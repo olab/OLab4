@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates>
+    <template lang="en">
+        <subject>A Preceptor has provided feedback for your review</subject>
+        <body>
+            Dear %TARGET_FIRSTNAME% %TARGET_LASTNAME%,
+
+            A Preceptor has completed an assessment on you, please proceed to the following link to
+            review and provide feedback:
+
+            %URL%
+
+            As a refresher your username is %USERNAME%, and if you have any trouble
+            remembering your password you can reset it by clicking the following link, and
+            entering %EMAIL% as your e-mail address.
+
+            %ENTRADA_URL%/password_reset
+
+            If you have any questions or concerns, please don't hesitate to let us know.
+
+            Sincerely,
+            The %APPLICATION_NAME% team
+        </body>
+    </template>
+</templates>

@@ -1,0 +1,20 @@
+.checkbox-group {
+    padding-left: 190px;
+}
+
+#evaluation-subtypes .control-group-checkbox, #evaluation-search, #checkbox-group-header {
+    margin: 0;
+    padding: 0;
+}
+
+#checkbox-group-header{
+    color: #8b959d;
+    font-size: 13px;
+    font-weight: normal;
+}
+
+#loading-spinner {
+    margin: 0 auto;
+    display: block;
+    padding-top: 10px;
+}

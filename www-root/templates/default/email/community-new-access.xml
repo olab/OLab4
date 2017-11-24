@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates>
+    <template lang="en">
+        <subject>%APPLICATION_NAME% Community Invitation from %FROM_FIRSTNAME% %FROM_LASTNAME%</subject>
+        <body>
+Dear %TO_FULLNAME%,
+
+%FROM_FIRSTNAME% %FROM_LASTNAME% has just added you to the %COMMUNITY_TITLE% community in %APPLICATION_NAME%.
+
+Since you already have a guest account in another community we have simply given you access using your existing username and password. Please click the following link access to the %COMMUNITY_TITLE% community:
+
+%COMMUNITY_URL%
+
+Reminder: Your username is %USERNAME%, and if you have forgotten your password you can click the "Forgot Your Password?" link on the login page.
+
+Should you have any questions or concerns please contact %FROM_FIRSTNAME% %FROM_LASTNAME% directly.
+
+Sincerely,
+
+%APPLICATION_NAME%
+        </body>
+    </template>
+</templates>

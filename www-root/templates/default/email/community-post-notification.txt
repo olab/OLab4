@@ -1,0 +1,18 @@
+%AUTHOR_FULLNAME% has just posted a new discussion topic entitled "%TITLE%" in the forum "%FORUM_TITLE%".
+
+----------------------------------------------------------------------
+%CONTENT_BODY%
+----------------------------------------------------------------------
+
+The discussion topic can be found here: 
+%URL%
+
+Unsubscribing:
+--------------
+
+You can unsubscribe at any time by logging into the system, visiting %UNSUBSCRIBE_URL%, and selecting "Unsubscribe to E-Mail".
+
+Regards,
+
+The %APPLICATION_NAME% team,
+%ENTRADA_URL%

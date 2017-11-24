@@ -1,0 +1,87 @@
+#curriculum-tag-sets {
+    min-width: 240px;
+    text-align: left;
+}
+
+#curriculum-tag-upload {
+    height: 200px;
+    margin-bottom: 0;
+}
+
+.upload-text {
+    font-size: 18px;
+    font-weight: bold;
+    text-align: center;
+}
+
+#curriculum-tag-upload.is-dragover {
+    background: #e8edf1;
+ }
+
+.form-dragndrop,
+.form-uploading,
+.form-success,
+.form-error {
+    display: none;
+}
+
+.has-advanced-upload {
+
+}
+
+#curriculum-tag-upload.has-advanced-upload .form-dragndrop {
+    display: inline;
+}
+
+.form-file {
+    opacity: 0;
+}
+
+.form-button {
+    display: block;
+}
+
+.form-input {
+    text-align: center;
+}
+
+#curriculum-tag-upload.is-uploading .form-input {
+    visibility: none;
+}
+#curriculum-tag-uploadis-uploading .form-uploading {
+    display: block;
+}
+
+#file-label {
+    display: block;
+    font-size: 17px;
+    line-height: 130px;
+}
+
+.input-label {
+    font-weight: bold;
+}
+
+.input-label:hover {
+    color: #006699;
+    font-weight: bold;
+}
+
+.form-button {
+    margin: 15px auto 0 auto;
+}
+
+.hide {
+    display: none !important;
+}
+
+#upload-instructions {
+    margin-bottom: -10px;
+    text-align: center;
+}
+
+#upload-instructions-controls {
+    height: 200px;
+    line-height: 190px;
+    font-size: 17px;
+}

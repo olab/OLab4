@@ -1,0 +1,14 @@
+%AUTHOR_FULLNAME% has just posted a new version of the file entitled "%TITLE%" in the shared folder "%FOLDER_TITLE%".
+
+The file can be found here: 
+%URL%
+
+Unsubscribing:
+--------------
+
+You can unsubscribe at any time by logging into the system, visiting %UNSUBSCRIBE_URL%, and selecting "Unsubscribe to E-Mail".
+
+Regards,
+
+The %APPLICATION_NAME% team,
+%ENTRADA_URL%

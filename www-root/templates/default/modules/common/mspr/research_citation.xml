@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates>
+	<template lang="en">
+		<![CDATA[
+			<span class="handle"><img src="%IMAGE%" /></span>
+			<form class="edit_data">
+				<input type="hidden" name="details" value="%DETAILS%" />
+			</form>
+			<span class="label">
+				Details: 
+			</span>
+			<p class="data">
+				%DETAILS%
+			</p>
+		]]>
+	</template>
+</templates>

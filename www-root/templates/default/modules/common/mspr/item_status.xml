@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates>
+	<template lang="en" status="confirmed">
+		<![CDATA[
+		<li class="entry approved" %ID%>
+			%CONTENT%
+			<div class="item-status">
+				<span class="label">
+					Status:
+				</span>
+				<span class="heading">
+					Confirmed
+				</span>
+			</div>
+			%CONTROLS%
+		</li>
+		]]>
+	</template>
+	<template lang="en" status="approved">
+		<![CDATA[
+		<li class="entry approved" %ID%>
+			%CONTENT%
+			<div class="item-status">
+				<span class="label">
+					Status:
+				</span>
+				<span class="heading">
+					Approved
+				</span>
+			</div>
+			%CONTROLS%
+		</li>
+		]]>
+	</template>
+	<template lang="en" status="unapproved">
+		<![CDATA[
+		<li class="entry unapproved" %ID%>
+			%CONTENT%
+			<div class="item-status">
+				<span class="label">
+					Status:
+				</span>
+				<span class="heading">
+					Pending Approval
+				</span>
+			</div>
+			%CONTROLS%
+		</li>
+		]]>
+	</template>
+	<template lang="en" status="rejected">
+		<![CDATA[
+		<li class="entry rejected" %ID%>
+			%CONTENT%
+			<div class="item-status">
+				<span class="label">
+					Status:
+				</span>
+				<span class="heading">
+					Rejected
+				</span>
+			</div>
+			%CONTROLS%
+		</li>
+		]]>
+	</template>
+	<template lang="en" status="rejected_reason">
+		<![CDATA[
+		<li class="entry rejected" %ID%>
+			%CONTENT%
+			<div class="item-status">
+				<span class="label">
+					Status:
+				</span>
+				<span class="heading">
+					Rejected
+				</span>
+				<span class="label">
+					Reason:
+				</span>
+				<p class="data">
+					%REASON%
+				</p>
+			</div>
+			%CONTROLS%
+		</li>
+		]]>
+	</template>
+	<template lang="en" status="default">
+		<![CDATA[
+		<li class="entry" %ID%>
+			%CONTENT%
+			%CONTROLS%
+		</li>
+		]]>
+	</template>
+</templates>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<message>
+	<lang>
+		<en>
+			<subject>Notice: You Must Confirm Your %REGION% Accommodations</subject>
+			<body>
+Dear %TO_FIRSTNAME% %TO_LASTNAME%,
+
+This is a notice to inform you that %FROM_FIRSTNAME% %FROM_LASTNAME% has assigned you the following accommodations during your rotation in %REGION%.
+
+In order to complete the process you must now review and confirm with the %DEPARTMENT_TITLE% office that you accept these accommodations. Please click the following link and log into %APPLICATION_NAME% to continue:
+
+%CONFIRMATION_URL%
+
+Should you have any questions or concerns please contact %FROM_FIRSTNAME% %FROM_LASTNAME% in the %DEPARTMENT_TITLE% office for further information.
+
+Sincerely,
+
+%DEPARTMENT_TITLE% Office
+			</body>
+		</en>
+	</lang>
+</message>

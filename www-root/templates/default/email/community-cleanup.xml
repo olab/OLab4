@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates>
+    <template lang="en">
+        <subject>%APPLICATION_NAME% Inactive Community Notification</subject>
+        <body>
+Dear %TO_FULLNAME%,
+
+Your Entrada community: %COMMUNITY_TITLE%, has been inactive for %TIME_INACTIVE% %MESSAGE%
+
+
+%COMMUNITY_URL%
+
+
+Sincerely,
+
+%APPLICATION_NAME%
+        </body>
+    </template>
+</templates>

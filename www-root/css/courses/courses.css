@@ -1,0 +1,201 @@
+.remove_audience, .remove_student, .remove_period {
+    cursor: pointer;
+}
+ol.sortableList {
+    margin-top: 0px;
+}
+.sortableList li {
+    width: 175px;
+    border-bottom: 0;
+}
+.sortableList img {
+    padding-top: 10px;
+}
+.listContainer {
+    list-style-type:none;
+}
+.enrollment-toggle {
+    display:inline;
+    background:transparent url(../../images/btn_add.gif) no-repeat center left;
+    padding:0 14px 0 16px;
+    color:#693;
+    font-weight:700;
+}
+img.list-cancel-image {
+    position: relative;
+    right: 0;
+    float: right;
+    margin-right: 3px;
+}
+
+.tracks-container tr:first-child td {
+    border-top: none;
+}
+
+.tracks-container tr td {
+    vertical-align: middle;
+}
+
+.track-name {
+    width: 340px;
+}
+
+.track-options label{
+    font-size: 15px;
+    margin-left: 10px;
+}
+
+.track-options input {
+    margin-top: 0px;
+    margin-right: 3px;
+}
+.course-sort, .group-sort, .member-sort {
+    position: relative;
+    float: right;
+    margin-top: 5px;
+    cursor: pointer;
+}
+
+#group-search {
+    width: 170px;
+}
+
+#autocomplete-list-container {
+    position: relative;
+    background: #eee;
+}
+
+#autocomplete-list-container a:hover {
+    border: 2px solid #79b7e7;
+    background: #FFB;
+    color: #000;
+}
+
+#autocomplete-list-container ul.ui-autocomplete {
+    max-height: 600px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+#autocomplete {
+    margin-top: 7px;
+    position: absolute;
+    width:290px;
+    margin-bottom: 60px;
+    overflow: visible;
+}
+
+div.autocomplete {
+    position: absolute;
+    width: 250px;
+    background-color: #FFF;
+    border: none;
+    z-index: 150;
+    margin: 0;
+    padding: 0;
+}
+
+.group-index-label {
+    width: 80px !important;
+}
+.group-index-select {
+    margin-left: 95px !important;
+}
+
+.group-assign-label {
+    width: 41px !important;
+}
+.group-assign-select {
+    margin-left: 46px !important;
+}
+
+.group_members {
+    margin-left: 30px;
+}
+
+.group_members .control-group {
+    margin: 0px !important;
+}
+
+.group_members .control-label {
+    text-align: left;
+    width: 110px;
+}
+.group_members .controls {
+    margin-left: 0px;
+}
+
+#groups-items-loading p,
+#groups-no-results p ,
+#courses-no-results p,
+#gradebook-no-results p,
+#courses-loading {
+    color: #bfbfbf;
+    font-size: 22px;
+    line-height:30px;
+    margin-top: 25px;
+    text-align: center;
+}
+
+#course-details-section {
+    position: relative;
+}
+
+#member-loading, #members-no-results {
+    text-align: center;
+}
+
+#member-loading p, #members-no-results p {
+    color: #bfbfbf;
+    font-size: 22px;
+    line-height:30px;
+    margin-top: 25px;
+}
+
+#groups-items-loading, #groups-no-results {
+    text-align: center;
+}
+
+.group-gender {
+    width : 100px;
+}
+
+.group-gender input{
+    width : 36px !important;
+}
+
+#gender_section {
+    margin-left: 30px;
+}
+
+#gender_section .first{
+    margin-left: 25px;
+}
+
+#prepopulated_section, .gender-radio {
+    margin-left: 30px;
+    margin-bottom: 10px;
+}
+
+.enrolment_groups {
+    margin-left: 40px;
+}
+
+.controls label{
+    line-height: 25px;
+}
+
+.right {
+    float: right;
+}
+
+.content-subheading {
+    font-size: 14px;
+}
+
+.v-divider {
+    margin-left: 5px;
+    margin-right: 5px;
+    height: 100%;
+    border-left: 2px solid #ced9e2;
+}

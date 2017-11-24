@@ -1,0 +1,149 @@
+#search_form select, #search_form input {
+    margin: 5px;
+}
+
+div#score-container .header {
+    text-align: center;
+}
+
+div#score-container .row-fluid.well {
+    /*width: auto;*/
+}
+
+div#score-container .score_large {
+    font-size: 25px;
+    padding: 5px;
+    margin: 5px;
+}
+
+div#score-container {
+    margin-top: 10px;
+}
+
+div#kr20_div {
+    height: 120px;
+    position: relative;
+}
+
+div#kr20_div_charts {
+    height: 120px;
+    position: absolute;
+}
+
+#chart_kr20 {
+    position: absolute;
+    top: 0;
+    z-index: 1;
+}
+
+#chart_kr20_2 {
+    z-index: 5;
+    top: 0;
+}
+
+h2.summary_header {
+    font-style: italic;
+    font-size: 24px;
+    padding-bottom: 5px;
+    margin-bottom: 10px;
+    border-bottom: 4px solid rgba(120, 76, 61, .5);
+}
+
+h1#main-title {
+    font-size: 40px;
+}
+
+h3#exam-title {
+    font-size: 20px;
+}
+
+.exam-slider {
+    width: 420px;
+    top: 12px;
+    z-index: 1;
+}
+
+div.slider-my-score, .exam-slider, div.slider-average-score, div.slider-min-score {
+    position: absolute;
+}
+
+div.slider-container {
+    position: relative;
+    width: 420px;
+    height: 50px;
+}
+
+div.slider-my-score {
+    z-index: 2;
+    color: #FF8500;
+}
+
+div.slider-min-score {
+    z-index: 2;
+    top: 14px;
+    color: #FFEE00;
+    margin-left: 8px;
+}
+
+div.slider-min-score.min-dark {
+    color: #000000;
+}
+
+div.slider-average-score {
+    z-index: 5;
+    top: 37px;
+}
+
+div.slider-average-score .fa-minus {
+    position: absolute;
+    z-index: 0;
+    font-size: .5em;
+    transform: scale(.4, 10);
+    left: 0px;
+    top: -3px;
+    color: #496C84;
+}
+
+div.slider-average-score .fa-users {
+    position: absolute;
+    z-index: 1;
+    font-size: 1.25em;
+    left: -9px;
+    color: #805FAD;
+}
+
+td.category-question-count {
+    width: 40px;
+    text-align: center;
+}
+
+#legend div.slider-average-score {
+    top: 0;
+    position: relative;
+    display: inline-block;
+}
+
+#legend div.slider-my-score {
+    top: 0;
+    position: relative;
+    display: inline-block;
+}
+
+#legend {
+    padding-left: 20px;
+}
+
+#audience-container, #curriculum-tag-container {
+    width: 50%;
+}
+
+#audience-container li, #curriculum-tag-container li {
+    margin: 10px 0;
+    list-style: none;
+}
+
+li.selected-list-item {
+    list-style-type: none;
+    background: transparent url("../../../images/list-community.gif") no-repeat scroll 0px 4px;
+}
+

@@ -1,0 +1,21 @@
+.dhx_cal_event .dhx_title,
+.dhx_cal_event .dhx_body, .dhx_cal_event_line {
+    font-size: 11px;
+}
+.dhx_cal_event .dhx_title {
+    border-radius: 4px 4px 0 0;
+}
+.dhx_move_denied .dhx_cal_event .dhx_title {
+    cursor: pointer;
+}
+.dhx_cal_event .dhx_body {
+    border-radius: 0;
+    cursor: pointer;
+}
+.dhx_cal_event .dhx_body, .dhx_cal_event .dhx_footer, .dhx_cal_event .dhx_header, .dhx_cal_event .dhx_title {
+    background-color: #68a1e5;
+}
+.dhx_cal_event .dhx_body, .dhx_cal_event .dhx_footer {
+    background-url: none;
+    height: 0;
+}

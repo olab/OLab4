@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ruleset name="Entrada ME">
+  <description>PSR-1 and PSR-2 implementation</description>
+
+  <exclude-pattern>\.git</exclude-pattern>
+  <exclude-pattern>/www-root/core/library/vendor/</exclude-pattern>
+  <exclude-pattern>*/*.html</exclude-pattern>
+  <exclude-pattern>*/*BAK*</exclude-pattern>
+
+  <rule ref="PSR2">
+    <!--<exclude name="PSR2.Methods.MethodDeclaration"/>-->
+    <!--<exclude name="PSR2.Classes.PropertyDeclaration"/>-->
+  </rule>
+
+  <rule ref="PSR1">
+  	<!--<exclude name="PSR1.Classes.ClassDeclaration"/>-->
+  </rule>
+
+</ruleset>

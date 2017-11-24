@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates>
+    <template lang="en">
+        <subject>%APPLICATION_NAME% Community Invitation from %FROM_FIRSTNAME% %FROM_LASTNAME%</subject>
+        <body>
+Dear %TO_FULLNAME%,
+
+%FROM_FIRSTNAME% %FROM_LASTNAME% has just added you to the %COMMUNITY_TITLE% community in %APPLICATION_NAME%.
+
+Since you do not have an existing account in %APPLICATION_NAME% we have created you a guest account to use. Before being able to log in you must first set a password for this account. To set your new password please click the following URL:
+
+%PASSWORD_URL%
+
+Once you have set your password you can log into the %COMMUNITY_TITLE% community at:
+
+%COMMUNITY_URL%
+
+Username: %USERNAME%
+Password: - You set this yourself via the link above -
+
+Should you have any questions or concerns please contact %FROM_FIRSTNAME% %FROM_LASTNAME% directly.
+
+Sincerely,
+
+%APPLICATION_NAME%
+        </body>
+    </template>
+</templates>

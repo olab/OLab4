@@ -1,0 +1,27 @@
+.grabbed {
+     user-select: none;
+     -o-user-select: none;
+     -moz-user-select: none;
+     -khtml-user-select: none;
+     -webkit-user-select: none;
+}
+.grabbed > .grip{
+    background: rgba(0,0,0,1);
+}
+.grip{
+    background: rgba(0,0,0,0.8);
+    width: 10px;
+    position: absolute;
+    right: 0;
+    border-radius: 10px;
+    margin-right: 2px;
+}
+.track{
+    height: 100%;
+    position: absolute;
+    right:0;
+    opacity: .5;
+    background: #ccc;
+    width:14px;
+    z-index: 11;
+}

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates>
+    <template lang="en">
+        <subject>Request to complete %UC_CONTENT_TYPE_NAME% [%CONTENT_TITLE%]</subject>
+        <body>
+%TARGET_FULLNAME% has requested that you complete an %CONTENT_TYPE_NAME% regarding them.
+			
+Further details regarding this %CONTENT_TYPE_SHORTNAME% can be found below:
+
+Title: %CONTENT_TITLE%
+
+Description: %CONTENT_BODY%
+
+The %CONTENT_TYPE_SHORTNAME% can be found here: 
+%URL%
+
+Regards,
+
+The %APPLICATION_NAME% team,
+%ENTRADA_URL%
+        </body>
+    </template>
+</templates>

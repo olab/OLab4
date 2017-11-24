@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates>
+	<template lang="en">
+		<![CDATA[
+			<form class="edit_data">
+				<input type="hidden" name="role" value="%ROLE%" />
+				<input type="hidden" name="org_event" value="%ORG_EVENT%" />
+				<input type="hidden" name="start_month" value="%START_MONTH%" />
+				<input type="hidden" name="end_month" value="%END_MONTH%" />
+				<input type="hidden" name="start_year" value="%START_YEAR%" />
+				<input type="hidden" name="end_year" value="%END_YEAR%" />
+			</form>
+			<span class="label">
+				Role:
+			</span>
+			<span class="heading">
+				%ROLE%			
+			</span>
+			<span class="label">
+				Organization/Event:
+			</span>
+			<span class="data">
+				%ORG_EVENT%			
+			</span>
+			<span class="label">
+				Period:
+			</span>
+			<span class="data">
+				%PERIOD%
+			</span>
+		]]>
+	</template>
+</templates>

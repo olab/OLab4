@@ -1,0 +1,19 @@
+*/15 * * * * php ENTRADA_ABSOLUTE/cron/community-quota.php > /dev/null 2>&1
+*/5 * * * * php ENTRADA_ABSOLUTE/cron/community-list-members.php > /dev/null 2>&1
+*/10 * * * * php ENTRADA_ABSOLUTE/cron/community-list-cleanup.php > /dev/null 2>&1
+30 * * * * php ENTRADA_ABSOLUTE/cron/calendars.php 1 > /dev/null 2>&1
+45 4 * * * php ENTRADA_ABSOLUTE/cron/most-active-communities.php > /dev/null 2>&1
+08 0 * * * php ENTRADA_ABSOLUTE/cron/electives-check.php > /dev/null 2>&1
+0 19 * * * php ENTRADA_ABSOLUTE/cron/cache-cleanup.php > /dev/null 2>&1
+*/5 * * * * php ENTRADA_ABSOLUTE/cron/community-notifications.php > /dev/null 2>&1
+35 3 * * * php ENTRADA_ABSOLUTE/cron/notifications.php > /dev/null 2>&1
+35 2 * * * php ENTRADA_ABSOLUTE/cron/queue-evaluation-notifications.php > /dev/null 2>&1
+*/30 * * * * php ENTRADA_ABSOLUTE/cron/import-draft-schedule.php > /dev/null 2>&1
+*/10 * * * * php ENTRADA_ABSOLUTE/cron/send-queued-notifications.php > /dev/null 2>&1
+0 1 * * * php ENTRADA_ABSOLUTE/cron/course-audience-ldap-sync.php > /dev/null 2>&1
+0 0 * * * php ENTRADA_ABSOLUTE/cron/syllabus_gen.php 1 > /dev/null 2>&1
+30 0 * * * php ENTRADA_ABSOLUTE/cron/observership-confirmations.php > /dev/null 2>&1
+30 * * * * php ENTRADA_ABSOLUTE/cron/weather.php > /dev/null 2>&1
+59 23 * * * php ENTRADA_ABSOLUTE/cron/check_grade_thresholds.php > /dev/null 2>&1
+30 3 * * * php ENTRADA_ABSOLUTE/cron/queue-distribution-assessments.php > /dev/null 2>&1
+*/15 * * * * php ENTRADA_ABSOLUTE/cron/register-rp-now-users.php 1 > /dev/null 2>&1

@@ -1,0 +1,39 @@
+<?php
+/**
+ * MEdTech Authentication System [SERVER]
+ * @author Unit: Medical Education Technology Unit
+ * @author Director: Dr. Benjamin Chen <bhc@post.queensu.ca>
+ * @author Developer: Matt Simpson <simpson@post.queensu.ca>
+ * @copyright Copyright 2007 Queen's University, MEdTech Unit
+ *
+ * $Id: Exp $
+ * 
+*/
+
+if(((isset($_POST["requirements"])) && (is_array($_POST["requirements"]))) ? count($_POST["requirements"]) : 0)
+
+if((!isset($_POST["requirements"])) || (!(int) count($_POST["requirements"]))) {
+	?>
+<!DOCTYPE authenticate [
+	<!ELEMENT authenticate (result*)>
+	<!ELEMENT result (status, message)>
+	<!ELEMENT status (#PCDATA)>
+	<!ELEMENT message (#PCDATA)>
+]>
+	<?php
+} else {
+	?>
+<!DOCTYPE authenticate [
+	<!ELEMENT authenticate (result*)>
+	<!ELEMENT result (status, message, <?php echo implode(", ", $_POST["requirements"]); ?>)>
+	<!ELEMENT status (#PCDATA)>
+	<!ELEMENT message (#PCDATA)>
+	<?php
+	foreach($_POST["requirements"] as $value) {
+		echo "\t<!ELEMENT ".$value." (\#PCDATA)>\n";
+	}
+	?>
+]>
+	<?php
+}
+?>

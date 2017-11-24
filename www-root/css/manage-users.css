@@ -1,0 +1,139 @@
+#display-notice a {
+    cursor: pointer;
+}
+
+.margin-bottom {
+    margin-bottom: 20px;
+}
+
+#permissions-loading {
+    text-align: center;
+}
+
+#permissions-loading p {
+    color: #bfbfbf;
+    font-size: 14px;
+}
+
+.permissions .clinical-checkbox {
+    margin-top: 0;
+}
+
+.clinical-label {
+    margin-bottom: 0;
+    vertical-align: middle;
+}
+
+.fa-minus-circle {
+    color: #e84447;
+    cursor: pointer;
+}
+
+.list-group {
+    padding-top: 10px;
+    padding-left: 0;
+}
+
+.list-group.departments {
+    margin: 0;
+}
+
+.list-group-item {
+    position: relative;
+    display: block;
+    padding: 15px;
+    margin-top: -1px;
+    background-color: #fff;
+    border: 1px solid #ddd;
+}
+
+.list-group-item:first-child {
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+}
+
+.list-group-item:last-child {
+    border-bottom-left-radius: 4px;
+    border-bottom-right-radius: 4px;
+}
+
+.student-li {
+    height: 36px;
+}
+
+.student-li .remove-permission {
+    padding-top: 9px;
+}
+
+.student-years select {
+    width: 70px;
+}
+
+.departments-advanced-search {
+    min-width: 220px;
+    text-align: left;
+}
+
+.departments-advanced-search .fa-chevron-down {
+    padding-top: 4px;
+}
+
+textarea.expandable {
+    width: 75%;
+}
+
+.panel {
+    margin-bottom: 20px;
+    background-color: #fff;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    -webkit-box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+}
+
+.panel-info {
+    border-color: #bce8f1;
+}
+
+.panel-heading {
+    font-size: 16px;
+    padding: 10px 15px;
+    border-bottom: 1px solid transparent;
+    border-top-left-radius: 3px;
+    border-top-right-radius: 3px;
+}
+
+.panel-info > .panel-heading {
+    color: #31708F;
+    background-color: #d9edf7;
+    border-color: #bce8f1;
+}
+
+.panel > .list-group {
+    margin-bottom: 0;
+}
+
+.panel .list-group {
+    padding-top: 0;
+    margin-left: 0;
+}
+
+.list-group-item {
+    border-color: #bce8f1;
+}
+
+.panel .list-group .list-group-item {
+    border-left: 0;
+    border-right: 0;
+}
+
+.panel .list-group .list-group-item:first-child {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+}
+
+.panel .list-group .list-group-item:last-child {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    border-bottom: 0;
+}

@@ -1,0 +1,121 @@
+.panel {
+  border:1px solid #000000;
+  padding:7px;
+  background:url("../images/pad.gif") no-repeat;
+}
+
+.row_head {
+}
+.head {
+  font-family:verdana;
+  font-size:12px;
+  text-align:center;
+  color:#000000;
+  cursor:default;
+}
+
+.row_week {
+  margin-top:2px;
+  padding:1px 0px;
+  border-width:1px 0px 1px 0px;
+  border-style:solid;
+  border-color:#000000;
+}
+.weekday {
+  font-family:verdana;
+  font-size:12px;
+  width:25px;
+  text-align:center;
+  color:#ffffff;
+  cursor:default;
+}
+
+.row_day {
+}
+.day {
+  margin-top:1px;
+  font-family:verdana;
+  font-size:12px;
+  line-height:16px;;
+  width:25px;
+  text-align:center;
+  background-color:transparent;
+  color:#000000;
+  cursor:pointer;
+}
+.day_over {
+  margin-top:1px;
+  font-family:verdana;
+  font-size:12px;
+  line-height:16px;;
+  width:25px;
+  text-align:center;
+  background-color:#ffffff;
+  color:#000000;
+  cursor:pointer;
+}
+.day_down {
+  margin-top:1px;
+  font-family:verdana;
+  font-size:12px;
+  line-height:16px;;
+  width:25px;
+  text-align:center;
+  background-color:#c08040;
+  color:#ffffff;
+  cursor:pointer;
+}
+.day_empty {
+  margin-top:1px;
+  font-family:verdana;
+  font-size:12px;
+  line-height:16px;;
+  width:25px;
+  text-align:center;
+  color:#cccccc;
+  cursor:default;
+}
+.day_current {
+  margin-top:1px;
+  font-family:verdana;
+  font-size:12px;
+  line-height:16px;;
+  width:25px;
+  text-align:center;
+  background-color:#c08040;
+  color:#ffffff;
+  cursor:pointer;
+}
+.day_other {
+  margin-top:1px;
+  font-family:verdana;
+  font-size:9px;
+  line-height:16px;;
+  width:25px;
+  text-align:center;
+  background-color:transparent;
+  color:#336699;
+  cursor:pointer;
+}
+.day_other_over {
+  margin-top:1px;
+  font-family:verdana;
+  font-size:9px;
+  line-height:16px;
+  width:25px;
+  text-align:center;
+  color:#666666;
+  background-color:#c0c0c0;
+  cursor:pointer;
+}
+.day_other_current {
+  margin-top:1px;
+  font-family:verdana;
+  font-size:9px;
+  line-height:16px;
+  width:25px;
+  text-align:center;
+  color:#cccccc;
+  background-color:#909090;
+  cursor:pointer;
+}

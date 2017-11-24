@@ -1,0 +1,62 @@
+@media print {
+    div#content, div.container {
+        display:block !important;
+        float:none !important;
+        width: 100%!important;
+    }
+
+    #bread-crumb-trail {
+        display: none !important;
+    }
+    .nav {
+        display: none;
+    }
+
+    .hidden-print {
+        display: none;
+    }
+}
+
+.print-friendly {
+    line-height: 125%;
+    font-size: 16px;
+}
+.print-question {
+    page-break-inside: avoid !important;
+    margin: 30px 0;
+}
+
+.print-question > div {
+    margin: 5px 0;
+}
+
+select#update_fonts {
+    width: 75px;
+}
+
+.print_fnb_text {
+    text-decoration: none;
+    border-bottom: 2px solid green;
+}
+
+.one-per-page-break {
+    page-break-before: always;
+}
+
+.question_stem.copy {
+    page-break-before: always;
+}
+
+.question_stem table {
+    padding-top: 10px;
+}
+
+.objective-title {
+    cursor: default;
+    font-weight: normal;
+    font-size: 14px;
+}
+
+ul.objective-list li {
+    padding: 0;
+}

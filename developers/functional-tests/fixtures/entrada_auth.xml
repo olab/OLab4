@@ -1,0 +1,62 @@
+<?xml version="1.0"?>
+<mysqldump xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <database name="entrada_auth">
+        <table_data name="user_data">
+            <row>
+                <field name="id">1</field>
+                <field name="number">0</field>
+                <field name="username">admin</field>
+                <field name="password">c87d10be7e5c7e1c120b7afea87f4d395206dce2</field>
+                <field name="salt">5fe2fd557bfe196aa9ae894fc9ecbd3a30f331040be0925154aff3d91cdeae3d</field>
+                <field name="organisation_id">1</field>
+                <field name="department" xsi:nil="true" />
+                <field name="prefix"></field>
+                <field name="firstname">System</field>
+                <field name="lastname">Administrator</field>
+                <field name="email">noreply+1@demo.entrada-project.org</field>
+                <field name="email_alt"></field>
+                <field name="email_updated" xsi:nil="true" />
+                <field name="google_id" xsi:nil="true" />
+                <field name="telephone"></field>
+                <field name="fax"></field>
+                <field name="address"></field>
+                <field name="city"></field>
+                <field name="province"></field>
+                <field name="postcode"></field>
+                <field name="country"></field>
+                <field name="country_id" xsi:nil="true" />
+                <field name="province_id" xsi:nil="true" />
+                <field name="notes">System Administrator</field>
+                <field name="office_hours" xsi:nil="true" />
+                <field name="privacy_level">2</field>
+                <field name="notifications">1</field>
+                <field name="entry_year" xsi:nil="true" />
+                <field name="grad_year" xsi:nil="true" />
+                <field name="gender">0</field>
+                <field name="clinical">1</field>
+                <field name="updated_date">0</field>
+                <field name="updated_by">0</field>
+            </row>
+        </table_data>
+        <table_data name="user_access">
+            <row>
+                <field name="id">1</field>
+                <field name="user_id">1</field>
+                <field name="app_id">1</field>
+                <field name="organisation_id">1</field>
+                <field name="account_active">true</field>
+                <field name="access_starts">1216149930</field>
+                <field name="access_expires">0</field>
+                <field name="last_login">0</field>
+                <field name="last_ip"></field>
+                <field name="login_attempts" xsi:nil="true" />
+                <field name="locked_out_until" xsi:nil="true" />
+                <field name="role">admin</field>
+                <field name="group">medtech</field>
+                <field name="extras">YToxOntzOjE2OiJhbGxvd19wb2RjYXN0aW5nIjtzOjM6ImFsbCI7fQ==</field>
+                <field name="private_hash">e71fdc9e8371296468c99c8872079a7e</field>
+                <field name="notes"></field>
+            </row>
+        </table_data>
+    </database>
+</mysqldump>

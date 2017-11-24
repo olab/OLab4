@@ -1,0 +1,895 @@
+#distribution-search-form {
+    margin-bottom: 0;
+}
+
+.load-distributions-disabled,
+.load-distributions-disabled:hover,
+.load-distributions-disabled:focus,
+.load-distributions-disabled:active,
+.load-distributions-disabled:focus:active {
+    background-color: #ecf0f3 !important;
+    border: 1px solid #d9dee2;
+    color: #8b959d;
+    cursor: not-allowed;
+}
+
+#distribution-loading {
+    text-align: center;
+    margin-top: 90px;
+    margin-bottom: 90px;
+}
+
+#distribution-loading p {
+    color: #bfbfbf;
+    font-size: 22px;
+    text-align: center;
+    margin-top: 35px;
+}
+
+.ui-datepicker, .ui-timepicker, .ui-autocomplete {
+    position: relative; 
+    z-index:9999 !important;
+}
+
+.modal-body .btn-search-filter {
+    min-width: 220px;
+    text-align: left;
+}
+
+.distribution-instruction {
+    margin-bottom: 10px;
+}
+
+.distribution-instruction h2 {
+    color: #000;
+    font-weight: bold;
+    margin-bottom: 4px;
+    text-align: center;
+}
+
+.distribution-instruction p {
+    color: #969696;
+    font-size: 14px;
+    line-height: 22px;
+    margin-top: -2px;
+    text-align: center;
+}
+
+.button-wrap {
+    text-align: center;
+}
+
+.btn-medium {
+    border-radius: 4px !important;
+    font-size: 14px;
+    padding: 7px 14px;
+}
+
+#add-external-assessor-container {
+    background-image: none !important;
+    display: none;
+    font-size: 0.9em;
+    font-weight: 700;
+    height: 35px;
+    line-height: 35px;
+    margin: 0;
+    text-align: center;
+}
+
+#add-external-assessor-container.active, #rs-add-external-assessor-container.active {
+    display: block;
+}
+
+#add-external-assessor-container div, #rs-add-external-assessor-container div {
+    height: inherit;
+    line-height: inherit;
+    margin: 0 auto;
+}
+
+#add-external-target-btn, #rs-add-external-target-btn, #add-external-eventtype-assessor-btn {
+    background-color: #f9f9f9;
+    border-bottom: 2px solid #dcdcdc;
+    border-left: 2px solid #dcdcdc;
+    border-right: 2px solid #dcdcdc;
+    border-top: 1px solid #dcdcdc;
+    border-bottom-left-radius: 6px;
+    border-bottom-right-radius: 6px;
+    color: #838383;
+    display:inline-block;
+    padding: 8px 0 8px 0;
+    text-align: center;
+    width:282px;
+}
+
+#add-external-target-btn:hover, #rs-add-external-target-btn:hover, #add-external-eventtype-assessor-btn:hover {
+    background-color: #eeeded;
+    color: #838383;
+    text-decoration: none;
+}
+
+#autocomplete, #target-autocomplete, #author-autocomplete, #eventtype-autocomplete {
+    margin-top: 7px;
+    position: absolute;
+    width:290px;
+    margin-bottom: 60px;
+    overflow: visible;
+}
+
+.wizard-step {
+    position:relative;
+    min-height:275px;
+}
+
+#wizard-step-2 ul.ui-autocomplete,
+#wizard-step-3 ul.ui-autocomplete,
+#wizard-step-4 ul.ui-autocomplete,
+#wizard-step-5 ul.ui-autocomplete {
+    max-height: 300px;
+    border-left: 2px solid #dcdcdc;
+    border-right: 2px solid #dcdcdc;
+    border-top: 2px solid #dcdcdc;
+    border-bottom: 2px solid #dcdcdc;
+    border-top-left-radius: 6px !important;
+    border-top-right-radius: 6px !important;
+    border-bottom-left-radius: 0px !important;
+    border-bottom-right-radius: 0px !important;
+    left: 0 !important;
+    padding: 0;
+    position: relative;
+    top: 0 !important;
+    overflow-y: auto;
+    overflow-x: hidden;
+    width:282px;
+}
+
+#wizard-step-2 ul.ui-autocomplete li.ui-menu-item,
+#wizard-step-3 ul.ui-autocomplete li.ui-menu-item,
+#wizard-step-4 ul.ui-autocomplete li.ui-menu-item,
+#wizard-step-5 ul.ui-autocomplete li.ui-menu-item{
+    border-bottom: 1px solid #f2f1f1;
+    cursor: pointer !important;
+}
+
+#wizard-step-2 ul.ui-autocomplete li.ui-menu-item:nth-child(2n),
+#wizard-step-3 ul.ui-autocomplete li.ui-menu-item:nth-child(2n),
+#wizard-step-4 ul.ui-autocomplete li.ui-menu-item:nth-child(2n),
+#wizard-step-5 ul.ui-autocomplete li.ui-menu-item:nth-child(2n){
+    background: #f9f9f9;
+}
+
+#wizard-step-2 ul.ui-autocomplete .ui-state-hover,
+#wizard-step-3 ul.ui-autocomplete .ui-state-hover,
+#wizard-step-4 ul.ui-autocomplete .ui-state-hover,
+#wizard-step-5 ul.ui-autocomplete .ui-state-hover{
+    background: #eeeded !important;
+    border-color: #dcdcdc;
+}
+
+#wizard-step-2 ul.ui-autocomplete li.ui-menu-item.ui-state-hover,
+#wizard-step-3 ul.ui-autocomplete li.ui-menu-item.ui-state-hover,
+#wizard-step-4 ul.ui-autocomplete li.ui-menu-item.ui-state-hover,
+#wizard-step-5 ul.ui-autocomplete li.ui-menu-item.ui-state-hover {
+    border-radius: 0 !important;
+    border-left: none !important;
+    border-right: none !important;
+    border-top: none !important;
+}
+
+#wizard-step-2 .ui-menu .ui-menu-item a.ui-state-hover, .ui-menu .ui-menu-item a.ui-state-active,
+#wizard-step-3 .ui-menu .ui-menu-item a.ui-state-hover, .ui-menu .ui-menu-item a.ui-state-active,
+#wizard-step-4 .ui-menu .ui-menu-item a.ui-state-hover, .ui-menu .ui-menu-item a.ui-state-active,
+#wizard-step-5 .ui-menu .ui-menu-item a.ui-state-hover, .ui-menu .ui-menu-item a.ui-state-active {
+    border-radius: 0;
+}
+
+#wizard-step-2 .ui-widget-content,
+#wizard-step-3 .ui-widget-content,
+#wizard-step-4 .ui-widget-content,
+#wizard-step-5 .ui-widget-content {
+    color: #646464;
+}
+    
+#wizard-step-2 .ui-widget,
+#wizard-step-3 .ui-widget,
+#wizard-step-4 .ui-widget,
+#wizard-step-5 .ui-widget{
+    font-family: inherit;
+    font-size: 13px;
+}
+
+#wizard-step-2 .ui-menu .ui-menu-item a,
+#wizard-step-3 .ui-menu .ui-menu-item a,
+#wizard-step-4 .ui-menu .ui-menu-item a,
+#wizard-step-5 .ui-menu .ui-menu-item a {
+    color: #646464 !important;
+    font-size: 13px !important;
+    padding-bottom: 6px;
+    padding-top: 6px;
+}
+
+#wizard-step-2 .ui-state-hover,
+#wizard-step-3 .ui-state-hover,
+#wizard-step-4 .ui-state-hover,
+#wizard-step-5 .ui-state-hover{
+    background: none !important;
+}
+
+.external-assessor-details, .target-details, .author-details {
+    color:#838383;
+    font-size: 12px;
+}
+
+#autocomplete-list-container, #target-autocomplete-list-container, #author-autocomplete-list-container, #rs-autocomplete-list-container {
+    overflow-y: auto;
+    position:absolute !important;
+}
+
+.absolute-position {
+    top: 30px !important;
+}
+
+.external-assessor-photo-container, .target-photo-container, .author-photo-container {
+    float: left;
+    margin-right: 7px;
+}
+
+.external-assessor-photo, .target-photo, .author-photo {
+    border: 1px solid #dcdcdc;
+    display: inline-block;
+    width: 30px;
+}
+
+#external-assessors-list, #internal-targets-list, #internal-assessors-list, #authors-list {
+    margin-bottom: 0px;
+    list-style-type: none;
+    margin: 0 0 10px 8px;
+    padding: 0;
+}
+
+#external-assessors-list li, #internal-targets-list li, #internal-assessors-list li, #authors-list li {
+    background: url("../../images/user-circle-small.png") no-repeat scroll 0 0 transparent;
+    color: #848484;
+    padding-left: 30px;
+}
+
+img.list-cancel-image {
+    float: right;
+    margin-right: 3px;
+    position: relative;
+    right: 100px;
+}
+
+.well {
+    color: #646464;
+    margin-bottom: 0;
+    padding: 4px 10px !important;
+    width: 270px;
+}
+
+#external-assessors-table, #targets-table, #authors-table {
+    margin-bottom: 5px;
+}
+
+span.or {
+    background: none repeat scroll 0 0 #faf8ec;
+    border-radius: 40px;
+    color: #646253;
+    display: inline-block;
+    font-style: italic;
+    font-weight: bold;
+    margin-left: 5px;
+    margin-right: 5px;
+    padding: 4px 8px 4px 8px;
+}
+
+#external-assessors-search {
+    position:relative;
+}
+
+#external-assessors-search.searching, #rs-external-assessors-search.searching, #target-search.searching, #targets-search.searching, #authors-search.searching {
+    background: url("../../images/loading_small.gif") no-repeat scroll right 4px top 7px rgba(0, 0, 0, 0);
+}
+
+#selected-assessors-list-heading,
+#rs-selected-assessors-list-heading,
+#eventtype-selected-assessors-list-heading,
+#selected-targets-list-heading,
+#selected-authors-list-heading,
+#distribution-editor-title,
+#selected-targets-faculty-heading,
+#selected-assessors-faculty-heading,
+#selected-assessment-reviewers-heading,
+#selected-targets-rs-faculty-heading,
+#selected-assessors-rs-faculty-heading,
+#selected-targets-rs-individual-heading,
+#selected-assessors-rs-individual-heading,
+#selected-targets-rs-additional-learners-heading,
+#selected-assessors-rs-additional-learners-heading,
+#selected-assessment-approvers-heading,
+#rs-external-assessors-controls {
+    border-bottom: 2px solid #eee;
+    color: #036;
+    font-size: 14px;
+    font-weight: normal;
+    line-height: 27px;
+    margin-bottom: 10px;
+    padding-left: 10px;
+}
+
+.selected-assessor-container, .selected-target-container, .selected-author-container {
+    display: inline-block;
+    margin-right: 15px;
+}
+
+.selected-assessor-label, .selected-target-label, .selected-author-label {
+    background-color: #f9f9f9;
+    border-top : 1px solid #dcdcdc;
+    border-right : none;
+    border-bottom : 1px solid #dcdcdc;
+    border-left : 1px solid #dcdcdc;
+    border-bottom-left-radius: 3px;
+    border-bottom-right-radius: 0px;
+    border-top-left-radius: 3px;
+    border-top-right-radius: 0px;
+    color: #838383;
+    display: inline-block;
+    font-size: 11px;
+    line-height: 14px;
+    margin-left: 0px;
+    padding: 2px 6px;
+    vertical-align: baseline;
+    white-space: nowrap;
+}
+
+.selected-author-label-immutable {
+    background-color: #f9f9f9;
+    border : 1px solid #dcdcdc;
+    border-radius:3px;
+    color: #838383;
+    display: inline-block;
+    font-size: 11px;
+    line-height: 14px;
+    margin-left: 0px;
+    padding: 2px 6px;
+    vertical-align: baseline;
+    white-space: nowrap;
+}
+
+.remove-selected-assessor, .remove-selected-target, .remove-selected-author {
+    background-color: #f9f9f9;
+    border: 1px solid #dcdcdc;
+    border-bottom-left-radius: 0px;
+    border-bottom-right-radius: 3px;
+    border-top-left-radius: 0px;
+    border-top-right-radius: 3px;
+    color: #838383;
+    cursor: pointer;
+    display: inline-block;
+    font-size: 14px;
+    font-weight: bold;
+    line-height: 12px;
+    padding: 2px 6px 4px 6px;
+    vertical-align: baseline;
+    white-space: nowrap;
+}
+
+.remove-selected-assessor:hover, .remove-selected-target:hover, .remove-selected-author:hover {
+    background-color: #efefef;
+    color: #b94a48;
+}
+
+#assessor-list-internal,
+#selected-targets-faculty-section,
+#selected-assessors-faculty-section,
+#selected-assessment-reviewers-section,
+#selected-targets-rs-faculty-section,
+#selected-assessors-rs-faculty-section,
+#selected-targets-rs-individual-section,
+#selected-assessors-rs-individual-section,
+#selected-targets-rs-additional-learners-section,
+#selected-assessors-rs-additional-learners-section,
+#eventtype-assessor-list-internal,
+#selected-assessment-approvers-section {
+    margin-left: 23px;
+}
+
+#external-assessors-controls, #eventtype-external-assessors-controls {
+    margin-left: 31px;
+}
+
+#external-assessors-controls input[type="text"], #eventtype-external-assessors-controls input[type="text"] {
+    font-size: 11px;
+    padding: 1px 4px;
+}
+
+.distribution-wizard-step-container {
+    width: 100%;
+}
+#distribution-editor-container h2 {
+    font-weight:normal;
+    color:#11345e;
+}
+
+ul.distribution-wizard-steps {
+    border: 2px solid #dcdcdc;
+    border-radius: 4px;
+    list-style-type: none;
+    margin: 15px auto 25px auto;
+}
+
+ul.distribution-wizard-steps li:last-child {
+    margin-right: 0;
+}
+
+ul.distribution-wizard-steps li {
+    background: #fff;
+    border-bottom-left-radius: 4px;
+    border-top-left-radius: 4px;
+    float: left;
+    font-size: 13px;
+    margin: 0;
+    width:20%;
+    box-sizing: border-box;
+}
+
+ul.distribution-wizard-steps li.complete {
+    border-color: #5bb75b;
+}
+
+ul.distribution-wizard-steps li.complete span {
+    background: #5bb75b;
+    color: #fff;
+}
+
+ul.distribution-wizard-steps li.complete a:hover, ul.distribution-wizard-steps li.complete a:active, ul.distribution-wizard-steps li.complete a:visited, ul.distribution-wizard-steps li.complete a:link {
+    color: #5bb75b;
+    display: inline-block;
+    font-weight: bold;
+    outline: 0;
+    text-decoration: none;
+}
+
+ul.distribution-wizard-steps li a span {
+    background: #dcdcdc;
+    color: #f9f9f9;
+    display: inline-block;
+    padding: 5px 14px 5px 13px;
+    margin: 0;
+    box-sizing: border-box;
+}
+
+ul.distribution-wizard-steps li a {
+    margin: 0 !important;
+}
+
+ul.distribution-wizard-steps li a:hover, ul.distribution-wizard-steps li a:active, ul.distribution-wizard-steps li a:visited, ul.distribution-wizard-steps li a:link {
+    color: #dcdcdc;
+    display: inline-block;
+    font-weight: bold;
+    outline: 0;
+    text-decoration: none;
+}
+
+ul.distribution-wizard-steps li.active span {
+    background: #00a8bc;
+    color: #fff;
+}
+
+ul.distribution-wizard-steps li:first-child span {
+    border-bottom-left-radius: 2px;
+    border-top-left-radius: 2px;
+}
+
+
+ul.distribution-wizard-steps li.active {
+    border-color: #00a8bc;
+}
+
+ul.distribution-wizard-steps li.active a:hover, ul.distribution-wizard-steps li.active a:active, ul.distribution-wizard-steps li.active a:visited, ul.distribution-wizard-steps li.active a:link {
+    color: #00a8bc;
+    display: inline-block;
+    font-weight: bold;
+    outline: 0;
+    text-decoration: none;
+}
+
+.distribution-step-number.active {
+    background-color: #dcdcdc;
+    border-radius: 50%;
+    display: inline-block;
+    font-weight: bold;
+    margin-right: 1px;
+    padding: 3px 10px;
+}
+
+.distribution-editor-footer {
+    display: table;
+    line-height: 0;
+    clear: both;
+    width:100%;
+    padding-top:15px;
+    border-top: 2px solid #eee;
+    margin-bottom: 10px;
+    text-align: right;
+}
+
+/* ------------------------------------------- [ Departments Dialog ] */
+
+/* Customize the size/position of the dialog to make the height somewhat
+   flexible. This prevents folks with small screens from having the
+   Save button get cut off by the viewport. */
+
+div#distributions-modal {
+    position: fixed;
+	height: 100%;
+    width: 100%;
+    margin-left: 0px;
+    left: 0px;
+    top: 0px;
+	padding: 0;
+    overflow-y: scroll;
+}
+
+div#distributions-modal div.modal-header,
+div#distributions-modal div.modal-footer {
+	left: 0;
+	right: 0;
+	line-height: 50px;
+	padding: 0 15px;
+	background-color: #fff;
+}
+
+div#distributions-modal div.modal-header {
+    border-radius: 6px 6px;
+    padding-top: 10px;
+    text-align: center;
+    z-index: 1;
+}
+
+div#distributions-modal div.modal-header {
+	top: 0;
+}
+
+div#distributions-modal div.modal-footer {
+    position: fixed;
+	background-color: #f5f5f5;
+    bottom: 0;
+}
+
+div#distributions-modal div.modal-body {
+	top: 51px;
+	bottom: 51px;
+	margin-left: auto;
+	margin-right: auto;
+    width: 600px;
+	max-height: none;
+	padding: 0 15px;
+    margin-bottom: 60px;
+    overflow: visible;
+}
+div#distributions-modal div.search-overlay {
+    margin-bottom: 60px;
+}
+
+#distribution-editor-container {
+    min-height: 300px;
+}
+
+#distribution-close-btn {
+
+}
+
+.badge-grey {
+    background-color: #f9f9f9;
+    border : 1px solid #dcdcdc;
+    border-radius: 3px;
+    color: #838383;
+    display: inline-block;
+    font-size: 11px;
+    line-height: 14px;
+    margin-left: 0px;
+    padding: 2px 6px;
+    vertical-align: baseline;
+    white-space: nowrap;
+}
+
+.badge-green {
+    background-color: #dff0d8;
+    border: 1px solid #c1d2b3;
+    border-radius: 3px;
+    color: #3c7f3c;
+    display: inline-block;
+    font-size: 11px;
+    line-height: 14px;
+    margin-left: 0px;
+    padding: 2px 6px;
+    vertical-align: baseline;
+    white-space: nowrap;
+}
+
+.external-assessor-email, .target-email, .author-email {
+    color: #b1b0b0;
+    display: block;
+    font-size: 11px;
+}
+
+#selected-targets-faculty-container li,
+#selected-assessors-faculty-container li,
+#selected-assessment-reviewers-container li,
+#selected-targets-rs-faculty-container li,
+#selected-assessors-rs-faculty-container li,
+#selected-targets-rs-individual-container li,
+#selected-assessors-rs-individual-container li,
+#selected-targets-rs-additional-learners-container li,
+#selected-assessors-rs-additional-learners-container li,
+#selected-assessment-approvers-container li{
+    color: #848484;
+    padding-bottom: 4px;
+    padding-left: 30px !important;
+    width: auto !important;
+}
+
+/* Delegation progress specific styles */
+
+.distribution-summary-container {
+    margin-bottom: 18px;
+}
+
+.distribution-summary-container .row-fluid [class*="span"] {
+    min-height: 23px;
+}
+
+.distribution-summary-container p {
+    margin-bottom: 2px;
+}
+
+.distribution-summary-container ul {
+    padding-left: 10px;
+    margin:0;
+}
+
+.assessment-delegation-progress-table {
+    border-radius:0;
+    height:100%;
+    box-shadow: 0 2px 2px 0px #888888;
+}
+
+.table-header-summary-row {
+    height:70px;
+    color: #f4f4f4;
+    background-color: #00a8bc;
+}
+
+.table-header-summary-row a {
+    color: #96d2ff;
+}
+
+.table-header-summary-row th div,
+.table-header-summary-row-not-available th div {
+    width: 60%;
+}
+
+.table-header-summary-row th div:first-child,
+.table-header-summary-row-not-available th div:first-child {
+    width: 39%;
+}
+
+
+.table-header-summary-row-not-available {
+    height:70px;
+    color: #f4f4f4;
+    background-color: #838383;
+}
+
+.table-header-summary-row p, .table-header-summary-row strong,
+.table-header-summary-row-not-available p, .table-header-summary-row-not-available strong {
+    font-size:13px;
+    margin: 0;
+    font-weight: initial;
+}
+
+.table-header-summary-row strong,
+.table-header-summary-row-not-available strong{
+    font-weight:bold;
+}
+
+.all-assessor-toggle-bar td {
+    height:10px;
+    background-color: #dae0e9 !important;
+    margin:10px !important;
+    padding:0 !important;
+}
+
+.all-assessor-toggle-bar td:hover {
+    background-color: #b4bac2 !important;
+    cursor: pointer;
+}
+
+.all-available-assessors-container {
+}
+
+.all-available-assessors-container ul {
+    list-style: none;
+    margin:0;
+    padding:0;
+}
+
+.all-available-assessors-container li {
+    width:28%;
+    font-size:11px;
+    padding:10px;
+}
+
+.all-assessor-block-container tbody tr td {
+    margin:0 !important;
+}
+
+.bgcolor-inherit {
+    background-color: inherit !important;
+}
+
+.assessment-delegation-assessor-sub-table {
+    width: 100%;
+    height: 100%;
+}
+
+.assessment-delegation-assessor-sub-table.assessor-content-blocks {
+    padding-top:7px;
+}
+
+.table-header-headings-row {
+}
+
+/* "Targets" heading  */
+.table-header-headings-row th:nth-child(1) {
+    width:201px;
+    padding-left:10px;
+    padding-right:3px;
+}
+
+/* "Assessors" heading */
+.table-header-headings-row th:nth-child(2) {
+    width:151px;
+    padding-left:10px;
+    padding-right:3px;
+}
+
+/* "Delegated on" heading */
+.table-header-headings-row th:nth-child(3) {
+    padding-left:10px;
+    padding-right:3px;
+    width:85px;
+}
+
+/* Notify bell icon */
+.table-header-headings-row th:nth-child(5) {
+    padding-left:3px;
+    padding-right:3px;
+    width: 15px;
+}
+
+/* Trash can icon */
+.table-header-headings-row th:nth-child(6) {
+    padding-left:3px;
+    padding-right:3px;
+    padding-top:8px;
+    width: 15px;
+}
+
+/* Assessors block */
+.assessment-delegation-assessor-sub-table.assessor-content-blocks td:nth-child(1) {
+    width:151px;
+    padding-left:10px;
+    padding-right:3px;
+    padding-top:8px;
+}
+
+/* Delegated On */
+.assessment-delegation-assessor-sub-table.assessor-content-blocks td:nth-child(2) {
+    width:85px;
+    padding-left:10px;
+    padding-right:3px;
+    padding-top:8px;
+}
+
+/* Notification bell checkbox */
+.assessment-delegation-assessor-sub-table.assessor-content-blocks td:nth-child(4) {
+    padding: 8px 3px 8px;
+    width: 15px;
+}
+
+/* Trash can checkbox */
+.assessment-delegation-assessor-sub-table.assessor-content-blocks td:nth-child(5) {
+    padding: 8px 3px 8px;
+    width: 15px;
+}
+
+.assessment-delegation-assessor-sub-table div strong,
+.assessment-delegation-assessor-sub-table div a {
+    display:block;
+}
+
+.assessment-delegation-assessor-sub-table td {
+    background-color: inherit !important;
+}
+
+.userbadge {
+    width:100%;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.userbadge-component {
+    display: inline-block;
+    vertical-align: top;
+}
+
+.userbadge-details div {
+    #display:block;
+}
+
+.userbadge-details.highlighted, .userbadge-details.highlighted a {
+    color:green;
+}
+
+.align-bottom {
+}
+
+.aligned-bottom {
+}
+
+.no-pending-delegations {
+    color: #858b93;
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 15px;
+    margin-top: 30px;
+    text-align: center;
+}
+
+.delegation-reminder-checkbox-container {
+    display:inline-block;
+}
+
+.delegation-reminder-checkbox-container input[type="checkbox"] {
+    float: none;
+    margin:3px;
+}
+
+
+/** Modal style fixes **/
+
+#content .modal {
+    padding: 0;
+}
+
+#content form {
+    margin: 0;
+}
+
+#distribution-data-form .btn-search-filter {
+    min-width: 218px;
+    text-align: left;
+}
+
+.table-header-eventtype-heading-remind,
+.table-header-eventtype-heading-delete {
+    width: 8px;
+}
+
+#targets-search, #rs-external-assessors-search, #add-task-delivery-date {
+    padding: 4px;
+    margin-bottom: 10px;
+}
+
+#date-selector {
+    margin-left: 10px;
+}
+
+#rs-internal-assessors-list {
+    padding-bottom: 10px;
+}
+
+#distribution-data-form .control-group {
+    margin-bottom: 5px;
+}

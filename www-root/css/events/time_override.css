@@ -1,0 +1,179 @@
+/*
+ * Entrada [ http://www.entrada-project.org ]
+ *
+ * Entrada is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Entrada is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Entrada.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *
+ * This CSS file provides style sheets for the granular scheduling/event time override feature.
+ *
+ * @author Organization: David Geffen School of Medicine at UCLA
+ * @author Unit: Instructional Design and Technology Unit
+ * @author Developer: Sam Payne <spayne@mednet.ucla.edu>
+ * @copyright Copyright 2014 Regents of The University of California. All Rights Reserved.
+ *
+ */
+
+/*
+event audience time override
+*/
+#audience_type {
+    width: 275px;
+}
+
+#event_audience_type_custom_options #audience_type {
+    width: 475px;
+}
+
+#event_audience_type_custom_options ul#audience_list {
+    width: 475px;
+}
+#event_audience_type_custom_options #audience_list li{
+    margin-top: 0;
+    padding-top: 0;
+    padding-bottom: 3px;
+}
+#event_audience_type_custom_options #audience_list li.group, #event_audience_type_custom_options #audience_list li.user {
+    border: 5px solid transparent;
+    border-bottom: 1px solid #EEEEEE;
+
+}
+
+#custom-time {
+    display: none;
+    position: absolute;
+    width: 800px;
+    background-color: #FAFAFA;
+    left: -115px;
+    top: -20px;
+    border-radius: 5px;
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+}
+#custom_time_container {
+    position: relative;
+}
+.custom_time_icon {
+    margin: 0;
+}
+.custom-time-btn-on-off.active {
+    cursor: default;
+}
+#warn-overlap {
+    height: 31px;
+    width: 45px;
+}
+.time-badge {
+    position: absolute;
+    right: 30px;
+    cursor: pointer;
+    padding: 3px 6px;
+    border-radius: 15px;
+}
+
+#audience_list li {
+    height: 24px;
+    position: relative;
+}
+
+.time {
+    position: absolute;
+    right: 60px;
+    top: 0;
+    padding: 0px 6px 6px 6px;
+    border-radius: 15px;
+}
+
+#event_audience_type_custom_options .list-cancel-image {
+    margin-top: 3px;
+}
+#custom-time-close {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+}
+#validation_group {
+    position: absolute;
+    bottom: 10px;
+    right: 80px;
+}
+.slider-range {
+    margin: 5px 30px 5px 10px;
+}
+#event_audience_override span.group, #event_audience_override span.individual {
+    margin-left: 5px;
+    font-size: 11px;
+}
+
+.slider-times {
+    display: table;
+    width: 100%;
+}
+.slider-audience {
+    width: 20%;
+}
+.slider-buttons {
+    width: 10%;
+}
+.slider-text-time {
+    width: 14%;
+    font-size: 10px;
+}
+.slider-times span.left {
+    display: table-cell;
+    text-align: left;
+    margin-left: 5px;
+}
+.slider-times span {
+    display: table-cell;
+    text-align: center;
+}
+.slider-times span.right {
+    display: table-cell;
+    text-align: right;
+    padding-right: 10px;
+}
+#custom-time #event_audience_override {
+    margin-bottom: 45px;
+    height: 250px;
+    overflow-y: auto;
+    width: 100%;
+}
+
+/* public events page for granular scheduling */
+
+ul.audience-events {
+    position: relative;
+    margin-bottom: 5px;
+}
+ul.audience-events .group, ul.audience-events .user{
+    position: relative;
+    width: 100%;
+    margin-top: 0px;
+}
+.audience-events .time {
+    /*right: 0px;*/
+}
+.audience-row .span4 {
+    width: 22%;
+}
+#column1_events {
+    width: 54%;
+}
+
+#column2_events {
+    width: 43%;
+}
+/*
+End event audience time override
+*/

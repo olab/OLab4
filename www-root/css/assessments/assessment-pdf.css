@@ -1,0 +1,92 @@
+thead, tfoot {
+    display: table-row-group;
+}
+
+h1 {
+    font-size: 14px;
+}
+
+.horizontal-response-input td,
+td {
+    padding: 0;
+}
+
+table.rubric-table thead h2,
+h2 {
+    line-height: 14px;
+    font-size: 12px;
+    width: 100%;
+}
+
+table.rubric-table thead h3,
+.space-below.medium {
+    margin: 0;
+}
+
+table.rubric-table thead h3,
+.rubric-item-text,
+.label-cell,
+label,
+h3 {
+    font-size: 11px;
+    line-height: 13px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    color: black;
+}
+
+.form-text-container p,
+.assessment-delivery-header {
+    color: black;
+}
+
+p.comment {
+    text-align: left;
+}
+
+div.item-container,
+div.rubric-container {
+    margin-bottom: 10px;
+}
+
+tr.item-response-view td textarea {
+    background-color: #ffffff;
+    color: black;
+    font-weight: normal;
+}
+
+.pdf-logo-image {
+    width: 100%;
+    max-width: 180px;
+}
+
+.pdf-user-image {
+    width: 50%;
+    max-width: 100px;
+    margin: 0 auto;
+    display: block;
+}
+
+.pdf-user-image-container {
+    vertical-align: middle;
+    text-align: center;
+}
+
+.header-block {
+    margin: 0 auto;
+    width: 100%;
+}
+
+.form-heading,
+.assessment-delivery-header {
+    padding-left: 10px;
+}
+
+.blank-space {
+    padding: 25px;
+}
+
+td select.item-control {
+    background-color: white;
+    color: black;
+}

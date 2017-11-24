@@ -1,0 +1,8 @@
+%CONTACT_NAME%,
+
+This is an automatically generated message to inform you that there are currently no occupants scheduled for the residence titled '%APARTMENT_TITLE%' for the following month. 
+
+Should there be any concerns please contact %REGIONALED_CONTACT% as soon as possible. 
+
+Sincerely,
+%APPLICATION_NAME%

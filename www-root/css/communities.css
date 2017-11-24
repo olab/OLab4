@@ -1,0 +1,223 @@
+.community-heading {
+position:relative;
+border:1px solid #036;
+background:#69C url(../images/community-header-background.gif) repeat-x top left;
+margin-bottom:13px;
+}
+
+.community-contentblock {
+padding:10px 15px;
+}
+
+.community-heading div {
+clear:none;
+}
+
+.community-heading .community-int-heading {
+height:154px;
+width:193px;
+float:right;
+border-left:1px solid #FFF;
+background:#69C url(../images/community-people-image.jpg) no-repeat top right;
+}
+
+.community-heading .bordering {
+margin-left:10px;
+padding:10px 10px 10px 0;
+}
+
+.community-heading .community-int-footing {
+position:absolute;
+bottom:0;
+left:-2px;
+width:557px;
+font-size:13px;
+font-weight:400;
+color:#FFF;
+}
+
+.community-heading .community-int-footing div {
+margin-left:2px;
+border-top:1px solid #FFF;
+background:#369 url(../images/community-footer-background.gif) repeat-x;
+padding:10px;
+}
+
+.community-heading .community-int-footing a {
+color:#BFF273;
+font-weight:700;
+}
+
+.community-heading .corner-tl,.community-heading .corner-tr,.community-heading .corner-bl,.community-heading .corner-br {
+background:url(../images/community-box-corner.gif) no-repeat;
+position:absolute;
+width:3px;
+height:3px;
+overflow:hidden;
+}
+
+.community-heading .corner-tl {
+background-position:0 -6px;
+top:-1px;
+left:-1px;
+}
+
+.community-heading .corner-tr {
+top:-1px;
+right:-1px;
+}
+
+.community-heading .corner-bl {
+background-position:0 -9px;
+bottom:-1px;
+left:-1px;
+}
+
+.community-heading .corner-br {
+background-position:0 -3px;
+bottom:-1px;
+right:-1px;
+}
+
+* html .community-heading .corner-bl,* html .community-heading .corner-br {
+bottom:-2px;
+}
+
+* html .community-heading .community-int-footing {
+bottom:-1px;
+}
+
+
+
+/*div.community-body {
+background:#FFF url(../images/community-body-background.gif) repeat-x top right;
+padding:10px;
+}*/
+
+div.community-body .body-left {
+float:left;
+width:31%;
+border-left:2px #369 solid;
+border-right:2px #369 solid;
+background-color:#FFF;
+padding:10px;
+}
+
+div.community-body .body-right {
+float:right;
+width:61%;
+border-left:2px #369 solid;
+border-right:2px #369 solid;
+background-color:#FFF;
+padding:10px;
+}
+
+.strong-green {
+color:#690;
+font-size:14px;
+font-weight:700;
+}
+
+.normal-green {
+color:#690;
+font-size:14px;
+font-weight:400;
+}
+
+.column-left,.column-right {
+border-left:2px #369 solid;
+border-right:2px #369 solid;
+background-color:#FFF;
+vertical-align:top;
+padding:10px;
+}
+
+/*** Community block ***/
+.community-block {
+  background:#f5f5ed;
+  color:#444444;
+  padding:3px;
+  position:relative;
+  -moz-border-radius:3px;
+  -webkit-border-radius:3px;
+  border-radius:3px;
+}
+.community-block h3{
+  color:#444;
+  font-weight:normal;
+}
+.community-content{
+    padding:15px;
+}
+.community-content p.community-int-footing{
+  position:absolute;
+  bottom:0;
+}
+.community-image {
+  text-align:right;
+}
+.create-comm-container{
+  padding:20px 0;
+  margin-bottom:20px;
+  border-bottom:1px dotted #CCC;
+}
+.create-comm-container span.content-small {
+  padding-left:20px;
+}
+.inner-comm-body {
+  padding-left:40px;
+  border-left:1px dotted #CCC;
+}
+.community-body > .span4 {
+  width:25%;
+}
+.community-body > .span8 {
+  width:72%;
+}
+h4.categ-title{
+  color:#669900;
+  font-size:13px;
+}
+/*** end Community block ***/
+
+ul.community-page-list {
+	margin-top: 0px;
+	padding-left: 0px;
+}
+.community-page-list li {
+	list-style-type: none;
+}
+div.community-page-container {
+	border-bottom: 1px solid #CCC;
+	padding: 4px 0;
+}
+.community-page-list li span.next {
+	margin-left: 5px;
+	padding-left: 15px;
+	background: url(../images/record-next-on.gif) no-repeat top left;
+}
+.community-page-list li span.next.off {
+	background-image: url(../images/record-next-off.gif);
+}
+div.community-page-list.home {
+	background: url(../images/record-next-on.gif) no-repeat 29px 6px;
+	padding: 4px 0px 4px 46px;
+	border-bottom: 1px solid #CCC;
+}ul.community-page-list ul span.delete {
+	padding-right: 25px;
+}
+ul.community-page-list ul ul span.delete {
+	padding-right: 50px;
+}
+ul.community-page-list ul ul ul span.delete {
+	padding-right: 75px;
+}
+ul.community-page-list ul ul ul ul span.delete {
+	padding-right: 100px;
+}
+ul.community-page-list ul ul ul ul ul span.delete {
+	padding-right: 125px;
+}
+ul.community-page-list ul ul ul ul ul ul span.delete {
+	padding-right: 150px;
+}

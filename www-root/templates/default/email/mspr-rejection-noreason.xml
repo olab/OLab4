@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates>
+	<template lang="en">
+		<subject>MSPR Submision Rejection</subject>
+		<body>
+Dear %TO_FULLNAME%,
+
+This is a notice to inform you that the following MSPR submission has been rejected.
+
+%SUBMISSION_DETAILS% 
+
+Should you have any questions or concerns please contact %FROM_FIRSTNAME% %FROM_LASTNAME% directly.
+
+Sincerely,
+
+%APPLICATION_NAME%
+		</body>
+	</template>
+</templates>

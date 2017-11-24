@@ -1,0 +1,21 @@
+#audience-container, #curriculum-tag-container {
+    width: 50%;
+}
+
+#audience-container li, #curriculum-tag-container li {
+    margin: 10px 0;
+}
+
+#run-score {
+    margin-left: 10px;
+}
+
+#run-score .update-score-loading img {
+    width: 20px;
+    height: 20px;
+}
+
+li.selected-list-item {
+    list-style-type: none;
+    background: transparent url("../../../images/list-community.gif") no-repeat scroll 0px 4px;
+}

@@ -1,0 +1,108 @@
+.notification-sort {
+    position: relative;
+    float: right;
+    margin-top: 5px;
+    cursor: pointer;
+}
+
+#autocomplete-list-container{
+    position: relative;
+    background: #eee;
+}
+
+#autocomplete-list-container a:hover{
+    border: 2px solid #79b7e7;
+    background: #FFB;
+    color: #000;
+}
+
+#autocomplete{
+    margin-top: 7px;
+    position: absolute;
+    width:290px;
+    margin-bottom: 60px;
+    overflow: visible;
+}
+
+tbody td.community-notifications{
+    text-align: center;
+}
+
+
+#notification-loading p{
+    color: #bfbfbf;
+    font-size: 22px;
+    line-height:30px;
+    margin-top: 25px;
+}
+
+#notification-loading{
+    text-align: center;
+}
+
+#notifications-container #notifications-table tbody td {
+    text-overflow: ellipsis;
+}
+
+.input-append {
+    margin: 0px !important;
+}
+
+.table-nowrap {
+    white-space: nowrap;
+}
+#profile-image-container {
+    position:relative;
+    width: 202px;
+    height: 202px;
+}
+#profile-image-container.pull-right {
+    right: 0;
+    top: 60px;
+}
+#profile-image-container .img-polaroid {
+    object-fit: cover;
+    width: 100%;
+    height: 100%;
+    vertical-align: initial;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+}
+#profile-wrapper {
+    position:relative;
+}
+
+#profile-wrapper #profile-image-container {
+    position: absolute;
+}
+
+#upload_profile_image_form {
+    margin: 0;
+    float: left;
+}
+#upload-image-modal-btn {
+    position:absolute;
+    right:7px;
+    top:7px;
+    display:none;
+    outline:none;
+}
+#btn-toggle {
+    position:absolute;
+    right:7px;
+    bottom:7px;
+    display:none;
+    outline:none;
+}
+#btn-toggle .btn {
+    outline:none;
+}
+.profile-image-preview {
+    text-align:center;
+    max-width:275px;
+    margin:auto;
+}
+.modal-body {
+    max-height:none;
+}

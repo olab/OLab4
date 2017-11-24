@@ -1,0 +1,12 @@
+It has come to our attention that you have not met the logging requirements for the [%ROTATION_TITLE%] rotation which ended over a month ago. To ensure that you are able to meet the logging requirements for clerkship, we ask that you contact the course director [%COURSE_DIRECTOR%] for this rotation to determine how you will fulfill the deficient objectives.  Your course grade will remain incomplete pending the successful fulfillment of mandatory clinical encounters.
+
+An overview of your progress in this rotation can be found here: 
+%ROTATION_OVERVIEW_URL%  
+
+And a list of your logbook entries by rotation can be found here: 
+%ENTRY_MANAGEMENT_URL%  
+
+Regards,
+
+The %APPLICATION_NAME% team, 
+%ENTRADA_URL%  

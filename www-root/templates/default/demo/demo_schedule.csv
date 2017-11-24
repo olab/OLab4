@@ -1,0 +1,8 @@
+Original Event,Parent Event,Term,Course Code,Course Name,Date,Start Time,Total Duration,Event Type Durations,Event Types,Event Title,Location,Audience (Cohorts),Audience (Groups),Audience (Students),Teacher Numbers,Teacher Names
+0,1,Term 1,EXAMPLE101,Introduction to Example,2013-04-10,9:00,120,60;30;30,Lecture;Lab;Review / Feedback Session,"Demo Event #1: Learning Demos",Room 102,Class of 2016,,,8217321,Dr. Jenn Warden
+0,1,Term 1,EXAMPLE101,Introduction to Example,2013-04-17,9:00,60,60,Lecture,"Demo Event #2: More About Demos",Room 102,Class of 2016,,,7291430,Ted Simon
+0,0,Term 1,EXAMPLE101,Introduction to Example,2013-04-17,10:00,60,60,Small Group,"Demo Small Group Session (Group 1)",Room 201,,2016 Group 1,,7291430,Ted Simon
+0,0,Term 1,EXAMPLE101,Introduction to Example,2013-04-17,10:00,60,60,Small Group,"Demo Small Group Session (Group 2)",Room 202,,2016 Group 2,,8392943,Sam Edwards
+0,0,Term 1,EXAMPLE101,Introduction to Example,2013-04-17,10:00,60,60,Small Group,"Demo Small Group Session (Group 3)",Room 203,,2016 Group 3,,2536437,Jim Sampson
+0,1,Term 1,EXAMPLE101,Introduction to Example,2013-04-18,8:00,60,60,Examination,"Mid-Term Make Up Session",Room 203a,,,8290103;2823945,7291430,Ted Simon
+0,1,Term 4,EXAMPLE403,Applying Examples,2013-04-19,14:30,60,60,Directed Independent Learning,Neurology Theme of the Week: Multiple Sclerosis,,,,,,

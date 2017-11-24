@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates>
+    <template lang="en">
+        <subject>Action Required: Reminder Pending Reviewer Task</subject>
+        <body>
+            Dear %TARGET_FIRSTNAME% %TARGET_LASTNAME%,
+
+            An assessment is awaiting your review in MedTech Central. To proceed, please
+            click the following link:
+
+            %URL%
+
+            As a refresher your username is %USERNAME%, and if you have any trouble
+            remembering your password you can reset it by clicking the following link, and
+            entering %EMAIL% as your e-mail address.
+
+            %ENTRADA_URL%/password_reset
+
+            If you have received this email on an earlier date, please be advised that the link
+            to this assessment has been revised, we apologize for any inconvenience this may
+            have caused.
+
+            If you have any questions or concerns please let us know, or for technical
+            assistance please contact the Education Technology Unit at (613) 533-6000 x74294
+            or via e-mail at healthsci.support@queensu.ca.
+
+            Sincerely,
+            %CREATOR_FIRSTNAME% %CREATOR_LASTNAME%
+            %CREATOR_EMAIL%
+        </body>
+    </template>
+</templates>

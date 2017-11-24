@@ -1,0 +1,40 @@
+.faded {
+    opacity: 0.25;
+}
+
+#delete-tasks-details-table {
+    width: 100%;
+}
+
+#delete-tasks-reason, #delete-tasks-other-reason {
+    min-height: 30px;
+    padding:3px;
+    margin:0;
+    display:block;
+    width: 98%;
+}
+
+#delete-tasks-other-reason {
+    min-height: 80px;
+}
+
+.heading-icon {
+    text-align: center !important;
+    width: 5%;
+}
+
+.schedule-details {
+    color: #858B93;
+}
+
+.icon-download-alt:hover{
+    cursor: pointer;
+}
+
+.icon-trash:hover{
+    cursor: pointer;
+}
+
+.icon-bell:hover{
+    cursor: pointer;
+}

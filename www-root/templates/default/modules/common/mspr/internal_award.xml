@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates>
+	<template lang="en">
+		<![CDATA[
+			<form class="edit_data">
+				<input type="hidden" name="award_id" value="%AWARD_ID%" />
+				<input type="hidden" name="year" value="%YEAR%" />
+			</form>
+			<span class="label">
+				Title: 
+			</span>
+			<span class="heading">
+				%TITLE%
+			</span>
+			<span class="label">
+				Year Awarded:	
+			</span>
+			<span class="data">
+				%YEAR%
+			</span>
+		]]>
+	</template>
+</templates>

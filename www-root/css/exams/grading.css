@@ -1,0 +1,151 @@
+.grading-wrapper {
+    border: 2px solid #ddd;
+    border-radius: 4px;
+    margin: 15px 0;
+    overflow: hidden;
+}
+.grading-wrapper.graded {
+    border-color: #50bc00;
+}
+
+.grading-question {
+    border-bottom: 1px solid #ddd;
+    background: #f9f9f9;
+    padding: 5px 10px;
+    font-size: 14px;
+    font-family: 'Lucida Grande', Geneva, Verdana, Arial, Helvetica, sans-serif;
+    line-height: 24px;
+    color: #4e4e4e;
+}
+
+.grading-answer {
+    padding: 5px 15px;
+    border-bottom: 1px solid #ddd;
+}
+
+.grading-wrapper.graded .grading-feedback {
+    background: #dfd;
+}
+.grading-feedback {
+    padding: 5px 15px;
+    background: #e2fafd;
+}
+
+.grading-answer textarea, .grading-feedback textarea {
+    width: 100%;
+    box-sizing: border-box;
+    resize: vertical;
+}
+
+.grading-feedback input, .grading-feedback span {
+    display: inline-block;
+    vertical-align: baseline;
+}
+
+.grading-submit-spinner {
+    float: right;
+    width: 20px;
+    line-height: 30px;
+}
+
+/* Sidebar item styles */
+#exam-grading-sidebar {
+    background: #fff;
+    border-radius: 4px;
+    box-shadow: 0 0 3px rgba(0,0,0,0.1);
+    margin-bottom: 18px;
+    text-align: center;
+}
+
+#grading-sidebar-active-user-image {
+    width: 75px;
+    height: 75px;
+    display: inline-block;
+    overflow: hidden;
+    text-align: center;
+    vertical-align: middle;
+    position: relative;
+    border-radius: 500px;
+    border: 4px solid #aab1bb;
+    margin-top: 35px;
+}
+#grading-sidebar-active-user-image img {
+    display: inline-block;
+    vertical-align: middle;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+#grading-sidebar-user-fullname {
+    font-size: 16px;
+    margin-top: 14px;
+    margin-bottom: 10px;
+}
+#grading-sidebar-user-organisation {
+    color: #7f848c;
+    font-size: 12px;
+    font-weight: bold;
+    margin-top: 0;
+    margin-bottom: 0;
+}
+#grading-sidebar-user-email {
+    color: #4F6177;
+    display: inline-block;
+    margin-bottom: 25px;
+}
+
+#grading-sidebar-dropdown-wrapper {
+    border-bottom-left-radius: 4px;
+    border-bottom-right-radius: 4px;
+    overflow: hidden;
+    background: #858b93;
+}
+#grading-sidebar-dropdown-link {
+    font-weight: bold;
+    font-size: 13px;
+    color: #fff;
+    display: block;
+    padding: 8px 0;
+    text-decoration: none;
+}
+.grading-sidebar-dropdown-category {
+    text-align: left;
+    color: #fff;
+    padding: 5px 10px;
+}
+#grading-sidebar-dropdown-pending {
+    border-top: 2px groove #959ba3;
+}
+.grading-sidebar-dropdown-category .badge {
+    float: right;
+}
+#grading-sidebar-dropdown-pending .badge {
+    background: #ea685a;
+}
+#grading-sidebar-dropdown-in-progress .badge {
+    background: #ed9e48;
+}
+#grading-sidebar-dropdown-complete .badge {
+    background: #5ec15f;
+}
+.grading-sidebar-no-students {
+    background: #fff;
+    font-weight: bold;
+    font-style: italic;
+    color: #7f848c;
+    margin: 0;
+    padding: 10px 0;
+}
+.grading-sidebar-student {
+    background: #fff;
+    margin: 0;
+    text-align: left;
+    padding: 5px 14px;
+    line-height: 20px;
+    display: block;
+    text-decoration: none;
+    color: #000;
+}
+.grading-sidebar-student:hover {
+    background: #dee1e6;
+}

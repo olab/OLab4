@@ -1,0 +1,12 @@
+It has come to our attention that %CLERK_FULLNAME% has submitted a plan to fulfill deficient logging requirements for the [%ROTATION_TITLE%] rotation after the allotted time. To ensure this plan meets all requirements, we ask that you review the plan and if there are any issues, write a few short comments to the clerk so they may make any necessary revisions.
+
+The clerk's deficiency plan can be found here:
+%DEFICIENCY_PLAN_URL%
+
+And an overview of the clerk's progress can be found here:
+%CLERK_MANAGEMENT_URL%
+
+Regards,
+
+The %APPLICATION_NAME% team,
+%ENTRADA_URL%

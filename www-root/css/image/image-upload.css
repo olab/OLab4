@@ -1,0 +1,23 @@
+.table-nowrap {
+    white-space: nowrap;
+}
+#image-container {
+    position: absolute;
+    right: 0;
+    top: 0px;
+}
+#upload_image_form {
+    margin: 0;
+    float: left;
+}
+#upload-image-modal-btn {position:absolute;right:7px;top:7px;display:none;outline:none;}
+#btn-toggle {position:absolute;right:7px;bottom:7px;display:none;outline:none;}
+#btn-toggle .btn {outline:none;}
+.image-preview {text-align:center;max-width:275px;margin:auto;}
+.modal-body {max-height:none;}
+#image {
+    float: left;
+}
+#track-details-section, #course-details-section {
+    position: relative;
+}

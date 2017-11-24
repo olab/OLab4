@@ -1,0 +1,128 @@
+#graders-cgroup-list {
+    background: #f7f7f7;
+    display: inline-block;
+    vertical-align: top;
+    width: 40%;
+    box-sizing: border-box;
+    max-height: 500px;
+    overflow-y: auto;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+#graders-cgroup-list .graders-cgroup-item {
+    padding: 10px;
+    border-bottom: 1px solid #ccc;
+}
+
+#graders-cgroup-list .graders-cgroup-item:last-of-type {
+    border-bottom: none;
+}
+
+#graders-cgroup-list .graders-cgroup-item.graders-cgroup-selected {
+    background: #ccc;
+}
+
+#graders-cgroup-list .graders-cgroup-item input {
+    margin-right: 10px;
+}
+
+#graders-user-list-wrapper  {
+    background: #f7f7f7;
+    display: inline-block;
+    vertical-align: top;
+    width: 55%;
+    box-sizing: border-box;
+    margin-left: 5%;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+#graders-user-list {
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+#graders-user-list p, #graders-user-search-results p {
+    padding: 10px;
+    margin: 0;
+}
+
+.graders-user-wrapper {
+    padding: 5px 10px;
+    border-bottom: 1px solid #ccc;
+    background: #eee;
+}
+
+.graders-user-wrapper:last-of-type {
+    border-bottom: none;
+}
+
+.graders-user-wrapper .graders-user-image {
+    width: 30px;
+    height: 30px;
+    display: inline-block;
+    overflow: hidden;
+    text-align: center;
+    vertical-align: middle;
+    position: relative;
+    border-radius: 500px;
+    border: 2px solid #999;
+}
+
+.graders-user-wrapper .graders-user-image img {
+    display: inline-block;
+    vertical-align: middle;
+    position: absolute;
+    top: -4px;
+    left: 0;
+}
+
+.graders-user-wrapper .graders-user-name {
+    display: inline-block;
+    vertical-align: middle;
+    padding: 0 10px;
+}
+
+.graders-user-wrapper .graders-user-remove {
+    float: right;
+    line-height: 34px;
+}
+
+#graders-user-search-wrapper {
+    padding: 5px;
+    border-top: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box;
+    height: 50px;
+    position: relative;
+}
+
+#graders-user-search-bar {
+    margin: 0;
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+}
+
+#graders-user-search-results {
+    position: absolute;
+    top: 55px;
+    left: 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box;
+    width: 100%;
+    background: #f7f7f7;
+    max-height: 294px;
+    overflow-y: auto;
+}
+
+#graders-user-search-results .graders-user-wrapper {
+    background: #f7f7f7;
+}
+
+#graders-user-search-results .graders-user-wrapper:hover {
+    background: #eee;
+    cursor: pointer;
+}

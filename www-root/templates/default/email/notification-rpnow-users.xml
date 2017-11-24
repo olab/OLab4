@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates>
+    <template lang="en">
+        <subject>New exam post</subject>
+        <body>
+Dear %FIRSTNAME% %LASTNAME%,
+
+A new exam code has just been created for you in Rp-Now, your exam code is %EXAM_CODE%
+
+You can download the RP-Now by clicking the following link:
+
+%RP_NOW_URL%
+
+If you require any assistance with this system, please do not hesitate to contact us.
+
+Sincerely,
+%CREATOR_FIRSTNAME% %CREATOR_LASTNAME%
+%CREATOR_EMAIL%
+        </body>
+    </template>
+</templates>

@@ -1,0 +1,80 @@
+/**
+ * Entrada [ http://www.entrada-project.org ]
+ * 
+ * Entrada is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Entrada is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Entrada.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Gradebook / View
+ * 
+ * @author Organization: bitHeads, Inc.
+ * @author Developer: Jean-Benoit Lesage <jblesage@bitheads.com>
+ * @copyright Copyright 2016 Queen's University. All Rights Reserved.
+ * 
+ */
+
+/* General */
+.btn-danger.disabled:active {
+	background-color: #bd362f;
+}
+
+/* DataTable */
+
+#datatable-assessments {
+	margin-bottom: 0;
+}
+
+.fa.fa-grip:before {
+    content: "\f142 \202F \f142";
+    color: #333;
+}
+
+.fa-grip-row, .fa-arrows-alt {
+	cursor: pointer;
+}
+
+.dataTable input[type="checkbox"] {
+	margin-top: 0;
+}
+
+.dataTable ul {
+	margin-bottom: 0;
+}
+
+.dataTable .td-edit {
+	text-align: center;
+}
+
+/* Row-Reordering */
+
+table.dt-rowReorder-float {
+  position: absolute !important;
+  opacity: 0.8;
+  table-layout: static;
+  outline: 2px solid #337ab7;
+  outline-offset: -2px;
+  z-index: 2001;
+}
+
+tr.dt-rowReorder-moving {
+  outline: 2px solid #888;
+  outline-offset: -2px;
+}
+
+body.dt-rowReorder-noOverflow {
+  overflow-x: hidden;
+}
+
+table.dataTable td.reorder {
+  text-align: center;
+  cursor: move;
+}

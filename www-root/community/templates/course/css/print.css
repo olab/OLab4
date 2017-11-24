@@ -1,0 +1,12 @@
+body {
+background-image:none;
+background-color:#FFF;
+}
+
+div.printing-enabled,.yes-printing {
+display:block;
+}
+
+div.printing-disabled,.no-printing,div.bread-crumb-trail {
+display:none;
+}

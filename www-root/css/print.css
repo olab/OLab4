@@ -1,0 +1,31 @@
+div.printing-enabled,.yes-printing,div.print-only {
+display:block;
+}
+
+#main-header,div.printing-disabled,.no-printing,div.bread-crumb-trail {
+display:none;
+}
+
+#dashboardCalendar div.wc-scrollable-grid {
+height: 974px !important;
+}
+
+.course-members-media-list {
+    width:100%;
+}
+
+.course-members-media-list .print-black {
+    color: #000;
+}
+
+#enrolment-container a[href]:after {
+    content: none !important;
+}
+
+#content {
+    width: 100%;
+}
+
+#evaluation-report-body .comments-row, #evaluation-report-body .question-text, #evaluation-report-body .responses-text, #evaluation-report-body .comments, #evaluation-report-body .evaluation-statistics, #evaluation-report-body .comments-row, #evaluation-report-body .question-content {
+    font-size: 16px;
+}

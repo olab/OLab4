@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates>
+    <template lang="en">
+        <subject>%UC_CONTENT_TYPE_NAME% [%CONTENT_TITLE%] Requires Attention</subject>
+        <body>
+Dear %EVALUATOR_FULLNAME%,
+
+A %CONTENT_TYPE_NAME% is overdue completion and requires your attention. 
+
+Evaluation of your rotation provides valuable feedback about your clinical placement, to ensure that we continue to provide a quality educational experience and identify opportunities for improvement. All rotation evaluations are confidential. Only pooled evaluation data for the entire class is released upon class graduation in the spring. The clerkship course directors and regional site leads appreciate receiving evaluations of the rotations, to facilitate feedback and optimize clerkship education.
+ 
+Timely completion of evaluations is a component of professionalism.
+         
+Further details regarding this %CONTENT_TYPE_SHORTNAME% can be found below:
+
+Title: %CONTENT_TITLE%
+
+Description: %CONTENT_BODY%
+
+%UC_CONTENT_TYPE_SHORTNAME% Start: %CONTENT_START%
+%UC_CONTENT_TYPE_SHORTNAME% Finish: %CONTENT_FINISH%
+
+The %CONTENT_TYPE_SHORTNAME% can be found here: 
+%URL%
+
+%LOCKOUT_STRING%
+            
+Please complete all remaining required attempts as soon as possible.
+
+Regards,
+
+The %APPLICATION_NAME% team,
+%ENTRADA_URL%
+        </body>
+    </template>
+</templates>

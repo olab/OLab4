@@ -1,0 +1,12 @@
+Congratulations for completing your [%ROTATION_TITLE%] rotation in the allotted time. The clerkship coordinator for the rotation has been notified of your completion, and will be asked to review your entries when they are able.
+
+If you would like to review your clinical procedures and tasks logged for this rotation, an overview of your progress in this rotation can be found here:
+%ROTATION_OVERVIEW_URL%
+
+And a list of your logbook entries by rotation can be found here:
+%ENTRY_MANAGEMENT_URL%
+
+Regards,
+
+The %APPLICATION_NAME% team,
+%ENTRADA_URL%

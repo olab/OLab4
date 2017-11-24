@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates>
+    <template lang="en">
+        <subject>%UC_CONTENT_TYPE_NAME% [%CONTENT_TITLE%] Requires Attention</subject>
+        <body>
+Dear %EVALUATOR_FULLNAME%,
+            
+A %CONTENT_TYPE_NAME% is overdue completion and requires your attention. 
+
+Further details regarding this mandatory %CONTENT_TYPE_SHORTNAME% can be found below:
+
+Title: %CONTENT_TITLE%
+
+Description: %CONTENT_BODY%
+
+%UC_CONTENT_TYPE_SHORTNAME% Start: %CONTENT_START%
+%UC_CONTENT_TYPE_SHORTNAME% Finish: %CONTENT_FINISH%
+
+The %CONTENT_TYPE_SHORTNAME% can be found here: 
+%URL%
+
+%CONTENT_LOCKOUT%
+
+Please complete all remaining required attempts as soon as possible.
+%LOCKOUT_STRING%
+
+Regards,
+
+The %APPLICATION_NAME% team,
+%ENTRADA_URL%
+        </body>
+    </template>
+</templates>

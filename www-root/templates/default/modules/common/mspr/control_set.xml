@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates>
+	<template lang="en">
+		<![CDATA[
+		<div class="controls">
+			<span class="label">
+				Actions:
+			</span>
+			<span class="actions">
+				%CONTROLS%
+			</span>
+		</div>
+		]]>
+	</template>
+</templates>

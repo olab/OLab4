@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates>
+    <template lang="en">
+        <subject>Notice of Removal: Assessment / Evaluation Task</subject>
+        <body>
+            Dear %TARGET_FIRSTNAME% %TARGET_LASTNAME%,
+
+            Please note that an assessment or evaluation task (%ASSESSMENT_NAME%) which was assigned to you for completion on %ASSESSMENT_DATE% has just been removed. Any information you may have filled out for this task has been retained.
+
+            If you have any questions or concerns please let us know, or for technical assistance please contact the Education Technology Unit at (613) 555-0123 or via e-mail at healthsci.support@myuniversity.edu.
+
+            Sincerely,
+            %CREATOR_FIRSTNAME% %CREATOR_LASTNAME%
+            %CREATOR_EMAIL%
+        </body>
+    </template>
+</templates>

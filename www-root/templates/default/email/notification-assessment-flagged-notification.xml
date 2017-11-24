@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates>
+    <template lang="en">
+        <subject>%ASSESSOR_FULLNAME% Assessing %TARGET_TITLE% [%CONTENT_TITLE%] - Flagged Response(s) Selected</subject>
+        <body>
+An assessment has been completed by a user [%ASSESSOR_FULLNAME%] in which at least one response was set to be flagged if selected.
+			
+Further details regarding this user's completed assessment can be found below:
+
+Title: %CONTENT_TITLE%
+
+The completed assessment can be found here:
+%URL%
+
+Regards,
+
+The %APPLICATION_NAME% team,
+%ENTRADA_URL%
+        </body>
+    </template>
+</templates>

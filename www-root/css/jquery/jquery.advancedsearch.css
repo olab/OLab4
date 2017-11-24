@@ -1,0 +1,616 @@
+.entrada-search-widget {
+    position: relative;
+}
+
+.entrada-search-widget .filter-menu {
+    background: #f9f9f9;
+    border: 2px solid #dcdcdc;
+    border-radius: 6px;
+    overflow: hidden;
+    text-align: left;
+    width: 250px;
+    z-index: 501;
+}
+
+.entrada-search-widget .filter-menu-heading {
+    border-bottom: 1px solid #ddd;
+    color: #838383;
+    font-size: 12px;
+    font-weight: normal;
+    margin: 0 0 0 0;
+    padding: 7px 7px 8px 10px;
+}
+
+.entrada-search-widget .filter-list {
+    background: #fff;
+    font-size: 12px;
+    list-style-type: none;
+    margin: 0;
+}
+
+.entrada-search-widget .filter-list-item {
+    border-bottom: 1px solid #f2f1f1;
+    color: #838383;
+    padding: 6px 6px 6px 10px;
+}
+
+.entrada-search-widget .filter-list-item:hover {
+    background: #f2f1f1;
+    cursor: pointer;
+}
+
+.entrada-search-widget .filter-ellipsis-container {
+    background: url("images/advanced-filter-ellipsis.png") no-repeat center;
+    cursor: pointer;
+    display: block;
+    height: 15px;
+    top: 4px;
+    position: absolute;
+    width: 18px;
+}
+
+.entrada-search-widget .search-overlay {
+    background: #f9f9f9;
+    border: 2px solid #dcdcdc;
+    border-radius: 6px;
+    left: 230px;
+    text-align: left;
+    top: 0;
+    z-index: 9999 !important;
+}
+
+.entrada-search-widget .absolute-position {
+    position: absolute;
+}
+
+.entrada-search-widget .fixed-position {
+    position: fixed;
+}
+
+.entrada-search-widget .input-container {
+    background: #f9f9f9;
+    border-bottom: 1px solid #ddd;
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+    padding-left: 8px;
+    padding-right: 8px;
+    margin:0;
+}
+
+.entrada-search-widget .filter-container {
+    background: #fff;
+    max-height: 300px;
+    min-height: 300px;
+    overflow-y: scroll;
+}
+
+.entrada-search-widget .search-input {
+    background: url("images/icon-magnify-gray.png") no-repeat scroll right 0 top 2px;
+    background-color: #fff;
+    border-radius: 4px;
+    box-sizing: border-box;
+    margin: 10px 0 10px 0;
+    padding: 5px 30px 5px 9px;
+    width: 100%;
+    height: 32px;
+}
+
+.entrada-search-widget .search-input-with-close {
+    width: 92%;
+}
+
+.entrada-search-widget .search-label {
+    background: #eeeded;
+    border-bottom: 1px solid #ddd;
+    color: #838383;
+    font-size: 11px;
+    font-weight: normal;
+    margin: 0 0 0 0;
+    padding: 2px 16px 2px 16px;
+}
+
+.entrada-search-widget .secondary-search-label {
+    color: #838383;
+    font-size: 11px;
+    font-weight: normal;
+    margin:2px 0 0 0;
+}
+
+.entrada-search-widget .secondary-search-container {
+    background: #eeeded;
+    border-bottom: 1px solid #ddd;
+    padding: 0 16px 0 16px;
+}
+
+.entrada-search-widget .secondary-search-nav-container {
+    display: inline-block;
+    position: relative;
+    height: 15px;
+    margin-right: 5px;
+    width: 18px;
+}
+
+.entrada-search-widget .secondary-search-label-container {
+    display: inline-block;
+}
+
+.entrada-search-widget .search-buttons {
+    background: #f9f9f9;
+    border-top: 1px solid #dcdcdc;
+    border-bottom-left-radius: 6px;
+    border-bottom-right-radius: 6px;
+    font-size: 12px;
+}
+
+.entrada-search-widget .search-apply-button {
+    border-right: 1px solid #dcdcdc;
+    border-bottom-left-radius: 6px;
+    color: #838383;
+    display: inline-block;
+    padding-bottom: 8px;
+    padding-top: 8px;
+    text-align: center;
+    text-decoration: none;
+    width: 33%;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+}
+
+.entrada-search-widget .search-clear-button {
+    border-right: 1px solid #dcdcdc;
+    color: #838383;
+    display: inline-block;
+    padding-bottom: 8px;
+    padding-top: 8px;
+    text-align: center;
+    text-decoration: none;
+    width: 34%;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+}
+
+.entrada-search-widget .search-close-button {
+    border-bottom-right-radius: 6px;
+    color: #838383;
+    display: inline-block;
+    padding-bottom: 8px;
+    padding-top: 8px;
+    text-align: center;
+    text-decoration: none;
+    width: 33%;
+}
+
+.entrada-search-widget .has-parent-form.search-close-button {
+    border-bottom-left-radius: 6px;
+    width: 100% !important;
+}
+
+.entrada-search-widget .target-select-button {
+    border-bottom-left-radius: 6px;
+    color: #838383;
+    display: inline-block;
+    padding-bottom: 8px;
+    padding-top: 8px;
+    text-align: center;
+    text-decoration: none;
+    width: 100%;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+}
+
+.entrada-search-widget .search-apply-button:hover, .entrada-search-widget .search-close-button:hover, .entrada-search-widget .search-clear-button:hover, .entrada-search-widget .target-select-button:hover {
+    background: #eeeded;
+}
+
+.entrada-search-widget .grippie {
+    background: url("images/grippie.png") no-repeat scroll center 2px #f9f9f9;
+    border: none;
+    clear: both;
+    cursor: s-resize;
+    height: 9px;
+    overflow: hidden;
+}
+
+.entrada-search-widget .search-loading-msg {
+    color: #bfbfbf;
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.entrada-search-widget .search-loading-msg p {
+    font-size: 14px;
+    margin-top: 75px;
+}
+
+.entrada-search-widget .data-source-error {
+    color: #b94a48;
+    font-size: 14px;
+    margin-top: 30px;
+    padding: 15px 10px;
+    text-align: center;
+}
+
+.entrada-search-widget .search-target-controls {
+    position: relative;
+    cursor: pointer;
+}
+
+.entrada-search-widget .search-target-label-span {
+
+}
+
+.entrada-search-widget .search-target-label {
+}
+
+.entrada-search-widget .search-target-input {
+    position: absolute;
+    right: 10px;
+    top: -1px;
+}
+
+.entrada-search-widget .search-filter-list {
+    list-style-type: none;
+    margin: 0;
+}
+
+.entrada-search-widget .search-filter-item {
+    border-bottom: 1px solid #f2f1f1;
+    color: #646464;
+    font-size: 13px;
+    padding: 6px 0 6px 15px;
+}
+
+.entrada-search-widget .search-filter-item:nth-child(even) {
+    background: #f9f9f9;
+}
+
+.entrada-search-widget .search-target-input-control {
+    margin: 0;
+    padding: 0;
+}
+
+.entrada-search-widget .search-hilite {
+    background: #dff0d8;
+    color: #468847;
+    display: inline-block;
+    font-weight: bold;
+    margin: 0;
+    padding: 0;
+}
+
+.entrada-search-widget .search-target-selected {
+    background: #d9edf7 !important;
+    border-bottom: 1px solid #bce8f1 !important;
+    color: #3a87ad;
+}
+.entrada-search-widget .search-target-label-text {
+    margin-bottom: 0;
+    width: 85%;
+}
+
+.entrada-search-widget .serach-target-clickable:hover {
+    cursor: pointer;
+}
+
+.entrada-search-widget .search-target-children-toggle {
+    background: #f9f9f9;
+    border-radius: 50%;
+    border: 1px solid #ddd;
+    color: #646464;
+    font-size: 14px;
+    font-weight: bold;
+    margin-right: 8px;
+    padding:0 6px 2px 6px;
+    text-decoration: none;
+}
+
+.entrada-search-widget .search-target-children-toggle-active {
+    background: #3a87ad;
+}
+
+.entrada-search-widget .search-children-count {
+    color: #3a87ad;
+    display:block;
+    font-size: 18px;
+}
+
+.entrada-search-widget .advanced-search-caret {
+    background: url("images/advanced-search-caret.png") no-repeat;
+    display: block;
+    height: 11px;
+    position: absolute;
+    width: 13px;
+}
+
+.entrada-search-widget .selected-targets-heading {
+    background: #eeeded;
+    border-bottom: 1px solid #ddd;
+    color: #838383;
+    font-size: 11px;
+    font-weight: normal;
+    margin: 0 0 0 0;
+    padding: 2px 16px 2px 16px;
+}
+
+.entrada-search-widget .selected-targets-list {
+    display: inline-block;
+    list-style-type: none;
+    margin: 5px 0 0 0;
+    padding: 0 0 0 16px;
+}
+
+.entrada-search-widget .selected-target-item {
+    background: #f5f2f2;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    color: #838383;
+    float: left;
+    font-size: 11px;
+    margin: 5px 5px 0 0;
+    padding: 0 3px 1px 9px;
+}
+
+.entrada-search-widget .selected-target-item:hover {
+    border: 1px solid #ddd;
+}
+
+.entrada-search-widget .remove-target-toggle {
+    cursor: pointer;
+    display: inline-block;
+    font-weight: bold;
+    font-size: 14px;
+    margin: 0 0 0 4px;
+    padding: 2px 6px 2px 5px;
+}
+
+.entrada-search-widget .targets-container {
+    border-bottom: 1px solid #ddd;
+}
+
+.entrada-search-widget .target-selected {
+    -moz-border-bottom-colors: none;
+    -moz-border-left-colors: none;
+    -moz-border-right-colors: none;
+    -moz-border-top-colors: none;
+    background-color: #f5f5f5;
+    background-image: linear-gradient(to bottom, #ffffff, #e6e6e6);
+    background-repeat: repeat-x;
+    border-color: #cccccc #cccccc #b3b3b3;
+    border-image: none;
+    border-radius: 4px;
+    border-style: solid;
+    border-width: 1px;
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.2) inset, 0 1px 2px rgba(0, 0, 0, 0.05);
+    color: #333333;
+    cursor: pointer;
+    display: inline-block;
+    font-size: 14px;
+    line-height: 20px;
+    margin-bottom: 0;
+    text-align: center;
+    text-shadow: 0 1px 1px rgba(255, 255, 255, 0.75);
+    vertical-align: middle;
+}
+
+.entrada-search-widget .selected-target-label {
+    display: inline-block;
+    padding: 7px 14px;
+}
+
+.entrada-search-widget .selected-target-close {
+    -moz-border-bottom-colors: none;
+    -moz-border-left-colors: none;
+    -moz-border-right-colors: none;
+    -moz-border-top-colors: none;
+    background-color: #f5f5f5;
+    background-image: linear-gradient(to bottom, #ffffff, #e6e6e6);
+    background-repeat: repeat-x;
+    border-color: #cccccc #cccccc #b3b3b3;
+    border-image: none;
+    border-top-left-radius: 0;
+    border-top-right-radius: 4px;
+    border-bottom-right-radius: 4px;
+    border-bottom-left-radius: 0;
+    border-style: solid;
+    border-width: 1px;
+    border-left: none;
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.2) inset, 0 1px 2px rgba(0, 0, 0, 0.05);
+    color: #333333;
+    cursor: pointer;
+    display: inline-block;
+    font-size: 16px;
+    font-weight: bold;
+    line-height: 20px;
+    margin-bottom: 0;
+    padding: 4px 12px;
+    text-align: center;
+    text-shadow: 0 1px 1px rgba(255, 255, 255, 0.75);
+    vertical-align: middle;
+}
+
+.entrada-search-widget .remove-right-radius {
+    border-top-left-radius: 4px !important;
+    border-top-right-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+    border-bottom-left-radius: 4px !important;
+}
+
+.entrada-search-widget .selected-filter-label {
+    border: 1px solid #dcdcdc;
+    border-radius: 3px;
+    background-color: #f9f9f9;
+    color: #838383;
+    display: inline-block;
+    font-size: 11px;
+    line-height: 14px;
+    margin-right: 5px;
+    padding: 1px 6px;
+    vertical-align: baseline;
+    white-space: nowrap;
+}
+
+.entrada-search-widget #search-targets-form {
+    margin-bottom: 0;
+}
+.entrada-search-widget .btn-icon {
+    margin-top: 3px;
+    padding: 0;
+}
+
+.entrada-search-list .selected-item-container {
+    display: inline-block;
+    margin-right: 15px;
+}
+
+.entrada-search-list .selected-list-item {
+    color: #848484;
+    padding-left: 25px;
+    padding-bottom: 4px;
+    width: auto;
+    *zoom: 1;
+}
+
+.entrada-search-list .selected-list-item:before, .entrada-search-list .selected-list-item:after {
+    display: table;
+    content: "";
+    line-height: 0;
+}
+
+.entrada-search-list .selected-list-item:after {
+    clear: both;
+}
+
+.entrada-search-list .selected-item-label {
+    background-color: #f9f9f9;
+    border-top : 1px solid #dcdcdc;
+    border-right : none;
+    border-bottom : 1px solid #dcdcdc;
+    border-left : 1px solid #dcdcdc;
+    border-bottom-left-radius: 3px;
+    border-bottom-right-radius: 0px;
+    border-top-left-radius: 3px;
+    border-top-right-radius: 0px;
+    color: #838383;
+    display: inline-block;
+    font-size: 11px;
+    line-height: 14px;
+    margin-left: 0px;
+    padding: 2px 6px;
+    vertical-align: baseline;
+    white-space: nowrap;
+}
+
+.entrada-search-list .remove-list-item {
+    background-color: #f9f9f9;
+    border: 1px solid #dcdcdc;
+    border-bottom-left-radius: 0px;
+    border-bottom-right-radius: 3px;
+    border-top-left-radius: 0px;
+    border-top-right-radius: 3px;
+    color: #838383;
+    cursor: pointer;
+    display: inline-block;
+    font-size: 14px;
+    font-weight: bold;
+    line-height: 12px;
+    padding: 2px 6px 4px 6px;
+    vertical-align: baseline;
+    white-space: nowrap;
+}
+
+.entrada-search-list .remove-list-item:hover {
+    background-color: #efefef;
+    color: #b94a48;
+}
+
+.entrada-search-list .pull-right {
+    float: right;
+}
+
+.entrada-search-widget .selected-list-container {
+    display: inline-block;
+}
+
+.entrada-search-widget .selected-list-item {
+    background-color: #f9f9f9;
+    border-top: 1px solid #dcdcdc;
+    border-right: none;
+    border-bottom: 1px solid #dcdcdc;
+    border-left: 1px solid #dcdcdc;
+    border-bottom-left-radius: 3px;
+    border-bottom-right-radius: 0px;
+    border-top-left-radius: 3px;
+    border-top-right-radius: 0px;
+    color: #838383;
+    display: inline-block;
+    font-size: 11px;
+    line-height: 14px;
+    margin-left: 0;
+    padding: 2px 6px;
+    vertical-align: baseline;
+    white-space: nowrap;
+}
+
+
+.entrada-search-widget .remove-selected-list-item {
+    background-color: #f9f9f9;
+    border: 1px solid #dcdcdc;
+    border-bottom-left-radius: 0px;
+    border-bottom-right-radius: 3px;
+    border-top-left-radius: 0px;
+    border-top-right-radius: 3px;
+    color: #838383;
+    cursor: pointer;
+    display: inline-block;
+    font-size: 14px;
+    font-weight: bold;
+    line-height: 12px;
+    margin-left: 0;
+    margin-right: 5px;
+    padding: 2px 6px 4px 6px;
+    vertical-align: baseline;
+    white-space: nowrap;
+}
+
+.entrada-search-widget .remove-selected-list-item:hover {
+    background-color: #efefef;
+    color: #b94a48;
+}
+
+.entrada-search-widget .selected-items-list {
+    list-style-type: none;
+    margin-left: 0;
+    margin-top: 15px;
+}
+
+.entrada-search-widget .selected-items-list li {
+    color: #848484;
+    margin-bottom: 5px;
+}
+
+.entrada-search-widget .close-widget {
+    color: #bebebe;
+    cursor: pointer;
+    display: inline-block;
+    float: right;
+    font-size: 18px;
+    padding: 15px 3px 15px 5px;
+}
+
+.entrada-search-widget .close-widget:hover {
+    color: #838383;
+}
+.entrada-search-widget .loading-overlay {
+    background: #fff;
+    bottom: 0;
+    font-size: 12px;
+    opacity: 0.70;
+    padding: 8px 0 8px 0;
+    position: absolute;
+    text-align: center;
+    width: 100%;
+    z-index: 5000;
+}

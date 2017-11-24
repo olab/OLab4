@@ -1,0 +1,15 @@
+A swap you have requested in %APPLICATION_NAME% has been accepted by another student. The details of this swap are listed below:
+
+The event which you swapped out of:
+%EVENT_TITLE%
+
+The event which you swapped in:
+%SWAP_EVENT_TITLE%
+
+You may view your updated schedule here:
+%CLERKSHIP_URL%
+
+Regards,
+
+The %APPLICATION_NAME% team,
+%ENTRADA_URL%

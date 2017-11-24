@@ -1,0 +1,161 @@
+table.objectives-report {
+    width: 100%;
+}
+
+.exam-slider {
+    width: 420px;
+    top: 12px;
+    z-index: 1;
+}
+
+div.slider-container {
+    position: relative;
+    width: 420px;
+    height: 50px;
+}
+
+div.slider-my-score, .exam-slider, div.slider-average-score, div.slider-min-score {
+    position: absolute;
+}
+
+div.slider-my-score {
+    z-index: 2;
+    color: #FF8500;
+}
+
+div.slider-min-score {
+    z-index: 2;
+    top: 14px;
+    color: #FFEE00;
+    margin-left: 8px;
+}
+
+div.slider-average-score {
+    z-index: 5;
+    top: 37px;
+}
+
+div.slider-average-score .fa-minus {
+    position: absolute;
+    z-index: 0;
+    font-size: .5em;
+    transform: scale(.4, 10);
+    left: 0px;
+    top: -3px;
+    color: #496C84;
+}
+
+div.slider-average-score .fa-users {
+    position: absolute;
+    z-index: 1;
+    font-size: 1.25em;
+    left: -9px;
+    color: #805FAD;
+}
+
+div.slider-my-score .fa-user {
+    position: absolute;
+    z-index: 1;
+    font-size: 1.5em;
+    left: -2px;
+    top: -6px;
+}
+
+div.slider-my-score .fa-minus {
+    position: absolute;
+    z-index: 0;
+    font-size: .5em;
+    transform: scale(.4, 10);
+    left: 2px;
+    top: 15px;
+    color: #496C84;
+}
+
+div.slider-min-score.min-dark {
+    color: #000000;
+}
+
+#legend div.slider-average-score {
+    top: 0;
+    position: relative;
+    display: inline-block;
+}
+
+#legend div.slider-my-score {
+    top: 0;
+    position: relative;
+    display: inline-block;
+}
+
+canvas.exam-charts {
+    width: 100%;
+    height: 100%;
+}
+
+#main-title {
+    text-align: center;
+    font-size: 20px;
+    margin: 5px;
+    padding: 5px;
+}
+
+#exam-title {
+    text-align: center;
+    font-size: 32px;
+    margin: 5px;
+    padding: 5px;
+}
+
+div#score-container .header {
+    text-align: center;
+}
+
+div#score-container .row-fluid.well {
+    width: auto;
+}
+
+div#score-container .score_large {
+    font-size: 40px;
+    padding: 5px;
+    margin: 5px;
+}
+
+td.category-question-count {
+    width: 40px;
+    text-align: center;
+}
+
+.star-level .star-container {
+    font-size: 1.5em;
+}
+
+.star-level .star-container .fa-stack-1x {
+    font-size: 1.5em;
+}
+
+.star-level .fa.level-1 {
+    color: #ed3f28;
+}
+
+.star-level .fa.level-2 {
+    color: #fff432;
+}
+
+.star-level .fa.level-3 {
+    color: #2aaa0d;
+}
+
+.star-level .fa.star-fill {
+    color: #000;
+}
+
+h2.summary_header {
+    font-style: italic;
+    font-size: 24px;
+    padding-bottom: 5px;
+    margin-bottom: 10px;
+    border-bottom: 4px solid rgba(120, 76, 61, .5);
+}
+button#show_controls {
+    margin-bottom: 10px;
+}

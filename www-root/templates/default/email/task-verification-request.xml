@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates>
+	<template lang="en">
+		<subject>Task Verification Request: %FROM_FIRSTNAME% %FROM_LASTNAME% Requests Verification of Completion of %TASK_TITLE% </subject>
+		<body>
+Dear %TO_FULLNAME%,
+
+%FROM_FIRSTNAME% %FROM_LASTNAME% has asked that you verify that they successfully completed the task, %TASK_TITLE%. 
+
+Please click the link below to complete verification or decline to verify.
+
+%TASK_VERIFICATION_URL%
+
+Should you have any questions or concerns please contact %FROM_FIRSTNAME% %FROM_LASTNAME% directly.
+
+Sincerely,
+
+%APPLICATION_NAME%
+		</body>
+	</template>
+</templates>

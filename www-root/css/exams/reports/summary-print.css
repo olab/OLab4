@@ -1,0 +1,36 @@
+@media print {
+    div#content {
+        display:block !important;
+        float:none !important;
+        width: 100%!important;
+    }
+
+    #bread-crumb-trail {
+        display: none !important;
+    }
+}
+
+.print-break {
+    page-break-before: always;
+}
+
+div.slider-average-score .fa-users:before  {
+    color: #805FAD;
+}
+
+div.slider-my-score .minus:before, div.slider-average-score .minus:before  {
+    color: #496C84;
+}
+
+.dataTables_filter, .dataTables_length, .dataTables_info, .paging_full_numbers {
+    display: none;
+}
+
+ul.nav {
+    display: none;
+}
+
+div.slider-min-score span:before, .slider-min-score span {
+    color: #ffee00 !important;
+    -webkit-print-color-adjust: exact;
+}

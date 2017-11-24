@@ -1,0 +1,13 @@
+%LEARNER_NAME%, 
+
+This is an automatically generated email to notify you that your regional rotation begins in 30 days.
+
+You are scheduled to stay at %ACCOMMODATION_TITLE% in %ACCOMMODATION_REGION%. Your occupancy begins %INHABITING_START% and ends %INHABITING_FINISH%. 
+
+For details of your accommodation (keys, shared, parking, etc.) please click on the following link - %ACCOMMODATION_LINK%
+
+Should you have any questions regarding your accommodations, please feel free to contact the %ACCOMMODATION_CONTACT_NAME% at %ACCOMMODATION_CONTACT_INFO%. 
+
+Sincerely, 
+
+%ACCOMMODATION_CONTACT_NAME%

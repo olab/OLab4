@@ -1,0 +1,10 @@
+%CONTACT_NAME%,
+
+This is an automatically generated message to inform you that the following occupants will be using the residence titled '%APARTMENT_TITLE%' for the following month. 
+
+%OCCUPANTS_AND_DATES%
+
+Should you have any questions regarding the accommodation list, please feel free to contact %REGIONALED_CONTACT% at %REGIONALED_EMAIL%. 
+
+Sincerely,
+%APPLICATION_NAME%

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates>
+	<template lang="en">
+		<![CDATA[
+			<form class="edit_data">
+				<input type="hidden" name="title" value="%TITLE%" />
+				<input type="hidden" name="terms" value="%TERMS%" />
+				<input type="hidden" name="body" value="%BODY%" />
+				<input type="hidden" name="year" value="%YEAR%" />
+			</form>
+			<span class="label">
+				Title: 
+			</span>
+			<span class="heading">
+				%TITLE%
+			</span>
+			<span class="label">
+				Terms:
+			</span>
+			<p class="data">
+				%TERMS%
+			</p>
+			<span class="label">
+				Awarding Body:
+			</span>
+			<span class="data">
+				%BODY%	
+			</span>
+			<span class="label">
+				Year Awarded:	
+			</span>
+			<span class="data">
+				%YEAR%
+			</span>
+		]]>
+	</template>
+</templates>

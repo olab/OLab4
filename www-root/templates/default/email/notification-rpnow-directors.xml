@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates>
+    <template lang="en">
+        <subject>RP-Now Exam Codes</subject>
+        <body>
+Please find the attached file that contains each of the learners RP-Now Exam Codes. These codes are used by the learner in order to start their exam.
+
+If you require any assistance, please contact us.
+
+Sincerely,
+%CREATOR_FIRSTNAME% %CREATOR_LASTNAME%
+%CREATOR_EMAIL%
+        </body>
+    </template>
+</templates>

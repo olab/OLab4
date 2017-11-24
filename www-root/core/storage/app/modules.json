@@ -1,0 +1,32 @@
+{
+    "Sandbox": {
+        "basename": "Sandbox",
+        "name": "Sandbox",
+        "slug": "sandbox",
+        "version": "1.0",
+        "description": "Example of a module that integrates into the Entrada frontend.",
+        "id": 3874156903,
+        "order": 9001,
+        "enabled": true
+    },
+    "Olab": {
+        "basename": "Olab",
+        "name": "OpenLabyrinth",
+        "slug": "olab",
+        "version": "1.0",
+        "description": "OpenLabyrinth integrated into the Entrada frontend.",
+        "id": 3700838559,
+        "enabled": true,
+        "order": 9001
+    },
+    "Foobar": {
+        "basename": "Foobar",
+        "name": "FooBar",
+        "slug": "foobar",
+        "version": "1.0",
+        "description": "This is the description. Fooooooo.",
+        "id": 2666930069,
+        "enabled": true,
+        "order": 9001
+    }
+}

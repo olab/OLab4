@@ -1,0 +1,171 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+
+	<title>New Teaching Notification</title>
+	
+	<style type="text/css">
+	body {
+		margin:				15px;
+		font-family:		'Lucida Grande', Geneva, Verdana, Arial, Helvetica, sans-serif;
+		font-size:			12px;
+		color:				#000000;
+	}
+	
+	table, td {
+		color:				#000000;
+	}
+	
+	h1 {
+		font-family:		'Century Gothic', Helvetica, Arial, sans-serif;
+		font-size:			20px;
+		font-weight:		normal;
+		color:				#003366;
+	}
+	
+	h2 {
+		font-family:		'Century Gothic', Helvetica, Arial, sans-serif;
+		font-size:			16px;
+		color:				#336699;
+		margin:				25px 0px 10px 0px;
+	}
+
+	h3 {
+		font-family:		'Century Gothic', Helvetica, Arial, sans-serif;
+		font-size:			14px;
+		color:				#003366;
+		margin:				25px 0px 10px 0px;
+	}
+	
+	div.display-green {
+		background-color:	#EBF4BF;
+		border:				1px #7F9900 solid;
+		padding:			20px;
+		margin-top:			15px;
+	}
+
+	div.display-red {
+		background-color:	#FFD9D0;
+		border:				1px #CC0000 solid;
+		padding:			20px;
+		margin-top:			15px;
+	}
+	
+	div.display-blue {
+		background-color:	#E1E8F1;
+		border:				1px #5A7CA7 solid;
+		padding:			20px;
+		margin-top:			15px;
+	}
+	</style>
+</head>
+<body>
+
+<div style="width: 760px; margin: 0px auto; border: 1px #003366 solid">
+	<table style="width: 100%" cellspacing="0" cellpadding="0" border="0">
+	<colgroup>
+		<col style="width: 70%" />
+		<col style="width: 30%" />
+	</colgroup>
+	<thead>
+		<tr>
+			<td style="height: 85px; background-color: #EEEEEE; vertical-align: bottom; border-bottom: 2px #003366 solid;">&nbsp;</td>
+			<td style="height: 85px; background-color: #EEEEEE; vertical-align: bottom; border-bottom: 2px #003366 solid;">&nbsp;</td>
+		</tr>
+		<tr>
+			<td style="height: 10px; background-color: #FFFFFF">&nbsp;</td>
+			<td style="height: 10px; background-color: #FFFFFF; padding-left: 35px">&nbsp;</td>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td colspan="2" style="padding: 0px 20px 20px 20px">
+	  			Dear %TO_FIRSTNAME% %TO_LASTNAME%,
+	  			<br /><br />
+	  			%CC_FACULTY_HTML%
+				This is an automated notice to remind you that you are scheduled to teach in the following learning event:
+				<div class="display-green">
+					<table style="width: 100%" border="0" cellspacing="0" cellpadding="2">
+					<colgroup>
+						<col style="width: 30%" />
+						<col style="width: 70%" />
+					</colgroup>
+					<tbody>
+						<tr>
+							<td style="font-weight: bold">Event Title:</td>
+							<td><a href="%EVENT_LINK%" style="font-weight: bold">%EVENT_TITLE%</a></td>
+						</tr>
+						<tr>
+							<td style="font-weight: bold">Phase:</td>
+							<td>%EVENT_PHASE%</td>
+						</tr>
+						<tr>
+							<td style="font-weight: bold">Event Date / Time:</td>
+							<td>%EVENT_DATE%</td>
+						</tr>
+						<tr>
+							<td style="font-weight: bold">Event Duration:</td>
+							<td>%EVENT_DURATION%</td>
+						</tr>
+						<tr>
+							<td style="font-weight: bold"><span style=" font-weight: bold">Event Location:</td>
+							<td>%EVENT_LOCATION%</td>
+						</tr>
+						<tr>
+							<td colspan="2">&nbsp;</td>
+						</tr>
+						<tr>
+							<td style="vertical-align: top; font-weight: bold">Associated Faculty:</td>
+							<td>%ASSOCIATED_FACULTY_HTML%</td>
+						</tr>
+					</tbody>		
+					</table>
+				</div>	
+	
+				<br /><br />
+				
+				<img src="%IMAGES_DIRECTORY%/icon-checklist.gif" align="left" width="40" height="47" alt="" title="" style="vertical-align: middle; margin-right: 10px" />
+				<h1>Important things to do <span style="font-style: italic; font-weight: bold; ">before</span> your learning event</h1>
+	
+				<h2>1) Review Learning Objectives</h2>
+				<div style="padding-left: 20px">
+					Please review your objectives to ensure that they accurately describe the learning objectives of your event.
+				</div>
+	
+				<h2>2) Update Learning Event Resources</h2>
+				<div style="padding-left: 20px">
+					The following resources are attached to this event for the learners to download. <strong>Please upload your new lecture notes or other resources and remove any outdated content.</strong>
+
+					%RESOURCES_HTML%
+					
+					<div style="margin-top: 15px">
+						<span style="color: #CC0000; font-weight: bold;">Important</span>: If you are going to have your assistant add your electronic resources to the site on your behalf and they have not been CC'd on this e-mail already, please forward this e-mail to them so they are able to easily find your learning event by <a href="%EVENT_LINK%" style="font-weight: bold">clicking this link</a>.
+					</div>
+				</div>
+				
+				<h2>3) Update the Event Type</h2>
+				<div style="padding-left: 20px">
+					Each learning event has an event type associated with it to help identify the type of teaching that is taking place during this time (lecture, small group, case study, etc). <span style="font-weight: bold;">Please ensure that the event type listed accurately represents the type of learning of this session</span>.
+				</div>
+
+				<h3>Need help editing your learning event?</h3>
+				Contact the help desk for help with uploading files and editing event details.
+
+				<table style="width: 100%; margin-bottom: 15px" cellspacing="0" cellpadding="3" border="0">
+				<tr>
+					<td>
+						<img src="%IMAGES_DIRECTORY%/icon-recycle.gif" border="0" width="50" height="50" alt="" title="" align="absmiddle" />
+					</td>
+					<td style="font-size: 16px; color: #363636">
+						<strong>Save a tree:</strong> Please consider the environment before printing this e-mail.
+					</td>
+				</tr>
+				</table>
+			</td>
+		</tr>
+	</tbody>
+	</table>
+</div>
+</body>
+</html>

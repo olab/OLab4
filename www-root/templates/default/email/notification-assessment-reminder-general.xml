@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates>
+    <template lang="en">
+        <subject>Action Required: Reminder New Assessment / Evaluation Task</subject>
+        <body>
+            Dear %TARGET_FIRSTNAME% %TARGET_LASTNAME%,
+
+            An assessment or evaluation task currently available for you to complete (or
+            delegate) in MEdTech Central has not yet been finished. To proceed, please
+            click the following link:
+
+            %ENTRADA_URL%/assessments
+
+            As a refresher your username is %USERNAME%, and if you have any trouble
+            remembering your password you can reset it by clicking the following link, and
+            entering %EMAIL% as your e-mail address.
+
+            %ENTRADA_URL%/password_reset
+
+            If you have received this email on an earlier date, please be advised that the link
+            to this assessment has been revised, we apologize for any inconvenience this may
+            have caused.
+
+            If you have any questions about the assessment/evaluation tasks in your task list,
+            please contact your program administrator for assistance.
+
+            Regards,
+
+            The %APPLICATION_NAME% team
+        </body>
+    </template>
+</templates>

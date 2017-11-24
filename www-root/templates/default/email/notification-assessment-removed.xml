@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates>
+    <template lang="en">
+        <subject>Notice of Removal: Assessment / Evaluation Task</subject>
+        <body>
+            Dear %TARGET_FIRSTNAME% %TARGET_LASTNAME%,
+
+            Please note that an assessment or evaluation task (%ASSESSMENT_NAME%) which was assigned to you for completion on %ASSESSMENT_DATE% has just been removed. Any information you may have filled out for this task has been retained.
+
+            To review all assessment or evaluation tasks which you still have available to complete or delegate, please follow the link below.
+
+            %URL%
+
+            As a refresher your username is %USERNAME%, and if you have any trouble remembering your password you can reset it by clicking the following link, and entering %EMAIL% as your e-mail address.
+
+            %ENTRADA_URL%/password_reset
+
+            If you have any questions or concerns, please don't hesitate to let me know.
+
+            Sincerely,
+            %CREATOR_FIRSTNAME% %CREATOR_LASTNAME%
+            %CREATOR_EMAIL%
+        </body>
+    </template>
+</templates>

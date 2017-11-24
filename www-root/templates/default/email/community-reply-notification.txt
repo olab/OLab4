@@ -1,0 +1,18 @@
+%AUTHOR_FULLNAME% has just posted a new reply to the topic entitled "%TITLE%" in the forum "%FORUM_TITLE%".
+
+----------------------------------------------------------------------
+%CONTENT_BODY%
+----------------------------------------------------------------------
+
+The discussion topic can be found here: 
+%URL%
+
+Unsubscribing:
+--------------
+
+You can unsubscribe at any time by logging into the system, visiting %UNSUBSCRIBE_URL%, visiting the "edit" section of any post in the thread and unselecting "Receive e-mail notification when people reply to this thread." then pressing the "Save" button.
+
+Regards,
+
+The %APPLICATION_NAME% team,
+%ENTRADA_URL%

@@ -1,0 +1,33 @@
+#exams_to_complete table th {
+    border-top: 0px;
+}
+
+.assessments-loading {
+    text-align: center;
+    margin-top: 10px;
+}
+
+#exam-search {
+    background: url("../../images/icon-magnify-gray.png") no-repeat right 2px top 4px;
+    padding:7px 30px 7px 16px;
+}
+
+.exam-search-message {
+    color: #777;
+    font-size: 18px;
+}
+
+.grid-view-thumb {
+    width: 54px;
+    height: 75px;
+}
+
+.media > .pull-left {
+    margin-right: 0px;
+}
+
+.attempt-info.fa {
+    font-size: 1.2em;
+    color: darkred;
+    cursor: pointer;
+}

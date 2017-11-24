@@ -1,0 +1,581 @@
+#assessment-form {
+    margin-bottom: 0;
+}
+
+#change-target-loading {
+    text-align: center;
+    margin-top: 35px;
+}
+
+#change-target-loading p {
+    color: #bfbfbf;
+    font-size: 22px;
+    text-align: center;
+    margin-top: 35px;
+}
+
+.change-target-step-2 {
+    text-align: center;
+}
+
+#change-target-id-container {
+    text-align: center;
+    margin-top: 35px;
+    margin-bottom: 35px;
+}
+
+.form-meta-data-container {
+    margin-top: 0px;
+    padding-top: 0px;
+}
+
+label.form-meta-data {
+    font-weight: bold;
+}
+
+.last_saved_container {
+    font-size: 10px;
+}
+
+.change_target {
+    display: inline-block;
+}
+
+.target-picker-container {
+    margin-right: 10px;
+}
+
+#change_target_link {
+    font-size: 10px;
+}
+
+#targets_remaining {
+    font-family: "Lucida Grande", Geneva, Verdana, Arial, Helvetica, sans-serif;
+    font-size: 16px;
+    margin-bottom: 30px;
+    margin-left: 3px;
+}
+
+#page-loading {
+    position: fixed;
+    left: 0px;
+    top: 0px;
+    width: 100%;
+    height: 100%;
+    z-index: 9999;
+    background: url('../../images/loading_med.gif') 50% 50% no-repeat;
+}
+
+.assessment-objective-list {
+    font-size: 14px;
+    list-style-type: none;
+    margin-top: 15px;
+    margin-left: 15px;
+}
+
+.assessment-objective-list li {
+    margin-bottom: 8px;
+    position: relative;
+}
+
+.expand-objective-btn, .collapse-objective-btn {
+    color: #646464;
+    display: inline-block;
+    font-size: 16px;
+    -webkit-transition:color .2s ease-in;
+    -moz-transition:color .2s ease-in;
+    -o-transition:color .2s ease-in;
+    transition:color .2s ease-in;
+}
+
+.expand-objective-btn span.plus-sign {
+    background: #f9f9f9;
+    border-radius: 50%;
+    border: 2px solid #ddd;
+    color: #646464;
+    display: inline-block;
+    font-size: 15px;
+    font-weight: bold;
+    height: 20px;
+    line-height: 17px;
+    margin-right: 6px;
+    text-align:center;
+    text-decoration: none;
+    width: 20px;
+    -webkit-transition: background-color 0.3s ease, border-color 0.3s ease;
+    -moz-transition: background-color 0.3s ease, border-color 0.3s ease;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.collapse-objective-btn span.ellipsis {
+    color: #646464;
+    display: inline-block;
+    font-size: 16px;
+    font-weight: bold;
+    height: 20px;
+    margin-right: 10px;
+    padding-top: 3px;
+    text-align:center;
+    text-decoration: none;
+    width: 20px;
+    -webkit-transition: color 0.2s;
+    -moz-transition: color 0.2s;
+    transition: color 0.2s;
+}
+
+.assessment-objective-list-spinner {
+    background: url("../../images/loading_small.gif") no-repeat;
+    background-size: 20px 20px;
+    border: 2px solid #fff;
+    display: inline-block;
+    height: 20px;
+    margin-right: 6px;
+    width: 20px;
+}
+
+.assessment-objective-name {
+    display: inline-block;
+    position: absolute;
+    top: 2px;
+}
+
+.expand-objective-btn:hover, .collapse-objective-btn:hover {
+    color: #006773;
+    text-decoration: none;
+}
+
+.expand-objective-btn:active, .expand-objective-btn:visited {
+    text-decoration: none;
+}
+
+.expand-objective-btn:hover span.plus-sign {
+    background: #00a8bc;
+    border-color: #00a8bc;
+    color: #fff;
+}
+
+.collapse-objective-btn:hover span.ellipsis {
+    color: #00a8bc;
+}
+
+.item-fieldnote-container {
+    margin-left: 45px;
+    margin-top: 16px;
+}
+
+.item-fieldnote-container h3 {
+    color: #646464 !important;
+    font-size: 16px;
+    margin-bottom: 10px !important;
+    margin-left: 0 !important;
+}
+
+.item-fieldnote-container ul {
+    color: #646464;
+    font-size: 14px;
+    margin-left: 32px;
+}
+
+.item-fieldnote-container li {
+    margin-bottom: 5px;
+}
+
+.fieldnote-response-container {
+    background: #f9f9f9;
+    border-bottom: 1px solid #ddd;
+    border-top: 1px solid #ddd;
+    border-right: 1px solid #ddd;
+    border-bottom-right-radius: 4px;
+    border-top-right-radius: 4px;
+    -webkit-box-shadow:inset 4px 0 0 0 #93cddd;
+    box-shadow:inset 5px 0 0 0 #93cddd;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    padding-top: 19px;
+    width: 95%;
+}
+
+.fieldnote-response-container ~ .fieldnote-response-container {
+    -webkit-box-shadow:inset 5px 0 0 0 #31859c;
+    box-shadow:inset 5px 0 0 0 #31859c;
+}
+
+.fieldnote-response-container ~ .fieldnote-response-container ~ .fieldnote-response-container {
+    -webkit-box-shadow:inset 5px 0 0 0 #215968;
+    box-shadow:inset 5px 0 0 0 #215968;
+}
+
+.fieldnote-response-container label {
+    font-size: 14px;
+    margin-left: 14px;
+}
+
+.hide {
+    display:none !important;
+}
+
+#last-saved-container {
+    margin-top: 5px;
+}
+
+#last-saved-time {
+    font-size: 11px;
+    font-weight: normal;
+    padding: 5px 8px;
+    text-shadow: none;
+}
+
+#form-heading {
+    line-height: 38px;
+}
+
+/* The following is CSS from assessment-form.css to support curriculum tags/field notes rendering in the form preview */
+
+#page-loading {
+    position: fixed;
+    left: 0px;
+    top: 0px;
+    width: 100%;
+    height: 100%;
+    z-index: 9999;
+    background: url('../../images/loading_med.gif') 50% 50% no-repeat;
+}
+
+.assessment-objective-list {
+    font-size: 14px;
+    list-style-type: none;
+    margin-top: 15px;
+    margin-left: 15px;
+    width: 100%;
+}
+
+.assessment-objective-list li {
+    margin-bottom: 8px;
+    position: relative;
+}
+
+.expand-objective-btn, .collapse-objective-btn {
+    color: #646464;
+    display: inline-block;
+    font-size: 16px;
+    -webkit-transition:color .2s ease-in;
+    -moz-transition:color .2s ease-in;
+    -o-transition:color .2s ease-in;
+    transition:color .2s ease-in;
+}
+
+.expand-objective-btn span.plus-sign {
+    background: #f9f9f9;
+    border-radius: 50%;
+    border: 2px solid #ddd;
+    color: #646464;
+    display: inline-block;
+    font-size: 15px;
+    font-weight: bold;
+    height: 20px;
+    line-height: 17px;
+    margin-right: 6px;
+    text-align:center;
+    text-decoration: none;
+    width: 20px;
+    -webkit-transition: background-color 0.3s ease, border-color 0.3s ease;
+    -moz-transition: background-color 0.3s ease, border-color 0.3s ease;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.collapse-objective-btn span.ellipsis {
+    color: #646464;
+    display: inline-block;
+    font-size: 16px;
+    font-weight: bold;
+    height: 20px;
+    margin-right: 10px;
+    padding-top: 3px;
+    text-align:center;
+    text-decoration: none;
+    width: 20px;
+    -webkit-transition: color 0.2s;
+    -moz-transition: color 0.2s;
+    transition: color 0.2s;
+}
+
+.assessment-objective-list-spinner {
+    background: url("../../images/loading_small.gif") no-repeat;
+    background-size: 20px 20px;
+    border: 2px solid #fff;
+    display: inline-block;
+    height: 20px;
+    margin-right: 6px;
+    width: 20px;
+}
+
+.assessment-objective-name {
+    display: inline-block;
+    position: absolute;
+    top: 2px;
+}
+
+.expand-objective-btn:hover, .collapse-objective-btn:hover {
+    color: #006773;
+    text-decoration: none;
+}
+
+.expand-objective-btn:active, .expand-objective-btn:visited {
+    text-decoration: none;
+}
+
+.expand-objective-btn:hover span.plus-sign {
+    background: #00a8bc;
+    border-color: #00a8bc;
+    color: #fff;
+}
+
+.collapse-objective-btn:hover span.ellipsis {
+    color: #00a8bc;
+}
+
+.item-fieldnote-container {
+    margin-left: 45px;
+    margin-top: 16px;
+}
+
+.item-fieldnote-container h3 {
+    color: #646464 !important;
+    font-size: 16px;
+    margin-bottom: 10px !important;
+    margin-left: 0 !important;
+}
+
+.item-fieldnote-container ul {
+    color: #646464;
+    font-size: 14px;
+    margin-left: 32px;
+}
+
+.item-fieldnote-container li {
+    margin-bottom: 5px;
+}
+
+.fieldnote-response-container {
+    background: #f9f9f9;
+    border-bottom: 1px solid #ddd;
+    border-top: 1px solid #ddd;
+    border-right: 1px solid #ddd;
+    border-bottom-right-radius: 4px;
+    border-top-right-radius: 4px;
+    -webkit-box-shadow:inset 4px 0 0 0 #858B93;
+    box-shadow:inset 5px 0 0 0 #858B93;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    padding-top: 19px;
+    width: 95%;
+}
+
+.fieldnote-response-container ~ .fieldnote-response-container {
+    -webkit-box-shadow:inset 4px 0 0 0 #93cddd;
+    box-shadow:inset 5px 0 0 0 #93cddd;
+}
+
+.fieldnote-response-container ~ .fieldnote-response-container ~ .fieldnote-response-container {
+    -webkit-box-shadow:inset 5px 0 0 0 #31859c;
+    box-shadow:inset 5px 0 0 0 #31859c;
+}
+
+.fieldnote-response-container ~ .fieldnote-response-container ~ .fieldnote-response-container ~ .fieldnote-response-container {
+    -webkit-box-shadow:inset 5px 0 0 0 #215968;
+    box-shadow:inset 5px 0 0 0 #215968;
+}
+
+.fieldnote-response-container label {
+    font-size: 14px;
+    margin-left: 14px;
+}
+
+.hide {
+    display:none !important;
+}
+
+#last-saved-container {
+    margin-top: 5px;
+}
+
+#last-saved-time {
+    font-size: 11px;
+    font-weight: normal;
+    padding: 5px 8px;
+    text-shadow: none;
+}
+
+/* ------------------------------------------------- [ Form Preview Dialog ] */
+
+div.preview-dialog-container {
+    position: fixed !important;
+    width: 100% !important;
+    height: 100% !important;
+    margin: 0;
+    padding: 0;
+
+    border: 0;
+    border-radius: 0;
+
+    /* note: we're using the shorthand property here in order to
+       override a style set by jquery */
+    background: #000; /* default for browsers that don't understand rgba() */
+    background: rgba(0,0,0,0.7);
+
+    opacity: 0;
+    -webkit-transition: 400ms opacity ease-out;
+    -moz-transition: 400ms opacity ease-out;
+    -ms-transition: 400ms opacity ease-out;
+    transition: 400ms opacity ease-out;
+
+    overflow: auto;
+}
+
+html.lt-ie9 div.preview-dialog-container {
+    background-color: transparent !important;
+    background-image: url("../images/semitransparent/black/70.png");
+    background-position: center center;
+    background-repeat: repeat;
+}
+
+div.preview-dialog-container div.preview-dialog-content {
+    display: table;
+    margin: 0;
+    padding: 0;
+    width: 100% !important;
+    height: 100% !important;
+
+    background-color: transparent !important;
+    background-image: none !important;
+}
+div.preview-dialog-container div.preview-dialog-content-inner {
+    z-index: 1;
+    display: block;
+    width: 58%;
+    padding-top: 10%;
+    margin: auto;
+    vertical-align: middle;
+}
+
+div.preview-dialog-container .ui-dialog-titlebar,
+div.preview-dialog-container .ui-dialog-buttonpane {
+    z-index: 2;
+
+    margin: 0;
+    padding: 0;
+
+    background-image: none;
+    background-color: transparent !important;
+    border: 0;
+    border-radius: 0;
+}
+div.preview-dialog-container .ui-dialog-titlebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 151px;
+
+    padding-left: 50px;
+    padding-right: 50px;
+
+    background-image: -webkit-linear-gradient(top, rgba(0,0,0,0.5) 0%, rgba(0, 0, 0, 0) 100%);
+}
+div.preview-dialog-container .ui-dialog-buttonpane {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 100px;
+
+    padding-left: 50px;
+    padding-right: 50px;
+}
+
+
+div.preview-dialog-container .ui-dialog-titlebar {
+    padding: 0 50px;
+}
+div.preview-dialog-container .ui-dialog-title {
+    margin: 40px 0 0;
+}
+div.preview-dialog-container .ui-dialog-title h1,
+div.preview-dialog-container .ui-dialog-title h2 {
+    margin: 0;
+    padding: 0;
+    color: #fff;
+    line-height: 1.2em;
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    right: 80px;
+
+    font-family: "Helvetica Neue";
+    text-shadow: 2px 2px 0 #000;
+}
+div.preview-dialog-container .ui-dialog-title h1 {
+    font-weight: 500;
+}
+div.preview-dialog-container .ui-dialog-title h2 {
+    font-weight: 300;
+}
+
+div.preview-dialog-container a.ui-dialog-titlebar-close {
+    margin-top: -21px;
+    margin-right: 50px;
+    background-color: none;
+    background-image: none;
+
+    padding: 7px;
+    border-radius: 25px;
+    border: 3px solid #fff;
+}
+div.preview-dialog-container a.ui-dialog-titlebar-close span {
+    margin: 0;
+    position: relative;
+    left: 1px;
+}
+div.preview-dialog-container a.ui-dialog-titlebar-close:hover {
+    padding: 7px;
+
+    background-image: none;
+    background-color: rgba(255,255,255,0.3);
+}
+
+div.preview-dialog-container a.ui-dialog-titlebar-close.ui-state-hover span {
+    background-image: url('../jquery/images/ui-icons_d8e7f3_256x240.png');
+}
+
+div.preview-dialog-container div.ensembleEmbeddedContent {
+    margin: 0 auto;
+    border: 16px solid #000;
+    background-color: #000;
+}
+div.preview-dialog-container div.ensembleEmbeddedContent span.ensembleContentTitle {
+    display: none;
+}
+
+.assessment-feedback-heading {
+    border-top: 3px solid #ddd;
+    margin-top: 50px;
+    padding-top: 5px;
+}
+
+.datepicker-icon {
+    cursor: pointer;
+}
+
+.assessment-delivery-detail {
+    display: block;
+}
+
+#return_to_my_assessments {
+    margin-top: 4px;
+}
+
+td label {
+    cursor: default;
+}

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<message>
+	<lang>
+		<en>
+			<subject>Notice: Removal From Previously Assigned Accommodations In %REGION%</subject>
+			<body>
+Dear %TO_FIRSTNAME% %TO_LASTNAME%,
+
+This is a notice to inform you that %FROM_FIRSTNAME% %FROM_LASTNAME% has removed you from the following accommodation during your rotation in %REGION%. You have now been removed from:
+
+%APARTMENT_ADDRESS%
+
+You are no longer scheduled to reside in this apartment from %INHABITING_START% until %INHABITING_FINISH%.
+
+Should you have any questions or concerns please contact %FROM_FIRSTNAME% %FROM_LASTNAME% in the %DEPARTMENT_TITLE% office for further information.
+
+Sincerely,
+
+%DEPARTMENT_TITLE% Office
+			</body>
+		</en>
+	</lang>
+</message>

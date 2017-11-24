@@ -1,0 +1,9 @@
+An administrator has reviewed your deficiency plan for the [%ROTATION_TITLE%] rotation, and found it to fulfill all requirements. %ADMIN_COMMENTS%
+
+This deficiency plan may be viewed here:
+%DEFICIENCY_PLAN_URL%
+
+Regards,
+
+The %APPLICATION_NAME% team,
+%ENTRADA_URL%

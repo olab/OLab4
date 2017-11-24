@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates>
+    <template lang="en">
+        <subject>New Activity on an %UC_CONTENT_TYPE_NAME% [%CONTENT_TITLE%]</subject>
+        <body>
+%COMMENTS_NUMBER_STRING% been posted on an %CONTENT_TYPE_NAME% [%CONTENT_TITLE%].
+
+The %CONTENT_TYPE_NAME% can be found here: 
+%URL%
+
+Unsubscribing:
+--------------
+
+You have received this notification because you requested to be notified when additional comments were made on this %CONTENT_TYPE_NAME%. You can unsubscribe at any time by visiting %UNSUBSCRIBE_URL%, or clicking "Unsubscribe to E-Mail Notifications" on the %CONTENT_TYPE_NAME% page.
+
+Regards,
+
+The %APPLICATION_NAME% team,
+%ENTRADA_URL%
+        </body>
+    </template>
+</templates>
+

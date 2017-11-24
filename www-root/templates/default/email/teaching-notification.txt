@@ -1,0 +1,34 @@
+Dear %TO_FIRSTNAME% %TO_LASTNAME%,
+
+%CC_FACULTY_TEXT%This is an automated notice to remind you that you are scheduled to teach in the following learning event.
+
+Event Title:        %EVENT_TITLE%
+Phase:              %EVENT_PHASE%
+Event Date / Time:  %EVENT_DATE%
+Event Duration:     %EVENT_DURATION%
+Event Location:     %EVENT_LOCATION%
+
+Associated Faculty:
+%ASSOCIATED_FACULTY_TEXT%
+To update your event click this link:
+   %EVENT_LINK%
+
+## Important things to do before your learning event:
+
+1) Review Learning Objectives
+Please review your objectives to ensure that they accurately describe the learning objectives of your event.
+
+2) Update Learning Event Resources
+The following resources are attached to this event for the learners to download. Please upload your new lecture notes or other resources and remove any outdated content.
+
+%RESOURCES_TEXT%
+IMPORTANT: If you are going to have your assistant add your electronic resources to the site on your behalf and they have not been CC'd on this e-mail already, please forward this e-mail to them so they are able to easily find your learning event by clicking the following link:
+   %EVENT_LINK%
+   
+3) Update the Event Type
+Each learning event has an event type associated with it to help identify the type of teaching that is taking place during this time (lecture, small group, case study, etc). Please ensure that the event type listed accurately represents the type of learning of this session.
+
+## Need help editing your learning event?
+Contact your Curricular Coordinator for help with uploading files and editing event details.
+
+## Save a tree: Please consider the environment before printing this e-mail.

@@ -1,0 +1,5 @@
+A new announcement has been posted to the community "%COMMUNITY_TITLE%". To approve or reject it, please visit %URL%.
+
+Announcement text follows:
+
+%CONTENT_BODY%

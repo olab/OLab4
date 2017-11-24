@@ -1,0 +1,44 @@
+.search-bar {
+    color: #3A87AD;
+    margin-top:5px;
+    font-size:12px;
+    width:675px;
+    z-index:500;
+}
+
+#objective-modal {
+    width: 715px;
+}
+
+#objective-modal div.objectives {
+    width: 38%;
+}
+
+#objective-modal div.mapped_objectives {
+    width: 60%;
+}
+
+.response-input {
+    height: 20px;
+    overflow: hidden;
+    width: 90%;
+}
+
+.field-note-category {
+    float:left;
+    margin-right: 30px;
+}
+
+.field-note-flag {
+    padding-top: 4px;
+}
+
+#field-note-objective-btn {
+    border-radius: 4px !important;
+    min-width: 220px;
+    text-align: left;
+}
+
+#item-form .btn-search-filter {
+    min-width: 200px;
+}

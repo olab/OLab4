@@ -1,0 +1,6 @@
+Dear %TO_NAME%,
+
+This is an automated notice to remind you that there are clerkship electives that are awaiting approval within the system.
+
+Vet the electives here: 
+   %EVENT_LINK%

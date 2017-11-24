@@ -1,0 +1,16 @@
+%AUTHOR_FULLNAME% has just posted a new event entitled "%TITLE%" in the community "%COMMUNITY_TITLE%".
+
+----------------------------------------------------------------------
+%CONTENT_BODY%
+----------------------------------------------------------------------
+
+The event can be found here: 
+%URL%
+
+Please be sure to add this event to your calendar.
+
+Regards,
+
+%SENDER_NAME%,
+
+You can unsubscribe at any time by logging into the system, visiting %UNSUBSCRIBE_URL%, and selecting "Unsubscribe to E-Mail".

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<phpunit colors="true" bootstrap="../../www-root/core/library/vendor/autoload.php">
+    <testsuites>
+        <testsuite name="Entrada">
+            <directory>./models</directory>
+            <directory>./functions</directory>
+        </testsuite>
+    </testsuites>
+    <php>
+        <const name="PHPUnit_MAIN_METHOD" value="1"/>
+    </php>
+</phpunit>

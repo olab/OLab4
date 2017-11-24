@@ -1,0 +1,445 @@
+table.sidebar {
+	width:			175px;
+}
+
+td.sidebar-head {
+	height:			20px;
+	padding-top:		0px;
+	padding-bottom:	0px;
+	padding-left:		2px;
+	padding-right:		4px;
+	vertical-align:	middle;
+	border:			1px solid #999999;
+	color:			#333333;
+	background-color:	#EBEBEB;
+	font-size:		11px;
+	font-weight:		bold;
+}
+
+td.sidebar-body {
+	height:			16px !important;
+	height:			20px;
+	padding:			5px;
+	font-size:		11px;
+	overflow:			hidden;
+	text-overflow:		ellipsis;
+	border:			1px solid #999999;
+	border-top:		none;
+}
+
+td.sidebar-body ul.menu {
+	list-style-type:	none;
+	padding:			0px 0px 0px 0px;
+	margin:			0px;
+	padding-top:		4px;
+	margin-bottom:		10px;
+}
+
+td.sidebar-body ul.menu li a {
+	font-size:		10px;
+	text-decoration:	none;
+}
+
+td.sidebar-body ul.menu li,
+td.sidebar-body ul.menu li.off {
+	font-size:		10px;
+	padding-bottom:	4px;
+}
+
+td.sidebar-body ul.menu li.on {
+	font-size:		10px;
+	padding-bottom:	4px;
+	padding-left:		20px;
+}
+
+table.inner-content-box {
+	width:			100%;
+}
+
+td.inner-content-box-head {
+	height:			20px;
+	padding-top:		0px;
+	padding-bottom:	0px;
+	padding-left:		2px;
+	padding-right:		4px;
+	vertical-align:	middle;
+	border:			1px solid #999999;
+	color:			#333333;
+	background-color:	#EBEBEB;
+	font-size:		11px;
+	font-weight:		bold;
+}
+
+td.inner-content-box-body {
+	height:			16px !important;
+	height:			20px;
+	padding:			5px;
+	font-size:		11px;
+	overflow:			hidden;
+	text-overflow:		ellipsis;
+	border:			1px solid #999999;
+	border-top:		none;
+}
+
+td.inner-content-box-body ul {
+	list-style-type:	none;
+	padding:			0px 0px 0px 0px;
+	margin:			0px;
+	padding-top:		4px;
+	margin-bottom:		10px;
+}
+
+td.inner-content-box-body ul li {
+	font-size:		10px;
+	padding-bottom:	4px;
+	padding-left:		20px;
+}
+
+td.inner-content-box-body ul li a {
+	font-size:		10px;
+	text-decoration:	none;
+}
+
+table.tableListReport {
+	width:			100%;
+	display:			table;
+	table-layout:		fixed;
+}
+
+table.tableListReport col {
+	display:			table-column;
+	text-align:		left;
+}
+
+table.tableListReport thead tr td {
+	height:			20px;
+	padding-top:		0px;
+	padding-bottom:	0px;
+	padding-left:		2px;
+	padding-right:		4px;
+	vertical-align:	middle;
+	border:			1px solid #999999;
+	color:			#333333;
+	background-color:	#EBEBEB;
+	font-size:		11px;
+	font-weight:		bold;
+}
+
+table.tableListReport thead tr td a,
+table.tableListReport thead tr td a:hover {
+	display:			block;
+	width:			auto !important;
+	width:			100%;
+	color:			#333333;
+	text-decoration:	none;
+}
+
+table.tableListReport tbody tr td {
+	height:			16px !important;
+	height:			20px;
+	padding:			2px;
+	padding-right:		4px;
+	font-size:		11px;
+	border-bottom:		1px solid #EBEBEB;
+}
+
+table.tableListReport tbody tr.user,
+table.tableListReport tbody tr.poll,
+table.tableListReport tbody tr.notice,
+table.tableListReport tbody tr.research,
+table.tableListReport tbody tr.event {
+	font-weight:		normal;
+	background-color:	#FFFFFF;
+}
+
+table.tableListReportPReport tbody tr.modified {
+	font-weight:		bold;
+	background-color:	#FDFEDA;
+}
+
+table.tableListReport tbody tr.na {
+	background-color:	#FFD9D0;
+}
+
+table.tableListReport tbody tr.np {
+	background-color:	#F9F9F9;
+}
+
+table.tableListReport tr td.np {
+	font-size:		12px;
+	color:			#999999;
+}
+
+table.tableListReport tr td.modified {
+	width:			18px;
+	text-align:		center;
+}
+
+table.tableListReport tr td.delete {
+	width:			16px;
+	text-align:		center;
+}
+
+table.tableListReport tr td.grant_title{
+	width:			160px;
+	border-left:		none;
+}
+
+table.tableListReport tr td.date-small,
+table.tableListReport tr td.activity_type {
+	width:			140px;
+	border-left:		none;
+}
+
+table.tableListReport tr td.notices,
+table.tableListReport tr td.accesses,
+table.tableListReport tr td.phase,
+table.tableListReport tr td.small_numbers {
+	width:			50px;
+	border-left:		none;
+}
+
+table.tableListReport tr td.file-category {
+	overflow:			hidden;
+	width:			115px;
+	border-left:		none;
+}
+
+table.tableListReport tr td.assigned,
+table.tableListReport tr td.course_number{
+	width:			60px;
+	border-left:		none;
+}
+
+table.tableListReport tr td.responses{
+	width:			75px;
+	border-left:		none;
+}
+
+table.tableListReport tr td.agency,
+table.tableListReport tr td.city_country{
+	width:			150px;
+	border-left:		none;
+}
+
+table.tableListReport tr td.co_investigator,
+table.tableListReport tr td.scholarly_activity_type,
+table.tableListReport tr td.course_name,
+table.tableListReport tr td.organisation {
+	width:			238px;
+	border-left:		none;
+}
+
+table.tableListReport tr td.description {
+	width:			320px;
+	border-left:		none;
+}
+
+table.tableListReport tr td.full_description {
+	width:			550;
+	border-left:		none;
+}
+
+table.tableListReport tr td.principal_investigator,
+table.tableListReport tr td.student_name,
+table.tableListReport tr td.department,
+table.tableListReport tr td.university{
+	width:			150px;
+	border-left:		none;
+}
+
+table.tableListReport tr td.general,
+table.tableListReport tr td.filetype,
+table.tableListReport tr td.filesize,
+table.tableListReport tr td.teacher {
+	width:			135px;
+	border-left:		none;
+}
+
+table.tableListReport tr td.average_hours,
+table.tableListReport tr td.role,
+table.tableListReport tr td.type {
+	width:			80px;
+	border-left:		none;
+}
+
+table.tableListReport tr td.title {
+	overflow:			hidden;
+	border-left:		none;
+}
+
+table.tableListReport tr td.attachment {
+	width:			18px;
+	text-align:		center;
+	border-left:		none;
+}
+
+
+.highlight {
+	background-color:	#FFFFCC;
+	font-weight:		bold;
+	padding-right:		3px;
+	padding-left:		3px;
+}
+
+.searchTitle{
+	background-color:	#EBECFF;
+	border-top:		1px #333399 solid;
+	width:			100%;
+	padding:			3px;
+	margin:			0px;
+	margin-bottom:		15px;
+}
+
+div.bread-crumb-trail {
+	margin-bottom:		15px;
+	padding:			2px;
+	padding-left:		5px;
+	border-bottom:		1px #9D9D9D dotted
+}
+
+div.bread-crumb-trail ul {
+	list-style:		none;
+	list-style-type:	none;
+	padding:			0px 0px 0px 0px;
+	margin:			0px;
+	padding-top:		4px;
+}
+
+
+ul.unIndentedList {
+	margin-left:		0px;
+	padding-left:		0px;
+}
+
+div.wizard-question {
+	margin-bottom:		15px;
+	padding:			5px;
+}
+
+a.small-email {
+	font-family:		"Lucida Grande", Geneva, Verdana, Arial, Helvetica, sans-serif;
+	font-size:		11px;
+	color:			#666666;
+	text-decoration:	none
+}
+
+a.small-email:hover {
+	color:			#CCCCCC
+}
+
+div.autocomplete {
+	position:			absolute;
+	width:			250px;
+	background-color:	white;
+	border:			1px solid #888;
+	margin:			0px;
+	padding:			0px;
+}
+
+div.autocomplete ul {
+	list-style-type:	none;
+	margin:			0px;
+	padding:			0px;
+}
+
+div.autocomplete ul li.selected {
+	background-color:	#FFFFBB;
+}
+
+div.autocomplete ul li {
+	list-style-type:	none;
+	display:			block;
+	margin:			0;
+	padding:			2px;
+	height:			32px;
+	cursor:			pointer;
+}
+
+div.rss-title {
+}
+
+div.rss-no-item {
+	padding:			2px;
+}
+
+div.rss-item-title {
+	width:			350px;
+	overflow:			hidden;
+	padding:			2px;
+	white-space:		nowrap;
+}
+
+div.discussion {
+	background-color:	#FFFFFF;
+	padding:			10px;
+	padding-left:		28px;
+	margin-bottom:		4px;
+	border:			1px #EEEEEE solid;
+}
+
+.discussion-title {
+	font-weight:		bold;
+	font-color:		#003366;
+	font-size:		13px;
+}
+
+#access-legend:before {
+	line-height: 0.1;
+	font-size: 1px;
+	margin: 0;
+	height: 9px;
+	display: block;
+	border-bottom: 1px solid #ddd;
+}
+#access-legend:after {
+	display: block;
+	padding-top: 0;
+	line-height: 0.1;
+	font-size: 1px;
+	margin: 0 0 0 0;
+	height: 8px;
+	border-top: 1px solid #fff;
+}
+#access-legend, #access-legend ul {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+#access-legend {
+	margin-bottom: 1em;
+}
+#access-legend li {
+	display: inline;
+	padding: 0;
+	margin: 0;
+}
+#access-legend li span {
+	display: block;
+	padding: 6px 10px;
+	font-weight: bold;
+	color: #666;
+}
+#access-legend li span#configParent, #access-legend li span #configuration {
+	display: inline;
+	font-weight: normal;
+	padding: 0;
+}
+#access-legend li a {
+	display: block;
+	padding: 8px 10px;
+	text-decoration: none;
+	background: #EDF2F2;
+	border-bottom: 1px solid #ddd;
+	border-top: 1px solid #fff;
+	border-right: 1px solid #ddd;
+}
+#access-legend li a:hover {
+	background: #E0E9E9;
+}
+#access-legend li li span { /* used for un-linked menu items */
+	padding: 4px 8px 4px 20px;
+}
+#access-legend li li a {
+	padding: 6px 8px 6px 20px;
+}

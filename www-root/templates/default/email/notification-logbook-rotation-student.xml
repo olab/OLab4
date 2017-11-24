@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates>
+    <template lang="en">
+        <subject>New Comment posted to Patient Encounter Report [%ROTATION_NAME%]</subject>
+        <body>
+%AUTHOR_FULLNAME% has just posted a new comment on your Patient Encounters Report for one of your clerkship rotations [%ROTATION_NAME%]:
+
+----------------------------------------------------------------------
+%CONTENT_BODY%
+----------------------------------------------------------------------
+
+The comment can be found here: 
+%URL%
+
+Unsubscribing:
+--------------
+
+You have received this notification because you requested to be notified when additional comments were made on the Patient Encounters Report for this rotation. You can unsubscribe at any time by visiting %UNSUBSCRIBE_URL%, or clicking the "Unsubscribe to E-Mail Notifications" link on the Patient Encounter Report.
+
+Regards,
+
+The %APPLICATION_NAME% team,
+%ENTRADA_URL%
+        </body>
+    </template>
+</templates>

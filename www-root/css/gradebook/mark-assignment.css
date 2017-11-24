@@ -1,0 +1,180 @@
+/**
+ * Entrada [ http://www.entrada-project.org ]
+ * 
+ * Entrada is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Entrada is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Entrada.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Gradebook / Assignment Marking In-Browser
+ * 
+ * @author Organization: bitHeads, Inc.
+ * @author Developer: Jean-Benoit Lesage <jblesage@bitheads.com>
+ * @copyright Copyright 2016 Queen's University. All Rights Reserved.
+ * 
+ */
+
+/* Fullscreen modal */
+
+body.modal-open {
+    overflow: hidden;
+}
+
+.fullscreen-modal {
+    margin-left: 0;
+    width: 100%;
+    left: 0;
+    top: 0;
+    border-radius: 0;
+    min-height: 100%;
+    height: 100%;
+    padding: 0;
+}
+
+.fullscreen-modal .modal-dialog {
+    margin: 0;
+    margin-right: auto;
+    margin-left: auto;
+    width: 100%;
+
+}
+
+.modal.in > body {
+    overflow: hidden;
+}
+
+@media (min-width: 768px) {
+    .fullscreen-modal .modal-dialog {
+        width: 750px;
+    }
+}
+
+@media (min-width: 992px) {
+    .fullscreen-modal .modal-dialog {
+        width: 970px;
+    }
+}
+
+@media (min-width: 1200px) {
+    .fullscreen-modal .modal-dialog {
+        width: 1170px;
+    }
+}
+
+/* Marking Scheme Modal */
+
+.modal-mark-assignment .modal-body {
+    text-align: center;
+    max-height: 80%; /* IE8 fallback */
+    max-height: calc(100vh - 142px);
+    overflow: hidden;
+}
+
+.modal-mark-assignment .modal-footer {
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    left: 0;
+    height: 32px;
+}
+
+.modal-mark-assignment .file, .modal-mark-assignment .marking-scheme {
+    height: 10%;
+    overflow-y: auto;
+    padding: 5px;
+    width: 100%;
+}
+
+.modal-mark-assignment .file {
+}
+
+.modal-mark-assignment .marking-scheme {
+}
+
+.spreadsheet-modal input {
+    width : 40px;
+}
+
+@media (min-width: 992px) {
+    .modal-mark-assignment .file, .modal-mark-assignment .marking-scheme {
+        position: absolute;
+        top: 0;
+        height: 100%;
+        overflow-y: auto;
+        padding: 5px;
+        width: 49%;
+    }
+
+    .modal-mark-assignment .file {
+        left: 0;
+        border-right: 1px solid #eee;
+    }
+
+    .modal-mark-assignment .marking-scheme {
+        right: 0;
+        padding-right: 10px;
+    }
+}
+
+.modal-mark-assignment .inline li {
+    padding-right: 20px;
+}
+
+.modal-mark-assignment .custom-grade-value {
+    width: 60px;
+}
+
+.modal-mark-assignment .custom-grade {
+    margin-top: 0;
+}
+
+.modal-mark-assignment .calculated-grade-text {
+    display: block;
+    padding-top: 5px;
+}
+
+.modal-mark-assignment .popover {
+    min-width: 150px;
+}
+
+.modal-mark-assignment .popover-content {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.gradebook_modal_close .spreadsheet-search-learners{
+    margin: 20px !important;
+}
+
+.spreadsheet-modal-cperiod {
+    padding-left: 20px;
+    font-weight: normal;
+    font-size: 11px;
+}
+
+.spreadsheet-loading {
+    background-image: url('../../images/loading.gif');
+    background-position: 50% 75%;
+    background-repeat: no-repeat;
+    width: 100%;
+    height: 100px;
+    text-align: center;
+    font-size: 24px;
+    color: #9e9f9f;
+}
+
+.spreadsheet-data-table td {
+    min-width: 150px !important;
+}
+
+.spreadsheet-search-learners #input-search-learners {
+    width: 100%;
+}

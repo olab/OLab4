@@ -1,0 +1,15 @@
+It has come to our attention that you have not met the logging requirements for the [%ROTATION_TITLE%] rotation after the allotted time. To ensure that you are able to meet the logging requirements for the rotation, we ask that you meet with the course director and submit a plan for how to attain the missing requirements for this rotation.
+
+The form used to submit your agreed on plan for this rotation can be found here:
+%ROTATION_DEFICIENCY_URL%
+
+An overview of your progress in this rotation can be found here:
+%ROTATION_OVERVIEW_URL%
+
+And a list of your logbook entries by rotation can be found here:
+%ENTRY_MANAGEMENT_URL%
+
+Regards,
+
+The %APPLICATION_NAME% team,
+%ENTRADA_URL%

@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<mysqldump xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<database name="entrada">
+	<table_data name="event_attendance">
+	<row>
+		<field name="eattendance_id">1</field>
+		<field name="event_id">1</field>
+		<field name="proxy_id">1</field>
+		<field name="updated_date">0</field>
+		<field name="updated_by">0</field>
+	</row>
+	</table_data>
+    <table_data name="portfolio-advisors">
+        <row>
+            <field name="padvisor_id">1</field>
+            <field name="proxy_id">2</field>
+            <field name="portfolio_id" xsi:nil="true" />
+            <field name="active">1</field>
+        </row>
+    </table_data>
+	<table_data name="evaluation_forms">
+		<row>
+			<field name="eform_id">1</field>
+			<field name="organisation_id">1</field>
+			<field name="target_id">8</field>
+			<field name="form_parent">0</field>
+			<field name="form_title">Test Self Assessment</field>
+			<field name="form_description">Test Self Assessment</field>
+			<field name="form_active">1</field>
+			<field name="updated_date">1445613717</field>
+			<field name="updated_by">2</field>
+		</row>
+	</table_data>
+	<table_data name="global_lu_countries">
+		<row>
+			<field name="countries_id">1</field>
+			<field name="country">Afghanistan</field>
+			<field name="abbreviation">AFG</field>
+			<field name="iso2">AF</field>
+			<field name="isonum">4</field>
+		</row>
+	</table_data>
+</database>
+</mysqldump>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates>
+	<template lang="en">
+		<subject>Verification Confirmation Notice: %FROM_FIRSTNAME% %FROM_LASTNAME% Verified Completion of %TASK_TITLE% </subject>
+		<body>
+Dear %TO_FULLNAME%,
+
+This is a notice to inform you that %FROM_FIRSTNAME% %FROM_LASTNAME% has verified completion of %TASK_TITLE%. 
+
+Sincerely,
+
+%APPLICATION_NAME%
+		</body>
+	</template>
+</templates>

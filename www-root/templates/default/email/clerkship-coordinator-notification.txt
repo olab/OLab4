@@ -1,0 +1,11 @@
+The following list of clerks have not met the logging requirements for the [%ROTATION_TITLE%] rotation after the allotted time, as well as a link to each clerk's respective progress summary for the rotation:  
+
+%CLERK_LIST%  
+
+* Clerk has completed the entire period of the rotation without completing logging. 
+** One week or more has elapsed since the end of this clerk's rotation.  
+
+Regards,
+
+The %APPLICATION_NAME% team,
+%ENTRADA_URL%

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates>
+    <template lang="en">
+        <subject>Assessment Task Available For Review</subject>
+        <body>
+            Dear %TARGET_FIRSTNAME% %TARGET_LASTNAME%,
+
+            An assessment task has been made available for you to review
+            in MEdTech Central that has been completed by %SUBMITTED_BY%.
+
+            To check the approver task assigned to you, please click the following link:
+
+            %URL%
+
+            As a refresher your username is %USERNAME%, and if you have any trouble
+            remembering your password you can reset it by clicking the following link, and
+            entering %EMAIL% as your e-mail address.
+
+            %ENTRADA_URL%/password_reset
+        </body>
+    </template>
+</templates>

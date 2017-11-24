@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates>
+	<template lang="en">
+		<![CDATA[
+			<form class="edit_data">
+				<input type="hidden" name="title" value="%TITLE%" />
+				<input type="hidden" name="site" value="%SITE%" />
+				<input type="hidden" name="location" value="%LOCATION%" />
+				<input type="hidden" name="preceptor_proxy_id" value="%PRECEPTOR_PROXY_ID%" />
+				<input type="hidden" name="preceptor_prefix" value="%PRECEPTOR_PREFIX%" />
+				<input type="hidden" name="preceptor_firstname" value="%PRECEPTOR_FIRSTNAME%" />
+				<input type="hidden" name="preceptor_lastname" value="%PRECEPTOR_LASTNAME%" />
+				<input type="hidden" name="preceptor_email" value="%PRECEPTOR_EMAIL%" />
+				<input type="hidden" name="start" value="%START%" />
+				<input type="hidden" name="end" value="%END%" />
+			</form>
+			<span class="label">
+				Title: 
+			</span>
+			<span class="data">
+				%TITLE%
+			</span>
+			<span class="label">
+				Site: 
+			</span>
+			<span class="data">
+				%SITE%
+			</span>
+			<span class="label">
+				Preceptor: 
+			</span>
+			<span class="data">
+				%PRECEPTOR%
+			</span>
+			<span class="label">
+				Period: 
+			</span>
+			<span class="data">
+				%PERIOD%
+			</span>
+		]]>
+	</template>
+</templates>

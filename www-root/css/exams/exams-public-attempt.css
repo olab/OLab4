@@ -1,0 +1,370 @@
+body {
+    background: none;
+    background-color: #E8EDF1;
+}
+
+#control-bar .submit-exam, #control-bar .save-exam  {
+    margin-left: 5px;
+    margin-right: 5px;
+}
+
+#control-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    padding: 5px;
+    width: 100%;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+    height: 48px;
+    background: #17323B;
+    z-index: 1000;
+    text-align: center;
+}
+
+footer#main-footer .container {
+    padding-bottom: 45px;
+}
+
+.message-confirmation {
+    margin-top: 20px;
+}
+
+.message-confirmation .alert p {
+    margin-top: 10px;
+}
+
+table.question-table tr.question-answer-view.strike, table.question-table tr.row-stripe.question-answer-view.strike td  {
+    background-color: #B9BABA;
+}
+
+#control-bar .pagination {
+    margin-top: 0;
+}
+
+#control-bar .pagination ul > .disabled > span, #control-bar .pagination ul > .disabled > a, #control-bar .pagination ul > .disabled > a:hover, #control-bar .pagination ul > .disabled > a:focus {
+    background-color: #f5f5f5;
+}
+
+
+#control-bar-progress .progress {
+    position: relative;
+    margin: 8px auto;
+}
+
+#control-bar-progress .progress .progress-bar-not-saved {
+    color: #000;
+    min-width: 50px;
+    background-color: unset;
+    background-image: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+#control-bar-progress .progress .progress-bar-saved {
+    color: #ffffff;
+    position: absolute;
+    top: 0;
+    left: 0;
+
+}
+
+#control-bar-progress .progress .progress-text {
+    position: absolute;
+    top: 0;
+    width: 100%;
+    z-index: 100;
+}
+
+#control-bar #control-bar-clock {
+    color: #f5f5f5;
+}
+
+#control-bar-clock .clock-toggle, #control-bar-clock .clock-toggle.show {
+    display: inline-block;
+    cursor: pointer;
+}
+
+#control-bar-clock .clock-toggle.hide {
+    display: none;
+}
+
+#control-bar-clock #count-down-clock, #control-bar-clock #no_count-down-clock, #control-bar-clock #count-down-sec-clock {
+    width: 70px;
+    text-align: left;
+}
+
+#control-bar-clock i {
+    margin-right: 5px;
+    font-size: 1.3em;
+    cursor: pointer;
+}
+
+#clock-container {
+    margin-left: 30px;
+    padding-top: 7px;
+}
+
+#control-bar .row-fluid .span2 {
+    width: 11.894%;
+}
+
+#control-bar .row-fluid #control-bar-progress.span3 {
+    width: 26.4039%;
+}
+
+/* Exam Sidebar */
+#exam-menu {
+    position: fixed;
+    bottom: 36px;
+    right: 0px;
+    padding: 5px 5px;
+    width: 140px;
+    background: #17323B;
+    z-index: 999;
+    color: #eee;
+    margin-left: 5px;
+    overflow-x: visible;
+}
+
+#exam-menu.expanded {
+    width: 225px;
+}
+
+#exam-progress-menu ul {
+    margin-left: 1.5em;
+}
+
+#exam-progress-menu li {
+    list-style: none;
+}
+
+#exam-progress-menu li.page_break {
+    font-size: 0.8em;
+    color: #FF8300;
+}
+
+#exam-progress-menu li.progress_menu_item {
+    font-weight: bold;
+}
+
+#exam-progress-menu li.progress_menu_item.access_false {
+    cursor: not-allowed;
+}
+
+#exam-progress-menu li.progress_menu_item.access_true {
+    cursor: pointer;
+}
+
+#exam-progress-menu li.progress_menu_item a.response_answered {
+    color: #5bb75b;
+}
+
+#exam-progress-menu li.progress_menu_item a.response_answered:hover {
+    color: #85F385;
+}
+
+#exam-progress-menu li.progress_menu_item.access_false a.response_answered {
+    color: #437943;
+}
+#exam-progress-menu li.progress_menu_item.access_false a.response_answered:hover {
+    color: #437943;
+}
+
+#exam-progress-menu li.progress_menu_item a.response_unanswered {
+    color: #CDCDCD;
+}
+
+#exam-progress-menu li.progress_menu_item a.response_unanswered:hover {
+    cursor: pointer;
+    color: #ffffff;
+}
+
+#exam-progress-menu li.progress_menu_item a {
+    padding-left: 15px;
+}
+
+#exam-progress-menu li.progress_menu_item.current a {
+    padding-left: 5px;
+}
+
+#exam-progress-menu h4 {
+    color: #cdcdcd;
+    font-size: 14px;
+    font-weight: bold;
+    padding: 0px 0px 0px 5px;
+    cursor: pointer;
+}
+
+#exam-progress-menu h4.dim {
+    color: #ABABAB;
+}
+
+#exam-progress-menu i.icon-flag-question {
+    color: #FFB601;
+}
+
+#contextMenuExam {
+    display: none;
+    position: fixed;
+    z-index: 1001;
+    top: 50px;
+    left: 60px;
+}
+
+#toggle-timer-controls {
+    cursor: pointer;
+}
+
+#timer-controls {
+    margin-left: 30px;
+}
+
+#timer-controls #toggle-timer-controls {
+    font-size: 1.5em;
+    margin-left: 5px;
+}
+
+#timer-controls span {
+    cursor: pointer;
+}
+
+#timer-controls span.show {
+    display: inline;
+}
+/* End Exam sidebar */
+
+
+/* Calculator Overrides */
+.calc-ln, .calc-smaller, .calc-info {
+    display: none;
+}
+
+#calc_spacer {
+    display: none;
+}
+
+/* ScratchPad CSS */
+#exam-progress-menu i.icon-flag-question, #exam-progress-menu i.scratchPad-icon {
+    margin: 2px 0px 0px 3px;
+}
+
+.learner_comments h3.title {
+    margin: 5px;
+    color: #000000;
+    font-size: 14px;
+    line-height: 10px;
+}
+
+textarea.learner_comments_text_area {
+    resize: vertical;
+}
+
+.table tr.learner_comments td {
+    line-height: 10px;
+    padding: 2px;
+    border: none;
+}
+
+span.comment-question.active {
+    background: #9FCED5;
+}
+
+li.progress_menu_item i.scratchPad-icon {
+    color: #C2DFE3;
+}
+
+/* End ScratchPad CSS */
+
+/*table.question-table tr.row-stripe.question-answer-view.strike td {*/
+    /*background-color: #878888;*/
+/*}*/
+
+/* Closes the modal windows which open for summernote */
+.note-editor .modal {
+    display: none;
+}
+
+div.exam-question .note-editor {
+    display: inline-block;
+}
+/* Hides the color dropdown selector for summernote */
+.note-btn.btn-sm.dropdown-toggle {
+    display: none !important;
+}
+
+/* prevents prototype from hiding the button */
+div.popover-content button.note-btn, div.popover-content button.note-color-btn {
+    display: inline-block !important;
+}
+
+.note-popover .popover-content .note-color .dropdown-menu, .panel-heading.note-toolbar .note-color .dropdown-menu {
+    min-width: 0;
+    padding: 10px;
+}
+
+#exam-progress-menu #calculator {
+    padding: 5px;
+}
+
+.note-editable a, .note-editable video {
+    cursor: pointer;
+}
+
+#pdf_viewer_fixed {
+    position: fixed;
+    bottom: 0px;
+    left: 10px;
+    width: 600px;
+    height: 500px;
+    z-index: -100;
+    pointer-events:none;
+}
+
+#pdf_viewer_fixed.active {
+    z-index: 1000;
+}
+
+#pdf_viewer_container {
+    position: relative;
+}
+
+#pdf_viewer {
+    position: absolute;
+    background: #264078 none repeat scroll 0 0;
+    border: 3px solid #ffffff;
+    border-radius: 5px;
+    box-shadow: 0 0 3px rgba(0, 0, 0, 0.1);
+    padding: 10px 20px;
+    width: 600px;
+    z-index: 9999;
+    pointer-events:auto;
+}
+
+#pdf_viewer iframe {
+    height: 90%;
+    width: 97%;
+}
+
+#pdf_handle, #pdf_close {
+    color: #ffffff;
+    padding: 0 0 5px 0;
+}
+
+#pdf_handle i, #pdf_close i {
+    cursor: pointer;
+}
+
+.exam-file-icon {
+    font-size: 1.3em;
+}
+
+#control-bar-buttons .exam-files {
+    margin-right: 5px;
+}
+
+#control-bar-buttons ul.exam_file_menu {
+    margin-bottom: 3px;
+}

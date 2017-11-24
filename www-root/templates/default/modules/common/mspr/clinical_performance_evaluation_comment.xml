@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates>
+	<template lang="en">
+		<![CDATA[
+			<form class="edit_data">
+				<input type="hidden" name="text" value="%COMMENT%" />
+				<input type="hidden" name="source" value="%SOURCE%" />
+			</form>
+			<span class="label">
+				Comment: 
+			</span>
+			<p class="data">
+				%COMMENT%
+			</p>
+			<span class="label">
+				Source:	
+			</span>
+			<span class="data">
+				%SOURCE%
+			</span>
+		]]>
+	</template>
+</templates>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates>
+	<template lang="en">
+		<![CDATA[
+			<form class="edit_data">
+				<input type="hidden" name="title" value="%TITLE%" />
+				<input type="hidden" name="organization" value="%ORGANISATION%" />
+				<input type="hidden" name="location" value="%LOCATION%" />
+				<input type="hidden" name="supervisor" value="%SUPERVISOR%" />
+			</form>
+			<span class="label">Title: </span>
+			<span class="heading">%TITLE%</span>
+			<span class="label">Organisation: </span>
+			<span class="data">%ORGANISATION%</span>
+			<span class="label">Location: </span>
+			<span class="data">%LOCATION%</span>
+			<span class="label">Supervisor: </span>
+			<span class="data">%SUPERVISOR%</span>
+		]]>
+	</template>
+</templates>

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<message>
+	<lang>
+		<en>
+			<subject>Rejection Notice: %FROM_FIRSTNAME% %FROM_LASTNAME% Rejected %REGION% Accommodations</subject>
+			<body>
+Dear %TO_FULLNAME%,
+
+This is a notice to inform you that %FROM_FIRSTNAME% %FROM_LASTNAME% has rejected the following accommodations in %REGION% from %INHABITING_START% until %INHABITING_FINISH%:
+
+%APARTMENT_ADDRESS%
+
+The reason they gave for this rejection was as follows:
+============================================================================
+%REASON%
+============================================================================
+
+Should you have any questions or concerns please contact %FROM_FIRSTNAME% %FROM_LASTNAME% directly.
+
+Sincerely,
+
+%APPLICATION_NAME%
+			</body>
+		</en>
+	</lang>
+</message>

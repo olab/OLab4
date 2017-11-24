@@ -1,0 +1,356 @@
+body{
+    background:url("../images/bg-pattern.png") right bottom repeat transparent;
+}
+a {
+  color:#006699;
+}
+h3{
+  font-size:14px;
+  margin-bottom:5px;
+}
+h1,h2,h3,h4{
+  font-family:"Lucida Grande",Geneva,Verdana,Arial,Helvetica,sans-serif;
+  color:#1B3842;
+}
+h2{
+  font-weight:normal;
+  color:#c94d21;
+}
+h1{
+  font-size:26px;
+  font-weight:500;
+  letter-spacing:-0.5px;
+  margin-bottom:28px;
+}
+.banner h1{
+  margin-bottom:0;
+}
+h2{
+  font-size:20px;
+  margin-bottom:5px;
+}
+label{
+  display:inline-block;
+}
+.alert ul{
+  margin-bottom:0;
+  list-style:none;
+}
+.form-horizontal .control-label {
+  width:150px;
+}
+.form-horizontal .controls {
+  margin-left:170px;
+}
+span.or{
+  margin:0 10px;
+  display:inline-block;
+}
+select{
+  margin-bottom:0;
+}
+.nav-tabs > li > a {
+  text-align:center;
+}
+.well{
+  background-color:#FAFAFA;
+  border:1px solid #DDD;
+   border: 1px solid rgba(0, 0, 0, 0.075);
+  -moz-box-shadow:0 2px 0 rgba(0, 0, 0, 0.03);
+  -webkit-box-shadow:0 2px 0 rgba(0, 0, 0, 0.03);
+  box-shadow:0 2px 0 rgba(0, 0, 0, 0.03);
+}
+.icon{
+  background-image:url("../images/icons-sprite.png");
+  background-repeat:no-repeat;
+  background-color:transparent;
+  width:16px;
+  height:16px;
+  display:inline-block;
+}
+.icon-logout{
+  background-position:left top;
+}
+
+#content{
+  border-radius:5px;
+  -moz-box-shadow:0 0 3px rgba(0,0,0,0.1);
+  -webkit-box-shadow:0 0 3px rgba(0,0,0,0.1);
+  box-shadow:0 0 3px rgba(0,0,0,0.1);
+}
+.inner-content{
+  border-radius:3px;
+  padding:20px;
+  background:#FFF;
+}
+header#main-header {
+  margin-bottom:18px;
+}
+header#main-header .banner{
+  padding:25px 0;
+  background: #306578; /* Old browsers */
+  background: -moz-linear-gradient(top,  #254e5d 0%, #173039 100%); /* FF3.6+ */
+  background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#254e5d), color-stop(100%,#173039)); /* Chrome,Safari4+ */
+  background: -webkit-linear-gradient(top,  #254e5d 0%,#173039 100%); /* Chrome10+,Safari5.1+ */
+  background: -o-linear-gradient(top,  #254e5d 0%,#173039 100%); /* Opera 11.10+ */
+  background: -ms-linear-gradient(top,  #254e5d 0%,#173039 100%); /* IE10+ */
+  background: linear-gradient(to bottom,  #254e5d 0%,#173039 100%); /* W3C */
+  filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#254e5d', endColorstr='#173039',GradientType=0 ); /* IE6-9 */
+}
+.navbar{
+  border-bottom:1px solid #fbfbfa;
+}
+.navbar-inner {
+  background:#1b3842;
+  /*border-top:1px solid #FFF;*/
+  border-top:1px solid rgba(255,255,255,0.1);
+  border-bottom:4px solid #d1ceb1;
+  -moz-box-shadow:0 -4px 7px rgba(0, 0, 0, 0.075);
+  -webkit-box-shadow:0 -4px 7px rgba(0, 0, 0, 0.075);
+  box-shadow:0 -4px 7px rgba(0, 0, 0, 0.075);
+  min-height:34px;
+  border-radius:0;
+}
+.navbar .nav > li {
+  background:url("../images/nav-separator.png") right bottom no-repeat transparent;
+}
+.navbar .nav > li > a {
+  text-transform:uppercase;
+  font-weight:bold;
+  color:#d3e9f0;
+  padding:7px 16px 9px;
+  text-shadow:1px 1px 0 rgba(0,0,0,0.1);
+}
+.navbar .nav > li.current > a{
+  background:#162d35;
+  color:#FFF;
+  -moz-box-shadow:0 0 8px rgba(0,0,0,0.5) inset;
+  -webkit-box-shadow:0 0 8px rgba(0,0,0,0.5) inset;
+  box-shadow:0 0 8px rgba(0,0,0,0.5) inset;
+  position:relative;
+}
+.navbar .nav > li.current > a:after{
+  content:"";
+  border-left:8px solid transparent;
+  border-right:8px solid transparent;
+  border-top:8px solid #162D35;
+  width:0;
+  position:absolute;
+  bottom:-5px;
+  height:0;
+  left:45%;
+}
+a.log-out{
+  border-radius:20px;
+  background:#18323b;
+  -moz-box-shadow:0 0 6px rgba(0,0,0,0.1) inset,1px 1px 0 rgba(255,255,255,0.1);
+  -webkit-box-shadow:0 0 6px rgba(0,0,0,0.1) inset,1px 1px 0 rgba(255,255,255,0.1);
+  box-shadow:0 0 6px rgba(0,0,0,0.1) inset,1px 1px 0 rgba(255,255,255,0.1);
+  color:#d3e9f0;
+  padding:3px 10px 3px 15px;
+  float:right;
+  font-weight:bold;
+  margin-top:10px;
+}
+a.log-out:hover{
+  text-decoration:none;
+  color:#FFF;
+}
+#sidebar .panel{
+  margin-bottom:18px;
+  background:#FFF;
+  border-radius:3px;
+  -moz-box-shadow:0 0 3px rgba(0,0,0,0.1);
+  -webkit-box-shadow:0 0 3px rgba(0,0,0,0.1);
+  box-shadow:0 0 3px rgba(0,0,0,0.1);
+  border:none;
+}
+.panel-head {
+  background: #306578; /* Old browsers */
+  background: -moz-linear-gradient(top,  #254e5d 0%, #173039 100%); /* FF3.6+ */
+  background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#254e5d), color-stop(100%,#173039)); /* Chrome,Safari4+ */
+  background: -webkit-linear-gradient(top,  #254e5d 0%,#173039 100%); /* Chrome10+,Safari5.1+ */
+  background: -o-linear-gradient(top,  #254e5d 0%,#173039 100%); /* Opera 11.10+ */
+  background: -ms-linear-gradient(top,  #254e5d 0%,#173039 100%); /* IE10+ */
+  background: linear-gradient(to bottom,  #254e5d 0%,#173039 100%); /* W3C */
+  filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#254e5d', endColorstr='#173039',GradientType=0 ); /* IE6-9 */
+  border-radius:3px 3px 0 0;
+}
+.panel-head h3{
+  color:#e9f9fe;
+  font-size:12px;
+  text-shadow:1px 1px 0 rbga(0,0,0,0.75);
+  padding:3px 10px;
+}
+.panel-body{
+  background:#FFF;
+  padding:10px;
+  -moz-border-radius:0 0 3px 3px;
+  -webkitborder-radius:0 0 3px 3px;
+  border-radius:0 0 3px 3px;
+}
+.dropdown-menu li > a:hover{
+  background:#173039;
+}
+.form-horizontal .form-actions{
+  background:none;
+  border:none;
+  margin:0;
+  padding-left:170px;
+}
+.btn.btn-primary{
+  background-color: #379fe1; /* Old browsers */
+  background-repeat:no-repeat;
+  background-image: -moz-linear-gradient(top,  #379fe1 0%, #0f7ebf 100%); /* FF3.6+ */
+  background-image: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#379fe1), color-stop(100%,#0f7ebf)); /* Chrome,Safari4+ */
+  background-image: -webkit-linear-gradient(top,  #379fe1 0%,#0f7ebf 100%); /* Chrome10+,Safari5.1+ */
+  background-image: -o-linear-gradient(top,  #379fe1 0%,#0f7ebf 100%); /* Opera 11.10+ */
+  background-image: -ms-linear-gradient(top,  #379fe1 0%,#0f7ebf 100%); /* IE10+ */
+  background-image: linear-gradient(to bottom,  #379fe1 0%,#0f7ebf 100%); /* W3C */
+  filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#379fe1', endColorstr='#0f7ebf',GradientType=0 ); /* IE6-9 */
+  font-weight:bold;
+  padding:5px 15px;
+  letter-spacing:0.1px;
+  text-shadow:1px 1px 0 rgba(0,0,0,0.25);
+  color:#FFF;
+}
+.btn-primary:hover{
+  background-color:#0f7ebf;
+}
+.btn-primary:hover, .btn-primary:active, .btn-primary.active, .btn-primary.disabled, .btn-primary[disabled] {
+  background-color: #0f7ebf;
+}
+.btn.btn-primary:active,.btn.btn-primary.active{
+  background-color:#0f7ebf;
+}
+.btn-small{
+  padding:2px 10px;
+}
+.btn.active, .btn:active {
+  background:#E9E9E9;
+  -webkit-box-shadow:0 1px 2px rgba(0, 0, 0, 0.1) inset, 0 1px 2px rgba(0, 0, 0, 0.05);
+  -moz-box-shadow:0 1px 2px rgba(0, 0, 0, 0.1) inset, 0 1px 2px rgba(0, 0, 0, 0.05);
+  box-shadow:0 1px 2px rgba(0, 0, 0, 0.1) inset, 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+.alignRight{
+  text-align:right;
+}
+.login-form{
+  margin-top:36px;
+  float:left;
+}
+.login-form label{
+  font-weight:bold;
+}
+/** User picture **/
+.welcome-area{
+  float:right;
+  color:#7dbedc;
+  font-size:11px;
+}
+.welcome-area .userAvatar img{
+  padding:2px;
+  background:#FFF;
+  background:rgba(255,255,255,0.9);
+  -moz-box-shadow:1px 1px 2px rgba(0,0,0,0.4);
+  -webkit-box-shadow:1px 1px 2px rgba(0,0,0,0.4);
+  box-shadow:1px 1px 2px rgba(0,0,0,0.4);
+  -moz-border-radius:2px;
+  -webkit-border-radius:2px;
+  border-radius:2px;
+  margin-right:7px;
+}
+.welcome-area .userName{
+  color:#D3E9F0;
+  font-weight:bold;
+}
+ul.legend-list{
+  list-style:none;
+  margin-left:0;
+}
+ul.legend-list li{
+  line-height:21px;
+}
+ul.legend-list li img{
+  margin-right:3px;
+}
+span.bread-separator{
+  color:#999;
+  margin:0 3px;
+}
+/*** Departamental Clerkship Schedule ***/
+.select-dep form{
+  padding:15px;
+  background:#FAFAFA;
+  -webkit-border-radius:5px;
+  -moz-border-radius:5px;
+  border-radius:5px;
+  -moz-box-shadow:1px 1px 0 rgba(0,0,0,0.1);
+  -webkit-box-shadow:1px 1px 0 rgba(0,0,0,0.1);
+  box-shadow:1px 1px 0 rgba(0,0,0,0.1);
+}
+.select-dep .control-group {
+  margin-bottom:0;
+}
+.select-dep form label{
+  font-weight:bold;
+}
+form legend.content-subheading{
+  margin-bottom:0;
+  line-height:1.5;
+  border:none;
+}
+/*** End dep clerkship schedule ***/
+
+/*** Courses ***/
+ul.course-list {
+  list-style-type:square;
+}
+p.info-not-available{
+  margin-bottom:0;
+  padding-top:5px;
+  font-size:11px;
+  color:#999;
+}
+/*** MSPR page ****/
+.mspr-box form{
+  margin-bottom:0;
+
+}
+.mspr-box{
+  min-height:95px;
+}
+span.or{
+  color:#646253;
+  display:inline-block;
+  background:#faf8ec;
+  border-radius:50px;
+  padding:15px;
+  font-style:italic;
+  font-weight:bold;
+}
+label#deadline_text{
+  width:143px !important;
+}
+ul.quiz-questions-list {
+  margin:0;
+}
+/* Flexgrid */
+.flexigrid div.pDiv input,.flexigrid div.pDiv select {
+  width:auto;
+  height:auto;
+  padding:2px;
+  line-height:1;
+}
+/***** Footer *****/
+footer#main-footer .container{
+  text-align:center;
+  margin:18px auto;
+}
+
+ul.public-announcements {
+list-style-type:none;
+margin:0;
+padding:4px 10px 10px;
+padding:0;
+}

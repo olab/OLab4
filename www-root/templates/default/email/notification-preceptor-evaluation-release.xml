@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates>
+    <template lang="en">
+        <subject>New %UC_CONTENT_TYPE_NAME% [%EVENT_TITLE%] available for completion</subject>
+        <body>
+A new %CONTENT_TYPE_NAME% has become available for completion in the last 24 hours. 
+
+Evaluation of your preceptors provides valuable feedback about your clinical placement, to ensure that we continue to provide a quality educational experience and identify opportunities for improvement. All preceptor evaluations are confidential. Only pooled evaluation data for the entire class is provided to the preceptors upon class graduation in the spring. Preceptors appreciate feedback about their roles as educators and mentors.
+ 
+Please evaluate between 2 and 4 preceptors which whom you worked most closely during your rotation.
+ 
+Timely completion of evaluations is a component of professionalism.
+
+Further details regarding this %CONTENT_TYPE_SHORTNAME% can be found below:
+
+Title: %CONTENT_TITLE%
+
+Description: %CONTENT_BODY%
+
+%UC_CONTENT_TYPE_SHORTNAME% Start: %CONTENT_START%
+%UC_CONTENT_TYPE_SHORTNAME% Finish: %CONTENT_FINISH%
+
+The %CONTENT_TYPE_SHORTNAME% can be found here: 
+%URL%
+
+Regards,
+
+The %APPLICATION_NAME% team,
+%ENTRADA_URL%
+        </body>
+    </template>
+</templates>

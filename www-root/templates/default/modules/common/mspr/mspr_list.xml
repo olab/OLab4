@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates>
+	<template lang="en">
+		<![CDATA[
+		<ul class="mspr-list %CLASS%" %ID%>
+			%CONTENT%
+		</ul>
+		]]>
+	</template>
+</templates>

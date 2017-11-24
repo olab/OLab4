@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates>
+	<template lang="en" type="approve">
+		<![CDATA[
+		<form class="approve_form" action="%FORM_URL%" method="post">
+			<input type="hidden" name="user_id" value="%USER_ID%"></input>
+			<input type="hidden" name="entity_id" value="%ENTITY_ID%"></input>
+			<input type="hidden" name="action" value="Approve"></input>
+			<input type="image" alt="Approve Button" title="Approve" src="%IMAGE_DIR%/btn-approve.gif"></input>
+		</form>
+		]]>
+	</template>
+	<template lang="en" type="unapprove">
+		<![CDATA[
+		<form class="unapprove_form" action="%FORM_URL%" method="post">
+			<input type="hidden" name="user_id" value="%USER_ID%"></input>
+			<input type="hidden" name="entity_id" value="%ENTITY_ID%"></input>
+			<input type="hidden" name="action" value="Unapprove"></input>
+			<input type="image" alt="Unapprove Button" title="Unapprove" src="%IMAGE_DIR%/btn-unapprove.gif"></input>
+		</form>
+		]]>
+	</template>
+	<template lang="en" type="reject">
+		<![CDATA[
+		<form class="reject_form" action="%FORM_URL%" method="post">
+			<input type="hidden" name="user_id" value="%USER_ID%"></input>
+			<input type="hidden" name="entity_id" value="%ENTITY_ID%"></input>
+			<input type="hidden" name="action" value="Reject"></input>
+			<input type="image" alt="Reject Button" title="Reject" src="%IMAGE_DIR%/btn-delete.gif"></input>
+		</form>
+		]]>
+	</template>
+	<template lang="en" type="edit">
+		<![CDATA[
+		<form class="edit_form" action="%FORM_URL%" method="post">
+			<input type="hidden" name="user_id" value="%USER_ID%"></input>
+			<input type="hidden" name="entity_id" value="%ENTITY_ID%"></input>
+			<input type="hidden" name="action" value="Edit"></input>
+			<input type="image" alt="Edit Button" title="Edit" src="%IMAGE_DIR%/btn-edit.gif"></input>
+		</form>
+		]]>
+	</template>
+	<template lang="en" type="remove">
+		<![CDATA[
+		<form class="remove_form" action="%FORM_URL%" method="post">
+			<input type="hidden" name="user_id" value="%USER_ID%"></input>
+			<input type="hidden" name="entity_id" value="%ENTITY_ID%"></input>
+			<input type="hidden" name="action" value="Remove"></input>
+			<input type="image" alt="Remove Button" title="Remove" src="%IMAGE_DIR%/btn-delete.gif"></input>
+		</form>
+		]]>
+	</template>
+</templates>

@@ -1,0 +1,9 @@
+An administrator has reviewed your deficiency plan for the [%ROTATION_TITLE%] rotation. Unfortunately, the plan did not fulfill all requirements. Please visit the deficiency plan page (linked below) to review the comments left by the administrator and make any necessary changes to your plan as soon as possible.
+
+This deficiency plan may be viewed here:
+%DEFICIENCY_PLAN_URL%
+
+Regards,
+
+The %APPLICATION_NAME% team,
+%ENTRADA_URL%

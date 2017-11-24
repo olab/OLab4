@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates>
+    <template lang="en">
+        <subject>%EVALUATOR_FULLNAME% - %UC_CONTENT_TYPE_NAME% [%CONTENT_TITLE%] - Response(s) Below Mandatory Threshold</subject>
+        <body>
+A %CONTENT_TYPE_NAME% has been completed by a user [%EVALUATOR_FULLNAME%] in which at least one response was below the minimum threshold for that question. 
+			
+Further details regarding this user's completed %CONTENT_TYPE_SHORTNAME% can be found below:
+
+Title: %CONTENT_TITLE%
+
+The completed %CONTENT_TYPE_SHORTNAME% can be found here: 
+%URL%
+
+Regards,
+
+The %APPLICATION_NAME% team,
+%ENTRADA_URL%
+        </body>
+    </template>
+</templates>

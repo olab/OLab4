@@ -1,0 +1,37 @@
+/* 
+    Document   : jquery.audienceselector.css
+    Created on : Nov 6, 2014, 9:20:34 AM
+    Author     : Ryan Warner <rw65@queensu.ca>
+    Description:
+        CSS corresponding to jquery.audienceselector.js
+*/
+
+.audience-selector-container {
+    position:absolute;
+    z-index:2051!important;
+    background:#fff;
+    width:218px;
+    height:200px;
+    border:1px solid #ccc;
+    border-top-width: 0px;
+    border-radius: 0px 0px 5px 5px;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.075) inset;
+    overflow-x:hidden;
+    overflow-y:scroll;
+}
+.audience-selector-list {
+    list-style:none;
+    margin:0px;
+    padding:0px;
+}
+.audience-selector-list .audience-selector-item {
+    padding:4px 6px;
+}
+.audience-selector-list .audience-selector-item:hover {
+    cursor:pointer;
+    background:#eee;
+}
+li.error-adding-member {
+    color: #CC0000;
+    font-weight: 800;
+}

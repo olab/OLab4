@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates>
+	<template lang="en">
+		<![CDATA[
+			<form class="edit_data">
+				<input type="hidden" name="group_name" value="%GROUP_NAME%" />
+				<input type="hidden" name="university" value="%UNIVERSITY%" />
+				<input type="hidden" name="location" value="%LOCATION%" />
+				<input type="hidden" name="start_month" value="%START_MONTH%" />
+				<input type="hidden" name="end_month" value="%END_MONTH%" />
+				<input type="hidden" name="start_year" value="%START_YEAR%" />
+				<input type="hidden" name="end_year" value="%END_YEAR%" />
+			</form>
+			<span class="label">
+				Details: 
+			</span>
+			<p class="data">
+				%DETAILS%
+			</p>
+			<span class="label">
+				Period: 
+			</span>
+			<span class="data">
+				%PERIOD%
+			</span>
+		]]>
+	</template>
+</templates>

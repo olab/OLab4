@@ -1,0 +1,87 @@
+thead h3 {
+    line-height: 24px;
+}
+.odd-row {
+    background-color: #ffffff;
+}
+
+.even-row {
+    background-color: #f9f9f9;
+}
+.group-container {
+    background:#E4E4E4;
+    padding:5px 5px;
+    margin:10px 0px;
+    border:1px solid rgba(0, 0, 0, 0.2);
+    border-radius:5px;
+}
+
+.group-question {
+    background:#fff;
+    padding:10px 20px;
+    margin:10px 0px;
+    border:1px solid rgba(0, 0, 0, 0.075);
+    border-radius:5px;
+}
+
+.group-answer {
+    vertical-align: top;
+}
+
+.group-actions {
+    vertical-align: top;
+    text-align: right;
+}
+
+.group-answer input {
+    margin-bottom: 10px;
+}
+
+.sortable-placeholder {
+    border: 1px solid red;
+    background-color: lightgoldenrodyellow;
+}
+
+tr.group-controls td {
+    background-color: #EFEFEF;
+    border-top: 1px solid #DDDDDD;
+}
+
+.sortable-group-item {
+    background-color: #FFFFFF;
+}
+
+.ind-drag.sortable-group-item {
+    padding-left: 20px !important;
+    background-color: white;
+}
+
+.drag {
+    border-radius:2px;
+    padding:5px;
+    column-rule: #777777;
+    font-size: 10px
+}
+
+table tr.group-answer-input td {
+    text-align: center;
+    padding:10px 10px 10px 10px;
+}
+.group-table tbody.ui-state-default:first-child {
+    border-top: 0;
+}
+.group-table tbody.ui-state-default:last-child {
+    border-bottom: 0;
+}
+
+table.group-table .btn-group {
+    margin: 2px 2px 2px 0;
+}
+table.group-table .btn.active, table.group-table .btn.active:hover {
+    background: #00a8bc;
+}
+
+
+li.permission-error {
+    color: red;
+}

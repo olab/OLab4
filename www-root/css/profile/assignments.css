@@ -1,0 +1,115 @@
+.tableList i {
+    margin-left: 5px;
+}
+
+.assignment-file-upload, .assignment-comment {
+    padding-top: 20px;
+}
+
+.assignment-file-upload i, .page-action i, .assignment-comment i {
+    margin-right: 5px;
+}
+
+.img-comments {
+    float: left;
+}
+.img-comments img{
+    width: 32px;
+    height: 32px;
+}
+
+.middle-comments {
+    margin-left: 50px;
+    width: 200px;
+}
+
+.comment-right {
+    float:right;
+    margin-top: -30px;
+}
+
+.comment-right a{
+    margin:0px 5px 0px 5px;
+}
+
+.discussions td {
+    border-bottom: 0px !important;
+}
+
+.discussions tr:last-child {
+    border-bottom: 1px solid #ebebeb !important;
+}
+
+.assignment_comment_edit, .assignment_comment_delete, .assignment_file_delete {
+    cursor: pointer;
+}
+
+#assignment_file {
+    float: left;
+}
+
+.description {
+    background: #f4f4f4;
+    border: 3px dashed #dcdcdc;
+    text-align: center;
+    height:165px;
+    width:485px;
+    padding:20px;
+}
+
+.decription-large {
+    font-size: 18px;
+    margin-top: 50px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 500px;
+}
+
+.decription-medium {
+    font-size: 14px;
+}
+
+.decription-small {
+    font-size: 12px;
+}
+
+.expandable {
+    height: 50px !important;
+    width: 95% !important;
+}
+
+.upload-progress-bar {
+    height: 100%;
+    color: #ffffff;
+    text-align: center;
+    font-weight: bold;
+    line-height: 30px; /* same as #progressBar height if we want text middle aligned */
+    width: 100%;
+    background-color: #2f79b8; border-radius: 5px;
+}
+
+.modal-footer {
+    background-color: #FFF !important;
+}
+
+table.tableList thead tr td.sortedASC, table.tableList thead tr td.sortedDESC, table.tableList thead tr td {
+    background: #ffffff;
+    border-radius: 3px;
+}
+
+table.tableList {
+    border-collapse: collapse;
+}
+
+table.tableList tr td.title {
+    border-left: 1px solid #dddddd;
+}
+
+input[type=file] {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 330px;
+}
+

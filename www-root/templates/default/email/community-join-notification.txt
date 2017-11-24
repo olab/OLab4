@@ -1,0 +1,14 @@
+A new member [%AUTHOR_FULLNAME%] has just joined the community "%COMMUNITY_TITLE%".
+
+This user's profile can be found here: 
+%URL%
+
+Unsubscribing:
+--------------
+
+You can unsubscribe at any time by logging into the system, by visiting the "Notifications" tab on %UNSUBSCRIBE_URL% and unchecking the "Members Join/Leave" checkbox under "%COMMUNITY_TITLE%".
+
+Regards,
+
+The %APPLICATION_NAME% team,
+%ENTRADA_URL%

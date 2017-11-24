@@ -1,0 +1,108 @@
+.timeline-container {
+    position: relative;
+    overflow: hidden;
+}
+
+.timeline-copyright {
+    position: absolute;
+    bottom: 0px;
+    left: 0px;
+    z-index: 1000;
+    cursor: pointer;
+}
+
+.timeline-message-container {
+    position:   absolute;
+    top:        30%;
+    left:       35%;
+    right:      35%;
+    z-index:    1000;
+    display:    none;
+}
+.timeline-message {
+    font-size:      120%;
+    font-weight:    bold;
+    text-align:     center;
+}
+.timeline-message img {
+    vertical-align: middle;
+}
+
+.timeline-band {
+    position:   absolute;
+    background: #eee;
+    z-index:    10;
+}
+
+.timeline-band-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+
+.timeline-band-input {
+    position:   absolute;
+    top:        -10em;
+    left:       -10em;
+    width:      1em;
+    height:     1em;
+    overflow:   hidden;
+    z-index:    0;
+}
+.timeline-band-input input{
+    width:      0;
+}
+
+.timeline-band-layer {
+    position:   absolute;
+    width:      100%;
+    height:     100%;
+}
+
+.timeline-band-layer-inner {
+    position:   relative;
+    width:      100%;
+    height:     100%;
+}
+
+.timeline-band-layer-inner {
+  cursor: move;
+  cursor: -webkit-grab;
+  cursor:-moz-grab;
+}
+.timeline-band-layer-inner[name="events"] {
+    height: 90%;
+    overflow-y: scroll;
+    overflow-x: hidden;
+}
+.all{
+    color:red;
+    padding:20px;
+    background:green;
+}
+.timeline-band-layer-inner[name="events"] div {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height:1;
+}
+.timeline-overflow-shadow{
+    box-shadow: inset 0px  12px 18px -10px #2f5d7c,
+                inset 0px -12px 18px -10px #2f5d7c;
+}
+.timeline-band-layer table,
+.timeline-band-layer tr,
+.timeline-band-layer td,
+.timeline-band-layer > div,
+.timeline-ether-marker-bottom {
+    user-select: none;
+    -moz-user-select: none;
+    -khtml-user-select: none;
+    -webkit-user-select: none;
+    -o-user-select: none;
+}
+.timeline-dragging div{
+  cursor: -webkit-grabbing;
+  cursor:-moz-grabbing;  
+}

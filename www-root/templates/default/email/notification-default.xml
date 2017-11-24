@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates>
+    <template lang="en">
+        <subject>New Comment posted to an %UC_CONTENT_TYPE_NAME% [%CONTENT_TITLE%]</subject>
+        <body>
+%AUTHOR_FULLNAME% has just posted a new comment on an %CONTENT_TYPE_NAME% [%CONTENT_TITLE%]:
+
+----------------------------------------------------------------------
+%CONTENT_BODY%
+----------------------------------------------------------------------
+
+The discussion can be found here: 
+%URL%
+
+Unsubscribing:
+--------------
+
+You have received this notification because you requested to be notified when additional comments were made on this %CONTENT_TYPE_NAME%. You can unsubscribe at any time by visiting %UNSUBSCRIBE_URL%, or clicking "Unsubscribe to E-Mail Notifications" on the %CONTENT_TYPE_NAME% page. 
+
+If you would prefer to receive notifications for this %CONTENT_TYPE_NAME% in "digest mode", please visit %DIGEST_URL%, or toggle it from your "My Profile" page under "Manage My Notifications". This will ensure that you are only notified once per day when new comments are made.
+
+Regards,
+
+The %APPLICATION_NAME% team,
+%ENTRADA_URL%
+        </body>
+    </template>
+</templates>
