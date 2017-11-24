@@ -113,7 +113,6 @@ COPY mariadb/olab.sql /tmp
 # Run any code set up steps
 COPY code-setup/code-setup.sh /tmp
 RUN chmod +x /tmp/code-setup.sh 
-RUN /tmp/code-setup.sh 
 
 COPY mariadb/mariadb-start.sh /usr/bin
 RUN chmod +x /usr/bin/mariadb-start.sh
