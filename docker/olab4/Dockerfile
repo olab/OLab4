@@ -110,11 +110,12 @@ COPY mariadb/entrada.sql /tmp
 # Create the OLab database and load all the databases
 COPY mariadb/olab.sql /tmp
 
-COPY mariadb/mariadb-start.sh /usr/bin
-RUN chmod +x /usr/bin/mariadb-start.sh
-
 # Run any code set up steps
 COPY code-setup/code-setup.sh /tmp
 RUN chmod +x /tmp/code-setup.sh 
+RUN /tmp/code-setup.sh 
+
+COPY mariadb/mariadb-start.sh /usr/bin
+RUN chmod +x /usr/bin/mariadb-start.sh
 
 CMD ["/usr/bin/supervisord"]

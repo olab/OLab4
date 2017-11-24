@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 
-if [ ! -f /var/www/vhosts/olab4/composer.lock ]; then
-	cd /var/www/vhosts/olab4
+rm -Rf /var/www/vhosts/Olab4/www-root/core/storage/cache
+
+if [ ! -f /var/www/vhosts/Olab4/composer.lock ]; then
+	cd /var/www/vhosts/Olab4
 	composer update
 fi
-

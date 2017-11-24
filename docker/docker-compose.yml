@@ -10,5 +10,5 @@ services:
     volumes:
       - ./Data:/var/lib/mysql
       - ../..:/var/www/vhosts
-      - ./olab4/apache/vhosts.d:/etc/httpd/vhosts.d
+      - ./OLab4/apache/vhosts.d:/etc/httpd/vhosts.d
     restart: always
