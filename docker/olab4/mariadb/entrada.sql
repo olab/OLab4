@@ -19,4 +19,3 @@ GRANT ALL ON `entrada_clerkship`.* TO 'entrada'@'%';
 
 FLUSH PRIVILEGES;
 
-SOURCE /var/lib/mysql/entrada20171122_1316.sql;
