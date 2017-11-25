@@ -9,13 +9,13 @@ if [ ! -f /var/lib/mysql/ibdata1 ]; then
 
 	/usr/bin/mysqladmin -u root password password
 
-  touch /tmp/entrada.sql.started
-	/usr/bin/mysql -uroot -ppassword < /tmp/entrada.sql > /tmp/entrada.out
-  touch /tmp/entrada.sql.finished
+  touch /tmp/create-entrada-db.started
+	/usr/bin/mysql -uroot -ppassword < /tmp/create-entrada-db.sql > /tmp/create-entrada-db.out
+  touch /tmp/create-entrada-db.finished
 
-  touch /tmp/olab.sql.started
-	/usr/bin/mysql -uroot -ppassword < /tmp/olab.sql > /tmp/olab.out
-  touch /tmp/olab.sql.finished
+  touch /tmp/create-olab-db.started
+	/usr/bin/mysql -uroot -ppassword < /tmp/create-olab-db.sql > /tmp/create-olab-db.out
+  touch /tmp/create-olab-db.finished
 
 	pkill mysqld
 	sleep 5s

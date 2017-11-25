@@ -105,17 +105,15 @@ COPY supervisor/supervisord.conf /etc/supervisord.conf
 
 # Create the MariaDB entrada user account and default databases.
 COPY mariadb/entrada.cnf /etc/my.cnf.d
-COPY mariadb/entrada.sql /tmp
-# Create the OLab database and load all the databases
-COPY mariadb/olab.sql /tmp
+COPY mariadb/create-entrada-db.sql /tmp
+COPY mariadb/create-olab-db.sql /tmp
 
 # Run any code set up steps
-COPY code-setup/code-setup.sh /tmp
-RUN chmod +x /tmp/code-setup.sh 
-RUN /tmp/code-setup.sh
+COPY post-create/post-create.sh /tmp
+RUN chmod +x /tmp/post-create.sh 
 
 # Update PHP for XDEBUG
-COPY code-setup/php.ini /etc/php.d/90-xdebug.ini
+COPY post-create/php.ini /etc/php.d/90-xdebug.ini
 
 COPY mariadb/mariadb-start.sh /usr/bin
 RUN chmod +x /usr/bin/mariadb-start.sh
