@@ -114,6 +114,9 @@ COPY mariadb/olab.sql /tmp
 COPY code-setup/code-setup.sh /tmp
 RUN chmod +x /tmp/code-setup.sh 
 
+# Update PHP for XDEBUG
+COPY code-setup/php.ini /etc/php.d/90-xdebug.ini
+
 COPY mariadb/mariadb-start.sh /usr/bin
 RUN chmod +x /usr/bin/mariadb-start.sh
 
