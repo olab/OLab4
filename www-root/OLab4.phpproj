@@ -14,7 +14,7 @@
     <EnvName>Custom</EnvName>
     <PHPDevHostName>localhost</PHPDevHostName>
     <PHPDevAutoPort>true</PHPDevAutoPort>
-    <CustomServerUrl>http://olablocal/dev</CustomServerUrl>
+    <CustomServerUrl>http://olab4.dev</CustomServerUrl>
     <CustomXdebugPort>9000</CustomXdebugPort>
     <PublishEvent>None</PublishEvent>
     <DebugMappingMethod>Automatic</DebugMappingMethod>
