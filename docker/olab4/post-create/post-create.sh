@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -x 
+#set -x 
 
 rm -Rf /var/www/vhosts/OLab4/www-root/core/storage/cache/*
 
