@@ -10,18 +10,20 @@ if [ ! -f /var/www/vhosts/OLab4/composer.lock ]; then
   touch /tmp/composer.finished
 fi
 
-cd /var/lib/mysql
+cd /tmp
 
-if [ ! -f /var/lib/mysql/entrada_data.sql ]; then  
-  wget http://www.olab.ca:26000/demo/entrada_data.sql
-  touch /tmp/entrada_data.start
-  mysql -uroot -ppassword < /var/lib/mysql/entrada_data.sql
-  touch /tmp/entrada_data.finished
+if [ ! -f entrada_data.sql ]; then  
+  wget http://www.olab.ca:26000/demo/entrada_data.sql.gz
+  gunzip entrada_data.sql.gz
+  touch entrada_data.start
+  mysql -uroot -ppassword < entrada_data.sql
+  touch entrada_data.finished
 fi
 
-if [ ! -f /var/lib/mysql/openlabyrinth_data.sql ]; then
-  wget http://www.olab.ca:26000/demo/openlabyrinth_data.sql
-  touch /tmp/openlabyrinth_data.start
-  mysql -uroot -ppassword < /var/lib/mysql/openlabyrinth_data.sql
-  touch /tmp/openlabyrinth_data.finished
+if [ ! -f openlabyrinth_data.sql ]; then
+  wget http://www.olab.ca:26000/demo/openlabyrinth_data.sql.gz
+  gunzip entrada_data.sql.gz
+  touch openlabyrinth_data.start
+  mysql -uroot -ppassword < openlabyrinth_data.sql
+  touch openlabyrinth_data.finished
 fi 
