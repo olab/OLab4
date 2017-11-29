@@ -22,7 +22,7 @@ fi
 
 if [ ! -f openlabyrinth_data.sql ]; then
   wget http://www.olab.ca:26000/demo/openlabyrinth_data.sql.gz
-  gunzip entrada_data.sql.gz
+  gunzip openlabyrinth_data.sql.gz
   touch openlabyrinth_data.start
   mysql -uroot -ppassword < openlabyrinth_data.sql
   touch openlabyrinth_data.finished
