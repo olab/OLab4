@@ -1,4 +1,10 @@
-# Welcome to Entrada ME
+# Welcome to OLab4
+
+OLab4 is an open source web-based education research platform, created to support a variety of approaches to data-informed educational research projects and programs. 
+
+The base data schemas for OLab4 are derived from OpenLabyrinth v3 (http://openlabyrinth.ca/), which grew from virtual patients to being able to support a wide variety of educational scenarios and other research activities. The system architecture of OLab4 has moved from an MVC model to being more ORM-based, and uses the Entrada curriculum management platform for some of its core functionality. 
+
+OLab4 uses Docker containers as a mechanism to simplify the installation and maintenance of the server and services. 
 
 Entrada is an open source web-based Integrated Teaching and Learning System created to allow teachers, learners and
 curriculum managers a simple way of accessing, interacting, and managing curriculum within an educational environment.
