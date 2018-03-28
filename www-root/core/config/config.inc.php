@@ -1,6 +1,6 @@
 <?php
 return array (
-  'entrada_url' => 'http://olab4.dev',
+  'entrada_url' => 'http://olab4.localhost',
   'entrada_relative' => '',
   'entrada_absolute' => '/var/www/vhosts/OLab4/www-root',
   'entrada_storage' => '/var/www/vhosts/OLab4/www-root/core/storage',
