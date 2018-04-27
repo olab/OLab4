@@ -207,12 +207,11 @@
         },
         {
             "name": "entradapackages/entrada-1x-api",
-            "version": "dev-develop",
-            "dist": {
-                "type": "path",
-                "url": "../entrada-1x-api",
-                "reference": "b602217440c43e548bbab27a122eb54d5df323d9",
-                "shasum": null
+            "version": "dev-release/me/1.12",
+            "source": {
+                "type": "git",
+                "url": "git@github.com:EntradaProject/entrada-1x-api.git",
+                "reference": "0591456a0e145f8cb8effea90809449f4118720e"
             },
             "require": {
                 "caffeinated/modules": "^4.1",
@@ -265,7 +264,8 @@
                 }
             ],
             "description": "Laravel-based Entrada API.",
-            "homepage": "https://gitlab.com/Entrada/entrada-1x-api"
+            "homepage": "https://gitlab.com/Entrada/entrada-1x-api",
+            "time": "2018-03-19T14:49:54+00:00"
         },
         {
             "name": "entradapackages/mysqldump-php",
@@ -1386,6 +1386,71 @@
                 "php"
             ],
             "time": "2018-03-25T17:35:16+00:00"
+        },
+        {
+            "name": "olab/OLab4-api",
+            "version": "dev-4.1dev",
+            "dist": {
+                "type": "path",
+                "url": "../OLab4-api",
+                "reference": "c70fe16059085a1bf05c0267cbf4eff73efc8771",
+                "shasum": null
+            },
+            "require": {
+                "caffeinated/modules": "^4.1",
+                "fzaninotto/faker": "^1.7",
+                "laravel/laravel": "5.4.*",
+                "php": ">=5.6.4",
+                "tymon/jwt-auth": "1.0.0-rc.1",
+                "wikimedia/composer-merge-plugin": "^1.4",
+                "zendframework/zendframework1": "~1.12.17"
+            },
+            "require-dev": {
+                "behat/behat": "^3.3",
+                "behat/mink-extension": "*",
+                "behat/mink-selenium2-driver": "*",
+                "jakub-onderka/php-console-highlighter": "^0.3.2",
+                "jakub-onderka/php-parallel-lint": "^0.9.2",
+                "phake/phake": "@stable",
+                "phpunit/dbunit": "^1.3",
+                "squizlabs/php_codesniffer": "^2.6"
+            },
+            "type": "library",
+            "extra": {
+                "merge-plugin": {
+                    "include": [
+                        "app/Modules/*/composer.json"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Entrada\\": "app/"
+                },
+                "classmap": [
+                    "database"
+                ]
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "Tests\\": "tests/"
+                }
+            },
+            "license": [
+                "ECL"
+            ],
+            "authors": [
+                {
+                    "name": "Matt Simpson",
+                    "homepage": "https://entrada.org",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Laravel-based Entrada API.",
+            "homepage": "https://gitlab.com/Entrada/entrada-1x-api",
+            "transport-options": {
+                "symlink": true
+            }
         },
         {
             "name": "openlss/lib-array2xml",
@@ -5869,7 +5934,8 @@
         "entradapackages/mysqldump-php": 20,
         "entradapackages/entrada-1x-api": 20,
         "tymon/jwt-auth": 5,
-        "phake/phake": 0
+        "phake/phake": 0,
+        "olab/olab4-api": 20
     },
     "prefer-stable": false,
     "prefer-lowest": false,

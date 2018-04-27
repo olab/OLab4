@@ -1,7 +1,7 @@
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Name>entrada-1x-me</Name>
+    <Name>OLab4</Name>
     <ProjectGuid>{765189bf-cce3-4416-baf9-d16dd9ff3cd7}</ProjectGuid>
     <RootNamespace>
     </RootNamespace>
@@ -20,6 +20,7 @@
     <DBGpProxyEnabled>false</DBGpProxyEnabled>
     <DBGpProxyPort>9001</DBGpProxyPort>
     <DebugPathMapping>\\olablocal\wwwroot;/var/www/vhosts/OLab/entrada-1x-me/www-root</DebugPathMapping>
+    <ProjectHome />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <IncludeDebugInformation>true</IncludeDebugInformation>
@@ -128,6 +129,7 @@
     <Compile Include="developers\unit-tests\phpunit.sh" />
     <Compile Include="developers\unit-tests\phpunit.xml" />
     <Compile Include="developers\phpcs.xml" />
+    <Compile Include="docker\olab4\phpMyAdmin\config.inc.php" />
     <Compile Include="www-root\api\v2\index.php" />
     <Compile Include="www-root\api\api-discussions.api.php" />
     <Compile Include="www-root\api\api-filter.api.php" />
@@ -6040,6 +6042,22 @@
     <Folder Include="developers\unit-tests\views" />
     <Folder Include="developers\unit-tests" />
     <Folder Include="developers" />
+    <Folder Include="docker\" />
+    <Folder Include="docker\Data\" />
+    <Folder Include="docker\Data\entrada\" />
+    <Folder Include="docker\Data\entrada_auth\" />
+    <Folder Include="docker\Data\entrada_clerkship\" />
+    <Folder Include="docker\Data\mysql\" />
+    <Folder Include="docker\Data\openlabyrinth\" />
+    <Folder Include="docker\Data\performance_schema\" />
+    <Folder Include="docker\Data\test\" />
+    <Folder Include="docker\olab4\" />
+    <Folder Include="docker\olab4\apache\" />
+    <Folder Include="docker\olab4\apache\vhosts.d\" />
+    <Folder Include="docker\olab4\mariadb\" />
+    <Folder Include="docker\olab4\phpMyAdmin\" />
+    <Folder Include="docker\olab4\post-create\" />
+    <Folder Include="docker\olab4\supervisor\" />
     <Folder Include="www-root\api\v2" />
     <Folder Include="www-root\api" />
     <Folder Include="www-root\authentication" />
@@ -6973,5 +6991,120 @@
     <Folder Include="www-root\templates\default" />
     <Folder Include="www-root\templates" />
     <Folder Include="www-root" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="docker\Data\00da75d4a9de-slow.log" />
+    <Content Include="docker\Data\aria_log.00000001" />
+    <Content Include="docker\Data\aria_log_control" />
+    <Content Include="docker\Data\entrada\db.opt" />
+    <Content Include="docker\Data\entrada_auth\db.opt" />
+    <Content Include="docker\Data\entrada_clerkship\db.opt" />
+    <Content Include="docker\Data\ibdata1" />
+    <Content Include="docker\Data\ib_logfile0" />
+    <Content Include="docker\Data\ib_logfile1" />
+    <Content Include="docker\Data\mysql\columns_priv.frm" />
+    <Content Include="docker\Data\mysql\columns_priv.MYD" />
+    <Content Include="docker\Data\mysql\columns_priv.MYI" />
+    <Content Include="docker\Data\mysql\db.frm" />
+    <Content Include="docker\Data\mysql\db.MYD" />
+    <Content Include="docker\Data\mysql\db.MYI" />
+    <Content Include="docker\Data\mysql\event.frm" />
+    <Content Include="docker\Data\mysql\event.MYD" />
+    <Content Include="docker\Data\mysql\event.MYI" />
+    <Content Include="docker\Data\mysql\func.frm" />
+    <Content Include="docker\Data\mysql\func.MYD" />
+    <Content Include="docker\Data\mysql\func.MYI" />
+    <Content Include="docker\Data\mysql\general_log.CSM" />
+    <Content Include="docker\Data\mysql\general_log.CSV" />
+    <Content Include="docker\Data\mysql\general_log.frm" />
+    <Content Include="docker\Data\mysql\help_category.frm" />
+    <Content Include="docker\Data\mysql\help_category.MYD" />
+    <Content Include="docker\Data\mysql\help_category.MYI" />
+    <Content Include="docker\Data\mysql\help_keyword.frm" />
+    <Content Include="docker\Data\mysql\help_keyword.MYD" />
+    <Content Include="docker\Data\mysql\help_keyword.MYI" />
+    <Content Include="docker\Data\mysql\help_relation.frm" />
+    <Content Include="docker\Data\mysql\help_relation.MYD" />
+    <Content Include="docker\Data\mysql\help_relation.MYI" />
+    <Content Include="docker\Data\mysql\help_topic.frm" />
+    <Content Include="docker\Data\mysql\help_topic.MYD" />
+    <Content Include="docker\Data\mysql\help_topic.MYI" />
+    <Content Include="docker\Data\mysql\host.frm" />
+    <Content Include="docker\Data\mysql\host.MYD" />
+    <Content Include="docker\Data\mysql\host.MYI" />
+    <Content Include="docker\Data\mysql\ndb_binlog_index.frm" />
+    <Content Include="docker\Data\mysql\ndb_binlog_index.MYD" />
+    <Content Include="docker\Data\mysql\ndb_binlog_index.MYI" />
+    <Content Include="docker\Data\mysql\plugin.frm" />
+    <Content Include="docker\Data\mysql\plugin.MYD" />
+    <Content Include="docker\Data\mysql\plugin.MYI" />
+    <Content Include="docker\Data\mysql\proc.frm" />
+    <Content Include="docker\Data\mysql\proc.MYD" />
+    <Content Include="docker\Data\mysql\proc.MYI" />
+    <Content Include="docker\Data\mysql\procs_priv.frm" />
+    <Content Include="docker\Data\mysql\procs_priv.MYD" />
+    <Content Include="docker\Data\mysql\procs_priv.MYI" />
+    <Content Include="docker\Data\mysql\proxies_priv.frm" />
+    <Content Include="docker\Data\mysql\proxies_priv.MYD" />
+    <Content Include="docker\Data\mysql\proxies_priv.MYI" />
+    <Content Include="docker\Data\mysql\servers.frm" />
+    <Content Include="docker\Data\mysql\servers.MYD" />
+    <Content Include="docker\Data\mysql\servers.MYI" />
+    <Content Include="docker\Data\mysql\slow_log.CSM" />
+    <Content Include="docker\Data\mysql\slow_log.CSV" />
+    <Content Include="docker\Data\mysql\slow_log.frm" />
+    <Content Include="docker\Data\mysql\tables_priv.frm" />
+    <Content Include="docker\Data\mysql\tables_priv.MYD" />
+    <Content Include="docker\Data\mysql\tables_priv.MYI" />
+    <Content Include="docker\Data\mysql\time_zone.frm" />
+    <Content Include="docker\Data\mysql\time_zone.MYD" />
+    <Content Include="docker\Data\mysql\time_zone.MYI" />
+    <Content Include="docker\Data\mysql\time_zone_leap_second.frm" />
+    <Content Include="docker\Data\mysql\time_zone_leap_second.MYD" />
+    <Content Include="docker\Data\mysql\time_zone_leap_second.MYI" />
+    <Content Include="docker\Data\mysql\time_zone_name.frm" />
+    <Content Include="docker\Data\mysql\time_zone_name.MYD" />
+    <Content Include="docker\Data\mysql\time_zone_name.MYI" />
+    <Content Include="docker\Data\mysql\time_zone_transition.frm" />
+    <Content Include="docker\Data\mysql\time_zone_transition.MYD" />
+    <Content Include="docker\Data\mysql\time_zone_transition.MYI" />
+    <Content Include="docker\Data\mysql\time_zone_transition_type.frm" />
+    <Content Include="docker\Data\mysql\time_zone_transition_type.MYD" />
+    <Content Include="docker\Data\mysql\time_zone_transition_type.MYI" />
+    <Content Include="docker\Data\mysql\user.frm" />
+    <Content Include="docker\Data\mysql\user.MYD" />
+    <Content Include="docker\Data\mysql\user.MYI" />
+    <Content Include="docker\Data\openlabyrinth\db.opt" />
+    <Content Include="docker\Data\performance_schema\cond_instances.frm" />
+    <Content Include="docker\Data\performance_schema\db.opt" />
+    <Content Include="docker\Data\performance_schema\events_waits_current.frm" />
+    <Content Include="docker\Data\performance_schema\events_waits_history.frm" />
+    <Content Include="docker\Data\performance_schema\events_waits_history_long.frm" />
+    <Content Include="docker\Data\performance_schema\events_waits_summary_by_instance.frm" />
+    <Content Include="docker\Data\performance_schema\events_waits_summary_by_thread_by_event_name.frm" />
+    <Content Include="docker\Data\performance_schema\events_waits_summary_global_by_event_name.frm" />
+    <Content Include="docker\Data\performance_schema\file_instances.frm" />
+    <Content Include="docker\Data\performance_schema\file_summary_by_event_name.frm" />
+    <Content Include="docker\Data\performance_schema\file_summary_by_instance.frm" />
+    <Content Include="docker\Data\performance_schema\mutex_instances.frm" />
+    <Content Include="docker\Data\performance_schema\performance_timers.frm" />
+    <Content Include="docker\Data\performance_schema\rwlock_instances.frm" />
+    <Content Include="docker\Data\performance_schema\setup_consumers.frm" />
+    <Content Include="docker\Data\performance_schema\setup_instruments.frm" />
+    <Content Include="docker\Data\performance_schema\setup_timers.frm" />
+    <Content Include="docker\Data\performance_schema\threads.frm" />
+    <Content Include="docker\docker-compose.yml" />
+    <Content Include="docker\olab4\apache\phpmyadmin.conf" />
+    <Content Include="docker\olab4\apache\vhosts.d\olab4.dev.conf" />
+    <Content Include="docker\olab4\Dockerfile" />
+    <Content Include="docker\olab4\mariadb\create-entrada-db.sql" />
+    <Content Include="docker\olab4\mariadb\create-olab-db.sql" />
+    <Content Include="docker\olab4\mariadb\entrada.cnf" />
+    <Content Include="docker\olab4\mariadb\mariadb-start.sh" />
+    <Content Include="docker\olab4\phpMyAdmin\phpmyadmin_install.sh" />
+    <Content Include="docker\olab4\post-create\php.ini" />
+    <Content Include="docker\olab4\post-create\post-create.sh" />
+    <Content Include="docker\olab4\supervisor\supervisord.conf" />
+    <Content Include="docker\README.md" />
   </ItemGroup>
 </Project>

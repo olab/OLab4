@@ -2,11 +2,13 @@
     "repositories": [
         {
             "type": "path",
-            "url": "../entrada-1x-api"
+            "url": "../OLab4-api",
+            "options": {
+                "symlink": true
+            }
         }
     ],
     "require": {
-        "entradapackages/entrada-1x-api": "dev-develop"
+        "olab/OLab4-api": "dev-4.1dev"
     }
 }
-
