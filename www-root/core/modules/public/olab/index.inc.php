@@ -55,21 +55,29 @@ if (!defined("PARENT_INCLUDED")) {
 <div id="content">
 
     <div id="olabContent" class="container" v-cloak>
+
         <div class="row">
 
             <div class="span9">
+
+                <div v-show="loadingList">
+                    <center>
+                        <img src="/apidev/images/loading.gif" /><p/>
+                    </center>
+                </div>
                 <table id='olabMapData' class='table table-striped table-bordered' style="table-layout: fixed;word-wrap: break-word;">
                     <thead></thead>
                     <tbody></tbody>
                 </table>
             </div>
 
-
             <div id="mapDetails" class="span3">
 
                 <div v-if="loadingDetail">
                     <div v-if="detailDataPending">
-                        <h4>Loading...</h4>
+                        <center>
+                            <img src="/apidev/images/loading.gif" />
+                        </center>
                     </div>
                     <div v-else>
                         <h4>Map Details</h4>
