@@ -32,10 +32,13 @@ class Views_Assessments_Forms_Items_FreeTextComment extends Views_Assessments_Fo
      */
     protected function renderView($options = array()) {
         global $translate;
-        $value = Entrada_Assessments_Forms::getItemComment($this->element, $this->progress);
+        $value = html_decode(Entrada_Assessments_Forms::getItemComment($this->element, $this->progress));
         $is_disabled = @$options["disabled"] ? true : false;
         ?>
         <div class="assessment-horizontal-choice-item item-container" data-item-id="<?php echo $this->item["item_id"]; ?>" data-comment-type="<?php echo html_encode($this->item["comment_type"]); ?>">
+
+            <?php $this->buildItemDisabledOverlay(); ?>
+
             <table class="item-table <?php echo str_replace("_", "-", $this->item["shortname"]) ?>">
 
                 <?php $this->buildItemHeader(); ?>

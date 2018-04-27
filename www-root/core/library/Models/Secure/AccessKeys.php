@@ -34,41 +34,6 @@ class Models_Secure_AccessKeys extends Models_Base {
         parent::__construct($arr);
     }
     
-    public static function fetchRowByID ($id = null) {
-        $self = new self();
-        
-        $constraints = array (
-            array(
-                "key" => "id",
-                "value" => $id,
-                "method" => "="
-            ),
-        );
-        
-        return $self->fetchRow($constraints);
-    }
-    
-    public static function fetchAllByResourceTypeResourceID ($resource_type, $resource_id = null, $deleted_date = NULL) {
-        $self = new self();
-        
-        $constraints = array (
-            array(
-                "key" => "resource_type",
-                "value" => $resource_type,
-                "method" => "="
-            ),
-            array(
-                "mode" => "AND",
-                "key" => "resource_id",
-                "value" => $resource_id,
-                "method" => "="
-            ),
-            array("key" => "deleted_date", "value" => ($deleted_date ? $deleted_date : NULL), "method" => ($deleted_date ? "<=" : "IS"))
-        );
-        
-        return $self->fetchAll($constraints);
-    }
-    
     public function getID() {
         return $this->id;
     }
@@ -108,4 +73,38 @@ class Models_Secure_AccessKeys extends Models_Base {
         return $this->update();
     }
     
+    public static function fetchRowByID ($id = null) {
+        $self = new self();
+
+        $constraints = array (
+            array(
+                "key" => "id",
+                "value" => $id,
+                "method" => "="
+            ),
+        );
+
+        return $self->fetchRow($constraints);
+    }
+
+    public static function fetchAllByResourceTypeResourceID ($resource_type, $resource_id = null, $deleted_date = NULL) {
+        $self = new self();
+
+        $constraints = array (
+            array(
+                "key" => "resource_type",
+                "value" => $resource_type,
+                "method" => "="
+            ),
+            array(
+                "mode" => "AND",
+                "key" => "resource_id",
+                "value" => $resource_id,
+                "method" => "="
+            ),
+            array("key" => "deleted_date", "value" => ($deleted_date ? $deleted_date : NULL), "method" => ($deleted_date ? "<=" : "IS"))
+        );
+
+        return $self->fetchAll($constraints);
+    }
 }

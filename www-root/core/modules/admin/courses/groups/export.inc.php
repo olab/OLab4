@@ -67,42 +67,79 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSE_GROUPS"))) {
 
 		$fp = fopen("php://output", "w");
 	
-		// Output CSV headings
-		fputcsv($fp, array("course_name" => "Course Name", "group_name" => "Group Name", "tutors" => "Tutors", "members" => "Group Members"), $csv_delimiter, $csv_enclosure);
-		
-		$row["course_name"] = $course_groups[0]["course_name"];
-		fputcsv($fp, $row, $csv_delimiter, $csv_enclosure);
-		
-		foreach ($course_groups as $course_group) {
-			$course_group_audience_object = new Models_Course_Group_Audience();
-			$course_group_contacts_object = new Models_Course_Group_Contact();
-			$course_group_audience = $course_group_audience_object->getExportGroupAudienceByGroupID($course_group["cgroup_id"]);
-			$course_group_contacts = $course_group_contacts_object->getExportGroupContactsByGroupID($course_group["cgroup_id"]);
-			$row = array();
-			$row["course_name"] = "";
-			$row["group_name"] = $course_group["group_name"];
-			fputcsv($fp, $row, $csv_delimiter, $csv_enclosure);
-			if ($course_group_contacts) {
-				foreach ($course_group_contacts as $course_group_contact) {
-					$row = array();
-					$row["course_name"] = "";
-					$row["group_name"] = "";
-					$row["tutors"] = $course_group_contact["fullname"];
-					fputcsv($fp, $row, $csv_delimiter, $csv_enclosure);
-				}
-			}
-			if ($course_group_audience) {
-				foreach ($course_group_audience as $course_group_member) {
-					$row = array();
-					$row["course_name"] = "";
-					$row["group_name"] = "";
-					$row["tutors"] = "";
-					$row["members"] = $course_group_member["fullname"];
-					fputcsv($fp, $row, $csv_delimiter, $csv_enclosure);
-				}
-			}
-		}
-		
+
+		switch ($_GET["method"]) {
+            case "printable-csv" :
+                // Output CSV headings
+                fputcsv($fp, array("course_name" => "Course Name", "group_name" => "Group Name", "tutors" => "Tutors", "learners" => "Group Learners"), $csv_delimiter, $csv_enclosure);
+
+                $row["course_name"] = $course_groups[0]["course_name"];
+                fputcsv($fp, $row, $csv_delimiter, $csv_enclosure);
+                foreach ($course_groups as $course_group) {
+                    $course_group_audience_object = new Models_Course_Group_Audience();
+                    $course_group_contacts_object = new Models_Course_Group_Contact();
+                    $course_group_audience = $course_group_audience_object->getExportGroupAudienceByGroupID($course_group["cgroup_id"]);
+                    $course_group_contacts = $course_group_contacts_object->getExportGroupContactsByGroupID($course_group["cgroup_id"]);
+                    $row = array();
+                    $row["course_name"] = "";
+                    $row["group_name"] = $course_group["group_name"];
+                    fputcsv($fp, $row, $csv_delimiter, $csv_enclosure);
+                    if ($course_group_contacts) {
+                        foreach ($course_group_contacts as $course_group_contact) {
+                            $row = array();
+                            $row["course_name"] = "";
+                            $row["group_name"] = "";
+                            $row["tutors"] = $course_group_contact["fullname"];
+                            fputcsv($fp, $row, $csv_delimiter, $csv_enclosure);
+                        }
+                    }
+                    if ($course_group_audience) {
+                        foreach ($course_group_audience as $course_group_member) {
+                            $row = array();
+                            $row["course_name"] = "";
+                            $row["group_name"] = "";
+                            $row["tutors"] = "";
+                            $row["learners"] = $course_group_member["fullname"];
+                            fputcsv($fp, $row, $csv_delimiter, $csv_enclosure);
+                        }
+                    }
+                }
+                break;
+
+            case "download-csv" :
+                // Output CSV headings
+                fputcsv($fp, array("group_name" => $translate->_("Group Name"), "tutors" => $translate->_("Tutors"), "tutors_number" => $translate->_("Tutors Number"), "learner_name" => $translate->_("Learner Name"), "learner_number" => $translate->_("Learner Number")), $csv_delimiter, $csv_enclosure);
+                foreach ($course_groups as $course_group) {
+                    $course_group_audience_object = new Models_Course_Group_Audience();
+                    $course_group_contacts_object = new Models_Course_Group_Contact();
+
+                    $tutor_names = array();
+                    $tutor_numbers = array();
+
+                    $course_group_audience = $course_group_audience_object->getExportGroupAudienceByGroupID($course_group["cgroup_id"]);
+                    $course_group_contacts = $course_group_contacts_object->getExportGroupContactsByGroupID($course_group["cgroup_id"]);
+
+                    if ($course_group_contacts) {
+                        foreach ($course_group_contacts as $course_group_contact) {
+                            $tutor_names[] = $course_group_contact["fullname"];
+                            $tutor_numbers[] = $course_group_contact["number"];
+                        }
+                    }
+
+                    if ($course_group_audience) {
+                        foreach ($course_group_audience as $course_group_member) {
+                            $row = array();
+                            $row["group_name"] = $course_group["group_name"];
+                            $row["tutors"] = implode("; ", $tutor_names);
+                            $row["tutors_number"] = implode("; ", $tutor_numbers);
+                            $row["learner_name"] = $course_group_member["fullname"];
+                            $row["learner_number"] = $course_group_member["number"];
+                            fputcsv($fp, $row, $csv_delimiter, $csv_enclosure);
+                        }
+                    }
+                }
+                break;
+        }
 		fclose($fp);
 		exit;
 	} else {

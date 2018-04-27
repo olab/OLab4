@@ -18,9 +18,9 @@
  * This class tests the functions in Models_Organisation.
  *
  * @author Organisation: The University of British Columbia
- * @author Unit: Faculty of Medicine
+ * @author Unit: MedIT - Faculty of Medicine
  * @author Developer: Brandon Nam <brandon.nam@ubc.ca>
- * @copyright Copyright 2014 Queen's University. All Rights Reserved.
+ * @copyright Copyright 2016 The University of British Columbia. All Rights Reserved.
  *
  */
 
@@ -44,12 +44,10 @@ class OrganisationTest extends BaseTestCase {
         global $db;
         $row = array("organisation_id" => 1, "organisation_title" => "Test Organisation");
 
-        $expectedQuery = "SELECT a.*
-                    FROM `".AUTH_DATABASE."`.`organisations` AS a
-                    ORDER BY a.`organisation_title` ASC";
         Phake::when($db)->GetAll(Phake::anyParameters())->thenReturn(array($row));
         $this->assertEquals(array(array("organisation_id" => 1, "organisation_title" => "Test Organisation")), Models_Organisation::fetchAllOrganisations());
-        Phake::verify($db)->GetAll($expectedQuery);
+        Phake::verify($db)->GetAll($this->stringContains("SELECT"));
+
     } 
 }
 if (!defined('PHPUnit_MAIN_METHOD')) {

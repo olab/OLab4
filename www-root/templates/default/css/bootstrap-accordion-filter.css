@@ -1,0 +1,105 @@
+#sidebarGroupAccordion {
+	margin: 0;
+}
+
+#sidebarGroupAccordion .panel {
+	margin-bottom: 1em;
+	background: #f1f1f1;
+	/* Apply box shadow */
+	-webkit-box-shadow: 10px 10px 8px -10px rgba(45,45,45,0.17);
+	-moz-box-shadow: 10px 10px 8px -10px rgba(45,45,45,0.17);
+	box-shadow: 10px 10px 8px -10px rgba(45,45,45,0.17);
+	/* Apply rounded corners */
+	-webkit-border-radius: 0.5em;
+	-moz-border-radius:0.5em;
+	border-radius: 0.5em;
+	cursor: pointer;
+	border: none;
+	padding: 0;
+}
+#sidebarGroupAccordion .panel h4 {
+	padding: 1em;
+	background-color: #f1f1f1;
+	margin-bottom: 0;
+	/* Apply rounded corners */
+	-webkit-border-radius: 0.5em;
+	-moz-border-radius:0.5em;
+	border-radius: 0.5em;
+	font-size: 12px;
+
+}
+#sidebarGroupAccordion .panel h4 .fa.pull-right {
+    margin-top: 0.5em;
+    margin-bottom: 1em;
+}
+
+#sidebarGroupAccordion .panel-collapse {
+	
+	/* Apply rounded corners */
+	-webkit-border-radius: 0.5em;
+	-moz-border-radius:0.5em;
+	border-radius: 0.5em;
+}
+
+
+#sidebarGroupSelect {
+	margin: 0.2em;
+}
+
+
+
+#sidebarGroupSelect .selectMenus {
+	background-color: #f1f1f1;
+	margin: 0 0 1em 0;
+	padding: 0;
+	/* Apply rounded corners */
+	-webkit-border-radius: 0.5em;
+	-moz-border-radius:0.5em;
+	border-radius: 0.5em;
+}
+#sidebarGroupSelect .selectMenus h3 {
+	margin-top: 0;
+	margin-bottom: 0;
+	line-height: 0;
+	padding: 1em;
+	background-color: #e5e5e5;
+}
+#sidebarGroupSelect .selectMenus button {
+	text-align: center;
+	margin: 1em;
+}
+
+#FilterSection  #actions {
+	padding: 1em 0 1em 0;
+	margin-bottom: 1em;
+}
+
+
+#FilterSection {
+	padding: 0;
+	border: none;
+	/* Apply rounded corners */
+	-webkit-border-radius: 0.5em;
+	-moz-border-radius:0.5em;
+	border-radius: 0.5em;
+}
+
+#contentFilters .alert {
+    margin: auto; 
+    display: inline;
+    margin-left:3px;
+    margin-bottom:3px;
+    color:#333333;
+}
+
+.panel-body{
+  background:#FFF;
+  padding:10px;
+  -moz-border-radius:0 0 3px 3px;
+  -webkitborder-radius:0 0 3px 3px;
+  border-radius:0 0 3px 3px;
+}
+
+.accordion-toggle label{
+	color: #000;
+}

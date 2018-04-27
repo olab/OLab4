@@ -220,7 +220,7 @@ class Views_Deprecated_Objective extends Views_Deprecated_Base {
         }
 
         $html = "";
-        $html .= "        <div id=\"assessment-item-list-wrapper\">\n";
+        $html .= "        <div id=\"assessment-item-list-wrapper\" class=\"pull-right\">\n";
         $html .= "            <a name=\"assessment-item-objective-list\"></a>\n";
         $html .= "            <h2 id=\"assessment-item-toggle\"  title=\"assessment item Objective List\" class=\"list-heading nocollapse\">Associated Curriculum Tags</h2>\n";
         $html .= "            <div id=\"assessment-item-objective-list\">\n";

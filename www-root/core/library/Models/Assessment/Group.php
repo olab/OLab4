@@ -56,6 +56,23 @@ class Models_Assessment_Group extends Models_Base {
         ));
     }
 
+    public static function fetchRowByCgroupIdAssessmentID($cgroup_id, $assessment_id) {
+        global $db;
+
+        $query = "SELECT * FROM `".DATABASE_NAME."`.`".static::$table_name."` a
+                    JOIN course_groups b
+                    ON a.cgroup_id = ?
+                    WHERE a.assessment_id = ?";
+
+        $results = $db->GetRow($query, [$cgroup_id, $assessment_id]);
+
+        if ($results) {
+            return $results;
+        }
+
+        return false;
+    }
+
     public static function fetchAllRecords() {
         $self = new self();
         return $self->fetchAll(array(array("key" => "agroup_id", "value" => 0, "method" => ">=")));

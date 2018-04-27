@@ -97,7 +97,9 @@ class Views_Exam_Question extends Views_Deprecated_Base {
     protected $element;
     protected $view_data = array();
     protected $distribution_data = array();
-    protected $response_answer, $progress, $post, $response, $allow_view, $type, $short_name, $display_style, $exam_mode, $echo_mode, $feedback, $highlight, $active_details;
+    protected $response_answer, $progress, $post, $response, $allow_view, $type, $short_name, $display_style, $exam_mode, $echo_mode, $feedback, $highlight, $active_details, $randomize_answers;
+
+    protected $exam_in_progress;
 
     public function __construct(Models_Exam_Question_Versions $question) {
         $this->question = $question;
@@ -123,11 +125,11 @@ class Views_Exam_Question extends Views_Deprecated_Base {
         $exam_elements = Models_Exam_Exam_Element::fetchAllByElementIDElementType($question_version->getID(), "question");
         $update_current_version = true;
 
-        //question version has been used on an exam, check if the exam's been taken yet.
+        // question version has been used on an exam, check if the exam's been taken yet.
         if (isset($exam_elements) && is_array($exam_elements)) {
             foreach ($exam_elements as $element) {
-                //if the question has already been used then there should be an entry in Exam_Progress_Responses
-                //we not checking if it's been answered yet as they might attempt to answer it while it's being updated.
+                // if the question has already been used then there should be an entry in Exam_Progress_Responses
+                // we not checking if it's been answered yet as they might attempt to answer it while it's being updated.
                 $exam_progress_response = Models_Exam_Progress_Responses::fetchAllByExamElementID($element->getExamElementID());
 
                 if (isset($exam_progress_response) && is_array($exam_progress_response) && !empty($exam_progress_response)) {
@@ -201,33 +203,31 @@ class Views_Exam_Question extends Views_Deprecated_Base {
                 $html .= "          <span class=\"question-number\" data-element-id=\"" . $element_id . "\">" . $element_order . ".</span>";
             }
             $html .= "      <span class=\"select-item select-question\">";
-            $html .= "          <i class=\"icon-select-item icon-select-question fa fa-square-o\" data-question-id=\"" . $question->getQuestionID() . "\" data-version-id=\"" . $question->getVersionID() . "\" data-version-count=\"" . $question->getVersionCount() . "\"></i>";
+            $html .= "          <i class=\"select-item-icon question-icon-select fa fa-square-o\" data-question-id=\"" . $question->getQuestionID() . "\" data-version-id=\"" . $question->getVersionID() . "\" data-version-count=\"" . $question->getVersionCount() . "\"></i>";
             $html .= "      </span>";
             $html .= "          <span class=\"question-type\">ID. " . $question->getQuestionID() . " Ver. " . $question->getVersionCount() . "</span>";
-
             $html .= "          <div class=\"pull-right\">";
             $html .= $this->buildHeaderEditButtons($question, $control_array);
-
             $html .= "        </div>";
             $html .= "      </td>";
             $html .= "  </tr>";
-            
+
             if ($this->element) {
                 $html .= "  <tr class=\"heading\">";
                 $html .= "      <td colspan=\"". $count ."\">";
                 $points = (NULL === $this->element->getPoints()) ? 1 : $this->element->getPoints();
 
                 $html .= "<div class=\"btn-group scoring\">
-                            <div class=\"btn-group scoring-method\">
+                                <div class=\"btn-group scoring-method\">
                                 <button class=\"btn btn-primary dropdown-toggle scoring-method inline ".($this->element->isScored() ? "state-scored" : "state-not-scored")."\" data-toggle=\"dropdown\">
-                                    ".($this->element->isScored() ? "Scored" : "Not Scored")."
-                                     <span class=\"caret\"></span>
-                                </button>
-                                <ul class=\"dropdown-menu\">
-                                    <li".($this->element->isScored() ? " class=\"active\"" : "")."><a class=\"scoring-option scored\" href=\"#\">Scored</a></li>
-                                    <li".($this->element->isScored() ? "" : " class=\"active\"")."><a class=\"scoring-option not-scored\" href=\"#\">Not Scored</a></li>
-                                </ul>
-                            </div>
+                                        ".($this->element->isScored() ? "Scored" : "Not Scored")."
+                                         <span class=\"caret\"></span>
+                                    </button>
+                                    <ul class=\"dropdown-menu\">
+                                        <li".($this->element->isScored() ? " class=\"active\"" : "")."><a class=\"scoring-option scored\" href=\"#\">Scored</a></li>
+                                        <li".($this->element->isScored() ? "" : " class=\"active\"")."><a class=\"scoring-option not-scored\" href=\"#\">Not Scored</a></li>
+                                    </ul>
+                                </div>
                             <div class=\"btn-group\">
                                 <div class=\"input-append\">
                                     <input class=\"points span6\" id=\"appendedInput\" type=\"text\" size=\"2\" name=\"points\" value=\"".$points."\">
@@ -432,12 +432,29 @@ class Views_Exam_Question extends Views_Deprecated_Base {
         $exam_id = false) {
         global $ENTRADA_ACL;
 
+        $this->exam_in_progress = false;
+        $exam                   = Models_Exam_Exam::fetchRowByID($exam_id);
+        if ($exam && is_object($exam)) {
+            $posts = Models_Exam_Post::fetchAllByExamID($exam_id);
+            if ($posts && is_array($posts) && !empty($posts)) {
+                foreach ($posts as $post) {
+                    $progress = Models_Exam_Progress::fetchAllStudentsByPostID($post->getID());
+
+                    if ($progress && is_array($progress) && !empty($progress)) {
+                        $this->exam_in_progress = true;
+                        break;
+                    }
+                }
+            }
+        }
+        $exam_in_progress   = $this->exam_in_progress;
+
         $groups = Models_Exam_Group_Question::fetchAllByVersionID($question->getVersionID());
         $edit = $ENTRADA_ACL->amIAllowed(new ExamQuestionResource($exam_element->getElementID(), true), "update");
         $related_versions = $question->fetchAllRelatedVersions();
         $highest_version  = $question->checkHighestVersion(0);
         $control_group = array();
-        if ($edit) {
+        if ($edit && !$exam_in_progress) {
             $control_group[]    = "<a class=\"flat-btn btn edit-item\" title=\"Edit Item\" href=\"" . ENTRADA_URL . "/admin/exams/questions?section=edit-question&id=" . $question->getQuestionID() . "&version_id=" . $exam_element->getElementID() . ($exam_id ? "&exam_id=" . $exam_id : "") . "\"><i class=\"fa fa-pencil\"></i></a>";
         }
         if ($display_style === "details") {
@@ -449,19 +466,20 @@ class Views_Exam_Question extends Views_Deprecated_Base {
         if (!empty($groups)) {
             $control_group[]    = "<a href=\"#\" title=\"View Linked Questions\" class=\"flat-btn btn btn-linked-question\"><i class=\"fa fa-link\"></i></a>";
         }
-        $control_group[]        = "<a class=\"flat-btn btn move\" title=\"Move\" href=\"#\"><i class=\"fa fa-arrows\"></i></a>";
+        if (!$exam_in_progress) {
+            $control_group[]        = "<a class=\"flat-btn btn move\" title=\"Move\" href=\"#\"><i class=\"fa fa-arrows\"></i></a>";
 
-        if (isset($related_versions) && is_array($related_versions) && !empty($related_versions)) {
-            $control_group[] = " <a href=\"#\" title=\"Select Related Version\" class=\"flat-btn btn dropdown-toggle related-questions" . ($highest_version ? "" : " updated-question-available") . "\" data-toggle=\"dropdown\"><i class=\"related-question-icon fa fa-exchange\" data-question-id=\"" . $question->getQuestionID() . "\" data-version-id=\"" . $question->getVersionID() . "\" data-version-count=\"" . $question->getVersionCount() . "\"></i></a>";
-        }
-        if (isset($related_versions) && is_array($related_versions) && !empty($related_versions)) {
-            $control_group[] = Views_Exam_Question::renderRelatedBrowser($related_versions);
+            if (isset($related_versions) && is_array($related_versions) && !empty($related_versions)) {
+                $control_group[] = " <a href=\"#\" title=\"Select Related Version\" class=\"flat-btn btn dropdown-toggle related-questions" . ($highest_version ? "" : " updated-question-available") . "\" data-toggle=\"dropdown\"><i class=\"related-question-icon fa fa-exchange\" data-question-id=\"" . $question->getQuestionID() . "\" data-version-id=\"" . $question->getVersionID() . "\" data-version-count=\"" . $question->getVersionCount() . "\"></i></a>";
+            }
+            if (isset($related_versions) && is_array($related_versions) && !empty($related_versions)) {
+                $control_group[] = Views_Exam_Question::renderRelatedBrowser($related_versions);
+            }
         }
 
-        $control_array = array(
+        return array(
             $control_group
         );
-        return $control_array;
     }
 
     public function buildDataAttrArray(Models_Exam_Question_Versions $question, Models_Exam_Exam_Element $exam_element) {
@@ -502,7 +520,7 @@ class Views_Exam_Question extends Views_Deprecated_Base {
 
     public function renderQuestionDetails(Models_Exam_Lu_Questiontypes $type, $count) {
         $question = $this->question;
-        $folder = Models_Exam_Question_Bank_Folders::fetchRowByID($question->getFolderID());
+        $folder = Models_Exam_Bank_Folders::fetchRowByID($question->getFolderID());
         if (isset($folder) && is_object($folder)) {
             $folder_name = $folder->getFolderTitle();
             $folder_url = ENTRADA_URL . "/admin/exams/questions?folder_id=" . $question->getFolderID();
@@ -584,7 +602,7 @@ class Views_Exam_Question extends Views_Deprecated_Base {
 
     public function renderListDetails(Models_Exam_Lu_Questiontypes $type, $count) {
         $question = $this->question;
-        $folder = Models_Exam_Question_Bank_Folders::fetchRowByID($question->getFolderID());
+        $folder = Models_Exam_Bank_Folders::fetchRowByID($question->getFolderID());
         if (isset($folder) && is_object($folder)) {
             $folder_name = $folder->getFolderTitle();
             $folder_url = ENTRADA_URL . "/admin/exams/questions?folder_id=" . $question->getFolderID();
@@ -633,9 +651,9 @@ class Views_Exam_Question extends Views_Deprecated_Base {
         $html = "<tr id=\"question-row-" . $question->getVersionID() ."\" class=\"exam-element question-row question\" data-version-id=\"" . $question->getVersionID() . "\"";
         $html .= $this->renderDataArray($data_attr_array);
         $html .= ">";
-        $html .= "<td class=\"span1 text-center\">
+        $html .= "<td class=\"span1 text-center q-list-edit\">
                     <span class=\"select-item select-question\">
-                        <i class=\"icon-select-item icon-select-question fa fa-square-o\" data-question-id=\"" . $question->getQuestionID() . "\" data-version-id = \"" . $question->getVersionID() . "\" data-version-count = \"" . $question->getVersionCount() . "\"></i>
+                        <i class=\"select-item-icon question-icon-select fa fa-square-o\" data-question-id=\"" . $question->getQuestionID() . "\" data-version-id = \"" . $question->getVersionID() . "\" data-version-count = \"" . $question->getVersionCount() . "\"></i>
                     </span>
                   </td>";
         if (isset($element_order)) {
@@ -675,6 +693,11 @@ class Views_Exam_Question extends Views_Deprecated_Base {
         return $html;
     }
 
+    /**
+     * @param $count
+     * @param null $correct_answer
+     * @return string
+     */
     public function renderFeedback($count, $correct_answer = NULL) {
         $question       = $this->question;
         $short_name     = $this->short_name;
@@ -746,16 +769,40 @@ class Views_Exam_Question extends Views_Deprecated_Base {
                             $comments = "Not graded yet";
                             $grader_date_formatted = "N/A";
                         }
+                        /*
 
+                        // Correct Text wont be displayed to learners anymore on the feedback
                         $correct_text = $question->getCorrectText();
 
                         if (!$correct_text) {
                             $correct_text = "N/A";
                         }
-
                         $html .= "<h5>Correct Answer: <span>" . (html_encode($correct_text)) . "</span></h5>";
+
+                        */
                         $html .= "<h5>Grader Comments: <span>" . html_encode($comments) . "</span></h5>";
                         $html .= "<h5>Grader: <span>" . $grader_date_formatted . "</span></h5>";
+                        break;
+                    case "match":
+                        $match_stems = $question->getMatchStems();
+                        $answers = $question->getQuestionAnswers();
+                        $correct_a = array();
+                        foreach ($match_stems as $mc) {
+                            $correct_option = Models_Exam_Question_Match_Correct::fetchRowByMatchID($mc->getID());
+                            $correct_order = $correct_option->getCorrect();
+                            foreach ($answers as $a) {
+                                if ($a->getOrder() == $correct_order) {
+                                    $correct_a[] = (
+                                        "<strong>" . $mc->getOrder() . ".</strong>" .
+                                        html_encode($mc->getMatchText()) .
+                                        "<br/><strong> - Correct match: </strong>" .
+                                        html_encode($a->getAnswerText())
+                                    );
+                                }
+                            }
+                        }
+                        $correct_a_text = implode("<br/>", $correct_a);
+                        $html .= "<h5>Correct Answer(s): <span><br/>" . ($correct_a_text) . "</span></h5>";
                         break;
                     default:
                         $html .= "<h5>Correct Answer: <span>" . (html_encode($correct_answer)) . "</span></h5>";
@@ -819,43 +866,46 @@ class Views_Exam_Question extends Views_Deprecated_Base {
      * @return string
      */
     public function getResponseColor($response, $answer) {
-        $feedback_array = $this->feedback;
-        $response_color = "";
-        $answer_response = Models_Exam_Progress_Response_Answers::fetchRowByAnswerElement($response->getID(), $answer->getID());
-        $adjustment     = Models_Exam_Adjustment::fetchRowByElementIDExamIDValue($response->getExamElementID(), $response->getExamID(), $answer->getID());
+        if ($response && is_object($response) && $answer && is_object($answer)) {
+            $feedback_array = $this->feedback;
+            $response_color = "";
+            $answer_response = Models_Exam_Progress_Response_Answers::fetchRowByAnswerElement($response->getID(), $answer->getID());
+            $adjustment     = Models_Exam_Adjustment::fetchRowByElementIDExamIDValue($response->getExamElementID(), $response->getExamID(), $answer->getID());
 
-        if (!$adjustment) {
-            if (isset($answer_response) && is_object($answer_response) && $answer_response->getResponseValue() == 1) {
-                if ($answer->getAdjustedCorrect($response->getExamElementID(), $response->getPostID()) === 1) {
-                    $response_color = " answer-correct";
+            if (!$adjustment) {
+                if (isset($answer_response) && is_object($answer_response) && $answer_response->getResponseValue() == 1) {
+                    if ($answer->getAdjustedCorrect($response->getExamElementID(), $response->getPostID()) === 1) {
+                        $response_color = " answer-correct";
+                    } else {
+                        $response_color = " answer-incorrect";
+                    }
                 } else {
-                    $response_color = " answer-incorrect";
+                    //they didn't click this option
+                    if ($answer->getAdjustedCorrect($response->getExamElementID(), $response->getPostID()) === 1) {
+                        $response_color = " answer-correct";
+                    }
                 }
             } else {
-                //they didn't click this option
-                if ($answer->getAdjustedCorrect($response->getExamElementID(), $response->getPostID()) === 1) {
-                    $response_color = " answer-correct";
+                // answer was adjusted after the exam
+                if ($adjustment && is_object($adjustment)) {
+                    switch ($adjustment->getType()) {
+                        case "correct":
+                            $response_color = " answer-correct";
+                            break;
+                        case "incorrect":
+                            $response_color = " answer-incorrect";
+                            break;
+                    }
                 }
             }
-        } else {
-            // answer was adjusted after the exam
-            if ($adjustment && is_object($adjustment)) {
-                switch ($adjustment->getType()) {
-                    case "correct":
-                        $response_color = " answer-correct";
-                        break;
-                    case "incorrect":
-                        $response_color = " answer-incorrect";
-                        break;
-                }
+
+            if ($feedback_array["incorrect"] === 1 && $response_color === " answer-correct") {
+                $response_color = "";
             }
-        }
 
-        if ($feedback_array["incorrect"] === 1 && $response_color === " answer-correct") {
-            $response_color = "";
+            return $response_color;
         }
-
-        return $response_color;
+        return false;
     }
 
     public function getResponseColorFNB($response_value, $possible_correct) {
@@ -956,11 +1006,11 @@ class Views_Exam_Question extends Views_Deprecated_Base {
         $html .= "            </tr>";
         if ($review) {
             $html .= "            <tr>";
-            $html .= "                <td colspan=\"". $count ."\">";
+            $html .= "                <td colspan=\"". $count ."\" class=\"learner_comments_checkbox\">";
             $html .= "                    <span class=\"btn learner_comments_mark_faculty_review" . ($checked ? " selected" : "") . "\">";
             $html .= "                        <i class=\"fa fa-2x"  . ($checked ? " fa-check-square-o" : " fa-square-o") . " \" data-element-id=\"" . $element_id . "\" data-response-id=\"" . $response_id . "\" data-question-id=\"" . $question->getQuestionID() . "\" data-version-id=\"" . $question->getVersionID() . "\" data-version-count=\"" . $question->getVersionCount() . "\"></i>";
             $html .= "                    </span>";
-            $html .= "                    <span class=\"learner_comments_text\"'>";
+            $html .= "                    <span class=\"learner_comments_text\">";
             $html .= "                        Mark question for faculty review";
             $html .= "                    </span>";
             $html .= "                </td>";
@@ -982,12 +1032,93 @@ class Views_Exam_Question extends Views_Deprecated_Base {
         return $html;
     }
 
+
+    /**
+     *  Inserts an intem into the array at the specified index
+     *
+     * @param array      $array
+     * @param int|string $position
+     * @param mixed      $insert
+     */
+    function array_insert(&$array, $position, $insert)
+    {
+        if (is_int($position)) {
+            array_splice($array, $position, 0, $insert);
+        } else {
+            $pos   = array_search($position, array_keys($array));
+            $array = array_merge(
+                array_slice($array, 0, $pos),
+                array($insert),
+                array_slice($array, $pos)
+            );
+        }
+    }
+
+    /**
+     *  Randomizes the order of answers if they aren't locked at a position
+     *
+     * @param array $answers
+     * @param int|string $question_id
+     * @param int|string $progress_id
+     *
+     * @return array
+     * */
+    public function randomizeAnswers($answers, $question_id, $progress_id) {
+        /*
+         *  Randomized answers should be in the same order they were loaded at the first time
+         *  So if the student Resume or go back one question the answers should stay in the same order.
+         *  To implement that I will use cookies to store the order of these answers
+         * */
+        $cookie_key = "ANSWER_ORDER_" . $question_id . "_" . $progress_id;
+        $final_answers = array();
+        if (isset($_COOKIE[$cookie_key])) {
+            $answers_generated_orders = json_decode($_COOKIE[$cookie_key]);
+            foreach ($answers_generated_orders as $answer_id) {
+                foreach ($answers as $answer) {
+                    if ($answer->getID() == $answer_id) {
+                        array_push($final_answers, $answer);
+                    }
+                }
+            }
+        } else {
+            //First lets separate the locked answers
+            $locked_answers = array();
+            foreach ($answers as $answer) {
+                if ($answer->getLocked()) {
+                    array_push($locked_answers, $answer);
+                }
+            }
+            //Get the unlocked answers from the original array and the shuffle them
+            foreach ($answers as $answer) {
+                if (!$answer->getLocked()) {
+                    array_push($final_answers, $answer);
+                }
+            }
+            shuffle($final_answers); //Here not locked answers will be randomized
+            // Now, add the locked answers back at their right position on the randomized array
+            foreach ($locked_answers as $locked_answer) {
+                $this->array_insert($final_answers, $locked_answer->getOrder(), $locked_answer);
+            }
+            //I need to reverse the array as well to keep the right position on the exam view
+            $final_answers =  array_reverse($final_answers);
+
+            //Now lets store the randomized answers in cookies
+            $answers_generated_orders = array();
+            foreach ($final_answers as $final_answer) {
+                array_push($answers_generated_orders, $final_answer->getID());
+            }
+            setcookie($cookie_key, json_encode($answers_generated_orders), time() + 43200);
+        }
+        return $final_answers;
+    }
+
+
     public function renderHorizontalChoiceSingleAnswer(
         Models_Exam_Question_Versions $question,
         $exam_mode = false,
         array $control_array = NULL,
         array $data_attr_array = NULL,
-        $display_style = 'details',
+        $display_style = "details",
         $echo_mode = true,
         Models_Exam_Progress $progress = NULL,
         Models_Exam_Progress_Responses $response = NULL,
@@ -1037,16 +1168,34 @@ class Views_Exam_Question extends Views_Deprecated_Base {
             $html .= ">";
 
             if ($answers) {
-                $alphas = range('A', 'Z');
+                $alphas = range("A", "Z");
                 $column_width = (100 / $count);
                 $correct_answer = $question->getCorrectQuestionAnswer();
+                $correct_o_r    = $this->correct;
                 $html .= $this->buildHeader($question, $count, $exam_mode, $control_array, $question_order_number, $type, $progress, $response, $feedback_array);
                 if ($this->allow_view == 1) {
                     $html .= "  <tr class=\"horizontal-answer-input question-answer-view\">";
                     $answer_count = 0;
+
+                    if ($this->randomize_answers && $exam_mode && empty($feedback_array)) {
+                        $answers = $this->randomizeAnswers($answers, $question->getID(), $progress->getID());
+                    }
+
                     foreach ($answers as $answer) {
+                        $response_color = "";
                         if (isset($feedback_array) && $feedback_array["score"] == 1 && $this->element->isScored()) {
                             $response_color = $this->getResponseColor($response, $answer);
+                        } elseif ($correct_o_r && is_array($correct_o_r) && !empty($correct_o_r)) {
+                            // $correct_o_r == $answer->getID()
+                            foreach ($correct_o_r as $id => $value) {
+                                if ($id == $answer->getID()) {
+                                    if ($value == "correct") {
+                                        $response_color = " answer-correct";
+                                    } elseif ($value == "incorrect") {
+                                        $response_color = " answer-incorrect";
+                                    }
+                                }
+                            }
                         }
 
                         $data_answer_attr_array = array(
@@ -1078,8 +1227,21 @@ class Views_Exam_Question extends Views_Deprecated_Base {
                     $answer_count = 0;
                     foreach ($answers as $answer) {
                         $highlight = Models_Exam_Question_Version_Highlight::fetchRowByProgressIdProxyIdQVersionIdOrder($exam_progress_id, $proxy_id, $question->getVersionID(), $answer->getOrder(), "answer_text");
+
+                        $response_color = "";
                         if (isset($feedback_array) && $feedback_array["score"] == 1 && $this->element->isScored()) {
                             $response_color = $this->getResponseColor($response, $answer);
+                        } elseif ($correct_o_r && is_array($correct_o_r) && !empty($correct_o_r)) {
+                            // $correct_o_r == $answer->getID()
+                            foreach ($correct_o_r as $id => $value) {
+                                if ($id == $answer->getID()) {
+                                    if ($value == "correct") {
+                                        $response_color = " answer-correct";
+                                    } elseif ($value == "incorrect") {
+                                        $response_color = " answer-incorrect";
+                                    }
+                                }
+                            }
                         }
 
                         $html .= "  <td class=\"" . $response_color . "\"  width=\"". $column_width ."%\">";
@@ -1129,7 +1291,7 @@ class Views_Exam_Question extends Views_Deprecated_Base {
         $exam_mode = false,
         array $control_array = NULL,
         array $data_attr_array = NULL,
-        $display_style = 'details',
+        $display_style = "details",
         $echo_mode = true,
         Models_Exam_Progress $progress = NULL,
         Models_Exam_Progress_Responses $response = NULL,
@@ -1179,13 +1341,20 @@ class Views_Exam_Question extends Views_Deprecated_Base {
             $html .= ">";
 
             if ($answers) {
-                $alphas         = range('A', 'Z');
+                $alphas         = range("A", "Z");
                 $count          = count($answers);
                 $correct_answer = $question->getCorrectQuestionAnswer();
+                $correct_o_r    = $this->correct;
+
                 $html .= $this->buildHeader($question, 3, $exam_mode, $control_array, $question_order_number, $type, $progress, $response, $feedback_array);
 
                 $answer_count = 0;
                 if ($this->allow_view == 1) {
+
+                    if ($this->randomize_answers && $exam_mode && empty($feedback_array)) {
+                        $answers = $this->randomizeAnswers($answers, $question->getID(), $progress->getID());
+                    }
+
                     foreach ($answers as $answer) {
                         $highlight = Models_Exam_Question_Version_Highlight::fetchRowByProgressIdProxyIdQVersionIdOrder($exam_progress_id, $proxy_id, $question->getVersionID(), $answer->getOrder(), "answer_text");
 
@@ -1195,9 +1364,20 @@ class Views_Exam_Question extends Views_Deprecated_Base {
                             $strike_out_class = "";
                         }
 
+                        $response_color = "";
                         if (isset($feedback_array) && $feedback_array["score"] == 1) {
                             $response_color = $this->getResponseColor($response, $answer);
-
+                        } elseif ($correct_o_r && is_array($correct_o_r) && !empty($correct_o_r)) {
+                            // $correct_o_r == $answer->getID()
+                            foreach ($correct_o_r as $id => $value) {
+                                if ($id == $answer->getID()) {
+                                    if ($value == "correct") {
+                                        $response_color = " answer-correct";
+                                    } elseif ($value == "incorrect") {
+                                        $response_color = " answer-incorrect";
+                                    }
+                                }
+                            }
                         }
 
                         $row_class = "question-answer-view" . $strike_out_class . $response_color;
@@ -1279,7 +1459,7 @@ class Views_Exam_Question extends Views_Deprecated_Base {
         $exam_mode = false,
         array $control_array = NULL,
         array $data_attr_array = NULL,
-        $display_style = 'details',
+        $display_style = "details",
         $echo_mode = true,
         Models_Exam_Progress $progress = NULL,
         Models_Exam_Progress_Responses $response = NULL,
@@ -1328,9 +1508,10 @@ class Views_Exam_Question extends Views_Deprecated_Base {
             $html .= ">";
 
             if ($answers) {
-                $alphas = range('A', 'Z');
+                $alphas = range("A", "Z");
                 $count = count($answers);
                 $correct_answer = $question->getCorrectQuestionAnswer();
+                $correct_o_r    = $this->correct;
                 $html .= $this->buildHeader($question, $count, $exam_mode, $control_array, $question_order_number, $type, $progress, $response, $feedback_array);
 
                 $column_width = (100 / $count);
@@ -1338,9 +1519,26 @@ class Views_Exam_Question extends Views_Deprecated_Base {
 
                 if ($this->allow_view == 1) {
                     $html .= "  <tr class=\"horizontal-answer-input question-answer-view\">";
+
+                    if ($this->randomize_answers && $exam_mode && empty($feedback_array)) {
+                        $answers = $this->randomizeAnswers($answers, $question->getID(), $progress->getID());
+                    }
+
                     foreach ($answers as $answer) {
-                        if (isset($feedback_array) && $feedback_array["score"] == 1) {
+                        $response_color = "";
+                        if (isset($feedback_array) && $feedback_array["score"] == 1 && $this->element->isScored()) {
                             $response_color = $this->getResponseColor($response, $answer);
+                        } elseif ($correct_o_r && is_array($correct_o_r) && !empty($correct_o_r)) {
+                            // $correct_o_r == $answer->getID()
+                            foreach ($correct_o_r as $id => $value) {
+                                if ($id == $answer->getID()) {
+                                    if ($value == "correct") {
+                                        $response_color = " answer-correct";
+                                    } elseif ($value == "incorrect") {
+                                        $response_color = " answer-incorrect";
+                                    }
+                                }
+                            }
                         }
 
                         $data_answer_attr_array = array(
@@ -1375,8 +1573,21 @@ class Views_Exam_Question extends Views_Deprecated_Base {
                     $answer_count = 0;
                     foreach ($answers as $answer) {
                         $highlight = Models_Exam_Question_Version_Highlight::fetchRowByProgressIdProxyIdQVersionIdOrder($exam_progress_id, $proxy_id, $question->getVersionID(), $answer->getOrder(), "answer_text");
-                        if (isset($feedback_array) && $feedback_array["score"] == 1) {
+
+                        $response_color = "";
+                        if (isset($feedback_array) && $feedback_array["score"] == 1 && $this->element->isScored()) {
                             $response_color = $this->getResponseColor($response, $answer);
+                        } elseif ($correct_o_r && is_array($correct_o_r) && !empty($correct_o_r)) {
+                            // $correct_o_r == $answer->getID()
+                            foreach ($correct_o_r as $id => $value) {
+                                if ($id == $answer->getID()) {
+                                    if ($value == "correct") {
+                                        $response_color = " answer-correct";
+                                    } elseif ($value == "incorrect") {
+                                        $response_color = " answer-incorrect";
+                                    }
+                                }
+                            }
                         }
 
                         $html .= "<td class=\"" . $response_color . "\" width=\"". $column_width ."%\">";
@@ -1424,7 +1635,7 @@ class Views_Exam_Question extends Views_Deprecated_Base {
         $exam_mode = false,
         array $control_array = NULL,
         array $data_attr_array = NULL,
-        $display_style = 'details',
+        $display_style = "details",
         $echo_mode = true,
         Models_Exam_Progress $progress = NULL,
         Models_Exam_Progress_Responses $response = NULL,
@@ -1481,11 +1692,16 @@ class Views_Exam_Question extends Views_Deprecated_Base {
 
             $html .= $this->buildHeader($question, 3, $exam_mode, $control_array, $question_order_number, $type, $progress, $response, $feedback_array);
             if ($answers && $this->allow_view == 1) {
-                $alphas = range('A', 'Z');
+                $alphas = range("A", "Z");
                 $count = count($answers);
                 $answer_count = 0;
+                $correct_o_r    = $this->correct;
 
                 $correct_answers = explode(", ", $question->getCorrectQuestionAnswer());
+
+                if ($this->randomize_answers && $exam_mode && empty($feedback_array)) {
+                    $answers = $this->randomizeAnswers($answers, $question->getID(), $progress->getID());
+                }
 
                 foreach ($answers as $answer) {
 
@@ -1499,8 +1715,20 @@ class Views_Exam_Question extends Views_Deprecated_Base {
                         $strike_out_class = "";
                     }
 
-                    if (isset($feedback_array) && $feedback_array["score"] == 1) {
+                    $response_color = "";
+                    if (isset($feedback_array) && $feedback_array["score"] == 1 && $this->element->isScored()) {
                         $response_color = $this->getResponseColor($response, $answer);
+                    } elseif ($correct_o_r && is_array($correct_o_r) && !empty($correct_o_r)) {
+                        // $correct_o_r == $answer->getID()
+                        foreach ($correct_o_r as $id => $value) {
+                            if ($id == $answer->getID()) {
+                                if ($value == "correct") {
+                                    $response_color = " answer-correct";
+                                } elseif ($value == "incorrect") {
+                                    $response_color = " answer-incorrect";
+                                }
+                            }
+                        }
                     }
 
                     if ($feedback_array["incorrect"] === 1) {
@@ -1562,6 +1790,7 @@ class Views_Exam_Question extends Views_Deprecated_Base {
                     $answer_count++;
                 }
             }
+
             if ($exam_mode === false) {
                 $html .= $this->renderQuestionDetails($type, $count);
             }
@@ -1591,7 +1820,7 @@ class Views_Exam_Question extends Views_Deprecated_Base {
         $exam_mode = false,
         array $control_array = NULL,
         array $data_attr_array = NULL,
-        $display_style = 'details',
+        $display_style = "details",
         $echo_mode = true,
         Models_Exam_Progress $progress = NULL,
         Models_Exam_Progress_Responses $response = NULL,
@@ -1637,6 +1866,7 @@ class Views_Exam_Question extends Views_Deprecated_Base {
             if ($answers) {
                 $count = count($question);
                 $correct_answer = $question->getCorrectQuestionAnswer();
+                $correct_o_r    = $this->correct;
                 $html .= $this->buildHeader($question, $count, $exam_mode, $control_array, $question_order_number, $type, $progress, $response, $feedback_array);
 
                 if ($this->allow_view == 1) {
@@ -1692,7 +1922,7 @@ class Views_Exam_Question extends Views_Deprecated_Base {
         $exam_mode = false,
         array $control_array = NULL,
         array $data_attr_array = NULL,
-        $display_style = 'details',
+        $display_style = "details",
         $echo_mode = true,
         Models_Exam_Progress $progress = NULL,
         Models_Exam_Progress_Responses $response = NULL,
@@ -1735,9 +1965,10 @@ class Views_Exam_Question extends Views_Deprecated_Base {
             $html .= ">";
 
             if ($answers) {
-                $alphas = range('A', 'Z');
+                $alphas = range("A", "Z");
                 $count = 1;
                 $correct_answer = $question->getCorrectQuestionAnswer();
+                $correct_o_r    = $this->correct;
                 $html .= $this->buildHeader($question, $count, $exam_mode, $control_array, $question_order_number, $type, $progress, $response, $feedback_array);
                 if ($this->allow_view == 1) {
                     $html .= "<tr class=\"question-answer-view\">
@@ -1787,7 +2018,7 @@ class Views_Exam_Question extends Views_Deprecated_Base {
         $exam_mode = false,
         array $control_array = NULL,
         array $data_attr_array = NULL,
-        $display_style = 'details',
+        $display_style = "details",
         $echo_mode = true,
         Models_Exam_Progress $progress = NULL,
         Models_Exam_Progress_Responses $response = NULL,
@@ -1839,7 +2070,7 @@ class Views_Exam_Question extends Views_Deprecated_Base {
         $exam_mode = false,
         array $control_array = NULL,
         array $data_attr_array = NULL,
-        $display_style = 'details',
+        $display_style = "details",
         $echo_mode = true,
         Models_Exam_Progress $progress = NULL,
         Models_Exam_Progress_Responses $response = NULL,
@@ -1928,7 +2159,7 @@ class Views_Exam_Question extends Views_Deprecated_Base {
         $exam_mode = false,
         array $control_array = NULL,
         array $data_attr_array = NULL,
-        $display_style = 'details',
+        $display_style = "details",
         $echo_mode = true,
         Models_Exam_Progress $progress = NULL,
         Models_Exam_Progress_Responses $response = NULL,
@@ -2017,7 +2248,7 @@ class Views_Exam_Question extends Views_Deprecated_Base {
         $exam_mode = false,
         array $control_array = NULL,
         array $data_attr_array = NULL,
-        $display_style = 'details',
+        $display_style = "details",
         $echo_mode = true,
         Models_Exam_Progress $progress = NULL,
         Models_Exam_Progress_Responses $response = NULL,
@@ -2073,7 +2304,7 @@ class Views_Exam_Question extends Views_Deprecated_Base {
                         $strike_out_class   = "";
                         $correct            = NULL;
                         $response_value     = NULL;
-                        $alphas             = range('A', 'Z');
+                        $alphas             = range("A", "Z");
                         $row_check          = $match_count + 1;
 
                         if (isset($answer_responses) && is_array($answer_responses)) {
@@ -2266,10 +2497,6 @@ class Views_Exam_Question extends Views_Deprecated_Base {
             $count = 1;
             $html .= $this->buildHeader($question, $count, $exam_mode, $control_array, $question_order_number, $type, $progress, $response, $feedback_array);
 
-            if ($this->allow_view == 1) {
-
-            }
-
             if ($exam_mode === false) {
                 $html .= $this->renderQuestionDetails($type, $count);
             }
@@ -2328,10 +2555,10 @@ class Views_Exam_Question extends Views_Deprecated_Base {
         // Output heading for all questions
         $html .= "<tr class=\"type\">\n";
         $html .= "<td colspan=\"$num_cols\">\n";
-        $html .= "      <span class=\"select-item select-question\">";
-        $html .= "          <i class=\"icon-select-item icon-select-question fa fa-square-o\" data-question-id=\"" . $this->question->getQuestionID() . "\" data-version-id=\"" . $this->question->getVersionID() . "\" data-version-count=\"" . $this->question->getVersionCount() . "\"></i>";
-        $html .= "      </span>";
-        $html .= "<span class=\"question-type\">ID. ".$this->question->getQuestionID()." Ver. ".$this->question->getVersionCount()."</span>\n";
+        $html .= "    <span class=\"select-item select-question\">";
+        $html .= "        <i class=\"select-item-icon question-icon-select fa fa-square-o\" data-question-id=\"" . $this->question->getQuestionID() . "\" data-version-id=\"" . $this->question->getVersionID() . "\" data-version-count=\"" . $this->question->getVersionCount() . "\"></i>";
+        $html .= "    </span>";
+        $html .= "    <span class=\"question-type\">ID. ".$this->question->getQuestionID()." Ver. ".$this->question->getVersionCount()."</span>\n";
         $html .= "</td>\n";
         $html .= "</tr>\n";
         // Output question text
@@ -2355,7 +2582,7 @@ class Views_Exam_Question extends Views_Deprecated_Base {
                 // Output input fields
                 $html .= "<tr class=\"horizontal-answer-input question-answer-view\">\n";
                 foreach ($answers as $answer) {
-                    $letter = chr(ord('A') + $answer->getOrder() - 1);
+                    $letter = chr(ord("A") + $answer->getOrder() - 1);
                     $correct = $answer->getAdjustedCorrect($exam_element->getID(), $exam_element->getExamID());
                     $html .= "<td width=\"".$width."%\">\n";
                     $html .= "<span class=\"question-letter\">".$letter.".</span>\n";
@@ -2376,7 +2603,7 @@ class Views_Exam_Question extends Views_Deprecated_Base {
             case "mc_v_m":
                 $input_type = "mc_v" === $short_name ? "radio" : "checkbox";
                 foreach ($answers as $answer) {
-                    $letter = chr(ord('A') + $answer->getOrder() - 1);
+                    $letter = chr(ord("A") + $answer->getOrder() - 1);
                     $correct = $answer->getAdjustedCorrect($exam_element->getID(), $exam_element->getExamID());
                     $html .= "<tr class=\"question-answer-view\">\n";
                     $html .= "<td class=\"vertical-answer-input\">";
@@ -2450,23 +2677,46 @@ class Views_Exam_Question extends Views_Deprecated_Base {
         return $html;
     }
 
+    /**
+     * @param bool|false $exam_mode
+     * @param array|NULL $control_array
+     * @param array|NULL $data_attr_array
+     * @param string $display_style
+     * @param bool|false $echo_mode
+     * @param Models_Exam_Progress|NULL $progress
+     * @param Models_Exam_Progress_Responses|NULL $response
+     * @param array|NULL $feedback
+     * @param int $allow_view
+     * @param int $active_details
+     * @param array|NULL $correct
+     * @param bool|false $randomize_answers
+     * @return string
+     */
     public function render (
         $exam_mode = false,
         array $control_array = NULL,
         array $data_attr_array = NULL,
-        $display_style = 'details',
+        $display_style = "details",
         $echo_mode = false,
         Models_Exam_Progress $progress = NULL,
         Models_Exam_Progress_Responses $response = NULL,
         array $feedback = NULL,
         $allow_view = 1,
-        $active_details = 0
+        $active_details = 0,
+        $correct = array(),
+        $randomize_answers = false
     ) {
         global $translate;
         $MODULE_TEXT = $translate->_("exams");
 
         if (isset($response)) {
             $this->response_answer = Models_Exam_Progress_Response_Answers::fetchAllByExamProgressResponseID($response->getID());
+        }
+
+        if (!empty($correct)) {
+            $this->correct = $correct;
+        } else {
+            $this->correct = NULL;
         }
 
         if (!empty($this->question)) {
@@ -2476,8 +2726,8 @@ class Views_Exam_Question extends Views_Deprecated_Base {
             if (NULL !== $response) {
                 $this->element      = $response->getElement();
                 $this->highlight    = $response->getHighlight();
-            } elseif (isset($data_attr_array['element-id'])) {
-                $this->element      = Models_Exam_Exam_Element::fetchRowByID($data_attr_array['element-id']);
+            } elseif (isset($data_attr_array["element-id"])) {
+                $this->element      = Models_Exam_Exam_Element::fetchRowByID($data_attr_array["element-id"]);
             } else {
                 $this->element      = NULL;
             }
@@ -2492,6 +2742,11 @@ class Views_Exam_Question extends Views_Deprecated_Base {
             $this->echo_mode    = $echo_mode;
             $this->feedback     = $feedback;
             $this->active_details = $active_details;
+            $this->randomize_answers = $randomize_answers;
+
+            /**
+             *  Answer randomization is only possible for the following question types: mc_h, mc_v, mc_h_m, mc_v_m
+             * */
 
             if (NULL !== $this->progress) {
                 $this->post = $this->progress->getExamPost();

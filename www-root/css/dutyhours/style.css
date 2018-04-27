@@ -1,0 +1,6 @@
+
+
+#entry_form_controls input[type=radio] {
+    vertical-align: middle;
+    margin-top: -2px;
+}

@@ -85,70 +85,36 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_CONFIGURATION")) {
             }
 			
 			if (!$ERROR) {
-                
-                $params = array("eventtype_title" => $PROCESSED["eventtype_title"], "eventtype_description" => $PROCESSED["eventtype_description"], "medbiq_instructional_method_id" => $PROCESSED["medbiq_instructional_method_id"], "eventtype_order" => "0", "updated_date"=> time(),"updated_by" => $ENTRADA_USER->getID(), "eventtype_active" => 1);
-                
-                // Check to see if the eventtype_id is used in more than one organisation
-                $eventtype_organisation = Models_Event_EventTypeOrganisation::get($PROCESSED["eventtype_id"]);
-                // if the eventtype_id is used in multiple organisations we are going to create a new entry and remove the old ones
+
+                $params = array("eventtype_id" => $PROCESSED["eventtype_id"], "eventtype_title" => $PROCESSED["eventtype_title"], "eventtype_description" => $PROCESSED["eventtype_description"], "eventtype_order" => "0", "updated_date"=> time(), "updated_by" => $ENTRADA_USER->getID(), "eventtype_active" => 1);
                 $eventtype = new Models_EventType($params);
-				if ($eventtype_organisation) {
-                    if ($eventtype->insert()) {
-                        
-                        // if creating a new eventtype we will need to delete the old one, then update all of the previously fetched events to the new one.
-						$eventtype_id = $eventtype->getID();
-                        $eto = new Models_Event_EventTypeOrganisation(array("eventtype_id" => $PROCESSED["eventtype_id"], "organisation_id" => $ORGANISATION_ID));
-						
-                        if (!$eto->delete()) {
-                            application_log("error", "An error occured while attempting to delete the organisation eventtype " . $eto->getEventTypeID() . " DB said: " . $db->ErrorMsg());
-                            add_error("An error while attempting to delete the organisation " . $translate->_("Event Type"));
-                        } else {
-                            $eto->setEventTypeID($eventtype_id);
-                            if(!$eto->insert()) {
-                                application_log("error", "An error occured while attempting to insert the organisation eventtype " . $eto->getEventTypeID() . " DB said: " . $db->ErrorMsg());
-                                add_error("An error while attempting to insert the organisation " . $translate->_("Event Type"));
-                            }
-                        }
-                        
-                        $mapped_instructional_method = Models_Event_MapEventsEventType::fetchRowByEventTypeID($PROCESSED["eventtype_id"]);
-                        if ($mapped_instructional_method) {
-                            $mapped_instructional_method->delete();
-                        }
-                        
-                        if (isset($PROCESSED["medbiq_instructional_method_id"])) {
-                            $mapped_method = new Models_Event_MapEventsEventType(array("fk_instructional_method_id" => $PROCESSED["medbiq_instructional_method_id"], "fk_eventtype_id" => $eventtype_id, "updated_date" => time(), "updated_by" => $ENTRADA_USER->getID()));
+
+                if ($eventtype->update()) {
+                    if (isset($PROCESSED["medbiq_instructional_method_id"])) {
+                        $insert = array();
+                        $insert["fk_instructional_method_id"] = $PROCESSED["medbiq_instructional_method_id"];
+                        $insert["fk_eventtype_id"] = $PROCESSED["eventtype_id"];
+                        $insert["updated_date"] = time();
+                        $insert["updated_by"] = $ENTRADA_USER->getID();
+                        $mapped_event = Models_Event_MapEventsEventType::fetchRowByEventTypeID($PROCESSED["eventtype_id"]);
+                        if (!$mapped_event) {
+                            $mapped_method = new Models_Event_MapEventsEventType($insert);
                             if (!$mapped_method->insert()) {
+                                add_error($translate->_("An error occured while attempting to save the selected medbiq instructional method"));
                                 application_log("error", "An error occured while attempting to insert the medbiq instructional method " . $mapped_method->getID() . " DB said: " . $db->ErrorMsg());
-                                add_error("An error occured while attempting to save the selected medbiq instructional method " . $db->ErrorMsg());
+                            }
+                        } else {
+                            if (!$mapped_event->fromArray($insert)->update()) {
+                                add_error($translate->_("An error occured while attempting to update the selected medbiq instructional method"));
+                                application_log("error", "An error occured while attempting to update the medbiq instructional method " . $mapped_method->getID() . " DB said: " . $db->ErrorMsg());
                             }
                         }
-                        
-                        
-                        // we need a list of event_ids that are associated with this eventtype_id
-                        $query = "	SELECT b.`event_id`, c.*
-                                    FROM `courses` AS a
-                                    LEFT JOIN `events` AS b
-                                    ON a.`course_id` = b.`course_id`
-                                    LEFT JOIN `event_eventtypes` AS c
-                                    ON b.`event_id` = c.`event_id`
-                                    WHERE a.`organisation_id` = ".$db->qstr($ORGANISATION_ID)."
-                                    AND c.`eventtype_id` = ".$db->qstr($PROCESSED["eventtype_id"]);
-                        $events_list = $db->GetAssoc($query);
-                        
-                        if ($events_list) {
-                            foreach ($events_list as $event_id => $event) {
-                                $event_eventtype = new Models_Event_EventType(array("eeventtype_id" => $event["eeventtype_id"], "event_id" => $event_id, "eventtype_id" => $eventtype_id, "duration" => $event["duration"]));
-                                $event_eventtype->update();
-                            }
-                        }
-                    } else {
-                        application_log("error", "An error occured while attempting to insert the eventtype " . $PROCESSED["eventtype_id"] . " DB said: " . $db->ErrorMsg());
-                        add_error("An error while attempting to insert the " . $translate->_("Event Type"));
                     }
-				} else {
-                    $eventtype->update();
-				}
-				
+                } else {
+                    add_error($translate->_("An error occured while attempting to update the event type"));
+                    application_log("error", "An error occured while attempting to update event type [" . $eventtype->getID() . "] DB said: " . $db->ErrorMsg());
+                }
+
 				if (!$ERROR) {	
 					$url = ENTRADA_URL . "/admin/settings/manage/eventtypes?org=".$ORGANISATION_ID;
 					$SUCCESS++;

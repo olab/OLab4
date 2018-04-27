@@ -106,6 +106,21 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_EXAM") && !defined("EDIT_EXA
                             );
                             $a = new Models_Exam_Exam_Author($author);
                             $a->insert();
+
+                            $history = new Models_Exam_Creation_History(array(
+                                "exam_id" => $exam->getExamID(),
+                                "proxy_id" => $ENTRADA_USER->getID(),
+                                "action" => "exam_add",
+                                "action_resource_id" => NULL,
+                                "secondary_action" => NULL,
+                                "secondary_action_resource_id" => NULL,
+                                "history_message" => "Created exam",
+                                "timestamp" => time(),
+                            ));
+
+                            if (!$history->insert()) {
+                                add_error($translate->_("Failed to insert history log when creating a new Exam."));
+                            }
                         }
                     } else {
                         // update exam order
@@ -252,14 +267,15 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_EXAM") && !defined("EDIT_EXA
             $HEAD[] = "<script type=\"text/javascript\">var default_text_labels = JSON.parse('" . json_encode($DEFAULT_TEXT_LABELS) . "');</script>";
             $HEAD[] = "<script type=\"text/javascript\">var exam_in_progress = \"". ($exam_in_progress ? $exam_in_progress : 0 ) ."\";</script>";
             $HEAD[] = "<script type=\"text/javascript\">var exam_id = \"". $PROCESSED["exam_id"] ."\";</script>";
+            $HEAD[] = "<script type=\"text/javascript\">var original_exam_id = \"". $PROCESSED["exam_id"] ."\";</script>";
             $HEAD[] = "<script type=\"text/javascript\">var edit_exam = \"edit\";</script>";
             $HEAD[] = "<script type=\"text/javascript\">var update_questions = JSON.parse('" . json_encode($update_questions_available) . "');</script>";
-            $HEAD[] = "<script type=\"text/javascript\" src=\"" . ENTRADA_URL . "/javascript/jquery/jquery.dataTables.min-1.10.1.js?release=". html_encode(APPLICATION_VERSION) ."\"></script>";
-            $HEAD[] = "<script type=\"text/javascript\" src=\"" . ENTRADA_URL . "/javascript/jquery/jquery.advancedsearch.js?release=". html_encode(APPLICATION_VERSION) ."\"></script>";
-            $HEAD[] = "<script type=\"text/javascript\" src=\"" . ENTRADA_URL . "/javascript/jquery/jquery.inputselector.js?release=". html_encode(APPLICATION_VERSION) ."\"></script>";
-            $HEAD[] = "<script type=\"text/javascript\" src=\"" . ENTRADA_URL . "/javascript/" . $MODULE . "/" . $SUBMODULE . "/" . $MODULE . "-" . $MODULE . "-admin.js?release=". html_encode(APPLICATION_VERSION) ."\"></script>";
-            $HEAD[] = "<script type=\"text/javascript\" src=\"" . ENTRADA_URL . "/javascript/" . $MODULE . "/questions/questions.js?release=". html_encode(APPLICATION_VERSION) ."\"></script>";
-            $HEAD[] = "<script type=\"text/javascript\" src=\"" . ENTRADA_URL . "/javascript/" . $MODULE . "/questions/linked-questions.js?release=". html_encode(APPLICATION_VERSION) ."\"></script>";
+            $HEAD[] = "<script type=\"text/javascript\" src=\"".  ENTRADA_URL ."/javascript/jquery/jquery.dataTables.min-1.10.1.js?release=". html_encode(APPLICATION_VERSION) ."\"></script>";
+            $HEAD[] = "<script type=\"text/javascript\" src=\"".  ENTRADA_URL ."/javascript/jquery/jquery.advancedsearch.js?release=". html_encode(APPLICATION_VERSION) ."\"></script>";
+            $HEAD[] = "<script type=\"text/javascript\" src=\"".  ENTRADA_URL ."/javascript/jquery/jquery.inputselector.js?release=". html_encode(APPLICATION_VERSION) ."\"></script>";
+            $HEAD[] = "<script type=\"text/javascript\" src=\"".  ENTRADA_URL ."/javascript/" . $MODULE . "/" . $SUBMODULE . "/" . $MODULE . "-" . $MODULE . "-admin.js?release=". html_encode(APPLICATION_VERSION) ."\"></script>";
+            $HEAD[] = "<script type=\"text/javascript\" src=\"".  ENTRADA_URL ."/javascript/" . $MODULE . "/questions/questions.js?release=". html_encode(APPLICATION_VERSION) ."\"></script>";
+            $HEAD[] = "<script type=\"text/javascript\" src=\"".  ENTRADA_URL ."/javascript/" . $MODULE . "/questions/linked-questions.js?release=". html_encode(APPLICATION_VERSION) ."\"></script>";
             $HEAD[] = "<script type=\"text/javascript\" src=\"" . ENTRADA_URL . "/javascript/jquery/jquery.inputselector.js?release=" . html_encode(APPLICATION_VERSION) . "\"></script>";
             $HEAD[] = "<link rel=\"stylesheet\" type=\"text/css\" href=\"" . ENTRADA_URL . "/css/" . $MODULE . "/" . $MODULE . ".css?release=" . html_encode(APPLICATION_VERSION) . "\" />";
             $HEAD[] = "<link rel=\"stylesheet\" type=\"text/css\" href=\"" . ENTRADA_URL . "/css/" . $MODULE . "/groups.css?release=" . html_encode(APPLICATION_VERSION) . "\" />";
@@ -350,33 +366,36 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_EXAM") && !defined("EDIT_EXA
                             ?>
                             <div class="btn-group btn-view-group pull-right">
                                 <button class="btn dropdown-toggle" data-toggle="dropdown">
-                                    <i class="fa fa-wrench"></i> Exam Actions
+                                    <i class="fa fa-wrench"></i> <?php echo $translate->_("Exam Actions"); ?>
                                     <span class="caret"></span>
                                 </button>
                                 <ul class="dropdown-menu">
-                                    <li id="exam-bank-view-controls">
-                                        <a href="#" id="toggle-exam-bank" title="<?php echo $SUBMODULE_TEXT["edit-exam"]["labels"]["exam_bank_toggle_title"]; ?>" <?php echo ($show_details_toggle ? "" : "style=\"display:none;\"") ;?>>
-                                            <i id="toggle-exam-bank-icon" class="fa fa-eye"></i>
-                                            <?php echo $SUBMODULE_TEXT["buttons"]["toggle"]; ?>
-                                        </a>
-                                    </li>
                                     <li>
                                         <a href="#copy-exam-modal" data-toggle="modal">
                                             <i class="copy-icon fa fa-files-o fa-fw"></i> <?php echo $SUBMODULE_TEXT["buttons"]["copy_exam"]; ?>
                                         </a>
                                     </li>
-                                    <?php
-                                    echo "<li>\n";
-                                    echo "<a href=\"" . ENTRADA_URL . "/admin/exams/exams?section=preview&id=" . $exam->getID() . "\">\n";
-                                    echo "<i class=\"fa fa-laptop fa-fw\"></i>\n";
-                                    echo $MENU_TEXT["preview_post"] . "</a>\n";
-                                    echo "</li>\n";
-                                    echo "<li>\n";
-                                    echo "<a href=\"" . ENTRADA_URL . "/admin/exams/exams?section=print&id=" . $exam->getID() . "\">\n";
-                                    echo "<i class=\"fa fa-print fa-fw\"></i>\n";
-                                    echo $MENU_TEXT["print_view"] . "</a>\n";
-                                    echo "</li>\n";
-                                    ?>
+                                    <li>
+                                        <a href="<?php echo ENTRADA_URL . "/admin/exams/exams?section=print-word&id=" . $exam->getID();?>">
+                                            <i class="fa fa-file-word-o fa-fw"></i> <?php echo $translate->_("Word Version") ; ?>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="<?php echo ENTRADA_URL . "/admin/exams/exams?section=preview&id=" . $exam->getID();?>">
+                                            <i class="fa fa-laptop fa-fw"></i> <?php echo $translate->_("Preview Exam"); ?>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="<?php echo ENTRADA_URL . "/admin/exams/exams?section=print&id=" . $exam->getID();?>">
+                                            <i class="fa fa-print fa-fw"></i> <?php echo $translate->_("Printer Friendly View"); ?>
+                                        </a>
+                                    </li>
+                                    <li id="exam-bank-view-controls">
+                                        <a href="#" id="toggle-exam-bank-details" title="<?php echo $SUBMODULE_TEXT["edit-exam"]["labels"]["exam_bank_toggle_title"]; ?>" <?php echo ($show_details_toggle ? "" : "style=\"display:none;\"") ;?>>
+                                            <i id="toggle-exam-bank-icon" class="fa fa-eye"></i>
+                                            <?php echo $SUBMODULE_TEXT["buttons"]["toggle"]; ?>
+                                        </a>
+                                    </li>
                                 </ul>
                             </div>
                             <?php
@@ -416,43 +435,47 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_EXAM") && !defined("EDIT_EXA
                         <div id="exam-list-container" class="hide">
                             <table id="exam-list-table" class="table table-bordered table-striped">
                                 <thead>
-                                    <th class=""></th>
-                                    <th class="sort-column" data-type="number" data-field="order" data-direction="asc">
-                                        <?php echo $SUBMODULE_TEXT["edit-exam"]["labels"]["number"];?>
-                                        <span class="sort-icon pull-right">
-                                            <i class="fa fa-sort-amount-asc"></i>
-                                        </span>
-                                    </th>
-                                    <th class="sort-column" data-field="version">
-                                        <?php echo $SUBMODULE_TEXT["edit-exam"]["labels"]["id"];?>
-                                        <span class="sort-icon pull-right"></span>
-                                    </th>
-                                    <th class="sort-column" data-field="description">
-                                        <?php echo $SUBMODULE_TEXT["edit-exam"]["labels"]["description"];?>
-                                        <span class="sort-icon pull-right"></span>
-                                    </th>
-                                    <th class="sort-column" data-field="update">
-                                        <?php echo $SUBMODULE_TEXT["edit-exam"]["labels"]["update"];?>
-                                        <span class="sort-icon pull-right"></span>
-                                    </th>
-                                    <th class="">&nbsp;</th>
+                                    <tr>
+                                        <th class="" id="sort-first-column"></th>
+                                        <th class="sort-column" data-type="number" data-field="order" data-direction="asc">
+                                            <?php echo $SUBMODULE_TEXT["edit-exam"]["labels"]["number"];?>
+                                            <span class="sort-icon pull-right">
+                                                <i class="fa fa-sort-amount-asc"></i>
+                                            </span>
+                                        </th>
+                                        <th class="sort-column" data-field="version">
+                                            <?php echo $SUBMODULE_TEXT["edit-exam"]["labels"]["id"];?>
+                                            <span class="sort-icon pull-right"></span>
+                                        </th>
+                                        <th class="sort-column" data-field="description">
+                                            <?php echo $SUBMODULE_TEXT["edit-exam"]["labels"]["description"];?>
+                                            <span class="sort-icon pull-right"></span>
+                                        </th>
+                                        <th class="sort-column" data-field="update">
+                                            <?php echo $SUBMODULE_TEXT["edit-exam"]["labels"]["update"];?>
+                                            <span class="sort-icon pull-right"></span>
+                                        </th>
+                                        <th class="">&nbsp;</th>
+                                    </tr>
                                 </thead>
                                 <tbody id="exam-list-body">
                                 <?php echo $exam_elements_html["list_view"]; ?>
                                 </tbody>
                             </table>
                         </div>
-                        <h2>Exam Data</h2>
-                        <dl class="dl-horizontal">
-                            <dt>Questions</dt>
-                            <dd>
-                                <?php echo $exam_elements_html["question_count"]; ?>
-                            </dd>
-                            <dt>Points</dt>
-                            <dd>
-                                <?php echo $exam_elements_html["point_count"]; ?>
-                            </dd>
-                        </dl>
+                        <div id="exam-data-bar" class="exam-data-bar">
+                            <h4 id="exam-data-bar-title">Exam Data</h4>
+                            <dl class="dl-horizontal">
+                                <dt>Questions</dt>
+                                <dd id="questions_count">
+                                    <?php echo $exam_elements_html["question_count"]; ?>
+                                </dd>
+                                <dt>Points</dt>
+                                <dd id="points_count">
+                                    <?php echo $exam_elements_html["point_count"]; ?>
+                                </dd>
+                            </dl>
+                        </div>
                     </div>
                 <?php } ?>
                 <button id="save_order" class="btn btn-default" disabled="disabled"><?php echo $SUBMODULE_TEXT["buttons"]["btn_reorder"]; ?></button>
@@ -507,11 +530,13 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_EXAM") && !defined("EDIT_EXA
                                 <div id="question-table-container">
                                     <table id="questions-table" class="table table-bordered table-striped hide">
                                         <thead>
-                                            <th class="q-list-id"><?php echo $SUBMODULE_TEXT["edit-exam"]["labels"]["id"];?></th>
-                                            <th class="q-list-code"><?php echo $SUBMODULE_TEXT["edit-exam"]["labels"]["code"];?></th>
-                                            <th class="q-list-type"><?php echo $SUBMODULE_TEXT["edit-exam"]["labels"]["type"];?></th>
-                                            <th class="q-list-desc"><?php echo $SUBMODULE_TEXT["edit-exam"]["labels"]["description"];?></th>
-                                            <th class="q-list-edit"></th>
+                                            <tr>
+                                                <th class="q-list-id"><?php echo $SUBMODULE_TEXT["edit-exam"]["labels"]["id"];?></th>
+                                                <th class="q-list-code"><?php echo $SUBMODULE_TEXT["edit-exam"]["labels"]["code"];?></th>
+                                                <th class="q-list-type"><?php echo $SUBMODULE_TEXT["edit-exam"]["labels"]["type"];?></th>
+                                                <th class="q-list-desc"><?php echo $SUBMODULE_TEXT["edit-exam"]["labels"]["description"];?></th>
+                                                <th class="q-list-edit"></th>
+                                            </tr>
                                         </thead>
                                         <tbody>
                                             <tr id="no-questions">
@@ -634,7 +659,8 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_EXAM") && !defined("EDIT_EXA
                                 },
                                 author : {
                                     label : "<?php echo $translate->_("Question Authors"); ?>",
-                                    data_source : "get-question-authors"
+                                    data_source : "get-question-permission-types",
+                                    secondary_data_source : "get-question-permissions"
                                 },
                                 course : {
                                     label : "<?php echo $translate->_("Courses"); ?>",

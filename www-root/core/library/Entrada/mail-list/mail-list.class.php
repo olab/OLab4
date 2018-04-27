@@ -23,7 +23,7 @@ abstract class MailingListBase
 
 	var $community_id	= 0;
 
-	public function MailingListBase($community_id = 0, $list_type = "inactive") {
+	public function __construct($community_id = 0, $list_type = "inactive") {
 		global $db;
 		if ($community_id) {
 			$query = "SELECT * FROM `community_mailing_lists` WHERE `community_id` = ".$db->qstr($community_id);
@@ -149,12 +149,12 @@ class GoogleMailingList extends MailingListBase
 	var $current_members = null;
 	var $current_owners = null;
 
-	public function GoogleMailingList($community_id, $type = "inactive") {
+	public function __construct($community_id, $type = "inactive") {
 		global $db, $GOOGLE_APPS, $GOOGLE_V3_REST_API;
 		$query = "SELECT `cmlist_id` FROM `community_mailing_lists` WHERE `community_id` = ".$db->qstr($community_id);
 		$result = $db->GetOne($query);
 
-		$this->MailingListBase($community_id, $type);
+		parent::__construct($community_id, $type);
 
 		try {
 			if (isset($GOOGLE_V3_REST_API) && $GOOGLE_V3_REST_API) {
@@ -428,7 +428,7 @@ class GoogleMailingList extends MailingListBase
 class MailingList extends GoogleMailingList
 {
 
-	public function MailingList($community_id, $type = "unset") {
+	public function __construct($community_id, $type = "unset") {
 		global $db;
 		if ($type == "unset") {
 			$type = $db->GetOne("SELECT `list_type` FROM `community_mailing_lists` WHERE `community_id` = ".$db->qstr($community_id));
@@ -436,7 +436,7 @@ class MailingList extends GoogleMailingList
 				$type = "inactive";
 			}
 		}
-		$this->GoogleMailingList($community_id, $type);
+		parent::__construct($community_id, $type);
 	}
 
 

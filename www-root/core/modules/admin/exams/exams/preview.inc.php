@@ -62,6 +62,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
             $PROCESSED["max_attempts"]              = 100;
             $PROCESSED["target_type"]               = "preview";
             $PROCESSED["mandatory"]                 = 0;
+            $PROCESSED["use_honor_code"]            = 0;
             $PROCESSED["mark_faculty_review"]       = 0;
             $PROCESSED["hide_exam"]                 = 0;
             $PROCESSED["auto_save"]                 = 30;
@@ -99,7 +100,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
 
     $HEAD[] = "<script type=\"text/javascript\">var ENTRADA_URL = \"" . ENTRADA_URL . "\";</script>";
     $HEAD[] = "<script type=\"text/javascript\">var API_URL = \"" . ENTRADA_URL . "/admin/" . $MODULE . "/" . $SUBMODULE . "?section=api-exams\";</script>";
-    $HEAD[] = "<script type=\"text/javascript\">var exam_id = " . (int)$PROCESSED["id"] . ";</script>";
+    $HEAD[] = "<script type=\"text/javascript\">var exam_id = " . (int) $PROCESSED["exam_id"] . ";</script>";
     $HEAD[] = "<script type=\"text/javascript\">var can_delete = " . $can_delete . ";</script>";
     $HEAD[] = "<script type=\"text/javascript\" src=\"".ENTRADA_RELATIVE."/javascript/jquery/jquery.dataTables.min-1.10.1.js?release=".html_encode(APPLICATION_VERSION)."\"></script>";
     $HEAD[] = "<script type=\"text/javascript\" src=\"".ENTRADA_RELATIVE."/javascript/jquery/dataTables.colVis.min.js?release=".html_encode(APPLICATION_VERSION)."\"></script>";
@@ -117,23 +118,79 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
 
         if ($ENTRADA_ACL->amIAllowed(new ExamResource($exam->getID(), true), "update")) {
             ?>
-            <h2><?php echo $SUBMODULE_TEXT["preview"]["title"]; ?></h2>
+            <h2><?php echo $translate->_("Exam Preview") ?></h2>
 
-            <?php
-            if ($post && is_object($post)) {
-                ?>
+            <?php if ($post && is_object($post)) { ?>
+                <h3><?php echo $translate->_("Preview Settings") ?></h3>
+                
+                <div class="control-group">
+                    <div class="controls">
+                        <label class="checkbox">
+                            <input id="use_calculator" name="use_calculator" <?php echo $post->getUseCalculator() ? 'checked' : '';?> type="checkbox">
+                            <?php echo $translate->_("Enable Calculator") ?>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <div class="controls">
+                        <label class="checkbox">
+                            <input id="use_self_timer" name="use_self_timer" <?php echo $post->getUseSelfTimer() ? 'checked' : '';?> type="checkbox">
+                            <?php echo $translate->_("Enable Self Timer") ?>
+                        </label>
+                    </div>
+                </div>
+
                 </br>
+
                 <?php
                 $post_view = new Views_Exam_Post($post);
-                echo $post_view->renderPreviewPost(false, false);
+                echo $post_view->renderPreviewPost();
                 ?>
+
 <!--                <div class="pull-right clearfix space-below">-->
 <!--                    <button id="edit-post" class="btn btn-primary">Edit --><?php //echo $SUBMODULE_TEXT["preview"]["title"]; ?><!--</button>-->
 <!--                </div>-->
-                <?php
-            }
 
-            ?>
+                <script type="text/javascript">
+                    jQuery(document).ready(function () {
+                        jQuery('#use_calculator').on('click', function(e){
+                            e.preventDefault();
+                            e.stopPropagation();
+
+                            var use_calculator = jQuery(this).is(':checked');
+
+                            jQuery.post(API_URL, {
+                                method: 'preview-settings',
+                                exam_id: exam_id,
+                                use_calculator: use_calculator,
+                            }).done(function (data) {
+                                var response = JSON.parse(data);
+                                jQuery('#use_calculator').prop('checked', response.use_calculator);
+                            });
+
+                        });
+
+                        jQuery('#use_self_timer').on('click', function(e){
+                            e.preventDefault();
+                            e.stopPropagation();
+
+                            var use_self_timer = jQuery(this).is(':checked');
+
+                            jQuery.post(API_URL, {
+                                method: 'preview-settings',
+                                exam_id: exam_id,
+                                use_self_timer: use_self_timer,
+                            }).done(function (data) {
+                                var response = JSON.parse(data);
+                                jQuery('#use_self_timer').prop('checked', response.use_self_timer);
+                            });
+
+                        });
+                    });
+
+                </script>
+            <?php } ?>
             <div id="preview-exam-modal" class="modal hide fade" data-href="<?php echo ENTRADA_URL . "/admin/" . $MODULE . "/" . $SUBMODULE . "?section=" . $SECTION ;?>">
                 <form id="preview-exam-modal-form" class="form-horizontal" action="<?php echo ENTRADA_URL . "/admin/" . $MODULE . "/" . $SUBMODULE . "?section=api-exams"; ?>" method="POST" style="margin:0px;">
                     <input type="hidden" name="step" value="2" />

@@ -249,8 +249,8 @@ class Models_Event_Resource_Entity extends Models_Base {
     }
     
     public function getResource() {
+        $resource = false;
         if (NULL === $this->resource) {
-            $resource = false;
             switch ($this->entity_type) {
                 case 1 :
                 case 5 :
@@ -279,6 +279,9 @@ class Models_Event_Resource_Entity extends Models_Base {
                     break;
                 case 12 :
                     $resource = Models_Exam_Post::fetchRowByID($this->entity_value);
+                    break;
+                case 13 :
+                    $resource = Models_Event_Resource_FeedBackForm::fetchRowByID($this->entity_value);
                     break;
             }
         }

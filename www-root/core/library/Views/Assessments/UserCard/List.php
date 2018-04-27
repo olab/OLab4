@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Entrada [ http://www.entrada-project.org ]
  *
@@ -22,16 +23,17 @@
  * @copyright Copyright 2016 Queen's University. All Rights Reserved.
  *
  */
-
-class Views_Assessments_UserCard_List extends Views_Assessments_Base {
-    protected $id, $class, $assessment_label = "%s assessments", $view_assessment_label = "View %s assessments &rtrif;", $no_results_label = "No users found matching your search.", $users = array(), $group = "student", $logbook_url = null;
+class Views_Assessments_UserCard_List extends Views_HTML
+{
+    protected $id, $class, $assessment_label = "%s assessments", $view_assessment_label = "%s assessments &rtrif;", $no_results_label = "No users found matching your search.", $users = array(), $group = "student", $logbook_url = null;
 
     /**
      * Get the assessment label
      * @return string
      */
 
-    public function getAssessmentLabel() {
+    public function getAssessmentLabel()
+    {
         return $this->assessment_label;
     }
 
@@ -40,7 +42,8 @@ class Views_Assessments_UserCard_List extends Views_Assessments_Base {
      * @param $assessment_label
      */
 
-    public function setAssessmentLabel($assessment_label) {
+    public function setAssessmentLabel($assessment_label)
+    {
         $this->assessment_label = $assessment_label;
     }
 
@@ -49,7 +52,8 @@ class Views_Assessments_UserCard_List extends Views_Assessments_Base {
      * @return string
      */
 
-    public function getViewAssessmentLabel() {
+    public function getViewAssessmentLabel()
+    {
         return $this->view_assessment_label;
     }
 
@@ -58,7 +62,8 @@ class Views_Assessments_UserCard_List extends Views_Assessments_Base {
      * @param string $view_assessment_label
      */
 
-    public function setViewAssessmentLabel($view_assessment_label) {
+    public function setViewAssessmentLabel($view_assessment_label)
+    {
         $this->view_assessment_label = $view_assessment_label;
     }
 
@@ -67,7 +72,8 @@ class Views_Assessments_UserCard_List extends Views_Assessments_Base {
      * @return string
      */
 
-    public function getNoResultsLabel() {
+    public function getNoResultsLabel()
+    {
         return $this->no_results_label;
     }
 
@@ -76,7 +82,8 @@ class Views_Assessments_UserCard_List extends Views_Assessments_Base {
      * @param string $no_results_label
      */
 
-    public function setNoResultsLabel($no_results_label) {
+    public function setNoResultsLabel($no_results_label)
+    {
         $this->no_results_label = $no_results_label;
     }
 
@@ -85,7 +92,8 @@ class Views_Assessments_UserCard_List extends Views_Assessments_Base {
      * @return array
      */
 
-    public function getUsers() {
+    public function getUsers()
+    {
         return $this->users;
     }
 
@@ -94,7 +102,8 @@ class Views_Assessments_UserCard_List extends Views_Assessments_Base {
      * @param array $learners
      */
 
-    public function setUsers($users) {
+    public function setUsers($users)
+    {
         $this->users = $users;
     }
 
@@ -103,7 +112,8 @@ class Views_Assessments_UserCard_List extends Views_Assessments_Base {
      * @return string
      */
 
-    public function getGroup() {
+    public function getGroup()
+    {
         return $this->group;
     }
 
@@ -112,7 +122,8 @@ class Views_Assessments_UserCard_List extends Views_Assessments_Base {
      * @param $group
      */
 
-    public function setGroup($group) {
+    public function setGroup($group)
+    {
         $this->group = $group;
     }
 
@@ -121,7 +132,8 @@ class Views_Assessments_UserCard_List extends Views_Assessments_Base {
      * @return string
      */
 
-    public function getLogbookUrl() {
+    public function getLogbookUrl()
+    {
         return $this->logbook_url;
     }
 
@@ -130,7 +142,8 @@ class Views_Assessments_UserCard_List extends Views_Assessments_Base {
      * @param $logbook_url
      */
 
-    public function setLogbookUrl($logbook_url) {
+    public function setLogbookUrl($logbook_url)
+    {
         $this->logbook_url = $logbook_url;
     }
 
@@ -140,7 +153,8 @@ class Views_Assessments_UserCard_List extends Views_Assessments_Base {
      * @return string
      */
 
-    protected function renderView($options = array()) {
+    protected function renderView($options = array())
+    {
         global $translate;
         $ENTRADA_URL = ENTRADA_URL;
         $html = array();
@@ -151,13 +165,15 @@ class Views_Assessments_UserCard_List extends Views_Assessments_Base {
             $pdf_user_name_class = "";
             $cache = new Entrada_Utilities_Cache();
 
-            $html[] = "<ul id=\"". html_encode($this->getID()) ."\" class=\"user-list-card\">";
+            $html[] = "<ul id=\"" . html_encode($this->getID()) . "\" class=\"user-list-card\">";
             foreach ($this->getUsers() as $user) {
                 $user_id = $user["id"];
                 $external = isset($user["type"]) && $user["type"] == "external";
 
+                $user_image_set = true;
                 $image_data = $cache->loadCache($user_id);
                 if ($image_data === false) {
+                    $user_image_set = false;
                     $image_data = $cache->loadCache("default_photo");
                 }
                 $mime_type = $image_data["mime_type"];
@@ -170,19 +186,36 @@ class Views_Assessments_UserCard_List extends Views_Assessments_Base {
                 }
 
                 if (!$external) {
-                    $html[] = "<li class=\"". html_encode($this->getClass()) ."\" data-cperiod_ids=\"" . (!$external && isset($user["cperiod_ids"]) && $user["cperiod_ids"] ? html_encode(implode("-", $user["cperiod_ids"])) : "") . "\">";
+                    $html[] = "<li class=\"" . html_encode($this->getClass()) . "\" data-cperiod_ids=\"" . (!$external && isset($user["cperiod_ids"]) && $user["cperiod_ids"] ? html_encode(implode("-", $user["cperiod_ids"])) : "") . "\">";
                     $html[] = "    <div class=\"user-card-wrapper\">";
                     $html[] = "        <div class=\"user-card-container\">";
-                    $html[] = "            <img src=\"data:{$mime_type};base64,{$encoded_image}\" $photo_class width=\"42\" />";
+
+                    if ($user_image_set):
+                        $html[] = "            <img id=\"user-photo-{$user_id}\" src=\"data:{$mime_type};base64,{$encoded_image}\" $photo_class width=\"42\" />";
+                    else:
+                        $html[] = "            <div class=\"user-photo-upload-container\">";
+                        $html[] = "                <img id=\"user-photo-{$user_id}\" src=\"data:{$mime_type};base64,{$encoded_image}\" $photo_class width=\"42\" />";
+                        $html[] = "                <a id=\"upload-user-photo-{$user_id}\" href=\"#upload-image\" data-toggle=\"modal\" data-proxy-id=\"{$user_id}\" class=\"upload-image-modal-btn hide\">";
+                        $html[] = "                    <i class=\"fa fa-upload\" aria-hidden=\"true\" data-toggle=\"tooltip\" title=\"" . html_encode($translate->_("Upload User Photo")) . "\"></i>";
+                        $html[] = "                </a>";
+                        $html[] = "            </div>";
+                    endif;
+
                     $html[] = "            <$name_size $pdf_user_name_class>" . html_encode($user["lastname"]) . ", " . html_encode($user["firstname"]) . ($this->group == "student" && !isset($options["hide"]) ? "<span>" . html_encode($user["number"]) . "</span>" : "") . "</$name_size>";
-                    $html[] = "            <a href=\"mailto:" . html_encode($user["email"]) . "\">" . html_encode($user["email"]) . "</a>";
+                    $html[] = "            <a href=\"mailto:" . html_encode($user["email"]) . "\">" . html_encode($user["email"]) . "</a><span " . ($user["cbme"] && array_key_exists("stage_name", $user) ? "data-toggle=\"tooltip\" title=\"" . html_encode($user["stage_name"]) . "\"" : "") . " class=\"learner-level-badge pull-right " . ($user["cbme"] ? "cbme" : "") . "\">" . ($user["cbme"] && array_key_exists("stage_code", $user) && !empty($user["stage_code"]) ? html_encode($user["stage_code"]) . " &bull; " : "") . html_encode($user["learner_level"]) . "</span>";
                     $html[] = "         </div>";
 
                     if (!isset($options["hide"])) {
                         $logbook_label = $translate->_("View Logbook");
+                        $cbme_enabled = (new Entrada_Settings)->read("cbme_enabled");
                         if ($this->group == "student") {
                             if (count(Models_Logbook_Entry::fetchAll($user_id)) > 0) {
                                 $html[] = " <div class=\"user-card-parent\">";
+                                if ($cbme_enabled) {
+                                    $html[] = "     <div class=\"user-card-child user-card-child-divider\">";
+                                    $html[] = "         <a data-id=\"" . $user["id"] . "\" href=\"" . html_encode($ENTRADA_URL . "/assessments/learner/cbme?proxy_id=" . $user["id"]) . "\" class=\"all-assessments learner-dashboard\">" . $translate->_("CBME Dashboard") . " &rtrif; " . "</a>";
+                                    $html[] = "     </div>";
+                                }
                                 $html[] = "     <div class=\"user-card-child user-card-child-divider\">";
                                 $html[] = "         <a href=\"" . html_encode($ENTRADA_URL . "/assessments/learner?proxy_id=" . $user["id"]) . "\" class=\"all-assessments\">" . $this->getViewAssessmentLabel() . "</a>";
                                 $html[] = "     </div>";
@@ -192,13 +225,20 @@ class Views_Assessments_UserCard_List extends Views_Assessments_Base {
                                 $html[] = " </div>";
                             } else {
                                 $html[] = "<div class=\"user-card-parent\">";
-                                $html[] = "    <a href=\"" . html_encode($ENTRADA_URL. "/assessments/learner?proxy_id=" . $user["id"]) . "\" class=\"all-assessments\">" . $this->getViewAssessmentLabel() . "</a>";
+                                if ($cbme_enabled) {
+                                    $html[] = "     <div class=\"user-card-child user-card-child-divider\">";
+                                    $html[] = "         <a data-id=\"" . $user["id"] . "\" href=\"" . html_encode($ENTRADA_URL . "/assessments/learner/cbme?proxy_id=" . $user["id"]) . "\" class=\"all-assessments learner-dashboard\">" . $translate->_("CBME Dashboard") . " &rtrif; " . "</a>";
+                                    $html[] = "     </div>";
+                                }
+                                $html[] = "     <div class=\"user-card-child\">";
+                                $html[] = "         <a href=\"" . html_encode($ENTRADA_URL . "/assessments/learner?proxy_id=" . $user["id"]) . "\" class=\"all-assessments\">" . $this->getViewAssessmentLabel() . "</a>";
+                                $html[] = "     </div>";
                                 $html[] = "</div>";
                             }
                         } else {
                             $internal_label = $translate->_("Internal");
                             $html[] = "<div class=\"user-card-parent\">";
-                            $html[] = "    <a href=\"" . html_encode($ENTRADA_URL. "/assessments/faculty?proxy_id=" . $user["id"]) . "\" class=\"all-assessments\">" . $this->getViewAssessmentLabel() . "</a>";
+                            $html[] = "    <a href=\"" . html_encode($ENTRADA_URL . "/assessments/faculty?proxy_id=" . $user["id"]) . "\" class=\"all-assessments\">" . $this->getViewAssessmentLabel() . "</a>";
                             $html[] = "</div>";
                             $html[] = "<div>";
                             $html[] = "    <span class=\"assessor-type-badge hide\">$internal_label</span>";
@@ -248,7 +288,7 @@ class Views_Assessments_UserCard_List extends Views_Assessments_Base {
             $html[] = "<div class=\"clearfix\"></div>";
             $html[] = "</ul>";
         } else {
-            $html[] = "<p class=\"no-search-targets\">". html_encode($this->getNoResultsLabel()) ."</p>";
+            $html[] = "<p class=\"no-search-targets\">" . html_encode($this->getNoResultsLabel()) . "</p>";
         }
 
         echo implode("\n", $html);

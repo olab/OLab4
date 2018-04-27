@@ -72,7 +72,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP")) || (!defined("IN
 					if($db->Execute($query)) {
                         $url = ENTRADA_URL."/admin/clerkship/";
 
-                        $msg	= " You will now be redirected to the clerkship index; this will happen <strong>automatically</strong> in 5 seconds or <a href=\"".$url."\" style=\"font-weight: bold\">click here</a> to continue.";
+                        $msg	= " You will now be redirected to the " . $translate->_("clerkship index") . "; this will happen <strong>automatically</strong> in 5 seconds or <a href=\"".$url."\" style=\"font-weight: bold\">click here</a> to continue.";
 
                         $SUCCESS++;
                         $SUCCESSSTR[]  	= "You have successfully removed <strong>".html_encode($PROCESSED["geo_location"])."</strong> elective from the system.<br /><br />".$msg;
@@ -260,7 +260,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP")) || (!defined("IN
 									}
 									$url = ENTRADA_URL."/admin/clerkship/";
 									
-									$msg	= " You will now be redirected to the clerkship index; this will happen <strong>automatically</strong> in 5 seconds or <a href=\"".$url."\" style=\"font-weight: bold\">click here</a> to continue.";
+									$msg	= " You will now be redirected to the " . $translate->_("clerkship index") . "; this will happen <strong>automatically</strong> in 5 seconds or <a href=\"".$url."\" style=\"font-weight: bold\">click here</a> to continue.";
 									
 									$SUCCESS++;
 									$SUCCESSSTR[]  	= "You have successfully removed <strong>".html_encode($PROCESSED["geo_location"])."</strong> core rotation from the system.<br /><br />".$msg;

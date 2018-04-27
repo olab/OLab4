@@ -23,22 +23,8 @@
  *
  */
 
-class Entrada_Utilities_AssessmentUser extends Entrada_Utilities_Assessments_Base {
-    protected $proxy_id, $firstname, $lastname, $email, $number, $cperiod_ids, $assessment_count, $assessment_url, $photo_url;
-
-    /**
-     * Sets the options for the class object. For example, $options = array('courses' => '123') sets $this->courses = 123.
-     * @param array $options
-     */
-
-    public function __construct($options = array()) {
-        // if $options property exists among class properties, set it
-        foreach ($options as $key => $value) {
-            if (property_exists($this, $key)) {
-                $this->$key = $value;
-            }
-        }
-    }
+class Entrada_Utilities_AssessmentUser extends Entrada_Assessments_Base {
+    protected $proxy_id, $firstname, $lastname, $email, $number, $cperiod_ids, $assessment_count, $assessment_url, $photo_url, $learner_level, $cbme;
 
     /**
      * Gets the proxy_id of the user
@@ -122,53 +108,99 @@ class Entrada_Utilities_AssessmentUser extends Entrada_Utilities_Assessments_Bas
     }
 
     /**
+     * Gets the user's active learner level info
+     * @return string
+     */
+
+    public function getLearnerLevel () {
+        return $this->learner_level;
+    }
+
+    /**
+     * Gets whether or not the user is CBME.
+     * @return bool
+     */
+
+    public function getCBME () {
+        return $this->cbme;
+    }
+
+    /**
      * Fetches a list of learners for academic advisors
-     * @param int proxy_id The id of the current user
-     * @param int organisation_id The current organisation of the user
+     * @param int $proxy_id The id of the current user
+     * @param int $organisation_id The current organisation of the user
+     * @param $admin
+     * @param $search_term
+     * @param $cperiod
+     * @param $limit
+     * @param $offset
+     * @param $course_ids
      * @return array
      */
 
-    public function getMyLearners($proxy_id = null, $organisation_id = null, $admin = false, $search_term = null) {
+    public function getMyLearners($proxy_id = null, $organisation_id = null, $admin = false, $search_term = null, $cperiod = null, $limit = null, $offset = null, $course_ids = null) {
         $users = array();
 
         $course_groups = Models_Course_Group::fetchAllGroupsByTutorProxyIDOrganisationID($proxy_id, $organisation_id);
         if ($course_groups) {
             foreach ($course_groups as $course_group) {
-                $course = Models_Course::fetchRowByID($course_group->getCourseID());
-                $course_learners = Models_User::fetchAllByCGroupIDSearchTerm($course_group->getID());
-                if ($course && $course_learners) {
-                    foreach ($course_learners as $user) {
-                        if (is_null($search_term) || strpos(strtolower($user->getFirstname() . " " . $user->getLastname()), strtolower($search_term)) !== false) {
-                            $users[$user->getID()] = array(
-                                "id" => $user->getID(),
-                                "proxy_id" => $user->getID(),
-                                "firstname" => $user->getFirstname(),
-                                "lastname" => $user->getLastname(),
-                                "email" => $user->getEmail(),
-                                "number" => $user->getNumber(),
-                                "cperiod_ids" => array()
-                            );
+                if (!is_array($course_ids) || in_array($course_group->getCourseID(), $course_ids)) {
+                    $course = Models_Course::fetchRowByID($course_group->getCourseID());
+                    $course_learners = Models_User::fetchAllByCGroupIDSearchTerm($course_group->getID(), $search_term, $limit, $offset);
+                    if ($course && $course_learners) {
+                        foreach ($course_learners as $user) {
+                            if (is_null($search_term) || strpos(strtolower($user->getFirstname() . " " . $user->getLastname()), strtolower($search_term)) !== false) {
+                                $users[$user->getID()] = array(
+                                    "id" => $user->getID(),
+                                    "proxy_id" => $user->getID(),
+                                    "firstname" => $user->getFirstname(),
+                                    "lastname" => $user->getLastname(),
+                                    "email" => $user->getEmail(),
+                                    "number" => $user->getNumber(),
+                                    "cperiod_ids" => array(),
+                                    "course_id" => $course_group->getCourseID()
+                                );
+                            }
                         }
                     }
                 }
             }
         }
 
+        $course_model = new Models_Course();
         if ($admin) {
             $courses = Models_Course::fetchAllByOrg($organisation_id);
         } else {
+            // Course owner
             $courses = Models_Course::getUserCourses($proxy_id, $organisation_id);
+
+            // Competency committee courses
+            $ccmember_courses = $course_model->fetchAllCoursesByProxyIDContactType($proxy_id, "ccmember");
+            if ($ccmember_courses) {
+                if (is_array($courses)) {
+                    $courses = array_merge($courses, $ccmember_courses);
+                } else {
+                    $courses = $ccmember_courses;
+                }
+            }
         }
 
         // Program administrators should be able to see all learners in the course by default without a course group/tutor relationship.
+        // Competency committee members also need to see all learners.
         if ($courses) {
             foreach ($courses as $course) {
-                if (CourseOwnerAssertion::_checkCourseOwner($proxy_id, $course->getID()) || $admin) {
-                    $audience = $course->getAudience();
 
+                $requested_course = (!is_array($course_ids) || in_array($course->getID(), $course_ids));
+
+                if ($requested_course &&
+                    (CourseOwnerAssertion::_checkCourseOwner($proxy_id, $course->getID()) ||
+                    $course_model->fetchRowByCourseIDProxyIDContactType($course->getID(), $proxy_id, "ccmember") ||
+                    $admin)
+                ) {
+                    $audience = $course->getAudience($cperiod);
                     foreach ($audience as $audience_member) {
                         if ($audience_member->getAudienceType() == "group_id") {
-                            $group_members = $audience_member->getMembers();
+                            $group_members = $audience_member->getMembers($search_term, true, $limit, $offset);
                             if ($group_members) {
                                 foreach ($group_members as $member) {
                                     $user = Models_User::fetchRowByID($member->getID());
@@ -182,7 +214,8 @@ class Entrada_Utilities_AssessmentUser extends Entrada_Utilities_Assessments_Bas
                                                     "lastname" => $user->getLastname(),
                                                     "email" => $user->getEmail(),
                                                     "number" => $user->getNumber(),
-                                                    "cperiod_ids" => array($audience_member->getCperiodID())
+                                                    "cperiod_ids" => array($audience_member->getCperiodID()),
+                                                    "course_id" => $course->getID()
                                                 );
                                             }
                                         } else {
@@ -199,28 +232,31 @@ class Entrada_Utilities_AssessmentUser extends Entrada_Utilities_Assessments_Bas
                                 }
                             }
                         } else {
-                            $user = Models_User::fetchRowByID($audience_member->getAudienceValue());
-                            if ($user) {
-                                if (!array_key_exists($user->getID(), $users)) {
-                                    if (is_null($search_term) || strpos(strtolower($user->getFirstname() . " " . $user->getLastname()), strtolower($search_term)) !== false) {
-                                        $users[$user->getID()] = array(
-                                            "id" => $user->getID(),
-                                            "proxy_id" => $user->getID(),
-                                            "firstname" => $user->getFirstname(),
-                                            "lastname" => $user->getLastname(),
-                                            "email" => $user->getEmail(),
-                                            "number" => $user->getNumber(),
-                                            "cperiods" => array($audience_member->getCperiodID())
-                                        );
-                                    }
-                                } else {
-                                    $old_user = $users[$user->getID()];
-                                    if (!is_array($old_user["cperiod_ids"]) || !in_array($audience_member->getCperiodID(), $old_user["cperiod_ids"])) {
-                                        $old_user["cperiod_ids"][] = $audience_member->getCperiodID();
-                                    }
-                                    if (is_null($search_term) || strpos(strtolower($user->getFirstname() . " " . $user->getLastname()), strtolower($search_term)) !== false) {
-                                        $old_user["id"] = $user->getID();
-                                        $users[$user->getID()] = $old_user;
+                            if ($audience_member->getAudienceActive()) {
+                                $user = Models_User::fetchRowByID($audience_member->getAudienceValue());
+                                if ($user) {
+                                    if (!array_key_exists($user->getID(), $users)) {
+                                        if (is_null($search_term) || strpos(strtolower($user->getFirstname() . " " . $user->getLastname()), strtolower($search_term)) !== false) {
+                                            $users[$user->getID()] = array(
+                                                "id" => $user->getID(),
+                                                "proxy_id" => $user->getID(),
+                                                "firstname" => $user->getFirstname(),
+                                                "lastname" => $user->getLastname(),
+                                                "email" => $user->getEmail(),
+                                                "number" => $user->getNumber(),
+                                                "cperiods" => array($audience_member->getCperiodID()),
+                                                "course_id" => $course->getID()
+                                            );
+                                        }
+                                    } else {
+                                        $old_user = $users[$user->getID()];
+                                        if (!isset($old_user["cperiod_ids"]) || !is_array($old_user["cperiod_ids"]) || !in_array($audience_member->getCperiodID(), $old_user["cperiod_ids"])) {
+                                            $old_user["cperiod_ids"][] = $audience_member->getCperiodID();
+                                        }
+                                        if (is_null($search_term) || strpos(strtolower($user->getFirstname() . " " . $user->getLastname()), strtolower($search_term)) !== false) {
+                                            $old_user["id"] = $user->getID();
+                                            $users[$user->getID()] = $old_user;
+                                        }
                                     }
                                 }
                             }
@@ -230,14 +266,32 @@ class Entrada_Utilities_AssessmentUser extends Entrada_Utilities_Assessments_Bas
             }
         }
 
-        usort($users, array("Entrada_Utilities_AssessmentUser", "compareUserFirst"));
+        if ($users) {
+            // Fetch learner levels.
+            $learner_level_model = new Models_User_LearnerLevel();
+            foreach ($users as $user_id => $user) {
+                $learner_level = "";
+                $cbme = "";
+                $learner_level_data = $learner_level_model->fetchActiveLevelInfoByProxyIDOrganisationID($user_id, $organisation_id);
+                if ($learner_level_data) {
+                    $learner_level = $learner_level_data["title"];
+                    $cbme = isset($learner_level_data["cbme"]) ? $learner_level_data["cbme"] : 0;
+                }
+                $users[$user_id]["learner_level"] = $learner_level;
+                $users[$user_id]["cbme"] = $cbme ? true : false;
+            }
+
+            // Sort by first name.
+            usort($users, array("Entrada_Utilities_AssessmentUser", "compareUserFirst"));
+        }
+
         return $users;
     }
 
     /**
      * Fetches a list of faculty for academic advisors
-     * @param int proxy_id The id of the current user
-     * @param int organisation_id The current organisation of the user
+     * @param int $proxy_id The id of the current user
+     * @param int $organisation_id The current organisation of the user
      * @return array
      */
 
@@ -251,6 +305,8 @@ class Entrada_Utilities_AssessmentUser extends Entrada_Utilities_Assessments_Bas
         }
 
         if ($courses) {
+            $course_contact_model = new Models_Assessments_Distribution_CourseContact();
+
             foreach ($courses as $course) {
                 if (CourseOwnerAssertion::_checkCourseOwner($proxy_id, $course->getID()) || $admin) {
 
@@ -293,6 +349,13 @@ class Entrada_Utilities_AssessmentUser extends Entrada_Utilities_Assessments_Bas
                         }
                     }
 
+                    $course_contact_list = $course_contact_model->fetchAllByCourseID($course->getID(),"internal", $search_term);
+                    if ($course_contact_list) {
+                        foreach ($course_contact_list as $course_contact) {
+                            $tmp_users[$course_contact["assessor_value"]] = $course_contact["assessor_value"];
+                        }
+                    }
+
                     foreach ($tmp_users as $id => $course_user) {
                         $user = Models_User::fetchRowByID($id);
                         if ($user) {
@@ -319,9 +382,54 @@ class Entrada_Utilities_AssessmentUser extends Entrada_Utilities_Assessments_Bas
         return $users;
     }
 
+    /**
+     * Fetches a list of faculty for academic advisors reporting on faculty.
+     * @param int $proxy_id The id of the current user
+     * @param int $organisation_id The current organisation of the user
+     * @return array
+     */
+
+    public function getReportFaculty ($proxy_id = null, $organisation_id = null, $course_ids = null, $admin = false, $search_term = null, $limit = null, $offset = null) {
+        $users = array();
+
+        if ($admin && (!$course_ids || empty($course_ids))) {
+            $courses = Models_Course::fetchAllByOrg($organisation_id);
+            foreach ($courses as $course) {
+                $course_ids[$course->getID()] = $course->getID();
+            }
+        }
+
+        // Ensure the user is an admin for the course.
+        foreach ($course_ids as $key => $course_id) {
+            if (!CourseOwnerAssertion::_checkCourseOwner($proxy_id, $course_id) && !$admin) {
+                unset($course_ids[$key]);
+            }
+        }
+
+        if ($course_ids) {
+            // Get all associated faculty associated with this user's courses and put them into the user array.
+            $course_contact_model = new Models_Assessments_Distribution_CourseContact();
+            $course_contact_list = $course_contact_model->fetchAllByCourseIDs($course_ids,"internal", $search_term, $limit, $offset);
+
+            if ($course_contact_list) {
+                foreach ($course_contact_list as $course_user) {
+                    $users[$course_user["id"]] = new Entrada_Utilities_AssessmentUser(array(
+                        "proxy_id" => $course_user["id"],
+                        "firstname" => $course_user["firstname"],
+                        "lastname" => $course_user["lastname"],
+                        "email" => $course_user["email"],
+                        "number" => $course_user["number"],
+                    ));
+                }
+            }
+        }
+
+        return $users;
+    }
+
     public function getUserAssessmentCount($proxy_id = null, $organisation_id = null, $current_section = "assessments") {
         // Get a count of all user assessments
-        $all_user_assessments = Entrada_Utilities_Assessments_AssessmentTask::getAssessmentProgressOnUser($proxy_id, $organisation_id, $current_section);
+        $all_user_assessments = Entrada_Utilities_Assessments_DeprecatedAssessmentTask::getAssessmentProgressOnUser($proxy_id, $organisation_id, $current_section);
         $complete_user_assessments = $all_user_assessments["complete"];
 
         if ($complete_user_assessments) {
@@ -428,29 +536,23 @@ class Entrada_Utilities_AssessmentUser extends Entrada_Utilities_Assessments_Bas
     }
 
     public function cacheUserCardPhotos($users = array()) {
-        global $ENTRADA_ACL;
-
         if (!empty($users)) {
-            $default_cached = false;
             $cache = new Entrada_Utilities_Cache();
-
             foreach ($users as $user) {
-                if (!$cache->loadCache($user["id"])) {
-                    $user_object = Models_User::fetchRowByID($user["id"]);
-                    if ($user_object && (@file_exists(STORAGE_USER_PHOTOS . "/" . $user["id"] . "-official")) && ($ENTRADA_ACL->amIAllowed(new PhotoResource($user["id"], (int) $user_object->getPrivacyLevel(), "official"), "read"))) {
-                        $cache->cacheImage(STORAGE_USER_PHOTOS . "/" . $user["id"] . "-official" , $user["id"]);
-                    } else {
-                        if (!$default_cached) {
-                            $cache->cacheImage(ENTRADA_ABSOLUTE . "/images/headshot-male.gif" , "default_photo", "image/gif");
-                            $default_cached = true;
-                        }
-                    }
+                $user_object = Models_User::fetchRowByID($user["id"]);
+                if ($user_object && (@file_exists(STORAGE_USER_PHOTOS . "/" . $user["id"] . "-official"))) {
+                    $cache->cacheImage(STORAGE_USER_PHOTOS . "/" . $user["id"] . "-official", $user["id"]);
+                } else if ($user_object && (@file_exists(STORAGE_USER_PHOTOS . "/" . $user["id"] . "-upload"))) {
+                    $cache->cacheImage(STORAGE_USER_PHOTOS . "/" . $user["id"] . "-upload", $user["id"]);
+                } else {
+                    $cache->cacheImage(ENTRADA_ABSOLUTE . "/images/headshot-male.gif" , "default_photo", "image/gif");
                 }
             }
         }
     }
 
     public function getAssessorFacultyList($proxy_id, $organisation_id, $search_term = null, $add_externals = true, $sort_by_last = false) {
+        global $ENTRADA_USER;
         $users = array();
         $courses = Models_Course::getUserCourses($proxy_id, $organisation_id);
 
@@ -462,7 +564,13 @@ class Entrada_Utilities_AssessmentUser extends Entrada_Utilities_Assessments_Bas
                 $course_contact_list = $course_contact_model->fetchAllByCourseID($course->getID(), $add_externals ? null : "internal", $search_term);
                 if ($course_contact_list) {
                     foreach ($course_contact_list as $course_contact) {
-                        $faculty[] = array("assessor_value" => $course_contact["assessor_value"], "assessor_type" => $course_contact["assessor_type"]);
+                        if ($course_contact["assessor_type"] != "internal" || ($course_contact["assessor_value"] != $ENTRADA_USER->getActiveID())) {
+                            $faculty[] = array(
+                                "course_contact_id" => $course_contact["id"],
+                                "assessor_value" => $course_contact["assessor_value"],
+                                "assessor_type" => $course_contact["assessor_type"]
+                            );
+                        }
                     }
                 }
             }
@@ -471,13 +579,19 @@ class Entrada_Utilities_AssessmentUser extends Entrada_Utilities_Assessments_Bas
                 $user_record = $this->getUserByType($faculty_member["assessor_value"], $faculty_member["assessor_type"]);
 
                 if ($user_record && !array_key_exists($user_record->getID(), $users)) {
-                    $users[$user_record->getID()] = array(
-                        "id" => $user_record->getID(),
-                        "firstname" => $user_record->getFirstname(),
-                        "lastname" => $user_record->getLastname(),
-                        "email" => $user_record->getEmail(),
-                        "type" => $faculty_member["assessor_type"] == "external" ? "external" : "internal",
-                    );
+                    $key = "{$faculty_member["assessor_type"]}-{$faculty_member["assessor_value"]}";
+                    if ($faculty_member["assessor_type"] != "internal" || ($faculty_member["assessor_value"] != $ENTRADA_USER->getActiveID())) {
+                        $users[$key] = array(
+                            "id" => $user_record->getID(),
+                            "firstname" => $user_record->getFirstname(),
+                            "lastname" => $user_record->getLastname(),
+                            "email" => $user_record->getEmail(),
+                            "type" => $faculty_member["assessor_type"] == "external" ? "external" : "internal",
+                            "course_contact_id" => $faculty_member["course_contact_id"],
+                            "cbme" => false,
+                            "learner_level" => null
+                        );
+                    }
                 }
             }
         }

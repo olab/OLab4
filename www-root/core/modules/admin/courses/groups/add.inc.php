@@ -61,7 +61,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSE_GROUPS"))) {
 	if ($course) {
 		$course_details = $course->toArray();
 		courses_subnavigation($course_details,"groups");
-		$curriculum_periods = Models_Curriculum_Period::fetchRowByCurriculumTypeIDCourseID($course->getCurriculumTypeID(), $course->getID());
+		$curriculum_periods = Models_Curriculum_Period::fetchAllByCurriculumTypeIDCourseID($course->getCurriculumTypeID(), $course->getID());
 	}
 
 	// Error Checking
@@ -263,7 +263,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSE_GROUPS"))) {
 							if (!isset($PROCESSED["gender_choice"])) {
 								$ordered = false;
 							}
-							$cohort_members = $audience_members_object->getAllAudienceMembers(implode(",",$groups), $ordered);
+							$cohort_members = $audience_members_object->getAllAudienceMembers($groups, $ordered);
 						}
 
 						if ($groups && $individuals) {
@@ -315,7 +315,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSE_GROUPS"))) {
 							if (!isset($PROCESSED["gender_choice"])) {
 								$ordered = false;
 							}
-							$cohort_members = $audience_members_object->getAllAudienceMembers(implode(",",$groups), $ordered);
+							$cohort_members = $audience_members_object->getAllAudienceMembers($groups, $ordered);
 						}
 
 						if ($groups && $individuals) {
@@ -506,11 +506,11 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSE_GROUPS"))) {
 								<label class="content-subheading"><?php echo $translate->_("Learners");?> </label>
 								<label class="radio"  id="all_enrolment_label">
 									<input type="radio" name="enrolment" class="enrolment" value="all_enrolment" checked="checked" />
-									<span>All <span id="total_students"></span> learners enroled in <?php echo $course_details['course_name']?> from <span id="enrolment_name"></span></span>
+									<span>All <span id="total_students"></span> <?php echo $translate->_("learners enroled in") . " " . $course_details["course_name"]; ?> from <span id="enrolment_name"></span></span>
 								</label>
 								<label class="radio"  id="part_enrolment_label">
 									<input type="radio" name="enrolment" class="enrolment" value="part_enrolment"/>
-									<span><?php echo $translate->_("Selected learners within");?> <?php echo $course_details['course_name']?></span>
+									<span><?php echo $translate->_("Selected learners within"); ?> <?php echo $course_details["course_name"]; ?></span>
 								</label>
 								<div class="v-divider">
 									<div class="enrolment_groups hide"></div>

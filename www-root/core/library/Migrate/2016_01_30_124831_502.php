@@ -7,7 +7,7 @@ class Migrate_2016_01_30_124831_502 extends Entrada_Cli_Migrate {
     public function up() {
         $this->record();
         ?>
-        CREATE TABLE `global_lu_buildings` (
+        CREATE TABLE IF NOT EXISTS `global_lu_buildings` (
             `building_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
             `organisation_id` int(11) unsigned NOT NULL,
             `building_code` varchar(16) NOT NULL DEFAULT '',
@@ -21,7 +21,7 @@ class Migrate_2016_01_30_124831_502 extends Entrada_Cli_Migrate {
         PRIMARY KEY (`building_id`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
-        CREATE TABLE `global_lu_rooms` (
+        CREATE TABLE IF NOT EXISTS `global_lu_rooms` (
             `room_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
             `building_id` int(11) unsigned NOT NULL,
             `room_number` varchar(20) NOT NULL DEFAULT '',
@@ -65,7 +65,11 @@ class Migrate_2016_01_30_124831_502 extends Entrada_Cli_Migrate {
         $migration = new Models_Migration();
         if ($migration->tableExists(DATABASE_NAME, "global_lu_buildings")) {
             if ($migration->tableExists(DATABASE_NAME, "global_lu_rooms")) {
-                return 1;
+                if ($migration->columnExists(DATABASE_NAME, "events", "room_id")) {
+                    if ($migration->columnExists(DATABASE_NAME, "draft_events", "room_id")) {
+                        return 1;
+                    }
+                }
             }
         }
 

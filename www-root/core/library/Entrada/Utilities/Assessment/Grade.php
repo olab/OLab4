@@ -262,7 +262,42 @@ class Entrada_Utilities_Assessment_Grade {
 	public function formatGradePresentation($proxy_id, $student) {
 		$html = array();
 				 
-		$html[] = '<span class="grade pull-left '.($this->assessment["form_id"] ? "open-modal-mark-assignment" : "no-form").' '.($student["group"] ? "in-group in-group-".$student["group"]["cgroup_id"] : "").'" id="grade_'.$this->assessment["assessment_id"].'_'.$proxy_id.'" data-grade-id="'.$student["b0grade_id"].'" data-assessment-id="'.$this->assessment["assessment_id"].'" data-type="grade" data-proxy-id="'.$proxy_id.'" data-course-id="'.$this->course["course_id"].'" data-organisation-id="'.$this->course['organisation_id'].'" data-assignment-id="'.$this->assessment["assignment_id"].'" data-grade-value="'.$student["b0grade"].'" data-formatted-grade="'.format_retrieved_grade($student["b0grade"], $this->assessment).'" data-form-id="'.$this->assessment["form_id"].'" data-assignment-title="'.$this->assessment["assignment_title"].'" data-student-name="'.$student["fullname"].'" '.($student["group"] ? 'data-group-name="'.$student["group"]["group_name"].'" data-group-id="'.$student["group"]["cgroup_id"].'"' : "").'>';
+		$html[] = '<span class="grade pull-left '
+                    .($this->assessment["form_id"] ? "open-modal-mark-assignment" : "no-form")
+                    .' '
+                    .($student["group"] ? "in-group in-group-".$student["group"]["cgroup_id"] : "")
+                    .'" id="grade_'
+                    .$this->assessment["assessment_id"]
+                    .'_'
+                    .$proxy_id
+                    .'" data-grade-id="'
+                    .$student["b0grade_id"]
+                    .'" data-assessment-id="'
+                    .$this->assessment["assessment_id"]
+                    .'" data-type="grade" data-proxy-id="'
+                    .$proxy_id.'" data-course-id="'
+                    .$this->course["course_id"]
+                    .'" data-organisation-id="'
+                    .$this->course['organisation_id']
+                    .'" data-assignment-id="'
+                    .$this->assessment["assignment_id"]
+                    .'" data-grade-value="'.$student["b0grade"]
+                    .'" data-formatted-grade="'
+                    .format_retrieved_grade($student["b0grade"], $this->assessment)
+                    .'" data-form-id="'
+                    .$this->assessment["form_id"]
+                    .'" data-portfolio-id="'
+                    .$this->assessment["portfolio_id"]
+                    .'" data-assignment-title="'
+                    .$this->assessment["assignment_title"]
+                    .'" data-student-name="'
+                    .$student["fullname"].'" '
+                    .($student["group"] ? 'data-group-name="'
+                    .$student["group"]["group_name"]
+                    .'" data-group-id="'
+                    .$student["group"]["cgroup_id"]
+                    .'"' : "")
+                    .'>';
 		$html[] = !is_null($student["b0grade"]) ? format_retrieved_grade($student["b0grade"], $this->assessment) : "";
 		$html[] = '</span>';
 		$html[] = '<span class="gradesuffix pull-left '.(is_null($student["b0grade"]) ? "hide" : "" ).'">';
@@ -379,7 +414,7 @@ class Entrada_Utilities_Assessment_Grade {
 			$unentered = 0;
 
 			foreach($this->raw_student_results as $student) {
-				if (!isset($student["b0grade"]) || !$student["b0grade"]) {
+				if (!isset($student["b0grade"])) {
 					$unentered++;
 				}
 			}

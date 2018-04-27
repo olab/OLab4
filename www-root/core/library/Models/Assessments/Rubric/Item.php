@@ -102,9 +102,10 @@ class Models_Assessments_Rubric_Item extends Models_Base {
         $sql = "SELECT  a.`item_id`,
                         a.`one45_element_id`,
                         a.`organisation_id`,
-                        a.`itemtype_id`, a.`item_code`, a.`item_text`,
+                        a.`itemtype_id`, a.`item_code`, a.`item_text`, a.`allow_default`, a.`default_response`,
                         a.`item_description`, a.`comment_type`, a.`created_date`, a.`created_by`, a.`updated_date`, a.`updated_by`, a.`deleted_date`,
-                        b.`text` AS `response_text`, b.`order` AS `response_order`,
+                        a.`attributes`,
+                        b.`text`, b.`order` AS `response_order`,
                         r.`aritem_id`, r.`rubric_id`
 
                 FROM `cbl_assessments_lu_items` AS a
@@ -219,5 +220,57 @@ class Models_Assessments_Rubric_Item extends Models_Base {
             }
         }
         return $rubric_ids;
+    }
+
+    public static function fetchRubricIDsByScaleID($scale_id) {
+        global $db;
+        $rubric_ids = array();
+
+        $sql = "SELECT DISTINCT `rubric_id`
+                FROM `cbl_assessments_lu_rubrics`
+                WHERE `rating_scale_id` = ?";
+        $rubrics = $db->GetAll($sql, array($scale_id));
+        if (is_array($rubrics)) {
+            foreach ($rubrics as $rubric) {
+                $rubric_ids[] = $rubric["rubric_id"];
+            }
+        }
+        return $rubric_ids;
+    }
+
+    public static function fetchItemIDsByRubricIDHavingScaleID($rubric_id) {
+        global $db;
+        $sql = "SELECT (ri.`item_id`)
+                FROM `cbl_assessment_rubric_items`  AS ri
+                JOIN `cbl_assessments_lu_items` AS i ON ri.`item_id` = i.`item_id`
+                WHERE ri.`rubric_id` = ?
+                AND ri.`deleted_date` IS NULL
+                AND i.`rating_scale_id` IS NOT NULL
+                AND i.`rating_scale_id` > 0";
+        $results = $db->GetAll($sql, array($rubric_id));
+        $return_set = array();
+        if (!empty($results)) {
+            foreach ($results as $result) {
+                $return_set[] = (int)$result["item_id"];
+            }
+        }
+        return $return_set;
+    }
+
+    public static function fetchItemIDsByRubricID($rubric_id) {
+        global $db;
+        $sql = "SELECT (ri.`item_id`)
+                FROM `cbl_assessment_rubric_items`  AS ri
+                JOIN `cbl_assessments_lu_items` AS i ON ri.`item_id` = i.`item_id`
+                WHERE ri.`rubric_id` = ?
+                AND ri.`deleted_date` IS NULL";
+        $results = $db->GetAll($sql, array($rubric_id));
+        $return_set = array();
+        if (!empty($results)) {
+            foreach ($results as $result) {
+                $return_set[] = (int)$result["item_id"];
+            }
+        }
+        return $return_set;
     }
 }

@@ -26,10 +26,10 @@
 class Views_Assessments_Forms_Sections_ItemResponses extends Views_Assessments_Forms_Sections_Base {
 
     protected function validateOptions($options = array()) {
-        if (!$this->validateIsSet($options, array("itemtype_shortname"))) {
+        if (!$this->validateIsSet($options, array("itemtype_shortname", "use_custom_flags"))) {
             return false;
         }
-        if (!$this->validateArray($options, array("item_responses", "item_response_descriptors", "advanced_search_descriptor_datasource"))) {
+        if (!$this->validateArray($options, array("item_responses", "advanced_search_descriptor_datasource"))) {
             return false;
         }
         return true;
@@ -45,17 +45,19 @@ class Views_Assessments_Forms_Sections_ItemResponses extends Views_Assessments_F
 
         $item_responses                 = $options["item_responses"];
         $itemtype_shortname             = $options["itemtype_shortname"];
-        $item_response_descriptors      = $options["item_response_descriptors"];
         $response_descriptor_datasource = $options["advanced_search_descriptor_datasource"];
 
-        $show_grid_controls             = @$options["show_grid_controls"];
-        $flag_response                  = @$options["flag_response"];
-        $selected_descriptors           = @$options["selected_descriptors"] ? $options["selected_descriptors"] : array();
-        $given_rubric_descriptors       = @$options["rubric_descriptors"];
+        $show_grid_controls             = array_key_exists("show_grid_controls", $options) ? $options["show_grid_controls"] : false;
+        $flag_response                  = array_key_exists("flag_response", $options) ? $options["flag_response"] : null;
+        $default_response               = array_key_exists("default_response", $options) ? $options["default_response"] : null;
+        $given_rubric_descriptors       = array_key_exists("rubric_descriptors", $options) ? $options["rubric_descriptors"] : null;
 
-        $disabled_text                  = @$options["disabled"] ? "disabled" : "";
+        $disabled_text                  = array_key_exists("disabled", $options) ? $options["disabled"] ? "disabled" : "" : "";
         $use_readonly_override          = array_key_exists("readonly_override", $options);
         $readonly_override              = @$options["readonly_override"] ? $options["readonly_override"] : false;
+        $allow_default                  = array_key_exists("allow_default", $options) ? $options["allow_default"] : false;
+        $use_custom_flags               = $options["use_custom_flags"];
+        $flags_datasource               = array_key_exists("flags_datasource", $options) ? $options["flags_datasource"] : array();
 
         $readonly_referred_rubric_descriptors = false;
         if ($given_rubric_descriptors &&
@@ -63,17 +65,30 @@ class Views_Assessments_Forms_Sections_ItemResponses extends Views_Assessments_F
             !empty($given_rubric_descriptors)) {
             $readonly_referred_rubric_descriptors = true;
         }
+
+        // If we've been given both item response and pre-set descriptors, use the already set item responses' descriptors.
+        if (!empty($given_rubric_descriptors) && !empty($item_responses)) {
+            $given_rubric_descriptors = array_map(function($i) { return $i["ardescriptor_id"]; }, $item_responses);
+        }
+
+        $hide_flex_column = "hide";
+        if (!$readonly_override && !$readonly_referred_rubric_descriptors) {
+            $hide_flex_column = "";
+        }
+
+        $hide_default_column = " hide";
+        if ($allow_default) {
+            $hide_default_column = "";
+        }
         ?>
         <div <?php echo $this->getClassString(); ?> <?php echo $this->getIDString(); ?>>
 
             <h2><?php echo $translate->_("Item Responses"); ?></h2>
 
-            <?php if ($show_grid_controls): ?>
-                <div class="btn-group space-below pull-right" id="response-grid-controls">
-                    <a href="#" class="btn add-response"><i class="icon-plus-sign"></i></a>
-                    <a href="#" class="btn remove-response"><i class="icon-minus-sign"></i></a>
-                </div>
-            <?php endif; ?>
+            <div class="btn-group space-below pull-right" id="response-grid-controls">
+                <a href="#" class="btn add-response"<?php echo (!$show_grid_controls) ? " style=\"display: none;\"" : ""; ?>><i class="icon-plus-sign"></i></a>
+                <a href="#" class="btn remove-response"<?php echo (!$show_grid_controls) ? " style=\"display: none;\"" : ""; ?>><i class="icon-minus-sign"></i></a>
+            </div>
 
             <div id="item-removal-success-box" class="clear"></div>
 
@@ -82,17 +97,15 @@ class Views_Assessments_Forms_Sections_ItemResponses extends Views_Assessments_F
                     <th width="15%"></th>
                     <th width="45%"><?php echo $translate->_("Response Text"); ?></th>
                     <th width=""><?php echo $translate->_("Response Category"); ?></th>
-                    <th width="5%"><?php echo $translate->_("Flag"); ?></th>
-                    <?php if (!$readonly_override && !$readonly_referred_rubric_descriptors): ?>
-                        <th width="5%"></th>
-                        <th width="5%"></th>
-                    <?php endif; ?>
+                    <th width="5%"><?php echo $translate->_("Prompt"); ?></th>
+                    <th width="5%" class="default_selection_column <?php echo $hide_default_column; ?>"><?php echo $translate->_("Default"); ?></th>
+                    <th width="5%" class="items-header-flex-column <?php echo $hide_flex_column ?>"></th>
+                    <th width="5%" class="items-header-flex-column <?php echo $hide_flex_column ?>"></th>
                 </thead>
 
                 <tbody class="sortable-items">
 
                     <?php if (!$readonly_referred_rubric_descriptors): ?>
-
                         <?php $ordinal = 0; foreach ($item_responses as $response):
                             $ordinal++;
                             $selected_ardescriptor_id = $response["ardescriptor_id"];
@@ -113,16 +126,17 @@ class Views_Assessments_Forms_Sections_ItemResponses extends Views_Assessments_F
                                 <?php if ($readonly_override): // Read-only descriptor display ?>
 
                                     <?php $this->renderReadonlyDescriptorTD($ordinal, $item_response_descriptor_id, $item_response_descriptor_text); ?>
-                                    <?php $this->renderFlagResponseTD($ordinal, @$flag_response[$ordinal], $disabled_text); ?>
+                                    <?php $this->renderFlagResponseTD($ordinal, @$flag_response[$ordinal], $disabled_text, $use_custom_flags, $flags_datasource); ?>
+                                    <?php $this->renderDefaultSelectionTD($allow_default, $ordinal, $default_response, $disabled_text); ?>
 
                                 <?php else: // Fully searchable descriptors ?>
 
                                     <?php $this->renderSearchableDescriptorTD($ordinal, $response_descriptor_datasource, $item_response_descriptor_id, $item_response_descriptor_text); ?>
-                                    <?php $this->renderFlagResponseTD($ordinal, @$flag_response[$ordinal], $disabled_text); ?>
+                                    <?php $this->renderFlagResponseTD($ordinal, @$flag_response[$ordinal], $disabled_text, $use_custom_flags, $flags_datasource); ?>
+                                    <?php $this->renderDefaultSelectionTD($allow_default, $ordinal, $default_response, $disabled_text); ?>
                                     <?php $this->renderItemOptionsTDs($ordinal); ?>
 
                                 <?php endif; ?>
-
                             </tr>
 
                         <?php endforeach; ?>
@@ -132,9 +146,9 @@ class Views_Assessments_Forms_Sections_ItemResponses extends Views_Assessments_F
                         // Rubric descriptors are given to us via rubric referrer data.
                         // This happens when creating a new item and attaching it to a rubric; there is no existing item to display
                         // responses for, but descriptors must be taken into account when creating this item.
-
-                        foreach ($given_rubric_descriptors as $key => $response_descriptor):
-                            $key++; // start from 1, not 0
+                        $key = 0;
+                        foreach ($given_rubric_descriptors as $response_descriptor):
+                            $key++; // starting from 1, not 0
                             $label = "";
                             $descriptor_id = null;
                             if ($search_source = Entrada_Utilities_AdvancedSearchHelper::getSearchItemByField($response_descriptor_datasource, "target_id", $response_descriptor)) {
@@ -158,12 +172,14 @@ class Views_Assessments_Forms_Sections_ItemResponses extends Views_Assessments_F
                                 <?php if ($use_readonly_override && $readonly_override): // Read-only descriptor display ?>
 
                                     <?php $this->renderReadonlyDescriptorTD($key, $descriptor_id, $label); ?>
-                                    <?php $this->renderFlagResponseTD($key, @$flag_response[$key], $disabled_text); ?>
+                                    <?php $this->renderFlagResponseTD($key, @$flag_response[$key], $disabled_text, $use_custom_flags, $flags_datasource); ?>
+                                    <?php $this->renderDefaultSelectionTD($allow_default, $key, $default_response, $disabled_text); ?>
 
                                 <?php else: // Fully searchable descriptors ?>
 
                                     <?php $this->renderSearchableDescriptorTD($key, $response_descriptor_datasource, $descriptor_id, $label); ?>
-                                    <?php $this->renderFlagResponseTD($key, @$flag_response[$key], $disabled_text); ?>
+                                    <?php $this->renderFlagResponseTD($key, @$flag_response[$key], $disabled_text, $use_custom_flags, $flags_datasource); ?>
+                                    <?php $this->renderDefaultSelectionTD($allow_default, $key, $default_response, $disabled_text); ?>
                                     <?php $this->renderItemOptionsTDs($key); ?>
 
                                 <?php endif; ?>
@@ -176,7 +192,7 @@ class Views_Assessments_Forms_Sections_ItemResponses extends Views_Assessments_F
 
                 </tbody>
             </table>
-        </div>        
+        </div>
         <?php
     }
 
@@ -191,10 +207,78 @@ class Views_Assessments_Forms_Sections_ItemResponses extends Views_Assessments_F
         <?php
     }
 
-    private function renderFlagResponseTD($ordinal, $flag_response, $disabled_text) {
-        ?>
+    private function renderFlagResponseTD($ordinal, $flag_response, $disabled_text, $custom_flags, $flags) {
+        global $translate; ?>
         <td>
-            <input type="checkbox" name="flag_response[<?php echo $ordinal ?>]" value="1" <?php echo $flag_response ? "checked='checked'" : "" ?> <?php echo $disabled_text ?> />
+            <?php if ($custom_flags) {
+                $this->renderAdvancedSearchFlagSelector($ordinal, $flag_response, $disabled_text, $flags);
+            } else {
+                $this->renderCheckboxFlagSelector($ordinal, $flag_response, $disabled_text);
+            }?>
+        </td>
+        <?php
+    }
+
+    private function renderAdvancedSearchFlagSelector($ordinal, $flag_response, $disabled_text, $flags) {
+        global $translate;
+        $selected = "";
+        foreach ($flags as $flag) {
+            if ($flag["target_id"] == $flag_response) {
+                $selected = $flag["target_label"];
+            }
+        }
+        if ($flag_response > 0 && !$selected) {
+            // The flag_response value does not correspond to a flag in the system.
+            // So we denote that the flag is actually set, but we don't populate the advancedSearch as to not overwrite the existing value.
+            $selected = $translate->_("Flagged");
+        }
+        ?>
+        <button id="flag-<?php echo $ordinal; ?>" class="btn btn-search-filter text-left" <?php echo $disabled_text; ?>>
+            <?php echo $selected ? $selected : $translate->_("Not Flagged"); ?><i class="icon-chevron-down btn-icon pull-right"></i>
+        </button>
+        <script language="JavaScript">
+            jQuery(document).ready(function ($) {
+                $("#flag-<?php echo $ordinal;?>").advancedSearch({
+                    filters: {},
+                    control_class: "flag-<?php echo $ordinal;?>",
+                    no_results_text: "",
+                    parent_form: $("#item-form"),
+                    width: 275,
+                    modal: false
+                });
+                // We must declare the filter after the object has been created to allow us to use a dynamic key with a variable in the name.
+                var descriptor_settings = jQuery("#flag-<?php echo $ordinal; ?>").data("settings");
+                if (descriptor_settings) {
+                    descriptor_settings.filters["flag_response_<?php echo $ordinal; ?>"] = {
+                        label: "<?php echo $translate->_("Flags") ?>",
+                        data_source: <?php echo json_encode($flags) ?>,
+                        mode: "radio",
+                        selector_control_name: "flag_response[<?php echo $ordinal; ?>]",
+                        search_mode: false
+                    }
+                }
+            })
+        </script>
+        <input type="hidden"
+               name="flag_response[<?php echo $ordinal; ?>]"
+               value="<?php echo $flag_response; ?>"
+               id="flag_response_<?php echo $ordinal; ?>_<?php echo $flag_response; ?>"
+               data-label="<?php echo $selected; ?>"
+               class="search-target-control flag_response_<?php echo $ordinal; ?> search_target_control flag-<?php echo $ordinal; ?>">
+        <?php
+    }
+
+    private function renderCheckboxFlagSelector($ordinal, $flag_response, $disabled_text) {
+        ?>
+        <input type="checkbox" name="flag_response[<?php echo $ordinal ?>]" value="1" <?php echo $flag_response ? "checked='checked'" : "" ?> <?php echo $disabled_text ?> />
+        <?php
+    }
+
+    private function renderDefaultSelectionTD($allow_default, $ordinal, $default_response, $disabled_text) {
+        $hide_tag = $allow_default ? "" : " hide";
+        ?>
+        <td class="default_selection_column <?php echo $hide_tag; ?>">
+            <input id="default-response-<?php echo $ordinal; ?>" type="radio" name="default_response" value="<?php echo $ordinal ?>" <?php echo ($default_response == $ordinal) ? "checked='checked'" : "" ?> <?php echo $disabled_text ?> />
         </td>
         <?php
     }
@@ -227,20 +311,20 @@ class Views_Assessments_Forms_Sections_ItemResponses extends Views_Assessments_F
 
             <script type="text/javascript">
                 jQuery(document).ready(function ($) {
-                    $("<?php echo "#descriptor-$ordinal"; ?>").advancedSearch({
+                    $("<?php echo "#descriptor-{$ordinal}"; ?>").advancedSearch({
                         filters: {},
-                        control_class: "<?php echo "descriptor-$ordinal"; ?>",
+                        control_class: "<?php echo "descriptor-{$ordinal}"; ?>",
                         no_results_text: "",
                         parent_form: $("#item-form"),
                         width: 275,
                         modal: false
                     });
-                    var descriptor_settings = $("<?php echo "#descriptor-$ordinal"; ?>").data("settings");
-                    descriptor_settings.filters["<?php echo "response_category_$ordinal"; ?>"] = {
+                    var descriptor_settings = $("<?php echo "#descriptor-{$ordinal}"; ?>").data("settings");
+                    descriptor_settings.filters["<?php echo "response_category_{$ordinal}"; ?>"] = {
                         label: "",
                         data_source: <?php echo json_encode($response_descriptor_datasource); ?>,
                         mode: "radio",
-                        selector_control_name: "<?php echo "ardescriptor_id[$ordinal]"; ?>",
+                        selector_control_name: "<?php echo "ardescriptor_id[{$ordinal}]"; ?>",
                         search_mode: true
                     }
                 });

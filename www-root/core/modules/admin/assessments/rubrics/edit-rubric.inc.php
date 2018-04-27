@@ -61,7 +61,6 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_RUBRICS"))) {
     }
 
     if ($PROCESSED["rubric_id"]) {
-
         $forms_api->setRubricID($PROCESSED["rubric_id"]);
         $rubric_data = $forms_api->fetchRubricData();
 
@@ -104,7 +103,6 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_RUBRICS"))) {
         $HEAD[] = "<script type=\"text/javascript\">var VIEW_PREFERENCE = \"". (isset($PREFERENCES["rubrics"]["selected_view"]) ? $PREFERENCES["rubrics"]["selected_view"] : "list") ."\";</script>";
         $HEAD[] = "<script type=\"text/javascript\" src=\"".ENTRADA_URL."/javascript/jquery/jquery.dataTables.min.js\"></script>";
         $HEAD[] = "<script type=\"text/javascript\" src=\"".ENTRADA_URL."/javascript/jquery/jquery.editable.js\"></script>";
-        $HEAD[] = "<script type=\"text/javascript\" src=\"".ENTRADA_URL."/javascript/assessments/rubrics/rubric-admin.js\"></script>";
         $HEAD[] = "<script type=\"text/javascript\" src=\"".ENTRADA_URL."/javascript/assessments/forms/view.js\"></script>";
 
         echo "<h1>{$translate->_("Editing Grouped Item:")}</h1>";

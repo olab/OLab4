@@ -21,6 +21,9 @@
  *
  */
 
+var course_id, event_start_date;
+var refresh_course_units = true;
+var course_units = {};
 var event_length_minutes = "";
 event_length_changed();
 
@@ -126,6 +129,12 @@ jQuery(function($) {
             event_length_changed();
         }, 200);
     });
+
+    $("#addEventForm").on("change", "#course_id", reset_course_units);
+    $("#addEventForm").on("click", "#course_unit", populate_course_units);
+    $("#editEventForm").on("change", "#course_id", reset_course_units);
+    $("#editEventForm").on("click", "#course_unit", populate_course_units);
+    $("body").on("click", ".xc2 td", reset_course_units);
 
     if (typeof EVENT_COLOR_PALETTE != 'undefined' && Array.isArray(EVENT_COLOR_PALETTE)) {
         color_picker('#event_color', EVENT_COLOR_PALETTE);
@@ -762,4 +771,75 @@ function update_start_end_times() {
             });
         }
     }
+}
+
+function reset_course_units()
+{
+    var new_course_id = jQuery("#course_id").val();
+    var new_event_start_date = jQuery("#event_start_date").val();
+    var course_changed = (new_course_id != course_id);
+    var date_changed = (new_event_start_date != event_start_date);
+    if (course_changed || date_changed) {
+        course_id = new_course_id;
+        event_start_date = new_event_start_date;
+        refresh_course_units = true;
+        populate_course_units();
+    }
+}
+
+function populate_course_units()
+{
+    if (refresh_course_units) {
+        refresh_course_units = false;
+        jQuery.when(get_course_units()).done(function (my_course_units) {
+            var old_cunit_id = parseInt(jQuery("#course_unit").val());
+            jQuery("#course_unit option[value!='']").remove();
+            if (my_course_units) {
+                var new_cunit_id = '';
+                for (var i = 0; i < my_course_units.length; i++) {
+                    var course_unit = my_course_units[i];
+                    if (old_cunit_id === parseInt(course_unit.cunit_id)) {
+                        new_cunit_id = old_cunit_id;
+                    }
+                    var option = jQuery(document.createElement('option')).html(course_unit.unit_title).val(course_unit.cunit_id);
+                    jQuery("#course_unit").append(option);
+                }
+                jQuery("#course_unit").val(new_cunit_id);
+                if (old_cunit_id && !new_cunit_id) {
+                    alert("The Course Unit you selected has been reset because you specified a date in different curriculum period or you changed the course.");
+                }
+            }
+        });
+    }
+}
+
+function get_course_units()
+{
+    var deferred = jQuery.Deferred();
+    course_id = parseInt(jQuery("#course_id").val());
+    event_start_date = jQuery("#event_start_date").val();
+    if (course_id && event_start_date) {
+        var key = course_id + ',' + event_start_date;
+        if (!course_units[key]) {
+            var promise = jQuery.ajax({
+                url: ENTRADA_URL + "/courses/units?section=api-units",
+                data: "method=get-units-by-course-date&course=" + course_id + "&date=" + event_start_date,
+                type: 'GET'
+            });
+            jQuery.when(promise).done(function(json) {
+                var data = JSON.parse(json);
+                if (data && data.status === 'success') {
+                    course_units[key] = data.data;
+                    deferred.resolve(data.data);
+                } else {
+                    deferred.resolve(undefined);
+                }
+            });
+        } else {
+            deferred.resolve(course_units[key]);
+        }
+    } else {
+        deferred.resolve([]);
+    }
+    return deferred.promise();
 }

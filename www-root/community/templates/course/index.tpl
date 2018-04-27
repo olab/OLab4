@@ -15,12 +15,14 @@
 	<script type="text/javascript" src="{$sys_website_url}/javascript/jquery/jquery-ui.min.js?release={$application_version}"></script>
 	<script type="text/javascript">jQuery.noConflict();</script>
     <script type="text/javascript">var ENTRADA_URL = '{$sys_website_url}'; var ENTRADA_RELATIVE = '{$sys_website_relative}'; var TEMPLATE_URL = '{$template_url}'; var TEMPLATE_RELATIVE = '{$template_relative}';</script>
-
+    <script>var COMMUNITY_ID = "{$community_id}";</script>
 	<script type="text/javascript" src="{$sys_website_url}/javascript/scriptaculous/prototype.js?release={$application_version}"></script>
 	<script type="text/javascript" src="{$sys_website_url}/javascript/scriptaculous/scriptaculous.js?release={$application_version}"></script>
 	<script type="text/javascript" src="{$template_relative}/javascript/libs/bootstrap.min.js?release={$application_version}"></script>
 	<script type="text/javascript" src="{$template_relative}/javascript/libs/modernizr-2.5.3.min.js?release={$application_version}"></script>
     <script src="{$sys_website_url}/javascript/bookmark.js?release={$application_version}"></script>
+    <script src="{$sys_website_url}/javascript/disclaimers.js?release={$application_version}"></script>
+    <script src="{$sys_website_url}/javascript/communities_sidebar.js?release={$application_version}"></script>
 
 	<link href="{$template_relative}/css/stylesheet.css?release={$application_version}" rel="stylesheet" type="text/css" media="all" />
 	<link href="{$template_relative}/css/print.css?release={$application_version}" rel="stylesheet" type="text/css" media="print" />

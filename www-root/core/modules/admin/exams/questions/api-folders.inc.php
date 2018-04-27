@@ -40,7 +40,7 @@ require_once("init.inc.php");
 if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
     header("Location: ".ENTRADA_URL);
     exit;
-} elseif (!$ENTRADA_ACL->amIAllowed("examfolder", "read", true)) {
+} elseif (!$ENTRADA_ACL->amIAllowed("exam", "read", true)) {
     add_error(sprintf($translate->_("You do not have the permissions required to use this module.<br /><br />If you believe you are receiving this message in error Please contact <a href=\"mailto:%1\$s\">%2\$s</a> for assistance."), html_encode($AGENT_CONTACTS["administrator"]["email"]), html_encode($AGENT_CONTACTS["administrator"]["name"])));
 
     echo display_error();
@@ -106,7 +106,7 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                             $PROCESSED["question_id"] = $tmp_input;
                         }
 
-                        $results = Models_Exam_Question_Bank_Folder_Authors::fetchAvailableAuthors($PROCESSED["filter_type"], $PROCESSED["question_id"], $PROCESSED["search_value"]);
+                        $results = Models_Exam_Bank_Folder_Authors::fetchAvailableAuthors($PROCESSED["filter_type"], $PROCESSED["question_id"], $PROCESSED["search_value"]);
                         if ($results) {
                             echo json_encode(array("results" => count($results), "data" => $results));
                         } else {
@@ -120,7 +120,7 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                             $PROCESSED["search_value"] = "";
                         }
 
-                        $authors = Models_Exam_Question_Bank_Folder_Authors::fetchByAuthorTypeProxyID($ENTRADA_USER->getActiveOrganisation(), $PROCESSED["search_value"]);
+                        $authors = Models_Exam_Bank_Folder_Authors::fetchByAuthorTypeProxyID($ENTRADA_USER->getActiveOrganisation(), $PROCESSED["search_value"]);
                         if ($authors) {
                             $data = array();
                             foreach ($authors as $author) {
@@ -149,7 +149,7 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 
                         $return = array();
 
-                        if (!$ERROR) {
+                        if (!has_error()) {
                             /*
                              * Question section
                              */
@@ -198,7 +198,7 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                              * Breadcrumb section
                              */
                             $path = array();
-                            $folder = Models_Exam_Question_Bank_Folders::fetchRowByID($PROCESSED["folder_id"]);
+                            $folder = Models_Exam_Bank_Folders::fetchRowByID($PROCESSED["folder_id"]);
 
                             if (isset($folder) && is_object($folder)) {
                                 $breadcrumbs_html = $folder->getBreadcrumbsByFolderID();
@@ -210,7 +210,7 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                                     $return["status_breadcrumbs_error"] = $translate->_("Error fetching breadcrumbs for this folder(". $PROCESSED["folder_id"].")");
                                 }
                             } else if ($PROCESSED["folder_id"] == 0) {
-                                $index_folder = new Models_Exam_Question_Bank_Folders(array(
+                                $index_folder = new Models_Exam_Bank_Folders(array(
                                     "folder_id" => 0,
                                     "parent_folder_id" => 0,
                                     "folder_title" => "Index",
@@ -246,16 +246,16 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                              * Sub folder section
                              */
                             $subfolder_html = "";
-                            $folders = Models_Exam_Question_Bank_Folders::fetchAllByParentID($PROCESSED["folder_id"]);
+                            $folders = Models_Exam_Bank_Folders::fetchAllByParentID($PROCESSED["folder_id"]);
                             if (isset($folders) && is_array($folders) && !empty($folders)) {
                                 $subfolder_html .= "<ul id=\"folder_ul\">";
                                 $folder_count = count($folders);
                                 foreach ($folders as $key => $folder) {
                                     if (isset($folder) && is_object($folder)) {
                                         if ($key === 0 && $PROCESSED["folder_id"] != 0) {
-                                            $subfolder_html .= Views_Exam_Question_Bank_Folder::renderBackNavigation($parent_parent_folder);
+                                            $subfolder_html .= Views_Exam_Bank_Folder::renderBackNavigation($parent_parent_folder);
                                         }
-                                        $folder_view = new Views_Exam_Question_Bank_Folder($folder);
+                                        $folder_view = new Views_Exam_Bank_Folder($folder);
                                         $subfolder_html .= $folder_view->render();
                                         if ($folder_count === $key + 1) {
                                             $subfolder_html .= "</ul>";
@@ -266,7 +266,7 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                                 $return["subfolder_html"] = $subfolder_html;
                             } else {
                                 $subfolder_html .= "<ul>";
-                                $subfolder_html .= Views_Exam_Question_Bank_Folder::renderBackNavigation($parent_parent_folder);
+                                $subfolder_html .= Views_Exam_Bank_Folder::renderBackNavigation($parent_parent_folder);
                                 $subfolder_html .= "</ul>";
                                 $return["status_folder"] = "success";
                                 $return["subfolder_html"] = $subfolder_html;
@@ -305,18 +305,18 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                             add_error($translate->_("A problem occurred while attempting to fetch questions for this folder. Please try again later"));
                         }
 
-                        $folder = Models_Exam_Question_Bank_Folders::fetchRowByID($PROCESSED["folder_id"]);
+                        $folder = Models_Exam_Bank_Folders::fetchRowByID($PROCESSED["folder_id"]);
                         if (isset($folder) && is_object($folder)) {
-                            $folder_view = new Views_Exam_Question_Bank_Folder($folder);
+                            $folder_view = new Views_Exam_Bank_Folder($folder);
                             $folder_render = $folder_view->renderSimpleView();
                         } else {
-                            $index_folder = new Models_Exam_Question_Bank_Folders(array(
+                            $index_folder = new Models_Exam_Bank_Folders(array(
                                 "folder_id" => 0,
                                 "parent_folder_id" => 0,
                                 "folder_title" => "Index",
                                 "image_id" => 3
                             ));
-                            $index_folder_view = new Views_Exam_Question_Bank_Folder($index_folder);
+                            $index_folder_view = new Views_Exam_Bank_Folder($index_folder);
                             $folder_render = $index_folder_view->renderSimpleView();
                         }
 
@@ -344,22 +344,30 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                             add_error($translate->_("A problem occurred while attempting to fetch questions for this folder. Please try again later"));
                         }
 
+                        if (isset($request["folder_type"]) && $tmp_input = clean_input(strtolower($request["folder_type"]), array("trim", "striptags"))) {
+                            $PROCESSED["folder_type"] = $tmp_input;
+                        } else {
+                            $PROCESSED["folder_type"] = "question";
+                        }
+
                         /*
                          * sub folder section
                          */
                         if ($PROCESSED["folder_id"] === 0) {
-                            $folder = new Models_Exam_Question_Bank_Folders(
+                            $folder = new Models_Exam_Bank_Folders(
                                 array(
                                     "folder_id"     => 0,
                                     "folder_title"  => "Index",
-                                    "image_id"      => 3
+                                    "image_id"      => 3,
+                                    "folder_type"   => $PROCESSED["folder_type"]
                                 )
                             );
                         } else {
-                            $folder = Models_Exam_Question_Bank_Folders::fetchRowByID($PROCESSED["folder_id"]);
+                            $folder = Models_Exam_Bank_Folders::fetchRowByID($PROCESSED["folder_id"]);
                         }
+
                         if ($folder && is_object($folder)) {
-                            $folder_view = new Views_Exam_Question_Bank_Folder($folder);
+                            $folder_view = new Views_Exam_Bank_Folder($folder);
                             $sub_folder_html = $folder_view->renderFolderSelectorInterface();
                         }
 
@@ -371,9 +379,9 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                         /*
                          * nav and nav section
                          */
-                        $current_folder = Models_Exam_Question_Bank_Folders::fetchRowByID($PROCESSED["folder_id"]);
+                        $current_folder = Models_Exam_Bank_Folders::fetchRowByID($PROCESSED["folder_id"]);
                         if (isset($current_folder) && is_object($current_folder)) {
-                            $current_folder_view = new Views_Exam_Question_Bank_Folder($current_folder);
+                            $current_folder_view = new Views_Exam_Bank_Folder($current_folder);
                             $nav_html = $current_folder_view->renderFolderSelectorBackNavigation();
 
                             $title = $current_folder_view->renderFolderSelectorTitle();
@@ -398,7 +406,7 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                             $PROCESSED["search_value"] = "";
                         }
 
-                        $authors = Models_Exam_Question_Bank_Folder_Authors::fetchByAuthorTypeProxyID($ENTRADA_USER->getActiveOrganisation(), $PROCESSED["search_value"]);
+                        $authors = Models_Exam_Bank_Folder_Authors::fetchByAuthorTypeProxyID($ENTRADA_USER->getActiveOrganisation(), $PROCESSED["search_value"]);
                         if ($authors) {
                             $data = array();
                             foreach ($authors as $author) {
@@ -424,10 +432,10 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 
                                     if ($delete === true) {
                                         // check if this folder has any questions in it or subfolders
-                                        $folder_obj = Models_Exam_Question_Bank_Folders::fetchRowByID($folder);
+                                        $folder_obj = Models_Exam_Bank_Folders::fetchRowByID($folder);
                                         if ($folder_obj && is_object($folder_obj)) {
                                             // getQuestionCount
-                                            $question_count = $folder_obj->getQuestionCount();
+                                            $question_count = $folder_obj->getCount();
                                         }
 
                                         if ($question_count !== 0) {
@@ -468,7 +476,7 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                         $element_order = 0;
                         if (isset($PROCESSED["folder_ids"]) && !empty($PROCESSED["folder_ids"])) {
                             foreach ($PROCESSED["folder_ids"] as $key => $folder_id) {
-                                $folder = Models_Exam_Question_Bank_Folders::fetchRowByID($folder_id);
+                                $folder = Models_Exam_Bank_Folders::fetchRowByID($folder_id);
                                 if (isset($folder) && is_object($folder)) {
                                     $folder->setFolderOrder($key);
                                     if (!$folder->update()) {
@@ -491,7 +499,7 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 
                         if (isset($PROCESSED["author_id"])) {
 
-                            $author = Models_Exam_Question_Bank_Folder_Authors::fetchRowByID($PROCESSED["author_id"]);
+                            $author = Models_Exam_Bank_Folder_Authors::fetchRowByID($PROCESSED["author_id"]);
                             if (($author->getAuthorType() == "proxy_id" && $author->getAuthorID() != $ENTRADA_USER->getID()) || $author->getAuthorType() != "proxy_id") {
                                 if ($author->fromArray(array("deleted_date" => time(), "updated_date" => time(), "updated_by" => $ENTRADA_USER->getActiveID()))->update()) {
                                     $ENTRADA_LOGGER->log("Question Bank", "remove-permission", "author_id", $PROCESSED["author_id"], 4, __FILE__, $ENTRADA_USER->getID());
@@ -522,7 +530,7 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 
                         if ($PROCESSED["member_id"] && $PROCESSED["member_type"] && $PROCESSED["folder_id"]) {
                             $added = 0;
-                            $a = Models_Exam_Question_Bank_Folder_Authors::fetchRowByFolderIDAuthorIDAuthorType($PROCESSED["folder_id"], $PROCESSED["member_id"], $PROCESSED["member_type"]);
+                            $a = Models_Exam_Bank_Folder_Authors::fetchRowByFolderIDAuthorIDAuthorType($PROCESSED["folder_id"], $PROCESSED["member_id"], $PROCESSED["member_type"]);
                             if ($a) {
                                 if ($a->getDeletedDate()) {
                                     if ($a->fromArray(array("deleted_date" => NULL))->update()) {
@@ -533,7 +541,7 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                                 }
                             } else {
 
-                                $a = new Models_Exam_Question_Bank_Folder_Authors(
+                                $a = new Models_Exam_Bank_Folder_Authors(
                                     array(
                                         "folder_id"     => $PROCESSED["folder_id"],
                                         "author_type"   => $PROCESSED["member_type"],
@@ -549,7 +557,7 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                             }
 
                             if ($added >= 1) {
-                                $author_view = new Views_Exam_Question_Bank_Folder_Author($a);
+                                $author_view = new Views_Exam_Bank_Folder_Author($a);
                                 if (isset($author_view)) {
                                     $author_view_render = $author_view->render(0);
                                 } else {
@@ -593,7 +601,7 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                             $deleted_folders = array();
                             foreach ($PROCESSED["delete_ids"] as $folder) {
                                 $question_obj = Models_Exam_Question_Versions::fetchRowByQuestionID($question["question_id"], $question["version_id"]);
-                                $folder_obj = Models_Exam_Question_Bank_Folders::fetchRowByID($folder["folder_id"]);
+                                $folder_obj = Models_Exam_Bank_Folders::fetchRowByID($folder["folder_id"]);
                                 if ($folder_obj) {
                                     $folder_obj->fromArray(array( "deleted_date" => time(),
                                         "updated_date" => time(),

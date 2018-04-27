@@ -28,30 +28,29 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_CONFIGURATION")) {
 	header("Location: ".ENTRADA_URL);
 	exit;
 } elseif (!$ENTRADA_ACL->amIAllowed("configuration", "read", false)) {
-	add_error("Your account does not have the permissions required to use this feature of this module.<br /><br />If you believe you are receiving this message in error please contact <a href=\"mailto:".html_encode($AGENT_CONTACTS["administrator"]["email"])."\">".html_encode($AGENT_CONTACTS["administrator"]["name"])."</a> for assistance.");
+	add_error($translate->_("module_no_permission") . str_ireplace(array("%admin_email%","%admin_name%"), array(html_encode($AGENT_CONTACTS["administrator"]["email"]),html_encode($AGENT_CONTACTS["administrator"]["name"])), $translate->_("module_assistance")));
 
 	echo display_error();
 
 	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] do not have access to this module [".$MODULE."]");
 } else {
+	require_once("Entrada/metadata/functions.inc.php");
+
+	echo "<h1>".$translate->_("metadata_heading")."</h1>";
 	?>
-	<h1>User Meta Data</h1>
 
 	<div class="row-fluid">
 		<span class="pull-right">
-			<a class="btn btn-success" href="<?php echo ENTRADA_RELATIVE; ?>/admin/settings/manage/metadata?section=add&amp;org=<?php echo $ORGANISATION_ID;?>"><i class="icon-plus-sign icon-white"></i> Add Meta Data</a>
+			<a class="btn btn-success" href="<?php echo ENTRADA_RELATIVE; ?>/admin/settings/manage/metadata?section=add&amp;org=<?php echo $ORGANISATION_ID;?>"><i class="icon-plus-sign icon-white"></i> <?php echo $translate->_("metadata_add") ?></a>
 		</span>
 	</div>
 	<br />
 	<?php
-	$query = "	SELECT DISTINCT a.`meta_type_id`, a.`label`,a.`parent_type_id`
-				FROM `meta_types` AS a 
-				JOIN `meta_type_relations` AS b 
-				ON a.`meta_type_id` = b.`meta_type_id` 
-				AND b.`entity_value` LIKE '".$ORGANISATION_ID.":%'";
-	$metadata_types = $db->GetAll($query);
-	if ($metadata_types) {
-		?>
+	$metadata_types = MetaDataTypes::get();
+
+	$top_types = getCategories($metadata_types);
+	if ($top_types) {
+	?>
 		<form action ="<?php echo ENTRADA_URL;?>/admin/settings/manage/metadata?section=delete&amp;org=<?php echo $ORGANISATION_ID;?>" method="post">
 			<table class="table table-striped" summary="User Meta Data">
 				<colgroup>
@@ -60,17 +59,24 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_CONFIGURATION")) {
 				</colgroup>
 				<tbody>
 					<?php
-					foreach ($metadata_types as $type) {
-						if ($type["parent_type_id"] == null){
+					foreach ($top_types as $type) {
+						if ($type->getParent() == null){
+							$restrictedRow = ($type->getRestricted() ? " [Admin view only]":"");
 							echo "<tr>";
-							echo "	<td><input type=\"checkbox\" name = \"remove_ids[]\" value=\"".$type["meta_type_id"]."\" id=\"parent-".$type["meta_type_id"]."\" onclick=\"selectChildren(".$type["meta_type_id"].")\"/></td>";
-							echo"	<td><a href=\"".ENTRADA_URL."/admin/settings/manage/metadata?section=edit&amp;org=".$ORGANISATION_ID."&amp;meta=".$type["meta_type_id"]."\">".$type["label"]."</a></td>";
+							echo "	<td><input type=\"checkbox\" name = \"remove_ids[]\" value=\"".$type->getID()."\" id=\"parent-".$type->getID()."\" onclick=\"selectChildren(".$type->getID().")\"/></td>";
+							echo"	<td><a href=\"".ENTRADA_URL."/admin/settings/manage/metadata?section=edit&amp;org=".$ORGANISATION_ID."&amp;meta=".$type->getID()."\"><b> ".$type->getLabel()."</b></a>$restrictedRow</td>";
 							echo "</tr>";
-							foreach ($metadata_types as $child) {
-								if ($child["parent_type_id"] == $type["meta_type_id"]) {
+							$child_types = getChildTypes($metadata_types,$type);
+							$children = array();
+							foreach ($child_types as $child) {
+								if (in_array($child->getID(), $children)) {
+									continue;
+								}
+								$children[] = $child->getID();
+								if ((int)$child->getParentID() == $type->getID()) {
 									echo "<tr>";
-									echo "	<td><input type=\"checkbox\" name = \"remove_ids[]\" value=\"".$child["meta_type_id"]."\" class=\"child-".$type["meta_type_id"]."\"/></td>";
-									echo "	<td><a href=\"".ENTRADA_URL."/admin/settings/manage/metadata?section=edit&amp;org=".$ORGANISATION_ID."&amp;meta=".$child["meta_type_id"]."\">".$type["label"]." → ".$child["label"]."</a></td>";
+									echo "	<td><input type=\"checkbox\" name = \"remove_ids[]\" value=\"".$child->getID()."\" class=\"child-".$type->getID()."\"/></td>";
+									echo "	<td><a href=\"".ENTRADA_URL."/admin/settings/manage/metadata?section=edit&amp;org=".$ORGANISATION_ID."&amp;meta=".$child->getID()."\">".$type->getLabel()." → <b>".$child->getLabel()."</b></a>$restrictedRow</td>";
 									echo "</tr>";
 								}
 							}
@@ -87,11 +93,11 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_CONFIGURATION")) {
 					}
 				</script>
 			</table>
-			<input type="submit" class="btn btn-danger" value="Delete Selected" />
+			<input type="submit" class="btn btn-danger" value="<?php echo $translate->_("metadata_button_delete") ?>" />
 		</form>
 		<?php
 	} else {
-		add_notice("There are currently no User Meta Data types assigned to this organization.");
+		add_notice($translate->_("metadata_notice_none"));
 		echo display_notice();
 	}
 }

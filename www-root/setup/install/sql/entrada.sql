@@ -1069,8 +1069,8 @@ CREATE TABLE `assessment_grade_form_elements` (
   PRIMARY KEY (`agfelement_id`),
   KEY `gairesponse_id` (`gairesponse_id`),
   KEY `assessment_id` (`assessment_id`),
-  CONSTRAINT `assessment_grade_form_elements_ibfk_2` FOREIGN KEY (`assessment_id`) REFERENCES `assessments` (`assessment_id`),
-  CONSTRAINT `assessment_grade_form_elements_ibfk_1` FOREIGN KEY (`gairesponse_id`) REFERENCES `gradebook_assessment_item_responses` (`gairesponse_id`)
+  CONSTRAINT `assessment_grade_form_elements_ibfk_1` FOREIGN KEY (`gairesponse_id`) REFERENCES `gradebook_assessment_item_responses` (`gairesponse_id`),
+  CONSTRAINT `assessment_grade_form_elements_ibfk_2` FOREIGN KEY (`assessment_id`) REFERENCES `assessments` (`assessment_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -1246,11 +1246,12 @@ CREATE TABLE `assessment_statistics` (
   `sub_module` varchar(64) DEFAULT NULL,
   `action` varchar(64) DEFAULT NULL,
   `assessment_id` varchar(64) NOT NULL,
-  `distribution_id` varchar(64) NOT NULL,
+  `distribution_id` varchar(64) DEFAULT '',
   `target_id` varchar(64) NOT NULL,
   `progress_id` varchar(64) DEFAULT NULL,
   `prune_after` bigint(64) DEFAULT NULL,
-  PRIMARY KEY (`assessment_statistic_id`)
+  PRIMARY KEY (`assessment_statistic_id`),
+  KEY `assessment_id` (`assessment_id`,`progress_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -1264,10 +1265,12 @@ CREATE TABLE `assessments` (
   `cperiod_id` int(11) DEFAULT NULL,
   `collection_id` int(10) DEFAULT NULL,
   `form_id` int(11) unsigned DEFAULT NULL,
+  `portfolio_id` int(10) unsigned DEFAULT NULL,
   `name` varchar(255) NOT NULL,
   `description` text NOT NULL,
   `type` varchar(255) NOT NULL,
   `marking_scheme_id` int(10) unsigned NOT NULL,
+  `scoring_method` int(5) DEFAULT '1',
   `numeric_grade_points_total` float unsigned DEFAULT NULL,
   `grade_weighting` float NOT NULL DEFAULT '0',
   `narrative` tinyint(1) NOT NULL DEFAULT '0',
@@ -1324,6 +1327,19 @@ INSERT INTO `assessments_lu_meta_options` VALUES (1,'Essay questions',1,NULL),(2
 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `assessments_lu_meta_scoring` (
+  `id` int(12) unsigned NOT NULL AUTO_INCREMENT,
+  `title` varchar(60) NOT NULL,
+  `short_name` varchar(60) NOT NULL,
+  `active` tinyint(1) unsigned DEFAULT '1',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+INSERT INTO `assessments_lu_meta_scoring` VALUES (1,'Show first score','first',1),(2,'Show highest score','highest',1),(3,'Show average of all scores','average',1),(4,'Show latest score','latest',1);
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `assignment_comments` (
   `acomment_id` int(12) NOT NULL AUTO_INCREMENT,
   `proxy_to_id` int(12) NOT NULL DEFAULT '0',
@@ -1366,7 +1382,7 @@ CREATE TABLE `assignment_file_versions` (
   `afile_id` int(11) NOT NULL,
   `assignment_id` int(11) NOT NULL,
   `proxy_id` int(11) NOT NULL,
-  `file_mimetype` varchar(64) NOT NULL,
+  `file_mimetype` varchar(128) NOT NULL,
   `file_version` int(5) DEFAULT NULL,
   `file_filename` varchar(128) NOT NULL,
   `file_filesize` int(32) NOT NULL,
@@ -1440,6 +1456,7 @@ CREATE TABLE `attached_quizzes` (
   `release_until` bigint(64) NOT NULL DEFAULT '0',
   `updated_date` bigint(64) NOT NULL DEFAULT '0',
   `updated_by` int(12) NOT NULL DEFAULT '0',
+  `draft` tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`aquiz_id`),
   KEY `content_id` (`content_id`),
   KEY `required` (`required`),
@@ -1462,6 +1479,7 @@ CREATE TABLE `bookmarks` (
   `uri` varchar(255) NOT NULL DEFAULT '',
   `bookmark_title` varchar(255) DEFAULT NULL,
   `proxy_id` int(11) DEFAULT NULL,
+  `organisation_id` int(11) NOT NULL DEFAULT '1',
   `updated_date` bigint(64) DEFAULT NULL,
   `order` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`)
@@ -1485,10 +1503,29 @@ CREATE TABLE `bookmarks_default` (
 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `cbl_academic_advisor_meetings` (
+  `meeting_id` int(12) unsigned NOT NULL AUTO_INCREMENT,
+  `meeting_date` bigint(64) unsigned NOT NULL,
+  `meeting_member_id` int(12) unsigned NOT NULL,
+  `comment` text NOT NULL,
+  `created_date` bigint(64) unsigned NOT NULL,
+  `created_by` int(12) unsigned NOT NULL,
+  `updated_date` bigint(64) unsigned DEFAULT NULL,
+  `updated_by` int(12) unsigned DEFAULT NULL,
+  `deleted_date` bigint(64) unsigned DEFAULT NULL,
+  `deleted_by` int(12) DEFAULT NULL,
+  PRIMARY KEY (`meeting_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `cbl_assessment_additional_tasks` (
   `additional_task_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
-  `adistribution_id` int(11) unsigned NOT NULL,
+  `adistribution_id` int(11) unsigned DEFAULT NULL,
   `target_id` int(11) NOT NULL,
+  `target_type` enum('proxy_id','cgroup_id','group_id','schedule_id','external_hash','course_id','organisation_id','event_id') NOT NULL DEFAULT 'proxy_id',
   `assessor_value` int(11) unsigned NOT NULL,
   `assessor_type` enum('internal','external') DEFAULT NULL,
   `delivery_date` bigint(64) NOT NULL,
@@ -1509,8 +1546,9 @@ CREATE TABLE `cbl_assessment_additional_tasks` (
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `cbl_assessment_deleted_tasks` (
   `deleted_task_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
-  `adistribution_id` int(11) unsigned NOT NULL,
+  `adistribution_id` int(11) unsigned DEFAULT NULL,
   `target_id` int(11) NOT NULL,
+  `target_type` enum('proxy_id','cgroup_id','group_id','schedule_id','external_hash','course_id','organisation_id','event_id') NOT NULL DEFAULT 'proxy_id',
   `assessor_value` int(11) unsigned NOT NULL,
   `assessor_type` enum('internal','external') DEFAULT NULL,
   `delivery_date` bigint(64) NOT NULL,
@@ -1536,12 +1574,13 @@ CREATE TABLE `cbl_assessment_deleted_tasks` (
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `cbl_assessment_distribution_approvers` (
   `adapprover_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
-  `adistribution_id` int(11) unsigned NOT NULL,
+  `adistribution_id` int(11) unsigned DEFAULT NULL,
   `proxy_id` int(11) NOT NULL,
   `created_date` bigint(64) NOT NULL,
   `created_by` int(11) NOT NULL,
   PRIMARY KEY (`adapprover_id`),
   KEY `adistribution_id` (`adistribution_id`),
+  KEY `proxy_id` (`proxy_id`),
   CONSTRAINT `cbl_assessment_distribution_approvers_ibfk_1` FOREIGN KEY (`adistribution_id`) REFERENCES `cbl_assessment_distributions` (`adistribution_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -1622,6 +1661,7 @@ CREATE TABLE `cbl_assessment_distribution_delegations` (
   `start_date` bigint(64) unsigned DEFAULT NULL,
   `end_date` bigint(64) unsigned DEFAULT NULL,
   `delivery_date` bigint(64) unsigned DEFAULT NULL,
+  `visible` tinyint(1) NOT NULL DEFAULT '1',
   `completed_by` int(11) DEFAULT NULL,
   `completed_reason` text CHARACTER SET utf8,
   `completed_date` bigint(64) unsigned DEFAULT NULL,
@@ -1629,10 +1669,13 @@ CREATE TABLE `cbl_assessment_distribution_delegations` (
   `created_date` bigint(64) unsigned DEFAULT NULL,
   `updated_by` int(11) DEFAULT NULL,
   `updated_date` bigint(64) unsigned DEFAULT NULL,
+  `deleted_reason_id` int(11) unsigned DEFAULT NULL,
+  `deleted_reason_notes` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   `deleted_date` bigint(64) unsigned DEFAULT NULL,
   `deleted_by` int(11) DEFAULT NULL,
   PRIMARY KEY (`addelegation_id`),
   KEY `adistribution_id` (`adistribution_id`),
+  KEY `idx_delegator_id_type` (`delegator_id`,`delegator_type`,`adistribution_id`),
   CONSTRAINT `cbl_assessment_distribution_delegations_ibfk_1` FOREIGN KEY (`adistribution_id`) REFERENCES `cbl_assessment_distributions` (`adistribution_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=209 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -1722,10 +1765,51 @@ CREATE TABLE `cbl_assessment_distribution_schedule` (
 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `cbl_assessment_distribution_target_report_releases` (
+  `adt_report_release_id` int(12) unsigned NOT NULL AUTO_INCREMENT,
+  `adistribution_id` int(12) unsigned NOT NULL,
+  `target_option` enum('never','always','percent') NOT NULL DEFAULT 'never',
+  `unique_targets` tinyint(1) NOT NULL DEFAULT '1',
+  `percent_threshold` int(12) DEFAULT NULL,
+  `comment_options` enum('identifiable','anonymous') NOT NULL DEFAULT 'anonymous',
+  `created_date` bigint(64) unsigned NOT NULL,
+  `created_by` int(12) unsigned NOT NULL,
+  `updated_date` bigint(64) unsigned DEFAULT NULL,
+  `updated_by` int(12) unsigned DEFAULT NULL,
+  `deleted_date` bigint(64) unsigned DEFAULT NULL,
+  PRIMARY KEY (`adt_report_release_id`),
+  KEY `adistribution_id` (`adistribution_id`),
+  CONSTRAINT `target_report_releases_adistribution_id` FOREIGN KEY (`adistribution_id`) REFERENCES `cbl_assessment_distributions` (`adistribution_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `cbl_assessment_distribution_target_task_releases` (
+  `adt_task_release_id` int(12) unsigned NOT NULL AUTO_INCREMENT,
+  `adistribution_id` int(12) unsigned NOT NULL,
+  `target_option` enum('never','always','percent') NOT NULL DEFAULT 'never',
+  `unique_targets` tinyint(1) NOT NULL DEFAULT '1',
+  `percent_threshold` int(12) DEFAULT NULL,
+  `created_date` bigint(64) unsigned NOT NULL,
+  `created_by` int(12) unsigned NOT NULL,
+  `updated_date` bigint(64) unsigned DEFAULT NULL,
+  `updated_by` int(12) unsigned DEFAULT NULL,
+  `deleted_date` bigint(64) unsigned DEFAULT NULL,
+  PRIMARY KEY (`adt_task_release_id`),
+  KEY `adistribution_id` (`adistribution_id`),
+  CONSTRAINT `target_task_releases_adistribution_id` FOREIGN KEY (`adistribution_id`) REFERENCES `cbl_assessment_distributions` (`adistribution_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `cbl_assessment_distribution_targets` (
   `adtarget_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `adistribution_id` int(11) unsigned NOT NULL,
-  `target_type` enum('proxy_id','group_id','cgroup_id','course_id','schedule_id','organisation_id','self','eventtype_id') NOT NULL DEFAULT 'proxy_id',
+  `target_type` enum('proxy_id','group_id','cgroup_id','course_id','schedule_id','organisation_id','self','external_hash','eventtype_id') NOT NULL DEFAULT 'proxy_id',
   `target_scope` enum('self','children','faculty','internal_learners','external_learners','all_learners') NOT NULL DEFAULT 'self',
   `target_role` enum('learner','faculty','any') NOT NULL DEFAULT 'any',
   `target_id` int(11) DEFAULT NULL,
@@ -1751,6 +1835,8 @@ CREATE TABLE `cbl_assessment_distributions` (
   `course_id` int(11) DEFAULT NULL,
   `assessment_type` enum('assessment','evaluation') NOT NULL,
   `assessor_option` enum('faculty','learner','individual_users') NOT NULL DEFAULT 'individual_users',
+  `target_option` enum('all','only_cbme','non_cbme') NOT NULL DEFAULT 'non_cbme',
+  `exclude_self_assessments` tinyint(1) DEFAULT '0',
   `min_submittable` tinyint(3) NOT NULL DEFAULT '0',
   `max_submittable` tinyint(3) NOT NULL DEFAULT '0',
   `repeat_targets` tinyint(1) NOT NULL DEFAULT '0',
@@ -1761,6 +1847,8 @@ CREATE TABLE `cbl_assessment_distributions` (
   `release_start_date` bigint(64) NOT NULL,
   `release_end_date` bigint(64) NOT NULL,
   `release_date` bigint(64) DEFAULT NULL,
+  `expiry_offset` bigint(64) DEFAULT NULL,
+  `expiry_notification_offset` bigint(64) DEFAULT NULL,
   `mandatory` tinyint(4) NOT NULL DEFAULT '0',
   `feedback_required` tinyint(1) NOT NULL DEFAULT '0',
   `distributor_timeout` bigint(64) DEFAULT NULL,
@@ -1817,10 +1905,52 @@ CREATE TABLE `cbl_assessment_form_elements` (
   PRIMARY KEY (`afelement_id`),
   KEY `form_id` (`form_id`),
   KEY `rubric_id` (`rubric_id`),
+  KEY `element_type` (`element_type`,`element_id`),
+  KEY `form_id_2` (`form_id`,`element_type`),
   CONSTRAINT `cbl_assessment_form_elements_ibfk_1` FOREIGN KEY (`form_id`) REFERENCES `cbl_assessments_lu_forms` (`form_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `cbl_assessment_form_objectives` (
+  `assessment_form_objective_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `form_id` int(11) unsigned NOT NULL,
+  `objective_id` int(11) unsigned NOT NULL,
+  `organisation_id` int(11) unsigned NOT NULL,
+  `course_id` int(11) unsigned NOT NULL,
+  `deleted_date` bigint(64) DEFAULT NULL,
+  PRIMARY KEY (`assessment_form_objective_id`),
+  KEY `objective_id_organisation_id` (`objective_id`,`organisation_id`),
+  KEY `objective_id` (`objective_id`),
+  KEY `form_id_index` (`form_id`),
+  KEY `form_id` (`form_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `cbl_assessment_form_type_meta` (
+  `form_type_meta_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `form_type_id` int(11) unsigned NOT NULL,
+  `organisation_id` int(11) NOT NULL,
+  `meta_name` char(50) NOT NULL,
+  `meta_value` text NOT NULL,
+  `active` tinyint(1) NOT NULL DEFAULT '1',
+  `created_date` bigint(64) unsigned NOT NULL,
+  `created_by` int(12) unsigned NOT NULL,
+  `updated_date` bigint(64) unsigned DEFAULT NULL,
+  `updated_by` int(12) unsigned DEFAULT NULL,
+  `deleted_date` bigint(64) unsigned DEFAULT NULL,
+  PRIMARY KEY (`form_type_meta_id`),
+  KEY `form_type_id` (`form_type_id`),
+  KEY `organisation_id` (`organisation_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+INSERT INTO `cbl_assessment_form_type_meta` VALUES (1,1,1,'hide_from_dashboard','1',1,1510375509,1,NULL,NULL,NULL),(2,2,1,'show_objectives','1',1,1510375509,1,NULL,NULL,NULL),(3,2,1,'show_entrustment','1',1,1510375509,1,NULL,NULL,NULL),(4,3,1,'show_objectives','1',1,1510375509,1,NULL,NULL,NULL),(5,3,1,'show_entrustment','1',1,1510375509,1,NULL,NULL,NULL),(6,4,1,'show_procedures','1',1,1510375509,1,NULL,NULL,NULL),(7,4,1,'show_objectives','1',1,1510375509,1,NULL,NULL,NULL),(8,4,1,'show_entrustment','1',1,1510375509,1,NULL,NULL,NULL),(9,5,1,'show_objectives','1',1,1510375509,1,NULL,NULL,NULL);
 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -1847,6 +1977,7 @@ CREATE TABLE `cbl_assessment_item_objectives` (
   `aiobjective_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `item_id` int(11) unsigned NOT NULL,
   `objective_id` int(11) unsigned NOT NULL,
+  `objective_metadata` text,
   `created_date` bigint(64) NOT NULL,
   `created_by` int(11) NOT NULL,
   `updated_date` bigint(64) DEFAULT NULL,
@@ -1854,6 +1985,7 @@ CREATE TABLE `cbl_assessment_item_objectives` (
   `deleted_date` bigint(64) DEFAULT NULL,
   PRIMARY KEY (`aiobjective_id`),
   KEY `item_id` (`item_id`),
+  KEY `objective_id` (`objective_id`),
   CONSTRAINT `cbl_assessment_item_objectives_ibfk_1` FOREIGN KEY (`item_id`) REFERENCES `cbl_assessments_lu_items` (`item_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -1868,11 +2000,29 @@ CREATE TABLE `cbl_assessment_item_tags` (
   PRIMARY KEY (`aitag_id`),
   KEY `item_id` (`item_id`),
   KEY `tag_id` (`tag_id`),
-  CONSTRAINT `cbl_assessment_item_tags_ibfk_2` FOREIGN KEY (`tag_id`) REFERENCES `cbl_assessments_lu_tags` (`tag_id`),
-  CONSTRAINT `cbl_assessment_item_tags_ibfk_1` FOREIGN KEY (`item_id`) REFERENCES `cbl_assessments_lu_items` (`item_id`)
+  CONSTRAINT `cbl_assessment_item_tags_ibfk_1` FOREIGN KEY (`item_id`) REFERENCES `cbl_assessments_lu_items` (`item_id`),
+  CONSTRAINT `cbl_assessment_item_tags_ibfk_2` FOREIGN KEY (`tag_id`) REFERENCES `cbl_assessments_lu_tags` (`tag_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `cbl_assessment_lu_methods` (
+  `assessment_method_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `shortname` varchar(64) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
+  `order` int(12) NOT NULL DEFAULT '0',
+  `phases` int(10) unsigned NOT NULL DEFAULT '1',
+  `created_date` bigint(64) unsigned NOT NULL,
+  `created_by` int(11) unsigned NOT NULL,
+  `updated_by` int(11) unsigned DEFAULT NULL,
+  `updated_date` bigint(64) unsigned DEFAULT NULL,
+  `deleted_date` bigint(64) unsigned DEFAULT NULL,
+  PRIMARY KEY (`assessment_method_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+INSERT INTO `cbl_assessment_lu_methods` VALUES (1,'default',0,1,1484625600,1,NULL,NULL,NULL),(2,'complete_and_confirm_by_email',2,2,1484625600,1,NULL,NULL,NULL),(3,'complete_and_confirm_by_pin',3,2,1484625600,1,NULL,NULL,NULL),(4,'send_blank_form',1,1,1484625600,1,NULL,NULL,NULL),(5,'double_blind_assessment',4,1,1510375508,1,NULL,NULL,NULL),(6,'faculty_triggered_assessment',0,1,1510375508,1,NULL,NULL,NULL);
 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -1881,29 +2031,105 @@ CREATE TABLE `cbl_assessment_lu_task_deleted_reasons` (
   `order_id` int(11) unsigned NOT NULL,
   `reason_details` varchar(128) NOT NULL,
   `notes_required` tinyint(1) NOT NULL DEFAULT '0',
+  `user_visible` tinyint(1) DEFAULT '1',
   `updated_date` bigint(64) DEFAULT NULL,
   `updated_by` int(11) DEFAULT NULL,
   `created_date` bigint(64) NOT NULL,
   `created_by` int(11) NOT NULL,
   `deleted_date` bigint(64) DEFAULT NULL,
   PRIMARY KEY (`reason_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
-INSERT INTO `cbl_assessment_lu_task_deleted_reasons` VALUES (1,3,'Other (Please Specify)',1,NULL,NULL,1483495903,1,NULL),(2,1,'Did not work with the target',0,NULL,NULL,1456515087,1,NULL),(3,2,'Completed all relevant tasks on relevant targets',0,NULL,NULL,1456515087,1,NULL);
+INSERT INTO `cbl_assessment_lu_task_deleted_reasons` VALUES (1,3,'Other (Please Specify)',1,1,NULL,NULL,1483495903,1,NULL),(2,1,'Did not work with the target',0,1,NULL,NULL,1456515087,1,NULL),(3,2,'Completed all relevant tasks on relevant targets',0,1,NULL,NULL,1456515087,1,NULL),(4,4,'Expired',0,0,NULL,NULL,1456515087,1,NULL);
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `cbl_assessment_lu_types` (
+  `assessment_type_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `title` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+  `description` text COLLATE utf8_unicode_ci,
+  `shortname` varchar(50) COLLATE utf8_unicode_ci NOT NULL,
+  `created_date` bigint(64) unsigned NOT NULL,
+  `created_by` int(11) unsigned NOT NULL,
+  `updated_by` int(11) unsigned DEFAULT NULL,
+  `updated_date` bigint(64) unsigned DEFAULT NULL,
+  `deleted_date` bigint(64) unsigned DEFAULT NULL,
+  PRIMARY KEY (`assessment_type_id`),
+  KEY `shortname` (`shortname`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+INSERT INTO `cbl_assessment_lu_types` VALUES (1,'Distribution','Distribution based assessment','distribution',1510375502,1,NULL,NULL,NULL),(2,'CBME','CBME based assessment','cbme',1510375502,1,NULL,NULL,NULL);
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `cbl_assessment_method_group_meta` (
+  `amethod_meta_id` int(12) unsigned NOT NULL AUTO_INCREMENT,
+  `assessment_method_id` int(11) unsigned NOT NULL,
+  `group` char(35) NOT NULL,
+  `title` char(255) NOT NULL,
+  `description` text,
+  `instructions` text,
+  `button_text` char(255) NOT NULL,
+  `skip_validation` tinyint(1) unsigned NOT NULL DEFAULT '0',
+  `assessment_cue` tinyint(1) unsigned NOT NULL DEFAULT '0',
+  `created_date` bigint(64) unsigned NOT NULL,
+  `created_by` int(11) unsigned NOT NULL,
+  `updated_date` bigint(64) unsigned DEFAULT NULL,
+  `updated_by` int(11) unsigned DEFAULT NULL,
+  `deleted_date` bigint(64) unsigned DEFAULT NULL,
+  PRIMARY KEY (`amethod_meta_id`),
+  KEY `amethod_group_id` (`assessment_method_id`),
+  KEY `group` (`group`),
+  KEY `assessment_method_id` (`assessment_method_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+INSERT INTO `cbl_assessment_method_group_meta` VALUES (1,1,'','Standard Assessment',NULL,NULL,'Submit',0,0,1510375509,1,NULL,NULL,NULL),(2,6,'faculty','Faculty Triggered Assessment',NULL,'Once you have submitted this assessment, the result will appear on the target\'s dashboard.','Submit',0,0,1510375509,1,NULL,NULL,NULL),(3,4,'student','Email blank form','The attending will receive an email notification to complete an assessment based on the selected tool.','Once you have submitted this assessment, the selected attending will receive a blank assessment task containing this form.','Submit and send attending a blank form',0,0,1510375509,1,NULL,NULL,NULL),(4,4,'faculty','Email blank form','The attending will receive an email notification to complete an assessment based on the selected tool.','Once you have submitted this assessment, the result will appear on the target\'s dashboard.','Submit',0,0,1510375509,1,NULL,NULL,NULL),(5,4,'medtech','Email blank form','Complete an assessment using the selected tool. Upon completion, the attending will receive an email notification asking them to review/edit and confirm the assessment.','Once you have submitted this assessment, the result will appear on the target\'s dashboard.','Submit',0,0,1510375509,1,NULL,NULL,NULL),(6,2,'student','Complete and confirm via email','Complete an assessment using the selected tool. Upon completion, the attending will receive an email notification asking them to review/edit and confirm the assessment.','Once you have submitted this assessment, the selected attending will receive an email link to complete this assessment task.','Submit and notify attending by email',1,1,1510375509,1,NULL,NULL,NULL),(7,2,'faculty','Complete and confirm via email','Complete an assessment using the selected tool. Upon completion, the attending will receive an email notification asking them to review/edit and confirm the assessment.','Once you have submitted this assessment, the result will appear on the target\'s dashboard.','Submit',0,0,1510375509,1,NULL,NULL,NULL),(8,3,'student','Complete and confirm via pin','Complete an assessment based on the selected tool. Upon completion the assessment, the attending will confirm it on the spot and adjust your assessment as necessary.','Once you have submitted this assessment, the attending will be prompted to enter their PIN and complete this assessment task.','Submit and have attending confirm by PIN',0,0,1510375509,1,NULL,NULL,NULL),(9,3,'faculty','Complete and confirm via pin','Complete an assessment based on the selected tool. Upon completion the assessment, the attending will confirm it on the spot and adjust your assessment as necessary.','Once your PIN has been entered, the result of this assessment will appear on the target\'s dashboard.','Submit',0,0,1510375509,1,NULL,NULL,NULL),(10,5,'student','Self Assessment, then email blank form','Complete an assessment based on the selected tool. Upon completion, the attending will receive a blank assessment task with the same assessment tool.','Once you have submitted this assessment, the selected attending will receive an email link to complete a blank assessment task containing this form.','Submit and send attending a blank form',0,1,1510375509,1,NULL,NULL,NULL),(11,5,'faculty','Self Assessment, then email blank form','Complete an assessment based on the selected tool. Upon completion, the attending will receive a blank assessment task with the same assessment tool.','Once you have submitted this assessment, the result will appear on the target\'s dashboard.','Submit',0,0,1510375509,1,NULL,NULL,NULL);
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `cbl_assessment_method_groups` (
+  `amethod_group_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `assessment_method_id` int(11) unsigned NOT NULL,
+  `group` varchar(35) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
+  `admin` tinyint(1) NOT NULL DEFAULT '0',
+  PRIMARY KEY (`amethod_group_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+INSERT INTO `cbl_assessment_method_groups` VALUES (1,4,'student',0),(2,4,'medtech',1),(3,2,'student',0),(4,2,'faculty',0),(5,3,'student',0),(6,3,'faculty',0),(7,5,'student',0),(8,5,'faculty',0);
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `cbl_assessment_method_organisations` (
+  `amethod_organisation_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `assessment_method_id` int(11) unsigned NOT NULL,
+  `organisation_id` int(11) unsigned NOT NULL,
+  `created_date` bigint(64) unsigned NOT NULL,
+  `created_by` int(11) unsigned NOT NULL,
+  `updated_date` bigint(64) unsigned DEFAULT NULL,
+  `updated_by` int(11) unsigned DEFAULT NULL,
+  `deleted_date` bigint(64) unsigned DEFAULT NULL,
+  PRIMARY KEY (`amethod_organisation_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+INSERT INTO `cbl_assessment_method_organisations` VALUES (1,1,1,1510375509,1,NULL,NULL,NULL),(2,6,1,1510375509,1,NULL,NULL,NULL),(3,4,1,1510375509,1,NULL,NULL,NULL),(4,2,1,1510375509,1,NULL,NULL,NULL),(5,3,1,1510375509,1,NULL,NULL,NULL),(6,5,1,1510375509,1,NULL,NULL,NULL);
 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `cbl_assessment_notifications` (
   `anotification_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
-  `adistribution_id` int(11) unsigned NOT NULL,
+  `adistribution_id` int(11) unsigned DEFAULT NULL,
   `assessment_value` int(11) unsigned NOT NULL,
   `assessment_type` enum('assessment','delegation','approver') CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT 'assessment',
   `notified_value` int(11) unsigned NOT NULL,
   `notified_type` enum('proxy_id','external_assessor_id') NOT NULL DEFAULT 'proxy_id',
   `notification_id` int(11) unsigned NOT NULL,
   `nuser_id` int(11) unsigned NOT NULL,
-  `notification_type` enum('delegator_start','delegator_late','assessor_start','assessor_reminder','assessment_approver','assessor_late','flagged_response','assessment_removal','assessment_task_deleted','delegation_task_deleted','assessment_submitted','assessment_delegation_assignment_removed','assessment_submitted_notify_approver','assessment_submitted_notify_learner') NOT NULL DEFAULT 'assessor_start',
+  `notification_type` enum('delegator_start','delegator_late','assessor_start','assessor_reminder','assessment_approver','assessor_late','flagged_response','assessment_removal','assessment_task_deleted','delegation_task_deleted','assessment_submitted','assessment_delegation_assignment_removed','assessment_submitted_notify_approver','assessment_submitted_notify_learner','assessment_expiry_warning') NOT NULL DEFAULT 'assessor_start',
   `schedule_id` int(11) unsigned DEFAULT NULL,
   `sent_date` bigint(64) NOT NULL,
   PRIMARY KEY (`anotification_id`),
@@ -1917,22 +2143,118 @@ CREATE TABLE `cbl_assessment_notifications` (
 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `cbl_assessment_plan_containers` (
+  `assessment_plan_container_id` int(12) unsigned NOT NULL AUTO_INCREMENT,
+  `title` varchar(1024) NOT NULL,
+  `description` text,
+  `course_id` int(12) NOT NULL,
+  `cperiod_id` int(11) NOT NULL,
+  `created_date` bigint(64) NOT NULL,
+  `created_by` int(12) NOT NULL,
+  `updated_date` bigint(64) DEFAULT NULL,
+  `updated_by` int(12) DEFAULT NULL,
+  `deleted_date` bigint(64) DEFAULT NULL,
+  PRIMARY KEY (`assessment_plan_container_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `cbl_assessment_plan_form_objectives` (
+  `assessment_plan_form_objective_id` int(12) unsigned NOT NULL AUTO_INCREMENT,
+  `assessment_plan_id` int(12) NOT NULL,
+  `assessment_plan_form_id` int(12) NOT NULL,
+  `objective_id` int(12) NOT NULL,
+  `objective_parent` int(12) NOT NULL DEFAULT '0',
+  `objective_set_id` int(12) NOT NULL,
+  `minimum` int(12) DEFAULT NULL,
+  `created_date` bigint(64) NOT NULL,
+  `created_by` int(12) NOT NULL,
+  `updated_date` bigint(64) DEFAULT NULL,
+  `updated_by` int(12) DEFAULT NULL,
+  `deleted_date` bigint(64) DEFAULT NULL,
+  PRIMARY KEY (`assessment_plan_form_objective_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `cbl_assessment_plan_forms` (
+  `assessment_plan_form_id` int(12) unsigned NOT NULL AUTO_INCREMENT,
+  `assessment_plan_id` int(12) NOT NULL,
+  `form_id` int(12) NOT NULL,
+  `minimum_assessments` int(12) NOT NULL,
+  `iresponse_id` int(12) NOT NULL,
+  `minimum_assessors` int(12) NOT NULL,
+  `created_date` bigint(64) NOT NULL,
+  `created_by` int(12) NOT NULL,
+  `updated_date` bigint(64) DEFAULT NULL,
+  `updated_by` int(12) DEFAULT NULL,
+  `deleted_date` bigint(64) DEFAULT NULL,
+  PRIMARY KEY (`assessment_plan_form_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `cbl_assessment_plan_objectives` (
+  `assessment_plan_objective_id` int(12) unsigned NOT NULL AUTO_INCREMENT,
+  `assessment_plan_id` int(12) NOT NULL,
+  `objective_id` int(12) NOT NULL,
+  `created_date` bigint(64) NOT NULL,
+  `created_by` int(12) NOT NULL,
+  `updated_date` bigint(64) DEFAULT NULL,
+  `updated_by` int(12) DEFAULT NULL,
+  `deleted_date` bigint(64) DEFAULT NULL,
+  PRIMARY KEY (`assessment_plan_objective_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `cbl_assessment_plans` (
+  `assessment_plan_id` int(12) unsigned NOT NULL AUTO_INCREMENT,
+  `title` varchar(1024) NOT NULL,
+  `description` text,
+  `assessment_plan_container_id` int(12) NOT NULL,
+  `objective_id` int(12) NOT NULL,
+  `valid_from` bigint(64) NOT NULL,
+  `valid_until` bigint(64) NOT NULL,
+  `published` tinyint(1) NOT NULL DEFAULT '0',
+  `created_date` bigint(64) NOT NULL,
+  `created_by` int(12) NOT NULL,
+  `updated_date` bigint(64) DEFAULT NULL,
+  `updated_by` int(12) DEFAULT NULL,
+  `deleted_date` bigint(64) DEFAULT NULL,
+  PRIMARY KEY (`assessment_plan_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `cbl_assessment_progress` (
   `aprogress_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `one45_formsAttached_id` int(11) unsigned DEFAULT NULL,
   `one45_p_id` int(11) DEFAULT NULL,
   `one45_moment_id` int(11) DEFAULT NULL,
-  `adistribution_id` int(11) unsigned NOT NULL,
+  `adistribution_id` int(11) unsigned DEFAULT NULL,
   `dassessment_id` int(11) DEFAULT NULL,
   `uuid` varchar(36) NOT NULL,
   `assessor_type` enum('internal','external') NOT NULL DEFAULT 'internal',
   `assessor_value` int(12) NOT NULL,
-  `adtarget_id` int(11) unsigned NOT NULL,
+  `adtarget_id` int(11) unsigned DEFAULT NULL,
   `target_record_id` int(11) DEFAULT NULL,
+  `target_type` enum('proxy_id','cgroup_id','group_id','schedule_id','external_hash','course_id','organisation_id','event_id') NOT NULL DEFAULT 'proxy_id',
   `target_learning_context_id` int(11) DEFAULT NULL,
   `progress_value` enum('inprogress','complete','cancelled') DEFAULT NULL,
+  `progress_time` bigint(64) unsigned DEFAULT NULL,
   `created_date` bigint(64) NOT NULL,
-  `created_by` int(11) NOT NULL,
+  `created_by` int(11) DEFAULT NULL,
   `updated_date` bigint(64) DEFAULT NULL,
   `updated_by` int(11) DEFAULT NULL,
   `deleted_date` bigint(20) DEFAULT NULL,
@@ -1940,6 +2262,8 @@ CREATE TABLE `cbl_assessment_progress` (
   KEY `adistribution_id` (`adistribution_id`),
   KEY `adtarget_id` (`adtarget_id`),
   KEY `dassessment_id` (`dassessment_id`),
+  KEY `assessor_type_value` (`assessor_type`,`assessor_value`),
+  KEY `dassessment_values` (`dassessment_id`,`progress_value`,`target_record_id`,`assessor_type`,`assessor_value`),
   CONSTRAINT `cbl_assessment_progress_ibfk_1` FOREIGN KEY (`adistribution_id`) REFERENCES `cbl_assessment_distributions` (`adistribution_id`),
   CONSTRAINT `cbl_assessment_progress_ibfk_2` FOREIGN KEY (`adtarget_id`) REFERENCES `cbl_assessment_distribution_targets` (`adtarget_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -1949,15 +2273,17 @@ CREATE TABLE `cbl_assessment_progress` (
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `cbl_assessment_progress_approvals` (
-  `adapprover_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `apapproval_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `aprogress_id` int(11) unsigned NOT NULL,
-  `adistribution_id` int(11) unsigned NOT NULL,
+  `adistribution_id` int(11) unsigned DEFAULT NULL,
   `approver_id` int(11) NOT NULL,
-  `release_status` tinyint(1) NOT NULL DEFAULT '0',
+  `approval_status` enum('approved','hidden','pending') NOT NULL DEFAULT 'pending',
   `comments` text,
-  `created_date` bigint(64) NOT NULL,
-  `created_by` int(11) NOT NULL,
-  PRIMARY KEY (`adapprover_id`),
+  `created_date` bigint(64) unsigned NOT NULL,
+  `created_by` int(11) unsigned NOT NULL,
+  `updated_date` bigint(64) unsigned DEFAULT NULL,
+  `updated_by` int(11) unsigned DEFAULT NULL,
+  PRIMARY KEY (`apapproval_id`),
   KEY `aprogress_id` (`aprogress_id`),
   KEY `adistribution_id` (`adistribution_id`),
   CONSTRAINT `cbl_assessment_progress_approvals_ibfk_1` FOREIGN KEY (`adistribution_id`) REFERENCES `cbl_assessment_distributions` (`adistribution_id`),
@@ -1973,14 +2299,14 @@ CREATE TABLE `cbl_assessment_progress_responses` (
   `one45_answer_id` int(11) unsigned DEFAULT NULL,
   `aprogress_id` int(11) unsigned NOT NULL,
   `form_id` int(11) unsigned NOT NULL,
-  `adistribution_id` int(11) unsigned NOT NULL,
+  `adistribution_id` int(11) unsigned DEFAULT NULL,
   `assessor_type` enum('internal','external') NOT NULL DEFAULT 'internal',
   `assessor_value` int(12) NOT NULL,
   `afelement_id` int(11) unsigned NOT NULL,
   `iresponse_id` int(11) DEFAULT NULL,
   `comments` text,
   `created_date` bigint(64) NOT NULL,
-  `created_by` int(11) NOT NULL,
+  `created_by` int(11) DEFAULT NULL,
   `updated_date` bigint(64) DEFAULT NULL,
   `updated_by` int(11) DEFAULT NULL,
   `deleted_date` bigint(64) DEFAULT NULL,
@@ -1989,6 +2315,7 @@ CREATE TABLE `cbl_assessment_progress_responses` (
   KEY `form_id` (`form_id`),
   KEY `adistribution_id` (`adistribution_id`),
   KEY `afelement_id` (`afelement_id`),
+  KEY `iresponse_id` (`iresponse_id`),
   CONSTRAINT `cbl_assessment_progress_responses_ibfk_1` FOREIGN KEY (`aprogress_id`) REFERENCES `cbl_assessment_progress` (`aprogress_id`),
   CONSTRAINT `cbl_assessment_progress_responses_ibfk_2` FOREIGN KEY (`form_id`) REFERENCES `cbl_assessments_lu_forms` (`form_id`),
   CONSTRAINT `cbl_assessment_progress_responses_ibfk_3` FOREIGN KEY (`adistribution_id`) REFERENCES `cbl_assessment_distributions` (`adistribution_id`),
@@ -1996,6 +2323,64 @@ CREATE TABLE `cbl_assessment_progress_responses` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `cbl_assessment_rating_scale` (
+  `rating_scale_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `organisation_id` int(11) unsigned NOT NULL,
+  `rating_scale_type` int(12) unsigned NOT NULL,
+  `rating_scale_title` varchar(255) CHARACTER SET utf8 NOT NULL DEFAULT '',
+  `rating_scale_description` text CHARACTER SET utf8,
+  `created_date` bigint(20) unsigned NOT NULL,
+  `created_by` int(11) unsigned NOT NULL,
+  `updated_date` bigint(20) unsigned DEFAULT NULL,
+  `updated_by` int(11) unsigned DEFAULT NULL,
+  `deleted_date` bigint(20) unsigned DEFAULT NULL,
+  PRIMARY KEY (`rating_scale_id`),
+  KEY `rating_scale_type` (`rating_scale_type`)
+) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+INSERT INTO `cbl_assessment_rating_scale` VALUES (1,1,2,'Queen\'s Six Point','Developmental',1510375509,1,1510375509,1,NULL),(2,1,2,'Queen\'s Five Point','Developmental',1510375509,1,1510375509,1,NULL),(3,1,2,'Queen\'s Rubric Version','Developmental',1510375509,1,1510375509,1,NULL),(4,1,2,'Dreyfus Scale','Developmental',1510375509,1,1510375509,1,NULL),(5,1,2,'O-Score','(Goften et al. 2012) – Rater-centric (\"looking at the learner through the lens of yourself\")',1510375509,1,1510375509,1,NULL),(6,1,2,'Entrustment','(ten Cate et al. 2015) - developmental',1510375509,1,1510375509,1,NULL),(7,1,2,'Queen\'s Family Medicine (Field Note)','',1510375509,1,1510375509,1,NULL),(8,1,2,'Queen\'s DOPs','Direct Observation of Procedural Skills',1510375509,1,1510375509,1,NULL),(9,1,2,'Queen\'s Three Point','',1510375509,1,1510375509,1,NULL),(10,1,2,'Queen\'s Entrustment Scale','',1510375509,1,1510375509,1,NULL),(11,1,1,'O-Score','(Gofton et al. 2012) – Rater-centric (\"looking at the learner through the lens of yourself\")',1510375509,1,1510375509,1,NULL),(12,1,1,'Entrustment','(ten Cate et al. 2015) - developmental',1510375509,1,1510375509,1,NULL),(13,1,1,'Queen\'s Developmental Score','',1510375509,1,1510375509,1,NULL),(14,1,1,'Queen\'s Family Medicine (Field Note)','',1510375509,1,1510375509,1,NULL),(15,1,1,'Queen\'s Global Rating Scale','',1510375509,1,1510375509,1,NULL);
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `cbl_assessment_rating_scale_authors` (
+  `rating_scale_author_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `rating_scale_id` int(11) unsigned NOT NULL,
+  `author_id` int(11) unsigned NOT NULL,
+  `author_type` enum('proxy_id','organisation_id','course_id') COLLATE utf8_unicode_ci NOT NULL DEFAULT 'proxy_id',
+  `created_date` bigint(20) unsigned NOT NULL,
+  `created_by` int(11) unsigned NOT NULL,
+  `updated_date` bigint(20) unsigned DEFAULT NULL,
+  `updated_by` int(11) unsigned DEFAULT NULL,
+  `deleted_date` bigint(20) unsigned DEFAULT NULL,
+  PRIMARY KEY (`rating_scale_author_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=31 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+INSERT INTO `cbl_assessment_rating_scale_authors` VALUES (1,1,1,'proxy_id',1510375509,1,1510375509,1,NULL),(2,1,1,'organisation_id',1510375509,1,NULL,NULL,NULL),(3,2,1,'proxy_id',1510375509,1,1510375509,1,NULL),(4,2,1,'organisation_id',1510375509,1,NULL,NULL,NULL),(5,3,1,'proxy_id',1510375509,1,1510375509,1,NULL),(6,3,1,'organisation_id',1510375509,1,NULL,NULL,NULL),(7,4,1,'proxy_id',1510375509,1,1510375509,1,NULL),(8,4,1,'organisation_id',1510375509,1,NULL,NULL,NULL),(9,5,1,'proxy_id',1510375509,1,1510375509,1,NULL),(10,5,1,'organisation_id',1510375509,1,NULL,NULL,NULL),(11,6,1,'proxy_id',1510375509,1,1510375509,1,NULL),(12,6,1,'organisation_id',1510375509,1,NULL,NULL,NULL),(13,7,1,'proxy_id',1510375509,1,1510375509,1,NULL),(14,7,1,'organisation_id',1510375509,1,NULL,NULL,NULL),(15,8,1,'proxy_id',1510375509,1,1510375509,1,NULL),(16,8,1,'organisation_id',1510375509,1,NULL,NULL,NULL),(17,9,1,'proxy_id',1510375509,1,1510375509,1,NULL),(18,9,1,'organisation_id',1510375509,1,NULL,NULL,NULL),(19,10,1,'proxy_id',1510375509,1,1510375509,1,NULL),(20,10,1,'organisation_id',1510375509,1,NULL,NULL,NULL),(21,11,1,'proxy_id',1510375509,1,1510375509,1,NULL),(22,11,1,'organisation_id',1510375509,1,NULL,NULL,NULL),(23,12,1,'proxy_id',1510375509,1,1510375509,1,NULL),(24,12,1,'organisation_id',1510375509,1,NULL,NULL,NULL),(25,13,1,'proxy_id',1510375509,1,1510375509,1,NULL),(26,13,1,'organisation_id',1510375509,1,NULL,NULL,NULL),(27,14,1,'proxy_id',1510375509,1,1510375509,1,NULL),(28,14,1,'organisation_id',1510375509,1,NULL,NULL,NULL),(29,15,1,'proxy_id',1510375509,1,1510375509,1,NULL),(30,15,1,'organisation_id',1510375509,1,NULL,NULL,NULL);
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `cbl_assessment_rating_scale_responses` (
+  `rating_scale_response_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `rating_scale_id` int(11) unsigned NOT NULL,
+  `text` text COLLATE utf8_unicode_ci,
+  `ardescriptor_id` int(11) unsigned NOT NULL,
+  `order` tinyint(3) unsigned NOT NULL DEFAULT '0',
+  `flag_response` tinyint(1) unsigned NOT NULL DEFAULT '0',
+  `weight` int(11) DEFAULT NULL,
+  `deleted_date` bigint(20) unsigned DEFAULT NULL,
+  PRIMARY KEY (`rating_scale_response_id`),
+  KEY `ind_rating_scale_id` (`rating_scale_id`),
+  KEY `ardescriptor_id` (`ardescriptor_id`),
+  KEY `weight` (`weight`)
+) ENGINE=InnoDB AUTO_INCREMENT=81 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+INSERT INTO `cbl_assessment_rating_scale_responses` VALUES (1,1,'Not observed',35,1,0,NULL,NULL),(2,1,'Very limited',45,2,0,NULL,NULL),(3,1,'Limited',32,3,0,NULL,NULL),(4,1,'Emerging',19,4,0,NULL,NULL),(5,1,'Developing',3,5,0,NULL,NULL),(6,1,'Achieving',4,6,0,NULL,NULL),(7,1,'Established',20,7,0,NULL,NULL),(8,2,'Not observed',35,1,0,NULL,NULL),(9,2,'Limited',32,2,0,NULL,NULL),(10,2,'Emerging',19,3,0,NULL,NULL),(11,2,'Developing',3,4,0,NULL,NULL),(12,2,'Achieving',4,5,0,NULL,NULL),(13,2,'Established',20,6,0,NULL,NULL),(14,3,'Not observed',35,1,0,NULL,NULL),(15,3,'Opportunities for Growth',1,2,0,NULL,NULL),(16,3,'Borderline LOW',2,3,0,NULL,NULL),(17,3,'Developing',3,4,0,NULL,NULL),(18,3,'Borderline HIGH',5,5,0,NULL,NULL),(19,3,'Achieving (ready for independent practice)',10,6,0,NULL,NULL),(20,4,'Not observed',35,1,0,NULL,NULL),(21,4,'Novice',37,2,0,NULL,NULL),(22,4,'Advanced beginner',12,3,0,NULL,NULL),(23,4,'Competent',16,4,0,NULL,NULL),(24,4,'Proficient',39,5,0,NULL,NULL),(25,4,'Expert',21,6,0,NULL,NULL),(26,5,'Not observed',35,1,0,NULL,NULL),(27,5,'I had to do',25,2,0,NULL,NULL),(28,5,'I had to talk them through',27,3,0,NULL,NULL),(29,5,'I had to prompt them from time to time',26,4,0,NULL,NULL),(30,5,'I needed to be there in the room just in case',28,5,0,NULL,NULL),(31,5,'I did not need to be there',24,6,0,NULL,NULL),(32,6,'Not observed',35,1,0,NULL,NULL),(33,6,'Observation only (no execution)',38,2,0,NULL,NULL),(34,6,'Direct, proactive supervision',18,3,0,NULL,NULL),(35,6,'Indirect, reactive supervision',30,4,0,NULL,NULL),(36,6,'Independent performance (with remote supervision)',29,5,0,NULL,NULL),(37,6,'Supervision of trainees',43,6,0,NULL,NULL),(38,7,'Not observed',35,1,0,NULL,NULL),(39,7,'Flagged for review',22,2,0,NULL,NULL),(40,7,'Direct supervision',17,3,0,NULL,NULL),(41,7,'Supervision on demand',44,4,0,NULL,NULL),(42,7,'Supervision for refinement',42,5,0,NULL,NULL),(43,8,'Not observed',35,1,0,NULL,NULL),(44,8,'Accepted standards not yet met, frequent errors uncorrected',8,2,0,NULL,NULL),(45,8,'Some standards not yet met, aspects to be improved, some errors uncorrected',40,3,0,NULL,NULL),(46,8,'Competent and safe throughout procedure, no uncorrected errors',15,4,0,NULL,NULL),(47,8,'Highly skilled performance',23,5,0,NULL,NULL),(48,9,'Not observed',35,1,0,NULL,NULL),(49,9,'Needs attention',33,2,0,NULL,NULL),(50,9,'Developing',3,3,0,NULL,NULL),(51,9,'Achieved',9,4,0,NULL,NULL),(52,10,'Not observed',35,1,0,NULL,NULL),(53,10,'Not yet',36,2,0,NULL,NULL),(54,10,'Almost',13,3,0,NULL,NULL),(55,10,'Yes',46,4,0,NULL,NULL),(56,11,'I had to do',25,1,0,NULL,NULL),(57,11,'I had to talk them through',27,2,0,NULL,NULL),(58,11,'I had to prompt them from time to time',26,3,0,NULL,NULL),(59,11,'I needed to be there in the room just in case',28,4,0,NULL,NULL),(60,11,'I did not need to be there',24,5,0,NULL,NULL),(61,12,'Observation only (no execution)',38,1,0,NULL,NULL),(62,12,'Direct, proactive supervision',18,2,0,NULL,NULL),(63,12,'Indirect, reactive supervision',30,3,0,NULL,NULL),(64,12,'Independent performance (with remote supervision)',29,4,0,NULL,NULL),(65,12,'Supervision of trainees',43,5,0,NULL,NULL),(66,13,'Very limited',45,1,0,NULL,NULL),(67,13,'Limited',32,2,0,NULL,NULL),(68,13,'Emerging',19,3,0,NULL,NULL),(69,13,'Developing',3,4,0,NULL,NULL),(70,13,'Achieving',4,5,0,NULL,NULL),(71,13,'Established',20,6,0,NULL,NULL),(72,14,'Flagged for review',22,1,0,NULL,NULL),(73,14,'Direct supervision',17,2,0,NULL,NULL),(74,14,'Supervision on demand',44,3,0,NULL,NULL),(75,14,'Supervision for refinement',42,4,0,NULL,NULL),(76,15,'Shows critical weaknesses',41,1,0,NULL,NULL),(77,15,'Needs attention',33,2,0,NULL,NULL),(78,15,'Is almost there',31,3,0,NULL,NULL),(79,15,'Achieves standard expected',11,4,0,NULL,NULL),(80,15,'Clearly exceeds standard',14,5,0,NULL,NULL);
 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -2041,8 +2426,8 @@ CREATE TABLE `cbl_assessment_report_source_targets` (
   PRIMARY KEY (`adtarget_id`),
   KEY `arsource_id` (`arsource_id`),
   KEY `areport_id` (`areport_id`),
-  CONSTRAINT `cbl_assessment_report_source_targets_ibfk_2` FOREIGN KEY (`areport_id`) REFERENCES `cbl_assessment_reports` (`areport_id`),
-  CONSTRAINT `cbl_assessment_report_source_targets_ibfk_1` FOREIGN KEY (`arsource_id`) REFERENCES `cbl_assessment_report_sources` (`arsource_id`)
+  CONSTRAINT `cbl_assessment_report_source_targets_ibfk_1` FOREIGN KEY (`arsource_id`) REFERENCES `cbl_assessment_report_sources` (`arsource_id`),
+  CONSTRAINT `cbl_assessment_report_source_targets_ibfk_2` FOREIGN KEY (`areport_id`) REFERENCES `cbl_assessment_reports` (`areport_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -2122,28 +2507,17 @@ CREATE TABLE `cbl_assessment_rubric_items` (
 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `cbl_assessment_ss_current_tasks` (
-  `current_task_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
-  `adistribution_id` int(11) unsigned NOT NULL,
-  `dassessment_id` int(11) unsigned DEFAULT NULL,
-  `assessor_type` enum('internal','external') DEFAULT NULL,
-  `assessor_value` int(11) unsigned NOT NULL,
-  `target_type` enum('proxy_id','cgroup_id','group_id','schedule_id','external_hash','course_id','organisation_id') DEFAULT NULL,
-  `target_value` int(11) NOT NULL,
-  `title` text,
-  `rotation_start_date` bigint(64) DEFAULT '0',
-  `rotation_end_date` bigint(64) DEFAULT '0',
-  `delivery_date` bigint(64) NOT NULL,
-  `schedule_details` text,
-  `created_by` int(11) NOT NULL,
-  `created_date` bigint(64) NOT NULL,
-  `deleted_by` int(11) DEFAULT NULL,
-  `deleted_date` bigint(64) DEFAULT NULL,
-  PRIMARY KEY (`current_task_id`),
-  KEY `cbl_assessment_ss_current_tasks_ibfk_1` (`adistribution_id`),
-  KEY `cbl_assessment_ss_current_tasks_ibfk_2` (`dassessment_id`),
-  CONSTRAINT `cbl_assessment_ss_current_tasks_ibfk_1` FOREIGN KEY (`adistribution_id`) REFERENCES `cbl_assessment_distributions` (`adistribution_id`),
-  CONSTRAINT `cbl_assessment_ss_current_tasks_ibfk_2` FOREIGN KEY (`dassessment_id`) REFERENCES `cbl_distribution_assessments` (`dassessment_id`)
+CREATE TABLE `cbl_assessment_ss_existing_tasks` (
+  `existing_task_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `adistribution_id` int(11) DEFAULT NULL,
+  `distribution_deleted_date` int(11) DEFAULT NULL,
+  `distribution_title` varchar(2048) DEFAULT NULL,
+  `assessor_name` varchar(100) DEFAULT NULL,
+  `target_name` varchar(100) DEFAULT NULL,
+  `form_title` varchar(1024) DEFAULT NULL,
+  `schedule_details` varchar(2048) DEFAULT NULL,
+  `progress_details` varchar(100) DEFAULT NULL,
+  PRIMARY KEY (`existing_task_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -2152,15 +2526,27 @@ CREATE TABLE `cbl_assessment_ss_current_tasks` (
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `cbl_assessment_ss_future_tasks` (
   `future_task_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
-  `adistribution_id` int(11) unsigned NOT NULL,
+  `adistribution_id` int(11) unsigned DEFAULT NULL,
   `assessor_type` enum('internal','external') DEFAULT NULL,
   `assessor_value` int(11) unsigned NOT NULL,
   `target_type` enum('proxy_id','cgroup_id','group_id','schedule_id','external_hash','course_id','organisation_id') DEFAULT NULL,
   `target_value` int(11) NOT NULL,
+  `task_type` enum('assessment','evaluation') NOT NULL,
   `title` text,
   `rotation_start_date` bigint(64) DEFAULT '0',
   `rotation_end_date` bigint(64) DEFAULT '0',
   `delivery_date` bigint(64) NOT NULL,
+  `form_id` int(11) unsigned DEFAULT NULL,
+  `assessment_type_id` int(11) unsigned NOT NULL DEFAULT '1',
+  `organisation_id` int(11) unsigned DEFAULT NULL,
+  `associated_record_id` int(11) unsigned DEFAULT NULL,
+  `associated_record_type` enum('event_id','proxy_id','course_id','group_id','schedule_id') DEFAULT NULL,
+  `min_submittable` int(11) unsigned DEFAULT '0',
+  `max_submittable` int(11) unsigned DEFAULT '0',
+  `feedback_required` tinyint(1) NOT NULL DEFAULT '0',
+  `start_date` bigint(64) NOT NULL DEFAULT '0',
+  `end_date` bigint(64) NOT NULL DEFAULT '0',
+  `additional_assessment` tinyint(1) NOT NULL DEFAULT '0',
   `schedule_details` text,
   `created_by` int(11) NOT NULL,
   `created_date` bigint(64) NOT NULL,
@@ -2172,6 +2558,175 @@ CREATE TABLE `cbl_assessment_ss_future_tasks` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `cbl_assessment_type_organisations` (
+  `atype_organisation_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `assessment_type_id` int(11) unsigned NOT NULL,
+  `organisation_id` int(11) unsigned NOT NULL,
+  `created_date` bigint(64) unsigned NOT NULL,
+  `created_by` int(11) unsigned NOT NULL,
+  `updated_by` int(11) unsigned DEFAULT NULL,
+  `updated_date` bigint(64) unsigned DEFAULT NULL,
+  `deleted_date` bigint(64) unsigned DEFAULT NULL,
+  PRIMARY KEY (`atype_organisation_id`),
+  KEY `assessment_type_id` (`assessment_type_id`),
+  KEY `organisation_id` (`organisation_id`),
+  KEY `organisation_id_2` (`organisation_id`,`assessment_type_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+INSERT INTO `cbl_assessment_type_organisations` VALUES (1,1,1,1510375509,1,NULL,NULL,NULL),(2,2,1,1510375509,1,NULL,NULL,NULL);
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `cbl_assessments_form_blueprint_authors` (
+  `afbauthor_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `form_blueprint_id` int(11) unsigned NOT NULL,
+  `author_type` enum('proxy_id','organisation_id','course_id') NOT NULL DEFAULT 'proxy_id',
+  `author_id` int(11) NOT NULL,
+  `created_date` bigint(64) NOT NULL,
+  `created_by` int(11) NOT NULL,
+  `updated_date` bigint(64) DEFAULT NULL,
+  `updated_by` int(11) DEFAULT NULL,
+  `deleted_date` bigint(64) DEFAULT NULL,
+  PRIMARY KEY (`afbauthor_id`),
+  KEY `form_blueprint_id` (`form_blueprint_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `cbl_assessments_form_blueprint_elements` (
+  `afblueprint_element_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `form_blueprint_id` int(11) unsigned NOT NULL,
+  `element_type` enum('text','blueprint_component','item','rubric') COLLATE utf8_unicode_ci NOT NULL DEFAULT 'blueprint_component',
+  `element_value` int(11) unsigned DEFAULT NULL,
+  `text` text COLLATE utf8_unicode_ci,
+  `component_order` int(11) unsigned NOT NULL,
+  `comment_type` enum('disabled','optional','mandatory','flagged') COLLATE utf8_unicode_ci NOT NULL DEFAULT 'disabled',
+  `editor_state` text COLLATE utf8_unicode_ci,
+  `created_date` bigint(64) unsigned NOT NULL,
+  `created_by` int(11) unsigned NOT NULL,
+  `updated_date` bigint(64) unsigned DEFAULT NULL,
+  `updated_by` int(11) unsigned DEFAULT NULL,
+  `deleted_date` bigint(64) unsigned DEFAULT NULL,
+  PRIMARY KEY (`afblueprint_element_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `cbl_assessments_form_blueprint_item_templates` (
+  `afb_item_template_id` int(12) unsigned NOT NULL AUTO_INCREMENT,
+  `form_type_id` int(12) unsigned NOT NULL,
+  `active` tinyint(1) unsigned NOT NULL DEFAULT '1',
+  `parent_item` int(12) unsigned NOT NULL DEFAULT '0',
+  `ordering` int(11) NOT NULL DEFAULT '1',
+  `component_order` int(11) unsigned NOT NULL,
+  `item_definition` text NOT NULL,
+  `created_date` bigint(64) unsigned NOT NULL,
+  `created_by` int(12) unsigned NOT NULL,
+  `updated_date` bigint(64) unsigned DEFAULT NULL,
+  `updated_by` int(12) unsigned DEFAULT NULL,
+  `deleted_date` bigint(64) unsigned DEFAULT NULL,
+  PRIMARY KEY (`afb_item_template_id`),
+  KEY `blueprint_id` (`form_type_id`),
+  KEY `parent_item` (`parent_item`)
+) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+INSERT INTO `cbl_assessments_form_blueprint_item_templates` VALUES (1,2,1,0,1,4,'{\"element_type\":\"item\",\"element_definition\":{\"item_group_id\":1,\"item_text\":\"Next Steps\",\"itemtype_shortname\":\"free_text\",\"item_code\":\"CBME_supervisor_item\",\"mandatory\":null,\"responses\":[],\"comment_type\":\"disabled\",\"rating_scale_id\":null,\"flagged_response\":[],\"descriptors\":[],\"objectives\":[],\"item_description\":null}}',1510375509,1,NULL,NULL,NULL),(2,2,1,0,1,5,'{\"element_type\":\"rubric\",\"element_definition\":{\"item_group_id\":2,\"item_text\":\"Concerns\",\"rating_scale_id\":null,\"comment_type\":\"flagged\"}}',1510375509,1,NULL,NULL,NULL),(3,2,1,2,1,0,'{\"element_type\":\"item\",\"element_definition\":{\"item_group_id\":3,\"item_text\":\"Do you have patient safety concerns related to this resident\'s performance?\",\"itemtype_shortname\":\"horizontal_multiple_choice_single\",\"item_code\":\"CBME_supervisor_form_item\",\"mandatory\":1,\"responses\":{\"1\":\"\",\"2\":\"\"},\"comment_type\":\"flagged\",\"rating_scale_id\":null,\"allow_default\":1,\"default_response\":1,\"flagged_response\":{\"2\":1},\"descriptors\":{\"1\":34,\"2\":46},\"objectives\":[],\"item_description\":null,\"attributes\":{\"mutators\":[\"invisible\"]}}}',1510375509,1,NULL,NULL,NULL),(4,2,1,2,2,0,'{\"element_type\":\"item\",\"element_definition\":{\"item_group_id\":4,\"item_text\":\"Do you have professionalism concerns about this resident\'s performance?\",\"itemtype_shortname\":\"horizontal_multiple_choice_single\",\"item_code\":\"CBME_supervisor_form_item\",\"mandatory\":1,\"responses\":{\"1\":\"\",\"2\":\"\"},\"comment_type\":\"flagged\",\"rating_scale_id\":null,\"allow_default\":1,\"default_response\":1,\"flagged_response\":{\"2\":1},\"descriptors\":{\"1\":34,\"2\":46},\"objectives\":[],\"item_description\":null,\"attributes\":{\"mutators\":[\"invisible\"]}}}',1510375509,1,NULL,NULL,NULL),(5,2,1,2,3,0,'{\"element_type\":\"item\",\"element_definition\":{\"item_group_id\":5,\"item_text\":\"Are there other reasons to flag this assessment?\",\"itemtype_shortname\":\"horizontal_multiple_choice_single\",\"item_code\":\"CBME_supervisor_form_item\",\"mandatory\":1,\"responses\":{\"1\":\"\",\"2\":\"\"},\"comment_type\":\"flagged\",\"rating_scale_id\":null,\"allow_default\":1,\"default_response\":1,\"flagged_response\":{\"2\":1},\"descriptors\":{\"1\":34,\"2\":46},\"objectives\":[],\"item_description\":null,\"attributes\":{\"mutators\":[\"invisible\"]}}}',1510375509,1,NULL,NULL,NULL),(6,2,1,0,1,6,'{\"element_type\":\"item\",\"element_definition\":{\"item_group_id\":6,\"item_text\":\"Have feedback about this form? (eg, \\\"Missing Dx\\\", etc.)\",\"itemtype_shortname\":\"horizontal_multiple_choice_single\",\"item_code\":\"CBME_supervisor_form_item\",\"mandatory\":1,\"allow_default\":1,\"default_response\":1,\"responses\":{\"1\":\"No\",\"2\":\"Yes\"},\"comment_type\":\"flagged\",\"rating_scale_id\":null,\"flagged_response\":{\"2\":1},\"descriptors\":[],\"objectives\":[],\"item_description\":null,\"attributes\":{\"mutators\":[\"invisible\"]}}}',1510375509,1,NULL,NULL,NULL),(7,3,1,0,1,3,'{\"element_type\":\"item\",\"element_definition\":{\"item_group_id\":7,\"item_text\":\"Continue...\",\"itemtype_shortname\":\"free_text\",\"item_code\":\"CBME_fieldnote_freetext\",\"mandatory\":null,\"responses\":[],\"comment_type\":\"disabled\",\"rating_scale_id\":null,\"flagged_response\":[],\"descriptors\":[],\"objectives\":[],\"item_description\":null}}',1510375509,1,NULL,NULL,NULL),(8,3,1,0,1,4,'{\"element_type\":\"item\",\"element_definition\":{\"item_group_id\":8,\"item_text\":\"Consider...\",\"itemtype_shortname\":\"free_text\",\"item_code\":\"CBME_fieldnote_freetext\",\"mandatory\":null,\"responses\":[],\"comment_type\":\"disabled\",\"rating_scale_id\":null,\"flagged_response\":[],\"descriptors\":[],\"objectives\":[],\"item_description\":null}}',1510375509,1,NULL,NULL,NULL),(9,3,1,0,1,6,'{\"element_type\":\"item\",\"element_definition\":{\"item_group_id\":9,\"item_text\":\"Next Steps\",\"itemtype_shortname\":\"free_text\",\"item_code\":\"CBME_fieldnote_item\",\"mandatory\":null,\"responses\":[],\"comment_type\":\"disabled\",\"rating_scale_id\":null,\"flagged_response\":[],\"descriptors\":[],\"objectives\":[],\"item_description\":null}}',1510375509,1,NULL,NULL,NULL),(10,3,1,0,1,7,'{\"element_type\":\"rubric\",\"element_definition\":{\"item_group_id\":10,\"item_text\":\"Concerns\",\"rating_scale_id\":null,\"comment_type\":\"flagged\"}}',1510375509,1,NULL,NULL,NULL),(11,3,1,10,1,0,'{\"element_type\":\"item\",\"element_definition\":{\"item_group_id\":11,\"item_text\":\"Do you have patient safety concerns related to this resident\'s performance?\",\"itemtype_shortname\":\"horizontal_multiple_choice_single\",\"item_code\":\"CBME_fieldnote_form_item\",\"mandatory\":1,\"responses\":{\"1\":\"\",\"2\":\"\"},\"comment_type\":\"flagged\",\"rating_scale_id\":null,\"allow_default\":1,\"default_response\":1,\"flagged_response\":{\"2\":1},\"descriptors\":{\"1\":34,\"2\":46},\"objectives\":[],\"item_description\":null,\"attributes\":{\"mutators\":[\"invisible\"]}}}',1510375509,1,NULL,NULL,NULL),(12,3,1,10,2,0,'{\"element_type\":\"item\",\"element_definition\":{\"item_group_id\":12,\"item_text\":\"Do you have professionalism concerns about this resident\'s performance?\",\"itemtype_shortname\":\"horizontal_multiple_choice_single\",\"item_code\":\"CBME_fieldnote_form_item\",\"mandatory\":1,\"responses\":{\"1\":\"\",\"2\":\"\"},\"comment_type\":\"flagged\",\"rating_scale_id\":null,\"allow_default\":1,\"default_response\":1,\"flagged_response\":{\"2\":1},\"descriptors\":{\"1\":34,\"2\":46},\"objectives\":[],\"item_description\":null,\"attributes\":{\"mutators\":[\"invisible\"]}}}',1510375509,1,NULL,NULL,NULL),(13,3,1,10,3,0,'{\"element_type\":\"item\",\"element_definition\":{\"item_group_id\":13,\"item_text\":\"Are there other reasons to flag this assessment?\",\"itemtype_shortname\":\"horizontal_multiple_choice_single\",\"item_code\":\"CBME_fieldnote_form_item\",\"mandatory\":1,\"responses\":{\"1\":\"\",\"2\":\"\"},\"comment_type\":\"flagged\",\"rating_scale_id\":null,\"allow_default\":1,\"default_response\":1,\"flagged_response\":{\"2\":1},\"descriptors\":{\"1\":34,\"2\":46},\"objectives\":[],\"item_description\":null,\"attributes\":{\"mutators\":[\"invisible\"]}}}',1510375509,1,NULL,NULL,NULL),(14,3,1,0,1,8,'{\"element_type\":\"item\",\"element_definition\":{\"item_group_id\":14,\"item_text\":\"Have feedback about this form? (eg, \\\"Missing Dx\\\", etc.)\",\"itemtype_shortname\":\"horizontal_multiple_choice_single\",\"item_code\":\"CBME_fieldnote_form_item\",\"mandatory\":1,\"allow_default\":1,\"default_response\":1,\"responses\":{\"1\":\"No\",\"2\":\"Yes\"},\"comment_type\":\"flagged\",\"rating_scale_id\":null,\"flagged_response\":{\"2\":1},\"descriptors\":[],\"objectives\":[],\"item_description\":null,\"attributes\":{\"mutators\":[\"invisible\"]}}}',1510375509,1,NULL,NULL,NULL),(15,4,1,0,1,4,'{\"element_type\":\"item\",\"element_definition\":{\"item_group_id\":15,\"item_text\":\"Next Steps\",\"itemtype_shortname\":\"free_text\",\"item_code\":\"CBME_procedure_item\",\"mandatory\":null,\"responses\":[],\"comment_type\":\"disabled\",\"rating_scale_id\":null,\"flagged_response\":[],\"descriptors\":[],\"objectives\":[],\"item_description\":null}}',1510375509,1,NULL,NULL,NULL),(16,4,1,0,1,5,'{\"element_type\":\"rubric\",\"element_definition\":{\"item_group_id\":16,\"item_text\":\"Concerns\",\"rating_scale_id\":null,\"comment_type\":\"flagged\"}}',1510375509,1,NULL,NULL,NULL),(17,4,1,16,1,0,'{\"element_type\":\"item\",\"element_definition\":{\"item_group_id\":17,\"item_text\":\"Do you have patient safety concerns related to this resident\'s performance?\",\"itemtype_shortname\":\"horizontal_multiple_choice_single\",\"item_code\":\"CBME_procedure_form_item\",\"mandatory\":1,\"responses\":{\"1\":\"\",\"2\":\"\"},\"comment_type\":\"flagged\",\"rating_scale_id\":null,\"allow_default\":1,\"default_response\":1,\"flagged_response\":{\"2\":1},\"descriptors\":{\"1\":34,\"2\":46},\"objectives\":[],\"item_description\":null,\"attributes\":{\"mutators\":[\"invisible\"]}}}',1510375509,1,NULL,NULL,NULL),(18,4,1,16,2,0,'{\"element_type\":\"item\",\"element_definition\":{\"item_group_id\":18,\"item_text\":\"Do you have professionalism concerns about this resident\'s performance?\",\"itemtype_shortname\":\"horizontal_multiple_choice_single\",\"item_code\":\"CBME_procedure_form_item\",\"mandatory\":1,\"responses\":{\"1\":\"\",\"2\":\"\"},\"comment_type\":\"flagged\",\"rating_scale_id\":null,\"allow_default\":1,\"default_response\":1,\"flagged_response\":{\"2\":1},\"descriptors\":{\"1\":34,\"2\":46},\"objectives\":[],\"item_description\":null,\"attributes\":{\"mutators\":[\"invisible\"]}}}',1510375509,1,NULL,NULL,NULL),(19,4,1,16,3,0,'{\"element_type\":\"item\",\"element_definition\":{\"item_group_id\":19,\"item_text\":\"Are there other reasons to flag this assessment?\",\"itemtype_shortname\":\"horizontal_multiple_choice_single\",\"item_code\":\"CBME_procedure_form_item\",\"mandatory\":1,\"responses\":{\"1\":\"\",\"2\":\"\"},\"comment_type\":\"flagged\",\"rating_scale_id\":null,\"allow_default\":1,\"default_response\":1,\"flagged_response\":{\"2\":1},\"descriptors\":{\"1\":34,\"2\":46},\"objectives\":[],\"item_description\":null,\"attributes\":{\"mutators\":[\"invisible\"]}}}',1510375509,1,NULL,NULL,NULL),(20,4,1,0,1,6,'{\"element_type\":\"item\",\"element_definition\":{\"item_group_id\":20,\"item_text\":\"Have feedback about this form? (eg, \\\"Missing Dx\\\", etc.)\",\"itemtype_shortname\":\"horizontal_multiple_choice_single\",\"item_code\":\"CBME_procedure_form_item\",\"mandatory\":1,\"allow_default\":1,\"default_response\":1,\"responses\":{\"1\":\"No\",\"2\":\"Yes\"},\"comment_type\":\"flagged\",\"rating_scale_id\":null,\"flagged_response\":{\"2\":1},\"descriptors\":[],\"objectives\":[],\"item_description\":null,\"attributes\":{\"mutators\":[\"invisible\"]}}}',1510375509,1,NULL,NULL,NULL);
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `cbl_assessments_form_blueprint_objectives` (
+  `afblueprint_objective_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `organisation_id` int(11) unsigned NOT NULL,
+  `objective_id` int(11) unsigned NOT NULL,
+  `associated_objective_id` int(11) unsigned DEFAULT NULL,
+  `afblueprint_element_id` int(11) unsigned NOT NULL,
+  `created_date` bigint(20) unsigned NOT NULL,
+  `created_by` int(10) unsigned NOT NULL,
+  `updated_date` bigint(20) unsigned DEFAULT NULL,
+  `updated_by` int(11) unsigned DEFAULT NULL,
+  `deleted_date` bigint(20) unsigned DEFAULT NULL,
+  PRIMARY KEY (`afblueprint_objective_id`),
+  KEY `objective_id` (`objective_id`,`afblueprint_objective_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `cbl_assessments_form_blueprint_rating_scales` (
+  `afblueprint_rating_scale_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `organisation_id` int(11) unsigned NOT NULL,
+  `rating_scale_id` int(11) unsigned NOT NULL,
+  `afblueprint_element_id` int(11) unsigned NOT NULL,
+  `created_date` bigint(20) unsigned NOT NULL,
+  `created_by` int(10) unsigned NOT NULL,
+  `updated_date` bigint(20) unsigned DEFAULT NULL,
+  `updated_by` int(11) unsigned DEFAULT NULL,
+  `deleted_date` bigint(20) unsigned DEFAULT NULL,
+  PRIMARY KEY (`afblueprint_rating_scale_id`),
+  KEY `scale_id` (`rating_scale_id`,`afblueprint_rating_scale_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `cbl_assessments_form_statistics` (
+  `afstatistic_id` int(12) unsigned NOT NULL AUTO_INCREMENT,
+  `course_id` int(11) unsigned DEFAULT NULL,
+  `form_id` int(11) unsigned NOT NULL,
+  `proxy_id` int(11) unsigned NOT NULL,
+  `count` int(11) unsigned NOT NULL,
+  PRIMARY KEY (`afstatistic_id`),
+  KEY `form_id` (`course_id`,`form_id`,`proxy_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `cbl_assessments_form_type_component_settings` (
+  `aftc_setting_id` int(12) unsigned NOT NULL AUTO_INCREMENT,
+  `form_type_id` int(11) unsigned NOT NULL,
+  `component_order` int(11) unsigned NOT NULL,
+  `settings` text NOT NULL,
+  `created_date` bigint(64) NOT NULL,
+  `created_by` int(12) NOT NULL,
+  `updated_date` bigint(64) DEFAULT NULL,
+  `updated_by` int(12) DEFAULT NULL,
+  `deleted_date` bigint(64) DEFAULT NULL,
+  PRIMARY KEY (`aftc_setting_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+INSERT INTO `cbl_assessments_form_type_component_settings` VALUES (3,2,0,'{\"max_milestones\":0,\"allow_milestones_selection\":1}',1510375509,1,NULL,NULL,NULL),(4,2,1,'{\"min_variables\":1,\"max_variables\":6,\"required_types\":[]}',1510375509,1,NULL,NULL,NULL),(5,2,3,'{\"component_header\":\"Select the scale to use for the Entrustment Question\",\"allow_default_response\":false}',1510375509,1,NULL,NULL,NULL),(6,3,0,'{\"max_milestones\":8,\"allow_milestones_selection\":0}',1510375509,1,NULL,NULL,NULL),(7,3,1,'{\"min_variables\":1,\"max_variables\":6,\"required_types\":[]}',1510375509,1,NULL,NULL,NULL),(8,3,2,'{\"element_text\":\"<h3>Feedback to Resident:</h3>\"}',1510375509,1,NULL,NULL,NULL),(9,3,5,'{\"component_header\":\"Select the scale to use for the Entrustment Question\",\"allow_default_response\":false}',1510375509,1,NULL,NULL,NULL),(10,4,0,'{\"max_milestones\":0,\"allow_milestones_selection\":0}',1510375509,1,NULL,NULL,NULL),(11,4,1,'{\"min_variables\":2,\"max_variables\":6,\"required_types\":[\"procedure\"]}',1510375509,1,NULL,NULL,NULL),(12,4,3,'{\"component_header\":\"Select the scale to use for the Entrustment Question\",\"allow_default_response\":false}',1510375509,1,NULL,NULL,NULL),(13,5,1,'{\"component_header\":\"Select the scale to use for the Entrustment Question\",\"allow_default_response\":false,\"mode\":\"form\"}',1511726333,1,NULL,NULL,NULL),(14,6,1,'{\"component_header\":\"Select the scale to use for the Entrustment Question\",\"allow_default_response\":false,\"mode\":\"form\"}',1511726333,1,NULL,NULL,NULL);
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `cbl_assessments_form_type_organisation` (
+  `aftype_organisation_id` int(12) unsigned NOT NULL AUTO_INCREMENT,
+  `organisation_id` int(12) unsigned NOT NULL,
+  `form_type_id` int(11) unsigned NOT NULL,
+  `created_date` bigint(64) unsigned NOT NULL,
+  `created_by` int(11) unsigned NOT NULL,
+  `updated_date` bigint(64) unsigned DEFAULT NULL,
+  `updated_by` int(11) unsigned DEFAULT NULL,
+  `deleted_date` bigint(64) unsigned DEFAULT NULL,
+  PRIMARY KEY (`aftype_organisation_id`),
+  KEY `organisation_id` (`organisation_id`,`form_type_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+INSERT INTO `cbl_assessments_form_type_organisation` VALUES (1,1,1,1510375500,1,NULL,NULL,NULL),(2,1,2,1510375500,1,NULL,NULL,NULL),(3,1,3,1510375500,1,NULL,NULL,NULL),(4,1,4,1510375500,1,NULL,NULL,NULL),(5,1,5,1510375500,1,NULL,NULL,NULL),(6,1,6,1510375500,1,NULL,NULL,NULL);
 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -2199,6 +2754,70 @@ CREATE TABLE `cbl_assessments_lu_data_sources` (
 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `cbl_assessments_lu_flags` (
+  `flag_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `flag_value` int(11) unsigned NOT NULL,
+  `organisation_id` int(11) unsigned DEFAULT NULL,
+  `ordering` int(11) unsigned NOT NULL,
+  `title` char(255) NOT NULL,
+  `description` text,
+  `color` char(10) NOT NULL,
+  `visibility` enum('Default','Admin','Public') NOT NULL,
+  `created_date` int(64) NOT NULL,
+  `created_by` int(11) NOT NULL,
+  `updated_date` int(64) DEFAULT NULL,
+  `updated_by` int(11) DEFAULT NULL,
+  `deleted_date` int(64) DEFAULT NULL,
+  PRIMARY KEY (`flag_id`),
+  KEY `organisation_id` (`organisation_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+INSERT INTO `cbl_assessments_lu_flags` VALUES (1,1,NULL,1,'Flagged','The default flag value.','#FF0000','Default',1510375505,1,NULL,NULL,NULL);
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `cbl_assessments_lu_form_blueprint_components` (
+  `blueprint_component_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `shortname` varchar(64) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
+  `description` text COLLATE utf8_unicode_ci NOT NULL,
+  `created_date` bigint(64) unsigned NOT NULL,
+  `created_by` int(11) unsigned NOT NULL,
+  `updated_date` bigint(64) unsigned DEFAULT NULL,
+  `updated_by` int(11) unsigned DEFAULT NULL,
+  `deleted_date` bigint(64) unsigned DEFAULT NULL,
+  PRIMARY KEY (`blueprint_component_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+INSERT INTO `cbl_assessments_lu_form_blueprint_components` VALUES (1,'epa_selector','EPA Selector',1510375500,1,NULL,NULL,NULL),(2,'contextual_variable_list','Contextual Variables',1510375500,1,NULL,NULL,NULL),(3,'entrustment_scale','Entrustment Scale',1510375500,1,NULL,NULL,NULL),(4,'ms_ec_scale','MS/EC Scale Selector',1510375500,1,NULL,NULL,NULL),(5,'standard_item','Standard Form Item',1510375509,1,NULL,NULL,NULL),(6,'free_text_element','Free Text Element',1510375509,1,NULL,NULL,NULL),(7,'role_selector','Role Selector',1510375509,1,NULL,NULL,NULL);
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `cbl_assessments_lu_form_blueprints` (
+  `form_blueprint_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `form_type_id` int(11) NOT NULL,
+  `course_id` int(11) unsigned DEFAULT NULL,
+  `organisation_id` int(11) unsigned DEFAULT NULL,
+  `title` varchar(100) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `description` text COLLATE utf8_unicode_ci,
+  `include_instructions` tinyint(1) unsigned NOT NULL DEFAULT '0',
+  `instructions` text COLLATE utf8_unicode_ci,
+  `created_date` bigint(64) unsigned NOT NULL,
+  `created_by` int(11) unsigned NOT NULL,
+  `updated_date` bigint(64) unsigned DEFAULT NULL,
+  `updated_by` int(11) unsigned DEFAULT NULL,
+  `deleted_date` bigint(64) unsigned DEFAULT NULL,
+  `published` tinyint(4) unsigned NOT NULL DEFAULT '0',
+  `active` tinyint(4) unsigned NOT NULL DEFAULT '0',
+  `complete` tinyint(4) unsigned DEFAULT '0',
+  PRIMARY KEY (`form_blueprint_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `cbl_assessments_lu_form_relationships` (
   `frelationship_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `form_id` int(11) unsigned NOT NULL,
@@ -2208,21 +2827,48 @@ CREATE TABLE `cbl_assessments_lu_form_relationships` (
   KEY `form_id` (`form_id`),
   KEY `first_parent_id` (`first_parent_id`),
   KEY `immediate_parent_id` (`immediate_parent_id`),
-  CONSTRAINT `cbl_assessments_lu_form_relationships_ibfk_3` FOREIGN KEY (`immediate_parent_id`) REFERENCES `cbl_assessments_lu_forms` (`form_id`),
   CONSTRAINT `cbl_assessments_lu_form_relationships_ibfk_1` FOREIGN KEY (`form_id`) REFERENCES `cbl_assessments_lu_forms` (`form_id`),
-  CONSTRAINT `cbl_assessments_lu_form_relationships_ibfk_2` FOREIGN KEY (`first_parent_id`) REFERENCES `cbl_assessments_lu_forms` (`form_id`)
+  CONSTRAINT `cbl_assessments_lu_form_relationships_ibfk_2` FOREIGN KEY (`first_parent_id`) REFERENCES `cbl_assessments_lu_forms` (`form_id`),
+  CONSTRAINT `cbl_assessments_lu_form_relationships_ibfk_3` FOREIGN KEY (`immediate_parent_id`) REFERENCES `cbl_assessments_lu_forms` (`form_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `cbl_assessments_lu_form_types` (
+  `form_type_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `category` enum('form','blueprint','cbme_form') COLLATE utf8_unicode_ci NOT NULL DEFAULT 'form',
+  `shortname` varchar(64) CHARACTER SET utf8 NOT NULL DEFAULT '',
+  `title` char(100) CHARACTER SET utf8 NOT NULL,
+  `description` text CHARACTER SET utf8 NOT NULL,
+  `course_related` tinyint(1) unsigned NOT NULL DEFAULT '0',
+  `active` tinyint(1) unsigned NOT NULL DEFAULT '1',
+  `cbme` tinyint(1) unsigned NOT NULL DEFAULT '0',
+  `created_date` bigint(64) unsigned NOT NULL,
+  `created_by` int(12) unsigned NOT NULL,
+  `updated_date` bigint(64) unsigned DEFAULT NULL,
+  `updated_by` int(12) unsigned DEFAULT NULL,
+  `deleted_date` bigint(64) unsigned DEFAULT NULL,
+  PRIMARY KEY (`form_type_id`),
+  KEY `category` (`category`)
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+INSERT INTO `cbl_assessments_lu_form_types` VALUES (1,'form','rubric_form','Generic Form','This is the default form type.',0,1,0,1510375500,1,NULL,NULL,NULL),(2,'blueprint','cbme_supervisor','Supervisor Form','CBME Supervisor Form',1,1,1,1510375500,1,NULL,NULL,NULL),(3,'blueprint','cbme_fieldnote','Field Note Form','CBME Field Note Form',1,1,1,1510375500,1,NULL,NULL,NULL),(4,'blueprint','cbme_procedure','Procedure Form','CBME Procedure Form',1,1,1,1510375500,1,NULL,NULL,NULL),(5,'cbme_form','cbme_ppa_form','PPA Form','CBME PPA Form',0,1,0,1510375500,1,NULL,NULL,NULL),(6,'cbme_form','cbme_rubric','Rubric Form','CBME Rubric Form',0,1,1,1510375500,1,NULL,NULL,NULL);
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `cbl_assessments_lu_forms` (
   `form_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `form_type_id` int(11) unsigned NOT NULL,
   `one45_form_id` int(11) DEFAULT NULL,
   `organisation_id` int(11) NOT NULL,
   `title` varchar(1024) NOT NULL DEFAULT '',
   `description` text,
+  `originating_id` int(11) DEFAULT NULL,
+  `origin_type` enum('blueprint') DEFAULT NULL,
+  `attributes` text,
   `created_date` bigint(64) NOT NULL,
   `created_by` int(11) NOT NULL,
   `updated_date` bigint(64) DEFAULT NULL,
@@ -2235,6 +2881,28 @@ CREATE TABLE `cbl_assessments_lu_forms` (
 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `cbl_assessments_lu_item_groups` (
+  `item_group_id` int(12) unsigned NOT NULL AUTO_INCREMENT,
+  `form_type_id` int(11) unsigned NOT NULL,
+  `item_type` enum('item','rubric') NOT NULL DEFAULT 'item',
+  `shortname` char(64) NOT NULL,
+  `title` char(100) NOT NULL,
+  `description` text NOT NULL,
+  `active` tinyint(1) unsigned NOT NULL DEFAULT '1',
+  `created_date` bigint(64) unsigned NOT NULL,
+  `created_by` int(12) unsigned NOT NULL,
+  `updated_date` bigint(64) unsigned DEFAULT NULL,
+  `updated_by` int(12) unsigned DEFAULT NULL,
+  `deleted_date` bigint(64) unsigned DEFAULT NULL,
+  PRIMARY KEY (`item_group_id`),
+  KEY `form_type_id` (`form_type_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=31 DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+INSERT INTO `cbl_assessments_lu_item_groups` VALUES (1,2,'item','cbme_supervisor_next_steps','Next Steps','',1,1510375509,1,NULL,NULL,NULL),(2,2,'rubric','cbme_supervisor_rubric_concerns','Concerns','',1,1510375509,1,NULL,NULL,NULL),(3,2,'item','cbme_supervisor_rubric_concerns_item_1','Do you have patient safety concerns related to this resident\'s performance?','',1,1510375509,1,NULL,NULL,NULL),(4,2,'item','cbme_supervisor_rubric_concerns_item_2','Do you have professionalism concerns about this resident\'s performance?','',1,1510375509,1,NULL,NULL,NULL),(5,2,'item','cbme_supervisor_rubric_concerns_item_3','Are there other reasons to flag this assessment?','',1,1510375509,1,NULL,NULL,NULL),(6,2,'item','cbme_supervisor_feedback','Have feedback about this form? (eg, \"Missing Dx\", etc.)','',1,1510375509,1,NULL,NULL,NULL),(7,3,'item','cbme_fieldnote_continue','Continue...','',1,1510375509,1,NULL,NULL,NULL),(8,3,'item','cbme_fieldnote_consider','Consider...','',1,1510375509,1,NULL,NULL,NULL),(9,3,'item','cbme_fieldnote_next_steps','Next Steps','',1,1510375509,1,NULL,NULL,NULL),(10,3,'rubric','cbme_fieldnote_rubric_concerns','Concerns','',1,1510375509,1,NULL,NULL,NULL),(11,3,'item','cbme_fieldnote_rubric_concerns_item_1','Do you have patient safety concerns related to this resident\'s performance?','',1,1510375509,1,NULL,NULL,NULL),(12,3,'item','cbme_fieldnote_rubric_concerns_item_2','Do you have professionalism concerns about this resident\'s performance?','',1,1510375509,1,NULL,NULL,NULL),(13,3,'item','cbme_fieldnote_rubric_concerns_item_3','Are there other reasons to flag this assessment?','',1,1510375509,1,NULL,NULL,NULL),(14,3,'item','cbme_fieldnote_feedback','Have feedback about this form? (eg, \"Missing Dx\", etc.)','',1,1510375509,1,NULL,NULL,NULL),(15,4,'item','cbme_procedure_next_steps','Next Steps','',1,1510375509,1,NULL,NULL,NULL),(16,4,'rubric','cbme_procedure_rubric_concerns','Concerns','',1,1510375509,1,NULL,NULL,NULL),(17,4,'item','cbme_procedure_rubric_concerns_item_1','Do you have patient safety concerns related to this resident\'s performance?','',1,1510375509,1,NULL,NULL,NULL),(18,4,'item','cbme_procedure_rubric_concerns_item_2','Do you have professionalism concerns about this resident\'s performance?','',1,1510375509,1,NULL,NULL,NULL),(19,4,'item','cbme_procedure_rubric_concerns_item_3','Are there other reasons to flag this assessment?','',1,1510375509,1,NULL,NULL,NULL),(20,4,'item','cbme_procedure_feedback','Have feedback about this form? (eg, \"Missing Dx\", etc.)','',1,1510375509,1,NULL,NULL,NULL),(21,5,'item','cbme_ppa_feedback','Have feedback about this form? (eg, \"Missing Dx\", etc.)','',1,1521522163,1,NULL,NULL,NULL),(22,5,'rubric','cbme_ppa_concerns','Concerns','',1,1521522163,1,NULL,NULL,NULL),(23,5,'item','cbme_ppa_concerns_item_1','Do you have concerns regarding this resident\'s professionalism?','',1,1521522163,1,NULL,NULL,NULL),(24,5,'item','cbme_ppa_concerns_item_2','Do you have patient safety concerns related to this resident\'s performance?','',1,1521522163,1,NULL,NULL,NULL),(25,5,'item','cbme_ppa_concerns_item_3','Are there other reasons to flag this assessment?','',1,1521522163,1,NULL,NULL,NULL),(26,6,'item','cbme_rubric_feedback','Have feedback about this form? (eg, \"Missing Dx\", etc.)','',1,1521522163,1,NULL,NULL,NULL),(27,6,'rubric','cbme_rubric_concerns','Concerns','',1,1521522163,1,NULL,NULL,NULL),(28,6,'item','cbme_rubric_concerns_item_1','Do you have concerns regarding this resident\'s professionalism?','',1,1521522163,1,NULL,NULL,NULL),(29,6,'item','cbme_rubric_concerns_item_2','Do you have patient safety concerns related to this resident\'s performance?','',1,1521522163,1,NULL,NULL,NULL),(30,6,'item','cbme_rubric_concerns_item_3','Are there other reasons to flag this assessment?','',1,1521522163,1,NULL,NULL,NULL);
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `cbl_assessments_lu_item_relationships` (
   `irelationship_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `item_id` int(11) unsigned NOT NULL,
@@ -2244,9 +2912,27 @@ CREATE TABLE `cbl_assessments_lu_item_relationships` (
   KEY `immediate_parent_id` (`immediate_parent_id`),
   KEY `cbl_assessments_lu_item_relationships_ibfk_1` (`item_id`),
   KEY `cbl_assessments_lu_item_relationships_ibfk_2` (`first_parent_id`),
-  CONSTRAINT `cbl_assessments_lu_item_relationships_ibfk_2` FOREIGN KEY (`first_parent_id`) REFERENCES `cbl_assessments_lu_items` (`item_id`),
   CONSTRAINT `cbl_assessments_lu_item_relationships_ibfk_1` FOREIGN KEY (`item_id`) REFERENCES `cbl_assessments_lu_items` (`item_id`),
+  CONSTRAINT `cbl_assessments_lu_item_relationships_ibfk_2` FOREIGN KEY (`first_parent_id`) REFERENCES `cbl_assessments_lu_items` (`item_id`),
   CONSTRAINT `cbl_assessments_lu_item_relationships_ibfk_3` FOREIGN KEY (`immediate_parent_id`) REFERENCES `cbl_assessments_lu_items` (`item_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `cbl_assessments_lu_item_response_objectives` (
+  `irobjective_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `iresponse_id` int(11) unsigned NOT NULL,
+  `objective_id` int(11) unsigned NOT NULL,
+  `created_date` bigint(64) NOT NULL,
+  `created_by` int(11) NOT NULL,
+  `updated_date` bigint(64) DEFAULT NULL,
+  `updated_by` int(11) DEFAULT NULL,
+  `deleted_date` bigint(64) DEFAULT NULL,
+  PRIMARY KEY (`irobjective_id`),
+  KEY `iresponse_id` (`iresponse_id`),
+  KEY `objective_id` (`objective_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -2261,7 +2947,7 @@ CREATE TABLE `cbl_assessments_lu_item_responses` (
   `text` text NOT NULL,
   `order` tinyint(3) NOT NULL DEFAULT '0',
   `allow_html` tinyint(1) NOT NULL DEFAULT '0',
-  `flag_response` tinyint(1) NOT NULL DEFAULT '0',
+  `flag_response` int(11) NOT NULL DEFAULT '0',
   `ardescriptor_id` int(11) unsigned DEFAULT NULL,
   `deleted_date` bigint(64) DEFAULT NULL,
   PRIMARY KEY (`iresponse_id`),
@@ -2278,11 +2964,17 @@ CREATE TABLE `cbl_assessments_lu_items` (
   `one45_element_id` int(11) DEFAULT NULL,
   `organisation_id` int(11) NOT NULL,
   `itemtype_id` int(11) unsigned NOT NULL,
+  `item_group_id` int(12) DEFAULT NULL,
   `item_code` varchar(128) DEFAULT '',
+  `rating_scale_id` int(11) unsigned DEFAULT NULL,
   `item_text` text NOT NULL,
   `item_description` longtext,
   `mandatory` tinyint(1) DEFAULT '1',
   `comment_type` enum('disabled','optional','mandatory','flagged') NOT NULL DEFAULT 'disabled',
+  `allow_default` tinyint(1) NOT NULL DEFAULT '0',
+  `default_response` int(11) DEFAULT NULL,
+  `hide_from_index` tinyint(1) unsigned NOT NULL DEFAULT '0',
+  `attributes` text,
   `created_date` bigint(64) NOT NULL,
   `created_by` int(11) NOT NULL,
   `updated_date` bigint(64) DEFAULT NULL,
@@ -2290,6 +2982,8 @@ CREATE TABLE `cbl_assessments_lu_items` (
   `deleted_date` bigint(64) DEFAULT NULL,
   PRIMARY KEY (`item_id`),
   KEY `itemtype_id` (`itemtype_id`),
+  KEY `item_group_id` (`item_group_id`),
+  KEY `item_code` (`item_code`),
   CONSTRAINT `cbl_assessments_lu_items_ibfk_1` FOREIGN KEY (`itemtype_id`) REFERENCES `cbl_assessments_lu_itemtypes` (`itemtype_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -2312,6 +3006,48 @@ INSERT INTO `cbl_assessments_lu_itemtypes` VALUES (1,'horizontal_multiple_choice
 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `cbl_assessments_lu_rating_scale_types` (
+  `rating_scale_type_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `organisation_id` int(11) unsigned NOT NULL,
+  `shortname` varchar(64) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
+  `title` varchar(255) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
+  `description` text COLLATE utf8_unicode_ci NOT NULL,
+  `active` tinyint(1) unsigned NOT NULL DEFAULT '1',
+  `ordering` int(11) unsigned NOT NULL,
+  `dashboard_visibility` tinyint(1) unsigned NOT NULL DEFAULT '1',
+  `created_by` int(11) unsigned NOT NULL,
+  `created_date` bigint(64) unsigned NOT NULL,
+  `updated_by` int(11) unsigned DEFAULT NULL,
+  `updated_date` bigint(64) unsigned DEFAULT NULL,
+  `deleted_date` bigint(64) unsigned DEFAULT NULL,
+  PRIMARY KEY (`rating_scale_type_id`),
+  KEY `organisation_id` (`organisation_id`),
+  KEY `active` (`active`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+INSERT INTO `cbl_assessments_lu_rating_scale_types` VALUES (1,1,'global_assessment','Global Assessment','',1,0,1,1,1510375509,NULL,NULL,NULL),(2,1,'milestone_ec','MS/EC','Milestones / EC',1,0,1,1,1510375509,NULL,NULL,NULL);
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `cbl_assessments_lu_response_description_options` (
+  `rdoption_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `ardescriptor_id` int(11) unsigned NOT NULL,
+  `option` varchar(255) NOT NULL DEFAULT '',
+  `option_value` text,
+  `organisation_id` int(12) unsigned NOT NULL,
+  `created_date` int(11) NOT NULL,
+  `created_by` int(11) NOT NULL,
+  `updated_date` int(11) DEFAULT NULL,
+  `updated_by` int(11) DEFAULT NULL,
+  `deleted_date` int(11) DEFAULT NULL,
+  PRIMARY KEY (`rdoption_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `cbl_assessments_lu_response_descriptors` (
   `ardescriptor_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `one45_anchor_value` int(11) DEFAULT NULL,
@@ -2325,10 +3061,10 @@ CREATE TABLE `cbl_assessments_lu_response_descriptors` (
   `updated_by` int(11) DEFAULT NULL,
   `deleted_date` bigint(64) DEFAULT NULL,
   PRIMARY KEY (`ardescriptor_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=47 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
-INSERT INTO `cbl_assessments_lu_response_descriptors` VALUES (1,NULL,1,'Opportunities for Growth',1,1,1402703700,1,NULL,NULL,NULL),(2,NULL,1,'Borderline LOW',1,2,1402531209,1,NULL,NULL,NULL),(3,NULL,1,'Developing',1,3,1397670525,1,NULL,NULL,NULL),(4,NULL,1,'Achieving',1,4,1397670545,1,NULL,NULL,NULL),(5,NULL,1,'Borderline HIGH',1,5,1402531188,1,NULL,NULL,NULL),(6,NULL,1,'Exceptional',1,6,1402697384,1,NULL,NULL,NULL),(7,NULL,1,'Not Applicable',1,7,1402703794,1,NULL,NULL,NULL);
+INSERT INTO `cbl_assessments_lu_response_descriptors` VALUES (1,NULL,1,'Opportunities for Growth',1,1,1402703700,1,NULL,NULL,NULL),(2,NULL,1,'Borderline LOW',1,2,1402531209,1,NULL,NULL,NULL),(3,NULL,1,'Developing',1,3,1397670525,1,NULL,NULL,NULL),(4,NULL,1,'Achieving',1,4,1397670545,1,NULL,NULL,NULL),(5,NULL,1,'Borderline HIGH',1,5,1402531188,1,NULL,NULL,NULL),(6,NULL,1,'Exceptional',1,6,1402697384,1,NULL,NULL,NULL),(7,NULL,1,'Not Applicable',1,7,1402703794,1,NULL,NULL,NULL),(8,NULL,1,'Accepted standards not yet met, frequent errors uncorrected',1,8,1510375509,1,NULL,NULL,NULL),(9,NULL,1,'Achieved',1,9,1510375509,1,NULL,NULL,NULL),(10,NULL,1,'Achieving (ready for independent practice)',1,10,1510375509,1,NULL,NULL,NULL),(11,NULL,1,'Achieves standard expected',1,11,1510375509,1,NULL,NULL,NULL),(12,NULL,1,'Advanced beginner',1,12,1510375509,1,NULL,NULL,NULL),(13,NULL,1,'Almost',1,13,1510375509,1,NULL,NULL,NULL),(14,NULL,1,'Clearly exceeds standard',1,14,1510375509,1,NULL,NULL,NULL),(15,NULL,1,'Competent and safe throughout procedure, no uncorrected errors',1,15,1510375509,1,NULL,NULL,NULL),(16,NULL,1,'Competent',1,16,1510375509,1,NULL,NULL,NULL),(17,NULL,1,'Direct supervision',1,17,1510375509,1,NULL,NULL,NULL),(18,NULL,1,'Direct, proactive supervision',1,18,1510375509,1,NULL,NULL,NULL),(19,NULL,1,'Emerging',1,19,1510375509,1,NULL,NULL,NULL),(20,NULL,1,'Established',1,20,1510375509,1,NULL,NULL,NULL),(21,NULL,1,'Expert',1,21,1510375509,1,NULL,NULL,NULL),(22,NULL,1,'Flagged for review',1,22,1510375509,1,NULL,NULL,NULL),(23,NULL,1,'Highly skilled performance',1,23,1510375509,1,NULL,NULL,NULL),(24,NULL,1,'I did not need to be there',1,24,1510375509,1,NULL,NULL,NULL),(25,NULL,1,'I had to do',1,25,1510375509,1,NULL,NULL,NULL),(26,NULL,1,'I had to prompt them from time to time',1,26,1510375509,1,NULL,NULL,NULL),(27,NULL,1,'I had to talk them through',1,27,1510375509,1,NULL,NULL,NULL),(28,NULL,1,'I needed to be there in the room just in case',1,28,1510375509,1,NULL,NULL,NULL),(29,NULL,1,'Independent performance (with remote supervision)',1,29,1510375509,1,NULL,NULL,NULL),(30,NULL,1,'Indirect, reactive supervision',1,30,1510375509,1,NULL,NULL,NULL),(31,NULL,1,'Is almost there',1,31,1510375509,1,NULL,NULL,NULL),(32,NULL,1,'Limited',1,32,1510375509,1,NULL,NULL,NULL),(33,NULL,1,'Needs attention',1,33,1510375509,1,NULL,NULL,NULL),(34,NULL,1,'No',1,34,1510375509,1,NULL,NULL,NULL),(35,NULL,1,'Not observed',1,35,1510375509,1,NULL,NULL,NULL),(36,NULL,1,'Not yet',1,36,1510375509,1,NULL,NULL,NULL),(37,NULL,1,'Novice',1,37,1510375509,1,NULL,NULL,NULL),(38,NULL,1,'Observation only (no execution)',1,38,1510375509,1,NULL,NULL,NULL),(39,NULL,1,'Proficient',1,39,1510375509,1,NULL,NULL,NULL),(40,NULL,1,'Some standards not yet met, aspects to be improved, some errors uncorrected',1,40,1510375509,1,NULL,NULL,NULL),(41,NULL,1,'Shows critical weaknesses',1,41,1510375509,1,NULL,NULL,NULL),(42,NULL,1,'Supervision for refinement',1,42,1510375509,1,NULL,NULL,NULL),(43,NULL,1,'Supervision of trainees',1,43,1510375509,1,NULL,NULL,NULL),(44,NULL,1,'Supervision on demand',1,44,1510375509,1,NULL,NULL,NULL),(45,NULL,1,'Very limited',1,45,1510375509,1,NULL,NULL,NULL),(46,NULL,1,'Yes',1,46,1510375509,1,NULL,NULL,NULL);
 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -2359,6 +3095,8 @@ CREATE TABLE `cbl_assessments_lu_rubrics` (
   `rubric_description` text,
   `rubric_item_code` varchar(128) DEFAULT '',
   `is_scale` tinyint(1) NOT NULL DEFAULT '0',
+  `rating_scale_id` int(11) unsigned DEFAULT NULL,
+  `attributes` text,
   `updated_date` bigint(64) DEFAULT NULL,
   `updated_by` int(11) DEFAULT NULL,
   `created_date` bigint(64) NOT NULL,
@@ -2398,9 +3136,23 @@ CREATE TABLE `cbl_assessor_target_feedback` (
   `updated_date` bigint(64) DEFAULT NULL,
   `updated_by` int(11) DEFAULT NULL,
   `created_date` bigint(64) NOT NULL,
-  `created_by` int(11) NOT NULL,
+  `created_by` int(11) DEFAULT NULL,
   `deleted_date` bigint(64) DEFAULT NULL,
   PRIMARY KEY (`atfeedback_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `cbl_cbme_upload_history` (
+  `file_name` char(255) NOT NULL,
+  `file_type` char(255) NOT NULL,
+  `course_id` int(11) NOT NULL,
+  `upload_type` char(255) NOT NULL,
+  `created_date` bigint(64) unsigned NOT NULL,
+  `created_by` int(11) unsigned NOT NULL,
+  PRIMARY KEY (`created_by`,`created_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -2447,18 +3199,48 @@ CREATE TABLE `cbl_distribution_assessment_assessors` (
 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `cbl_distribution_assessment_options` (
+  `daoption_id` int(12) unsigned NOT NULL AUTO_INCREMENT,
+  `adistribution_id` int(12) unsigned DEFAULT NULL,
+  `dassessment_id` int(12) unsigned NOT NULL,
+  `actor_id` int(12) DEFAULT NULL,
+  `option_name` varchar(64) NOT NULL DEFAULT '',
+  `option_value` text NOT NULL,
+  `assessment_siblings` varchar(256) DEFAULT NULL,
+  `created_date` bigint(64) unsigned NOT NULL,
+  `created_by` int(12) unsigned NOT NULL,
+  `updated_date` bigint(64) unsigned DEFAULT NULL,
+  `updated_by` int(12) unsigned DEFAULT NULL,
+  `deleted_date` bigint(64) unsigned DEFAULT NULL,
+  PRIMARY KEY (`daoption_id`),
+  KEY `adistribution_id` (`adistribution_id`),
+  KEY `dassessment_id` (`dassessment_id`),
+  KEY `actor_id` (`actor_id`),
+  KEY `option_name` (`option_name`),
+  CONSTRAINT `assessment_options_dassessment_id` FOREIGN KEY (`dassessment_id`) REFERENCES `cbl_distribution_assessments` (`dassessment_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `cbl_distribution_assessment_targets` (
   `atarget_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `dassessment_id` int(12) NOT NULL,
-  `adistribution_id` int(11) unsigned NOT NULL,
+  `adistribution_id` int(11) unsigned DEFAULT NULL,
+  `task_type` enum('assessment','evaluation') DEFAULT 'assessment',
   `target_type` enum('proxy_id','cgroup_id','group_id','schedule_id','external_hash','course_id','organisation_id','event_id') NOT NULL DEFAULT 'proxy_id',
   `target_value` int(11) DEFAULT NULL,
   `delegation_list_id` int(11) DEFAULT NULL,
   `created_date` int(11) NOT NULL,
-  `created_by` int(11) NOT NULL,
-  `updated_date` int(11) NOT NULL,
-  `updated_by` int(11) NOT NULL,
+  `created_by` int(11) DEFAULT NULL,
+  `updated_date` int(11) DEFAULT NULL,
+  `updated_by` int(11) DEFAULT NULL,
   `deleted_date` int(11) DEFAULT NULL,
+  `deleted_reason_id` int(11) unsigned DEFAULT NULL,
+  `deleted_reason_notes` varchar(255) DEFAULT NULL,
+  `deleted_by` int(11) DEFAULT NULL,
+  `visible` tinyint(1) NOT NULL DEFAULT '1',
   PRIMARY KEY (`atarget_id`),
   KEY `cbl_distribution_assessment_targets_ibfk_1` (`adistribution_id`),
   KEY `target_type` (`target_type`,`target_value`),
@@ -2472,6 +3254,12 @@ CREATE TABLE `cbl_distribution_assessment_targets` (
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `cbl_distribution_assessments` (
   `dassessment_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `form_id` int(11) unsigned DEFAULT NULL,
+  `course_id` int(11) DEFAULT NULL,
+  `assessment_type_id` int(11) unsigned NOT NULL DEFAULT '1',
+  `assessment_method_id` int(11) NOT NULL DEFAULT '1',
+  `assessment_method_data` text,
+  `organisation_id` int(11) unsigned DEFAULT NULL,
   `adistribution_id` int(11) unsigned DEFAULT NULL,
   `assessor_type` enum('internal','external') NOT NULL DEFAULT 'internal',
   `assessor_value` int(12) NOT NULL,
@@ -2480,20 +3268,28 @@ CREATE TABLE `cbl_distribution_assessments` (
   `number_submitted` int(11) unsigned DEFAULT '0',
   `min_submittable` int(11) unsigned DEFAULT '0',
   `max_submittable` int(11) unsigned DEFAULT '0',
+  `feedback_required` tinyint(1) NOT NULL DEFAULT '0',
   `published` tinyint(1) NOT NULL DEFAULT '0',
   `start_date` bigint(64) NOT NULL DEFAULT '0',
   `end_date` bigint(64) NOT NULL DEFAULT '0',
   `delivery_date` bigint(64) DEFAULT NULL,
+  `encounter_date` bigint(64) DEFAULT NULL,
   `rotation_start_date` bigint(64) DEFAULT '0',
   `rotation_end_date` bigint(64) DEFAULT '0',
+  `expiry_date` bigint(64) DEFAULT NULL,
+  `expiry_notification_date` bigint(64) DEFAULT NULL,
   `external_hash` varchar(32) DEFAULT NULL,
   `additional_assessment` tinyint(1) DEFAULT '0',
   `created_date` bigint(64) NOT NULL,
-  `created_by` int(11) NOT NULL,
+  `created_by` int(11) DEFAULT NULL,
   `updated_date` bigint(64) DEFAULT NULL,
   `updated_by` int(11) DEFAULT NULL,
+  `forwarded_from_assessment_id` int(11) DEFAULT NULL,
+  `forwarded_date` bigint(64) DEFAULT NULL,
+  `forwarded_by` int(11) DEFAULT NULL,
   `deleted_date` bigint(64) DEFAULT NULL,
-  PRIMARY KEY (`dassessment_id`)
+  PRIMARY KEY (`dassessment_id`),
+  KEY `form_id` (`form_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -2533,6 +3329,25 @@ CREATE TABLE `cbl_external_assessors` (
 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `cbl_learner_objectives_completion` (
+  `lo_completion_id` int(12) unsigned NOT NULL AUTO_INCREMENT,
+  `proxy_id` int(12) unsigned NOT NULL,
+  `course_id` int(12) unsigned NOT NULL,
+  `objective_id` int(12) unsigned NOT NULL,
+  `created_date` bigint(64) unsigned NOT NULL,
+  `created_by` int(12) unsigned NOT NULL,
+  `created_reason` text,
+  `deleted_date` bigint(64) unsigned DEFAULT NULL,
+  `deleted_by` int(12) unsigned DEFAULT NULL,
+  `deleted_reason` text,
+  PRIMARY KEY (`lo_completion_id`),
+  KEY `proxy_id` (`proxy_id`,`objective_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `cbl_leave_tracking` (
   `leave_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `proxy_id` int(11) NOT NULL,
@@ -2555,6 +3370,45 @@ CREATE TABLE `cbl_leave_tracking` (
 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `cbl_likes` (
+  `like_id` int(12) unsigned NOT NULL AUTO_INCREMENT,
+  `aprogress_id` int(11) unsigned NOT NULL,
+  `dassessment_id` int(11) DEFAULT NULL,
+  `proxy_id` int(12) NOT NULL,
+  `like_type` varchar(128) NOT NULL,
+  `like_value` int(11) NOT NULL,
+  `comment` text,
+  `created_by` int(12) unsigned NOT NULL,
+  `created_date` bigint(64) unsigned NOT NULL,
+  `updated_by` int(12) unsigned DEFAULT NULL,
+  `updated_date` bigint(64) unsigned DEFAULT NULL,
+  `deleted_by` int(12) unsigned DEFAULT NULL,
+  `deleted_date` bigint(64) unsigned DEFAULT NULL,
+  PRIMARY KEY (`like_id`),
+  KEY `aprogress_id` (`aprogress_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `cbl_linked_assessments` (
+  `link_id` int(12) unsigned NOT NULL AUTO_INCREMENT,
+  `originating_id` int(11) unsigned NOT NULL,
+  `linked_id` int(11) unsigned NOT NULL,
+  `created_date` bigint(64) NOT NULL,
+  `created_by` int(11) DEFAULT NULL,
+  `updated_date` bigint(64) DEFAULT NULL,
+  `updated_by` int(11) DEFAULT NULL,
+  `deleted_date` bigint(64) DEFAULT NULL,
+  PRIMARY KEY (`link_id`),
+  KEY `originating_id` (`originating_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `cbl_lu_leave_tracking_types` (
   `type_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `type_value` varchar(128) NOT NULL DEFAULT '',
@@ -2571,11 +3425,72 @@ INSERT INTO `cbl_lu_leave_tracking_types` VALUES (1,'Absence',NULL,NULL,0,1,NULL
 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `cbl_meeting_files` (
+  `meeting_file_id` int(12) NOT NULL AUTO_INCREMENT,
+  `meeting_id` int(12) NOT NULL DEFAULT '0',
+  `type` varchar(255) NOT NULL DEFAULT '',
+  `size` varchar(32) NOT NULL DEFAULT '',
+  `name` varchar(255) NOT NULL DEFAULT '',
+  `title` varchar(255) NOT NULL DEFAULT '',
+  `file_order` int(12) NOT NULL DEFAULT '0',
+  `created_date` bigint(64) NOT NULL DEFAULT '0',
+  `created_by` int(12) NOT NULL DEFAULT '0',
+  `updated_date` bigint(64) DEFAULT '0',
+  `updated_by` int(12) DEFAULT '0',
+  `deleted_date` bigint(64) DEFAULT '0',
+  `deleted_by` int(12) DEFAULT '0',
+  PRIMARY KEY (`meeting_file_id`),
+  KEY `meeting_id` (`meeting_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `cbl_pins` (
+  `pin_id` int(12) unsigned NOT NULL AUTO_INCREMENT,
+  `aprogress_id` int(11) unsigned NOT NULL,
+  `dassessment_id` int(11) DEFAULT NULL,
+  `proxy_id` int(12) NOT NULL,
+  `pin_type` varchar(128) NOT NULL,
+  `pin_value` int(11) NOT NULL,
+  `created_by` int(12) unsigned NOT NULL,
+  `created_date` bigint(64) unsigned NOT NULL,
+  `updated_by` int(12) unsigned DEFAULT NULL,
+  `updated_date` bigint(64) unsigned DEFAULT NULL,
+  `deleted_by` int(12) unsigned DEFAULT NULL,
+  `deleted_date` bigint(64) unsigned DEFAULT NULL,
+  PRIMARY KEY (`pin_id`),
+  KEY `aprogress_id` (`aprogress_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `cbl_read` (
+  `read_id` int(12) unsigned NOT NULL AUTO_INCREMENT,
+  `aprogress_id` int(11) unsigned NOT NULL,
+  `dassessment_id` int(11) DEFAULT NULL,
+  `proxy_id` int(12) NOT NULL,
+  `read_type` varchar(128) NOT NULL,
+  `read_value` int(11) NOT NULL,
+  `created_by` int(12) unsigned NOT NULL,
+  `created_date` bigint(64) unsigned NOT NULL,
+  `updated_by` int(12) unsigned DEFAULT NULL,
+  `updated_date` bigint(64) unsigned DEFAULT NULL,
+  `deleted_by` int(12) unsigned DEFAULT NULL,
+  `deleted_date` bigint(64) unsigned DEFAULT NULL,
+  PRIMARY KEY (`read_id`),
+  KEY `aprogress_id` (`aprogress_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `cbl_schedule` (
   `schedule_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
-  `one45_rotation_id` int(11) DEFAULT NULL,
-  `one45_owner_group_id` int(11) DEFAULT NULL,
-  `one45_moment_id` int(11) DEFAULT NULL,
   `title` varchar(256) DEFAULT NULL,
   `code` varchar(128) DEFAULT NULL,
   `description` varchar(2048) DEFAULT NULL,
@@ -2599,7 +3514,8 @@ CREATE TABLE `cbl_schedule` (
   `deleted_date` bigint(64) DEFAULT NULL,
   PRIMARY KEY (`schedule_id`),
   KEY `schedule_parent_id` (`schedule_parent_id`),
-  KEY `draft_id` (`draft_id`)
+  KEY `draft_id` (`draft_id`),
+  KEY `start_date_end_date` (`start_date`,`end_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -2608,15 +3524,14 @@ CREATE TABLE `cbl_schedule` (
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `cbl_schedule_audience` (
   `saudience_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
-  `one45_p_id` int(11) DEFAULT NULL,
   `schedule_id` int(11) unsigned NOT NULL,
   `schedule_slot_id` int(11) DEFAULT NULL,
-  `audience_type` enum('proxy_id','course_id','cperiod_id') NOT NULL DEFAULT 'proxy_id',
+  `audience_type` enum('proxy_id','course_id','cperiod_id','cgroup_id') NOT NULL DEFAULT 'proxy_id',
   `audience_value` int(11) NOT NULL,
+  `custom_start_date` bigint(64) DEFAULT NULL,
+  `custom_end_date` bigint(64) DEFAULT NULL,
   `deleted_date` int(11) DEFAULT NULL,
-  `one45_rotation_id` int(11) DEFAULT NULL,
   PRIMARY KEY (`saudience_id`),
-  KEY `schedule_od` (`schedule_id`),
   KEY `audience_type` (`audience_type`,`audience_value`),
   KEY `schedule_id` (`schedule_id`),
   CONSTRAINT `cbl_schedule_audience_ibfk_1` FOREIGN KEY (`schedule_id`) REFERENCES `cbl_schedule` (`schedule_id`)
@@ -2626,10 +3541,35 @@ CREATE TABLE `cbl_schedule_audience` (
 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `cbl_schedule_course_objectives` (
+  `sco_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `course_id` int(11) unsigned NOT NULL,
+  `schedule_id` int(11) unsigned NOT NULL,
+  `objective_id` int(11) unsigned DEFAULT NULL,
+  `likelihood_id` int(11) unsigned DEFAULT NULL,
+  `priority` tinyint(1) NOT NULL DEFAULT '0',
+  `created_date` bigint(64) unsigned NOT NULL,
+  `created_by` int(11) unsigned NOT NULL,
+  `updated_by` int(11) unsigned DEFAULT NULL,
+  `updated_date` bigint(64) unsigned DEFAULT NULL,
+  `deleted_date` bigint(64) unsigned DEFAULT NULL,
+  `deleted_by` int(11) unsigned DEFAULT NULL,
+  PRIMARY KEY (`sco_id`),
+  KEY `schedule_id` (`schedule_id`),
+  KEY `cbl_schedule_course_objectives_likelihood_id` (`likelihood_id`),
+  CONSTRAINT `cbl_schedule_course_objectives_likelihood_id` FOREIGN KEY (`likelihood_id`) REFERENCES `global_lu_likelihoods` (`likelihood_id`),
+  CONSTRAINT `cbl_schedule_course_objectives_schedule_id` FOREIGN KEY (`schedule_id`) REFERENCES `cbl_schedule` (`schedule_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `cbl_schedule_draft_authors` (
   `cbl_schedule_draft_author_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `cbl_schedule_draft_id` int(11) DEFAULT NULL,
-  `proxy_id` int(11) DEFAULT NULL,
+  `author_value` int(11) DEFAULT NULL,
+  `author_type` enum('proxy_id','course_id') DEFAULT 'proxy_id',
   `created_date` int(11) DEFAULT NULL,
   `created_by` int(11) DEFAULT NULL,
   PRIMARY KEY (`cbl_schedule_draft_author_id`)
@@ -2670,6 +3610,26 @@ INSERT INTO `cbl_schedule_lu_block_types` VALUES (1,'1 Week',52,NULL),(2,'2 Week
 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `cbl_schedule_sites` (
+  `cssite_id` int(12) unsigned NOT NULL AUTO_INCREMENT,
+  `schedule_id` int(12) unsigned NOT NULL,
+  `site_id` int(12) unsigned NOT NULL,
+  `created_date` bigint(64) NOT NULL,
+  `created_by` int(12) NOT NULL,
+  `updated_date` bigint(64) DEFAULT NULL,
+  `updated_by` int(12) DEFAULT NULL,
+  `deleted_date` bigint(64) DEFAULT NULL,
+  PRIMARY KEY (`cssite_id`),
+  KEY `cbl_schedule_sites_schedule_id` (`schedule_id`),
+  KEY `cbl_schedule_slots_site_id` (`site_id`),
+  CONSTRAINT `cbl_schedule_sites_schedule_id` FOREIGN KEY (`schedule_id`) REFERENCES `cbl_schedule` (`schedule_id`),
+  CONSTRAINT `cbl_schedule_slots_site_id` FOREIGN KEY (`site_id`) REFERENCES `global_lu_sites` (`site_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `cbl_schedule_slot_types` (
   `slot_type_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `slot_type_code` varchar(5) NOT NULL DEFAULT '',
@@ -2687,8 +3647,11 @@ CREATE TABLE `cbl_schedule_slots` (
   `schedule_slot_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `schedule_id` int(11) NOT NULL,
   `slot_type_id` int(11) NOT NULL,
+  `slot_min_spaces` int(11) NOT NULL DEFAULT '0',
   `slot_spaces` int(11) NOT NULL DEFAULT '1',
+  `strict_spaces` tinyint(1) unsigned NOT NULL DEFAULT '0',
   `course_id` int(11) DEFAULT NULL,
+  `site_id` int(11) DEFAULT NULL,
   `created_date` int(11) NOT NULL,
   `created_by` int(11) NOT NULL,
   `deleted_date` int(11) DEFAULT NULL,
@@ -2711,7 +3674,56 @@ CREATE TABLE `cbme_course_objectives` (
   `updated_date` bigint(64) DEFAULT NULL,
   `updated_by` int(12) DEFAULT NULL,
   `deleted_date` bigint(64) DEFAULT NULL,
-  PRIMARY KEY (`cbme_course_objective_id`)
+  PRIMARY KEY (`cbme_course_objective_id`),
+  KEY `objective_id` (`objective_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `cbme_objective_trees` (
+  `cbme_objective_tree_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `tree_id` int(11) NOT NULL,
+  `primary` tinyint(4) NOT NULL DEFAULT '0',
+  `left` int(11) NOT NULL,
+  `right` int(11) NOT NULL,
+  `depth` int(11) NOT NULL,
+  `organisation_id` int(11) NOT NULL,
+  `course_id` int(11) NOT NULL,
+  `objective_id` int(11) DEFAULT NULL,
+  `active_from` bigint(64) DEFAULT NULL,
+  `active_until` bigint(64) DEFAULT NULL,
+  `created_by` int(11) NOT NULL,
+  `created_date` bigint(64) NOT NULL,
+  `updated_by` int(11) DEFAULT NULL,
+  `updated_date` bigint(64) DEFAULT NULL,
+  `deleted_date` bigint(64) DEFAULT NULL,
+  PRIMARY KEY (`cbme_objective_tree_id`),
+  KEY `lft` (`left`,`right`),
+  KEY `objective_id` (`objective_id`),
+  KEY `depth` (`depth`,`left`,`right`),
+  KEY `tree_id` (`tree_id`),
+  KEY `organisation_id` (`organisation_id`,`course_id`),
+  KEY `tree_id_2` (`tree_id`,`organisation_id`,`course_id`),
+  KEY `primary_2` (`primary`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `cbme_procedure_epa_attributes` (
+  `epa_attribute_id` int(12) unsigned NOT NULL AUTO_INCREMENT,
+  `course_id` int(12) unsigned NOT NULL,
+  `epa_objective_id` int(12) unsigned NOT NULL,
+  `attribute_objective_id` int(12) unsigned NOT NULL,
+  `created_by` int(12) unsigned NOT NULL,
+  `created_date` bigint(64) unsigned NOT NULL,
+  `updated_by` int(12) unsigned DEFAULT NULL,
+  `updated_date` bigint(64) unsigned DEFAULT NULL,
+  `deleted_date` bigint(64) unsigned DEFAULT NULL,
+  PRIMARY KEY (`epa_attribute_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -3613,6 +4625,7 @@ CREATE TABLE `community_shares` (
   `folder_order` int(6) NOT NULL DEFAULT '0',
   `folder_active` int(1) NOT NULL DEFAULT '1',
   `student_hidden` int(1) NOT NULL DEFAULT '0',
+  `show_file_versions` tinyint(1) DEFAULT NULL,
   `admin_notifications` int(1) NOT NULL DEFAULT '0',
   `allow_public_read` int(1) NOT NULL DEFAULT '0',
   `allow_public_upload` int(1) NOT NULL DEFAULT '0',
@@ -3711,10 +4724,10 @@ CREATE TABLE `community_type_pages` (
   `updated_by` int(12) NOT NULL DEFAULT '0',
   PRIMARY KEY (`ctpage_id`),
   KEY `type_id` (`type_id`,`type_scope`)
-) ENGINE=MyISAM AUTO_INCREMENT=58 DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM AUTO_INCREMENT=60 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
-INSERT INTO `community_type_pages` VALUES (1,1,'global',0,0,'default','Home','Home','','',1,1,1,1,1,1,1362062187,1),(2,1,'global',0,1,'announcements','Announcements','Announcements','announcements','',1,1,1,1,0,0,1362062187,1),(3,1,'global',0,2,'discussions','Discussions','Discussions','discussions','',1,1,1,1,0,0,1362062187,1),(8,1,'global',0,3,'shares','Document Sharing','Document Sharing','shares','',1,1,1,1,0,0,1362062187,1),(4,1,'global',0,4,'events','Events','Events','events','',1,1,1,1,0,0,1362062187,1),(5,1,'global',0,5,'galleries','Galleries','Galleries','galleries','',1,1,1,1,0,0,1362062187,1),(6,1,'global',0,6,'polls','Polling','Polling','polls','',1,1,1,1,0,0,1362062187,1),(7,1,'global',0,7,'quizzes','Quizzes','Quizzes','quizzes','',1,1,1,1,0,0,1362062187,1),(9,2,'global',0,0,'course','Background','Background Information','',' ',1,1,1,0,1,1,1362062187,1),(10,2,'global',0,1,'course','Course Calendar','Course Calendar','course_calendar',' ',1,1,1,0,1,1,1362062187,1),(11,2,'global',0,2,'default','Prerequisites','Prerequisites (Foundational Knowledge)','prerequisites',' ',1,1,1,0,1,1,1362062187,1),(12,2,'global',0,3,'default','Course Aims','Aims of the Course','course_aims',' ',1,1,1,0,1,1,1362062187,1),(13,2,'global',0,4,'course','Learning Objectives','Learning Objectives','objectives',' ',1,1,1,0,1,1,1362062187,1),(14,2,'global',0,5,'course','MCC Presentations','MCC Presentations','mcc_presentations',' ',1,1,1,0,1,1,1362062187,1),(15,2,'global',0,6,'default','Teaching Strategies','Teaching and Learning Strategies','teaching_strategies',' ',1,1,1,0,1,1,1362062187,1),(16,2,'global',0,7,'default','Assessment Strategies','Assessment Strategies','assessment_strategies',' ',1,1,1,0,1,1,1362062187,1),(17,2,'global',0,8,'default','Resources','Resources','resources',' ',1,1,1,0,1,1,1362062187,1),(18,2,'global',0,9,'default','Expectations of Students','What is Expected of Students','expectations_of_students',' ',1,1,1,0,1,1,1362062187,1),(19,2,'global',0,10,'default','Expectations of Faculty','What is Expected of Course Faculty','expectations_of_faculty',' ',1,1,1,0,1,1,1362062187,1),(20,1,'organisation',0,0,'default','Home','Home','','',1,1,1,1,1,1,1362062187,1),(21,1,'organisation',0,0,'announcements','Announcements','Announcements','announcements','',1,1,1,1,0,0,1362062187,1),(22,1,'organisation',0,1,'discussions','Discussions','Discussions','discussions','',1,1,1,1,0,0,1362062187,1),(23,1,'organisation',0,3,'events','Events','Events','events','',1,1,1,1,0,0,1362062187,1),(24,1,'organisation',0,4,'galleries','Galleries','Galleries','galleries','',1,1,1,1,0,0,1362062187,1),(25,1,'organisation',0,5,'polls','Polling','Polling','polls','',1,1,1,1,0,0,1362062187,1),(26,1,'organisation',0,6,'quizzes','Quizzes','Quizzes','quizzes','',1,1,1,1,0,0,1362062187,1),(27,1,'organisation',0,2,'shares','Document Sharing','Document Sharing','shares','',1,1,1,1,0,0,1362062187,1),(28,2,'organisation',0,0,'course','Background','Background Information','',' ',1,1,1,0,1,1,1362062187,1),(29,2,'organisation',0,1,'course','Course Calendar','Course Calendar','course_calendar',' ',1,1,1,0,1,1,1362062187,1),(30,2,'organisation',0,2,'default','Prerequisites','Prerequisites (Foundational Knowledge)','prerequisites',' ',1,1,1,0,1,1,1362062187,1),(31,2,'organisation',0,3,'default','Course Aims','Aims of the Course','course_aims',' ',1,1,1,0,1,1,1362062187,1),(32,2,'organisation',0,4,'course','Learning Objectives','Learning Objectives','objectives',' ',1,1,1,0,1,1,1362062187,1),(33,2,'organisation',0,5,'course','MCC Presentations','MCC Presentations','mcc_presentations',' ',1,1,1,0,1,1,1362062187,1),(34,2,'organisation',0,6,'default','Teaching Strategies','Teaching and Learning Strategies','teaching_strategies',' ',1,1,1,0,1,1,1362062187,1),(35,2,'organisation',0,7,'default','Assessment Strategies','Assessment Strategies','assessment_strategies',' ',1,1,1,0,1,1,1362062187,1),(36,2,'organisation',0,8,'default','Resources','Resources','resources',' ',1,1,1,0,1,1,1362062187,1),(37,2,'organisation',0,9,'default','Expectations of Students','What is Expected of Students','expectations_of_students',' ',1,1,1,0,1,1,1362062187,1),(38,2,'organisation',0,10,'default','Expectations of Faculty','What is Expected of Course Faculty','expectations_of_faculty',' ',1,1,1,0,1,1,1362062187,1),(39,3,'global',0,0,'default','Community Title','Community Title','',' ',1,1,1,1,1,0,0,1),(40,3,'global',0,7,'default','Credits','Credits','credits','',1,1,1,1,1,0,0,1),(41,3,'global',0,4,'default','Formative Assessment','Formative Assessment','formative_assessment','',1,1,1,1,1,0,0,1),(42,3,'global',0,3,'default','Foundational Knowledge','Foundational Knowledge','foundational_knowledge','',1,1,1,1,1,0,0,1),(43,3,'global',0,1,'default','Introduction','Introduction','introduction','',1,1,1,1,1,0,0,1),(44,3,'global',0,2,'default','Objectives','Objectives','objectives','',1,1,1,1,1,0,0,1),(45,3,'global',0,8,'url','Print Version','Print Version','print_version','',1,1,1,1,1,0,0,1),(46,3,'global',0,6,'default','Summary','Summary','summary','',1,1,1,1,1,0,0,1),(47,3,'global',0,5,'default','Test your understanding','Test your understanding','test_your_understanding','',1,1,1,1,1,0,0,1),(49,3,'organisation',0,0,'default','Community Title','Community Title','',' ',1,1,1,1,1,0,0,1),(50,3,'organisation',0,7,'default','Credits','Credits','credits','',1,1,1,1,1,0,0,1),(51,3,'organisation',0,4,'default','Formative Assessment','Formative Assessment','formative_assessment','',1,1,1,1,1,0,0,1),(52,3,'organisation',0,3,'default','Foundational Knowledge','Foundational Knowledge','foundational_knowledge','',1,1,1,1,1,0,0,1),(53,3,'organisation',0,1,'default','Introduction','Introduction','introduction','',1,1,1,1,1,0,0,1),(54,3,'organisation',0,2,'default','Objectives','Objectives','objectives','',1,1,1,1,1,0,0,1),(55,3,'organisation',0,8,'url','Print Version','Print Version','print_version','',1,1,1,1,1,0,0,1),(56,3,'organisation',0,6,'default','Summary','Summary','summary','',1,1,1,1,1,0,0,1),(57,3,'organisation',0,5,'default','Test your understanding','Test your understanding','test_your_understanding','',1,1,1,1,1,0,0,1);
+INSERT INTO `community_type_pages` VALUES (1,1,'global',0,0,'default','Home','Home','','',1,1,1,1,1,1,1362062187,1),(2,1,'global',0,1,'announcements','Announcements','Announcements','announcements','',1,1,1,1,0,0,1362062187,1),(3,1,'global',0,2,'discussions','Discussions','Discussions','discussions','',1,1,1,1,0,0,1362062187,1),(8,1,'global',0,3,'shares','Document Sharing','Document Sharing','shares','',1,1,1,1,0,0,1362062187,1),(4,1,'global',0,4,'events','Events','Events','events','',1,1,1,1,0,0,1362062187,1),(5,1,'global',0,5,'galleries','Galleries','Galleries','galleries','',1,1,1,1,0,0,1362062187,1),(6,1,'global',0,6,'polls','Polling','Polling','polls','',1,1,1,1,0,0,1362062187,1),(7,1,'global',0,7,'quizzes','Quizzes','Quizzes','quizzes','',1,1,1,1,0,0,1362062187,1),(9,2,'global',0,0,'course','Background','Background Information','',' ',1,1,1,0,1,1,1362062187,1),(10,2,'global',0,1,'course','Course Calendar','Course Calendar','course_calendar',' ',1,1,1,0,1,1,1362062187,1),(11,2,'global',0,2,'default','Prerequisites','Prerequisites (Foundational Knowledge)','prerequisites',' ',1,1,1,0,1,1,1362062187,1),(12,2,'global',0,3,'default','Course Aims','Aims of the Course','course_aims',' ',1,1,1,0,1,1,1362062187,1),(13,2,'global',0,4,'course','Learning Objectives','Learning Objectives','objectives',' ',1,1,1,0,1,1,1362062187,1),(14,2,'global',0,5,'course','MCC Presentations','MCC Presentations','mcc_presentations',' ',1,1,1,0,1,1,1362062187,1),(15,2,'global',0,6,'default','Teaching Strategies','Teaching and Learning Strategies','teaching_strategies',' ',1,1,1,0,1,1,1362062187,1),(16,2,'global',0,7,'default','Assessment Strategies','Assessment Strategies','assessment_strategies',' ',1,1,1,0,1,1,1362062187,1),(17,2,'global',0,8,'default','Resources','Resources','resources',' ',1,1,1,0,1,1,1362062187,1),(18,2,'global',0,9,'default','Expectations of Students','What is Expected of Students','expectations_of_students',' ',1,1,1,0,1,1,1362062187,1),(19,2,'global',0,10,'default','Expectations of Faculty','What is Expected of Course Faculty','expectations_of_faculty',' ',1,1,1,0,1,1,1362062187,1),(20,1,'organisation',0,0,'default','Home','Home','','',1,1,1,1,1,1,1362062187,1),(21,1,'organisation',0,0,'announcements','Announcements','Announcements','announcements','',1,1,1,1,0,0,1362062187,1),(22,1,'organisation',0,1,'discussions','Discussions','Discussions','discussions','',1,1,1,1,0,0,1362062187,1),(23,1,'organisation',0,3,'events','Events','Events','events','',1,1,1,1,0,0,1362062187,1),(24,1,'organisation',0,4,'galleries','Galleries','Galleries','galleries','',1,1,1,1,0,0,1362062187,1),(25,1,'organisation',0,5,'polls','Polling','Polling','polls','',1,1,1,1,0,0,1362062187,1),(26,1,'organisation',0,6,'quizzes','Quizzes','Quizzes','quizzes','',1,1,1,1,0,0,1362062187,1),(27,1,'organisation',0,2,'shares','Document Sharing','Document Sharing','shares','',1,1,1,1,0,0,1362062187,1),(28,2,'organisation',0,0,'course','Background','Background Information','',' ',1,1,1,0,1,1,1362062187,1),(29,2,'organisation',0,1,'course','Course Calendar','Course Calendar','course_calendar',' ',1,1,1,0,1,1,1362062187,1),(30,2,'organisation',0,2,'default','Prerequisites','Prerequisites (Foundational Knowledge)','prerequisites',' ',1,1,1,0,1,1,1362062187,1),(31,2,'organisation',0,3,'default','Course Aims','Aims of the Course','course_aims',' ',1,1,1,0,1,1,1362062187,1),(32,2,'organisation',0,4,'course','Learning Objectives','Learning Objectives','objectives',' ',1,1,1,0,1,1,1362062187,1),(33,2,'organisation',0,5,'course','MCC Presentations','MCC Presentations','mcc_presentations',' ',1,1,1,0,1,1,1362062187,1),(34,2,'organisation',0,6,'default','Teaching Strategies','Teaching and Learning Strategies','teaching_strategies',' ',1,1,1,0,1,1,1362062187,1),(35,2,'organisation',0,7,'default','Assessment Strategies','Assessment Strategies','assessment_strategies',' ',1,1,1,0,1,1,1362062187,1),(36,2,'organisation',0,8,'default','Resources','Resources','resources',' ',1,1,1,0,1,1,1362062187,1),(37,2,'organisation',0,9,'default','Expectations of Students','What is Expected of Students','expectations_of_students',' ',1,1,1,0,1,1,1362062187,1),(38,2,'organisation',0,10,'default','Expectations of Faculty','What is Expected of Course Faculty','expectations_of_faculty',' ',1,1,1,0,1,1,1362062187,1),(39,3,'global',0,0,'default','Community Title','Community Title','',' ',1,1,1,1,1,0,0,1),(40,3,'global',0,7,'default','Credits','Credits','credits','',1,1,1,1,1,0,0,1),(41,3,'global',0,4,'default','Formative Assessment','Formative Assessment','formative_assessment','',1,1,1,1,1,0,0,1),(42,3,'global',0,3,'default','Foundational Knowledge','Foundational Knowledge','foundational_knowledge','',1,1,1,1,1,0,0,1),(43,3,'global',0,1,'default','Introduction','Introduction','introduction','',1,1,1,1,1,0,0,1),(44,3,'global',0,2,'default','Objectives','Objectives','objectives','',1,1,1,1,1,0,0,1),(45,3,'global',0,8,'url','Print Version','Print Version','print_version','',1,1,1,1,1,0,0,1),(46,3,'global',0,6,'default','Summary','Summary','summary','',1,1,1,1,1,0,0,1),(47,3,'global',0,5,'default','Test your understanding','Test your understanding','test_your_understanding','',1,1,1,1,1,0,0,1),(49,3,'organisation',0,0,'default','Community Title','Community Title','',' ',1,1,1,1,1,0,0,1),(50,3,'organisation',0,7,'default','Credits','Credits','credits','',1,1,1,1,1,0,0,1),(51,3,'organisation',0,4,'default','Formative Assessment','Formative Assessment','formative_assessment','',1,1,1,1,1,0,0,1),(52,3,'organisation',0,3,'default','Foundational Knowledge','Foundational Knowledge','foundational_knowledge','',1,1,1,1,1,0,0,1),(53,3,'organisation',0,1,'default','Introduction','Introduction','introduction','',1,1,1,1,1,0,0,1),(54,3,'organisation',0,2,'default','Objectives','Objectives','objectives','',1,1,1,1,1,0,0,1),(55,3,'organisation',0,8,'url','Print Version','Print Version','print_version','',1,1,1,1,1,0,0,1),(56,3,'organisation',0,6,'default','Summary','Summary','summary','',1,1,1,1,1,0,0,1),(57,3,'organisation',0,5,'default','Test your understanding','Test your understanding','test_your_understanding','',1,1,1,1,1,0,0,1),(58,2,'organisation',0,1,'course','Units','Units','units','',1,1,1,0,1,1,1500937017,1),(59,2,'global',0,1,'course','Units','Units','units','',1,1,1,0,1,1,1500937017,1);
 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -3860,6 +4873,41 @@ CREATE TABLE `course_keywords` (
 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `course_learner_levels` (
+  `course_level_id` int(12) unsigned NOT NULL AUTO_INCREMENT,
+  `course_id` int(12) unsigned NOT NULL,
+  `level_id` int(11) unsigned NOT NULL,
+  `created_date` bigint(64) unsigned NOT NULL,
+  `created_by` int(11) unsigned NOT NULL,
+  `updated_date` bigint(64) unsigned NOT NULL,
+  `updated_by` int(11) unsigned NOT NULL,
+  `deleted_date` bigint(64) unsigned NOT NULL,
+  `deleted_by` int(11) unsigned NOT NULL,
+  PRIMARY KEY (`course_level_id`),
+  KEY `organisation_id` (`course_id`,`level_id`),
+  KEY `course_learner_levels_level_id` (`level_id`),
+  CONSTRAINT `course_learner_levels_level_id` FOREIGN KEY (`level_id`) REFERENCES `global_lu_learner_levels` (`level_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `course_linked_objectives` (
+  `clobjective_id` int(12) unsigned NOT NULL AUTO_INCREMENT,
+  `course_id` int(12) unsigned NOT NULL,
+  `linked_objective_id` int(12) unsigned NOT NULL,
+  `updated_date` bigint(64) DEFAULT NULL,
+  `updated_by` int(12) unsigned DEFAULT NULL,
+  PRIMARY KEY (`clobjective_id`),
+  KEY `course_id` (`course_id`),
+  KEY `linked_objective_id` (`linked_objective_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `course_links` (
   `id` int(12) NOT NULL AUTO_INCREMENT,
   `course_id` int(12) NOT NULL DEFAULT '0',
@@ -3923,6 +4971,7 @@ INSERT INTO `course_lu_reports` VALUES (1,'Report Card','report-card',1449685603
 CREATE TABLE `course_objectives` (
   `cobjective_id` int(12) NOT NULL AUTO_INCREMENT,
   `course_id` int(12) NOT NULL DEFAULT '0',
+  `cperiod_id` int(11) DEFAULT NULL,
   `objective_id` int(12) NOT NULL DEFAULT '0',
   `importance` int(2) NOT NULL DEFAULT '1',
   `objective_type` enum('event','course') DEFAULT 'course',
@@ -3935,6 +4984,7 @@ CREATE TABLE `course_objectives` (
   PRIMARY KEY (`cobjective_id`),
   KEY `course_id` (`course_id`),
   KEY `objective_id` (`objective_id`),
+  KEY `cperiod_id` (`cperiod_id`),
   FULLTEXT KEY `ft_objective_details` (`objective_details`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -3971,6 +5021,28 @@ CREATE TABLE `course_reports` (
 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `course_settings` (
+  `csetting_id` int(12) unsigned NOT NULL AUTO_INCREMENT,
+  `course_id` int(12) unsigned NOT NULL,
+  `organisation_id` int(12) unsigned NOT NULL,
+  `shortname` varchar(128) NOT NULL,
+  `value` text NOT NULL,
+  `created_date` bigint(64) unsigned NOT NULL,
+  `created_by` int(12) unsigned NOT NULL,
+  `updated_date` bigint(64) unsigned DEFAULT NULL,
+  `updated_by` int(12) unsigned DEFAULT NULL,
+  `deleted_date` bigint(64) unsigned DEFAULT NULL,
+  PRIMARY KEY (`csetting_id`),
+  KEY `course_id` (`course_id`),
+  KEY `course_organisation` (`course_id`,`organisation_id`),
+  KEY `shortname` (`shortname`),
+  KEY `course_shortname` (`course_id`,`shortname`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `course_syllabi` (
   `syllabus_id` int(12) unsigned NOT NULL AUTO_INCREMENT,
   `course_id` int(12) DEFAULT NULL,
@@ -3993,6 +5065,78 @@ CREATE TABLE `course_tracks` (
   PRIMARY KEY (`curriculum_track_id`,`course_id`),
   UNIQUE KEY `curriculum_track_id` (`curriculum_track_id`,`course_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `course_unit_contacts` (
+  `cucontact_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `cunit_id` int(11) unsigned NOT NULL,
+  `proxy_id` int(12) unsigned NOT NULL,
+  `contact_order` int(6) NOT NULL DEFAULT '0',
+  `updated_date` bigint(64) DEFAULT NULL,
+  `updated_by` int(12) unsigned DEFAULT NULL,
+  PRIMARY KEY (`cucontact_id`),
+  KEY `cunit_id` (`cunit_id`),
+  KEY `proxy_id` (`proxy_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `course_unit_linked_objectives` (
+  `culobjective_id` int(12) unsigned NOT NULL AUTO_INCREMENT,
+  `cunit_id` int(12) unsigned NOT NULL,
+  `linked_objective_id` int(12) unsigned NOT NULL,
+  `updated_date` bigint(64) DEFAULT NULL,
+  `updated_by` int(12) unsigned DEFAULT NULL,
+  PRIMARY KEY (`culobjective_id`),
+  KEY `cunit_id` (`cunit_id`),
+  KEY `linked_objective_id` (`linked_objective_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `course_unit_objectives` (
+  `cuobjective_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `cunit_id` int(11) unsigned NOT NULL,
+  `objective_id` int(12) NOT NULL,
+  `objective_order` int(6) NOT NULL DEFAULT '0',
+  `updated_date` bigint(64) DEFAULT NULL,
+  `updated_by` int(12) unsigned DEFAULT NULL,
+  PRIMARY KEY (`cuobjective_id`),
+  KEY `cunit_id` (`cunit_id`),
+  KEY `objective_id` (`objective_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `course_units` (
+  `cunit_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `unit_code` varchar(16) DEFAULT NULL,
+  `unit_title` varchar(128) NOT NULL DEFAULT '',
+  `unit_description` text,
+  `course_id` int(12) unsigned NOT NULL,
+  `cperiod_id` int(11) DEFAULT NULL,
+  `week_id` int(11) unsigned DEFAULT NULL,
+  `unit_order` int(12) NOT NULL DEFAULT '0',
+  `updated_date` bigint(64) DEFAULT NULL,
+  `updated_by` int(11) DEFAULT NULL,
+  `created_date` bigint(64) NOT NULL,
+  `created_by` int(11) NOT NULL,
+  `deleted_date` bigint(64) DEFAULT NULL,
+  PRIMARY KEY (`cunit_id`),
+  KEY `course_id` (`course_id`),
+  KEY `cperiod_id` (`cperiod_id`),
+  KEY `week_id` (`week_id`),
+  FULLTEXT KEY `ft_unit_search` (`unit_code`,`unit_title`,`unit_description`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 
@@ -4024,6 +5168,11 @@ CREATE TABLE `courses` (
   `course_twitter_handle` varchar(16) DEFAULT NULL,
   `course_twitter_hashtags` text,
   `course_color` varchar(20) DEFAULT NULL,
+  `cbme_milestones` tinyint(1) DEFAULT NULL,
+  `created_date` bigint(64) NOT NULL,
+  `created_by` int(12) NOT NULL,
+  `updated_date` bigint(64) NOT NULL,
+  `updated_by` int(12) NOT NULL,
   PRIMARY KEY (`course_id`),
   KEY `notifications` (`notifications`),
   KEY `pcoord_id` (`pcoord_id`),
@@ -4122,6 +5271,43 @@ INSERT INTO `curriculum_lu_types` VALUES (1,0,'Term 1',NULL,0,1,NULL,1250538588,
 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `curriculum_map_version_organisations` (
+  `version_id` int(11) unsigned NOT NULL,
+  `organisation_id` int(11) NOT NULL,
+  PRIMARY KEY (`version_id`,`organisation_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `curriculum_map_version_periods` (
+  `version_id` int(11) unsigned NOT NULL,
+  `cperiod_id` int(11) NOT NULL,
+  PRIMARY KEY (`version_id`,`cperiod_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `curriculum_map_versions` (
+  `version_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `title` varchar(255) NOT NULL DEFAULT '',
+  `description` text,
+  `status` enum('draft','published') NOT NULL DEFAULT 'draft',
+  `created_date` bigint(64) NOT NULL,
+  `created_by` int(11) NOT NULL,
+  `updated_date` bigint(64) DEFAULT NULL,
+  `updated_by` int(11) DEFAULT NULL,
+  `deleted_date` bigint(64) DEFAULT NULL,
+  PRIMARY KEY (`version_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `curriculum_periods` (
   `cperiod_id` int(11) NOT NULL AUTO_INCREMENT,
   `curriculum_type_id` int(11) NOT NULL,
@@ -4144,6 +5330,78 @@ CREATE TABLE `curriculum_type_organisation` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 INSERT INTO `curriculum_type_organisation` VALUES (1,1),(2,1),(3,1),(4,1),(5,1),(6,1),(7,1),(8,1);
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `disclaimer_audience` (
+  `disclaimer_audience_id` int(11) NOT NULL AUTO_INCREMENT,
+  `disclaimer_id` int(11) NOT NULL,
+  `disclaimer_audience_type` enum('proxy_id','grad_year','cohort','group_id','course_id','cgroup_id','role_id') NOT NULL DEFAULT 'cohort',
+  `disclaimer_audience_value` varchar(16) NOT NULL,
+  `updated_date` bigint(64) NOT NULL,
+  `updated_by` int(11) NOT NULL,
+  PRIMARY KEY (`disclaimer_audience_id`),
+  KEY `disclaimer_id` (`disclaimer_id`),
+  CONSTRAINT `disclaimer_audience_ibfk_1` FOREIGN KEY (`disclaimer_id`) REFERENCES `disclaimers` (`disclaimer_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `disclaimer_audience_users` (
+  `disclaimer_audience_users_id` int(11) NOT NULL AUTO_INCREMENT,
+  `disclaimer_id` int(11) NOT NULL,
+  `proxy_id` int(11) NOT NULL,
+  `approved` tinyint(1) NOT NULL DEFAULT '0',
+  `updated_date` bigint(64) NOT NULL,
+  `updated_by` int(11) NOT NULL,
+  PRIMARY KEY (`disclaimer_audience_users_id`),
+  KEY `disclaimer_id` (`disclaimer_id`),
+  KEY `proxy_id` (`proxy_id`),
+  CONSTRAINT `disclaimer_audience_users_ibfk_1` FOREIGN KEY (`disclaimer_id`) REFERENCES `disclaimers` (`disclaimer_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `disclaimer_trigger` (
+  `disclaimer_trigger_id` int(11) NOT NULL AUTO_INCREMENT,
+  `disclaimer_id` int(11) NOT NULL,
+  `disclaimer_trigger_type` enum('course','community') NOT NULL,
+  `disclaimer_trigger_value` varchar(16) NOT NULL,
+  `updated_date` bigint(64) NOT NULL,
+  `updated_by` int(11) NOT NULL,
+  PRIMARY KEY (`disclaimer_trigger_id`),
+  KEY `disclaimer_id` (`disclaimer_id`),
+  CONSTRAINT `disclaimer_trigger_ibfk_1` FOREIGN KEY (`disclaimer_id`) REFERENCES `disclaimers` (`disclaimer_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `disclaimers` (
+  `disclaimer_id` int(11) NOT NULL AUTO_INCREMENT,
+  `disclaimer_title` varchar(255) NOT NULL DEFAULT '',
+  `disclaimer_issue_date` bigint(64) DEFAULT NULL,
+  `disclaimer_expire_date` bigint(64) DEFAULT NULL,
+  `disclaimer_text` text NOT NULL,
+  `organisation_id` int(11) NOT NULL,
+  `upon_decline` enum('continue','log_out','deny_access') DEFAULT NULL,
+  `trigger_type` enum('page_load','course','community') NOT NULL DEFAULT 'page_load',
+  `email_admin` tinyint(1) NOT NULL DEFAULT '0',
+  `created_date` bigint(64) NOT NULL,
+  `created_by` int(11) NOT NULL,
+  `updated_date` bigint(64) DEFAULT NULL,
+  `updated_by` int(11) DEFAULT NULL,
+  `deleted_date` bigint(64) DEFAULT NULL,
+  `deleted_by` int(11) DEFAULT NULL,
+  PRIMARY KEY (`disclaimer_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -4209,6 +5467,7 @@ CREATE TABLE `draft_events` (
   `devent_id` int(12) NOT NULL AUTO_INCREMENT,
   `event_id` int(12) DEFAULT NULL,
   `draft_id` int(11) DEFAULT NULL,
+  `draft_parent_id` int(12) unsigned DEFAULT NULL,
   `parent_id` int(12) DEFAULT NULL,
   `event_children` int(12) DEFAULT NULL,
   `recurring_id` int(12) DEFAULT '0',
@@ -4220,6 +5479,8 @@ CREATE TABLE `draft_events` (
   `include_parent_description` tinyint(1) NOT NULL DEFAULT '1',
   `event_goals` text,
   `event_objectives` text,
+  `keywords_hidden` int(1) DEFAULT '0',
+  `keywords_release_date` bigint(64) DEFAULT '0',
   `objectives_release_date` bigint(64) DEFAULT '0',
   `event_message` text,
   `include_parent_message` tinyint(1) NOT NULL DEFAULT '1',
@@ -4232,6 +5493,7 @@ CREATE TABLE `draft_events` (
   `audience_visible` tinyint(1) NOT NULL DEFAULT '1',
   `release_date` bigint(64) NOT NULL,
   `release_until` bigint(64) NOT NULL,
+  `event_color` varchar(20) DEFAULT NULL,
   `updated_date` bigint(64) NOT NULL,
   `updated_by` int(12) NOT NULL,
   PRIMARY KEY (`devent_id`),
@@ -4287,8 +5549,30 @@ CREATE TABLE `drafts` (
   `description` text,
   `created` int(11) DEFAULT NULL,
   `preserve_elements` binary(4) DEFAULT NULL,
+  `copy_resources_as_draft` tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`draft_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `duty_hours_entries` (
+  `dhentry_id` int(12) unsigned NOT NULL AUTO_INCREMENT,
+  `proxy_id` int(12) unsigned NOT NULL,
+  `encounter_date` int(12) NOT NULL,
+  `updated_date` bigint(64) unsigned NOT NULL DEFAULT '0',
+  `rotation_id` int(12) unsigned NOT NULL DEFAULT '0',
+  `llocation_id` int(12) unsigned NOT NULL DEFAULT '0',
+  `lsite_id` int(11) NOT NULL DEFAULT '0',
+  `hours` float(4,2) NOT NULL,
+  `hours_type` enum('on_duty','off_duty','absence') NOT NULL DEFAULT 'on_duty',
+  `comments` text,
+  `entry_active` int(1) NOT NULL DEFAULT '1',
+  `course_id` int(12) unsigned NOT NULL,
+  `cperiod_id` int(12) unsigned NOT NULL,
+  PRIMARY KEY (`dhentry_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 
@@ -4755,11 +6039,32 @@ CREATE TABLE `event_eventtypes` (
   `eeventtype_id` int(12) unsigned NOT NULL AUTO_INCREMENT,
   `event_id` int(12) NOT NULL,
   `eventtype_id` int(12) NOT NULL,
-  `duration` int(12) NOT NULL,
+  `duration` float DEFAULT NULL,
   PRIMARY KEY (`eeventtype_id`),
   KEY `event_id` (`event_id`),
   KEY `eventtype_id` (`eventtype_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `event_feedback_forms` (
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `event_id` int(11) NOT NULL DEFAULT '0',
+  `form_id` int(11) NOT NULL,
+  `required` int(1) NOT NULL DEFAULT '0',
+  `timeframe` varchar(64) NOT NULL DEFAULT 'none',
+  `accesses` int(11) NOT NULL DEFAULT '0',
+  `release_date` int(11) NOT NULL,
+  `release_until` int(11) NOT NULL,
+  `created_by` int(11) NOT NULL,
+  `created_date` int(11) NOT NULL,
+  `updated_by` int(11) NOT NULL,
+  `updated_date` int(11) NOT NULL,
+  `deleted_date` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 
@@ -4776,17 +6081,22 @@ CREATE TABLE `event_files` (
   `file_name` varchar(255) NOT NULL,
   `file_title` varchar(128) NOT NULL,
   `file_notes` longtext NOT NULL,
+  `file_contents` longtext,
   `access_method` int(1) NOT NULL DEFAULT '0',
   `accesses` int(12) NOT NULL DEFAULT '0',
   `release_date` bigint(64) NOT NULL DEFAULT '0',
   `release_until` bigint(64) NOT NULL DEFAULT '0',
   `updated_date` bigint(64) NOT NULL DEFAULT '0',
   `updated_by` int(12) NOT NULL DEFAULT '0',
+  `draft` tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`efile_id`),
   KEY `required` (`required`),
   KEY `access_method` (`access_method`),
   KEY `event_id` (`event_id`),
-  KEY `release_date` (`release_date`,`release_until`)
+  KEY `release_date` (`release_date`,`release_until`),
+  FULLTEXT KEY `ft_contents_search` (`file_contents`),
+  FULLTEXT KEY `ft_name_search` (`file_name`),
+  FULLTEXT KEY `ft_notes_search` (`file_notes`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -4825,6 +6135,21 @@ CREATE TABLE `event_keywords` (
 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `event_linked_objectives` (
+  `elobjective_id` int(12) unsigned NOT NULL AUTO_INCREMENT,
+  `event_id` int(12) NOT NULL,
+  `linked_objective_id` int(12) unsigned NOT NULL,
+  `updated_date` bigint(64) DEFAULT NULL,
+  `updated_by` int(12) unsigned DEFAULT NULL,
+  PRIMARY KEY (`elobjective_id`),
+  KEY `event_id` (`event_id`),
+  KEY `linked_objective_id` (`linked_objective_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `event_links` (
   `elink_id` int(12) NOT NULL AUTO_INCREMENT,
   `event_id` int(12) NOT NULL DEFAULT '0',
@@ -4839,6 +6164,7 @@ CREATE TABLE `event_links` (
   `release_until` bigint(64) NOT NULL DEFAULT '0',
   `updated_date` bigint(64) NOT NULL DEFAULT '0',
   `updated_by` int(12) NOT NULL DEFAULT '0',
+  `draft` tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`elink_id`),
   KEY `lecture_id` (`event_id`),
   KEY `required` (`required`),
@@ -4881,10 +6207,28 @@ CREATE TABLE `event_lu_resource_types` (
   `updated_by` int(12) NOT NULL,
   `active` tinyint(1) NOT NULL DEFAULT '1',
   PRIMARY KEY (`event_resource_type_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
-INSERT INTO `event_lu_resource_types` VALUES (1,'Podcast','Attach a podcast to this learning event.',1449685604,1,1),(2,'Bring to Class','Attach a description of materials students should bring to class.',1449685604,1,0),(3,'Link','Attach links to external websites that relate to the learning event.',1449685604,1,1),(4,'Homework','Attach a description to indicate homework tasks assigned to students.',1449685604,1,0),(5,'Lecture Notes','Attach files such as documents, pdfs or images.',1449685604,1,1),(6,'Lecture Slides','Attach files such as documents, powerpoint files, pdfs or images.',1449685604,1,1),(7,'Online Learning Module','Attach links to external learning modules.',1449685604,1,1),(8,'Quiz','Attach an existing quiz to this learning event.',1449685604,1,1),(9,'Textbook Reading','Attach a reading list related to this learning event.',1449685604,1,0),(10,'LTI Provider','',1449685604,1,0),(11,'Other Files','Attach miscellaneous media files to this learning event.',1449685604,1,1),(12,'Exam','Attach an exam to this learning event.',1492431737,1,1);
+INSERT INTO `event_lu_resource_types` VALUES (1,'Podcast','Attach a podcast to this learning event.',1449685604,1,1),(2,'Bring to Class','Attach a description of materials students should bring to class.',1449685604,1,0),(3,'Link','Attach links to external websites that relate to the learning event.',1449685604,1,1),(4,'Homework','Attach a description to indicate homework tasks assigned to students.',1449685604,1,0),(5,'Lecture Notes','Attach files such as documents, pdfs or images.',1449685604,1,1),(6,'Lecture Slides','Attach files such as documents, powerpoint files, pdfs or images.',1449685604,1,1),(7,'Online Learning Module','Attach links to external learning modules.',1449685604,1,1),(8,'Quiz','Attach an existing quiz to this learning event.',1449685604,1,1),(9,'Textbook Reading','Attach a reading list related to this learning event.',1449685604,1,0),(10,'LTI Provider','',1449685604,1,0),(11,'Other Files','Attach miscellaneous media files to this learning event.',1449685604,1,1),(12,'Exam','Attach an exam to this learning event.',1492431737,1,1),(13,'Feedback Form','Attach a feedback form to this learning event.',1510375504,1,1);
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `event_medbiq_resources` (
+  `em_resource_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `event_id` int(11) NOT NULL,
+  `resource_id` int(11) NOT NULL,
+  `updated_date` bigint(64) NOT NULL,
+  `updated_by` int(11) NOT NULL,
+  `created_date` bigint(64) NOT NULL,
+  `created_by` int(11) NOT NULL,
+  `deleted_date` bigint(64) DEFAULT NULL,
+  PRIMARY KEY (`em_resource_id`),
+  KEY `event_id` (`event_id`),
+  KEY `resource_id` (`resource_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -5037,6 +6381,7 @@ CREATE TABLE `events` (
   `recurring_id` int(12) DEFAULT '0',
   `region_id` int(12) DEFAULT '0',
   `course_id` int(12) NOT NULL DEFAULT '0',
+  `cunit_id` int(11) unsigned DEFAULT NULL,
   `event_phase` varchar(12) DEFAULT NULL,
   `event_title` varchar(255) NOT NULL,
   `event_description` text,
@@ -5069,6 +6414,7 @@ CREATE TABLE `events` (
   KEY `event_start` (`event_start`,`event_duration`),
   KEY `event_start_2` (`event_start`,`event_finish`),
   KEY `event_phase` (`event_phase`),
+  KEY `cunit_id` (`cunit_id`),
   FULLTEXT KEY `event_title` (`event_title`,`event_description`,`event_goals`,`event_objectives`,`event_message`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -5223,6 +6569,64 @@ CREATE TABLE `exam_authors` (
 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `exam_bank_folder_authors` (
+  `efauthor_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `folder_id` int(11) unsigned NOT NULL,
+  `author_type` enum('proxy_id','organisation_id','course_id') NOT NULL DEFAULT 'proxy_id',
+  `author_id` int(11) NOT NULL,
+  `created_date` bigint(64) NOT NULL,
+  `created_by` int(11) NOT NULL,
+  `updated_date` bigint(64) DEFAULT NULL,
+  `updated_by` int(11) DEFAULT NULL,
+  `deleted_date` bigint(64) DEFAULT NULL,
+  PRIMARY KEY (`efauthor_id`),
+  KEY `folder_id` (`folder_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `exam_bank_folder_organisations` (
+  `folder_org_id` int(12) unsigned NOT NULL AUTO_INCREMENT,
+  `folder_id` int(12) NOT NULL,
+  `organisation_id` int(12) NOT NULL DEFAULT '1',
+  `updated_date` bigint(64) DEFAULT NULL,
+  `updated_by` int(11) DEFAULT NULL,
+  `deleted_date` bigint(64) DEFAULT NULL,
+  PRIMARY KEY (`folder_org_id`),
+  KEY `folder_id` (`folder_id`),
+  CONSTRAINT `exam_qbf_org_fk_1` FOREIGN KEY (`folder_id`) REFERENCES `exam_bank_folders` (`folder_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+INSERT INTO `exam_bank_folder_organisations` VALUES (1,1,1,1521522163,1,NULL);
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `exam_bank_folders` (
+  `folder_id` int(12) NOT NULL AUTO_INCREMENT,
+  `parent_folder_id` int(12) NOT NULL DEFAULT '0',
+  `folder_title` varchar(64) NOT NULL,
+  `folder_description` text,
+  `folder_order` int(10) NOT NULL DEFAULT '0',
+  `image_id` int(10) DEFAULT '1',
+  `folder_type` enum('exam','question') NOT NULL DEFAULT 'question',
+  `organisation_id` int(12) NOT NULL DEFAULT '1',
+  `created_date` bigint(64) NOT NULL DEFAULT '0',
+  `created_by` int(12) NOT NULL DEFAULT '0',
+  `updated_date` bigint(64) NOT NULL DEFAULT '0',
+  `updated_by` int(12) NOT NULL DEFAULT '0',
+  `deleted_date` bigint(64) DEFAULT NULL,
+  PRIMARY KEY (`folder_id`),
+  KEY `ebf_index_1` (`parent_folder_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+INSERT INTO `exam_bank_folders` VALUES (1,0,'Default Folder','Folder create automatically',0,3,'exam',1,1521522163,1,1521522163,1,NULL);
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `exam_category` (
   `category_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `post_id` int(11) unsigned NOT NULL,
@@ -5327,6 +6731,26 @@ CREATE TABLE `exam_category_set` (
 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `exam_creation_history` (
+  `exam_history_id` int(12) NOT NULL AUTO_INCREMENT,
+  `exam_id` int(12) DEFAULT '0',
+  `proxy_id` int(12) NOT NULL DEFAULT '0',
+  `action` enum('exam_add','exam_edit','exam_delete','exam_copy','exam_move','exam_settings_edit','exam_element_add','exam_element_edit','exam_element_delete','exam_element_group_add','exam_element_group_edit','exam_element_group_delete','exam_element_order','exam_element_points','post_exam_add','post_exam_edit','post_exam_delete','adjust_score','delete_adjust_score','reopen_progress','delete_progress','report_add','report_edit','report_delete') NOT NULL,
+  `action_resource_id` int(12) DEFAULT NULL,
+  `secondary_action` text,
+  `secondary_action_resource_id` int(12) DEFAULT NULL,
+  `history_message` text,
+  `timestamp` bigint(64) NOT NULL DEFAULT '0',
+  PRIMARY KEY (`exam_history_id`),
+  KEY `timestamp` (`timestamp`),
+  KEY `exam_id` (`exam_id`),
+  KEY `proxy_id` (`proxy_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `exam_element_highlight` (
   `highlight_id` int(12) unsigned NOT NULL AUTO_INCREMENT,
   `exam_element_id` int(11) unsigned NOT NULL,
@@ -5361,6 +6785,7 @@ CREATE TABLE `exam_elements` (
   PRIMARY KEY (`exam_element_id`),
   KEY `exam_id` (`exam_id`),
   KEY `exam_elements_ibfk_2` (`group_id`),
+  KEY `ee_index_1` (`exam_id`,`deleted_date`),
   CONSTRAINT `exam_elements_fk_1` FOREIGN KEY (`exam_id`) REFERENCES `exams` (`exam_id`),
   CONSTRAINT `exam_elements_ibfk_1` FOREIGN KEY (`group_id`) REFERENCES `exam_groups` (`group_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -5445,7 +6870,7 @@ CREATE TABLE `exam_groups` (
 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `exam_lu_question_bank_folder_images` (
+CREATE TABLE `exam_lu_bank_folder_images` (
   `image_id` int(12) NOT NULL AUTO_INCREMENT,
   `file_name` varchar(64) NOT NULL DEFAULT '0',
   `color` varchar(64) NOT NULL,
@@ -5455,7 +6880,7 @@ CREATE TABLE `exam_lu_question_bank_folder_images` (
 ) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
-INSERT INTO `exam_lu_question_bank_folder_images` VALUES (1,'list-folder-1.png','light blue',1,NULL),(2,'list-folder-2.png','medium blue',2,NULL),(3,'list-folder-3.png','teal',3,NULL),(4,'list-folder-4.png','yellow green',4,NULL),(5,'list-folder-5.png','medium green',5,NULL),(6,'list-folder-6.png','dark green',6,NULL),(7,'list-folder-7.png','light yellow',7,NULL),(8,'list-folder-8.png','yellow',8,NULL),(9,'list-folder-9.png','orange',9,NULL),(10,'list-folder-10.png','dark orange',10,NULL),(11,'list-folder-11.png','red',11,NULL),(12,'list-folder-12.png','magenta',12,NULL),(13,'list-folder-13.png','light pink',13,NULL),(14,'list-folder-14.png','pink',14,NULL),(15,'list-folder-15.png','light purple',15,NULL),(16,'list-folder-16.png','purple',16,NULL),(17,'list-folder-17.png','cream',17,NULL),(18,'list-folder-18.png','light brown',18,NULL),(19,'list-folder-19.png','medium brown',19,NULL),(20,'list-folder-20.png','dark blue',20,NULL);
+INSERT INTO `exam_lu_bank_folder_images` VALUES (1,'list-folder-1.png','light blue',1,NULL),(2,'list-folder-2.png','medium blue',2,NULL),(3,'list-folder-3.png','teal',3,NULL),(4,'list-folder-4.png','yellow green',4,NULL),(5,'list-folder-5.png','medium green',5,NULL),(6,'list-folder-6.png','dark green',6,NULL),(7,'list-folder-7.png','light yellow',7,NULL),(8,'list-folder-8.png','yellow',8,NULL),(9,'list-folder-9.png','orange',9,NULL),(10,'list-folder-10.png','dark orange',10,NULL),(11,'list-folder-11.png','red',11,NULL),(12,'list-folder-12.png','magenta',12,NULL),(13,'list-folder-13.png','light pink',13,NULL),(14,'list-folder-14.png','pink',14,NULL),(15,'list-folder-15.png','light purple',15,NULL),(16,'list-folder-16.png','purple',16,NULL),(17,'list-folder-17.png','cream',17,NULL),(18,'list-folder-18.png','light brown',18,NULL),(19,'list-folder-19.png','medium brown',19,NULL),(20,'list-folder-20.png','dark blue',20,NULL);
 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -5518,6 +6943,8 @@ CREATE TABLE `exam_posts` (
   `use_resume_password` int(1) DEFAULT '0',
   `resume_password` varchar(20) DEFAULT '0',
   `secure_mode` varchar(32) DEFAULT NULL,
+  `use_honor_code` int(1) NOT NULL DEFAULT '0',
+  `honor_code` text,
   `mark_faculty_review` tinyint(1) DEFAULT '0',
   `use_calculator` int(1) DEFAULT '0',
   `hide_exam` int(1) DEFAULT '0',
@@ -5549,7 +6976,8 @@ CREATE TABLE `exam_posts` (
   `updated_date` bigint(20) DEFAULT NULL,
   `updated_by` int(11) DEFAULT NULL,
   `deleted_date` bigint(20) DEFAULT NULL,
-  PRIMARY KEY (`post_id`)
+  PRIMARY KEY (`post_id`),
+  KEY `post_index_1` (`exam_id`,`post_id`,`deleted_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -5659,9 +7087,10 @@ CREATE TABLE `exam_question_answers` (
   `correct` int(1) DEFAULT '0',
   `weight` varchar(10) DEFAULT '0',
   `order` int(4) DEFAULT '0',
-  `deleted_date` bigint(64) DEFAULT NULL,
+  `locked` int(1) DEFAULT '0',
   `updated_date` bigint(64) DEFAULT NULL,
   `updated_by` int(11) DEFAULT NULL,
+  `deleted_date` bigint(64) DEFAULT NULL,
   PRIMARY KEY (`qanswer_id`),
   KEY `question_id` (`qanswer_id`),
   KEY `exam_questions_answers_fk_1` (`question_id`),
@@ -5690,60 +7119,6 @@ CREATE TABLE `exam_question_authors` (
   KEY `exam_questions_authors_fk_2` (`version_id`),
   CONSTRAINT `exam_questions_authors_fk_1` FOREIGN KEY (`question_id`) REFERENCES `exam_questions` (`question_id`),
   CONSTRAINT `exam_questions_authors_fk_2` FOREIGN KEY (`version_id`) REFERENCES `exam_question_versions` (`version_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
-
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `exam_question_bank_folder_authors` (
-  `efauthor_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
-  `folder_id` int(11) unsigned NOT NULL,
-  `author_type` enum('proxy_id','organisation_id','course_id') NOT NULL DEFAULT 'proxy_id',
-  `author_id` int(11) NOT NULL,
-  `created_date` bigint(64) NOT NULL,
-  `created_by` int(11) NOT NULL,
-  `updated_date` bigint(64) DEFAULT NULL,
-  `updated_by` int(11) DEFAULT NULL,
-  `deleted_date` bigint(64) DEFAULT NULL,
-  PRIMARY KEY (`efauthor_id`),
-  KEY `folder_id` (`folder_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
-
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `exam_question_bank_folder_organisations` (
-  `folder_org_id` int(12) unsigned NOT NULL AUTO_INCREMENT,
-  `folder_id` int(12) NOT NULL,
-  `organisation_id` int(12) NOT NULL DEFAULT '1',
-  `updated_date` bigint(64) DEFAULT NULL,
-  `updated_by` int(11) DEFAULT NULL,
-  `deleted_date` bigint(64) DEFAULT NULL,
-  PRIMARY KEY (`folder_org_id`),
-  KEY `folder_id` (`folder_id`),
-  CONSTRAINT `exam_qbf_org_fk_1` FOREIGN KEY (`folder_id`) REFERENCES `exam_question_bank_folders` (`folder_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
-
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `exam_question_bank_folders` (
-  `folder_id` int(12) NOT NULL AUTO_INCREMENT,
-  `parent_folder_id` int(12) NOT NULL DEFAULT '0',
-  `folder_title` varchar(64) NOT NULL,
-  `folder_description` text,
-  `folder_order` int(10) NOT NULL DEFAULT '0',
-  `image_id` int(10) DEFAULT '1',
-  `organisation_id` int(12) NOT NULL DEFAULT '1',
-  `created_date` bigint(64) NOT NULL DEFAULT '0',
-  `created_by` int(12) NOT NULL DEFAULT '0',
-  `updated_date` bigint(64) NOT NULL DEFAULT '0',
-  `updated_by` int(12) NOT NULL DEFAULT '0',
-  `deleted_date` bigint(64) DEFAULT NULL,
-  PRIMARY KEY (`folder_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -5904,18 +7279,21 @@ CREATE TABLE `exam_versions` (
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `exams` (
   `exam_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `folder_id` int(12) DEFAULT '0',
   `organisation_id` int(11) NOT NULL,
   `title` varchar(1024) NOT NULL DEFAULT '',
   `description` text,
   `display_questions` enum('all','one','page_breaks') DEFAULT 'all',
   `random` int(1) DEFAULT NULL,
+  `random_answers` int(1) DEFAULT '0',
   `examsoft_exam_id` int(11) DEFAULT NULL,
   `created_date` bigint(64) NOT NULL,
   `created_by` int(11) NOT NULL,
   `updated_date` bigint(64) DEFAULT NULL,
   `updated_by` int(11) DEFAULT NULL,
   `deleted_date` bigint(64) DEFAULT NULL,
-  PRIMARY KEY (`exam_id`)
+  PRIMARY KEY (`exam_id`),
+  KEY `e_index_1` (`folder_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -5941,14 +7319,16 @@ INSERT INTO `filetypes` VALUES (1,'pdf','application/pdf','GoogleDocsViewer','PD
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `global_lu_buildings` (
   `building_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
-  `organisation_id` int(11) unsigned NOT NULL,
+  `site_id` int(11) unsigned DEFAULT NULL,
   `building_code` varchar(16) NOT NULL DEFAULT '',
   `building_name` varchar(128) NOT NULL DEFAULT '',
   `building_address1` varchar(128) NOT NULL DEFAULT '',
-  `building_address2` varchar(128) NOT NULL DEFAULT '',
+  `building_address2` varchar(128) DEFAULT NULL,
   `building_city` varchar(64) NOT NULL DEFAULT '',
   `building_province` varchar(64) NOT NULL DEFAULT '',
   `building_country` varchar(64) NOT NULL DEFAULT '',
+  `building_province_id` int(11) unsigned DEFAULT NULL,
+  `building_country_id` int(11) unsigned DEFAULT NULL,
   `building_postcode` varchar(16) NOT NULL DEFAULT '',
   PRIMARY KEY (`building_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -6040,24 +7420,88 @@ CREATE TABLE `global_lu_hospital_location` (
 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `global_lu_learner_levels` (
+  `level_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `title` varchar(128) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
+  `description` varchar(128) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
+  `created_date` bigint(64) unsigned NOT NULL,
+  `created_by` int(11) unsigned NOT NULL,
+  `updated_date` bigint(64) unsigned NOT NULL,
+  `updated_by` int(11) unsigned NOT NULL,
+  `deleted_date` bigint(64) unsigned DEFAULT NULL,
+  `deleted_by` int(11) unsigned DEFAULT NULL,
+  PRIMARY KEY (`level_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+INSERT INTO `global_lu_learner_levels` VALUES (1,'Year 1','Year 1',1483714897,1,1483714897,1,NULL,NULL),(2,'Year 2','Year 2',1483714897,1,1483714897,1,NULL,NULL),(3,'Year 3','Year 3',1483714897,1,1483714897,1,NULL,NULL),(4,'Year 4','Year 4',1483714897,1,1483714897,1,NULL,NULL),(5,'Year 5','Year 5',1483714897,1,1483714897,1,NULL,NULL),(6,'Year 6','Year 6',1483714897,1,1483714897,1,NULL,NULL),(7,'Fellow','Fellow',1483714897,1,1483714897,1,NULL,NULL),(8,'PGY1','Year 1',1483714897,1,1483714897,1,NULL,NULL),(9,'PGY2','Year 2',1483714897,1,1483714897,1,NULL,NULL),(10,'PGY3','Year 3',1483714897,1,1483714897,1,NULL,NULL),(11,'PGY4','Year 4',1483714897,1,1483714897,1,NULL,NULL),(12,'PGY5','Year 5',1483714897,1,1483714897,1,NULL,NULL),(13,'PGY6','Year 6',1483714897,1,1483714897,1,NULL,NULL),(14,'PGY7','Year 7',1483714897,1,1483714897,1,NULL,NULL),(15,'PGY8','Year 8',1483714897,1,1483714897,1,NULL,NULL);
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `global_lu_learner_statuses` (
+  `status_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `title` varchar(128) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
+  `description` varchar(128) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
+  `percent_active` float NOT NULL DEFAULT '100',
+  `created_date` bigint(64) unsigned NOT NULL,
+  `created_by` int(11) unsigned NOT NULL,
+  `updated_date` bigint(64) unsigned NOT NULL,
+  `updated_by` int(11) unsigned NOT NULL,
+  `deleted_date` bigint(64) unsigned DEFAULT NULL,
+  `deleted_by` int(11) unsigned DEFAULT NULL,
+  PRIMARY KEY (`status_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=24 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+INSERT INTO `global_lu_learner_statuses` VALUES (1,'Active','',100,1493231858,1,1493231858,1,NULL,NULL),(2,'AVP','',100,1493231858,1,1493231858,1,NULL,NULL),(3,'Clerkship','',100,1493231858,1,1493231858,1,NULL,NULL),(4,'Compassionate Leave','',0,1493231858,1,1493231858,1,NULL,NULL),(5,'Elective','',100,1493231858,1,1493231858,1,NULL,NULL),(6,'IEP','',100,1493231858,1,1493231858,1,NULL,NULL),(7,'Inactive','',0,1493231858,1,1493231858,1,NULL,NULL),(8,'Leave-NoPay','',0,1493231858,1,1493231858,1,NULL,NULL),(9,'Leave-Pay','',0,1493231858,1,1493231858,1,NULL,NULL),(10,'Long-Term','',0,1493231858,1,1493231858,1,NULL,NULL),(11,'Med Leave','',0,1493231858,1,1493231858,1,NULL,NULL),(12,'Parental Leave','',0,1493231858,1,1493231858,1,NULL,NULL),(13,'PEAP','',100,1493231858,1,1493231858,1,NULL,NULL),(14,'Preregister','',0,1493231858,1,1493231858,1,NULL,NULL),(15,'PreResProg','',0,1493231858,1,1493231858,1,NULL,NULL),(16,'Probation','',0,1493231858,1,1493231858,1,NULL,NULL),(17,'Remediation','',0,1493231858,1,1493231858,1,NULL,NULL),(18,'Suspension','',0,1493231858,1,1493231858,1,NULL,NULL),(19,'Part-time (25%)','',25,1493231858,1,1493231858,1,NULL,NULL),(20,'Part-time (50%)','',50,1493231858,1,1493231858,1,NULL,NULL),(21,'Part-time (60%)','',60,1493231858,1,1493231858,1,NULL,NULL),(22,'Part-time(75%)','',75,1493231858,1,1493231858,1,NULL,NULL),(23,'Part-time(80%)','',80,1493231858,1,1493231858,1,NULL,NULL);
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `global_lu_likelihoods` (
+  `likelihood_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `title` varchar(128) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
+  `shortname` varchar(64) CHARACTER SET utf8 NOT NULL DEFAULT '',
+  `description` varchar(128) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
+  `order` int(11) NOT NULL DEFAULT '0',
+  `created_date` bigint(64) unsigned NOT NULL,
+  `created_by` int(11) unsigned NOT NULL,
+  `updated_date` bigint(64) unsigned NOT NULL,
+  `updated_by` int(11) unsigned NOT NULL,
+  `deleted_date` bigint(64) unsigned DEFAULT NULL,
+  `deleted_by` int(11) unsigned DEFAULT NULL,
+  PRIMARY KEY (`likelihood_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+INSERT INTO `global_lu_likelihoods` VALUES (1,'Unlikely','unlikely','Not very likely to encounter',0,1495033048,1,1495033048,1,NULL,NULL),(2,'Likely','likely','Likely to encounter',1,1495033048,1,1495033048,1,NULL,NULL),(3,'Very Likely','very_likely','Very likely to encounter',2,1495033048,1,1495033048,1,NULL,NULL);
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `global_lu_objective_sets` (
   `objective_set_id` int(12) NOT NULL AUTO_INCREMENT,
+  `code` varchar(24) DEFAULT NULL,
   `title` varchar(255) NOT NULL,
   `description` text,
   `shortname` varchar(128) NOT NULL,
   `start_date` bigint(64) DEFAULT NULL,
   `end_date` bigint(64) DEFAULT NULL,
   `standard` tinyint(1) DEFAULT '0',
+  `languages` text,
+  `requirements` text,
+  `maximum_levels` int(2) DEFAULT '1',
+  `short_method` text,
+  `long_method` text,
   `created_date` bigint(64) NOT NULL,
   `created_by` int(12) NOT NULL,
   `updated_date` bigint(64) DEFAULT NULL,
   `updated_by` int(12) DEFAULT NULL,
   `deleted_date` bigint(64) DEFAULT NULL,
-  PRIMARY KEY (`objective_set_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8;
+  PRIMARY KEY (`objective_set_id`),
+  KEY `shortname` (`shortname`)
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
-INSERT INTO `global_lu_objective_sets` VALUES (1,'Entrusbable Professional Activities','Entrusbable Professional Activities','epa',NULL,NULL,0,1483495904,1,NULL,NULL,NULL),(2,'Key Competencies','Key Competencies','kc',NULL,NULL,1,1483495904,1,NULL,NULL,NULL),(3,'Enabling Competencies','Enabling Competencies','ec',NULL,NULL,1,1483495904,1,NULL,NULL,NULL),(4,'Milestones','Milestones','milestone',NULL,NULL,0,1483495904,1,NULL,NULL,NULL);
+INSERT INTO `global_lu_objective_sets` VALUES (1,NULL,'Entrustable Professional Activities','Entrustable Professional Activities','epa',NULL,NULL,0,'{\"0\":\"en\"}','{\"code\":{\"required\":false},\"title\":{\"required\":true},\"description\":{\"required\":false}}',1,'%t','<h4 class=\"tag-title\">%t</h4><p class=\"tag-description\">%d</p>',1483495904,1,NULL,NULL,1510375507),(2,NULL,'Key Competencies','Key Competencies','kc',NULL,NULL,1,'{\"0\":\"en\"}','{\"code\":{\"required\":false},\"title\":{\"required\":true},\"description\":{\"required\":false}}',1,'%t','<h4 class=\"tag-title\">%t</h4><p class=\"tag-description\">%d</p>',1483495904,1,NULL,NULL,1510375507),(3,NULL,'Enabling Competencies','Enabling Competencies','ec',NULL,NULL,1,'{\"0\":\"en\"}','{\"code\":{\"required\":false},\"title\":{\"required\":true},\"description\":{\"required\":false}}',1,'%t','<h4 class=\"tag-title\">%t</h4><p class=\"tag-description\">%d</p>',1483495904,1,NULL,NULL,1510375507),(4,NULL,'Milestones','Milestones','milestone',NULL,NULL,0,'{\"0\":\"en\"}','{\"code\":{\"required\":false},\"title\":{\"required\":true},\"description\":{\"required\":false}}',1,'%t','<h4 class=\"tag-title\">%t</h4><p class=\"tag-description\">%d</p>',1483495904,1,NULL,NULL,1510375507),(5,NULL,'Contextual Variable Responses','Contextual Variable Responses','contextual_variable_responses',NULL,NULL,0,'{\"0\":\"en\"}','{\"code\":{\"required\":false},\"title\":{\"required\":true},\"description\":{\"required\":false}}',1,'%t','<h4 class=\"tag-title\">%t</h4><p class=\"tag-description\">%d</p>',1510375503,1,NULL,NULL,1510375507),(6,NULL,'Curriculum Objectives','','curriculumobjectives',NULL,NULL,0,'{\"0\":\"en\"}','{\"code\":{\"required\":false},\"title\":{\"required\":true},\"description\":{\"required\":false}}',4,'%t','<h4 class=\"tag-title\">%t</h4><p class=\"tag-description\">%d</p>',0,0,0,0,NULL),(7,NULL,'Clinical Learning Objectives',NULL,'clinicallearningobjectives',NULL,NULL,0,'{\"0\":\"en\"}','{\"code\":{\"required\":false},\"title\":{\"required\":true},\"description\":{\"required\":false}}',1,'%t','<h4 class=\"tag-title\">%t</h4><p class=\"tag-description\">%d</p>',0,0,0,0,NULL),(8,NULL,'MCC Presentations',NULL,'mccpresentations',NULL,NULL,0,'{\"0\":\"en\"}','{\"code\":{\"required\":false},\"title\":{\"required\":true},\"description\":{\"required\":false}}',2,'%t','<h4 class=\"tag-title\">%t</h4><p class=\"tag-description\">%d</p>',1265296358,1,1265296358,1,NULL),(9,NULL,'AAMC Physician Competencies Reference Set','July 2013 *Source: Englander R, Cameron T, Ballard AJ, Dodge J, Bull J, and Aschenbrener CA. Toward a common taxonomy of competency domains for the health professions and competencies for physicians. Acad Med. 2013;88:1088-1094.','aamcphysiciancompetenciesreferenceset',NULL,NULL,0,'{\"0\":\"en\"}','{\"code\":{\"required\":false},\"title\":{\"required\":true},\"description\":{\"required\":false}}',2,'%t','<h4 class=\"tag-title\">%t</h4><p class=\"tag-description\">%d</p>',1391798786,1,1391798786,1,NULL);
 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -6069,20 +7513,26 @@ CREATE TABLE `global_lu_objectives` (
   `objective_secondary_description` text,
   `objective_parent` int(12) NOT NULL DEFAULT '0',
   `objective_set_id` int(12) NOT NULL,
+  `associated_objective` int(12) DEFAULT NULL,
   `objective_order` int(12) NOT NULL DEFAULT '0',
   `objective_loggable` tinyint(1) NOT NULL DEFAULT '0',
   `objective_active` int(12) NOT NULL DEFAULT '1',
+  `non_examinable` int(11) NOT NULL DEFAULT '0',
+  `objective_status_id` int(11) NOT NULL DEFAULT '2',
+  `admin_notes` varchar(600) DEFAULT NULL,
+  `objective_translation_status_id` int(12) NOT NULL DEFAULT '0',
   `updated_date` bigint(64) NOT NULL,
   `updated_by` int(12) NOT NULL,
   PRIMARY KEY (`objective_id`),
   KEY `objective_order` (`objective_order`),
   KEY `objective_code` (`objective_code`),
   KEY `idx_parent` (`objective_parent`,`objective_active`),
+  KEY `objective_parent` (`objective_parent`),
   FULLTEXT KEY `ft_objective_search` (`objective_code`,`objective_name`,`objective_description`)
 ) ENGINE=MyISAM AUTO_INCREMENT=2403 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
-INSERT INTO `global_lu_objectives` VALUES (1,NULL,'Curriculum Objectives','',NULL,0,0,2,0,1,0,0),(2,NULL,'Medical Expert','',NULL,1,0,0,0,1,0,0),(3,NULL,'Professionalism','',NULL,1,0,0,0,1,0,0),(4,NULL,'Scholar','',NULL,1,0,0,0,1,0,0),(5,NULL,'Communicator','',NULL,1,0,0,0,1,0,0),(6,NULL,'Collaborator','',NULL,1,0,0,0,1,0,0),(7,NULL,'Advocate','',NULL,1,0,0,0,1,0,0),(8,NULL,'Manager','',NULL,1,0,0,0,1,0,0),(9,NULL,'Application of Basic Sciences','The competent medical graduate articulates and uses the basic sciences to inform disease prevention, health promotion and the assessment and management of patients presenting with clinical illness.',NULL,2,0,0,0,1,0,0),(10,NULL,'Clinical Assessment','Is able to perform a complete and appropriate clinical assessment of patients presenting with clinical illness',NULL,2,0,1,0,1,0,0),(11,NULL,'Clinical Presentations','Is able to appropriately assess and provide initial management for patients presenting with clinical illness, as defined by the Medical Council of Canada Clinical Presentations',NULL,2,0,2,0,1,0,0),(12,NULL,'Health Promotion','Apply knowledge of disease prevention and health promotion to the care of patients',NULL,2,0,3,0,1,0,0),(13,NULL,'Professional Behaviour','Demonstrates appropriate professional behaviours to serve patients, the profession, and society',NULL,3,0,0,0,1,0,0),(14,NULL,'Principles of Professionalism','Apply knowledge of legal and ethical principles to serve patients, the profession, and society',NULL,3,0,1,0,1,0,0),(15,NULL,'Critical Appraisal','Critically evaluate medical information and its sources (the literature)',NULL,4,0,0,0,1,0,0),(16,NULL,'Research','Contribute to the process of knowledge creation (research)',NULL,4,0,1,0,1,0,0),(17,NULL,'Life Long Learning','Engages in life long learning',NULL,4,0,2,0,1,0,0),(18,NULL,'Effective Communication','Effectively communicates with colleagues, other health professionals, patients, families and other caregivers',NULL,5,0,0,0,1,0,0),(19,NULL,'Effective Collaboration','Effectively collaborate with colleagues and other health professionals',NULL,6,0,0,0,1,0,0),(20,NULL,'Determinants of Health','Articulate and apply the determinants of health and disease, principles of health promotion and disease prevention',NULL,7,0,0,0,1,0,0),(21,NULL,'Profession and Community','Effectively advocate for their patients, the profession, and community',NULL,7,0,1,0,1,0,0),(22,NULL,'Practice Options','Describes a variety of practice options and settings within the practice of Medicine',NULL,8,0,0,0,1,0,0),(23,NULL,'Balancing Health and Profession','Balances personal health and professional responsibilities',NULL,8,0,1,0,1,0,0),(24,NULL,'ME1.1 Homeostasis & Dysregulation','Applies knowledge of molecular, biochemical, cellular, and systems-level mechanisms that maintain homeostasis, and of the dysregulation of these mechanisms, to the prevention, diagnosis, and management of disease.',NULL,9,0,0,0,1,0,0),(25,NULL,'ME1.2 Physics and Chemistry','Apply major principles of physics and chemistry to explain normal biology, the pathobiology of significant diseases, and the mechanism of action of major technologies used in the prevention, diagnosis, and treatment of disease.',NULL,9,0,1,0,1,0,0),(26,NULL,'ME1.3 Genetics','Use the principles of genetic transmission, molecular biology of the human genome, and population genetics to guide assessments and clinical decision making.',NULL,9,0,2,0,1,0,0),(27,NULL,'ME1.4 Defense Mechanisms','Apply the principles of the cellular and molecular basis of immune and nonimmune host defense mechanisms in health and disease to determine the etiology of disease, identify preventive measures, and predict response to therapies.',NULL,9,0,3,0,1,0,0),(28,NULL,'ME1.5 Pathological Processes','Apply the mechanisms of general and disease-specific pathological processes in health and disease to the prevention, diagnosis, management, and prognosis of critical human disorders.',NULL,9,0,4,0,1,0,0),(29,NULL,'ME1.6 Microorganisms','Apply principles of the biology of microorganisms in normal physiology and disease to explain the etiology of disease, identify preventive measures, and predict response to therapies.',NULL,9,0,5,0,1,0,0),(30,NULL,'ME1.7 Pharmacology','Apply the principles of pharmacology to evaluate options for safe, rational, and optimally beneficial drug therapy.',NULL,9,0,6,0,1,0,0),(32,NULL,'ME2.1 History and Physical','Conducts a comprehensive and appropriate history and physical examination ',NULL,10,0,0,0,1,0,0),(33,NULL,'ME2.2 Procedural Skills','Demonstrate proficient and appropriate use of selected procedural skills, diagnostic and therapeutic',NULL,10,0,1,0,1,0,0),(34,NULL,'ME3.x Clinical Presentations','',NULL,11,0,0,0,1,0,0),(35,NULL,'ME4.1 Health Promotion & Maintenance','',NULL,12,0,0,0,1,0,0),(36,NULL,'P1.1 Professional Behaviour','Practice appropriate professional behaviours, including honesty, integrity, commitment, dependability, compassion, respect, an understanding of the human condition, and altruism in the educational  and clinical settings',NULL,13,0,0,0,1,0,0),(37,NULL,'P1.2 Patient-Centered Care','Learn how to deliver the highest quality patient-centered care, with commitment to patients\' well being.  ',NULL,13,0,1,0,1,0,0),(38,NULL,'P1.3 Self-Awareness','Is self-aware, engages consultancy appropriately and maintains competence',NULL,13,0,2,0,1,0,0),(39,NULL,'P2.1 Ethics','Analyze ethical issues encountered in practice (such as informed consent, confidentiality, truth telling, vulnerable populations, etc.)',NULL,14,0,0,0,1,0,0),(40,NULL,'P2.2 Law and Regulation','Apply profession-led regulation to serve patients, the profession and society. ',NULL,14,0,1,0,1,0,0),(41,NULL,'S1.1 Information Retrieval','Are able to retrieve medical information efficiently and effectively',NULL,15,0,0,0,1,0,0),(42,NULL,'S1.2 Critical Evaluation','Critically evaluate the validity and applicability of medical procedures and therapeutic modalities to patient care',NULL,15,0,1,0,1,0,0),(43,NULL,'S2.1 Research Methodology','Adopt rigorous research methodology and scientific inquiry procedures',NULL,16,0,0,0,1,0,0),(44,NULL,'S2.2 Sharing Innovation','Prepares and disseminates new medical information',NULL,16,0,1,0,1,0,0),(45,NULL,'S3.1 Learning Strategies','Implements effective personal learning experiences including the capacity to engage in reflective learning',NULL,17,0,0,0,1,0,0),(46,NULL,'CM1.1 Therapeutic Relationships','Demonstrate skills and attitudes to foster rapport, trust and ethical therapeutic relationships with patients and families',NULL,18,0,0,0,1,0,0),(47,NULL,'CM1.2 Eliciting Perspectives','Elicit and synthesize relevant information and perspectives of patients and families, colleagues and other professionals',NULL,18,0,1,0,1,0,0),(48,NULL,'CM1.3 Conveying Information','Convey relevant information and explanations appropriately to patients and families, colleagues and other professionals, orally and in writing',NULL,18,0,2,0,1,0,0),(49,NULL,'CM1.4 Finding Common Ground','Develop a common understanding on issues, problems, and plans with patients and families, colleagues and other professionals to develop a shared plan of care',NULL,18,0,3,0,1,0,0),(50,NULL,'CL 1.1 Working In Teams','Participate effectively and appropriately as part of a multiprofessional healthcare team.',NULL,19,0,0,0,1,0,0),(51,NULL,'CL1.2 Overcoming Conflict','Work with others effectively in order to prevent, negotiate, and resolve conflict.',NULL,19,0,1,0,1,0,0),(52,NULL,'CL1.3 Including Patients and Families','Includes patients and families in prevention and management of illness',NULL,19,0,2,0,1,0,0),(53,NULL,'CL1.4 Teaching and Learning','Teaches and learns from others consistently  ',NULL,19,0,3,0,1,0,0),(54,NULL,'A1.1 Applying Determinants of Health','Apply knowledge of the determinants of health for populations to medical encounters and problems.',NULL,20,0,0,0,1,0,0),(55,NULL,'A2.1 Community Resources','Identify and communicate about community resources to promote health, prevent disease, and manage illness in their patients and the communities they will serve.',NULL,21,0,0,0,1,0,0),(56,NULL,'A2.2 Responsibility and Service','Integrate the principles of advocacy into their understanding of their professional responsibility to patients and the communities they will serve. ',NULL,21,0,1,0,1,0,0),(57,NULL,'M1.1 Career Settings','Is aware of the variety of practice options and settings within the practice of Medicine, and makes informed personal choices regarding career direction',NULL,22,0,0,0,1,0,0),(58,NULL,'M2.1 Work / Life Balance','Identifies and implement strategies that promote care of one\'s self and one\'s colleagues to maintain balance between personal and educational/ professional commitments',NULL,23,0,0,0,1,0,0),(59,NULL,'ME1.1a','Apply knowledge of biological systems and their interactions to explain how the human body functions in health and disease. ',NULL,24,0,0,0,1,0,0),(60,NULL,'ME1.1b','Use the principles of feedback control to explain how specific homeostatic and reproductive systems maintain the internal environment and identify (1) how perturbations in these systems may result in disease and (2) how homeostasis may be changed by disease.',NULL,24,0,1,0,1,0,0),(61,NULL,'ME1.1c','Apply knowledge of the atomic and molecular characteristics of biological constituents to predict normal and pathological molecular function.',NULL,24,0,2,0,1,0,0),(62,NULL,'ME1.1d','Explain how the regulation of major biochemical energy production pathways and the synthesis/degradation of macromolecules function to maintain health and identify major forms of dysregulation in disease.',NULL,24,0,3,0,1,0,0),(63,NULL,'ME1.1e','Explain the major mechanisms of intra- and intercellular communication and their role in health and disease states.',NULL,24,0,4,0,1,0,0),(64,NULL,'ME1.1f','Apply an understanding of the morphological and biochemical events that occur when somatic or germ cells divide, and the mechanisms that regulate cell division and cell death, to explain normal and abnormal growth and development.',NULL,24,0,5,0,1,0,0),(65,NULL,'ME1.1g','Identify and describe the common and unique microscopic and three dimensional macroscopic structures of macromolecules, cells, tissues, organs, systems, and compartments that lead to their unique and integrated function from fertilization through senescence to explain how perturbations contribute to disease. ',NULL,24,0,6,0,1,0,0),(66,NULL,'ME1.1h','Predict the consequences of structural variability and damage or loss of tissues and organs due to maldevelopment, trauma, disease, and aging.',NULL,24,0,7,0,1,0,0),(67,NULL,'ME1.1i','Apply principles of information processing at the molecular, cellular, and integrated nervous system level and understanding of sensation, perception, decision making, action, and cognition to explain behavior in health and disease.',NULL,24,0,8,0,1,0,0),(68,NULL,'ME1.2a','Apply the principles of physics and chemistry, such as mass flow, transport, electricity, biomechanics, and signal detection and processing, to the specialized functions of membranes, cells, tissues, organs, and the human organism, and recognize how perturbations contribute to disease.',NULL,25,0,0,0,1,0,0),(69,NULL,'ME1.2b','Apply the principles of physics and chemistry to explain the risks, limitations, and appropriate use of diagnostic and therapeutic technologies.',NULL,25,0,1,0,1,0,0),(70,NULL,'ME1.3a','Describe the functional elements in the human genome, their evolutionary origins, their interactions, and the consequences of genetic and epigenetic changes on adaptation and health.',NULL,26,0,0,0,1,0,0),(71,NULL,'ME1.3b','Explain how variation at the gene level alters the chemical and physical properties of biological systems, and how this, in turn, influences health.',NULL,26,0,1,0,1,0,0),(72,NULL,'ME1.3c','Describe the major forms and frequencies of genetic variation and their consequences on health in different human populations.',NULL,26,0,2,0,1,0,0),(73,NULL,'ME1.3d','Apply knowledge of the genetics and the various patterns of genetic transmission within families in order to obtain and interpret family history and ancestry data, calculate risk of disease, and order genetic tests to guide therapeutic decision-making.',NULL,26,0,3,0,1,0,0),(74,NULL,'ME1.3e','Use to guide clinical action plans, the interaction of genetic and environmental factors to produce phenotypes and provide the basis for individual variation in response to toxic, pharmacological, or other exposures.',NULL,26,0,4,0,1,0,0),(75,NULL,'ME1.4a','Apply knowledge of the generation of immunological diversity and specificity to the diagnosis and treatment of disease.',NULL,27,0,0,0,1,0,0),(76,NULL,'ME1.4b','Apply knowledge of the mechanisms for distinction between self and nonself (tolerance and immune surveillance) to the maintenance of health, autoimmunity, and transplant rejection.',NULL,27,0,1,0,1,0,0),(77,NULL,'ME1.4c','Apply knowledge of the molecular basis for immune cell development to diagnose and treat immune deficiencies.',NULL,27,0,2,0,1,0,0),(78,NULL,'ME1.4d','Apply knowledge of the mechanisms used to defend against intracellular or extracellular microbes to the development of immunological prevention or treatment.',NULL,27,0,3,0,1,0,0),(79,NULL,'ME1.5a','Apply knowledge of cellular responses to injury, and the underlying etiology, biochemical and molecular alterations, to assess therapeutic interventions.',NULL,28,0,0,0,1,0,0),(80,NULL,'ME1.5b','Apply knowledge of the vascular and leukocyte responses of inflammation and their cellular and soluble mediators to the causation, resolution, prevention, and targeted therapy of tissue injury.',NULL,28,0,1,0,1,0,0),(81,NULL,'ME1.5c','Apply knowledge of the interplay of platelets, vascular endothelium, leukocytes, and coagulation factors in maintaining fluidity of blood, formation of thrombi, and causation of atherosclerosis to the prevention and diagnosis of thrombosis and atherosclerosis in various vascular beds, and the selection of therapeutic responses.',NULL,28,0,2,0,1,0,0),(82,NULL,'ME1.5d','Apply knowledge of the molecular basis of neoplasia to an understanding of the biological behavior, morphologic appearance, classification, diagnosis, prognosis, and targeted therapy of specific neoplasms.',NULL,28,0,3,0,1,0,0),(83,NULL,'ME1.6a','Apply the principles of host-pathogen and pathogen-population interactions and knowledge of pathogen structure, genomics, lifecycle, transmission, natural history, and pathogenesis to the prevention, diagnosis, and treatment of infectious disease.',NULL,29,0,0,0,1,0,0),(84,NULL,'ME1.6b','Apply the principles of symbiosis (commensalisms, mutualism, and parasitism) to the maintenance of health and disease.',NULL,29,0,1,0,1,0,0),(85,NULL,'ME1.6c','Apply the principles of epidemiology to maintaining and restoring the health of communities and individuals.',NULL,29,0,2,0,1,0,0),(86,NULL,'ME1.7a','Apply knowledge of pathologic processes, pharmacokinetics, and pharmacodynamics to guide safe and effective treatments.',NULL,30,0,0,0,1,0,0),(87,NULL,'ME1.7b','Select optimal drug therapy based on an understanding of pertinent research, relevant medical literature, regulatory processes, and pharmacoeconomics.',NULL,30,0,1,0,1,0,0),(88,NULL,'ME1.7c','Apply knowledge of individual variability in the use and responsiveness to pharmacological agents to selecting and monitoring therapeutic regimens and identifying adverse responses.',NULL,30,0,2,0,1,0,0),(89,NULL,'ME1.8a','Apply basic mathematical tools and concepts, including functions, graphs and modeling, measurement and scale, and quantitative reasoning, to an understanding of the specialized functions of membranes, cells, tissues, organs, and the human organism, in both health and disease.',NULL,31,0,0,0,1,0,0),(90,NULL,'ME1.8b','Apply the principles and approaches of statistics, biostatistics, and epidemiology to the evaluation and interpretation of disease risk, etiology, and prognosis, and to the prevention, diagnosis, and management of disease.',NULL,31,0,1,0,1,0,0),(91,NULL,'ME1.8c','Apply the basic principles of information systems, their design and architecture, implementation, use, and limitations, to information retrieval, clinical problem solving, and public health and policy.',NULL,31,0,2,0,1,0,0),(92,NULL,'ME1.8d','Explain the importance, use, and limitations of biomedical and health informatics, including data quality, analysis, and visualization, and its application to diagnosis, therapeutics, and characterization of populations and subpopulations. ',NULL,31,0,3,0,1,0,0),(93,NULL,'ME1.8e','Apply elements of the scientific process, such as inference, critical analysis of research design, and appreciation of the difference between association and causation, to interpret the findings, applications, and limitations of observational and experimental research in clinical decision making.',NULL,31,0,4,0,1,0,0),(94,NULL,'ME2.1a','Effectively identify and explore issues to be addressed in a patient encounter, including the patient\'s context and preferences.',NULL,32,0,0,0,1,0,0),(95,NULL,'ME2.1b','For purposes of prevention and health promotion, diagnosis and/or management, elicit a history that is relevant, concise and accurate to context and preferences.',NULL,32,0,1,0,1,0,0),(96,NULL,'ME2.1c','For the purposes of prevention and health promotion, diagnosis and/or management, perform a focused physical examination that is relevant and accurate.',NULL,32,0,2,0,1,0,0),(97,NULL,'ME2.1d','Select basic, medically appropriate investigative methods in an ethical manner.',NULL,32,0,3,0,1,0,0),(98,NULL,'ME2.1e','Demonstrate effective clinical problem solving and judgment to address selected common patient presentations, including interpreting available data and integrating information to generate differential diagnoses and management plans.',NULL,32,0,4,0,1,0,0),(99,NULL,'ME2.2a','Demonstrate effective, appropriate and timely performance of selected diagnostic procedures.',NULL,33,0,0,0,1,0,0),(100,NULL,'ME2.2b','Demonstrate effective, appropriate and timely performance of selected therapeutic procedures.',NULL,33,0,1,0,1,0,0),(101,NULL,'ME3.xa','Identify and apply aspects of normal human structure and physiology relevant to the clinical presentation.',NULL,34,0,0,0,1,0,0),(102,NULL,'ME3.xb','Identify pathologic or maladaptive processes that are active.',NULL,34,0,1,0,1,0,0),(103,NULL,'ME3.xc','Develop a differential diagnosis for the clinical presentation.',NULL,34,0,2,0,1,0,0),(104,NULL,'ME3.xd','Use history taking and physical examination relevant to the clinical presentation.',NULL,34,0,3,0,1,0,0),(105,NULL,'ME3.xe','Use diagnostic tests or procedures appropriately to establish working diagnoses.',NULL,34,0,4,0,1,0,0),(106,NULL,'ME3.xf','Provide appropriate initial management for the clinical presentation.',NULL,34,0,5,0,1,0,0),(107,NULL,'ME3.xg','Provide evidence for diagnostic and therapeutic choices.',NULL,34,0,6,0,1,0,0),(108,NULL,'ME4.1a','Demonstrate awareness and respect for the Determinants of Health in identifying the needs of a patient.',NULL,35,0,0,0,1,0,0),(109,NULL,'ME4.1b','Discover opportunities for health promotion and disease prevention as well as resources for patient care.',NULL,35,0,1,0,1,0,0),(110,NULL,'ME4.1c','Formulate preventive measures into their management strategies.',NULL,35,0,2,0,1,0,0),(111,NULL,'ME4.1d','Communicate with the patient, the patient\'s family and concerned others with regard to risk factors and their modification where appropriate.',NULL,35,0,3,0,1,0,0),(112,NULL,'ME4.1e','Describe programs for the promotion of health including screening for, and the prevention of, illness.',NULL,35,0,4,0,1,0,0),(113,NULL,'P1.1a','Defines the concepts of honesty, integrity, commitment, dependability, compassion, respect and altruism as applied to medical practice and correctly identifies examples of appropriate and inappropriate application.',NULL,36,0,0,0,1,0,0),(114,NULL,'P1.1b','Applies these concepts in medical and professional encounters.',NULL,36,0,1,0,1,0,0),(115,NULL,'P1.2a','Defines the concept of \"standard of care\".',NULL,37,0,0,0,1,0,0),(116,NULL,'P1.2b','Applies diagnostic and therapeutic modalities in evidence based and patient centred contexts.',NULL,37,0,1,0,1,0,0),(117,NULL,'P1.3a','Recognizes and acknowledges limits of personal competence.',NULL,38,0,0,0,1,0,0),(118,NULL,'P1.3b','Is able to acquire specific knowledge appropriately to assist clinical management.',NULL,38,0,1,0,1,0,0),(119,NULL,'P1.3c','Engages colleagues and other health professionals appropriately.',NULL,38,0,2,0,1,0,0),(120,NULL,'P2.1a','Analyze ethical issues encountered in practice (such as informed consent, confidentiality, truth telling, vulnerable populations etc).',NULL,39,0,0,0,1,0,0),(121,NULL,'P2.1b','Analyze legal issues encountered in practice (such as conflict of interest, patient rights and privacy, etc).',NULL,39,0,1,0,1,0,0),(122,NULL,'P2.1c','Analyze the psycho-social, cultural and religious issues that could affect patient management.',NULL,39,0,2,0,1,0,0),(123,NULL,'P2.1d','Define and implement principles of appropriate relationships with patients.',NULL,39,0,3,0,1,0,0),(124,NULL,'P2.2a','Recognize the professional, legal and ethical codes and obligations required of current practice in a variety of settings, including hospitals, private practice and health care institutions, etc.',NULL,40,0,0,0,1,0,0),(125,NULL,'P2.2b','Recognize and respond appropriately to unprofessional behaviour in colleagues.',NULL,40,0,1,0,1,0,0),(126,NULL,'S1.1a','Use objective parameters to assess reliability of various sources of medical information.',NULL,41,0,0,0,1,0,0),(127,NULL,'S1.1b','Are able to efficiently search sources of medical information in order to address specific clinical questions.',NULL,41,0,1,0,1,0,0),(128,NULL,'S1.2a','Apply knowledge of research and statistical methodology to the review of medical information and make decisions for health care of patients and society through scientifically rigourous analysis of evidence.',NULL,42,0,0,0,1,0,0),(129,NULL,'S1.2b','Apply to the review of medical literature the principles of research ethics, including disclosure, conflicts of interest, research on human subjects and industry relations.',NULL,42,0,1,0,1,0,0),(130,NULL,'S1.2c','Identify the nature and requirements of organizations contributing to medical education.',NULL,42,0,2,0,1,0,0),(131,NULL,'S1.2d','Balance scientific evidence with consideration of patient preferences and overall quality of life in therapeutic decision making.',NULL,42,0,3,0,1,0,0),(132,NULL,'S2.1a','Formulates relevant research hypotheses.',NULL,43,0,0,0,1,0,0),(133,NULL,'S2.1b','Develops rigorous methodologies.',NULL,43,0,1,0,1,0,0),(134,NULL,'S2.1c','Develops appropriate collaborations in order to participate in research projects.',NULL,43,0,2,0,1,0,0),(135,NULL,'S2.1d','Practice research ethics, including disclosure, conflicts of interest, research on human subjects and industry relations.',NULL,43,0,3,0,1,0,0),(136,NULL,'S2.1e','Evaluates the outcomes of research by application of rigorous statistical analysis.',NULL,43,0,4,0,1,0,0),(137,NULL,'S2.2a','Report to students and faculty upon new knowledge gained from research and enquiry, using a variety of methods.',NULL,44,0,0,0,1,0,0),(138,NULL,'S3.1a','Develop lifelong learning strategies through integration of the principles of learning.',NULL,45,0,0,0,1,0,0),(139,NULL,'S3.1b','Self-assess learning critically, in congruence with others\' assessment, and address prioritized learning issues.',NULL,45,0,1,0,1,0,0),(140,NULL,'S3.1c','Ask effective learning questions and solve problems appropriately.',NULL,45,0,2,0,1,0,0),(141,NULL,'S3.1d','Consult multiple sources of information.',NULL,45,0,3,0,1,0,0),(142,NULL,'S3.1e','Employ a variety of learning methodologies.',NULL,45,0,4,0,1,0,0),(143,NULL,'S3.1f','Learn with and enhance the learning of others through communities of practice.',NULL,45,0,5,0,1,0,0),(144,NULL,'S3.1g','Employ information technology (informatics) in learning, including, in clerkship, access to patient record data and other technologies.',NULL,45,0,6,0,1,0,0),(145,NULL,'CM1.1a','Apply the skills that develop positive therapeutic relationships with patients and their families, characterized by understanding, trust, respect, honesty and empathy.',NULL,46,0,0,0,1,0,0),(146,NULL,'CM1.1b','Respect patient confidentiality, privacy and autonomy.',NULL,46,0,1,0,1,0,0),(147,NULL,'CM1.1c','Listen effectively and be aware of and responsive to nonverbal cues.',NULL,46,0,2,0,1,0,0),(148,NULL,'CM1.1d','Communicate effectively with individuals regardless of their social, cultural or ethnic backgrounds, or disabilities.',NULL,46,0,3,0,1,0,0),(149,NULL,'CM1.1e','Effectively facilitate a structured clinical encounter.',NULL,46,0,4,0,1,0,0),(150,NULL,'CM1.2a','Gather information about a disease, but also about a patient\'s beliefs, concerns, expectations and illness experience.',NULL,47,0,0,0,1,0,0),(151,NULL,'CM1.2b','Seek out and synthesize relevant information from other sources, such as a patient\'s family, caregivers and other professionals.',NULL,47,0,1,0,1,0,0),(152,NULL,'CM1.3a','Provide accurate information to a patient and family, colleagues and other professionals in a clear, non-judgmental, and understandable manner.',NULL,48,0,0,0,1,0,0),(153,NULL,'CM1.3b','Maintain clear, accurate and appropriate records of clinical encounters and plans.',NULL,48,0,1,0,1,0,0),(154,NULL,'CM1.3c','Effectively present verbal reports of clinical encounters and plans.',NULL,48,0,2,0,1,0,0),(155,NULL,'CM1.4a','Effectively identify and explore problems to be addressed from a patient encounter, including the patient\'s context, responses, concerns and preferences.',NULL,49,0,0,0,1,0,0),(156,NULL,'CM1.4b','Respect diversity and difference, including but not limited to the impact of gender, religion and cultural beliefs on decision making.',NULL,49,0,1,0,1,0,0),(157,NULL,'CM1.4c','Encourage discussion, questions and interaction in the encounter.',NULL,49,0,2,0,1,0,0),(158,NULL,'CM1.4d','Engage patients, families and relevant health professionals in shared decision making to develop a plan of care.',NULL,49,0,3,0,1,0,0),(159,NULL,'CM1.4e','Effectively address challenging communication issues such as obtaining informed consent, delivering bad news, and addressing anger, confusion and misunderstanding.',NULL,49,0,4,0,1,0,0),(160,NULL,'CL1.1a','Clearly describe and demonstrate their roles and responsibilities under law and other provisions, to other professionals within a variety of health care settings.',NULL,50,0,0,0,1,0,0),(161,NULL,'CL1.1b','Recognize and respect the diversity of roles and responsibilities of other health care professionals in a variety of settings, noting  how these roles interact with their own.',NULL,50,0,1,0,1,0,0),(162,NULL,'CL1.1c','Work with others to assess, plan, provide and integrate care for individual patients.',NULL,50,0,2,0,1,0,0),(163,NULL,'CL1.1d','Respect team ethics, including confidentiality, resource allocation and professionalism.',NULL,50,0,3,0,1,0,0),(164,NULL,'CL1.1e','Where appropriate, demonstrate leadership in a healthcare team.',NULL,50,0,4,0,1,0,0),(165,NULL,'CL1.2a','Demonstrate a respectful attitude towards other colleagues and members of an interprofessional team members in a variety of settings.',NULL,51,0,0,0,1,0,0),(166,NULL,'CL1.2b','Respect differences, and work to overcome misunderstandings and limitations in others, that may contribute to conflict.',NULL,51,0,1,0,1,0,0),(167,NULL,'CL1.2c','Recognize one\'s own differences, and work to overcome one\'s own misunderstandings and limitations that may contribute to interprofessional conflict.',NULL,51,0,2,0,1,0,0),(168,NULL,'CL1.2d','Reflect on successful interprofessional team function.',NULL,51,0,3,0,1,0,0),(169,NULL,'CL1.3a','Identify the roles of patients and their family in prevention and management of illness.',NULL,52,0,0,0,1,0,0),(170,NULL,'CL1.3b','Learn how to inform and involve the patient and family in decision-making and management plans.',NULL,52,0,1,0,1,0,0),(171,NULL,'CL1.4a','Improve teaching through advice from experts in medical education.',NULL,53,0,0,0,1,0,0),(172,NULL,'CL1.4b','Accept supervision and feedback.',NULL,53,0,1,0,1,0,0),(173,NULL,'CL1.4c','Seek learning from others.',NULL,53,0,2,0,1,0,0),(174,NULL,'A1.1a','Explain factors that influence health, disease, disability and access to care including non-biologic factors (cultural, psychological, sociologic, familial, economic, environmental, legal, political, spiritual needs and beliefs).',NULL,54,0,0,0,1,0,0),(175,NULL,'A1.1b','Describe barriers to access to care and resources.',NULL,54,0,1,0,1,0,0),(176,NULL,'A1.1c','Discuss health issues for special populations, including vulnerable or marginalized populations.',NULL,54,0,2,0,1,0,0),(177,NULL,'A1.1d','Identify principles of health policy and implications.',NULL,54,0,3,0,1,0,0),(178,NULL,'A1.1e','Describe health programs and interventions at the population level.',NULL,54,0,4,0,1,0,0),(179,NULL,'A2.1a','Identify the role of and method of access to services of community resources.',NULL,55,0,0,0,1,0,0),(180,NULL,'A2.1b','Describe appropriate methods of communication about community resources to and on behalf of patients.',NULL,55,0,1,0,1,0,0),(181,NULL,'A2.1c','Locate and analyze a variety of health communities and community health networks in the local Kingston area and beyond.',NULL,55,0,2,0,1,0,0),(182,NULL,'A2.2a','Describe the role and examples of physicians and medical associations in advocating collectively for health and patient safety.',NULL,56,0,0,0,1,0,0),(183,NULL,'A2.2b','Analyze the ethical and professional issues inherent in health advocacy, including possible conflict between roles of gatekeeper and manager.',NULL,56,0,1,0,1,0,0),(184,NULL,'M1.1a','Outline strategies for effective practice in a variety of health care settings, including their structure, finance and operation.',NULL,57,0,0,0,1,0,0),(185,NULL,'M1.1b','Outline the common law and statutory provisions which govern practice and collaboration within hospital and other settings.',NULL,57,0,1,0,1,0,0),(186,NULL,'M1.1c','Recognizes one\'s own personal preferences and strengths and uses this knowledge in career decisions.',NULL,57,0,2,0,1,0,0),(187,NULL,'M1.1d','Identify career paths within health care settings.',NULL,57,0,3,0,1,0,0),(188,NULL,'M2.1a','Identify and balance personal and educational priorities to foster future balance between personal health and a sustainable practice.',NULL,58,0,0,0,1,0,0),(189,NULL,'M2.1b','Practice personal and professional awareness, insight and acceptance of feedback and peer review;  participate in peer review.',NULL,58,0,1,0,1,0,0),(190,NULL,'M2.1c','Implement plans to overcome barriers to health personal and professional behavior.',NULL,58,0,2,0,1,0,0),(191,NULL,'M2.1d','Recognize and respond to other educational/professional colleagues in need of support.',NULL,58,0,3,0,1,0,0),(200,NULL,'Clinical Learning Objectives',NULL,NULL,0,0,1,0,1,0,0),(201,NULL,'Pain, lower limb',NULL,NULL,200,0,113,0,1,1257353646,1),(202,NULL,'Pain, upper limb',NULL,NULL,200,0,112,0,1,1257353646,1),(203,NULL,'Fracture/disl\'n',NULL,NULL,200,0,111,0,1,1257353646,1),(204,NULL,'Scrotal pain',NULL,NULL,200,0,101,0,1,1257353646,1),(205,NULL,'Blood in urine',NULL,NULL,200,0,100,0,1,1257353646,1),(206,NULL,'Urinary obstruction/hesitancy',NULL,NULL,200,0,99,0,1,1257353646,1),(207,NULL,'Nausea/vomiting',NULL,NULL,200,0,98,0,1,1257353646,1),(208,NULL,'Hernia',NULL,NULL,200,0,97,0,1,1257353646,1),(209,NULL,'Abdominal injuries',NULL,NULL,200,0,96,0,1,1257353646,1),(210,NULL,'Chest injuries',NULL,NULL,200,0,95,0,1,1257353646,1),(211,NULL,'Breast disorders',NULL,NULL,200,0,94,0,1,1257353646,1),(212,NULL,'Anorectal pain',NULL,NULL,200,0,93,0,1,1257353646,1),(213,NULL,'Blood, GI tract',NULL,NULL,200,0,92,0,1,1257353646,1),(214,NULL,'Abdominal distension',NULL,NULL,200,0,91,0,1,1257353646,1),(215,NULL,'Subs abuse/addic/wdraw',NULL,NULL,200,0,90,0,1,1257353646,1),(216,NULL,'Abdo pain - acute',NULL,NULL,200,0,89,0,1,1257353646,1),(217,NULL,'Psychosis/disord thoughts',NULL,NULL,200,0,88,0,1,1257353646,1),(218,NULL,'Personality disorders',NULL,NULL,200,0,87,0,1,1257353646,1),(219,NULL,'Panic/anxiety',NULL,NULL,200,0,86,0,1,1257353646,1),(221,NULL,'Mood disorders',NULL,NULL,200,0,84,0,1,1257353646,1),(222,NULL,'XR-Wrist/hand',NULL,NULL,200,0,83,0,1,1257353646,1),(223,NULL,'XR-Chest',NULL,NULL,200,0,82,0,1,1257353646,1),(224,NULL,'XR-Hip/pelvis',NULL,NULL,200,0,81,0,1,1257353646,1),(225,NULL,'XR-Ankle/foot',NULL,NULL,200,0,80,0,1,1257353646,1),(226,NULL,'Skin ulcers-tumors',NULL,NULL,200,0,79,0,1,1257353646,1),(228,NULL,'Skin wound',NULL,NULL,200,0,77,0,1,1257353646,1),(233,NULL,'Dyspnea, acute',NULL,NULL,200,0,72,0,1,1257353646,1),(234,NULL,'Infant/child nutrition',NULL,NULL,200,0,71,0,1,1257353646,1),(235,NULL,'Newborn assessment',NULL,NULL,200,0,70,0,1,1257353646,1),(236,NULL,'Rash,child',NULL,NULL,200,0,69,0,1,1257353646,1),(237,NULL,'Ped naus/vom/diarh',NULL,NULL,200,0,68,0,1,1257353646,1),(238,NULL,'Ped EM\'s-acutely ill',NULL,NULL,200,0,67,0,1,1257353646,1),(239,NULL,'Ped dysp/resp dstres',NULL,NULL,200,0,66,0,1,1257353646,1),(240,NULL,'Ped constipation',NULL,NULL,200,0,65,0,1,1257353646,1),(241,NULL,'Fever in a child',NULL,NULL,200,0,64,0,1,1257353646,1),(242,NULL,'Ear pain',NULL,NULL,200,0,63,0,1,1257353646,1),(257,NULL,'Prolapse',NULL,NULL,200,0,48,0,1,1257353646,1),(258,NULL,'Vaginal bleeding, abn',NULL,NULL,200,0,47,0,1,1257353646,1),(259,NULL,'Postpartum, normal',NULL,NULL,200,0,46,0,1,1257353646,1),(260,NULL,'Labour, normal',NULL,NULL,200,0,45,0,1,1257353646,1),(261,NULL,'Labour, abnormal',NULL,NULL,200,0,44,0,1,1257353646,1),(262,NULL,'Infertility',NULL,NULL,200,0,43,0,1,1257353646,1),(263,NULL,'Incontinence-urine',NULL,NULL,200,0,42,0,1,1257353646,1),(264,NULL,'Hypertension, preg',NULL,NULL,200,0,41,0,1,1257353646,1),(265,NULL,'Dysmenorrhea',NULL,NULL,200,0,40,0,1,1257353646,1),(266,NULL,'Contraception',NULL,NULL,200,0,39,0,1,1257353646,1),(267,NULL,'Antepartum care',NULL,NULL,200,0,38,0,1,1257353646,1),(268,NULL,'Weakness',NULL,NULL,200,0,37,0,1,1257353646,1),(269,NULL,'Sodium-abn',NULL,NULL,200,0,36,0,1,1257353646,1),(270,NULL,'Renal failure',NULL,NULL,200,0,35,0,1,1257353646,1),(271,NULL,'Potassium-abn',NULL,NULL,200,0,34,0,1,1257353646,1),(272,NULL,'Murmur',NULL,NULL,200,0,33,0,1,1257353646,1),(273,NULL,'Joint pain, poly',NULL,NULL,200,0,32,0,1,1257353646,1),(274,NULL,'Impaired LOC (coma)',NULL,NULL,200,0,31,0,1,1257353646,1),(275,NULL,'Hypotension',NULL,NULL,200,0,30,0,1,1257353646,1),(276,NULL,'Hypertension',NULL,NULL,200,0,29,0,1,1257353646,1),(277,NULL,'H+ concentratn, abn',NULL,NULL,200,0,28,0,1,1257353646,1),(278,NULL,'Fever',NULL,NULL,200,0,27,0,1,1257353646,1),(279,NULL,'Edema',NULL,NULL,200,0,26,0,1,1257353646,1),(280,NULL,'Dyspnea-chronic',NULL,NULL,200,0,25,0,1,1257353646,1),(281,NULL,'Diabetes mellitus',NULL,NULL,200,0,24,0,1,1257353646,1),(282,NULL,'Dementia',NULL,NULL,200,0,23,0,1,1257353646,1),(283,NULL,'Delerium/confusion',NULL,NULL,200,0,22,0,1,1257353646,1),(284,NULL,'Cough',NULL,NULL,200,0,21,0,1,1257353646,1),(286,NULL,'Anemia',NULL,NULL,200,0,19,0,1,1257353646,1),(287,NULL,'Chest pain',NULL,NULL,200,0,18,0,1,1257353646,1),(288,NULL,'Abdo pain-chronic',NULL,NULL,200,0,17,0,1,1257353646,1),(289,NULL,'Wk-rel\'td health iss',NULL,NULL,200,0,16,0,1,1257353646,1),(290,NULL,'Weight loss/gain',NULL,NULL,200,0,15,0,1,1257353646,1),(291,NULL,'URTI',NULL,NULL,200,0,14,0,1,1257353646,1),(292,NULL,'Sore throat',NULL,NULL,200,0,13,0,1,1257353646,1),(293,NULL,'Skin rash',NULL,NULL,200,0,12,0,1,1257353646,1),(294,NULL,'Pregnancy',NULL,NULL,200,0,11,0,1,1257353646,1),(295,NULL,'Periodic health exam',NULL,NULL,200,0,10,0,1,1257353646,1),(296,NULL,'Pain, spinal',NULL,NULL,200,0,9,0,1,1257353646,1),(299,NULL,'Headache',NULL,NULL,200,0,6,0,1,1257353646,1),(300,NULL,'Fatigue',NULL,NULL,200,0,5,0,1,1257353646,1),(303,NULL,'Dysuria/pyuria',NULL,NULL,200,0,2,0,1,1257353646,1),(304,NULL,'Fracture/dislocation',NULL,NULL,200,0,114,0,1,1261414735,1),(305,NULL,'Pain',NULL,NULL,200,0,115,0,1,1261414735,1),(306,NULL,'Preop Assess - anesthesiology',NULL,NULL,200,0,116,0,1,1261414735,1),(307,NULL,'Preop Assess - surgery',NULL,NULL,200,0,117,0,1,1261414735,1),(308,NULL,'Pain - spinal',NULL,NULL,200,0,118,0,1,1261414735,1),(309,NULL,'MCC Presentations',NULL,NULL,0,0,3,0,1,1265296358,1),(310,'1-E','Abdominal Distension','Abdominal distention is common and may indicate the presence of serious intra-abdominal or systemic disease.',NULL,309,0,1,0,1,1271174177,1),(311,'2-E','Abdominal Mass','If hernias are excluded, most other abdominal masses represent a significant underlying disease that requires complete investigation.',NULL,309,0,2,0,1,1271174177,1),(312,'2-1-E','Adrenal Mass','Adrenal masses are at times found incidentally after CT, MRI, or ultrasound examination done for unrelated reasons.  The incidence is about 3.5 % (almost 10 % of autopsies).',NULL,311,0,1,0,1,1271174178,1),(313,'2-2-E','Hepatomegaly','True hepatomegaly (enlargement of the liver with a span greater than 14 cm in adult males and greater than 12 cm in adult females) is an uncommon clinical presentation, but is important to recognize in light of potentially serious causal conditions.',NULL,311,0,2,0,1,1271174178,1),(314,'2-4-E','Hernia (abdominal Wall And Groin)','A hernia is defined as an abnormal protrusion of part of a viscus through its containing wall.  Hernias, in particular inguinal hernias, are very common, and thus, herniorrphaphy is a very common surgical intervention.',NULL,311,0,3,0,1,1271174178,1),(315,'2-3-E','Splenomegaly','Splenomegaly, an enlarged spleen detected on physical examination by palpitation or percussion at Castell\'s point, is relatively uncommon.  However, it is often associated with serious underlying pathology.',NULL,311,0,4,0,1,1271174178,1),(316,'3-1-E','Abdominal Pain (children)','Abdominal pain is a common complaint in children.  While the symptoms may result from serious abdominal pathology, in a large proportion of cases, an identifiable organic cause is not found.  The causes are often age dependent.',NULL,309,0,3,0,1,1271174178,1),(317,'3-2-E','Abdominal Pain, Acute ','Abdominal pain may result from intra-abdominal inflammation or disorders of the abdominal wall.  Pain may also be referred from sources outside the abdomen such as retroperitoneal processes as well as intra-thoracic processes.  Thorough clinical evaluation is the most important \"test\" in the diagnosis of abdominal pain.',NULL,309,0,4,0,1,1271174178,1),(318,'3-4-E','Abdominal Pain, Anorectal','While almost all causes of anal pain are treatable, some can be destructive locally if left untreated.',NULL,309,0,5,0,1,1271174178,1),(319,'3-3-E','Abdominal Pain, Chronic','Chronic and recurrent abdominal pain, including heartburn or dyspepsia is a common symptom (20 - 40 % of adults) with an extensive differential diagnosis and heterogeneous pathophysiology.  The history and physical examination frequently differentiate between functional and more serious underlying diseases.',NULL,309,0,6,0,1,1271174178,1),(320,'4-E','Allergic Reactions/food Allergies Intolerance/atopy','Allergic reactions are considered together despite the fact that they exhibit a variety of clinical responses and are considered separately under the appropriate presentation.  The rationale for considering them together is that in some patients with a single response (e.g., atopic dermatitis), other atopic disorders such as asthma or allergic rhinitis may occur at other times.  Moreover, 50% of patients with atopic dermatitis report a family history of respiratory atopy. ',NULL,309,0,7,0,1,1271174178,1),(321,'5-E','Attention Deficit/hyperactivity Disorder (adhd)/learning Dis','Family physicians at times are the initial caregivers to be confronted by developmental and behavioural problems of childhood and adolescence (5 - 10% of school-aged population).  Lengthy waiting lists for specialists together with the urgent plight of patients often force primary-care physicians to care for these children.',NULL,309,0,8,0,1,1271174178,1),(322,'6-E','Blood From Gastrointestinal Tract','Both upper and lower gastrointestinal bleeding are common and may be life-threatening.  Upper intestinal bleeding usually presents with hematemesis (blood or coffee-ground material) and/or melena (black, tarry stools).  Lower intestinal bleeding usually manifests itself as hematochezia (bright red blood or dark red blood or clots per rectum).  Unfortunately, this difference is not consistent. Melena may be seen in patients with colorectal or small bowel bleeding, and hematochezia may be seen with massive upper gastrointestinal bleeding.  Occult bleeding from the gastrointestinal tract may also be identified by positive stool for occult blood or the presence of iron deficiency anemia.',NULL,309,0,9,0,1,1271174178,1),(323,'6-2-E','Blood From Gastrointestinal Tract, Lower/hematochezia','Although lower gastrointestinal bleeding (blood originating distal to ligament of Treitz) or hematochezia is less common than upper (20% vs. 80%), it is associated with 10 -20% morbidity and mortality since it usually occurs in the elderly.  Early identification of colorectal cancer is important in preventing cancer-related morbidity and mortality (colorectal cancer is second only to lung cancer as a cause of cancer-related death). ',NULL,322,0,1,0,1,1271174178,1),(324,'6-1-E','Blood From Gastrointestinal Tract, Upper/hematemesis','Although at times self-limited, upper GI bleeding always warrants careful and urgent evaluation, investigation, and treatment.  The urgency of treatment and the nature of resuscitation depend on the amount of blood loss, the likely cause of the bleeding, and the underlying health of the patient.',NULL,322,0,2,0,1,1271174178,1),(325,'7-E','Blood In Sputum (hemoptysis/prevention Of Lung Cancer)','Expectoration of blood can range from blood streaking of sputum to massive hemoptysis (&gt;200 ml/d) that may be acutely life threatening.  Bleeding usually starts and stops unpredictably, but under certain circumstances may require immediate establishment of an airway and control of the bleeding.',NULL,309,0,10,0,1,1271174178,1),(326,'8-E','Blood In Urine (hematuria)','Urinalysis is a screening procedure for insurance and routine examinations.  Persistent hematuria implies the presence of conditions ranging from benign to malignant.',NULL,309,0,11,0,1,1271174178,1),(327,'9-1-E','Hypertension','Hypertension is a common condition that usually presents with a modest elevation in either systolic or diastolic blood pressure.  Under such circumstances, the diagnosis of hypertension is made only after three separate properly measured blood pressures.  Appropriate investigation and management of hypertension is expected to improve health outcomes.',NULL,309,0,12,0,1,1271174178,1),(328,'9-1-1-E','Hypertension In Childhood','The prevalence of hypertension in children is&lt;1 %, but often results from identifiable causes (usually renal or vascular).  Consequently, vigorous investigation is warranted.',NULL,327,0,1,0,1,1271174178,1),(329,'9-1-2-E','Hypertension In The Elderly','Elderly patients (&gt;65 years) have hypertension much more commonly than younger patients do, especially systolic hypertension.  The prevalence of hypertension among the elderly may reach 60 -80 %.',NULL,327,0,2,0,1,1271174178,1),(330,'9-1-3-E','Malignant Hypertension','Malignant hypertension and hypertensive encephalopathies are two life-threatening syndromes caused by marked elevation in blood pressure.',NULL,327,0,3,0,1,1271174178,1),(331,'9-1-4-E','Pregnancy Associated Hypertension','Ten to 20 % of pregnancies are associated with hypertension.  Chronic hypertension complicates&lt;5%, preeclampsia occurs in slightly&gt;6%, and gestational hypertension arises in 6% of pregnant women.  Preeclampsia is potentially serious, but can be managed by treatment of hypertension and \'cured\' by delivery of the fetus.',NULL,327,0,4,0,1,1271174178,1),(332,'9-2-E','Hypotension/shock','All physicians must deal with life-threatening emergencies.  Regardless of underlying cause, certain general measures are usually indicated (investigations and therapeutic interventions) that can be life saving.',NULL,309,0,13,0,1,1271174178,1),(333,'9-2-1-E','Anaphylaxis','Anaphylaxis causes about 50 fatalities per year, and occurs in 1/5000-hospital admissions in Canada.  Children most commonly are allergic to foods.',NULL,332,0,1,0,1,1271174178,1),(334,'10-1-E','Breast Lump/screening','Complaints of breast lumps are common, and breast cancer is the most common cancer in women.  Thus, all breast complaints need to be pursued to resolution.  Screening women 50 - 69 years with annual mammography improves survival. ',NULL,309,0,14,0,1,1271174178,1),(335,'10-2-E','Galactorrhea/discharge','Although noticeable breast secretions are normal in&gt;50 % of reproductive age women, spontaneous persistent galactorrhea may reflect underlying disease and requires investigation.',NULL,309,0,15,0,1,1271174178,1),(336,'10-3-E','Gynecomastia','Although a definite etiology for gynecomastia is found in&lt;50% of patients, a careful drug history is important so that a treatable cause is detected.  The underlying feature is an increased estrogen to androgen ratio.',NULL,309,0,16,0,1,1271174178,1),(337,'11-E','Burns','Burns are relatively common and range from minor cutaneous wounds to major life-threatening traumas.  An understanding of the patho-physiology and treatment of burns and the metabolic and wound healing response will enable physicians to effectively assess and treat these injuries.',NULL,309,0,17,0,1,1271174178,1),(338,'12-1-E','Hypercalcemia','Hypercalcemia may be associated with an excess of calcium in both extracellular fluid and bone (e.g., increased intestinal absorption), or with a localised or generalised deficit of calcium in bone (e.g., increased bone resorption).  This differentiation by physicians is important for both diagnostic and management reasons.',NULL,309,0,18,0,1,1271174178,1),(339,'12-4-E','Hyperphosphatemia','Acute severe hyperphosphatemia can be life threatening.',NULL,309,0,19,0,1,1271174178,1),(340,'12-2-E','Hypocalcemia','Tetany, seizures, and papilledema may occur in patients who develop hypocalcemia acutely.',NULL,309,0,20,0,1,1271174178,1),(341,'12-3-E','Hypophosphatemia/fanconi Syndrome','Of hospitalised patients, 10-15% develop hypophosphatemia, and a small proportion have sufficiently profound depletion to lead to complications (e.g., rhabdomyolysis).',NULL,309,0,21,0,1,1271174178,1),(342,'13-E','Cardiac Arrest','All physicians are expected to attempt resuscitation of an individual with cardiac arrest. In the community, cardiac arrest most commonly is caused by ventricular fibrillation. However, heart rhythm at clinical presentation in many cases is unknown.  As a consequence, operational criteria for cardiac arrest do not rely on heart rhythm but focus on the presumed sudden pulse-less condition and the absence of evidence of a non-cardiac condition as the cause of the arrest.',NULL,309,0,22,0,1,1271174178,1),(343,'14-E','Chest Discomfort/pain/angina Pectoris','Chest pain in the primary care setting, although potentially severe and disabling, is more commonly of benign etiology.  The correct diagnosis requires a cost-effective approach.  Although coronary heart disease primarily occurs in patients over the age of 40, younger men and women can be affected (it is estimated that advanced lesions are present in 20% of men and 8% of women aged 30 to 34).  Physicians must recognise the manifestations of coronary artery disease and assess coronary risk factors.  Modifications of risk factors should be recommended as necessary.',NULL,309,0,23,0,1,1271174178,1),(344,'15-1-E','Bleeding Tendency/bruising','A bleeding tendency (excessive, delayed, or spontaneous bleeding) may signify serious underlying disease.  In children or infants, suspicion of a bleeding disorder may be a family history of susceptibility to bleeding.  An organised approach to this problem is essential.  Urgent management may be required.',NULL,309,0,24,0,1,1271174178,1),(345,'15-2-E','Hypercoagulable State','Patients may present with venous thrombosis and on occasion with pulmonary embolism. A risk factor for thrombosis can now be identified in over 80% of such patients.',NULL,309,0,25,0,1,1271174178,1),(346,'16-1-E',' Adult Constipation','Constipation is common in Western society, but frequency depends on patient and physician\'s definition of the problem.  One definition is straining, incomplete evacuation, sense of blockade, manual maneuvers, and hard stools at least 25% of the time along with&lt;3 stools/week for at least 12 weeks (need not be consecutive).  The prevalence of chronic constipation rises with age. In patients&gt;65 years, almost 1/3 complain of constipation.',NULL,309,0,26,0,1,1271174178,1),(347,'16-2-E','Pediatric Constipation','Constipation is a common problem in children.  It is important to differentiate functional from organic causes in order to develop appropriate management plans.',NULL,309,0,27,0,1,1271174178,1),(348,'17-E','Contraception','Ideally, the prevention of an unwanted pregnancy should be directed at education of patients, male and female, preferably before first sexual contact.  Counselling patients about which method to use, how, and when is a must for anyone involved in health care.',NULL,309,0,28,0,1,1271174178,1),(349,'18-E','Cough','Chronic cough is the fifth most common symptom for which patients seek medical advice.  Assessment of chronic cough must be thorough.  Patients with benign causes for their cough (gastro-esophageal reflux, post-nasal drip, two of the commonest causes) can often be effectively and easily managed.  Patients with more serious causes for their cough (e.g., asthma, the other common cause of chronic cough) require full investigation and management is more complex.',NULL,309,0,29,0,1,1271174178,1),(350,'19-E','Cyanosis/hypoxemia/hypoxia','Cyanosis is the physical sign indicative of excessive concentration of reduced hemoglobin in the blood, but at times is difficult to detect (it must be sought carefully, under proper lighting conditions).  Hypoxemia (low partial pressure of oxygen in blood), when detected, may be reversible with oxygen therapy after which the underlying cause requires diagnosis and management.',NULL,309,0,30,0,1,1271174178,1),(351,'19-1-E','Cyanosis/hypoxemia/hypoxia In Children','Evaluation of the patient with cyanosis depends on the age of the child.  It is an ominous finding and differentiation between peripheral and central is essential in order to mount appropriate management.',NULL,350,0,1,0,1,1271174178,1),(352,'20-E','Deformity/limp/pain In Lower Extremity, Child','\'Limp\' is a bumpy, rough, or strenuous way of walking, usually caused by weakness, pain, or deformity.  Although usually caused by benign conditions, at times it may be life or limb threatening. ',NULL,309,0,31,0,1,1271174178,1),(353,'21-E','Development Disorder/developmental Delay','Providing that normal development and behavior is readily recognized, primary care physicians will at times be the first physicians in a position to assess development in an infant, and recognize abnormal delay and/or atypical development.  Developmental surveillance and direct developmental screening of children, especially those with predisposing risks, will then be an integral part of health care.',NULL,309,0,32,0,1,1271174178,1),(354,'22-1-E','Acute Diarrhea','Diarrheal diseases are extremely common worldwide, and even in North America morbidity and mortality is significant.  One of the challenges for a physician faced with a patient with acute diarrhea is to know when to investigate and initiate treatment and when to simply wait for a self-limiting condition to run its course.',NULL,309,0,33,0,1,1271174178,1),(355,'22-2-E','Chronic Diarrhea','Chronic diarrhea is a decrease in fecal consistency lasting for 4 or more weeks.  It affects about 5% of the population.',NULL,309,0,34,0,1,1271174178,1),(356,'22-3-E','Pediatric Diarrhea','Diarrhea is defined as frequent, watery stools and is a common problem in infants and children.  In most cases, it is mild and self-limited, but the potential for hypovolemia (reduced effective arterial/extracellular volume) and dehydration (water loss in excess of solute) leading to electrolyte abnormalities is great.  These complications in turn may lead to significant morbidity or even mortality.',NULL,309,0,35,0,1,1271174178,1),(357,'23-E','Diplopia','Diplopia is the major symptom associated with dysfunction of extra-ocular muscles or abnormalities of the motor nerves innervating these muscles.  Monocular diplopia is almost always indicative of relatively benign optical problems whereas binocular diplopia is due to ocular misalignment.  Once restrictive disease or myasthenia gravis is excluded, the major cause of binocular diplopia is a cranial nerve lesion.  Careful clinical assessment will enable diagnosis in most, and suggest appropriate investigation and management.',NULL,309,0,36,0,1,1271174178,1),(358,'24-E','Dizziness/vertigo','\"Dizziness\" is a common but imprecise complaint.  Physicians need to determine whether it refers to true vertigo, \'dizziness\', disequilibrium, or pre-syncope/ lightheadedness. ',NULL,309,0,37,0,1,1271174178,1),(359,'25-E','Dying Patient/bereavement','Physicians are frequently faced with patients dying from incurable or untreatable diseases. In such circumstances, the important role of the physician is to alleviate any suffering by the patient and to provide comfort and compassion to both patient and family. ',NULL,309,0,38,0,1,1271174178,1),(360,'26-E','Dysphagia/difficulty Swallowing','Dysphagia should be regarded as a danger signal that indicates the need to evaluate and define the cause of the swallowing difficulty and thereafter initiate or refer for treatment.',NULL,309,0,39,0,1,1271174178,1),(361,'27-E','Dyspnea','Dyspnea is common and distresses millions of patients with pulmonary disease and myocardial dysfunction.  Assessment of the manner dyspnea is described by patients suggests that their description may provide insight into the underlying pathophysiology of the disease.',NULL,309,0,40,0,1,1271174178,1),(362,'27-1-E','Acute Dyspnea (minutes To Hours)','Shortness of breath occurring over minutes to hours is caused by a relatively small number of conditions.  Attention to clinical information and consideration of these conditions can lead to an accurate diagnosis.  Diagnosis permits initiation of therapy that can limit associated morbidity and mortality.',NULL,361,0,1,0,1,1271174178,1),(363,'27-2-E','Chronic Dyspnea (weeks To Months)','Since patients with acute dyspnea require more immediate evaluation and treatment, it is important to differentiate them from those with chronic dyspnea.  However, chronic dyspnea etiology may be harder to elucidate.  Usually patients have cardio-pulmonary disease, but symptoms may be out of proportion to the demonstrable impairment.',NULL,361,0,2,0,1,1271174178,1),(364,'27-3-E','Pediatric Dyspnea/respiratory Distress','After fever, respiratory distress is one of the commonest pediatric emergency complaints.',NULL,361,0,3,0,1,1271174178,1),(365,'28-E','Ear Pain','The cause of ear pain is often otologic, but it may be referred.  In febrile young children, who most frequently are affected by ear infections, if unable to describe the pain, a good otologic exam is crucial. (see also <a href=\"objectives.pl?lang=english&amp;loc=obj&amp;id=40-E\" title=\"Presentation 40-E\">Hearing Loss/Deafness)',NULL,309,0,41,0,1,1271174178,1),(366,'29-1-E',' Generalized Edema','Patients frequently complain of swelling.  On closer scrutiny, such swelling often represents expansion of the interstitial fluid volume.  At times the swelling may be caused by relatively benign conditions, but at times serious underlying diseases may be present.',NULL,309,0,42,0,1,1271174178,1),(367,'29-2-E',' Unilateral/local Edema','Over 90 % of cases of acute pulmonary embolism are due to emboli emanating from the proximal veins of the lower extremities.',NULL,309,0,43,0,1,1271174178,1),(368,'30-E','Eye Redness','Red eye is a very common complaint.  Despite the rather lengthy list of causal conditions, three problems make up the vast majority of causes: conjunctivitis (most common), foreign body, and iritis.  Other types of injury are relatively less common, but important because excessive manipulation may cause further damage or even loss of vision.',NULL,309,0,44,0,1,1271174178,1),(369,'31-1-E','Failure To Thrive, Elderly ','Failure to thrive for an elderly person means the loss of energy, vigor and/or weight often accompanied by a decline in the ability to function and at times associated with depression.',NULL,309,0,45,0,1,1271174178,1),(370,'31-2-E','Failure To Thrive, Infant/child','Failure to thrive is a phrase that describes the occurrence of growth failure in either height or weight in childhood.  Since failure to thrive is attributed to children&lt;2 years whose weight is below the 5th percentile for age on more than one occasion, it is essential to differentiate normal from the abnormal growth patterns.',NULL,309,0,46,0,1,1271174178,1),(371,'32-E','Falls','Falls are common (&gt;1/3 of people over 65 years; 80% among those with?4 risk factors) and 1 in 10 are associated with serious injury such as hip fracture, subdural hematoma, or head injury.  Many are preventable.  Interventions that prevent falls and their sequelae delay or reduce the frequency of nursing home admissions.',NULL,309,0,47,0,1,1271174178,1),(372,'33-E','Fatigue ','In a primary care setting, 20-30% of patients will report significant fatigue (usually not associated with organic cause).  Fatigue&lt;1 month is \'recent\';&gt;6 months, it is \'chronic\'.',NULL,309,0,48,0,1,1271174178,1),(373,'34-E','Fractures/dislocations ','Fractures and dislocations are common problems at any age and are related to high-energy injuries (e.g., motor accidents, sport injuries) or, at the other end of the spectrum, simple injuries such as falls or non-accidental injuries.  They require initial management by primary care physicians with referral for difficult cases to specialists.',NULL,309,0,49,0,1,1271174178,1),(374,'35-E','Gait Disturbances/ataxia ','Abnormalities of gait can result from disorders affecting several levels of the nervous system and the type of abnormality observed clinically often indicates the site affected.',NULL,309,0,50,0,1,1271174178,1),(375,'36-E','Genetic Concerns','Genetics have increased our understanding of the origin of many diseases.  Parents with a family history of birth defects or a previously affected child need to know that they are at higher risk of having a baby with an anomaly.  Not infrequently, patients considering becoming parents seek medical advice because of concerns they might have.  Primary care physicians must provide counseling about risk factors such as maternal age, illness, drug use, exposure to infectious or environmental agents, etc. and if necessary referral if further evaluation is necessary.',NULL,309,0,51,0,1,1271174178,1),(376,'36-1-E','Ambiguous Genitalia','Genetic males with 46, XY genotype but having impaired androgen sensitivity of varying severity may present with features that range from phenotypic females to \'normal\' males with only minor defects in masculinization or infertility.  Primary care physicians may be called upon to determine the nature of the problem.',NULL,375,0,1,0,1,1271174178,1),(377,'36-2-E','Dysmorphic Features','Three out of 100 infants are born with a genetic disorder or congenital defect.  Many of these are associated with long-term disability, making early detection and identification vital.  Although early involvement of genetic specialists in the care of such children is prudent, primary care physicians are at times required to contribute immediate care, and subsequently assist with long term management of suctients.',NULL,375,0,2,0,1,1271174178,1),(378,'37-1-E','Hyperglycemia/diabetes Mellitus','Diabetes mellitus is a very common disorder associated with a relative or absolute impairment of insulin secretion together with varying degrees of peripheral resistance to the action of insulin.  The morbidity and mortality associated with diabetic complications may be reduced by preventive measures.  Intensive glycemic control will reduce neonatal complications and reduce congenital malformations in pregnancy diabetes.',NULL,309,0,52,0,1,1271174178,1),(379,'37-2-E','Hypoglycemia','Maintenance of the blood sugar within normal limits is essential for health.  In the short-term, hypoglycemia is much more dangerous than hyperglycemia.  Fortunately, it is an uncommon clinical problem outside of therapy for diabetes mellitus. ',NULL,309,0,53,0,1,1271174178,1),(380,'38-1-E','Alopecia ','Although in themselves hair changes may be innocuous, they can be psychologically unbearable.  Frequently they may provide significant diagnostic hints of underlying disease.',NULL,309,0,54,0,1,1271174178,1),(381,'38-2-E','Nail Complaints ','Nail disorders (toenails more than fingernails), especially ingrown, infected, and painful nails, are common conditions.  Local nail problems may be acute or chronic.  Relatively simple treatment can prevent or alleviate symptoms.  Although in themselves nail changes may be innocuous, they frequently provide significant diagnostic hints of underlying disease.',NULL,309,0,55,0,1,1271174178,1),(382,'39-E','Headache','The differentiation of patients with headaches due to serious or life-threatening conditions from those with benign primary headache disorders (e.g., tension headaches or migraine) is an important diagnostic challenge.',NULL,309,0,56,0,1,1271174178,1),(383,'40-E','Hearing Loss/deafness ','Many hearing loss causes are short-lived, treatable, and/or preventable.  In the elderly, more permanent sensorineural loss occurs.  In pediatrics, otitis media accounts for 25% of office visits.  Adults/older children have otitis less commonly, but may be affected by sequelae of otitis.',NULL,309,0,57,0,1,1271174178,1),(384,'41-E','Hemiplegia/hemisensory Loss +/- Aphasia','Hemiplegia/hemisensory loss results from an upper motor neuron lesion above the mid-cervical spinal cord.  The concomitant finding of aphasia is diagnostic of a dominant cerebral hemisphere lesion.  Acute hemiplegia generally heralds the onset of serious medical conditions, usually of vascular origin, that at times are effectively treated by advanced medical and surgical techniques.</p>\r\n<p>If the sudden onset of focal neurologic symptoms and/or signs lasts&lt;24 hours, presumably it was caused by a transient decrease in blood supply rendering the brain ischemic but with blood flow restoration timely enough to avoid infarction.  This definition of transient ischemic attacks (TIA) is now recognized to be inadequate.  ',NULL,309,0,58,0,1,1271174178,1),(385,'42-1-E','Anemia','The diagnosis in a patient with anemia can be complex.  An unfocused or unstructured investigation of anemia can be costly and inefficient.  Simple tests may provide important information.  Anemia may be the sole manifestation of serious medical disease.',NULL,309,0,59,0,1,1271174178,1),(386,'42-2-E','Polycythemia/elevated Hemoglobin','The reason for evaluating patients with elevated hemoglobin levels (male 185 g/L, female 165 g/L) is to ascertain the presence or absence of polycythemia vera first, and subsequently to differentiate between the various causes of secondary erythrocytosis.',NULL,309,0,60,0,1,1271174178,1),(387,'43-E','Hirsutism/virilization','Hirsutism, terminal body hair where unusual (face, chest, abdomen, back), is a common problem, particularly in dark-haired, darkly pigmented, white women.  However, if accompanied by virilization, then a full diagnostic evaluation is essential because it is androgen-dependent.  Hypertrichosis on the other hand is a rare condition usually caused by drugs or systemic illness.',NULL,309,0,61,0,1,1271174178,1),(388,'44-E','Hoarseness/dysphonia/speech And Language Abnormalities','Patients with impairment in comprehension and/or use of the form, content, or function of language are said to have a language disorder.  Those who have correct word choice and syntax but have speech disorders may have an articulation disorder.  Almost any change in voice quality may be described as hoarseness.  However, if it lasts more than 2 weeks, especially in patients who use alcohol or tobacco, it needs to be evaluated.',NULL,309,0,62,0,1,1271174178,1),(389,'45-E','Hydrogen Ion Concentration Abnormal, Serum','Major adverse consequences may occur with severe acidemia and alkalemia despite absence of specific symptoms.  The diagnosis depends on the clinical setting and laboratory studies.  It is crucial to distinguish acidemia due to metabolic causes from that due to respiratory causes; especially important is detecting the presence of both.  Management of the underlying causes and not simply of the change in [H+] is essential.',NULL,309,0,63,0,1,1271174178,1),(390,'46-E','Infertility','Infertility, meaning the inability to conceive after one year of intercourse without contraception, affects about 15% of couples.  Both partners must be investigated; male-associated factors account for approximately half of infertility problems.  Although current emphasis is on treatment technologies, it is important to consider first the cause of the infertility and tailor the treatment accordingly.',NULL,309,0,64,0,1,1271174178,1),(391,'47-1-E','Incontinence, Stool','Fecal incontinence varies from inadvertent soiling with liquid stool to the involuntary excretion of feces.  It is a demoralizing disability because it affects self-assurance and can lead to social isolation.  It is the second leading cause of nursing home placement.',NULL,309,0,65,0,1,1271174178,1),(392,'47-2-E','Incontinence, Urine','Because there is increasing incidence of involuntary micturition with age, incontinence has increased in frequency in our ageing population.  Unfortunately, incontinence remains under treated despite its effect on quality of life and impact on physical and psychological morbidity.  Primary care physicians should diagnose the cause of incontinence in the majority of cases.',NULL,309,0,66,0,1,1271174178,1),(393,'47-3-E','Incontinence, Urine, Pediatric (enuresis)','Enuresis is the involuntary passage of urine, and may be diurnal (daytime), nocturnal (nighttime), or both.  The majority of children have primary nocturnal enuresis (20% of five-year-olds).  Diurnal and secondary enuresis is much less common, but requires differentiating between underlying diseases and stress related conditions.',NULL,309,0,67,0,1,1271174178,1),(394,'48-E','Impotence/erectile Dysfunction','Impotence is an issue that has a major impact on relationships.  There is a need to explore the impact with both partners, although many consider it a male problem.  Impotence is present when an erection of sufficient rigidity for sexual intercourse cannot be acquired or sustained&gt;75% of the time.',NULL,309,0,68,0,1,1271174178,1),(395,'49-E','Jaundice ','Jaundice may represent hemolysis or hepatobiliary disease.  Although usually the evaluation of a patient is not urgent, in a few situations it is a medical emergency (e.g., massive hemolysis, ascending cholangitis, acute hepatic failure).',NULL,309,0,69,0,1,1271174178,1),(396,'49-1-E','Neonatal Jaundice ','Jaundice, usually mild unconjugated bilirubinemia, affects nearly all newborns.  Up to 65% of full-term neonates have jaundice at 72 - 96 hours of age.  Although some causes are ominous, the majority are transient and without consequences.',NULL,395,0,1,0,1,1271174178,1),(397,'50-1-E','Joint Pain, Mono-articular (acute, Chronic)','Any arthritis can initially present as one swollen painful joint.  Thus, the early exclusion of polyarticular joint disease may be challenging.  In addition, pain caused by a problem within the joint needs to be distinguished from pain arising from surrounding soft tissues.',NULL,309,0,70,0,1,1271174178,1),(398,'50-2-E','Joint Pain, Poly-articular (acute, Chronic)','Polyarticular joint pain is common in medical practice, and causes vary from some that are self-limiting to others which are potentially disabling and life threatening.',NULL,309,0,71,0,1,1271174178,1),(399,'50-3-E','Periarticular Pain/soft Tissue Rheumatic Disorders','Pain caused by a problem within the joint needs to be distinguished from pain arising from surrounding soft tissues.',NULL,309,0,72,0,1,1271174178,1),(400,'51-E','Lipids Abnormal, Serum ','Hypercholesterolemia is a common and important modifiable risk factor for ischemic heart disease (IHD) and cerebro-vascular disease.  The relationship of elevated triglycerides to IHD is less clear (may be a modest independent predictor) but very high levels predispose to pancreatitis.  HDL cholesterol is inversely related to IHD risk.',NULL,309,0,73,0,1,1271174178,1),(401,'52-E','Liver Function Tests Abnormal, Serum','Appropriate investigation can distinguish benign reversible liver disease requiring no treatment from potentially life-threatening conditions requiring immediate therapy.',NULL,309,0,74,0,1,1271174178,1),(402,'53-E','Lump/mass, Musculoskeletal ','Lumps or masses are a common cause for consultation with a physician.  The majority will be of a benign dermatologic origin. Musculoskeletal lumps or masses are not common, but they represent an important cause of morbidity and mortality, especially among young people.',NULL,309,0,75,0,1,1271174178,1),(403,'54-E','Lymphadenopathy','Countless potential causes may lead to lymphadenopathy.  Some of these are serious but treatable.  In a study of patients with lymphadenopathy, 84% were diagnosed with benign lymphadenopathy and the majority of these were due to a nonspecific (reactive) etiology.',NULL,309,0,76,0,1,1271174178,1),(404,'54-1-E','Mediastinal Mass/hilar Adenopathy','The mediastinum contains many vital structures (heart, aorta, pulmonary hila, esophagus) that are affected directly or indirectly by mediastinal masses.  Evaluation of such masses is aided by envisaging the nature of the mass from its location in the mediastinum.</p>\r\n<p>',NULL,403,0,1,0,1,1271174178,1),(405,'55-E','Magnesium Concentration Serum, Abnormal/hypomagnesemia ','Although hypomagnesemia occurs in only about 10% of hospitalized patients, the incidence rises to over 60% in severely ill patients.  It is frequently associated with hypokalemia and hypocalcemia.',NULL,309,0,77,0,1,1271174178,1),(406,'56-1-E','Amenorrhea/oligomenorrhea','The average age of onset of menarche in North America is 11 to 13 years and menopause is approximately 50 years.  Between these ages, absence of menstruation is a cause for investigation and appropriate management.',NULL,309,0,78,0,1,1271174178,1),(407,'56-2-E','Dysmenorrhea','Approximately 30 - 50% of post-pubescent women experience painful menstruation and 10% of women are incapacitated by pain 1 - 3 days per month.  It is the single greatest cause of lost working hours and school days among young women.',NULL,309,0,79,0,1,1271174178,1),(408,'56-3-E','Pre-menstrual Syndrome (pms)','Pre-menstrual syndrome is a combination of physical, emotional, or behavioral symptoms that occur prior to the menstrual cycle and are absent during the rest of the cycle.  The symproms, on occasion, are severe enough to intefere significantly with work and/or home activities.',NULL,309,0,80,0,1,1271174178,1),(409,'57-E','Menopause ','Women cease to have menstrual periods at about 50 years of age, although ovarian function declines earlier.  Changing population demographics means that the number of women who are menopausal will continue to grow, and many women will live 1/3 of their lives after ovarian function ceases.  Promotion of health maintenance in this group of women will enhance physical, emotional, and sexual quality of life.',NULL,309,0,81,0,1,1271174178,1),(410,'58-1-E','Coma','Patients with altered level of consciousness account for 5% of hospital admissions.  Coma however is defined as a state of pathologic unconsciousness (unarousable).',NULL,309,0,82,0,1,1271174178,1),(411,'58-2-E','Delirium/confusion ','An acute confusional state in patients with medical illness, especially among those who are older, is extremely common.  Between 10 - 15% of elderly patients admitted to hospital have delirium and up to a further 30% develop delirium while in hospital.  It represents a disturbance of consciousness with reduced ability to focus, sustain, or shift attention (DSM-IV).  This disturbance tends to develop over a short period of time (hours to days) and tends to fluctuate during the course of the day.  A clear understanding of the differential diagnosis enables rapid and appropriate management.',NULL,309,0,83,0,1,1271174178,1),(412,'58-3-E','Dementia','Dementia is a problem physicians encounter frequently, and causes that are potentially treatable require identification.  Alzheimer disease is the most common form of dementia in the elderly (about 70%), and primary care physicians will need to diagnose and manage the early cognitive manifestations.',NULL,309,0,84,0,1,1271174178,1),(413,'59-E','Mood Disorders ','Depression is one of the top five diagnoses made in the offices of primary care physicians.  Depressed mood occurs in some individuals as a normal reaction to grief, but in others it is considered abnormal because it interferes with the person\'s daily function (e.g., self-care, relationships, work, self-support).  Thus, it is necessary for primary care clinicians to detect depression, initiate treatment, and refer to specialists for assistance when required.',NULL,309,0,85,0,1,1271174178,1),(414,'60-E','Mouth Problems','Although many disease states can affect the mouth, the two most common ones are odontogenic infections (dental carries and periodontal infections) and oral carcinoma. Almost 15% of the population have significant periodontal disease despite its being preventable.  Such infections, apart from the discomfort inflicted, may result in serious complications.',NULL,309,0,86,0,1,1271174178,1),(415,'61-E','Movement Disorders,involuntary/tic Disorders','Movement disorders are regarded as either excessive (hyperkinetic) or reduced (bradykinetic) activity.  Diagnosis depends primarily on careful observation of the clinical features. ',NULL,309,0,87,0,1,1271174178,1),(416,'62-1-E','Diastolic Murmur','Although systolic murmurs are often \"innocent\" or physiological, diastolic murmurs are virtually always pathologic.',NULL,309,0,88,0,1,1271174178,1),(417,'62-2-E','Heart Sounds, Pathological','Pathological heart sounds are clues to underlying heart disease.',NULL,309,0,89,0,1,1271174178,1),(418,'62-3-E','Systolic Murmur','Ejection systolic murmurs are common, and frequently quite \'innocent\' (with absence of cardiac findings and normal splitting of the second sound).',NULL,309,0,90,0,1,1271174178,1),(419,'63-E','Neck Mass/goiter/thyroid Disease ','The vast majority of neck lumps are benign (usually reactive lymph nodes or occasionally of congenital origin).  The lumps that should be of most concern to primary care physicians are the rare malignant neck lumps.  Among patients with thyroid nodules, children, patients with a family history or history for head and neck radiation, and adults&lt;30 years or&gt;60 years are at higher risk for thyroid cancer.',NULL,309,0,91,0,1,1271174178,1),(420,'64-E','Newborn, Depressed','A call requesting assistance in the delivery of a newborn may be \"routine\" or because the neonate is depressed and requires resuscitation.  For any type of call, the physician needs to be prepared to manage potential problems.',NULL,309,0,92,0,1,1271174178,1),(421,'65-E','Non-reassuring Fetal Status (fetal Distress)','Non-reassuring fetal status occurs in 5 - 10% of pregnancies.  (Fetal distress, a term also used, is imprecise and has a low positive predictive value.  The newer term should be used.)  Early detection and pro-active management can reduce serious consequences and prepare parents for eventualities.',NULL,309,0,93,0,1,1271174178,1),(422,'66-E','Numbness/tingling/altered Sensation','Disordered sensation may be alarming and highly intrusive.  The physician requires a framework of knowledge in order to assess abnormal sensation, consider the likely site of origin, and recognise the implications.',NULL,309,0,94,0,1,1271174178,1),(423,'67-E','Pain','Because pain is considered a signal of disease, it is the most common symptom that brings a patient to a physician.  Acute pain is a vital protective mechanism.  In contrast, chronic pain (&gt;6 weeks or lasting beyond the ordinary duration of time that an injury needs to heal) serves no physiologic role and is itself a disease state.  Pain is an unpleasant somatic sensation, but it is also an emotion.  Although control of pain/discomfort is a crucial endpoint of medical care, the degree of analgesia provided is often inadequate, and may lead to complications (e.g., depression, suicide).  Physicians should recognise the development and progression of pain, and develop strategies for its control.',NULL,309,0,95,0,1,1271174178,1),(424,'67-1-2-1-E',' Generalized Pain Disorders','Fibromyalgia, a common cause of chronic musculoskeletal pain and fatigue, has no known etiology and is not associated with tissue inflammation.  It affects muscles, tendons, and ligaments.  Along with a group of similar conditions, fibromyalgia is controversial because obvious sign and laboratory/radiological abnormalities are lacking.</p>\r\n<p>Polymyalgia rheumatica, a rheumatic condition frequently linked to giant cell (temporal) arteritis, is a relatively common disorder (prevalence of about 700/100,000 persons over 50 years of age).  Synovitis is considered to be the cause of the discomfort.',NULL,423,0,1,0,1,1271174178,1),(425,'67-1-2-3-E','Local Pain, Hip/knee/ankle/foot','With the current interest in physical activity, the commonest cause of leg pain is muscular or ligamentous strain.  The knee, the most intricate joint in the body, has the greatest susceptibility to pain.',NULL,423,0,2,0,1,1271174178,1),(426,'67-1-2-2-E','Local Pain, Shoulder/elbow/wrist/hand','After backache, upper extremity pain is the most common type of musculoskeletal pain.',NULL,423,0,3,0,1,1271174178,1),(427,'67-1-2-4-E','Local Pain, Spinal Compression/osteoporosis','Spinal compression is one manifestation of osteoporosis, the prevalence of which increases with age.  As the proportion of our population in old age rises, osteoporosis becomes an important cause of painful fractures, deformity, loss of mobility and independence, and even death.  Although less common in men, the incidence of fractures increases exponentially with ageing, albeit 5 - 10 years later.  For unknown reasons, the mortality associated with fractures is higher in men than in women.',NULL,423,0,4,0,1,1271174178,1),(428,'67-1-2-6-E','Local Pain, Spine/low Back Pain','Low back pain is one of the most common physical complaints and a major cause of lost work time.  Most frequently it is associated with vocations that involve lifting, twisting, bending, and reaching.  In individuals suffering from chronic back pain, 5% will have an underlying serious disease.',NULL,423,0,5,0,1,1271174178,1),(429,'67-1-2-5-E','Local Pain, Spine/neck/thoracic','Approximately 10 % of the adult population have neck pain at any one time.  This prevalence is similar to low back pain, but few patients lose time from work and the development of neurologic deficits is&lt;1 %.',NULL,423,0,6,0,1,1271174178,1),(430,'67-2-2-E','Central/peripheral Neuropathic Pain','Neuropathic pain is caused by dysfunction of the nervous system without tissue damage.  The pain tends to be chronic and causes great discomfort.',NULL,423,0,7,0,1,1271174178,1),(431,'67-2-1-E','Sympathetic/complex Regional Pain Syndrome/reflex Sympatheti','Following an injury or vascular event (myocardial infarction, stroke), a disorder may develop that is characterized by regional pain and sensory changes (vasomotor instability, skin changes, and patchy bone demineralization).',NULL,423,0,8,0,1,1271174178,1),(432,'68-E','Palpitations (abnormal Ecg-arrhythmia)','Palpitations are a common symptom.  Although the cause is often benign, occasionally it may indicate the presence of a serious underlying problem.',NULL,309,0,96,0,1,1271174178,1),(433,'69-E','Panic And Anxiety ','Panic attacks/panic disorders are common problems in the primary care setting.  Although such patients may present with discrete episodes of intense fear, more commonly they complain of one or more physical symptoms.  A minority of such patients present to mental health settings, whereas 1/3 present to their family physician and another 1/3 to emergency departments.  Generalized anxiety disorder, characterized by excessive worry and anxiety that are difficult to control, tends to develop secondary to other psychiatric conditions.',NULL,309,0,97,0,1,1271174178,1),(434,'70-E','Pap Smear Screening','Carcinoma of the cervix is a preventable disease.  Any female patient who visits a physician\'s office should have current screening guidelines applied and if appropriate, a Pap smear should be recommended.',NULL,309,0,98,0,1,1271174178,1),(435,'71-E','Pediatric Emergencies  - Acutely Ill Infant/child','Although pediatric emergencies such as the ones listed below are discussed with the appropriate condition, the care of the patient in the pediatric age group demands special skills',NULL,309,0,99,0,1,1271174178,1),(436,'71-1-E','Crying/fussing Child','A young infant whose only symptom is crying/fussing challenges the primary care physician to distinguish between benign and organic causes.',NULL,435,0,1,0,1,1271174178,1),(437,'71-2-E','Hypotonia/floppy Infant/child','Infants/children with decreased resistance to passive movement differ from those with weakness and hyporeflexia.  They require detailed, careful neurologic evaluation. Management programs, often life-long, are multidisciplinary and involve patients, family, and community.',NULL,435,0,2,0,1,1271174178,1),(438,'72-E','Pelvic Mass','Pelvic masses are common and may be found in a woman of any age, although the possible etiologies differ among age groups.  There is a need to diagnose and investigate them since early detection may affect outcome.',NULL,309,0,100,0,1,1271174178,1),(439,'73-E','Pelvic Pain','Acute pelvic pain is potentially life threatening.  Chronic pelvic pain is one of the most common problems in gynecology.  Women average 2 - 3 visits each year to physicians\' offices with chronic pelvic pain.  At present, only about one third of these women are given a specific diagnosis.  The absence of a clear diagnosis can frustrate both patients and clinicians.  Once the diagnosis is established, specific and usually successful treatment may be instituted.',NULL,309,0,101,0,1,1271174178,1),(440,'74-E','Periodic Health Examination (phe) ','Periodically, patients visit physicians\' office not because they are unwell, but because they want a \'check-up\'.  Such visits are referred to as health maintenance or the PHE. The PHE is an opportunity to relate to an asymptomatic patient for the purpose of case finding and screening for undetected disease and risky behaviour.  It is also an opportunity for health promotion and disease prevention.  The decision to include or exclude a medical condition in the PHE should be based on the burden of suffering caused by the condition, the quality of the screening, and effectiveness of the intervention.',NULL,309,0,102,0,1,1271174178,1),(441,'74-2-E','Infant And Child Immunization ','Immunization has reduced or eradicated many infectious diseases and has improved overall world health.  Recommended immunization schedules are constantly updated as new vaccines become available.',NULL,440,0,1,0,1,1271174178,1),(442,'74-1-E','Newborn Assessment/nutrition ','Primary care physicians play a vital role in identifying children at risk for developmental and other disorders that are threatening to life or long-term health before they become symptomatic.  In most cases, parents require direction and reassurance regarding the health status of their newborn infant.  With respect to development, parental concerns regarding the child\'s language development, articulation, fine motor skills, and global development require careful assessment.',NULL,440,0,2,0,1,1271174178,1),(443,'74-3-E','Pre-operative Medical Evaluation','Evaluation of patients prior to surgery is an important element of comprehensive medical care.  The objectives of such an evaluation include the detection of unrecognized disease that may increase the risk of surgery and how to minimize such risk.',NULL,440,0,3,0,1,1271174178,1),(444,'74-4-E','Work-related Health Issues ','Physicians will encounter health hazards in their own work place, as well as in patients\' work place.  These hazards need to be recognised and addressed.  A patient\'s reported environmental exposures may prompt interventions important in preventing future illnesses/injuries.  Equally important, physicians can not only play an important role in preventing occupational illness but also in promoting environmental health.',NULL,440,0,4,0,1,1271174178,1),(445,'75-E','Personality Disorders ','Personality disorders are persistent and maladaptive patterns of behaviour exhibited over a wide variety of social, occupational, and relationship contexts and leading to distress and impairment.  They represent important risk factors for a variety of medical, interpersonal, and psychiatric difficulties.  For example, patients with personality difficulties may attempt suicide, or may be substance abusers.  As a group, they may alienate health care providers with angry outbursts, high-risk behaviours, signing out against medical advice, etc.',NULL,309,0,103,0,1,1271174178,1),(446,'76-E','Pleural Effusion/pleural Abnormalities',NULL,NULL,309,0,104,0,1,1271174178,1),(447,'77-E','Poisoning','Exposures to poisons or drug overdoses account for 5 - 10% of emergency department visits, and&gt;5 % of admissions to intensive care units.  More than 50 % of these patients are children less than 6 years of age.',NULL,309,0,105,0,1,1271174178,1),(448,'78-4-E','Administration Of Effective Health Programs At The Populatio','Knowing the organization of the health care and public health systems in Canada as well as how to determine the most cost-effective interventions are becoming key elements of clinical practice. Physicians also must work well in multidisciplinary teams within the current system in order to achieve the maximum health benefit for all patients and residents. ',NULL,309,0,106,0,1,1271174178,1),(449,'78-2-E','Assessing And Measuring Health Status At The Population Leve','Knowing the health status of the population allows for better planning and evaluation of health programs and tailoring interventions to meet patient/community needs. Physicians are also active participants in disease surveillance programs, encouraging them to address health needs in the population and not merely health demands.',NULL,309,0,107,0,1,1271174178,1),(450,'78-1-E','Concepts Of Health And Its Determinants','Concepts of health, illness, disease and the socially defined sick role are fundamental to understanding the health of a community and to applying that knowledge to the patients that a physician serves. With advances in care, the aspirations of patients for good health have expanded and this has placed new demands on physicians to address issues that are not strictly biomedical in nature. These concepts are also important if the physician is to understand health and illness behaviour. ',NULL,309,0,108,0,1,1271174178,1),(451,'78-6-E','Environment','Environmental issues are important in medical practice because exposures may be causally linked to a patient\'s clinical presentation and the health of the exposed population. A physician is expected to work with regulatory agencies to help implement the necessary interventions to prevent future illness.  Physician involvement is important in the promotion of global environmental health.',NULL,309,0,109,0,1,1271174178,1),(452,'78-7-E','Health Of Special Populations','Health equity is defined as each person in society having an equal opportunity for health. Each community is composed of diverse groups of individuals and sub-populations. Due to variations in factors such as physical location, culture, behaviours, age and gender structure, populations have different health risks and needs that must be addressed in order to achieve health equity.  Hence physicians need to be aware of the differing needs of population groups and must be able to adjust service provision to ensure culturally safe communications and care.',NULL,309,0,110,0,1,1271174178,1),(453,'78-3-E','Interventions At The Population Level','Many interventions at the individual level must be supported by actions at the community level. Physicians will be expected to advocate for community wide interventions and to address issues that occur to many patients across their practice. ',NULL,309,0,111,0,1,1271174178,1),(454,'78-5-E','Outbreak Management','Physicians are crucial participants in the control of outbreaks of disease. They must be able to diagnose cases, recognize outbreaks, report these to public health authorities and work with authorities to limit the spread of the outbreak. A common example includes physicians working in nursing homes and being asked to assist in the control of an outbreak of influenza or diarrhea.',NULL,309,0,112,0,1,1271174178,1),(455,'79-1-E','Hyperkalemia ','Hyperkalemia may have serious consequences (especially cardiac) and may also be indicative of the presence of serious associated medical conditions.',NULL,309,0,113,0,1,1271174178,1),(456,'79-2-E','Hypokalemia ','Hypokalemia, a common clinical problem, is most often discovered on routine analysis of serum electrolytes or ECG results.  Symptoms usually develop much later when depletion is quite severe.',NULL,309,0,114,0,1,1271174178,1),(457,'80-1-E','Antepartum Care ','The purpose of antepartum care is to help achieve as good a maternal and infant outcome as possible.  This means that psychosocial issues as well as biological issues need to be addressed.',NULL,309,0,115,0,1,1271174178,1),(458,'80-2-E','Intrapartum Care/postpartum Care ','Intrapartum and postpartum care means the care of the mother and fetus during labor and the six-week period following birth during which the reproductive tract returns to its normal nonpregnant state.  Of pregnant women, 85% will undergo spontaneous labor between 37 and 42 weeks of gestation.  Labor is the process by which products of conception are delivered from the uterus by progressive cervical effacement and dilatation in the presence of regular uterine contractions.',NULL,309,0,116,0,1,1271174178,1),(459,'80-3-E','Obstetrical Complications ','Virtually any maternal medical or surgical condition can complicate the course of a pregnancy and/or be affected by the pregnancy.  In addition, conditions arising in pregnancy can have adverse effects on the mother and/or the fetus.  For example, babies born prematurely account for&gt;50% of perinatal morbidity and mortality; an estimated 5% of women will describe bleeding of some extent during pregnancy, and in some patients the bleeding will endanger the mother.',NULL,309,0,117,0,1,1271174178,1),(460,'81-E','Pregnancy Loss','A miscarriage or abortion is a pregnancy that ends before the fetus can live outside the uterus.  The term also means the actual passage of the uterine contents.  It is very common in early pregnancy; up to 20% of pregnant women have a miscarriage before 20 weeks of pregnancy, 80% of these in the first 12 weeks.',NULL,309,0,118,0,1,1271174178,1),(461,'82-E','Prematurity','The impact of premature birth is best summarized by the fact that&lt;10% of babies born prematurely in North America account for&gt;50% of all perinatal morbidity and mortality.  Yet outcomes, although guarded, can be rewarding given optimal circumstances.',NULL,309,0,119,0,1,1271174178,1),(462,'83-E','Prolapse/pelvic Relaxation','Patients with pelvic relaxation present with a forward and downward drop of the pelvic organs (bladder, rectum).  In order to identify patients who would benefit from therapy, the physician should be familiar with the manifestations of pelvic relaxation (uterine prolapse, vaginal vault prolapse, cystocele, rectocele, and enterocele) and have an approach to management.',NULL,309,0,120,0,1,1271174178,1),(463,'84-E','Proteinuria ','Urinalysis is a screening procedure used frequently for insurance and routine examinations.  Proteinuria is usually identified by positive dipstick on routine urinalysis. Persistent proteinuria often implies abnormal glomerular function.',NULL,309,0,121,0,1,1271174178,1),(464,'85-E','Pruritus ','Itching is the most common symptom in dermatology.  In the absence of primary skin lesions, generalised pruritus can be indicative of an underlying systemic disorder.  Most patients with pruritus do not have a systemic disorder and the itching is due to a cutaneous disorder.',NULL,309,0,122,0,1,1271174178,1),(465,'86-E','Psychotic Patient/disordered Thought','Psychosis is a general term for a major mental disorder characterized by derangement of personality and loss of contact with reality, often with false beliefs (delusions), disturbances in sensory perception (hallucinations), or thought disorders (illusions). Schizophrenia is both the most common (1% of world population) and the classic psychotic disorder.  There are other psychotic syndromes that do not meet the diagnostic criteria for schizophrenia, some of them caused by general medical conditions or induced by a substance (alcohol, hallucinogens, steroids).  In the evaluation of any psychotic patient in a primary care setting all of these possibilities need to be considered.',NULL,309,0,123,0,1,1271174178,1),(466,'87-E','Pulse Abnormalities/diminished/absent/bruits','Arterial pulse characteristics should be assessed as an integral part of the physical examination.  Carotid, radial, femoral, posterior tibial, and dorsalis pedis pulses should be examined routinely on both sides, and differences, if any, in amplitude, contour, and upstroke should be ascertained.',NULL,309,0,124,0,1,1271174178,1),(467,'88-E','Pupil Abnormalities ','Pupillary disorders of changing degree are in general of little clinical importance.  If only one pupil is fixed to light, it is suspicious of the effect of mydriatics.  However, pupillary disorders with neurological symptoms may be of significance.',NULL,309,0,125,0,1,1271174178,1),(468,'89-1-E','Acute Renal Failure (anuria/oliguria/arf)','A sudden and rapid rise in serum creatinine is a common finding.  A competent physician is required to have an organised approach to this problem.',NULL,309,0,126,0,1,1271174178,1),(469,'89-2-E','Chronic Renal Failure ','Although specialists in nephrology will care for patients with chronic renal failure, family physicians will need to identify patients at risk for chronic renal disease, will participate in treatment to slow the progression of chronic renal disease, and will care for other common medical problems that afflict these patients.  Physicians must realise that patients with chronic renal failure have unique risks and that common therapies may be harmful because kidneys are frequently the main routes for excretion of many drugs.',NULL,309,0,127,0,1,1271174178,1),(470,'90-E','Scrotal Mass ','In children and adolescents, scrotal masses vary from incidental, requiring only reassurance, to acute pathologic events.  In adults, tumors of the testis are relatively uncommon (only 1 - 2 % of malignant tumors in men), but are considered of particular importance because they affect predominantly young men (25 - 34 years).  In addition, recent advances in management have resulted in dramatic improvement in survival rate.',NULL,309,0,128,0,1,1271174178,1),(471,'91-E','Scrotal Pain ','In most scrotal disorders, there is swelling of the testis or its adnexae.  However, some conditions are not only associated with pain, but pain may precede the development of an obvious mass in the scrotum.',NULL,309,0,129,0,1,1271174178,1),(472,'92-E','Seizures (epilepsy)','Seizures are an important differential diagnosis of syncope.  A seizure is a transient neurological dysfunction resulting from excessive/abnormal electrical discharges of cortical neurons.  They may represent epilepsy (a chronic condition characterized by recurrent seizures) but need to be differentiated from a variety of secondary causes.',NULL,309,0,130,0,1,1271174178,1),(473,'93-1-E','Sexual Maturation, Abnormal ','Sexual development is important to adolescent perception of self-image and wellbeing. Many factors may disrupt the normal progression to sexual maturation.',NULL,309,0,131,0,1,1271174178,1),(474,'94-E','Sexually Concerned Patient/gender Identity Disorder','The social appropriateness of sexuality is culturally determined.  The physician\'s own sexual attitude needs to be recognised and taken into account in order to deal with the patient\'s concern in a relevant manner.  The patient must be set at ease in order to make possible discussion of private and sensitive sexual issues.',NULL,309,0,132,0,1,1271174178,1),(475,'95-E','Skin Ulcers/skin Tumors (benign And Malignant)',NULL,NULL,309,0,133,0,1,1271174178,1),(476,'96-E','Skin Rash, Macules',NULL,NULL,309,0,134,0,1,1271174178,1),(477,'97-E','Skin Rash, Papules',NULL,NULL,309,0,135,0,1,1271174178,1),(478,'97-1-E','Childhood Communicable Diseases ','Communicable diseases are common in childhood and vary from mild inconveniences to life threatening disorders.  Physicians need to differentiate between these common conditions and initiate management.',NULL,477,0,1,0,1,1271174178,1),(479,'97-2-E','Urticaria/angioedema/anaphylaxis',NULL,NULL,477,0,2,0,1,1271174178,1),(480,'98-E','Sleep And Circadian Rhythm Disorders/sleep Apnea Syndrome/in','Insomnia is a symptom that affects 1/3 of the population at some time, and is a persistent problem in 10 % of the population.  Affected patients complain of difficulty in initiating and maintaining sleep, and this inability to obtain adequate quantity and quality of sleep results in impaired daytime functioning.',NULL,309,0,136,0,1,1271174178,1),(481,'99-1-E','Hypernatremia ','Although not extremely common, hypernatremia is likely to be encountered with increasing frequency in our ageing population.  It is also encountered at the other extreme of life, the very young, for the same reason: an inability to respond to thirst by drinking water.',NULL,309,0,137,0,1,1271174178,1),(482,'99-2-E','Hyponatremia ','Hyponatremia is detected in many asymptomatic patients because serum electrolytes are measured almost routinely.  In children with sodium depletion, the cause of the hyponatremia is usually iatrogenic.  The presence of hyponatremia may predict serious neurologic complications or be relatively benign.',NULL,309,0,138,0,1,1271174178,1),(483,'100-E','Sore Throat (rhinorrhea) ','Rhinorrhea and sore throat occurring together indicate a viral upper respiratory tract infection such as the \"common cold\".  Sore throat may be due to a variety of bacterial and viral pathogens (as well as other causes in more unusual circumstances).  Infection is transmitted from person to person and arises from direct contact with infected saliva or nasal secretions.  Rhinorrhea alone is not infective and may be seasonal (hay fever or allergic rhinitis) or chronic (vaso-motor rhinitis).',NULL,309,0,139,0,1,1271174178,1),(484,'100-1-E','Smell/taste Dysfunction ','In order to evaluate patients with smell or taste disorders, a multi-disciplinary approach is required.  This means that in addition to the roles specialists may have, the family physician must play an important role.',NULL,483,0,1,0,1,1271174178,1),(485,'101-E','Stature Abnormal (tall Stature/short Stature)','To define any growth point, children should be measured accurately and each point (height, weight, and head circumference) plotted.  One of the more common causes of abnormal growth is mis-measurement or aberrant plotting.',NULL,309,0,140,0,1,1271174178,1),(486,'102-E','Strabismus And/or Amblyopia ','Parental concern about children with a wandering eye, crossing eye, or poor vision in one eye makes it necessary for physicians to know how to manage such problems.',NULL,309,0,141,0,1,1271174178,1),(487,'103-E','Substance Abuse/drug Addiction/withdrawal','Alcohol and nicotine abuse is such a common condition that virtually every clinician is confronted with their complications.  Moreover, 10 - 15% of outpatient visits as well as 25 - 40% of hospital admissions are related to substance abuse and its sequelae.',NULL,309,0,142,0,1,1271174178,1),(488,'104-E','Sudden Infant Death Syndrome(sids)/acute Life Threatening Ev','SIDS and/or ALTE are a devastating event for parents, caregivers and health care workers alike.  It is imperative that the precursors, probable cause and parental concerns are extensively evaluated to prevent recurrence.',NULL,309,0,143,0,1,1271174178,1),(489,'105-E','Suicidal Behavior','Psychiatric emergencies are common and serious problems.  Suicidal behaviour is one of several psychiatric emergencies which physicians must know how to assess and manage.',NULL,309,0,144,0,1,1271174178,1),(490,'106-E','Syncope/pre-syncope/loss Of Consciousness  (fainting)','Syncopal episodes, an abrupt and transient loss of consciousness followed by a rapid and usually complete recovery, are common.  Physicians are required to distinguish syncope from seizures, and benign syncope from syncope caused by serious underlying illness.',NULL,309,0,145,0,1,1271174178,1),(491,'107-3-E','Fever In A Child/fever In A Child Less Than Three Weeks','Fever in children is the most common symptom for which parents seek medical advice.  While most causes are self-limited viral infections (febrile illness of short duration) it is important to identify serious underlying disease and/or those other infections amenable to treatment.',NULL,309,0,146,0,1,1271174178,1),(492,'107-4-E','Fever In The Immune Compromised Host/recurrent Fever','Patients with certain immuno-deficiencies are at high risk for infections.  The infective organism and site depend on the type and severity of immuno-suppression.  Some of these infections are life threatening.',NULL,309,0,147,0,1,1271174178,1),(493,'107-2-E','Fever Of Unknown Origin ','Unlike acute fever (&lt;2 weeks), which is usually either viral (low-grade, moderate fever) or bacterial (high grade, chills, rigors) in origin, fever of unknown origin is an illness of three weeks or more without an established diagnosis despite appropriate investigation.',NULL,309,0,148,0,1,1271174178,1),(494,'107-1-E','Hyperthermia ','Hyperthermia is an elevation in core body temperature due to failure of thermo-regulation (in contrast to fever, which is induced by cytokine activation).  It is a medical emergency and may be associated with severe complications and death.  The differential diagnosis is extensive (includes all causes of fever).',NULL,309,0,149,0,1,1271174178,1),(495,'107-5-E','Hypothermia ','Hypothermia is the inability to maintain core body temperature.  Although far less common than is elevation in temperature, hypothermia (central temperature ? 35Ãƒâ€šÃ‚Â°C) is of considerable importance because it can represent a medical emergency.  Severe hypothermia is defined as a core temperature of &lt;28Ãƒâ€šÃ‚Â°C.',NULL,309,0,150,0,1,1271174178,1),(496,'108-E','Tinnitus','Tinnitus is an awareness of sound near the head without an obvious external source.  It may involve one or both ears, be continuous or intermittent.  Although not usually related to serious medical problems, in some it may interfere with daily activities, affect quality of life, and in a very few be indicative of serious organic disease.',NULL,309,0,151,0,1,1271174178,1),(497,'109-E','Trauma/accidents','Management of patients with traumatic injuries presents a variety of challenges.  They require evaluation in the emergency department for triage and prevention of further deterioration prior to transfer or discharge.  Early recognition and management of complications along with aggressive treatment of underlying medical conditions are necessary to minimise morbidity and mortality in this patient population.',NULL,309,0,152,0,1,1271174178,1),(498,'109-1-E','Abdominal Injuries ','The major causes of blunt trauma are motor vehicles, auto-pedestrian injuries, and motorcycle/all terrain vehicle injuries.  In children, bicycle injuries, falls, and child abuse also contribute.  Assessment of a patient with an abdominal injury is difficult.  As a consequence, important injuries tend to be missed.  Rupture of a hollow viscus or bleeding from a solid organ may produce few clinical signs.',NULL,497,0,1,0,1,1271174178,1),(499,'109-2-E','Bites, Animal/insects ','Since so many households include pets, animal bite wounds are common.  Dog and cat bites account for about 1% of emergency visits, the majority in children.  Some can be serious and lead to limb damage, and at times permanent disability.</p>\r\n<p>Insect bites in Canada most commonly cause a local inflammatory reaction that subsides within a few hours and is mostly a nuisance.  In contrast, mosquitoes can transmit infectious disease to more than 700 million people in other geographic areas of the world (e.g., malaria, yellow fever, dengue, encephalitis and filariasis among others), as well as in Canada.  Tick-borne illness is also common.  On the other hand, systemic reactions to insect bites are extremely rare compared with insect stings.  The most common insects associated with systemic allergic reactions were blackflies, deerflies, and horseflies.',NULL,497,0,2,0,1,1271174178,1),(500,'109-3-E','Bone/joint Injury','Major fractures are at times associated with other injuries, and priorities must be set for each patient.  For example, hemodynamic stability takes precedence over fracture management, but an open fracture should be managed as soon as possible.  On the other hand, management of many soft tissue injuries is facilitated by initial stabilization of bone or joint injury. Unexplained fractures in children should alert physicians to the possibility of abuse.',NULL,497,0,3,0,1,1271174178,1),(501,'109-4-E','Chest Injuries ','Injury to the chest may be blunt (e.g., motor vehicle accident resulting in steering wheel blow to sternum, falls, explosions, crush injuries) or penetrating (knife/bullet).  In either instance, emergency management becomes extremely important to the eventual outcome.',NULL,497,0,4,0,1,1271174178,1),(502,'109-6-E','Drowning (near-drowning) ','Survival after suffocation by submersion in a liquid medium, including loss of consciousness, is defined as near drowning.  The incidence is uncertain, but likely it may occur several hundred times more frequently than drowning deaths (150,000/year worldwide).',NULL,497,0,5,0,1,1271174178,1),(503,'109-8-E','Facial Injuries ','Facial injuries are potentially life threatening because of possible damage to the airway and central nervous system.',NULL,497,0,6,0,1,1271174178,1),(504,'109-9-E','Hand/wrist Injuries ','Hand injuries are common problems presenting to emergency departments.  The ultimate function of the hand depends upon the quality of the initial care, the severity of the original injury and rehabilitation.',NULL,497,0,7,0,1,1271174178,1),(505,'109-10-E','Head Trauma/brain Death/transplant Donations','Most head trauma is mild and not associated with brain injury or long-term sequelae. Improved outcome after head trauma depends upon preventing deterioration and secondary brain injury.  Serious intracranial injuries may remain undetected due to failure to obtain an indicated head CT.',NULL,497,0,8,0,1,1271174178,1),(506,'109-11-E','Nerve Injury ','Peripheral nerve injuries often occur as part of more extensive injuries and tend to go unrecognized.  Evaluation of these injuries is based on an accurate knowledge of the anatomy and function of the nerve(s) involved.',NULL,497,0,9,0,1,1271174178,1),(507,'109-12-E','Skin Wounds/regional Anaesthesia','Skin and subcutaneous wounds tend to be superficial and can be repaired under local anesthesia.  Animal bite wounds are common and require special consideration.  Since so many households include pets, dog and cat bites account for about 1% of emergency visits, the majority in children.  Some can be serious and lead to limb damage, and at times permanent disability.',NULL,497,0,10,0,1,1271174178,1),(508,'109-13-E','Spinal Trauma','Most spinal cord injuries are a result of car accidents, falls, sports-related trauma, or assault with weapons.  The average age at the time of spinal injury is approximately 35 years, and men are four times more likely to be injured than are women.  The sequelae of such events are dire in terms of effect on patient, family, and community.  Initial immobilization and maintenance of ventilation are of critical importance.',NULL,497,0,11,0,1,1271174178,1),(509,'109-14-E','Urinary Tract Injuries ','Urinary tract injuries are usually closed rather than penetrating, and may affect the kidneys and/or the collecting system.',NULL,497,0,12,0,1,1271174178,1),(510,'109-15-E','Vascular Injury ','Vascular injuries are becoming more common.  Hemorrhage may be occult and require a high index of suspicion (e.g., fracture in an adjacent bone).',NULL,497,0,13,0,1,1271174178,1),(511,'110-1-E','Dysuria And/or Pyuria ','Patients with urinary tract infections, especially the very young and very old, may present in an atypical manner.  Appropriate diagnosis and management may prevent significant morbidity.  Dysuria may mean discomfort/pain on micturition or difficulty with micturition.  Pain usually implies infection whereas difficulty is usually related to distal mechanical obstruction (e.g., prostatic).',NULL,309,0,153,0,1,1271174178,1),(512,'110-2-E','Polyuria/polydipsia','Urinary frequency, a common complaint, can be confused with polyuria, a less common, but important complaint.  Diabetes mellitus is a common disorder with morbidity and mortality that can be reduced by preventive measures.  Intensive glycemic control during pregnancy will reduce neonatal complications.',NULL,309,0,154,0,1,1271174178,1),(513,'111-E','Urinary Obstruction/hesitancy/prostatic Cancer','Urinary tract obstruction is a relatively common problem.  The obstruction may be complete or incomplete, and unilateral or bilateral.  Thus, the consequences of the obstruction depend on its nature.',NULL,309,0,155,0,1,1271174178,1),(514,'112-E','Vaginal Bleeding, Excessive/irregular/abnormal','Vaginal bleeding is considered abnormal when it occurs at an unexpected time (before menarche or after menopause) or when it varies from the norm in amount or pattern (urinary tract and bowel should be excluded as a source).  Amount or pattern is considered outside normal when it is associated with iron deficiency anemia, it lasts&gt;7days, flow is&gt;80ml/clots, or interval is&lt;24 days.',NULL,309,0,156,0,1,1271174178,1),(515,'113-E','Vaginal Discharge/vulvar Itch/std ','Vaginal discharge, with or without pruritus, is a common problem seen in the physician\'s office.',NULL,309,0,157,0,1,1271174178,1),(516,'114-E','Violence, Family','There are a number of major psychiatric emergencies and social problems which physicians must be prepared to assess and manage.  Domestic violence is one of them, since it has both direct and indirect effects on the health of populations.  Intentional controlling or violent behavior (physical, sexual, or emotional abuse, economic control, or social isolation of the victim) by a person who is/was in an intimate relationship with the victim is domestic violence.  The victim lives in a state of constant fear, terrified about when the next episode of abuse will occur.  Despite this, abuse frequently remains hidden and undiagnosed because patients often conceal that they are in abusive relationships.  It is important for clinicians to seek the diagnosis in certain groups of patients.',NULL,309,0,158,0,1,1271174178,1),(517,'114-3-E','Adult Abuse/spouse Abuse ','The major problem in spouse abuse is wife abuse (some abuse of husbands has been reported).  It is the abuse of power in a relationship involving domination, coercion, intimidation, and the victimization of one person by another.  Ten percent of women in a relationship with a man have experienced abuse.  Of women presenting to a primary care clinic, almost 1/3 reported physical and verbal abuse.',NULL,516,0,1,0,1,1271174178,1),(518,'114-1-E','Child Abuse, Physical/emotional/sexual/neglect/self-induced ','Child abuse is intentional harm to a child by the caregiver.  It is part of the spectrum of family dysfunction and leads to significant morbidity and mortality (recently sexual attacks on children by groups of other children have increased).  Abuse causes physical and emotional trauma, and may present as neglect.  The possibility of abuse must be in the mind of all those involved in the care of children who have suffered traumatic injury or have psychological or social disturbances (e.g., aggressive behavior, stress disorder, depressive disorder, substance abuse, etc.).',NULL,516,0,2,0,1,1271174178,1),(519,'114-2-E','Elderly Abuse ','Abuse of the elderly may represent an act or omission that results in harm to the elderly person\'s health or welfare.  Although the incidence and prevalence in Canada has been difficult to quantitate, in one study 4 % of surveyed seniors report that they experienced abuse.  There are three categories of abuse: domestic, institutional, and self-neglect.',NULL,516,0,3,0,1,1271174178,1),(520,'115-1-E','Acute Visual Disturbance/loss','Loss of vision is a frightening symptom that demands prompt attention; most patients require an urgent ophthalmologic opinion.',NULL,309,0,159,0,1,1271174178,1),(521,'115-2-E','Chronic Visual Disturbance/loss ','Loss of vision is a frightening symptom that demands prompt attention on the part of the physician.',NULL,309,0,160,0,1,1271174178,1),(522,'116-E','Vomiting/nausea ','Nausea may occur alone or along with vomiting (powerful ejection of gastric contents), dyspepsia, and other GI complaints.  As a cause of absenteeism from school or workplace, it is second only to the common cold.  When prolonged or severe, vomiting may be associated with disturbances of volume, water and electrolyte metabolism that may require correction prior to other specific treatment.',NULL,309,0,161,0,1,1271174178,1),(523,'117-E','Weakness/paralysis/paresis/loss Of Motion','Many patients who complain of weakness are not objectively weak when muscle strength is formally tested.  A careful history and physical examination will permit the distinction between functional disease and true muscle weakness.',NULL,309,0,162,0,1,1271174178,1),(524,'118-3-E','Weight (low) At Birth/intrauterine Growth Restriction ','Intrauterine growth restriction (IUGR) is often a manifestation of congenital infections, poor maternal nutrition, or maternal illness.  In other instances, the infant may be large for the gestational age.  There may be long-term sequelae for both.  Low birth weight is the most important risk factor for infant mortality.  It is also a significant determinant of infant and childhood morbidity, particularly neuro-developmental problems and learning disabilities.',NULL,309,0,163,0,1,1271174178,1),(525,'118-1-E','Weight Gain/obesity ','Obesity is a chronic disease that is increasing in prevalence. The percentage of the population with a body mass index of&gt;30 kg/m2 is approximately 15%.',NULL,309,0,164,0,1,1271174178,1),(526,'118-2-E','Weight Loss/eating Disorders/anorexia ','Although voluntary weight loss may be of no concern in an obese patient, it could be a manifestation of psychiatric illness.  Involuntary clinically significant weight loss (&gt;5% baseline body weight or 5 kg) is nearly always a sign of serious medical or psychiatric illness and should be investigated.',NULL,309,0,165,0,1,1271174178,1),(527,'119-1-E','Lower Respiratory Tract Disorders ','Individuals with episodes of wheezing, breathlessness, chest tightness, and cough usually have limitation of airflow.  Frequently this limitation is reversible with treatment.  Without treatment it may be lethal.',NULL,309,0,166,0,1,1271174178,1),(528,'119-2-E','Upper Respiratory Tract Disorders ','Wheezing, a continuous musical sound&gt;1/4 seconds, is produced by vibration of the walls of airways narrowed almost to the point of closure.  It can originate from airways of any size, from large upper airways to intrathoracic small airways.  It can be either inspiratory or expiratory, unlike stridor (a noisy, crowing sound, usually inspiratory and resulting from disturbances in or adjacent to the larynx).',NULL,309,0,167,0,1,1271174178,1),(529,'120-E','White Blood Cells, Abnormalities Of','Because abnormalities of white blood cells (WBCs) occur commonly in both asymptomatic as well as acutely ill patients, every physician will need to evaluate patients for this common problem.  Physicians also need to select medications to be prescribed mindful of the morbidity and mortality associated with drug-induced neutropenia and agranulocytosis.',NULL,309,0,168,0,1,1271174178,1),(2328,'','AAMC Physician Competencies Reference Set','July 2013 *Source: Englander R, Cameron T, Ballard AJ, Dodge J, Bull J, and Aschenbrener CA. Toward a common taxonomy of competency domains for the health professions and competencies for physicians. Acad Med. 2013;88:1088-1094.',NULL,0,0,0,0,1,1391798786,1),(2329,'aamc-pcrs-comp-c0100','1 Patient Care','Provide patient-centered care that is compassionate, appropriate, and effective for the treatment of health problems and the',NULL,2328,0,0,0,1,1391798786,1),(2330,'aamc-pcrs-comp-c0200','2 Knowledge for Practice','Demonstrate knowledge of established and evolving biomedical, clinical, epidemiological and social-behavioral sciences, as well as the application of this knowledge to patient care',NULL,2328,0,1,0,1,1391798786,1),(2331,'aamc-pcrs-comp-c0300','3 Practice-Based Learning and Improvement','Demonstrate the ability to investigate and evaluate oneÃƒÂ¢??s care of patients, to appraise and assimilate scientific evidence, and to continuously improve patient care based on constant self-evaluation and life-long learning',NULL,2328,0,2,0,1,1391798786,1),(2332,'aamc-pcrs-comp-c0400','4 Interpersonal and Communication Skills','Demonstrate interpersonal and communication skills that result in the effective exchange of information and collaboration with patients, their families, and health professionals',NULL,2328,0,3,0,1,1391798786,1),(2333,'aamc-pcrs-comp-c0500','5 Professionalism','Demonstrate a commitment to carrying out professional responsibilities and an adherence to ethical principles',NULL,2328,0,4,0,1,1391798786,1),(2334,'aamc-pcrs-comp-c0600','6 Systems-Based Practice','Demonstrate an awareness of and responsiveness to the larger context and system of health care, as well as the ability to call effectively on other resources in the system to provide optimal health care',NULL,2328,0,5,0,1,1391798786,1),(2335,'aamc-pcrs-comp-c0700','7 Interprofessional Collaboration','Demonstrate the ability to engage in an interprofessional team in a manner that optimizes safe, effective patient- and population-centered care',NULL,2328,0,6,0,1,1391798786,1),(2336,'aamc-pcrs-comp-c0800','8 Personal and Professional Development','Demonstrate the qualities required to sustain lifelong personal and professional growth',NULL,2328,0,7,0,1,1391798786,1),(2337,'aamc-pcrs-comp-c0101','1.1','Perform all medical, diagnostic, and surgical procedures considered',NULL,2329,0,0,0,1,1391798786,1),(2338,'aamc-pcrs-comp-c0102','1.2','Gather essential and accurate information about patients and their conditions through history-taking, physical examination, and the use of laboratory data, imaging, and other tests',NULL,2329,0,1,0,1,1391798786,1),(2339,'aamc-pcrs-comp-c0103','1.3','Organize and prioritize responsibilities to provide care that is safe, effective, and efficient',NULL,2329,0,2,0,1,1391798786,1),(2340,'aamc-pcrs-comp-c0104','1.4','Interpret laboratory data, imaging studies, and other tests required for the area of practice',NULL,2329,0,3,0,1,1391798786,1),(2341,'aamc-pcrs-comp-c0105','1.5','Make informed decisions about diagnostic and therapeutic interventions based on patient information and preferences, up-to-date scientific evidence, and clinical judgment',NULL,2329,0,4,0,1,1391798786,1),(2342,'aamc-pcrs-comp-c0106','1.6','Develop and carry out patient management plans',NULL,2329,0,5,0,1,1391798786,1),(2343,'aamc-pcrs-comp-c0107','1.7','Counsel and educate patients and their families to empower them to participate in their care and enable shared decision making',NULL,2329,0,6,0,1,1391798786,1),(2344,'aamc-pcrs-comp-c0108','1.8','Provide appropriate referral of patients including ensuring continuity of care throughout transitions between providers or settings, and following up on patient progress and outcomes',NULL,2329,0,7,0,1,1391798786,1),(2345,'aamc-pcrs-comp-c0109','1.9','Provide health care services to patients, families, and communities aimed at preventing health problems or maintaining health',NULL,2329,0,8,0,1,1391798786,1),(2346,'aamc-pcrs-comp-c0110','1.10','Provide appropriate role modeling',NULL,2329,0,9,0,1,1391798786,1),(2347,'aamc-pcrs-comp-c0111','1.11','Perform supervisory responsibilities commensurate with one\'s roles, abilities, and qualifications',NULL,2329,0,10,0,1,1391798786,1),(2348,'aamc-pcrs-comp-c0199','1.99','Other patient care',NULL,2329,0,11,0,1,1391798786,1),(2349,'aamc-pcrs-comp-c0201','2.1','Demonstrate an investigatory and analytic approach to clinical situations',NULL,2330,0,0,0,1,1391798786,1),(2350,'aamc-pcrs-comp-c0202','2.2','Apply established and emerging bio-physical scientific principles fundamental to health care for patients and populations',NULL,2330,0,1,0,1,1391798786,1),(2351,'aamc-pcrs-comp-c0203','2.3','Apply established and emerging principles of clinical sciences to diagnostic and therapeutic decision-making, clinical problem-solving, and other aspects of evidence-based health care',NULL,2330,0,2,0,1,1391798786,1),(2352,'aamc-pcrs-comp-c0204','2.4','Apply principles of epidemiological sciences to the identification of health problems, risk factors, treatment strategies, resources, and disease prevention/health promotion efforts for patients and populations',NULL,2330,0,3,0,1,1391798786,1),(2353,'aamc-pcrs-comp-c0205','2.5','Apply principles of social-behavioral sciences to provision of patient care, including assessment of the impact of psychosocial and cultural influences on health, disease, care-seeking, care compliance, and barriers to and attitudes toward care',NULL,2330,0,4,0,1,1391798786,1),(2354,'aamc-pcrs-comp-c0206','2.6','Contribute to the creation, dissemination, application, and translation of new health care knowledge and practices',NULL,2330,0,5,0,1,1391798786,1),(2355,'aamc-pcrs-comp-c0299','2.99','Other knowledge for practice',NULL,2330,0,6,0,1,1391798786,1),(2356,'aamc-pcrs-comp-c0301','3.1','Identify strengths, deficiencies, and limits in one\'s knowledge and expertise',NULL,2331,0,0,0,1,1391798786,1),(2357,'aamc-pcrs-comp-c0302','3.2','Set learning and improvement goals',NULL,2331,0,1,0,1,1391798786,1),(2358,'aamc-pcrs-comp-c0303','3.3','Identify and perform learning activities that address one\'s gaps in knowledge, skills, and/or attitudes',NULL,2331,0,2,0,1,1391798786,1),(2359,'aamc-pcrs-comp-c0304','3.4','Systematically analyze practice using quality improvement methods, and implement changes with the goal of practice improvement',NULL,2331,0,3,0,1,1391798786,1),(2360,'aamc-pcrs-comp-c0305','3.5','Incorporate feedback into daily practice',NULL,2331,0,4,0,1,1391798786,1),(2361,'aamc-pcrs-comp-c0306','3.6','Locate, appraise, and assimilate evidence from scientific studies related to',NULL,2331,0,5,0,1,1391798786,1),(2362,'aamc-pcrs-comp-c0307','3.7','Use information technology to optimize learning',NULL,2331,0,6,0,1,1391798786,1),(2363,'aamc-pcrs-comp-c0308','3.8','Participate in the education of patients, families, students, trainees, peers and other health professionals',NULL,2331,0,7,0,1,1391798786,1),(2364,'aamc-pcrs-comp-c0309','3.9','Obtain and utilize information about individual patients, populations of patients, or communities from which patients are drawn to improve care',NULL,2331,0,8,0,1,1391798786,1),(2365,'aamc-pcrs-comp-c0310','3.10','Continually identify, analyze, and implement new knowledge, guidelines, standards, technologies, products, or services that have been demonstrated to improve outcomes',NULL,2331,0,9,0,1,1391798786,1),(2366,'aamc-pcrs-comp-c0399','3.99','Other practice-based learning and improvement',NULL,2331,0,10,0,1,1391798786,1),(2367,'aamc-pcrs-comp-c0401','4.1','Communicate effectively with patients, families, and the public, as appropriate, across a broad range of socioeconomic and cultural backgrounds',NULL,2332,0,0,0,1,1391798786,1),(2368,'aamc-pcrs-comp-c0402','4.2','Communicate effectively with colleagues within one\'s profession or specialty, other health professionals, and health related agencies (see also 7.3)',NULL,2332,0,1,0,1,1391798786,1),(2369,'aamc-pcrs-comp-c0403','4.3','Work effectively with others as a member or leader of a health care team or other professional group (see also 7.4)',NULL,2332,0,2,0,1,1391798786,1),(2370,'aamc-pcrs-comp-c0404','4.4','Act in a consultative role to other health professionals',NULL,2332,0,3,0,1,1391798786,1),(2371,'aamc-pcrs-comp-c0405','4.5','Maintain comprehensive, timely, and legible medical records',NULL,2332,0,4,0,1,1391798786,1),(2372,'aamc-pcrs-comp-c0406','4.6','Demonstrate sensitivity, honesty, and compassion in difficult conversations, including those about death, end of life, adverse events, bad news, disclosure of errors, and other sensitive topics',NULL,2332,0,5,0,1,1391798786,1),(2373,'aamc-pcrs-comp-c0407','4.7','Demonstrate insight and understanding about emotions and human responses to emotions that allow one to develop and manage interpersonal',NULL,2332,0,6,0,1,1391798786,1),(2374,'aamc-pcrs-comp-c0499','4.99','Other interpersonal and communication skills',NULL,2332,0,7,0,1,1391798786,1),(2375,'aamc-pcrs-comp-c0501','5.1','Demonstrate compassion, integrity, and respect for others',NULL,2333,0,0,0,1,1391798786,1),(2376,'aamc-pcrs-comp-c0502','5.2','Demonstrate responsiveness to patient needs that supersedes self-interest',NULL,2333,0,1,0,1,1391798786,1),(2377,'aamc-pcrs-comp-c0503','5.3','Demonstrate respect for patient privacy and autonomy',NULL,2333,0,2,0,1,1391798786,1),(2378,'aamc-pcrs-comp-c0504','5.4','Demonstrate accountability to patients, society, and the profession',NULL,2333,0,3,0,1,1391798786,1),(2379,'aamc-pcrs-comp-c0505','5.5','Demonstrate sensitivity and responsiveness to a diverse patient population, including but not limited to diversity in gender, age, culture, race, religion, disabilities, and sexual orientation',NULL,2333,0,4,0,1,1391798786,1),(2380,'aamc-pcrs-comp-c0506','5.6','Demonstrate a commitment to ethical principles pertaining to provision or withholding of care, confidentiality, informed consent, and business practices, including compliance with relevant laws, policies, and regulations',NULL,2333,0,5,0,1,1391798786,1),(2381,'aamc-pcrs-comp-c0599','5.99','Other professionalism',NULL,2333,0,6,0,1,1391798786,1),(2382,'aamc-pcrs-comp-c0601','6.1','Work effectively in various health care delivery settings and systems relevant to one\'s clinical specialty',NULL,2334,0,0,0,1,1391798786,1),(2383,'aamc-pcrs-comp-c0602','6.2','Coordinate patient care within the health care system relevant to one\'s clinical specialty',NULL,2334,0,1,0,1,1391798786,1),(2384,'aamc-pcrs-comp-c0603','6.3','Incorporate considerations of cost awareness and risk-benefit analysis in patient and/or population-based care',NULL,2334,0,2,0,1,1391798786,1),(2385,'aamc-pcrs-comp-c0604','6.4','Advocate for quality patient care and optimal patient care systems',NULL,2334,0,3,0,1,1391798786,1),(2386,'aamc-pcrs-comp-c0605','6.5','Participate in identifying system errors and implementing potential systems solutions',NULL,2334,0,4,0,1,1391798786,1),(2387,'aamc-pcrs-comp-c0606','6.6','Perform administrative and practice management responsibilities commensurate with oneÃƒÂ¢??s role, abilities, and qualifications',NULL,2334,0,5,0,1,1391798786,1),(2388,'aamc-pcrs-comp-c0699','6.99','Other systems-based practice',NULL,2334,0,6,0,1,1391798786,1),(2389,'aamc-pcrs-comp-c0701','7.1','Work with other health professionals to establish and maintain a climate of mutual respect, dignity, diversity, ethical integrity, and trust',NULL,2335,0,0,0,1,1391798786,1),(2390,'aamc-pcrs-comp-c0702','7.2','Use the knowledge of oneÃƒÂ¢??s own role and the roles of other health professionals to appropriately assess and address the health care needs of the patients and populations served',NULL,2335,0,1,0,1,1391798786,1),(2391,'aamc-pcrs-comp-c0703','7.3','Communicate with other health professionals in a responsive and responsible manner that supports the maintenance of health and the',NULL,2335,0,2,0,1,1391798786,1),(2392,'aamc-pcrs-comp-c0704','7.4','Participate in different team roles to establish, develop, and continuously enhance interprofessional teams to provide patient- and population-centered care that is safe, timely, efficient, effective, and equitable',NULL,2335,0,3,0,1,1391798786,1),(2393,'aamc-pcrs-comp-c0799','7.99','Other interprofessional collaboration',NULL,2335,0,4,0,1,1391798786,1),(2394,'aamc-pcrs-comp-c0801','8.1','Develop the ability to use self-awareness of knowledge, skills, and emotional limitations to engage in appropriate help-seeking behaviors',NULL,2336,0,0,0,1,1391798786,1),(2395,'aamc-pcrs-comp-c0802','8.2','Demonstrate healthy coping mechanisms to respond to stress',NULL,2336,0,1,0,1,1391798786,1),(2396,'aamc-pcrs-comp-c0803','8.3','Manage conflict between personal and professional responsibilities',NULL,2336,0,2,0,1,1391798786,1),(2397,'aamc-pcrs-comp-c0804','8.4','Practice flexibility and maturity in adjusting to change with the capacity to alter one\'s behavior',NULL,2336,0,3,0,1,1391798786,1),(2398,'aamc-pcrs-comp-c0805','8.5','Demonstrate trustworthiness that makes colleagues feel secure when one is responsible for the care of patients',NULL,2336,0,4,0,1,1391798786,1),(2399,'aamc-pcrs-comp-c0806','8.6','Provide leadership skills that enhance team functioning, the learning environment, and/or the health care delivery system',NULL,2336,0,5,0,1,1391798786,1),(2400,'aamc-pcrs-comp-c0807','8.7','Demonstrate self-confidence that puts patients, families, and members of the health care team at ease',NULL,2336,0,6,0,1,1391798786,1),(2401,'aamc-pcrs-comp-c0808','8.8','Recognize that ambiguity is part of clinical health care and respond by utilizing appropriate resources in dealing with uncertainty',NULL,2336,0,7,0,1,1391798786,1),(2402,'aamc-pcrs-comp-c0899','8.99','Other personal and professional development',NULL,2336,0,8,0,1,1391798786,1);
+INSERT INTO `global_lu_objectives` VALUES (1,NULL,'Curriculum Objectives','',NULL,0,6,NULL,2,0,1,0,2,NULL,0,0,0),(2,NULL,'Medical Expert','',NULL,1,6,NULL,0,0,1,0,2,NULL,0,0,0),(3,NULL,'Professionalism','',NULL,1,6,NULL,0,0,1,0,2,NULL,0,0,0),(4,NULL,'Scholar','',NULL,1,6,NULL,0,0,1,0,2,NULL,0,0,0),(5,NULL,'Communicator','',NULL,1,6,NULL,0,0,1,0,2,NULL,0,0,0),(6,NULL,'Collaborator','',NULL,1,6,NULL,0,0,1,0,2,NULL,0,0,0),(7,NULL,'Advocate','',NULL,1,6,NULL,0,0,1,0,2,NULL,0,0,0),(8,NULL,'Manager','',NULL,1,6,NULL,0,0,1,0,2,NULL,0,0,0),(9,NULL,'Application of Basic Sciences','The competent medical graduate articulates and uses the basic sciences to inform disease prevention, health promotion and the assessment and management of patients presenting with clinical illness.',NULL,2,6,NULL,0,0,1,0,2,NULL,0,0,0),(10,NULL,'Clinical Assessment','Is able to perform a complete and appropriate clinical assessment of patients presenting with clinical illness',NULL,2,6,NULL,1,0,1,0,2,NULL,0,0,0),(11,NULL,'Clinical Presentations','Is able to appropriately assess and provide initial management for patients presenting with clinical illness, as defined by the Medical Council of Canada Clinical Presentations',NULL,2,6,NULL,2,0,1,0,2,NULL,0,0,0),(12,NULL,'Health Promotion','Apply knowledge of disease prevention and health promotion to the care of patients',NULL,2,6,NULL,3,0,1,0,2,NULL,0,0,0),(13,NULL,'Professional Behaviour','Demonstrates appropriate professional behaviours to serve patients, the profession, and society',NULL,3,6,NULL,0,0,1,0,2,NULL,0,0,0),(14,NULL,'Principles of Professionalism','Apply knowledge of legal and ethical principles to serve patients, the profession, and society',NULL,3,6,NULL,1,0,1,0,2,NULL,0,0,0),(15,NULL,'Critical Appraisal','Critically evaluate medical information and its sources (the literature)',NULL,4,6,NULL,0,0,1,0,2,NULL,0,0,0),(16,NULL,'Research','Contribute to the process of knowledge creation (research)',NULL,4,6,NULL,1,0,1,0,2,NULL,0,0,0),(17,NULL,'Life Long Learning','Engages in life long learning',NULL,4,6,NULL,2,0,1,0,2,NULL,0,0,0),(18,NULL,'Effective Communication','Effectively communicates with colleagues, other health professionals, patients, families and other caregivers',NULL,5,6,NULL,0,0,1,0,2,NULL,0,0,0),(19,NULL,'Effective Collaboration','Effectively collaborate with colleagues and other health professionals',NULL,6,6,NULL,0,0,1,0,2,NULL,0,0,0),(20,NULL,'Determinants of Health','Articulate and apply the determinants of health and disease, principles of health promotion and disease prevention',NULL,7,6,NULL,0,0,1,0,2,NULL,0,0,0),(21,NULL,'Profession and Community','Effectively advocate for their patients, the profession, and community',NULL,7,6,NULL,1,0,1,0,2,NULL,0,0,0),(22,NULL,'Practice Options','Describes a variety of practice options and settings within the practice of Medicine',NULL,8,6,NULL,0,0,1,0,2,NULL,0,0,0),(23,NULL,'Balancing Health and Profession','Balances personal health and professional responsibilities',NULL,8,6,NULL,1,0,1,0,2,NULL,0,0,0),(24,NULL,'ME1.1 Homeostasis & Dysregulation','Applies knowledge of molecular, biochemical, cellular, and systems-level mechanisms that maintain homeostasis, and of the dysregulation of these mechanisms, to the prevention, diagnosis, and management of disease.',NULL,9,6,NULL,0,0,1,0,2,NULL,0,0,0),(25,NULL,'ME1.2 Physics and Chemistry','Apply major principles of physics and chemistry to explain normal biology, the pathobiology of significant diseases, and the mechanism of action of major technologies used in the prevention, diagnosis, and treatment of disease.',NULL,9,6,NULL,1,0,1,0,2,NULL,0,0,0),(26,NULL,'ME1.3 Genetics','Use the principles of genetic transmission, molecular biology of the human genome, and population genetics to guide assessments and clinical decision making.',NULL,9,6,NULL,2,0,1,0,2,NULL,0,0,0),(27,NULL,'ME1.4 Defense Mechanisms','Apply the principles of the cellular and molecular basis of immune and nonimmune host defense mechanisms in health and disease to determine the etiology of disease, identify preventive measures, and predict response to therapies.',NULL,9,6,NULL,3,0,1,0,2,NULL,0,0,0),(28,NULL,'ME1.5 Pathological Processes','Apply the mechanisms of general and disease-specific pathological processes in health and disease to the prevention, diagnosis, management, and prognosis of critical human disorders.',NULL,9,6,NULL,4,0,1,0,2,NULL,0,0,0),(29,NULL,'ME1.6 Microorganisms','Apply principles of the biology of microorganisms in normal physiology and disease to explain the etiology of disease, identify preventive measures, and predict response to therapies.',NULL,9,6,NULL,5,0,1,0,2,NULL,0,0,0),(30,NULL,'ME1.7 Pharmacology','Apply the principles of pharmacology to evaluate options for safe, rational, and optimally beneficial drug therapy.',NULL,9,6,NULL,6,0,1,0,2,NULL,0,0,0),(32,NULL,'ME2.1 History and Physical','Conducts a comprehensive and appropriate history and physical examination ',NULL,10,6,NULL,0,0,1,0,2,NULL,0,0,0),(33,NULL,'ME2.2 Procedural Skills','Demonstrate proficient and appropriate use of selected procedural skills, diagnostic and therapeutic',NULL,10,6,NULL,1,0,1,0,2,NULL,0,0,0),(34,NULL,'ME3.x Clinical Presentations','',NULL,11,6,NULL,0,0,1,0,2,NULL,0,0,0),(35,NULL,'ME4.1 Health Promotion & Maintenance','',NULL,12,6,NULL,0,0,1,0,2,NULL,0,0,0),(36,NULL,'P1.1 Professional Behaviour','Practice appropriate professional behaviours, including honesty, integrity, commitment, dependability, compassion, respect, an understanding of the human condition, and altruism in the educational  and clinical settings',NULL,13,6,NULL,0,0,1,0,2,NULL,0,0,0),(37,NULL,'P1.2 Patient-Centered Care','Learn how to deliver the highest quality patient-centered care, with commitment to patients\' well being.  ',NULL,13,6,NULL,1,0,1,0,2,NULL,0,0,0),(38,NULL,'P1.3 Self-Awareness','Is self-aware, engages consultancy appropriately and maintains competence',NULL,13,6,NULL,2,0,1,0,2,NULL,0,0,0),(39,NULL,'P2.1 Ethics','Analyze ethical issues encountered in practice (such as informed consent, confidentiality, truth telling, vulnerable populations, etc.)',NULL,14,6,NULL,0,0,1,0,2,NULL,0,0,0),(40,NULL,'P2.2 Law and Regulation','Apply profession-led regulation to serve patients, the profession and society. ',NULL,14,6,NULL,1,0,1,0,2,NULL,0,0,0),(41,NULL,'S1.1 Information Retrieval','Are able to retrieve medical information efficiently and effectively',NULL,15,6,NULL,0,0,1,0,2,NULL,0,0,0),(42,NULL,'S1.2 Critical Evaluation','Critically evaluate the validity and applicability of medical procedures and therapeutic modalities to patient care',NULL,15,6,NULL,1,0,1,0,2,NULL,0,0,0),(43,NULL,'S2.1 Research Methodology','Adopt rigorous research methodology and scientific inquiry procedures',NULL,16,6,NULL,0,0,1,0,2,NULL,0,0,0),(44,NULL,'S2.2 Sharing Innovation','Prepares and disseminates new medical information',NULL,16,6,NULL,1,0,1,0,2,NULL,0,0,0),(45,NULL,'S3.1 Learning Strategies','Implements effective personal learning experiences including the capacity to engage in reflective learning',NULL,17,6,NULL,0,0,1,0,2,NULL,0,0,0),(46,NULL,'CM1.1 Therapeutic Relationships','Demonstrate skills and attitudes to foster rapport, trust and ethical therapeutic relationships with patients and families',NULL,18,6,NULL,0,0,1,0,2,NULL,0,0,0),(47,NULL,'CM1.2 Eliciting Perspectives','Elicit and synthesize relevant information and perspectives of patients and families, colleagues and other professionals',NULL,18,6,NULL,1,0,1,0,2,NULL,0,0,0),(48,NULL,'CM1.3 Conveying Information','Convey relevant information and explanations appropriately to patients and families, colleagues and other professionals, orally and in writing',NULL,18,6,NULL,2,0,1,0,2,NULL,0,0,0),(49,NULL,'CM1.4 Finding Common Ground','Develop a common understanding on issues, problems, and plans with patients and families, colleagues and other professionals to develop a shared plan of care',NULL,18,6,NULL,3,0,1,0,2,NULL,0,0,0),(50,NULL,'CL 1.1 Working In Teams','Participate effectively and appropriately as part of a multiprofessional healthcare team.',NULL,19,6,NULL,0,0,1,0,2,NULL,0,0,0),(51,NULL,'CL1.2 Overcoming Conflict','Work with others effectively in order to prevent, negotiate, and resolve conflict.',NULL,19,6,NULL,1,0,1,0,2,NULL,0,0,0),(52,NULL,'CL1.3 Including Patients and Families','Includes patients and families in prevention and management of illness',NULL,19,6,NULL,2,0,1,0,2,NULL,0,0,0),(53,NULL,'CL1.4 Teaching and Learning','Teaches and learns from others consistently  ',NULL,19,6,NULL,3,0,1,0,2,NULL,0,0,0),(54,NULL,'A1.1 Applying Determinants of Health','Apply knowledge of the determinants of health for populations to medical encounters and problems.',NULL,20,6,NULL,0,0,1,0,2,NULL,0,0,0),(55,NULL,'A2.1 Community Resources','Identify and communicate about community resources to promote health, prevent disease, and manage illness in their patients and the communities they will serve.',NULL,21,6,NULL,0,0,1,0,2,NULL,0,0,0),(56,NULL,'A2.2 Responsibility and Service','Integrate the principles of advocacy into their understanding of their professional responsibility to patients and the communities they will serve. ',NULL,21,6,NULL,1,0,1,0,2,NULL,0,0,0),(57,NULL,'M1.1 Career Settings','Is aware of the variety of practice options and settings within the practice of Medicine, and makes informed personal choices regarding career direction',NULL,22,6,NULL,0,0,1,0,2,NULL,0,0,0),(58,NULL,'M2.1 Work / Life Balance','Identifies and implement strategies that promote care of one\'s self and one\'s colleagues to maintain balance between personal and educational/ professional commitments',NULL,23,6,NULL,0,0,1,0,2,NULL,0,0,0),(59,NULL,'ME1.1a','Apply knowledge of biological systems and their interactions to explain how the human body functions in health and disease. ',NULL,24,6,NULL,0,0,1,0,2,NULL,0,0,0),(60,NULL,'ME1.1b','Use the principles of feedback control to explain how specific homeostatic and reproductive systems maintain the internal environment and identify (1) how perturbations in these systems may result in disease and (2) how homeostasis may be changed by disease.',NULL,24,6,NULL,1,0,1,0,2,NULL,0,0,0),(61,NULL,'ME1.1c','Apply knowledge of the atomic and molecular characteristics of biological constituents to predict normal and pathological molecular function.',NULL,24,6,NULL,2,0,1,0,2,NULL,0,0,0),(62,NULL,'ME1.1d','Explain how the regulation of major biochemical energy production pathways and the synthesis/degradation of macromolecules function to maintain health and identify major forms of dysregulation in disease.',NULL,24,6,NULL,3,0,1,0,2,NULL,0,0,0),(63,NULL,'ME1.1e','Explain the major mechanisms of intra- and intercellular communication and their role in health and disease states.',NULL,24,6,NULL,4,0,1,0,2,NULL,0,0,0),(64,NULL,'ME1.1f','Apply an understanding of the morphological and biochemical events that occur when somatic or germ cells divide, and the mechanisms that regulate cell division and cell death, to explain normal and abnormal growth and development.',NULL,24,6,NULL,5,0,1,0,2,NULL,0,0,0),(65,NULL,'ME1.1g','Identify and describe the common and unique microscopic and three dimensional macroscopic structures of macromolecules, cells, tissues, organs, systems, and compartments that lead to their unique and integrated function from fertilization through senescence to explain how perturbations contribute to disease. ',NULL,24,6,NULL,6,0,1,0,2,NULL,0,0,0),(66,NULL,'ME1.1h','Predict the consequences of structural variability and damage or loss of tissues and organs due to maldevelopment, trauma, disease, and aging.',NULL,24,6,NULL,7,0,1,0,2,NULL,0,0,0),(67,NULL,'ME1.1i','Apply principles of information processing at the molecular, cellular, and integrated nervous system level and understanding of sensation, perception, decision making, action, and cognition to explain behavior in health and disease.',NULL,24,6,NULL,8,0,1,0,2,NULL,0,0,0),(68,NULL,'ME1.2a','Apply the principles of physics and chemistry, such as mass flow, transport, electricity, biomechanics, and signal detection and processing, to the specialized functions of membranes, cells, tissues, organs, and the human organism, and recognize how perturbations contribute to disease.',NULL,25,6,NULL,0,0,1,0,2,NULL,0,0,0),(69,NULL,'ME1.2b','Apply the principles of physics and chemistry to explain the risks, limitations, and appropriate use of diagnostic and therapeutic technologies.',NULL,25,6,NULL,1,0,1,0,2,NULL,0,0,0),(70,NULL,'ME1.3a','Describe the functional elements in the human genome, their evolutionary origins, their interactions, and the consequences of genetic and epigenetic changes on adaptation and health.',NULL,26,6,NULL,0,0,1,0,2,NULL,0,0,0),(71,NULL,'ME1.3b','Explain how variation at the gene level alters the chemical and physical properties of biological systems, and how this, in turn, influences health.',NULL,26,6,NULL,1,0,1,0,2,NULL,0,0,0),(72,NULL,'ME1.3c','Describe the major forms and frequencies of genetic variation and their consequences on health in different human populations.',NULL,26,6,NULL,2,0,1,0,2,NULL,0,0,0),(73,NULL,'ME1.3d','Apply knowledge of the genetics and the various patterns of genetic transmission within families in order to obtain and interpret family history and ancestry data, calculate risk of disease, and order genetic tests to guide therapeutic decision-making.',NULL,26,6,NULL,3,0,1,0,2,NULL,0,0,0),(74,NULL,'ME1.3e','Use to guide clinical action plans, the interaction of genetic and environmental factors to produce phenotypes and provide the basis for individual variation in response to toxic, pharmacological, or other exposures.',NULL,26,6,NULL,4,0,1,0,2,NULL,0,0,0),(75,NULL,'ME1.4a','Apply knowledge of the generation of immunological diversity and specificity to the diagnosis and treatment of disease.',NULL,27,6,NULL,0,0,1,0,2,NULL,0,0,0),(76,NULL,'ME1.4b','Apply knowledge of the mechanisms for distinction between self and nonself (tolerance and immune surveillance) to the maintenance of health, autoimmunity, and transplant rejection.',NULL,27,6,NULL,1,0,1,0,2,NULL,0,0,0),(77,NULL,'ME1.4c','Apply knowledge of the molecular basis for immune cell development to diagnose and treat immune deficiencies.',NULL,27,6,NULL,2,0,1,0,2,NULL,0,0,0),(78,NULL,'ME1.4d','Apply knowledge of the mechanisms used to defend against intracellular or extracellular microbes to the development of immunological prevention or treatment.',NULL,27,6,NULL,3,0,1,0,2,NULL,0,0,0),(79,NULL,'ME1.5a','Apply knowledge of cellular responses to injury, and the underlying etiology, biochemical and molecular alterations, to assess therapeutic interventions.',NULL,28,6,NULL,0,0,1,0,2,NULL,0,0,0),(80,NULL,'ME1.5b','Apply knowledge of the vascular and leukocyte responses of inflammation and their cellular and soluble mediators to the causation, resolution, prevention, and targeted therapy of tissue injury.',NULL,28,6,NULL,1,0,1,0,2,NULL,0,0,0),(81,NULL,'ME1.5c','Apply knowledge of the interplay of platelets, vascular endothelium, leukocytes, and coagulation factors in maintaining fluidity of blood, formation of thrombi, and causation of atherosclerosis to the prevention and diagnosis of thrombosis and atherosclerosis in various vascular beds, and the selection of therapeutic responses.',NULL,28,6,NULL,2,0,1,0,2,NULL,0,0,0),(82,NULL,'ME1.5d','Apply knowledge of the molecular basis of neoplasia to an understanding of the biological behavior, morphologic appearance, classification, diagnosis, prognosis, and targeted therapy of specific neoplasms.',NULL,28,6,NULL,3,0,1,0,2,NULL,0,0,0),(83,NULL,'ME1.6a','Apply the principles of host-pathogen and pathogen-population interactions and knowledge of pathogen structure, genomics, lifecycle, transmission, natural history, and pathogenesis to the prevention, diagnosis, and treatment of infectious disease.',NULL,29,6,NULL,0,0,1,0,2,NULL,0,0,0),(84,NULL,'ME1.6b','Apply the principles of symbiosis (commensalisms, mutualism, and parasitism) to the maintenance of health and disease.',NULL,29,6,NULL,1,0,1,0,2,NULL,0,0,0),(85,NULL,'ME1.6c','Apply the principles of epidemiology to maintaining and restoring the health of communities and individuals.',NULL,29,6,NULL,2,0,1,0,2,NULL,0,0,0),(86,NULL,'ME1.7a','Apply knowledge of pathologic processes, pharmacokinetics, and pharmacodynamics to guide safe and effective treatments.',NULL,30,6,NULL,0,0,1,0,2,NULL,0,0,0),(87,NULL,'ME1.7b','Select optimal drug therapy based on an understanding of pertinent research, relevant medical literature, regulatory processes, and pharmacoeconomics.',NULL,30,6,NULL,1,0,1,0,2,NULL,0,0,0),(88,NULL,'ME1.7c','Apply knowledge of individual variability in the use and responsiveness to pharmacological agents to selecting and monitoring therapeutic regimens and identifying adverse responses.',NULL,30,6,NULL,2,0,1,0,2,NULL,0,0,0),(89,NULL,'ME1.8a','Apply basic mathematical tools and concepts, including functions, graphs and modeling, measurement and scale, and quantitative reasoning, to an understanding of the specialized functions of membranes, cells, tissues, organs, and the human organism, in both health and disease.',NULL,31,0,NULL,0,0,1,0,2,NULL,0,0,0),(90,NULL,'ME1.8b','Apply the principles and approaches of statistics, biostatistics, and epidemiology to the evaluation and interpretation of disease risk, etiology, and prognosis, and to the prevention, diagnosis, and management of disease.',NULL,31,0,NULL,1,0,1,0,2,NULL,0,0,0),(91,NULL,'ME1.8c','Apply the basic principles of information systems, their design and architecture, implementation, use, and limitations, to information retrieval, clinical problem solving, and public health and policy.',NULL,31,0,NULL,2,0,1,0,2,NULL,0,0,0),(92,NULL,'ME1.8d','Explain the importance, use, and limitations of biomedical and health informatics, including data quality, analysis, and visualization, and its application to diagnosis, therapeutics, and characterization of populations and subpopulations. ',NULL,31,0,NULL,3,0,1,0,2,NULL,0,0,0),(93,NULL,'ME1.8e','Apply elements of the scientific process, such as inference, critical analysis of research design, and appreciation of the difference between association and causation, to interpret the findings, applications, and limitations of observational and experimental research in clinical decision making.',NULL,31,0,NULL,4,0,1,0,2,NULL,0,0,0),(94,NULL,'ME2.1a','Effectively identify and explore issues to be addressed in a patient encounter, including the patient\'s context and preferences.',NULL,32,6,NULL,0,0,1,0,2,NULL,0,0,0),(95,NULL,'ME2.1b','For purposes of prevention and health promotion, diagnosis and/or management, elicit a history that is relevant, concise and accurate to context and preferences.',NULL,32,6,NULL,1,0,1,0,2,NULL,0,0,0),(96,NULL,'ME2.1c','For the purposes of prevention and health promotion, diagnosis and/or management, perform a focused physical examination that is relevant and accurate.',NULL,32,6,NULL,2,0,1,0,2,NULL,0,0,0),(97,NULL,'ME2.1d','Select basic, medically appropriate investigative methods in an ethical manner.',NULL,32,6,NULL,3,0,1,0,2,NULL,0,0,0),(98,NULL,'ME2.1e','Demonstrate effective clinical problem solving and judgment to address selected common patient presentations, including interpreting available data and integrating information to generate differential diagnoses and management plans.',NULL,32,6,NULL,4,0,1,0,2,NULL,0,0,0),(99,NULL,'ME2.2a','Demonstrate effective, appropriate and timely performance of selected diagnostic procedures.',NULL,33,6,NULL,0,0,1,0,2,NULL,0,0,0),(100,NULL,'ME2.2b','Demonstrate effective, appropriate and timely performance of selected therapeutic procedures.',NULL,33,6,NULL,1,0,1,0,2,NULL,0,0,0),(101,NULL,'ME3.xa','Identify and apply aspects of normal human structure and physiology relevant to the clinical presentation.',NULL,34,6,NULL,0,0,1,0,2,NULL,0,0,0),(102,NULL,'ME3.xb','Identify pathologic or maladaptive processes that are active.',NULL,34,6,NULL,1,0,1,0,2,NULL,0,0,0),(103,NULL,'ME3.xc','Develop a differential diagnosis for the clinical presentation.',NULL,34,6,NULL,2,0,1,0,2,NULL,0,0,0),(104,NULL,'ME3.xd','Use history taking and physical examination relevant to the clinical presentation.',NULL,34,6,NULL,3,0,1,0,2,NULL,0,0,0),(105,NULL,'ME3.xe','Use diagnostic tests or procedures appropriately to establish working diagnoses.',NULL,34,6,NULL,4,0,1,0,2,NULL,0,0,0),(106,NULL,'ME3.xf','Provide appropriate initial management for the clinical presentation.',NULL,34,6,NULL,5,0,1,0,2,NULL,0,0,0),(107,NULL,'ME3.xg','Provide evidence for diagnostic and therapeutic choices.',NULL,34,6,NULL,6,0,1,0,2,NULL,0,0,0),(108,NULL,'ME4.1a','Demonstrate awareness and respect for the Determinants of Health in identifying the needs of a patient.',NULL,35,6,NULL,0,0,1,0,2,NULL,0,0,0),(109,NULL,'ME4.1b','Discover opportunities for health promotion and disease prevention as well as resources for patient care.',NULL,35,6,NULL,1,0,1,0,2,NULL,0,0,0),(110,NULL,'ME4.1c','Formulate preventive measures into their management strategies.',NULL,35,6,NULL,2,0,1,0,2,NULL,0,0,0),(111,NULL,'ME4.1d','Communicate with the patient, the patient\'s family and concerned others with regard to risk factors and their modification where appropriate.',NULL,35,6,NULL,3,0,1,0,2,NULL,0,0,0),(112,NULL,'ME4.1e','Describe programs for the promotion of health including screening for, and the prevention of, illness.',NULL,35,6,NULL,4,0,1,0,2,NULL,0,0,0),(113,NULL,'P1.1a','Defines the concepts of honesty, integrity, commitment, dependability, compassion, respect and altruism as applied to medical practice and correctly identifies examples of appropriate and inappropriate application.',NULL,36,6,NULL,0,0,1,0,2,NULL,0,0,0),(114,NULL,'P1.1b','Applies these concepts in medical and professional encounters.',NULL,36,6,NULL,1,0,1,0,2,NULL,0,0,0),(115,NULL,'P1.2a','Defines the concept of \"standard of care\".',NULL,37,6,NULL,0,0,1,0,2,NULL,0,0,0),(116,NULL,'P1.2b','Applies diagnostic and therapeutic modalities in evidence based and patient centred contexts.',NULL,37,6,NULL,1,0,1,0,2,NULL,0,0,0),(117,NULL,'P1.3a','Recognizes and acknowledges limits of personal competence.',NULL,38,6,NULL,0,0,1,0,2,NULL,0,0,0),(118,NULL,'P1.3b','Is able to acquire specific knowledge appropriately to assist clinical management.',NULL,38,6,NULL,1,0,1,0,2,NULL,0,0,0),(119,NULL,'P1.3c','Engages colleagues and other health professionals appropriately.',NULL,38,6,NULL,2,0,1,0,2,NULL,0,0,0),(120,NULL,'P2.1a','Analyze ethical issues encountered in practice (such as informed consent, confidentiality, truth telling, vulnerable populations etc).',NULL,39,6,NULL,0,0,1,0,2,NULL,0,0,0),(121,NULL,'P2.1b','Analyze legal issues encountered in practice (such as conflict of interest, patient rights and privacy, etc).',NULL,39,6,NULL,1,0,1,0,2,NULL,0,0,0),(122,NULL,'P2.1c','Analyze the psycho-social, cultural and religious issues that could affect patient management.',NULL,39,6,NULL,2,0,1,0,2,NULL,0,0,0),(123,NULL,'P2.1d','Define and implement principles of appropriate relationships with patients.',NULL,39,6,NULL,3,0,1,0,2,NULL,0,0,0),(124,NULL,'P2.2a','Recognize the professional, legal and ethical codes and obligations required of current practice in a variety of settings, including hospitals, private practice and health care institutions, etc.',NULL,40,6,NULL,0,0,1,0,2,NULL,0,0,0),(125,NULL,'P2.2b','Recognize and respond appropriately to unprofessional behaviour in colleagues.',NULL,40,6,NULL,1,0,1,0,2,NULL,0,0,0),(126,NULL,'S1.1a','Use objective parameters to assess reliability of various sources of medical information.',NULL,41,6,NULL,0,0,1,0,2,NULL,0,0,0),(127,NULL,'S1.1b','Are able to efficiently search sources of medical information in order to address specific clinical questions.',NULL,41,6,NULL,1,0,1,0,2,NULL,0,0,0),(128,NULL,'S1.2a','Apply knowledge of research and statistical methodology to the review of medical information and make decisions for health care of patients and society through scientifically rigourous analysis of evidence.',NULL,42,6,NULL,0,0,1,0,2,NULL,0,0,0),(129,NULL,'S1.2b','Apply to the review of medical literature the principles of research ethics, including disclosure, conflicts of interest, research on human subjects and industry relations.',NULL,42,6,NULL,1,0,1,0,2,NULL,0,0,0),(130,NULL,'S1.2c','Identify the nature and requirements of organizations contributing to medical education.',NULL,42,6,NULL,2,0,1,0,2,NULL,0,0,0),(131,NULL,'S1.2d','Balance scientific evidence with consideration of patient preferences and overall quality of life in therapeutic decision making.',NULL,42,6,NULL,3,0,1,0,2,NULL,0,0,0),(132,NULL,'S2.1a','Formulates relevant research hypotheses.',NULL,43,6,NULL,0,0,1,0,2,NULL,0,0,0),(133,NULL,'S2.1b','Develops rigorous methodologies.',NULL,43,6,NULL,1,0,1,0,2,NULL,0,0,0),(134,NULL,'S2.1c','Develops appropriate collaborations in order to participate in research projects.',NULL,43,6,NULL,2,0,1,0,2,NULL,0,0,0),(135,NULL,'S2.1d','Practice research ethics, including disclosure, conflicts of interest, research on human subjects and industry relations.',NULL,43,6,NULL,3,0,1,0,2,NULL,0,0,0),(136,NULL,'S2.1e','Evaluates the outcomes of research by application of rigorous statistical analysis.',NULL,43,6,NULL,4,0,1,0,2,NULL,0,0,0),(137,NULL,'S2.2a','Report to students and faculty upon new knowledge gained from research and enquiry, using a variety of methods.',NULL,44,6,NULL,0,0,1,0,2,NULL,0,0,0),(138,NULL,'S3.1a','Develop lifelong learning strategies through integration of the principles of learning.',NULL,45,6,NULL,0,0,1,0,2,NULL,0,0,0),(139,NULL,'S3.1b','Self-assess learning critically, in congruence with others\' assessment, and address prioritized learning issues.',NULL,45,6,NULL,1,0,1,0,2,NULL,0,0,0),(140,NULL,'S3.1c','Ask effective learning questions and solve problems appropriately.',NULL,45,6,NULL,2,0,1,0,2,NULL,0,0,0),(141,NULL,'S3.1d','Consult multiple sources of information.',NULL,45,6,NULL,3,0,1,0,2,NULL,0,0,0),(142,NULL,'S3.1e','Employ a variety of learning methodologies.',NULL,45,6,NULL,4,0,1,0,2,NULL,0,0,0),(143,NULL,'S3.1f','Learn with and enhance the learning of others through communities of practice.',NULL,45,6,NULL,5,0,1,0,2,NULL,0,0,0),(144,NULL,'S3.1g','Employ information technology (informatics) in learning, including, in clerkship, access to patient record data and other technologies.',NULL,45,6,NULL,6,0,1,0,2,NULL,0,0,0),(145,NULL,'CM1.1a','Apply the skills that develop positive therapeutic relationships with patients and their families, characterized by understanding, trust, respect, honesty and empathy.',NULL,46,6,NULL,0,0,1,0,2,NULL,0,0,0),(146,NULL,'CM1.1b','Respect patient confidentiality, privacy and autonomy.',NULL,46,6,NULL,1,0,1,0,2,NULL,0,0,0),(147,NULL,'CM1.1c','Listen effectively and be aware of and responsive to nonverbal cues.',NULL,46,6,NULL,2,0,1,0,2,NULL,0,0,0),(148,NULL,'CM1.1d','Communicate effectively with individuals regardless of their social, cultural or ethnic backgrounds, or disabilities.',NULL,46,6,NULL,3,0,1,0,2,NULL,0,0,0),(149,NULL,'CM1.1e','Effectively facilitate a structured clinical encounter.',NULL,46,6,NULL,4,0,1,0,2,NULL,0,0,0),(150,NULL,'CM1.2a','Gather information about a disease, but also about a patient\'s beliefs, concerns, expectations and illness experience.',NULL,47,6,NULL,0,0,1,0,2,NULL,0,0,0),(151,NULL,'CM1.2b','Seek out and synthesize relevant information from other sources, such as a patient\'s family, caregivers and other professionals.',NULL,47,6,NULL,1,0,1,0,2,NULL,0,0,0),(152,NULL,'CM1.3a','Provide accurate information to a patient and family, colleagues and other professionals in a clear, non-judgmental, and understandable manner.',NULL,48,6,NULL,0,0,1,0,2,NULL,0,0,0),(153,NULL,'CM1.3b','Maintain clear, accurate and appropriate records of clinical encounters and plans.',NULL,48,6,NULL,1,0,1,0,2,NULL,0,0,0),(154,NULL,'CM1.3c','Effectively present verbal reports of clinical encounters and plans.',NULL,48,6,NULL,2,0,1,0,2,NULL,0,0,0),(155,NULL,'CM1.4a','Effectively identify and explore problems to be addressed from a patient encounter, including the patient\'s context, responses, concerns and preferences.',NULL,49,6,NULL,0,0,1,0,2,NULL,0,0,0),(156,NULL,'CM1.4b','Respect diversity and difference, including but not limited to the impact of gender, religion and cultural beliefs on decision making.',NULL,49,6,NULL,1,0,1,0,2,NULL,0,0,0),(157,NULL,'CM1.4c','Encourage discussion, questions and interaction in the encounter.',NULL,49,6,NULL,2,0,1,0,2,NULL,0,0,0),(158,NULL,'CM1.4d','Engage patients, families and relevant health professionals in shared decision making to develop a plan of care.',NULL,49,6,NULL,3,0,1,0,2,NULL,0,0,0),(159,NULL,'CM1.4e','Effectively address challenging communication issues such as obtaining informed consent, delivering bad news, and addressing anger, confusion and misunderstanding.',NULL,49,6,NULL,4,0,1,0,2,NULL,0,0,0),(160,NULL,'CL1.1a','Clearly describe and demonstrate their roles and responsibilities under law and other provisions, to other professionals within a variety of health care settings.',NULL,50,6,NULL,0,0,1,0,2,NULL,0,0,0),(161,NULL,'CL1.1b','Recognize and respect the diversity of roles and responsibilities of other health care professionals in a variety of settings, noting  how these roles interact with their own.',NULL,50,6,NULL,1,0,1,0,2,NULL,0,0,0),(162,NULL,'CL1.1c','Work with others to assess, plan, provide and integrate care for individual patients.',NULL,50,6,NULL,2,0,1,0,2,NULL,0,0,0),(163,NULL,'CL1.1d','Respect team ethics, including confidentiality, resource allocation and professionalism.',NULL,50,6,NULL,3,0,1,0,2,NULL,0,0,0),(164,NULL,'CL1.1e','Where appropriate, demonstrate leadership in a healthcare team.',NULL,50,6,NULL,4,0,1,0,2,NULL,0,0,0),(165,NULL,'CL1.2a','Demonstrate a respectful attitude towards other colleagues and members of an interprofessional team members in a variety of settings.',NULL,51,6,NULL,0,0,1,0,2,NULL,0,0,0),(166,NULL,'CL1.2b','Respect differences, and work to overcome misunderstandings and limitations in others, that may contribute to conflict.',NULL,51,6,NULL,1,0,1,0,2,NULL,0,0,0),(167,NULL,'CL1.2c','Recognize one\'s own differences, and work to overcome one\'s own misunderstandings and limitations that may contribute to interprofessional conflict.',NULL,51,6,NULL,2,0,1,0,2,NULL,0,0,0),(168,NULL,'CL1.2d','Reflect on successful interprofessional team function.',NULL,51,6,NULL,3,0,1,0,2,NULL,0,0,0),(169,NULL,'CL1.3a','Identify the roles of patients and their family in prevention and management of illness.',NULL,52,6,NULL,0,0,1,0,2,NULL,0,0,0),(170,NULL,'CL1.3b','Learn how to inform and involve the patient and family in decision-making and management plans.',NULL,52,6,NULL,1,0,1,0,2,NULL,0,0,0),(171,NULL,'CL1.4a','Improve teaching through advice from experts in medical education.',NULL,53,6,NULL,0,0,1,0,2,NULL,0,0,0),(172,NULL,'CL1.4b','Accept supervision and feedback.',NULL,53,6,NULL,1,0,1,0,2,NULL,0,0,0),(173,NULL,'CL1.4c','Seek learning from others.',NULL,53,6,NULL,2,0,1,0,2,NULL,0,0,0),(174,NULL,'A1.1a','Explain factors that influence health, disease, disability and access to care including non-biologic factors (cultural, psychological, sociologic, familial, economic, environmental, legal, political, spiritual needs and beliefs).',NULL,54,6,NULL,0,0,1,0,2,NULL,0,0,0),(175,NULL,'A1.1b','Describe barriers to access to care and resources.',NULL,54,6,NULL,1,0,1,0,2,NULL,0,0,0),(176,NULL,'A1.1c','Discuss health issues for special populations, including vulnerable or marginalized populations.',NULL,54,6,NULL,2,0,1,0,2,NULL,0,0,0),(177,NULL,'A1.1d','Identify principles of health policy and implications.',NULL,54,6,NULL,3,0,1,0,2,NULL,0,0,0),(178,NULL,'A1.1e','Describe health programs and interventions at the population level.',NULL,54,6,NULL,4,0,1,0,2,NULL,0,0,0),(179,NULL,'A2.1a','Identify the role of and method of access to services of community resources.',NULL,55,6,NULL,0,0,1,0,2,NULL,0,0,0),(180,NULL,'A2.1b','Describe appropriate methods of communication about community resources to and on behalf of patients.',NULL,55,6,NULL,1,0,1,0,2,NULL,0,0,0),(181,NULL,'A2.1c','Locate and analyze a variety of health communities and community health networks in the local Kingston area and beyond.',NULL,55,6,NULL,2,0,1,0,2,NULL,0,0,0),(182,NULL,'A2.2a','Describe the role and examples of physicians and medical associations in advocating collectively for health and patient safety.',NULL,56,6,NULL,0,0,1,0,2,NULL,0,0,0),(183,NULL,'A2.2b','Analyze the ethical and professional issues inherent in health advocacy, including possible conflict between roles of gatekeeper and manager.',NULL,56,6,NULL,1,0,1,0,2,NULL,0,0,0),(184,NULL,'M1.1a','Outline strategies for effective practice in a variety of health care settings, including their structure, finance and operation.',NULL,57,6,NULL,0,0,1,0,2,NULL,0,0,0),(185,NULL,'M1.1b','Outline the common law and statutory provisions which govern practice and collaboration within hospital and other settings.',NULL,57,6,NULL,1,0,1,0,2,NULL,0,0,0),(186,NULL,'M1.1c','Recognizes one\'s own personal preferences and strengths and uses this knowledge in career decisions.',NULL,57,6,NULL,2,0,1,0,2,NULL,0,0,0),(187,NULL,'M1.1d','Identify career paths within health care settings.',NULL,57,6,NULL,3,0,1,0,2,NULL,0,0,0),(188,NULL,'M2.1a','Identify and balance personal and educational priorities to foster future balance between personal health and a sustainable practice.',NULL,58,6,NULL,0,0,1,0,2,NULL,0,0,0),(189,NULL,'M2.1b','Practice personal and professional awareness, insight and acceptance of feedback and peer review;  participate in peer review.',NULL,58,6,NULL,1,0,1,0,2,NULL,0,0,0),(190,NULL,'M2.1c','Implement plans to overcome barriers to health personal and professional behavior.',NULL,58,6,NULL,2,0,1,0,2,NULL,0,0,0),(191,NULL,'M2.1d','Recognize and respond to other educational/professional colleagues in need of support.',NULL,58,6,NULL,3,0,1,0,2,NULL,0,0,0),(200,NULL,'Clinical Learning Objectives',NULL,NULL,0,7,NULL,1,0,1,0,2,NULL,0,0,0),(201,NULL,'Pain, lower limb',NULL,NULL,200,7,NULL,113,0,1,0,2,NULL,0,1257353646,1),(202,NULL,'Pain, upper limb',NULL,NULL,200,7,NULL,112,0,1,0,2,NULL,0,1257353646,1),(203,NULL,'Fracture/disl\'n',NULL,NULL,200,7,NULL,111,0,1,0,2,NULL,0,1257353646,1),(204,NULL,'Scrotal pain',NULL,NULL,200,7,NULL,101,0,1,0,2,NULL,0,1257353646,1),(205,NULL,'Blood in urine',NULL,NULL,200,7,NULL,100,0,1,0,2,NULL,0,1257353646,1),(206,NULL,'Urinary obstruction/hesitancy',NULL,NULL,200,7,NULL,99,0,1,0,2,NULL,0,1257353646,1),(207,NULL,'Nausea/vomiting',NULL,NULL,200,7,NULL,98,0,1,0,2,NULL,0,1257353646,1),(208,NULL,'Hernia',NULL,NULL,200,7,NULL,97,0,1,0,2,NULL,0,1257353646,1),(209,NULL,'Abdominal injuries',NULL,NULL,200,7,NULL,96,0,1,0,2,NULL,0,1257353646,1),(210,NULL,'Chest injuries',NULL,NULL,200,7,NULL,95,0,1,0,2,NULL,0,1257353646,1),(211,NULL,'Breast disorders',NULL,NULL,200,7,NULL,94,0,1,0,2,NULL,0,1257353646,1),(212,NULL,'Anorectal pain',NULL,NULL,200,7,NULL,93,0,1,0,2,NULL,0,1257353646,1),(213,NULL,'Blood, GI tract',NULL,NULL,200,7,NULL,92,0,1,0,2,NULL,0,1257353646,1),(214,NULL,'Abdominal distension',NULL,NULL,200,7,NULL,91,0,1,0,2,NULL,0,1257353646,1),(215,NULL,'Subs abuse/addic/wdraw',NULL,NULL,200,7,NULL,90,0,1,0,2,NULL,0,1257353646,1),(216,NULL,'Abdo pain - acute',NULL,NULL,200,7,NULL,89,0,1,0,2,NULL,0,1257353646,1),(217,NULL,'Psychosis/disord thoughts',NULL,NULL,200,7,NULL,88,0,1,0,2,NULL,0,1257353646,1),(218,NULL,'Personality disorders',NULL,NULL,200,7,NULL,87,0,1,0,2,NULL,0,1257353646,1),(219,NULL,'Panic/anxiety',NULL,NULL,200,7,NULL,86,0,1,0,2,NULL,0,1257353646,1),(221,NULL,'Mood disorders',NULL,NULL,200,7,NULL,84,0,1,0,2,NULL,0,1257353646,1),(222,NULL,'XR-Wrist/hand',NULL,NULL,200,7,NULL,83,0,1,0,2,NULL,0,1257353646,1),(223,NULL,'XR-Chest',NULL,NULL,200,7,NULL,82,0,1,0,2,NULL,0,1257353646,1),(224,NULL,'XR-Hip/pelvis',NULL,NULL,200,7,NULL,81,0,1,0,2,NULL,0,1257353646,1),(225,NULL,'XR-Ankle/foot',NULL,NULL,200,7,NULL,80,0,1,0,2,NULL,0,1257353646,1),(226,NULL,'Skin ulcers-tumors',NULL,NULL,200,7,NULL,79,0,1,0,2,NULL,0,1257353646,1),(228,NULL,'Skin wound',NULL,NULL,200,7,NULL,77,0,1,0,2,NULL,0,1257353646,1),(233,NULL,'Dyspnea, acute',NULL,NULL,200,7,NULL,72,0,1,0,2,NULL,0,1257353646,1),(234,NULL,'Infant/child nutrition',NULL,NULL,200,7,NULL,71,0,1,0,2,NULL,0,1257353646,1),(235,NULL,'Newborn assessment',NULL,NULL,200,7,NULL,70,0,1,0,2,NULL,0,1257353646,1),(236,NULL,'Rash,child',NULL,NULL,200,7,NULL,69,0,1,0,2,NULL,0,1257353646,1),(237,NULL,'Ped naus/vom/diarh',NULL,NULL,200,7,NULL,68,0,1,0,2,NULL,0,1257353646,1),(238,NULL,'Ped EM\'s-acutely ill',NULL,NULL,200,7,NULL,67,0,1,0,2,NULL,0,1257353646,1),(239,NULL,'Ped dysp/resp dstres',NULL,NULL,200,7,NULL,66,0,1,0,2,NULL,0,1257353646,1),(240,NULL,'Ped constipation',NULL,NULL,200,7,NULL,65,0,1,0,2,NULL,0,1257353646,1),(241,NULL,'Fever in a child',NULL,NULL,200,7,NULL,64,0,1,0,2,NULL,0,1257353646,1),(242,NULL,'Ear pain',NULL,NULL,200,7,NULL,63,0,1,0,2,NULL,0,1257353646,1),(257,NULL,'Prolapse',NULL,NULL,200,7,NULL,48,0,1,0,2,NULL,0,1257353646,1),(258,NULL,'Vaginal bleeding, abn',NULL,NULL,200,7,NULL,47,0,1,0,2,NULL,0,1257353646,1),(259,NULL,'Postpartum, normal',NULL,NULL,200,7,NULL,46,0,1,0,2,NULL,0,1257353646,1),(260,NULL,'Labour, normal',NULL,NULL,200,7,NULL,45,0,1,0,2,NULL,0,1257353646,1),(261,NULL,'Labour, abnormal',NULL,NULL,200,7,NULL,44,0,1,0,2,NULL,0,1257353646,1),(262,NULL,'Infertility',NULL,NULL,200,7,NULL,43,0,1,0,2,NULL,0,1257353646,1),(263,NULL,'Incontinence-urine',NULL,NULL,200,7,NULL,42,0,1,0,2,NULL,0,1257353646,1),(264,NULL,'Hypertension, preg',NULL,NULL,200,7,NULL,41,0,1,0,2,NULL,0,1257353646,1),(265,NULL,'Dysmenorrhea',NULL,NULL,200,7,NULL,40,0,1,0,2,NULL,0,1257353646,1),(266,NULL,'Contraception',NULL,NULL,200,7,NULL,39,0,1,0,2,NULL,0,1257353646,1),(267,NULL,'Antepartum care',NULL,NULL,200,7,NULL,38,0,1,0,2,NULL,0,1257353646,1),(268,NULL,'Weakness',NULL,NULL,200,7,NULL,37,0,1,0,2,NULL,0,1257353646,1),(269,NULL,'Sodium-abn',NULL,NULL,200,7,NULL,36,0,1,0,2,NULL,0,1257353646,1),(270,NULL,'Renal failure',NULL,NULL,200,7,NULL,35,0,1,0,2,NULL,0,1257353646,1),(271,NULL,'Potassium-abn',NULL,NULL,200,7,NULL,34,0,1,0,2,NULL,0,1257353646,1),(272,NULL,'Murmur',NULL,NULL,200,7,NULL,33,0,1,0,2,NULL,0,1257353646,1),(273,NULL,'Joint pain, poly',NULL,NULL,200,7,NULL,32,0,1,0,2,NULL,0,1257353646,1),(274,NULL,'Impaired LOC (coma)',NULL,NULL,200,7,NULL,31,0,1,0,2,NULL,0,1257353646,1),(275,NULL,'Hypotension',NULL,NULL,200,7,NULL,30,0,1,0,2,NULL,0,1257353646,1),(276,NULL,'Hypertension',NULL,NULL,200,7,NULL,29,0,1,0,2,NULL,0,1257353646,1),(277,NULL,'H+ concentratn, abn',NULL,NULL,200,7,NULL,28,0,1,0,2,NULL,0,1257353646,1),(278,NULL,'Fever',NULL,NULL,200,7,NULL,27,0,1,0,2,NULL,0,1257353646,1),(279,NULL,'Edema',NULL,NULL,200,7,NULL,26,0,1,0,2,NULL,0,1257353646,1),(280,NULL,'Dyspnea-chronic',NULL,NULL,200,7,NULL,25,0,1,0,2,NULL,0,1257353646,1),(281,NULL,'Diabetes mellitus',NULL,NULL,200,7,NULL,24,0,1,0,2,NULL,0,1257353646,1),(282,NULL,'Dementia',NULL,NULL,200,7,NULL,23,0,1,0,2,NULL,0,1257353646,1),(283,NULL,'Delerium/confusion',NULL,NULL,200,7,NULL,22,0,1,0,2,NULL,0,1257353646,1),(284,NULL,'Cough',NULL,NULL,200,7,NULL,21,0,1,0,2,NULL,0,1257353646,1),(286,NULL,'Anemia',NULL,NULL,200,7,NULL,19,0,1,0,2,NULL,0,1257353646,1),(287,NULL,'Chest pain',NULL,NULL,200,7,NULL,18,0,1,0,2,NULL,0,1257353646,1),(288,NULL,'Abdo pain-chronic',NULL,NULL,200,7,NULL,17,0,1,0,2,NULL,0,1257353646,1),(289,NULL,'Wk-rel\'td health iss',NULL,NULL,200,7,NULL,16,0,1,0,2,NULL,0,1257353646,1),(290,NULL,'Weight loss/gain',NULL,NULL,200,7,NULL,15,0,1,0,2,NULL,0,1257353646,1),(291,NULL,'URTI',NULL,NULL,200,7,NULL,14,0,1,0,2,NULL,0,1257353646,1),(292,NULL,'Sore throat',NULL,NULL,200,7,NULL,13,0,1,0,2,NULL,0,1257353646,1),(293,NULL,'Skin rash',NULL,NULL,200,7,NULL,12,0,1,0,2,NULL,0,1257353646,1),(294,NULL,'Pregnancy',NULL,NULL,200,7,NULL,11,0,1,0,2,NULL,0,1257353646,1),(295,NULL,'Periodic health exam',NULL,NULL,200,7,NULL,10,0,1,0,2,NULL,0,1257353646,1),(296,NULL,'Pain, spinal',NULL,NULL,200,7,NULL,9,0,1,0,2,NULL,0,1257353646,1),(299,NULL,'Headache',NULL,NULL,200,7,NULL,6,0,1,0,2,NULL,0,1257353646,1),(300,NULL,'Fatigue',NULL,NULL,200,7,NULL,5,0,1,0,2,NULL,0,1257353646,1),(303,NULL,'Dysuria/pyuria',NULL,NULL,200,7,NULL,2,0,1,0,2,NULL,0,1257353646,1),(304,NULL,'Fracture/dislocation',NULL,NULL,200,7,NULL,114,0,1,0,2,NULL,0,1261414735,1),(305,NULL,'Pain',NULL,NULL,200,7,NULL,115,0,1,0,2,NULL,0,1261414735,1),(306,NULL,'Preop Assess - anesthesiology',NULL,NULL,200,7,NULL,116,0,1,0,2,NULL,0,1261414735,1),(307,NULL,'Preop Assess - surgery',NULL,NULL,200,7,NULL,117,0,1,0,2,NULL,0,1261414735,1),(308,NULL,'Pain - spinal',NULL,NULL,200,7,NULL,118,0,1,0,2,NULL,0,1261414735,1),(309,NULL,'MCC Presentations',NULL,NULL,0,8,NULL,3,0,1,0,2,NULL,0,1265296358,1),(310,'1-E','Abdominal Distension','Abdominal distention is common and may indicate the presence of serious intra-abdominal or systemic disease.',NULL,309,8,NULL,1,0,1,0,2,NULL,0,1271174177,1),(311,'2-E','Abdominal Mass','If hernias are excluded, most other abdominal masses represent a significant underlying disease that requires complete investigation.',NULL,309,8,NULL,2,0,1,0,2,NULL,0,1271174177,1),(312,'2-1-E','Adrenal Mass','Adrenal masses are at times found incidentally after CT, MRI, or ultrasound examination done for unrelated reasons.  The incidence is about 3.5 % (almost 10 % of autopsies).',NULL,311,8,NULL,1,0,1,0,2,NULL,0,1271174178,1),(313,'2-2-E','Hepatomegaly','True hepatomegaly (enlargement of the liver with a span greater than 14 cm in adult males and greater than 12 cm in adult females) is an uncommon clinical presentation, but is important to recognize in light of potentially serious causal conditions.',NULL,311,8,NULL,2,0,1,0,2,NULL,0,1271174178,1),(314,'2-4-E','Hernia (abdominal Wall And Groin)','A hernia is defined as an abnormal protrusion of part of a viscus through its containing wall.  Hernias, in particular inguinal hernias, are very common, and thus, herniorrphaphy is a very common surgical intervention.',NULL,311,8,NULL,3,0,1,0,2,NULL,0,1271174178,1),(315,'2-3-E','Splenomegaly','Splenomegaly, an enlarged spleen detected on physical examination by palpitation or percussion at Castell\'s point, is relatively uncommon.  However, it is often associated with serious underlying pathology.',NULL,311,8,NULL,4,0,1,0,2,NULL,0,1271174178,1),(316,'3-1-E','Abdominal Pain (children)','Abdominal pain is a common complaint in children.  While the symptoms may result from serious abdominal pathology, in a large proportion of cases, an identifiable organic cause is not found.  The causes are often age dependent.',NULL,309,8,NULL,3,0,1,0,2,NULL,0,1271174178,1),(317,'3-2-E','Abdominal Pain, Acute ','Abdominal pain may result from intra-abdominal inflammation or disorders of the abdominal wall.  Pain may also be referred from sources outside the abdomen such as retroperitoneal processes as well as intra-thoracic processes.  Thorough clinical evaluation is the most important \"test\" in the diagnosis of abdominal pain.',NULL,309,8,NULL,4,0,1,0,2,NULL,0,1271174178,1),(318,'3-4-E','Abdominal Pain, Anorectal','While almost all causes of anal pain are treatable, some can be destructive locally if left untreated.',NULL,309,8,NULL,5,0,1,0,2,NULL,0,1271174178,1),(319,'3-3-E','Abdominal Pain, Chronic','Chronic and recurrent abdominal pain, including heartburn or dyspepsia is a common symptom (20 - 40 % of adults) with an extensive differential diagnosis and heterogeneous pathophysiology.  The history and physical examination frequently differentiate between functional and more serious underlying diseases.',NULL,309,8,NULL,6,0,1,0,2,NULL,0,1271174178,1),(320,'4-E','Allergic Reactions/food Allergies Intolerance/atopy','Allergic reactions are considered together despite the fact that they exhibit a variety of clinical responses and are considered separately under the appropriate presentation.  The rationale for considering them together is that in some patients with a single response (e.g., atopic dermatitis), other atopic disorders such as asthma or allergic rhinitis may occur at other times.  Moreover, 50% of patients with atopic dermatitis report a family history of respiratory atopy. ',NULL,309,8,NULL,7,0,1,0,2,NULL,0,1271174178,1),(321,'5-E','Attention Deficit/hyperactivity Disorder (adhd)/learning Dis','Family physicians at times are the initial caregivers to be confronted by developmental and behavioural problems of childhood and adolescence (5 - 10% of school-aged population).  Lengthy waiting lists for specialists together with the urgent plight of patients often force primary-care physicians to care for these children.',NULL,309,8,NULL,8,0,1,0,2,NULL,0,1271174178,1),(322,'6-E','Blood From Gastrointestinal Tract','Both upper and lower gastrointestinal bleeding are common and may be life-threatening.  Upper intestinal bleeding usually presents with hematemesis (blood or coffee-ground material) and/or melena (black, tarry stools).  Lower intestinal bleeding usually manifests itself as hematochezia (bright red blood or dark red blood or clots per rectum).  Unfortunately, this difference is not consistent. Melena may be seen in patients with colorectal or small bowel bleeding, and hematochezia may be seen with massive upper gastrointestinal bleeding.  Occult bleeding from the gastrointestinal tract may also be identified by positive stool for occult blood or the presence of iron deficiency anemia.',NULL,309,8,NULL,9,0,1,0,2,NULL,0,1271174178,1),(323,'6-2-E','Blood From Gastrointestinal Tract, Lower/hematochezia','Although lower gastrointestinal bleeding (blood originating distal to ligament of Treitz) or hematochezia is less common than upper (20% vs. 80%), it is associated with 10 -20% morbidity and mortality since it usually occurs in the elderly.  Early identification of colorectal cancer is important in preventing cancer-related morbidity and mortality (colorectal cancer is second only to lung cancer as a cause of cancer-related death). ',NULL,322,8,NULL,1,0,1,0,2,NULL,0,1271174178,1),(324,'6-1-E','Blood From Gastrointestinal Tract, Upper/hematemesis','Although at times self-limited, upper GI bleeding always warrants careful and urgent evaluation, investigation, and treatment.  The urgency of treatment and the nature of resuscitation depend on the amount of blood loss, the likely cause of the bleeding, and the underlying health of the patient.',NULL,322,8,NULL,2,0,1,0,2,NULL,0,1271174178,1),(325,'7-E','Blood In Sputum (hemoptysis/prevention Of Lung Cancer)','Expectoration of blood can range from blood streaking of sputum to massive hemoptysis (&gt;200 ml/d) that may be acutely life threatening.  Bleeding usually starts and stops unpredictably, but under certain circumstances may require immediate establishment of an airway and control of the bleeding.',NULL,309,8,NULL,10,0,1,0,2,NULL,0,1271174178,1),(326,'8-E','Blood In Urine (hematuria)','Urinalysis is a screening procedure for insurance and routine examinations.  Persistent hematuria implies the presence of conditions ranging from benign to malignant.',NULL,309,8,NULL,11,0,1,0,2,NULL,0,1271174178,1),(327,'9-1-E','Hypertension','Hypertension is a common condition that usually presents with a modest elevation in either systolic or diastolic blood pressure.  Under such circumstances, the diagnosis of hypertension is made only after three separate properly measured blood pressures.  Appropriate investigation and management of hypertension is expected to improve health outcomes.',NULL,309,8,NULL,12,0,1,0,2,NULL,0,1271174178,1),(328,'9-1-1-E','Hypertension In Childhood','The prevalence of hypertension in children is&lt;1 %, but often results from identifiable causes (usually renal or vascular).  Consequently, vigorous investigation is warranted.',NULL,327,8,NULL,1,0,1,0,2,NULL,0,1271174178,1),(329,'9-1-2-E','Hypertension In The Elderly','Elderly patients (&gt;65 years) have hypertension much more commonly than younger patients do, especially systolic hypertension.  The prevalence of hypertension among the elderly may reach 60 -80 %.',NULL,327,8,NULL,2,0,1,0,2,NULL,0,1271174178,1),(330,'9-1-3-E','Malignant Hypertension','Malignant hypertension and hypertensive encephalopathies are two life-threatening syndromes caused by marked elevation in blood pressure.',NULL,327,8,NULL,3,0,1,0,2,NULL,0,1271174178,1),(331,'9-1-4-E','Pregnancy Associated Hypertension','Ten to 20 % of pregnancies are associated with hypertension.  Chronic hypertension complicates&lt;5%, preeclampsia occurs in slightly&gt;6%, and gestational hypertension arises in 6% of pregnant women.  Preeclampsia is potentially serious, but can be managed by treatment of hypertension and \'cured\' by delivery of the fetus.',NULL,327,8,NULL,4,0,1,0,2,NULL,0,1271174178,1),(332,'9-2-E','Hypotension/shock','All physicians must deal with life-threatening emergencies.  Regardless of underlying cause, certain general measures are usually indicated (investigations and therapeutic interventions) that can be life saving.',NULL,309,8,NULL,13,0,1,0,2,NULL,0,1271174178,1),(333,'9-2-1-E','Anaphylaxis','Anaphylaxis causes about 50 fatalities per year, and occurs in 1/5000-hospital admissions in Canada.  Children most commonly are allergic to foods.',NULL,332,8,NULL,1,0,1,0,2,NULL,0,1271174178,1),(334,'10-1-E','Breast Lump/screening','Complaints of breast lumps are common, and breast cancer is the most common cancer in women.  Thus, all breast complaints need to be pursued to resolution.  Screening women 50 - 69 years with annual mammography improves survival. ',NULL,309,8,NULL,14,0,1,0,2,NULL,0,1271174178,1),(335,'10-2-E','Galactorrhea/discharge','Although noticeable breast secretions are normal in&gt;50 % of reproductive age women, spontaneous persistent galactorrhea may reflect underlying disease and requires investigation.',NULL,309,8,NULL,15,0,1,0,2,NULL,0,1271174178,1),(336,'10-3-E','Gynecomastia','Although a definite etiology for gynecomastia is found in&lt;50% of patients, a careful drug history is important so that a treatable cause is detected.  The underlying feature is an increased estrogen to androgen ratio.',NULL,309,8,NULL,16,0,1,0,2,NULL,0,1271174178,1),(337,'11-E','Burns','Burns are relatively common and range from minor cutaneous wounds to major life-threatening traumas.  An understanding of the patho-physiology and treatment of burns and the metabolic and wound healing response will enable physicians to effectively assess and treat these injuries.',NULL,309,8,NULL,17,0,1,0,2,NULL,0,1271174178,1),(338,'12-1-E','Hypercalcemia','Hypercalcemia may be associated with an excess of calcium in both extracellular fluid and bone (e.g., increased intestinal absorption), or with a localised or generalised deficit of calcium in bone (e.g., increased bone resorption).  This differentiation by physicians is important for both diagnostic and management reasons.',NULL,309,8,NULL,18,0,1,0,2,NULL,0,1271174178,1),(339,'12-4-E','Hyperphosphatemia','Acute severe hyperphosphatemia can be life threatening.',NULL,309,8,NULL,19,0,1,0,2,NULL,0,1271174178,1),(340,'12-2-E','Hypocalcemia','Tetany, seizures, and papilledema may occur in patients who develop hypocalcemia acutely.',NULL,309,8,NULL,20,0,1,0,2,NULL,0,1271174178,1),(341,'12-3-E','Hypophosphatemia/fanconi Syndrome','Of hospitalised patients, 10-15% develop hypophosphatemia, and a small proportion have sufficiently profound depletion to lead to complications (e.g., rhabdomyolysis).',NULL,309,8,NULL,21,0,1,0,2,NULL,0,1271174178,1),(342,'13-E','Cardiac Arrest','All physicians are expected to attempt resuscitation of an individual with cardiac arrest. In the community, cardiac arrest most commonly is caused by ventricular fibrillation. However, heart rhythm at clinical presentation in many cases is unknown.  As a consequence, operational criteria for cardiac arrest do not rely on heart rhythm but focus on the presumed sudden pulse-less condition and the absence of evidence of a non-cardiac condition as the cause of the arrest.',NULL,309,8,NULL,22,0,1,0,2,NULL,0,1271174178,1),(343,'14-E','Chest Discomfort/pain/angina Pectoris','Chest pain in the primary care setting, although potentially severe and disabling, is more commonly of benign etiology.  The correct diagnosis requires a cost-effective approach.  Although coronary heart disease primarily occurs in patients over the age of 40, younger men and women can be affected (it is estimated that advanced lesions are present in 20% of men and 8% of women aged 30 to 34).  Physicians must recognise the manifestations of coronary artery disease and assess coronary risk factors.  Modifications of risk factors should be recommended as necessary.',NULL,309,8,NULL,23,0,1,0,2,NULL,0,1271174178,1),(344,'15-1-E','Bleeding Tendency/bruising','A bleeding tendency (excessive, delayed, or spontaneous bleeding) may signify serious underlying disease.  In children or infants, suspicion of a bleeding disorder may be a family history of susceptibility to bleeding.  An organised approach to this problem is essential.  Urgent management may be required.',NULL,309,8,NULL,24,0,1,0,2,NULL,0,1271174178,1),(345,'15-2-E','Hypercoagulable State','Patients may present with venous thrombosis and on occasion with pulmonary embolism. A risk factor for thrombosis can now be identified in over 80% of such patients.',NULL,309,8,NULL,25,0,1,0,2,NULL,0,1271174178,1),(346,'16-1-E',' Adult Constipation','Constipation is common in Western society, but frequency depends on patient and physician\'s definition of the problem.  One definition is straining, incomplete evacuation, sense of blockade, manual maneuvers, and hard stools at least 25% of the time along with&lt;3 stools/week for at least 12 weeks (need not be consecutive).  The prevalence of chronic constipation rises with age. In patients&gt;65 years, almost 1/3 complain of constipation.',NULL,309,8,NULL,26,0,1,0,2,NULL,0,1271174178,1),(347,'16-2-E','Pediatric Constipation','Constipation is a common problem in children.  It is important to differentiate functional from organic causes in order to develop appropriate management plans.',NULL,309,8,NULL,27,0,1,0,2,NULL,0,1271174178,1),(348,'17-E','Contraception','Ideally, the prevention of an unwanted pregnancy should be directed at education of patients, male and female, preferably before first sexual contact.  Counselling patients about which method to use, how, and when is a must for anyone involved in health care.',NULL,309,8,NULL,28,0,1,0,2,NULL,0,1271174178,1),(349,'18-E','Cough','Chronic cough is the fifth most common symptom for which patients seek medical advice.  Assessment of chronic cough must be thorough.  Patients with benign causes for their cough (gastro-esophageal reflux, post-nasal drip, two of the commonest causes) can often be effectively and easily managed.  Patients with more serious causes for their cough (e.g., asthma, the other common cause of chronic cough) require full investigation and management is more complex.',NULL,309,8,NULL,29,0,1,0,2,NULL,0,1271174178,1),(350,'19-E','Cyanosis/hypoxemia/hypoxia','Cyanosis is the physical sign indicative of excessive concentration of reduced hemoglobin in the blood, but at times is difficult to detect (it must be sought carefully, under proper lighting conditions).  Hypoxemia (low partial pressure of oxygen in blood), when detected, may be reversible with oxygen therapy after which the underlying cause requires diagnosis and management.',NULL,309,8,NULL,30,0,1,0,2,NULL,0,1271174178,1),(351,'19-1-E','Cyanosis/hypoxemia/hypoxia In Children','Evaluation of the patient with cyanosis depends on the age of the child.  It is an ominous finding and differentiation between peripheral and central is essential in order to mount appropriate management.',NULL,350,8,NULL,1,0,1,0,2,NULL,0,1271174178,1),(352,'20-E','Deformity/limp/pain In Lower Extremity, Child','\'Limp\' is a bumpy, rough, or strenuous way of walking, usually caused by weakness, pain, or deformity.  Although usually caused by benign conditions, at times it may be life or limb threatening. ',NULL,309,8,NULL,31,0,1,0,2,NULL,0,1271174178,1),(353,'21-E','Development Disorder/developmental Delay','Providing that normal development and behavior is readily recognized, primary care physicians will at times be the first physicians in a position to assess development in an infant, and recognize abnormal delay and/or atypical development.  Developmental surveillance and direct developmental screening of children, especially those with predisposing risks, will then be an integral part of health care.',NULL,309,8,NULL,32,0,1,0,2,NULL,0,1271174178,1),(354,'22-1-E','Acute Diarrhea','Diarrheal diseases are extremely common worldwide, and even in North America morbidity and mortality is significant.  One of the challenges for a physician faced with a patient with acute diarrhea is to know when to investigate and initiate treatment and when to simply wait for a self-limiting condition to run its course.',NULL,309,8,NULL,33,0,1,0,2,NULL,0,1271174178,1),(355,'22-2-E','Chronic Diarrhea','Chronic diarrhea is a decrease in fecal consistency lasting for 4 or more weeks.  It affects about 5% of the population.',NULL,309,8,NULL,34,0,1,0,2,NULL,0,1271174178,1),(356,'22-3-E','Pediatric Diarrhea','Diarrhea is defined as frequent, watery stools and is a common problem in infants and children.  In most cases, it is mild and self-limited, but the potential for hypovolemia (reduced effective arterial/extracellular volume) and dehydration (water loss in excess of solute) leading to electrolyte abnormalities is great.  These complications in turn may lead to significant morbidity or even mortality.',NULL,309,8,NULL,35,0,1,0,2,NULL,0,1271174178,1),(357,'23-E','Diplopia','Diplopia is the major symptom associated with dysfunction of extra-ocular muscles or abnormalities of the motor nerves innervating these muscles.  Monocular diplopia is almost always indicative of relatively benign optical problems whereas binocular diplopia is due to ocular misalignment.  Once restrictive disease or myasthenia gravis is excluded, the major cause of binocular diplopia is a cranial nerve lesion.  Careful clinical assessment will enable diagnosis in most, and suggest appropriate investigation and management.',NULL,309,8,NULL,36,0,1,0,2,NULL,0,1271174178,1),(358,'24-E','Dizziness/vertigo','\"Dizziness\" is a common but imprecise complaint.  Physicians need to determine whether it refers to true vertigo, \'dizziness\', disequilibrium, or pre-syncope/ lightheadedness. ',NULL,309,8,NULL,37,0,1,0,2,NULL,0,1271174178,1),(359,'25-E','Dying Patient/bereavement','Physicians are frequently faced with patients dying from incurable or untreatable diseases. In such circumstances, the important role of the physician is to alleviate any suffering by the patient and to provide comfort and compassion to both patient and family. ',NULL,309,8,NULL,38,0,1,0,2,NULL,0,1271174178,1),(360,'26-E','Dysphagia/difficulty Swallowing','Dysphagia should be regarded as a danger signal that indicates the need to evaluate and define the cause of the swallowing difficulty and thereafter initiate or refer for treatment.',NULL,309,8,NULL,39,0,1,0,2,NULL,0,1271174178,1),(361,'27-E','Dyspnea','Dyspnea is common and distresses millions of patients with pulmonary disease and myocardial dysfunction.  Assessment of the manner dyspnea is described by patients suggests that their description may provide insight into the underlying pathophysiology of the disease.',NULL,309,8,NULL,40,0,1,0,2,NULL,0,1271174178,1),(362,'27-1-E','Acute Dyspnea (minutes To Hours)','Shortness of breath occurring over minutes to hours is caused by a relatively small number of conditions.  Attention to clinical information and consideration of these conditions can lead to an accurate diagnosis.  Diagnosis permits initiation of therapy that can limit associated morbidity and mortality.',NULL,361,8,NULL,1,0,1,0,2,NULL,0,1271174178,1),(363,'27-2-E','Chronic Dyspnea (weeks To Months)','Since patients with acute dyspnea require more immediate evaluation and treatment, it is important to differentiate them from those with chronic dyspnea.  However, chronic dyspnea etiology may be harder to elucidate.  Usually patients have cardio-pulmonary disease, but symptoms may be out of proportion to the demonstrable impairment.',NULL,361,8,NULL,2,0,1,0,2,NULL,0,1271174178,1),(364,'27-3-E','Pediatric Dyspnea/respiratory Distress','After fever, respiratory distress is one of the commonest pediatric emergency complaints.',NULL,361,8,NULL,3,0,1,0,2,NULL,0,1271174178,1),(365,'28-E','Ear Pain','The cause of ear pain is often otologic, but it may be referred.  In febrile young children, who most frequently are affected by ear infections, if unable to describe the pain, a good otologic exam is crucial. (see also <a href=\"objectives.pl?lang=english&amp;loc=obj&amp;id=40-E\" title=\"Presentation 40-E\">Hearing Loss/Deafness)',NULL,309,8,NULL,41,0,1,0,2,NULL,0,1271174178,1),(366,'29-1-E',' Generalized Edema','Patients frequently complain of swelling.  On closer scrutiny, such swelling often represents expansion of the interstitial fluid volume.  At times the swelling may be caused by relatively benign conditions, but at times serious underlying diseases may be present.',NULL,309,8,NULL,42,0,1,0,2,NULL,0,1271174178,1),(367,'29-2-E',' Unilateral/local Edema','Over 90 % of cases of acute pulmonary embolism are due to emboli emanating from the proximal veins of the lower extremities.',NULL,309,8,NULL,43,0,1,0,2,NULL,0,1271174178,1),(368,'30-E','Eye Redness','Red eye is a very common complaint.  Despite the rather lengthy list of causal conditions, three problems make up the vast majority of causes: conjunctivitis (most common), foreign body, and iritis.  Other types of injury are relatively less common, but important because excessive manipulation may cause further damage or even loss of vision.',NULL,309,8,NULL,44,0,1,0,2,NULL,0,1271174178,1),(369,'31-1-E','Failure To Thrive, Elderly ','Failure to thrive for an elderly person means the loss of energy, vigor and/or weight often accompanied by a decline in the ability to function and at times associated with depression.',NULL,309,8,NULL,45,0,1,0,2,NULL,0,1271174178,1),(370,'31-2-E','Failure To Thrive, Infant/child','Failure to thrive is a phrase that describes the occurrence of growth failure in either height or weight in childhood.  Since failure to thrive is attributed to children&lt;2 years whose weight is below the 5th percentile for age on more than one occasion, it is essential to differentiate normal from the abnormal growth patterns.',NULL,309,8,NULL,46,0,1,0,2,NULL,0,1271174178,1),(371,'32-E','Falls','Falls are common (&gt;1/3 of people over 65 years; 80% among those with?4 risk factors) and 1 in 10 are associated with serious injury such as hip fracture, subdural hematoma, or head injury.  Many are preventable.  Interventions that prevent falls and their sequelae delay or reduce the frequency of nursing home admissions.',NULL,309,8,NULL,47,0,1,0,2,NULL,0,1271174178,1),(372,'33-E','Fatigue ','In a primary care setting, 20-30% of patients will report significant fatigue (usually not associated with organic cause).  Fatigue&lt;1 month is \'recent\';&gt;6 months, it is \'chronic\'.',NULL,309,8,NULL,48,0,1,0,2,NULL,0,1271174178,1),(373,'34-E','Fractures/dislocations ','Fractures and dislocations are common problems at any age and are related to high-energy injuries (e.g., motor accidents, sport injuries) or, at the other end of the spectrum, simple injuries such as falls or non-accidental injuries.  They require initial management by primary care physicians with referral for difficult cases to specialists.',NULL,309,8,NULL,49,0,1,0,2,NULL,0,1271174178,1),(374,'35-E','Gait Disturbances/ataxia ','Abnormalities of gait can result from disorders affecting several levels of the nervous system and the type of abnormality observed clinically often indicates the site affected.',NULL,309,8,NULL,50,0,1,0,2,NULL,0,1271174178,1),(375,'36-E','Genetic Concerns','Genetics have increased our understanding of the origin of many diseases.  Parents with a family history of birth defects or a previously affected child need to know that they are at higher risk of having a baby with an anomaly.  Not infrequently, patients considering becoming parents seek medical advice because of concerns they might have.  Primary care physicians must provide counseling about risk factors such as maternal age, illness, drug use, exposure to infectious or environmental agents, etc. and if necessary referral if further evaluation is necessary.',NULL,309,8,NULL,51,0,1,0,2,NULL,0,1271174178,1),(376,'36-1-E','Ambiguous Genitalia','Genetic males with 46, XY genotype but having impaired androgen sensitivity of varying severity may present with features that range from phenotypic females to \'normal\' males with only minor defects in masculinization or infertility.  Primary care physicians may be called upon to determine the nature of the problem.',NULL,375,8,NULL,1,0,1,0,2,NULL,0,1271174178,1),(377,'36-2-E','Dysmorphic Features','Three out of 100 infants are born with a genetic disorder or congenital defect.  Many of these are associated with long-term disability, making early detection and identification vital.  Although early involvement of genetic specialists in the care of such children is prudent, primary care physicians are at times required to contribute immediate care, and subsequently assist with long term management of suctients.',NULL,375,8,NULL,2,0,1,0,2,NULL,0,1271174178,1),(378,'37-1-E','Hyperglycemia/diabetes Mellitus','Diabetes mellitus is a very common disorder associated with a relative or absolute impairment of insulin secretion together with varying degrees of peripheral resistance to the action of insulin.  The morbidity and mortality associated with diabetic complications may be reduced by preventive measures.  Intensive glycemic control will reduce neonatal complications and reduce congenital malformations in pregnancy diabetes.',NULL,309,8,NULL,52,0,1,0,2,NULL,0,1271174178,1),(379,'37-2-E','Hypoglycemia','Maintenance of the blood sugar within normal limits is essential for health.  In the short-term, hypoglycemia is much more dangerous than hyperglycemia.  Fortunately, it is an uncommon clinical problem outside of therapy for diabetes mellitus. ',NULL,309,8,NULL,53,0,1,0,2,NULL,0,1271174178,1),(380,'38-1-E','Alopecia ','Although in themselves hair changes may be innocuous, they can be psychologically unbearable.  Frequently they may provide significant diagnostic hints of underlying disease.',NULL,309,8,NULL,54,0,1,0,2,NULL,0,1271174178,1),(381,'38-2-E','Nail Complaints ','Nail disorders (toenails more than fingernails), especially ingrown, infected, and painful nails, are common conditions.  Local nail problems may be acute or chronic.  Relatively simple treatment can prevent or alleviate symptoms.  Although in themselves nail changes may be innocuous, they frequently provide significant diagnostic hints of underlying disease.',NULL,309,8,NULL,55,0,1,0,2,NULL,0,1271174178,1),(382,'39-E','Headache','The differentiation of patients with headaches due to serious or life-threatening conditions from those with benign primary headache disorders (e.g., tension headaches or migraine) is an important diagnostic challenge.',NULL,309,8,NULL,56,0,1,0,2,NULL,0,1271174178,1),(383,'40-E','Hearing Loss/deafness ','Many hearing loss causes are short-lived, treatable, and/or preventable.  In the elderly, more permanent sensorineural loss occurs.  In pediatrics, otitis media accounts for 25% of office visits.  Adults/older children have otitis less commonly, but may be affected by sequelae of otitis.',NULL,309,8,NULL,57,0,1,0,2,NULL,0,1271174178,1),(384,'41-E','Hemiplegia/hemisensory Loss +/- Aphasia','Hemiplegia/hemisensory loss results from an upper motor neuron lesion above the mid-cervical spinal cord.  The concomitant finding of aphasia is diagnostic of a dominant cerebral hemisphere lesion.  Acute hemiplegia generally heralds the onset of serious medical conditions, usually of vascular origin, that at times are effectively treated by advanced medical and surgical techniques.</p>\r\n<p>If the sudden onset of focal neurologic symptoms and/or signs lasts&lt;24 hours, presumably it was caused by a transient decrease in blood supply rendering the brain ischemic but with blood flow restoration timely enough to avoid infarction.  This definition of transient ischemic attacks (TIA) is now recognized to be inadequate.  ',NULL,309,8,NULL,58,0,1,0,2,NULL,0,1271174178,1),(385,'42-1-E','Anemia','The diagnosis in a patient with anemia can be complex.  An unfocused or unstructured investigation of anemia can be costly and inefficient.  Simple tests may provide important information.  Anemia may be the sole manifestation of serious medical disease.',NULL,309,8,NULL,59,0,1,0,2,NULL,0,1271174178,1),(386,'42-2-E','Polycythemia/elevated Hemoglobin','The reason for evaluating patients with elevated hemoglobin levels (male 185 g/L, female 165 g/L) is to ascertain the presence or absence of polycythemia vera first, and subsequently to differentiate between the various causes of secondary erythrocytosis.',NULL,309,8,NULL,60,0,1,0,2,NULL,0,1271174178,1),(387,'43-E','Hirsutism/virilization','Hirsutism, terminal body hair where unusual (face, chest, abdomen, back), is a common problem, particularly in dark-haired, darkly pigmented, white women.  However, if accompanied by virilization, then a full diagnostic evaluation is essential because it is androgen-dependent.  Hypertrichosis on the other hand is a rare condition usually caused by drugs or systemic illness.',NULL,309,8,NULL,61,0,1,0,2,NULL,0,1271174178,1),(388,'44-E','Hoarseness/dysphonia/speech And Language Abnormalities','Patients with impairment in comprehension and/or use of the form, content, or function of language are said to have a language disorder.  Those who have correct word choice and syntax but have speech disorders may have an articulation disorder.  Almost any change in voice quality may be described as hoarseness.  However, if it lasts more than 2 weeks, especially in patients who use alcohol or tobacco, it needs to be evaluated.',NULL,309,8,NULL,62,0,1,0,2,NULL,0,1271174178,1),(389,'45-E','Hydrogen Ion Concentration Abnormal, Serum','Major adverse consequences may occur with severe acidemia and alkalemia despite absence of specific symptoms.  The diagnosis depends on the clinical setting and laboratory studies.  It is crucial to distinguish acidemia due to metabolic causes from that due to respiratory causes; especially important is detecting the presence of both.  Management of the underlying causes and not simply of the change in [H+] is essential.',NULL,309,8,NULL,63,0,1,0,2,NULL,0,1271174178,1),(390,'46-E','Infertility','Infertility, meaning the inability to conceive after one year of intercourse without contraception, affects about 15% of couples.  Both partners must be investigated; male-associated factors account for approximately half of infertility problems.  Although current emphasis is on treatment technologies, it is important to consider first the cause of the infertility and tailor the treatment accordingly.',NULL,309,8,NULL,64,0,1,0,2,NULL,0,1271174178,1),(391,'47-1-E','Incontinence, Stool','Fecal incontinence varies from inadvertent soiling with liquid stool to the involuntary excretion of feces.  It is a demoralizing disability because it affects self-assurance and can lead to social isolation.  It is the second leading cause of nursing home placement.',NULL,309,8,NULL,65,0,1,0,2,NULL,0,1271174178,1),(392,'47-2-E','Incontinence, Urine','Because there is increasing incidence of involuntary micturition with age, incontinence has increased in frequency in our ageing population.  Unfortunately, incontinence remains under treated despite its effect on quality of life and impact on physical and psychological morbidity.  Primary care physicians should diagnose the cause of incontinence in the majority of cases.',NULL,309,8,NULL,66,0,1,0,2,NULL,0,1271174178,1),(393,'47-3-E','Incontinence, Urine, Pediatric (enuresis)','Enuresis is the involuntary passage of urine, and may be diurnal (daytime), nocturnal (nighttime), or both.  The majority of children have primary nocturnal enuresis (20% of five-year-olds).  Diurnal and secondary enuresis is much less common, but requires differentiating between underlying diseases and stress related conditions.',NULL,309,8,NULL,67,0,1,0,2,NULL,0,1271174178,1),(394,'48-E','Impotence/erectile Dysfunction','Impotence is an issue that has a major impact on relationships.  There is a need to explore the impact with both partners, although many consider it a male problem.  Impotence is present when an erection of sufficient rigidity for sexual intercourse cannot be acquired or sustained&gt;75% of the time.',NULL,309,8,NULL,68,0,1,0,2,NULL,0,1271174178,1),(395,'49-E','Jaundice ','Jaundice may represent hemolysis or hepatobiliary disease.  Although usually the evaluation of a patient is not urgent, in a few situations it is a medical emergency (e.g., massive hemolysis, ascending cholangitis, acute hepatic failure).',NULL,309,8,NULL,69,0,1,0,2,NULL,0,1271174178,1),(396,'49-1-E','Neonatal Jaundice ','Jaundice, usually mild unconjugated bilirubinemia, affects nearly all newborns.  Up to 65% of full-term neonates have jaundice at 72 - 96 hours of age.  Although some causes are ominous, the majority are transient and without consequences.',NULL,395,8,NULL,1,0,1,0,2,NULL,0,1271174178,1),(397,'50-1-E','Joint Pain, Mono-articular (acute, Chronic)','Any arthritis can initially present as one swollen painful joint.  Thus, the early exclusion of polyarticular joint disease may be challenging.  In addition, pain caused by a problem within the joint needs to be distinguished from pain arising from surrounding soft tissues.',NULL,309,8,NULL,70,0,1,0,2,NULL,0,1271174178,1),(398,'50-2-E','Joint Pain, Poly-articular (acute, Chronic)','Polyarticular joint pain is common in medical practice, and causes vary from some that are self-limiting to others which are potentially disabling and life threatening.',NULL,309,8,NULL,71,0,1,0,2,NULL,0,1271174178,1),(399,'50-3-E','Periarticular Pain/soft Tissue Rheumatic Disorders','Pain caused by a problem within the joint needs to be distinguished from pain arising from surrounding soft tissues.',NULL,309,8,NULL,72,0,1,0,2,NULL,0,1271174178,1),(400,'51-E','Lipids Abnormal, Serum ','Hypercholesterolemia is a common and important modifiable risk factor for ischemic heart disease (IHD) and cerebro-vascular disease.  The relationship of elevated triglycerides to IHD is less clear (may be a modest independent predictor) but very high levels predispose to pancreatitis.  HDL cholesterol is inversely related to IHD risk.',NULL,309,8,NULL,73,0,1,0,2,NULL,0,1271174178,1),(401,'52-E','Liver Function Tests Abnormal, Serum','Appropriate investigation can distinguish benign reversible liver disease requiring no treatment from potentially life-threatening conditions requiring immediate therapy.',NULL,309,8,NULL,74,0,1,0,2,NULL,0,1271174178,1),(402,'53-E','Lump/mass, Musculoskeletal ','Lumps or masses are a common cause for consultation with a physician.  The majority will be of a benign dermatologic origin. Musculoskeletal lumps or masses are not common, but they represent an important cause of morbidity and mortality, especially among young people.',NULL,309,8,NULL,75,0,1,0,2,NULL,0,1271174178,1),(403,'54-E','Lymphadenopathy','Countless potential causes may lead to lymphadenopathy.  Some of these are serious but treatable.  In a study of patients with lymphadenopathy, 84% were diagnosed with benign lymphadenopathy and the majority of these were due to a nonspecific (reactive) etiology.',NULL,309,8,NULL,76,0,1,0,2,NULL,0,1271174178,1),(404,'54-1-E','Mediastinal Mass/hilar Adenopathy','The mediastinum contains many vital structures (heart, aorta, pulmonary hila, esophagus) that are affected directly or indirectly by mediastinal masses.  Evaluation of such masses is aided by envisaging the nature of the mass from its location in the mediastinum.</p>\r\n<p>',NULL,403,8,NULL,1,0,1,0,2,NULL,0,1271174178,1),(405,'55-E','Magnesium Concentration Serum, Abnormal/hypomagnesemia ','Although hypomagnesemia occurs in only about 10% of hospitalized patients, the incidence rises to over 60% in severely ill patients.  It is frequently associated with hypokalemia and hypocalcemia.',NULL,309,8,NULL,77,0,1,0,2,NULL,0,1271174178,1),(406,'56-1-E','Amenorrhea/oligomenorrhea','The average age of onset of menarche in North America is 11 to 13 years and menopause is approximately 50 years.  Between these ages, absence of menstruation is a cause for investigation and appropriate management.',NULL,309,8,NULL,78,0,1,0,2,NULL,0,1271174178,1),(407,'56-2-E','Dysmenorrhea','Approximately 30 - 50% of post-pubescent women experience painful menstruation and 10% of women are incapacitated by pain 1 - 3 days per month.  It is the single greatest cause of lost working hours and school days among young women.',NULL,309,8,NULL,79,0,1,0,2,NULL,0,1271174178,1),(408,'56-3-E','Pre-menstrual Syndrome (pms)','Pre-menstrual syndrome is a combination of physical, emotional, or behavioral symptoms that occur prior to the menstrual cycle and are absent during the rest of the cycle.  The symproms, on occasion, are severe enough to intefere significantly with work and/or home activities.',NULL,309,8,NULL,80,0,1,0,2,NULL,0,1271174178,1),(409,'57-E','Menopause ','Women cease to have menstrual periods at about 50 years of age, although ovarian function declines earlier.  Changing population demographics means that the number of women who are menopausal will continue to grow, and many women will live 1/3 of their lives after ovarian function ceases.  Promotion of health maintenance in this group of women will enhance physical, emotional, and sexual quality of life.',NULL,309,8,NULL,81,0,1,0,2,NULL,0,1271174178,1),(410,'58-1-E','Coma','Patients with altered level of consciousness account for 5% of hospital admissions.  Coma however is defined as a state of pathologic unconsciousness (unarousable).',NULL,309,8,NULL,82,0,1,0,2,NULL,0,1271174178,1),(411,'58-2-E','Delirium/confusion ','An acute confusional state in patients with medical illness, especially among those who are older, is extremely common.  Between 10 - 15% of elderly patients admitted to hospital have delirium and up to a further 30% develop delirium while in hospital.  It represents a disturbance of consciousness with reduced ability to focus, sustain, or shift attention (DSM-IV).  This disturbance tends to develop over a short period of time (hours to days) and tends to fluctuate during the course of the day.  A clear understanding of the differential diagnosis enables rapid and appropriate management.',NULL,309,8,NULL,83,0,1,0,2,NULL,0,1271174178,1),(412,'58-3-E','Dementia','Dementia is a problem physicians encounter frequently, and causes that are potentially treatable require identification.  Alzheimer disease is the most common form of dementia in the elderly (about 70%), and primary care physicians will need to diagnose and manage the early cognitive manifestations.',NULL,309,8,NULL,84,0,1,0,2,NULL,0,1271174178,1),(413,'59-E','Mood Disorders ','Depression is one of the top five diagnoses made in the offices of primary care physicians.  Depressed mood occurs in some individuals as a normal reaction to grief, but in others it is considered abnormal because it interferes with the person\'s daily function (e.g., self-care, relationships, work, self-support).  Thus, it is necessary for primary care clinicians to detect depression, initiate treatment, and refer to specialists for assistance when required.',NULL,309,8,NULL,85,0,1,0,2,NULL,0,1271174178,1),(414,'60-E','Mouth Problems','Although many disease states can affect the mouth, the two most common ones are odontogenic infections (dental carries and periodontal infections) and oral carcinoma. Almost 15% of the population have significant periodontal disease despite its being preventable.  Such infections, apart from the discomfort inflicted, may result in serious complications.',NULL,309,8,NULL,86,0,1,0,2,NULL,0,1271174178,1),(415,'61-E','Movement Disorders,involuntary/tic Disorders','Movement disorders are regarded as either excessive (hyperkinetic) or reduced (bradykinetic) activity.  Diagnosis depends primarily on careful observation of the clinical features. ',NULL,309,8,NULL,87,0,1,0,2,NULL,0,1271174178,1),(416,'62-1-E','Diastolic Murmur','Although systolic murmurs are often \"innocent\" or physiological, diastolic murmurs are virtually always pathologic.',NULL,309,8,NULL,88,0,1,0,2,NULL,0,1271174178,1),(417,'62-2-E','Heart Sounds, Pathological','Pathological heart sounds are clues to underlying heart disease.',NULL,309,8,NULL,89,0,1,0,2,NULL,0,1271174178,1),(418,'62-3-E','Systolic Murmur','Ejection systolic murmurs are common, and frequently quite \'innocent\' (with absence of cardiac findings and normal splitting of the second sound).',NULL,309,8,NULL,90,0,1,0,2,NULL,0,1271174178,1),(419,'63-E','Neck Mass/goiter/thyroid Disease ','The vast majority of neck lumps are benign (usually reactive lymph nodes or occasionally of congenital origin).  The lumps that should be of most concern to primary care physicians are the rare malignant neck lumps.  Among patients with thyroid nodules, children, patients with a family history or history for head and neck radiation, and adults&lt;30 years or&gt;60 years are at higher risk for thyroid cancer.',NULL,309,8,NULL,91,0,1,0,2,NULL,0,1271174178,1),(420,'64-E','Newborn, Depressed','A call requesting assistance in the delivery of a newborn may be \"routine\" or because the neonate is depressed and requires resuscitation.  For any type of call, the physician needs to be prepared to manage potential problems.',NULL,309,8,NULL,92,0,1,0,2,NULL,0,1271174178,1),(421,'65-E','Non-reassuring Fetal Status (fetal Distress)','Non-reassuring fetal status occurs in 5 - 10% of pregnancies.  (Fetal distress, a term also used, is imprecise and has a low positive predictive value.  The newer term should be used.)  Early detection and pro-active management can reduce serious consequences and prepare parents for eventualities.',NULL,309,8,NULL,93,0,1,0,2,NULL,0,1271174178,1),(422,'66-E','Numbness/tingling/altered Sensation','Disordered sensation may be alarming and highly intrusive.  The physician requires a framework of knowledge in order to assess abnormal sensation, consider the likely site of origin, and recognise the implications.',NULL,309,8,NULL,94,0,1,0,2,NULL,0,1271174178,1),(423,'67-E','Pain','Because pain is considered a signal of disease, it is the most common symptom that brings a patient to a physician.  Acute pain is a vital protective mechanism.  In contrast, chronic pain (&gt;6 weeks or lasting beyond the ordinary duration of time that an injury needs to heal) serves no physiologic role and is itself a disease state.  Pain is an unpleasant somatic sensation, but it is also an emotion.  Although control of pain/discomfort is a crucial endpoint of medical care, the degree of analgesia provided is often inadequate, and may lead to complications (e.g., depression, suicide).  Physicians should recognise the development and progression of pain, and develop strategies for its control.',NULL,309,8,NULL,95,0,1,0,2,NULL,0,1271174178,1),(424,'67-1-2-1-E',' Generalized Pain Disorders','Fibromyalgia, a common cause of chronic musculoskeletal pain and fatigue, has no known etiology and is not associated with tissue inflammation.  It affects muscles, tendons, and ligaments.  Along with a group of similar conditions, fibromyalgia is controversial because obvious sign and laboratory/radiological abnormalities are lacking.</p>\r\n<p>Polymyalgia rheumatica, a rheumatic condition frequently linked to giant cell (temporal) arteritis, is a relatively common disorder (prevalence of about 700/100,000 persons over 50 years of age).  Synovitis is considered to be the cause of the discomfort.',NULL,423,8,NULL,1,0,1,0,2,NULL,0,1271174178,1),(425,'67-1-2-3-E','Local Pain, Hip/knee/ankle/foot','With the current interest in physical activity, the commonest cause of leg pain is muscular or ligamentous strain.  The knee, the most intricate joint in the body, has the greatest susceptibility to pain.',NULL,423,8,NULL,2,0,1,0,2,NULL,0,1271174178,1),(426,'67-1-2-2-E','Local Pain, Shoulder/elbow/wrist/hand','After backache, upper extremity pain is the most common type of musculoskeletal pain.',NULL,423,8,NULL,3,0,1,0,2,NULL,0,1271174178,1),(427,'67-1-2-4-E','Local Pain, Spinal Compression/osteoporosis','Spinal compression is one manifestation of osteoporosis, the prevalence of which increases with age.  As the proportion of our population in old age rises, osteoporosis becomes an important cause of painful fractures, deformity, loss of mobility and independence, and even death.  Although less common in men, the incidence of fractures increases exponentially with ageing, albeit 5 - 10 years later.  For unknown reasons, the mortality associated with fractures is higher in men than in women.',NULL,423,8,NULL,4,0,1,0,2,NULL,0,1271174178,1),(428,'67-1-2-6-E','Local Pain, Spine/low Back Pain','Low back pain is one of the most common physical complaints and a major cause of lost work time.  Most frequently it is associated with vocations that involve lifting, twisting, bending, and reaching.  In individuals suffering from chronic back pain, 5% will have an underlying serious disease.',NULL,423,8,NULL,5,0,1,0,2,NULL,0,1271174178,1),(429,'67-1-2-5-E','Local Pain, Spine/neck/thoracic','Approximately 10 % of the adult population have neck pain at any one time.  This prevalence is similar to low back pain, but few patients lose time from work and the development of neurologic deficits is&lt;1 %.',NULL,423,8,NULL,6,0,1,0,2,NULL,0,1271174178,1),(430,'67-2-2-E','Central/peripheral Neuropathic Pain','Neuropathic pain is caused by dysfunction of the nervous system without tissue damage.  The pain tends to be chronic and causes great discomfort.',NULL,423,8,NULL,7,0,1,0,2,NULL,0,1271174178,1),(431,'67-2-1-E','Sympathetic/complex Regional Pain Syndrome/reflex Sympatheti','Following an injury or vascular event (myocardial infarction, stroke), a disorder may develop that is characterized by regional pain and sensory changes (vasomotor instability, skin changes, and patchy bone demineralization).',NULL,423,8,NULL,8,0,1,0,2,NULL,0,1271174178,1),(432,'68-E','Palpitations (abnormal Ecg-arrhythmia)','Palpitations are a common symptom.  Although the cause is often benign, occasionally it may indicate the presence of a serious underlying problem.',NULL,309,8,NULL,96,0,1,0,2,NULL,0,1271174178,1),(433,'69-E','Panic And Anxiety ','Panic attacks/panic disorders are common problems in the primary care setting.  Although such patients may present with discrete episodes of intense fear, more commonly they complain of one or more physical symptoms.  A minority of such patients present to mental health settings, whereas 1/3 present to their family physician and another 1/3 to emergency departments.  Generalized anxiety disorder, characterized by excessive worry and anxiety that are difficult to control, tends to develop secondary to other psychiatric conditions.',NULL,309,8,NULL,97,0,1,0,2,NULL,0,1271174178,1),(434,'70-E','Pap Smear Screening','Carcinoma of the cervix is a preventable disease.  Any female patient who visits a physician\'s office should have current screening guidelines applied and if appropriate, a Pap smear should be recommended.',NULL,309,8,NULL,98,0,1,0,2,NULL,0,1271174178,1),(435,'71-E','Pediatric Emergencies  - Acutely Ill Infant/child','Although pediatric emergencies such as the ones listed below are discussed with the appropriate condition, the care of the patient in the pediatric age group demands special skills',NULL,309,8,NULL,99,0,1,0,2,NULL,0,1271174178,1),(436,'71-1-E','Crying/fussing Child','A young infant whose only symptom is crying/fussing challenges the primary care physician to distinguish between benign and organic causes.',NULL,435,8,NULL,1,0,1,0,2,NULL,0,1271174178,1),(437,'71-2-E','Hypotonia/floppy Infant/child','Infants/children with decreased resistance to passive movement differ from those with weakness and hyporeflexia.  They require detailed, careful neurologic evaluation. Management programs, often life-long, are multidisciplinary and involve patients, family, and community.',NULL,435,8,NULL,2,0,1,0,2,NULL,0,1271174178,1),(438,'72-E','Pelvic Mass','Pelvic masses are common and may be found in a woman of any age, although the possible etiologies differ among age groups.  There is a need to diagnose and investigate them since early detection may affect outcome.',NULL,309,8,NULL,100,0,1,0,2,NULL,0,1271174178,1),(439,'73-E','Pelvic Pain','Acute pelvic pain is potentially life threatening.  Chronic pelvic pain is one of the most common problems in gynecology.  Women average 2 - 3 visits each year to physicians\' offices with chronic pelvic pain.  At present, only about one third of these women are given a specific diagnosis.  The absence of a clear diagnosis can frustrate both patients and clinicians.  Once the diagnosis is established, specific and usually successful treatment may be instituted.',NULL,309,8,NULL,101,0,1,0,2,NULL,0,1271174178,1),(440,'74-E','Periodic Health Examination (phe) ','Periodically, patients visit physicians\' office not because they are unwell, but because they want a \'check-up\'.  Such visits are referred to as health maintenance or the PHE. The PHE is an opportunity to relate to an asymptomatic patient for the purpose of case finding and screening for undetected disease and risky behaviour.  It is also an opportunity for health promotion and disease prevention.  The decision to include or exclude a medical condition in the PHE should be based on the burden of suffering caused by the condition, the quality of the screening, and effectiveness of the intervention.',NULL,309,8,NULL,102,0,1,0,2,NULL,0,1271174178,1),(441,'74-2-E','Infant And Child Immunization ','Immunization has reduced or eradicated many infectious diseases and has improved overall world health.  Recommended immunization schedules are constantly updated as new vaccines become available.',NULL,440,8,NULL,1,0,1,0,2,NULL,0,1271174178,1),(442,'74-1-E','Newborn Assessment/nutrition ','Primary care physicians play a vital role in identifying children at risk for developmental and other disorders that are threatening to life or long-term health before they become symptomatic.  In most cases, parents require direction and reassurance regarding the health status of their newborn infant.  With respect to development, parental concerns regarding the child\'s language development, articulation, fine motor skills, and global development require careful assessment.',NULL,440,8,NULL,2,0,1,0,2,NULL,0,1271174178,1),(443,'74-3-E','Pre-operative Medical Evaluation','Evaluation of patients prior to surgery is an important element of comprehensive medical care.  The objectives of such an evaluation include the detection of unrecognized disease that may increase the risk of surgery and how to minimize such risk.',NULL,440,8,NULL,3,0,1,0,2,NULL,0,1271174178,1),(444,'74-4-E','Work-related Health Issues ','Physicians will encounter health hazards in their own work place, as well as in patients\' work place.  These hazards need to be recognised and addressed.  A patient\'s reported environmental exposures may prompt interventions important in preventing future illnesses/injuries.  Equally important, physicians can not only play an important role in preventing occupational illness but also in promoting environmental health.',NULL,440,8,NULL,4,0,1,0,2,NULL,0,1271174178,1),(445,'75-E','Personality Disorders ','Personality disorders are persistent and maladaptive patterns of behaviour exhibited over a wide variety of social, occupational, and relationship contexts and leading to distress and impairment.  They represent important risk factors for a variety of medical, interpersonal, and psychiatric difficulties.  For example, patients with personality difficulties may attempt suicide, or may be substance abusers.  As a group, they may alienate health care providers with angry outbursts, high-risk behaviours, signing out against medical advice, etc.',NULL,309,8,NULL,103,0,1,0,2,NULL,0,1271174178,1),(446,'76-E','Pleural Effusion/pleural Abnormalities',NULL,NULL,309,8,NULL,104,0,1,0,2,NULL,0,1271174178,1),(447,'77-E','Poisoning','Exposures to poisons or drug overdoses account for 5 - 10% of emergency department visits, and&gt;5 % of admissions to intensive care units.  More than 50 % of these patients are children less than 6 years of age.',NULL,309,8,NULL,105,0,1,0,2,NULL,0,1271174178,1),(448,'78-4-E','Administration Of Effective Health Programs At The Populatio','Knowing the organization of the health care and public health systems in Canada as well as how to determine the most cost-effective interventions are becoming key elements of clinical practice. Physicians also must work well in multidisciplinary teams within the current system in order to achieve the maximum health benefit for all patients and residents. ',NULL,309,8,NULL,106,0,1,0,2,NULL,0,1271174178,1),(449,'78-2-E','Assessing And Measuring Health Status At The Population Leve','Knowing the health status of the population allows for better planning and evaluation of health programs and tailoring interventions to meet patient/community needs. Physicians are also active participants in disease surveillance programs, encouraging them to address health needs in the population and not merely health demands.',NULL,309,8,NULL,107,0,1,0,2,NULL,0,1271174178,1),(450,'78-1-E','Concepts Of Health And Its Determinants','Concepts of health, illness, disease and the socially defined sick role are fundamental to understanding the health of a community and to applying that knowledge to the patients that a physician serves. With advances in care, the aspirations of patients for good health have expanded and this has placed new demands on physicians to address issues that are not strictly biomedical in nature. These concepts are also important if the physician is to understand health and illness behaviour. ',NULL,309,8,NULL,108,0,1,0,2,NULL,0,1271174178,1),(451,'78-6-E','Environment','Environmental issues are important in medical practice because exposures may be causally linked to a patient\'s clinical presentation and the health of the exposed population. A physician is expected to work with regulatory agencies to help implement the necessary interventions to prevent future illness.  Physician involvement is important in the promotion of global environmental health.',NULL,309,8,NULL,109,0,1,0,2,NULL,0,1271174178,1),(452,'78-7-E','Health Of Special Populations','Health equity is defined as each person in society having an equal opportunity for health. Each community is composed of diverse groups of individuals and sub-populations. Due to variations in factors such as physical location, culture, behaviours, age and gender structure, populations have different health risks and needs that must be addressed in order to achieve health equity.  Hence physicians need to be aware of the differing needs of population groups and must be able to adjust service provision to ensure culturally safe communications and care.',NULL,309,8,NULL,110,0,1,0,2,NULL,0,1271174178,1),(453,'78-3-E','Interventions At The Population Level','Many interventions at the individual level must be supported by actions at the community level. Physicians will be expected to advocate for community wide interventions and to address issues that occur to many patients across their practice. ',NULL,309,8,NULL,111,0,1,0,2,NULL,0,1271174178,1),(454,'78-5-E','Outbreak Management','Physicians are crucial participants in the control of outbreaks of disease. They must be able to diagnose cases, recognize outbreaks, report these to public health authorities and work with authorities to limit the spread of the outbreak. A common example includes physicians working in nursing homes and being asked to assist in the control of an outbreak of influenza or diarrhea.',NULL,309,8,NULL,112,0,1,0,2,NULL,0,1271174178,1),(455,'79-1-E','Hyperkalemia ','Hyperkalemia may have serious consequences (especially cardiac) and may also be indicative of the presence of serious associated medical conditions.',NULL,309,8,NULL,113,0,1,0,2,NULL,0,1271174178,1),(456,'79-2-E','Hypokalemia ','Hypokalemia, a common clinical problem, is most often discovered on routine analysis of serum electrolytes or ECG results.  Symptoms usually develop much later when depletion is quite severe.',NULL,309,8,NULL,114,0,1,0,2,NULL,0,1271174178,1),(457,'80-1-E','Antepartum Care ','The purpose of antepartum care is to help achieve as good a maternal and infant outcome as possible.  This means that psychosocial issues as well as biological issues need to be addressed.',NULL,309,8,NULL,115,0,1,0,2,NULL,0,1271174178,1),(458,'80-2-E','Intrapartum Care/postpartum Care ','Intrapartum and postpartum care means the care of the mother and fetus during labor and the six-week period following birth during which the reproductive tract returns to its normal nonpregnant state.  Of pregnant women, 85% will undergo spontaneous labor between 37 and 42 weeks of gestation.  Labor is the process by which products of conception are delivered from the uterus by progressive cervical effacement and dilatation in the presence of regular uterine contractions.',NULL,309,8,NULL,116,0,1,0,2,NULL,0,1271174178,1),(459,'80-3-E','Obstetrical Complications ','Virtually any maternal medical or surgical condition can complicate the course of a pregnancy and/or be affected by the pregnancy.  In addition, conditions arising in pregnancy can have adverse effects on the mother and/or the fetus.  For example, babies born prematurely account for&gt;50% of perinatal morbidity and mortality; an estimated 5% of women will describe bleeding of some extent during pregnancy, and in some patients the bleeding will endanger the mother.',NULL,309,8,NULL,117,0,1,0,2,NULL,0,1271174178,1),(460,'81-E','Pregnancy Loss','A miscarriage or abortion is a pregnancy that ends before the fetus can live outside the uterus.  The term also means the actual passage of the uterine contents.  It is very common in early pregnancy; up to 20% of pregnant women have a miscarriage before 20 weeks of pregnancy, 80% of these in the first 12 weeks.',NULL,309,8,NULL,118,0,1,0,2,NULL,0,1271174178,1),(461,'82-E','Prematurity','The impact of premature birth is best summarized by the fact that&lt;10% of babies born prematurely in North America account for&gt;50% of all perinatal morbidity and mortality.  Yet outcomes, although guarded, can be rewarding given optimal circumstances.',NULL,309,8,NULL,119,0,1,0,2,NULL,0,1271174178,1),(462,'83-E','Prolapse/pelvic Relaxation','Patients with pelvic relaxation present with a forward and downward drop of the pelvic organs (bladder, rectum).  In order to identify patients who would benefit from therapy, the physician should be familiar with the manifestations of pelvic relaxation (uterine prolapse, vaginal vault prolapse, cystocele, rectocele, and enterocele) and have an approach to management.',NULL,309,8,NULL,120,0,1,0,2,NULL,0,1271174178,1),(463,'84-E','Proteinuria ','Urinalysis is a screening procedure used frequently for insurance and routine examinations.  Proteinuria is usually identified by positive dipstick on routine urinalysis. Persistent proteinuria often implies abnormal glomerular function.',NULL,309,8,NULL,121,0,1,0,2,NULL,0,1271174178,1),(464,'85-E','Pruritus ','Itching is the most common symptom in dermatology.  In the absence of primary skin lesions, generalised pruritus can be indicative of an underlying systemic disorder.  Most patients with pruritus do not have a systemic disorder and the itching is due to a cutaneous disorder.',NULL,309,8,NULL,122,0,1,0,2,NULL,0,1271174178,1),(465,'86-E','Psychotic Patient/disordered Thought','Psychosis is a general term for a major mental disorder characterized by derangement of personality and loss of contact with reality, often with false beliefs (delusions), disturbances in sensory perception (hallucinations), or thought disorders (illusions). Schizophrenia is both the most common (1% of world population) and the classic psychotic disorder.  There are other psychotic syndromes that do not meet the diagnostic criteria for schizophrenia, some of them caused by general medical conditions or induced by a substance (alcohol, hallucinogens, steroids).  In the evaluation of any psychotic patient in a primary care setting all of these possibilities need to be considered.',NULL,309,8,NULL,123,0,1,0,2,NULL,0,1271174178,1),(466,'87-E','Pulse Abnormalities/diminished/absent/bruits','Arterial pulse characteristics should be assessed as an integral part of the physical examination.  Carotid, radial, femoral, posterior tibial, and dorsalis pedis pulses should be examined routinely on both sides, and differences, if any, in amplitude, contour, and upstroke should be ascertained.',NULL,309,8,NULL,124,0,1,0,2,NULL,0,1271174178,1),(467,'88-E','Pupil Abnormalities ','Pupillary disorders of changing degree are in general of little clinical importance.  If only one pupil is fixed to light, it is suspicious of the effect of mydriatics.  However, pupillary disorders with neurological symptoms may be of significance.',NULL,309,8,NULL,125,0,1,0,2,NULL,0,1271174178,1),(468,'89-1-E','Acute Renal Failure (anuria/oliguria/arf)','A sudden and rapid rise in serum creatinine is a common finding.  A competent physician is required to have an organised approach to this problem.',NULL,309,8,NULL,126,0,1,0,2,NULL,0,1271174178,1),(469,'89-2-E','Chronic Renal Failure ','Although specialists in nephrology will care for patients with chronic renal failure, family physicians will need to identify patients at risk for chronic renal disease, will participate in treatment to slow the progression of chronic renal disease, and will care for other common medical problems that afflict these patients.  Physicians must realise that patients with chronic renal failure have unique risks and that common therapies may be harmful because kidneys are frequently the main routes for excretion of many drugs.',NULL,309,8,NULL,127,0,1,0,2,NULL,0,1271174178,1),(470,'90-E','Scrotal Mass ','In children and adolescents, scrotal masses vary from incidental, requiring only reassurance, to acute pathologic events.  In adults, tumors of the testis are relatively uncommon (only 1 - 2 % of malignant tumors in men), but are considered of particular importance because they affect predominantly young men (25 - 34 years).  In addition, recent advances in management have resulted in dramatic improvement in survival rate.',NULL,309,8,NULL,128,0,1,0,2,NULL,0,1271174178,1),(471,'91-E','Scrotal Pain ','In most scrotal disorders, there is swelling of the testis or its adnexae.  However, some conditions are not only associated with pain, but pain may precede the development of an obvious mass in the scrotum.',NULL,309,8,NULL,129,0,1,0,2,NULL,0,1271174178,1),(472,'92-E','Seizures (epilepsy)','Seizures are an important differential diagnosis of syncope.  A seizure is a transient neurological dysfunction resulting from excessive/abnormal electrical discharges of cortical neurons.  They may represent epilepsy (a chronic condition characterized by recurrent seizures) but need to be differentiated from a variety of secondary causes.',NULL,309,8,NULL,130,0,1,0,2,NULL,0,1271174178,1),(473,'93-1-E','Sexual Maturation, Abnormal ','Sexual development is important to adolescent perception of self-image and wellbeing. Many factors may disrupt the normal progression to sexual maturation.',NULL,309,8,NULL,131,0,1,0,2,NULL,0,1271174178,1),(474,'94-E','Sexually Concerned Patient/gender Identity Disorder','The social appropriateness of sexuality is culturally determined.  The physician\'s own sexual attitude needs to be recognised and taken into account in order to deal with the patient\'s concern in a relevant manner.  The patient must be set at ease in order to make possible discussion of private and sensitive sexual issues.',NULL,309,8,NULL,132,0,1,0,2,NULL,0,1271174178,1),(475,'95-E','Skin Ulcers/skin Tumors (benign And Malignant)',NULL,NULL,309,8,NULL,133,0,1,0,2,NULL,0,1271174178,1),(476,'96-E','Skin Rash, Macules',NULL,NULL,309,8,NULL,134,0,1,0,2,NULL,0,1271174178,1),(477,'97-E','Skin Rash, Papules',NULL,NULL,309,8,NULL,135,0,1,0,2,NULL,0,1271174178,1),(478,'97-1-E','Childhood Communicable Diseases ','Communicable diseases are common in childhood and vary from mild inconveniences to life threatening disorders.  Physicians need to differentiate between these common conditions and initiate management.',NULL,477,8,NULL,1,0,1,0,2,NULL,0,1271174178,1),(479,'97-2-E','Urticaria/angioedema/anaphylaxis',NULL,NULL,477,8,NULL,2,0,1,0,2,NULL,0,1271174178,1),(480,'98-E','Sleep And Circadian Rhythm Disorders/sleep Apnea Syndrome/in','Insomnia is a symptom that affects 1/3 of the population at some time, and is a persistent problem in 10 % of the population.  Affected patients complain of difficulty in initiating and maintaining sleep, and this inability to obtain adequate quantity and quality of sleep results in impaired daytime functioning.',NULL,309,8,NULL,136,0,1,0,2,NULL,0,1271174178,1),(481,'99-1-E','Hypernatremia ','Although not extremely common, hypernatremia is likely to be encountered with increasing frequency in our ageing population.  It is also encountered at the other extreme of life, the very young, for the same reason: an inability to respond to thirst by drinking water.',NULL,309,8,NULL,137,0,1,0,2,NULL,0,1271174178,1),(482,'99-2-E','Hyponatremia ','Hyponatremia is detected in many asymptomatic patients because serum electrolytes are measured almost routinely.  In children with sodium depletion, the cause of the hyponatremia is usually iatrogenic.  The presence of hyponatremia may predict serious neurologic complications or be relatively benign.',NULL,309,8,NULL,138,0,1,0,2,NULL,0,1271174178,1),(483,'100-E','Sore Throat (rhinorrhea) ','Rhinorrhea and sore throat occurring together indicate a viral upper respiratory tract infection such as the \"common cold\".  Sore throat may be due to a variety of bacterial and viral pathogens (as well as other causes in more unusual circumstances).  Infection is transmitted from person to person and arises from direct contact with infected saliva or nasal secretions.  Rhinorrhea alone is not infective and may be seasonal (hay fever or allergic rhinitis) or chronic (vaso-motor rhinitis).',NULL,309,8,NULL,139,0,1,0,2,NULL,0,1271174178,1),(484,'100-1-E','Smell/taste Dysfunction ','In order to evaluate patients with smell or taste disorders, a multi-disciplinary approach is required.  This means that in addition to the roles specialists may have, the family physician must play an important role.',NULL,483,8,NULL,1,0,1,0,2,NULL,0,1271174178,1),(485,'101-E','Stature Abnormal (tall Stature/short Stature)','To define any growth point, children should be measured accurately and each point (height, weight, and head circumference) plotted.  One of the more common causes of abnormal growth is mis-measurement or aberrant plotting.',NULL,309,8,NULL,140,0,1,0,2,NULL,0,1271174178,1),(486,'102-E','Strabismus And/or Amblyopia ','Parental concern about children with a wandering eye, crossing eye, or poor vision in one eye makes it necessary for physicians to know how to manage such problems.',NULL,309,8,NULL,141,0,1,0,2,NULL,0,1271174178,1),(487,'103-E','Substance Abuse/drug Addiction/withdrawal','Alcohol and nicotine abuse is such a common condition that virtually every clinician is confronted with their complications.  Moreover, 10 - 15% of outpatient visits as well as 25 - 40% of hospital admissions are related to substance abuse and its sequelae.',NULL,309,8,NULL,142,0,1,0,2,NULL,0,1271174178,1),(488,'104-E','Sudden Infant Death Syndrome(sids)/acute Life Threatening Ev','SIDS and/or ALTE are a devastating event for parents, caregivers and health care workers alike.  It is imperative that the precursors, probable cause and parental concerns are extensively evaluated to prevent recurrence.',NULL,309,8,NULL,143,0,1,0,2,NULL,0,1271174178,1),(489,'105-E','Suicidal Behavior','Psychiatric emergencies are common and serious problems.  Suicidal behaviour is one of several psychiatric emergencies which physicians must know how to assess and manage.',NULL,309,8,NULL,144,0,1,0,2,NULL,0,1271174178,1),(490,'106-E','Syncope/pre-syncope/loss Of Consciousness  (fainting)','Syncopal episodes, an abrupt and transient loss of consciousness followed by a rapid and usually complete recovery, are common.  Physicians are required to distinguish syncope from seizures, and benign syncope from syncope caused by serious underlying illness.',NULL,309,8,NULL,145,0,1,0,2,NULL,0,1271174178,1),(491,'107-3-E','Fever In A Child/fever In A Child Less Than Three Weeks','Fever in children is the most common symptom for which parents seek medical advice.  While most causes are self-limited viral infections (febrile illness of short duration) it is important to identify serious underlying disease and/or those other infections amenable to treatment.',NULL,309,8,NULL,146,0,1,0,2,NULL,0,1271174178,1),(492,'107-4-E','Fever In The Immune Compromised Host/recurrent Fever','Patients with certain immuno-deficiencies are at high risk for infections.  The infective organism and site depend on the type and severity of immuno-suppression.  Some of these infections are life threatening.',NULL,309,8,NULL,147,0,1,0,2,NULL,0,1271174178,1),(493,'107-2-E','Fever Of Unknown Origin ','Unlike acute fever (&lt;2 weeks), which is usually either viral (low-grade, moderate fever) or bacterial (high grade, chills, rigors) in origin, fever of unknown origin is an illness of three weeks or more without an established diagnosis despite appropriate investigation.',NULL,309,8,NULL,148,0,1,0,2,NULL,0,1271174178,1),(494,'107-1-E','Hyperthermia ','Hyperthermia is an elevation in core body temperature due to failure of thermo-regulation (in contrast to fever, which is induced by cytokine activation).  It is a medical emergency and may be associated with severe complications and death.  The differential diagnosis is extensive (includes all causes of fever).',NULL,309,8,NULL,149,0,1,0,2,NULL,0,1271174178,1),(495,'107-5-E','Hypothermia ','Hypothermia is the inability to maintain core body temperature.  Although far less common than is elevation in temperature, hypothermia (central temperature ? 35Ãƒâ€šÃ‚Â°C) is of considerable importance because it can represent a medical emergency.  Severe hypothermia is defined as a core temperature of &lt;28Ãƒâ€šÃ‚Â°C.',NULL,309,8,NULL,150,0,1,0,2,NULL,0,1271174178,1),(496,'108-E','Tinnitus','Tinnitus is an awareness of sound near the head without an obvious external source.  It may involve one or both ears, be continuous or intermittent.  Although not usually related to serious medical problems, in some it may interfere with daily activities, affect quality of life, and in a very few be indicative of serious organic disease.',NULL,309,8,NULL,151,0,1,0,2,NULL,0,1271174178,1),(497,'109-E','Trauma/accidents','Management of patients with traumatic injuries presents a variety of challenges.  They require evaluation in the emergency department for triage and prevention of further deterioration prior to transfer or discharge.  Early recognition and management of complications along with aggressive treatment of underlying medical conditions are necessary to minimise morbidity and mortality in this patient population.',NULL,309,8,NULL,152,0,1,0,2,NULL,0,1271174178,1),(498,'109-1-E','Abdominal Injuries ','The major causes of blunt trauma are motor vehicles, auto-pedestrian injuries, and motorcycle/all terrain vehicle injuries.  In children, bicycle injuries, falls, and child abuse also contribute.  Assessment of a patient with an abdominal injury is difficult.  As a consequence, important injuries tend to be missed.  Rupture of a hollow viscus or bleeding from a solid organ may produce few clinical signs.',NULL,497,8,NULL,1,0,1,0,2,NULL,0,1271174178,1),(499,'109-2-E','Bites, Animal/insects ','Since so many households include pets, animal bite wounds are common.  Dog and cat bites account for about 1% of emergency visits, the majority in children.  Some can be serious and lead to limb damage, and at times permanent disability.</p>\r\n<p>Insect bites in Canada most commonly cause a local inflammatory reaction that subsides within a few hours and is mostly a nuisance.  In contrast, mosquitoes can transmit infectious disease to more than 700 million people in other geographic areas of the world (e.g., malaria, yellow fever, dengue, encephalitis and filariasis among others), as well as in Canada.  Tick-borne illness is also common.  On the other hand, systemic reactions to insect bites are extremely rare compared with insect stings.  The most common insects associated with systemic allergic reactions were blackflies, deerflies, and horseflies.',NULL,497,8,NULL,2,0,1,0,2,NULL,0,1271174178,1),(500,'109-3-E','Bone/joint Injury','Major fractures are at times associated with other injuries, and priorities must be set for each patient.  For example, hemodynamic stability takes precedence over fracture management, but an open fracture should be managed as soon as possible.  On the other hand, management of many soft tissue injuries is facilitated by initial stabilization of bone or joint injury. Unexplained fractures in children should alert physicians to the possibility of abuse.',NULL,497,8,NULL,3,0,1,0,2,NULL,0,1271174178,1),(501,'109-4-E','Chest Injuries ','Injury to the chest may be blunt (e.g., motor vehicle accident resulting in steering wheel blow to sternum, falls, explosions, crush injuries) or penetrating (knife/bullet).  In either instance, emergency management becomes extremely important to the eventual outcome.',NULL,497,8,NULL,4,0,1,0,2,NULL,0,1271174178,1),(502,'109-6-E','Drowning (near-drowning) ','Survival after suffocation by submersion in a liquid medium, including loss of consciousness, is defined as near drowning.  The incidence is uncertain, but likely it may occur several hundred times more frequently than drowning deaths (150,000/year worldwide).',NULL,497,8,NULL,5,0,1,0,2,NULL,0,1271174178,1),(503,'109-8-E','Facial Injuries ','Facial injuries are potentially life threatening because of possible damage to the airway and central nervous system.',NULL,497,8,NULL,6,0,1,0,2,NULL,0,1271174178,1),(504,'109-9-E','Hand/wrist Injuries ','Hand injuries are common problems presenting to emergency departments.  The ultimate function of the hand depends upon the quality of the initial care, the severity of the original injury and rehabilitation.',NULL,497,8,NULL,7,0,1,0,2,NULL,0,1271174178,1),(505,'109-10-E','Head Trauma/brain Death/transplant Donations','Most head trauma is mild and not associated with brain injury or long-term sequelae. Improved outcome after head trauma depends upon preventing deterioration and secondary brain injury.  Serious intracranial injuries may remain undetected due to failure to obtain an indicated head CT.',NULL,497,8,NULL,8,0,1,0,2,NULL,0,1271174178,1),(506,'109-11-E','Nerve Injury ','Peripheral nerve injuries often occur as part of more extensive injuries and tend to go unrecognized.  Evaluation of these injuries is based on an accurate knowledge of the anatomy and function of the nerve(s) involved.',NULL,497,8,NULL,9,0,1,0,2,NULL,0,1271174178,1),(507,'109-12-E','Skin Wounds/regional Anaesthesia','Skin and subcutaneous wounds tend to be superficial and can be repaired under local anesthesia.  Animal bite wounds are common and require special consideration.  Since so many households include pets, dog and cat bites account for about 1% of emergency visits, the majority in children.  Some can be serious and lead to limb damage, and at times permanent disability.',NULL,497,8,NULL,10,0,1,0,2,NULL,0,1271174178,1),(508,'109-13-E','Spinal Trauma','Most spinal cord injuries are a result of car accidents, falls, sports-related trauma, or assault with weapons.  The average age at the time of spinal injury is approximately 35 years, and men are four times more likely to be injured than are women.  The sequelae of such events are dire in terms of effect on patient, family, and community.  Initial immobilization and maintenance of ventilation are of critical importance.',NULL,497,8,NULL,11,0,1,0,2,NULL,0,1271174178,1),(509,'109-14-E','Urinary Tract Injuries ','Urinary tract injuries are usually closed rather than penetrating, and may affect the kidneys and/or the collecting system.',NULL,497,8,NULL,12,0,1,0,2,NULL,0,1271174178,1),(510,'109-15-E','Vascular Injury ','Vascular injuries are becoming more common.  Hemorrhage may be occult and require a high index of suspicion (e.g., fracture in an adjacent bone).',NULL,497,8,NULL,13,0,1,0,2,NULL,0,1271174178,1),(511,'110-1-E','Dysuria And/or Pyuria ','Patients with urinary tract infections, especially the very young and very old, may present in an atypical manner.  Appropriate diagnosis and management may prevent significant morbidity.  Dysuria may mean discomfort/pain on micturition or difficulty with micturition.  Pain usually implies infection whereas difficulty is usually related to distal mechanical obstruction (e.g., prostatic).',NULL,309,8,NULL,153,0,1,0,2,NULL,0,1271174178,1),(512,'110-2-E','Polyuria/polydipsia','Urinary frequency, a common complaint, can be confused with polyuria, a less common, but important complaint.  Diabetes mellitus is a common disorder with morbidity and mortality that can be reduced by preventive measures.  Intensive glycemic control during pregnancy will reduce neonatal complications.',NULL,309,8,NULL,154,0,1,0,2,NULL,0,1271174178,1),(513,'111-E','Urinary Obstruction/hesitancy/prostatic Cancer','Urinary tract obstruction is a relatively common problem.  The obstruction may be complete or incomplete, and unilateral or bilateral.  Thus, the consequences of the obstruction depend on its nature.',NULL,309,8,NULL,155,0,1,0,2,NULL,0,1271174178,1),(514,'112-E','Vaginal Bleeding, Excessive/irregular/abnormal','Vaginal bleeding is considered abnormal when it occurs at an unexpected time (before menarche or after menopause) or when it varies from the norm in amount or pattern (urinary tract and bowel should be excluded as a source).  Amount or pattern is considered outside normal when it is associated with iron deficiency anemia, it lasts&gt;7days, flow is&gt;80ml/clots, or interval is&lt;24 days.',NULL,309,8,NULL,156,0,1,0,2,NULL,0,1271174178,1),(515,'113-E','Vaginal Discharge/vulvar Itch/std ','Vaginal discharge, with or without pruritus, is a common problem seen in the physician\'s office.',NULL,309,8,NULL,157,0,1,0,2,NULL,0,1271174178,1),(516,'114-E','Violence, Family','There are a number of major psychiatric emergencies and social problems which physicians must be prepared to assess and manage.  Domestic violence is one of them, since it has both direct and indirect effects on the health of populations.  Intentional controlling or violent behavior (physical, sexual, or emotional abuse, economic control, or social isolation of the victim) by a person who is/was in an intimate relationship with the victim is domestic violence.  The victim lives in a state of constant fear, terrified about when the next episode of abuse will occur.  Despite this, abuse frequently remains hidden and undiagnosed because patients often conceal that they are in abusive relationships.  It is important for clinicians to seek the diagnosis in certain groups of patients.',NULL,309,8,NULL,158,0,1,0,2,NULL,0,1271174178,1),(517,'114-3-E','Adult Abuse/spouse Abuse ','The major problem in spouse abuse is wife abuse (some abuse of husbands has been reported).  It is the abuse of power in a relationship involving domination, coercion, intimidation, and the victimization of one person by another.  Ten percent of women in a relationship with a man have experienced abuse.  Of women presenting to a primary care clinic, almost 1/3 reported physical and verbal abuse.',NULL,516,8,NULL,1,0,1,0,2,NULL,0,1271174178,1),(518,'114-1-E','Child Abuse, Physical/emotional/sexual/neglect/self-induced ','Child abuse is intentional harm to a child by the caregiver.  It is part of the spectrum of family dysfunction and leads to significant morbidity and mortality (recently sexual attacks on children by groups of other children have increased).  Abuse causes physical and emotional trauma, and may present as neglect.  The possibility of abuse must be in the mind of all those involved in the care of children who have suffered traumatic injury or have psychological or social disturbances (e.g., aggressive behavior, stress disorder, depressive disorder, substance abuse, etc.).',NULL,516,8,NULL,2,0,1,0,2,NULL,0,1271174178,1),(519,'114-2-E','Elderly Abuse ','Abuse of the elderly may represent an act or omission that results in harm to the elderly person\'s health or welfare.  Although the incidence and prevalence in Canada has been difficult to quantitate, in one study 4 % of surveyed seniors report that they experienced abuse.  There are three categories of abuse: domestic, institutional, and self-neglect.',NULL,516,8,NULL,3,0,1,0,2,NULL,0,1271174178,1),(520,'115-1-E','Acute Visual Disturbance/loss','Loss of vision is a frightening symptom that demands prompt attention; most patients require an urgent ophthalmologic opinion.',NULL,309,8,NULL,159,0,1,0,2,NULL,0,1271174178,1),(521,'115-2-E','Chronic Visual Disturbance/loss ','Loss of vision is a frightening symptom that demands prompt attention on the part of the physician.',NULL,309,8,NULL,160,0,1,0,2,NULL,0,1271174178,1),(522,'116-E','Vomiting/nausea ','Nausea may occur alone or along with vomiting (powerful ejection of gastric contents), dyspepsia, and other GI complaints.  As a cause of absenteeism from school or workplace, it is second only to the common cold.  When prolonged or severe, vomiting may be associated with disturbances of volume, water and electrolyte metabolism that may require correction prior to other specific treatment.',NULL,309,8,NULL,161,0,1,0,2,NULL,0,1271174178,1),(523,'117-E','Weakness/paralysis/paresis/loss Of Motion','Many patients who complain of weakness are not objectively weak when muscle strength is formally tested.  A careful history and physical examination will permit the distinction between functional disease and true muscle weakness.',NULL,309,8,NULL,162,0,1,0,2,NULL,0,1271174178,1),(524,'118-3-E','Weight (low) At Birth/intrauterine Growth Restriction ','Intrauterine growth restriction (IUGR) is often a manifestation of congenital infections, poor maternal nutrition, or maternal illness.  In other instances, the infant may be large for the gestational age.  There may be long-term sequelae for both.  Low birth weight is the most important risk factor for infant mortality.  It is also a significant determinant of infant and childhood morbidity, particularly neuro-developmental problems and learning disabilities.',NULL,309,8,NULL,163,0,1,0,2,NULL,0,1271174178,1),(525,'118-1-E','Weight Gain/obesity ','Obesity is a chronic disease that is increasing in prevalence. The percentage of the population with a body mass index of&gt;30 kg/m2 is approximately 15%.',NULL,309,8,NULL,164,0,1,0,2,NULL,0,1271174178,1),(526,'118-2-E','Weight Loss/eating Disorders/anorexia ','Although voluntary weight loss may be of no concern in an obese patient, it could be a manifestation of psychiatric illness.  Involuntary clinically significant weight loss (&gt;5% baseline body weight or 5 kg) is nearly always a sign of serious medical or psychiatric illness and should be investigated.',NULL,309,8,NULL,165,0,1,0,2,NULL,0,1271174178,1),(527,'119-1-E','Lower Respiratory Tract Disorders ','Individuals with episodes of wheezing, breathlessness, chest tightness, and cough usually have limitation of airflow.  Frequently this limitation is reversible with treatment.  Without treatment it may be lethal.',NULL,309,8,NULL,166,0,1,0,2,NULL,0,1271174178,1),(528,'119-2-E','Upper Respiratory Tract Disorders ','Wheezing, a continuous musical sound&gt;1/4 seconds, is produced by vibration of the walls of airways narrowed almost to the point of closure.  It can originate from airways of any size, from large upper airways to intrathoracic small airways.  It can be either inspiratory or expiratory, unlike stridor (a noisy, crowing sound, usually inspiratory and resulting from disturbances in or adjacent to the larynx).',NULL,309,8,NULL,167,0,1,0,2,NULL,0,1271174178,1),(529,'120-E','White Blood Cells, Abnormalities Of','Because abnormalities of white blood cells (WBCs) occur commonly in both asymptomatic as well as acutely ill patients, every physician will need to evaluate patients for this common problem.  Physicians also need to select medications to be prescribed mindful of the morbidity and mortality associated with drug-induced neutropenia and agranulocytosis.',NULL,309,8,NULL,168,0,1,0,2,NULL,0,1271174178,1),(2328,'','AAMC Physician Competencies Reference Set','July 2013 *Source: Englander R, Cameron T, Ballard AJ, Dodge J, Bull J, and Aschenbrener CA. Toward a common taxonomy of competency domains for the health professions and competencies for physicians. Acad Med. 2013;88:1088-1094.',NULL,0,9,NULL,0,0,1,0,2,NULL,0,1391798786,1),(2329,'aamc-pcrs-comp-c0100','1 Patient Care','Provide patient-centered care that is compassionate, appropriate, and effective for the treatment of health problems and the',NULL,2328,9,NULL,0,0,1,0,2,NULL,0,1391798786,1),(2330,'aamc-pcrs-comp-c0200','2 Knowledge for Practice','Demonstrate knowledge of established and evolving biomedical, clinical, epidemiological and social-behavioral sciences, as well as the application of this knowledge to patient care',NULL,2328,9,NULL,1,0,1,0,2,NULL,0,1391798786,1),(2331,'aamc-pcrs-comp-c0300','3 Practice-Based Learning and Improvement','Demonstrate the ability to investigate and evaluate oneÃƒÂ¢??s care of patients, to appraise and assimilate scientific evidence, and to continuously improve patient care based on constant self-evaluation and life-long learning',NULL,2328,9,NULL,2,0,1,0,2,NULL,0,1391798786,1),(2332,'aamc-pcrs-comp-c0400','4 Interpersonal and Communication Skills','Demonstrate interpersonal and communication skills that result in the effective exchange of information and collaboration with patients, their families, and health professionals',NULL,2328,9,NULL,3,0,1,0,2,NULL,0,1391798786,1),(2333,'aamc-pcrs-comp-c0500','5 Professionalism','Demonstrate a commitment to carrying out professional responsibilities and an adherence to ethical principles',NULL,2328,9,NULL,4,0,1,0,2,NULL,0,1391798786,1),(2334,'aamc-pcrs-comp-c0600','6 Systems-Based Practice','Demonstrate an awareness of and responsiveness to the larger context and system of health care, as well as the ability to call effectively on other resources in the system to provide optimal health care',NULL,2328,9,NULL,5,0,1,0,2,NULL,0,1391798786,1),(2335,'aamc-pcrs-comp-c0700','7 Interprofessional Collaboration','Demonstrate the ability to engage in an interprofessional team in a manner that optimizes safe, effective patient- and population-centered care',NULL,2328,9,NULL,6,0,1,0,2,NULL,0,1391798786,1),(2336,'aamc-pcrs-comp-c0800','8 Personal and Professional Development','Demonstrate the qualities required to sustain lifelong personal and professional growth',NULL,2328,9,NULL,7,0,1,0,2,NULL,0,1391798786,1),(2337,'aamc-pcrs-comp-c0101','1.1','Perform all medical, diagnostic, and surgical procedures considered',NULL,2329,9,NULL,0,0,1,0,2,NULL,0,1391798786,1),(2338,'aamc-pcrs-comp-c0102','1.2','Gather essential and accurate information about patients and their conditions through history-taking, physical examination, and the use of laboratory data, imaging, and other tests',NULL,2329,9,NULL,1,0,1,0,2,NULL,0,1391798786,1),(2339,'aamc-pcrs-comp-c0103','1.3','Organize and prioritize responsibilities to provide care that is safe, effective, and efficient',NULL,2329,9,NULL,2,0,1,0,2,NULL,0,1391798786,1),(2340,'aamc-pcrs-comp-c0104','1.4','Interpret laboratory data, imaging studies, and other tests required for the area of practice',NULL,2329,9,NULL,3,0,1,0,2,NULL,0,1391798786,1),(2341,'aamc-pcrs-comp-c0105','1.5','Make informed decisions about diagnostic and therapeutic interventions based on patient information and preferences, up-to-date scientific evidence, and clinical judgment',NULL,2329,9,NULL,4,0,1,0,2,NULL,0,1391798786,1),(2342,'aamc-pcrs-comp-c0106','1.6','Develop and carry out patient management plans',NULL,2329,9,NULL,5,0,1,0,2,NULL,0,1391798786,1),(2343,'aamc-pcrs-comp-c0107','1.7','Counsel and educate patients and their families to empower them to participate in their care and enable shared decision making',NULL,2329,9,NULL,6,0,1,0,2,NULL,0,1391798786,1),(2344,'aamc-pcrs-comp-c0108','1.8','Provide appropriate referral of patients including ensuring continuity of care throughout transitions between providers or settings, and following up on patient progress and outcomes',NULL,2329,9,NULL,7,0,1,0,2,NULL,0,1391798786,1),(2345,'aamc-pcrs-comp-c0109','1.9','Provide health care services to patients, families, and communities aimed at preventing health problems or maintaining health',NULL,2329,9,NULL,8,0,1,0,2,NULL,0,1391798786,1),(2346,'aamc-pcrs-comp-c0110','1.10','Provide appropriate role modeling',NULL,2329,9,NULL,9,0,1,0,2,NULL,0,1391798786,1),(2347,'aamc-pcrs-comp-c0111','1.11','Perform supervisory responsibilities commensurate with one\'s roles, abilities, and qualifications',NULL,2329,9,NULL,10,0,1,0,2,NULL,0,1391798786,1),(2348,'aamc-pcrs-comp-c0199','1.99','Other patient care',NULL,2329,9,NULL,11,0,1,0,2,NULL,0,1391798786,1),(2349,'aamc-pcrs-comp-c0201','2.1','Demonstrate an investigatory and analytic approach to clinical situations',NULL,2330,9,NULL,0,0,1,0,2,NULL,0,1391798786,1),(2350,'aamc-pcrs-comp-c0202','2.2','Apply established and emerging bio-physical scientific principles fundamental to health care for patients and populations',NULL,2330,9,NULL,1,0,1,0,2,NULL,0,1391798786,1),(2351,'aamc-pcrs-comp-c0203','2.3','Apply established and emerging principles of clinical sciences to diagnostic and therapeutic decision-making, clinical problem-solving, and other aspects of evidence-based health care',NULL,2330,9,NULL,2,0,1,0,2,NULL,0,1391798786,1),(2352,'aamc-pcrs-comp-c0204','2.4','Apply principles of epidemiological sciences to the identification of health problems, risk factors, treatment strategies, resources, and disease prevention/health promotion efforts for patients and populations',NULL,2330,9,NULL,3,0,1,0,2,NULL,0,1391798786,1),(2353,'aamc-pcrs-comp-c0205','2.5','Apply principles of social-behavioral sciences to provision of patient care, including assessment of the impact of psychosocial and cultural influences on health, disease, care-seeking, care compliance, and barriers to and attitudes toward care',NULL,2330,9,NULL,4,0,1,0,2,NULL,0,1391798786,1),(2354,'aamc-pcrs-comp-c0206','2.6','Contribute to the creation, dissemination, application, and translation of new health care knowledge and practices',NULL,2330,9,NULL,5,0,1,0,2,NULL,0,1391798786,1),(2355,'aamc-pcrs-comp-c0299','2.99','Other knowledge for practice',NULL,2330,9,NULL,6,0,1,0,2,NULL,0,1391798786,1),(2356,'aamc-pcrs-comp-c0301','3.1','Identify strengths, deficiencies, and limits in one\'s knowledge and expertise',NULL,2331,9,NULL,0,0,1,0,2,NULL,0,1391798786,1),(2357,'aamc-pcrs-comp-c0302','3.2','Set learning and improvement goals',NULL,2331,9,NULL,1,0,1,0,2,NULL,0,1391798786,1),(2358,'aamc-pcrs-comp-c0303','3.3','Identify and perform learning activities that address one\'s gaps in knowledge, skills, and/or attitudes',NULL,2331,9,NULL,2,0,1,0,2,NULL,0,1391798786,1),(2359,'aamc-pcrs-comp-c0304','3.4','Systematically analyze practice using quality improvement methods, and implement changes with the goal of practice improvement',NULL,2331,9,NULL,3,0,1,0,2,NULL,0,1391798786,1),(2360,'aamc-pcrs-comp-c0305','3.5','Incorporate feedback into daily practice',NULL,2331,9,NULL,4,0,1,0,2,NULL,0,1391798786,1),(2361,'aamc-pcrs-comp-c0306','3.6','Locate, appraise, and assimilate evidence from scientific studies related to',NULL,2331,9,NULL,5,0,1,0,2,NULL,0,1391798786,1),(2362,'aamc-pcrs-comp-c0307','3.7','Use information technology to optimize learning',NULL,2331,9,NULL,6,0,1,0,2,NULL,0,1391798786,1),(2363,'aamc-pcrs-comp-c0308','3.8','Participate in the education of patients, families, students, trainees, peers and other health professionals',NULL,2331,9,NULL,7,0,1,0,2,NULL,0,1391798786,1),(2364,'aamc-pcrs-comp-c0309','3.9','Obtain and utilize information about individual patients, populations of patients, or communities from which patients are drawn to improve care',NULL,2331,9,NULL,8,0,1,0,2,NULL,0,1391798786,1),(2365,'aamc-pcrs-comp-c0310','3.10','Continually identify, analyze, and implement new knowledge, guidelines, standards, technologies, products, or services that have been demonstrated to improve outcomes',NULL,2331,9,NULL,9,0,1,0,2,NULL,0,1391798786,1),(2366,'aamc-pcrs-comp-c0399','3.99','Other practice-based learning and improvement',NULL,2331,9,NULL,10,0,1,0,2,NULL,0,1391798786,1),(2367,'aamc-pcrs-comp-c0401','4.1','Communicate effectively with patients, families, and the public, as appropriate, across a broad range of socioeconomic and cultural backgrounds',NULL,2332,9,NULL,0,0,1,0,2,NULL,0,1391798786,1),(2368,'aamc-pcrs-comp-c0402','4.2','Communicate effectively with colleagues within one\'s profession or specialty, other health professionals, and health related agencies (see also 7.3)',NULL,2332,9,NULL,1,0,1,0,2,NULL,0,1391798786,1),(2369,'aamc-pcrs-comp-c0403','4.3','Work effectively with others as a member or leader of a health care team or other professional group (see also 7.4)',NULL,2332,9,NULL,2,0,1,0,2,NULL,0,1391798786,1),(2370,'aamc-pcrs-comp-c0404','4.4','Act in a consultative role to other health professionals',NULL,2332,9,NULL,3,0,1,0,2,NULL,0,1391798786,1),(2371,'aamc-pcrs-comp-c0405','4.5','Maintain comprehensive, timely, and legible medical records',NULL,2332,9,NULL,4,0,1,0,2,NULL,0,1391798786,1),(2372,'aamc-pcrs-comp-c0406','4.6','Demonstrate sensitivity, honesty, and compassion in difficult conversations, including those about death, end of life, adverse events, bad news, disclosure of errors, and other sensitive topics',NULL,2332,9,NULL,5,0,1,0,2,NULL,0,1391798786,1),(2373,'aamc-pcrs-comp-c0407','4.7','Demonstrate insight and understanding about emotions and human responses to emotions that allow one to develop and manage interpersonal',NULL,2332,9,NULL,6,0,1,0,2,NULL,0,1391798786,1),(2374,'aamc-pcrs-comp-c0499','4.99','Other interpersonal and communication skills',NULL,2332,9,NULL,7,0,1,0,2,NULL,0,1391798786,1),(2375,'aamc-pcrs-comp-c0501','5.1','Demonstrate compassion, integrity, and respect for others',NULL,2333,9,NULL,0,0,1,0,2,NULL,0,1391798786,1),(2376,'aamc-pcrs-comp-c0502','5.2','Demonstrate responsiveness to patient needs that supersedes self-interest',NULL,2333,9,NULL,1,0,1,0,2,NULL,0,1391798786,1),(2377,'aamc-pcrs-comp-c0503','5.3','Demonstrate respect for patient privacy and autonomy',NULL,2333,9,NULL,2,0,1,0,2,NULL,0,1391798786,1),(2378,'aamc-pcrs-comp-c0504','5.4','Demonstrate accountability to patients, society, and the profession',NULL,2333,9,NULL,3,0,1,0,2,NULL,0,1391798786,1),(2379,'aamc-pcrs-comp-c0505','5.5','Demonstrate sensitivity and responsiveness to a diverse patient population, including but not limited to diversity in gender, age, culture, race, religion, disabilities, and sexual orientation',NULL,2333,9,NULL,4,0,1,0,2,NULL,0,1391798786,1),(2380,'aamc-pcrs-comp-c0506','5.6','Demonstrate a commitment to ethical principles pertaining to provision or withholding of care, confidentiality, informed consent, and business practices, including compliance with relevant laws, policies, and regulations',NULL,2333,9,NULL,5,0,1,0,2,NULL,0,1391798786,1),(2381,'aamc-pcrs-comp-c0599','5.99','Other professionalism',NULL,2333,9,NULL,6,0,1,0,2,NULL,0,1391798786,1),(2382,'aamc-pcrs-comp-c0601','6.1','Work effectively in various health care delivery settings and systems relevant to one\'s clinical specialty',NULL,2334,9,NULL,0,0,1,0,2,NULL,0,1391798786,1),(2383,'aamc-pcrs-comp-c0602','6.2','Coordinate patient care within the health care system relevant to one\'s clinical specialty',NULL,2334,9,NULL,1,0,1,0,2,NULL,0,1391798786,1),(2384,'aamc-pcrs-comp-c0603','6.3','Incorporate considerations of cost awareness and risk-benefit analysis in patient and/or population-based care',NULL,2334,9,NULL,2,0,1,0,2,NULL,0,1391798786,1),(2385,'aamc-pcrs-comp-c0604','6.4','Advocate for quality patient care and optimal patient care systems',NULL,2334,9,NULL,3,0,1,0,2,NULL,0,1391798786,1),(2386,'aamc-pcrs-comp-c0605','6.5','Participate in identifying system errors and implementing potential systems solutions',NULL,2334,9,NULL,4,0,1,0,2,NULL,0,1391798786,1),(2387,'aamc-pcrs-comp-c0606','6.6','Perform administrative and practice management responsibilities commensurate with oneÃƒÂ¢??s role, abilities, and qualifications',NULL,2334,9,NULL,5,0,1,0,2,NULL,0,1391798786,1),(2388,'aamc-pcrs-comp-c0699','6.99','Other systems-based practice',NULL,2334,9,NULL,6,0,1,0,2,NULL,0,1391798786,1),(2389,'aamc-pcrs-comp-c0701','7.1','Work with other health professionals to establish and maintain a climate of mutual respect, dignity, diversity, ethical integrity, and trust',NULL,2335,9,NULL,0,0,1,0,2,NULL,0,1391798786,1),(2390,'aamc-pcrs-comp-c0702','7.2','Use the knowledge of oneÃƒÂ¢??s own role and the roles of other health professionals to appropriately assess and address the health care needs of the patients and populations served',NULL,2335,9,NULL,1,0,1,0,2,NULL,0,1391798786,1),(2391,'aamc-pcrs-comp-c0703','7.3','Communicate with other health professionals in a responsive and responsible manner that supports the maintenance of health and the',NULL,2335,9,NULL,2,0,1,0,2,NULL,0,1391798786,1),(2392,'aamc-pcrs-comp-c0704','7.4','Participate in different team roles to establish, develop, and continuously enhance interprofessional teams to provide patient- and population-centered care that is safe, timely, efficient, effective, and equitable',NULL,2335,9,NULL,3,0,1,0,2,NULL,0,1391798786,1),(2393,'aamc-pcrs-comp-c0799','7.99','Other interprofessional collaboration',NULL,2335,9,NULL,4,0,1,0,2,NULL,0,1391798786,1),(2394,'aamc-pcrs-comp-c0801','8.1','Develop the ability to use self-awareness of knowledge, skills, and emotional limitations to engage in appropriate help-seeking behaviors',NULL,2336,9,NULL,0,0,1,0,2,NULL,0,1391798786,1),(2395,'aamc-pcrs-comp-c0802','8.2','Demonstrate healthy coping mechanisms to respond to stress',NULL,2336,9,NULL,1,0,1,0,2,NULL,0,1391798786,1),(2396,'aamc-pcrs-comp-c0803','8.3','Manage conflict between personal and professional responsibilities',NULL,2336,9,NULL,2,0,1,0,2,NULL,0,1391798786,1),(2397,'aamc-pcrs-comp-c0804','8.4','Practice flexibility and maturity in adjusting to change with the capacity to alter one\'s behavior',NULL,2336,9,NULL,3,0,1,0,2,NULL,0,1391798786,1),(2398,'aamc-pcrs-comp-c0805','8.5','Demonstrate trustworthiness that makes colleagues feel secure when one is responsible for the care of patients',NULL,2336,9,NULL,4,0,1,0,2,NULL,0,1391798786,1),(2399,'aamc-pcrs-comp-c0806','8.6','Provide leadership skills that enhance team functioning, the learning environment, and/or the health care delivery system',NULL,2336,9,NULL,5,0,1,0,2,NULL,0,1391798786,1),(2400,'aamc-pcrs-comp-c0807','8.7','Demonstrate self-confidence that puts patients, families, and members of the health care team at ease',NULL,2336,9,NULL,6,0,1,0,2,NULL,0,1391798786,1),(2401,'aamc-pcrs-comp-c0808','8.8','Recognize that ambiguity is part of clinical health care and respond by utilizing appropriate resources in dealing with uncertainty',NULL,2336,9,NULL,7,0,1,0,2,NULL,0,1391798786,1),(2402,'aamc-pcrs-comp-c0899','8.99','Other personal and professional development',NULL,2336,9,NULL,8,0,1,0,2,NULL,0,1391798786,1);
 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -6145,6 +7595,54 @@ CREATE TABLE `global_lu_schools` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 INSERT INTO `global_lu_schools` VALUES (1,'University of Alberta'),(2,'University of British Columbia'),(3,'University of Calgary'),(4,'Dalhousie University'),(5,'Laval University'),(6,'University of Manitoba'),(7,'McGill University'),(8,'McMaster University'),(9,'Memorial University of Newfoundland'),(10,'Universite de Montreal'),(11,'Northern Ontario School of Medicine'),(12,'University of Ottawa'),(13,'Queen\'s University'),(14,'University of Saskatchewan'),(15,'Universite de Sherbrooke'),(16,'University of Toronto'),(17,'University of Western Ontario');
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `global_lu_sites` (
+  `site_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `site_code` varchar(16) NOT NULL DEFAULT '',
+  `site_name` varchar(128) NOT NULL DEFAULT '',
+  `site_address1` varchar(128) NOT NULL DEFAULT '',
+  `site_address2` varchar(128) DEFAULT NULL,
+  `site_city` varchar(64) NOT NULL DEFAULT '',
+  `site_province_id` int(11) unsigned DEFAULT NULL,
+  `site_country_id` int(11) unsigned NOT NULL,
+  `site_postcode` varchar(16) NOT NULL DEFAULT '',
+  `created_date` bigint(64) NOT NULL,
+  `created_by` int(11) NOT NULL,
+  `updated_date` bigint(64) NOT NULL,
+  `updated_by` int(11) NOT NULL,
+  `deleted_date` bigint(64) DEFAULT NULL,
+  `deleted_by` int(11) DEFAULT NULL,
+  PRIMARY KEY (`site_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+INSERT INTO `global_lu_sites` VALUES (1,'','Your University','University Avenue','','Kingston',0,39,'K7L3N6',1521522163,0,1521522163,0,NULL,NULL);
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `global_lu_sites_organisation` (
+  `site_id` int(11) unsigned NOT NULL,
+  `organisation_id` int(11) unsigned NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+INSERT INTO `global_lu_sites_organisation` VALUES (1,1);
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `global_objective_note` (
+  `global_objective_note_id` int(12) NOT NULL AUTO_INCREMENT,
+  `objective_id` int(12) NOT NULL,
+  `global_objective_note` varchar(600) NOT NULL,
+  `updated_date` bigint(20) NOT NULL,
+  `updated_by` int(11) NOT NULL,
+  PRIMARY KEY (`global_objective_note_id`),
+  KEY `idx_global_objective_note` (`objective_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -6239,6 +7737,90 @@ INSERT INTO `groups` VALUES (1,'Class of 2015','cohort',NULL,NULL,NULL,1,0,0,144
 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `language` (
+  `language_id` int(12) NOT NULL AUTO_INCREMENT,
+  `iso_6391_code` varchar(2) NOT NULL,
+  PRIMARY KEY (`language_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+INSERT INTO `language` VALUES (1,'en'),(2,'fr');
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `learner_level_organisation` (
+  `level_org_id` int(12) unsigned NOT NULL AUTO_INCREMENT,
+  `organisation_id` int(12) unsigned NOT NULL,
+  `level_id` int(11) unsigned NOT NULL,
+  `order` int(2) NOT NULL,
+  `created_date` bigint(64) unsigned NOT NULL,
+  `created_by` int(11) unsigned NOT NULL,
+  `updated_date` bigint(64) unsigned NOT NULL,
+  `updated_by` int(11) unsigned NOT NULL,
+  `deleted_date` bigint(64) unsigned NOT NULL,
+  `deleted_by` int(11) unsigned NOT NULL,
+  PRIMARY KEY (`level_org_id`),
+  KEY `organisation_id` (`organisation_id`,`level_id`),
+  KEY `level_id` (`level_id`),
+  CONSTRAINT `level_id` FOREIGN KEY (`level_id`) REFERENCES `global_lu_learner_levels` (`level_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+INSERT INTO `learner_level_organisation` VALUES (1,1,1,1,1483714897,1,1483714897,1,0,0),(2,1,2,2,1483714897,1,1483714897,1,0,0),(3,1,3,3,1483714897,1,1483714897,1,0,0),(4,1,4,4,1483714897,1,1483714897,1,0,0),(5,1,5,5,1483714897,1,1483714897,1,0,0),(6,1,6,6,1483714897,1,1483714897,1,0,0);
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `learner_status_organisation` (
+  `status_org_id` int(12) unsigned NOT NULL AUTO_INCREMENT,
+  `organisation_id` int(12) unsigned NOT NULL,
+  `status_id` int(11) unsigned NOT NULL,
+  `created_date` bigint(64) unsigned NOT NULL,
+  `created_by` int(11) unsigned NOT NULL,
+  `updated_date` bigint(64) unsigned NOT NULL,
+  `updated_by` int(11) unsigned NOT NULL,
+  `deleted_date` bigint(64) unsigned NOT NULL,
+  `deleted_by` int(11) unsigned NOT NULL,
+  PRIMARY KEY (`status_org_id`),
+  KEY `organisation_id` (`organisation_id`,`status_id`),
+  KEY `lso_status_id` (`status_id`),
+  CONSTRAINT `lso_status_id` FOREIGN KEY (`status_id`) REFERENCES `global_lu_learner_statuses` (`status_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `learning_object_authors` (
+  `id` int(12) NOT NULL AUTO_INCREMENT,
+  `author_id` int(12) NOT NULL COMMENT 'This value is either entrada_auth.user_data.id if auth_type is Internal, entrada.lo_external_authors.eauthor_id if auth_type is External.',
+  `author_type` enum('Internal','External') NOT NULL DEFAULT 'Internal',
+  `learning_object_id` int(12) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `learning_object_id` (`learning_object_id`),
+  CONSTRAINT `fk_learning_object` FOREIGN KEY (`learning_object_id`) REFERENCES `learning_objects` (`learning_object_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `learning_object_external_authors` (
+  `eauthor_id` int(12) NOT NULL AUTO_INCREMENT,
+  `firstname` varchar(255) NOT NULL DEFAULT '',
+  `lastname` varchar(255) NOT NULL DEFAULT '',
+  `email` varchar(255) NOT NULL DEFAULT '',
+  `created_date` int(11) NOT NULL,
+  `created_by` int(11) NOT NULL,
+  `updated_date` int(11) NOT NULL,
+  `updated_by` int(11) NOT NULL,
+  `deleted_date` int(11) DEFAULT NULL,
+  PRIMARY KEY (`eauthor_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `learning_object_file_permissions` (
   `lo_file_permission_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `lo_file_id` int(11) NOT NULL,
@@ -6286,13 +7868,81 @@ CREATE TABLE `learning_object_files` (
 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `learning_objects` (
+  `learning_object_id` int(12) NOT NULL AUTO_INCREMENT,
+  `title` varchar(255) NOT NULL DEFAULT '',
+  `description` text,
+  `primary_usage` varchar(255) DEFAULT NULL,
+  `tool` varchar(255) DEFAULT NULL,
+  `object_type` enum('link','tincan','scorm') NOT NULL DEFAULT 'link',
+  `url` text NOT NULL,
+  `filename` varchar(255) DEFAULT NULL,
+  `filename_hashed` varchar(255) DEFAULT NULL,
+  `screenshot_filename` varchar(255) NOT NULL DEFAULT '',
+  `viewable_start` bigint(64) DEFAULT NULL,
+  `viewable_end` bigint(64) DEFAULT NULL,
+  `created_date` bigint(64) DEFAULT NULL,
+  `created_by` int(11) DEFAULT NULL,
+  `updated_date` bigint(64) DEFAULT NULL,
+  `updated_by` int(11) DEFAULT NULL,
+  `deleted_date` bigint(64) DEFAULT NULL,
+  PRIMARY KEY (`learning_object_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `learning_objects_progress` (
+  `learning_objects_progress_id` int(12) NOT NULL AUTO_INCREMENT,
+  `proxy_id` int(11) NOT NULL DEFAULT '0',
+  `learning_objects_activity_id` varchar(255) NOT NULL,
+  `learning_objects_state_id` varchar(255) NOT NULL,
+  `data` text NOT NULL,
+  `created_date` bigint(64) NOT NULL DEFAULT '0',
+  PRIMARY KEY (`learning_objects_progress_id`),
+  KEY `proxy_id` (`proxy_id`),
+  KEY `learning_objects_activity_id` (`learning_objects_activity_id`),
+  KEY `learning_objects_state_id` (`learning_objects_state_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `linked_objectives` (
   `linked_objective_id` int(12) unsigned NOT NULL AUTO_INCREMENT,
+  `version_id` int(11) unsigned DEFAULT NULL,
   `objective_id` int(12) NOT NULL,
   `target_objective_id` int(12) NOT NULL,
   `active` tinyint(1) NOT NULL DEFAULT '1',
-  PRIMARY KEY (`linked_objective_id`)
+  PRIMARY KEY (`linked_objective_id`),
+  KEY `objective_id` (`objective_id`),
+  KEY `target_objective_id` (`target_objective_id`),
+  KEY `version_id` (`version_id`),
+  KEY `version_objective_target_id` (`version_id`,`objective_id`,`target_objective_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `linked_tag_sets` (
+  `linked_tag_set_id` int(12) unsigned NOT NULL AUTO_INCREMENT,
+  `organisation_id` int(12) unsigned NOT NULL,
+  `type` enum('event','course_unit','course') DEFAULT NULL,
+  `objective_id` int(12) NOT NULL,
+  `target_objective_id` int(12) DEFAULT NULL,
+  `created_date` bigint(64) DEFAULT NULL,
+  `created_by` int(12) unsigned DEFAULT NULL,
+  `updated_date` bigint(64) DEFAULT NULL,
+  `updated_by` int(12) unsigned DEFAULT NULL,
+  `deleted_date` bigint(64) DEFAULT NULL,
+  PRIMARY KEY (`linked_tag_set_id`),
+  KEY `organisation_id` (`organisation_id`),
+  KEY `type` (`type`),
+  KEY `objective_id` (`objective_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 
@@ -6489,11 +8139,12 @@ CREATE TABLE `meta_types` (
   `label` varchar(255) NOT NULL,
   `description` text NOT NULL,
   `parent_type_id` int(10) unsigned DEFAULT NULL,
+  `restricted` tinyint(1) NOT NULL DEFAULT '1',
   PRIMARY KEY (`meta_type_id`)
 ) ENGINE=MyISAM AUTO_INCREMENT=22 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
-INSERT INTO `meta_types` VALUES (1,'N95 Mask Fit','Make, Model, and size definition of required N95 masks.',NULL),(2,'Police Record Check','Police Record Checks to verify background as clear of events which could prevent placement in hospitals or clinics.',NULL),(3,'Full','Full record check. Due to differences in how police departments handle reporting of background checks, vulnerable sector screening (VSS) is a separate type of record',2),(4,'Vulnerable Sector Screening','Required for placement in hospitals or clinics. May be included in full police record checks or may be a separate document.',2),(5,'Assertion','Yearly or bi-yearly assertion that prior police background checks remain valid.',2),(6,'Immunization/Health Check','',NULL),(7,'Hepatitis B','',6),(8,'Tuberculosis','',6),(9,'Measles','',6),(10,'Mumps','',6),(11,'Rubella','',6),(12,'Tetanus/Diptheria','',6),(13,'Polio','',6),(14,'Varicella','',6),(15,'Pertussis','',6),(16,'Influenza','Each student is required to obtain an annual influenza immunization. The Ontario government provides the influenza vaccine free to all citizens during the flu season. Students will be required to follow Public Health guidelines put forward for health care professionals. Thia immunization must be received by December 1st each academic year and documentation forwarded to the UGME office by the student',6),(17,'Hepatitis C','',6),(18,'HIV','',6),(19,'Cardiac Life Support','',NULL),(20,'Basic','',19),(21,'Advanced','',19);
+INSERT INTO `meta_types` VALUES (1,'N95 Mask Fit','Make, Model, and size definition of required N95 masks.',NULL,1),(2,'Police Record Check','Police Record Checks to verify background as clear of events which could prevent placement in hospitals or clinics.',NULL,1),(3,'Full','Full record check. Due to differences in how police departments handle reporting of background checks, vulnerable sector screening (VSS) is a separate type of record',2,1),(4,'Vulnerable Sector Screening','Required for placement in hospitals or clinics. May be included in full police record checks or may be a separate document.',2,1),(5,'Assertion','Yearly or bi-yearly assertion that prior police background checks remain valid.',2,1),(6,'Immunization/Health Check','',NULL,1),(7,'Hepatitis B','',6,1),(8,'Tuberculosis','',6,1),(9,'Measles','',6,1),(10,'Mumps','',6,1),(11,'Rubella','',6,1),(12,'Tetanus/Diptheria','',6,1),(13,'Polio','',6,1),(14,'Varicella','',6,1),(15,'Pertussis','',6,1),(16,'Influenza','Each student is required to obtain an annual influenza immunization. The Ontario government provides the influenza vaccine free to all citizens during the flu season. Students will be required to follow Public Health guidelines put forward for health care professionals. Thia immunization must be received by December 1st each academic year and documentation forwarded to the UGME office by the student',6,1),(17,'Hepatitis C','',6,1),(18,'HIV','',6,1),(19,'Cardiac Life Support','',NULL,1),(20,'Basic','',19,1),(21,'Advanced','',19,1);
 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -6521,7 +8172,7 @@ CREATE TABLE `migrations` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
-INSERT INTO `migrations` VALUES ('2015_01_28_143720_556',1,0,0,1450108251),('2015_10_05_115238_571',1,1,0,1450108251),('2015_10_07_140708_607',1,1,0,1450108251),('2015_11_09_114101_211',1,3,0,1450108251),('2015_11_19_141523_555',1,1,0,1450108251),('2015_12_14_100257_655',1,0,0,1450108251),('2015_02_06_141230_501',1,14,0,1464582935),('2015_02_10_162530_501',1,4,0,1464582935),('2015_04_23_213148_701',1,2,0,1464582935),('2015_11_02_143612_445',1,3,0,1464582935),('2015_12_23_000231_648',1,2,0,1464582935),('2016_01_14_163721_658',1,250,0,1464582935),('2016_01_29_151435_666',1,3,0,1464582936),('2016_03_10_124616_686',1,1,0,1464582936),('2016_03_23_225930_706',1,1,0,1464582936),('2016_03_28_202227_707',1,1,0,1464582936),('2016_03_28_211819_726',1,3,0,1464582936),('2016_03_29_113528_696',1,3,0,1464582936),('2016_04_05_105040_745',1,3,0,1464582936),('2016_04_05_145610_747',1,3,0,1464582936),('2016_05_29_235550_857',1,2,0,1464582936),('2015_01_28_154313_558',1,48,0,1483495901),('2015_02_13_100237_558',1,1,0,1483495901),('2015_02_20_103041_560',1,2,0,1483495901),('2015_02_20_130446_558',1,4,0,1483495901),('2015_02_24_083616_558',1,0,0,1483495902),('2015_02_24_124946_558',1,1,0,1483495902),('2015_02_24_142830_558',1,3,0,1483495902),('2015_02_24_160446_558',1,6,0,1483495902),('2015_02_25_160706_558',1,1,0,1483495902),('2015_02_25_161433_558',1,2,0,1483495902),('2015_02_25_194020_558',1,1,0,1483495902),('2015_02_25_200000_558',1,1,0,1483495902),('2015_02_26_094149_558',1,3,0,1483495902),('2015_02_26_143839_558',1,9,0,1483495902),('2015_02_26_173341_558',1,1,0,1483495902),('2015_02_26_191105_558',1,1,0,1483495902),('2015_03_03_131415_558',1,1,0,1483495902),('2015_03_03_141256_558',1,2,0,1483495902),('2015_04_10_145114_558',1,1,0,1483495902),('2015_05_15_130638_558',1,3,0,1483495902),('2015_05_20_125455_558',1,1,0,1483495902),('2015_05_22_093608_558',1,1,0,1483495902),('2015_05_22_105753_558',1,1,0,1483495902),('2015_05_27_141448_558',1,1,0,1483495902),('2015_06_25_162521_558',1,1,0,1483495902),('2015_06_26_103137_558',1,2,0,1483495902),('2015_06_30_132039_558',1,1,0,1483495902),('2015_07_07_112833_558',1,3,0,1483495902),('2015_07_15_134443_558',1,1,0,1483495902),('2015_07_27_085651_558',1,4,0,1483495902),('2015_07_27_110335_558',1,4,0,1483495902),('2015_07_27_123307_558',1,1,0,1483495902),('2015_08_07_134306_558',1,8,0,1483495902),('2015_08_12_120043_558',1,3,0,1483495902),('2015_08_12_145426_558',1,2,0,1483495902),('2015_08_25_100105_558',1,1,0,1483495902),('2015_08_27_131116_558',1,1,0,1483495902),('2015_09_01_134859_558',1,1,0,1483495902),('2015_09_03_094219_558',1,1,0,1483495902),('2015_09_08_105058_558',1,2,0,1483495902),('2015_09_10_090232_573',1,2,0,1483495902),('2015_09_11_104429_558',1,1,0,1483495902),('2015_09_16_142818_558',1,3,0,1483495902),('2015_09_29_101115_558',1,2,0,1483495902),('2015_10_02_144459_558',1,2,0,1483495902),('2015_10_08_114141_558',1,1,0,1483495902),('2015_10_15_105816_558',1,3,0,1483495902),('2015_11_18_091429_558',1,9,0,1483495903),('2015_11_18_133543_558',1,1,0,1483495903),('2015_11_30_105832_558',1,1,0,1483495903),('2015_12_03_100956_558',1,1,0,1483495903),('2015_12_10_104135_558',1,1,0,1483495903),('2016_01_14_104922_558',1,1,0,1483495903),('2016_01_20_121723_558',1,3,0,1483495903),('2016_01_21_143258_558',1,1,0,1483495903),('2016_01_22_091315_558',1,1,0,1483495903),('2016_01_28_111745_558',1,0,0,1483495903),('2016_02_03_145049_558',1,1,0,1483495903),('2016_03_01_093559_558',1,2,0,1483495903),('2016_03_07_104809_558',1,1,0,1483495903),('2016_04_05_094031_558',1,2,0,1483495903),('2016_04_07_164823_695',1,1,0,1483495903),('2016_04_08_093542_762',1,3,0,1483495903),('2016_04_08_163323_744',1,5,0,1483495903),('2016_04_22_113127_780',1,2,0,1483495903),('2016_04_28_111323_29',1,5,0,1483495903),('2016_05_02_152214_695',1,14,0,1483495903),('2016_05_05_145709_695',1,2,0,1483495903),('2016_05_06_094958_695',1,1,0,1483495903),('2016_05_06_100718_695',1,1,0,1483495903),('2016_05_06_133104_695',1,1,0,1483495903),('2016_05_09_095058_806',1,1,0,1483495903),('2016_05_09_145312_793',1,1,0,1483495903),('2016_05_10_085657_558',1,3,0,1483495903),('2016_05_13_145916_695',1,3,0,1483495903),('2016_05_20_084021_841',1,1,0,1483495903),('2016_05_24_102734_558',1,1,0,1483495903),('2016_05_24_105810_695',1,1,0,1483495903),('2016_05_26_132210_558',1,2,0,1483495903),('2016_05_30_095337_695',1,1,0,1483495903),('2016_05_31_133812_558',1,1,0,1483495903),('2016_06_06_114233_885',1,3,0,1483495903),('2016_06_09_150429_889',1,2,0,1483495903),('2016_06_09_152346_901',1,4,0,1483495904),('2016_06_13_083546_883',1,1,0,1483495904),('2016_06_13_114418_810',1,1,0,1483495904),('2016_06_14_100522_914',1,1,0,1483495904),('2016_06_14_102557_923',1,1,0,1483495904),('2016_06_16_115300_932',1,1,0,1483495904),('2016_06_17_131437_558',1,3,0,1483495904),('2016_06_21_162705_957',1,1,0,1483495904),('2016_06_27_090833_949',1,1,0,1483495904),('2016_06_30_100114_971',1,1,0,1483495904),('2016_07_04_141351_695',1,1,0,1483495904),('2016_07_04_163356_695',1,1,0,1483495904),('2016_07_04_164821_695',1,1,0,1483495904),('2016_07_06_125605_994',1,1,0,1483495904),('2016_07_11_085528_942',1,4,0,1483495904),('2016_07_11_141024_558',1,3,0,1483495904),('2016_07_25_092223_1040',1,1,0,1483495904),('2016_07_25_093116_1028',1,1,0,1483495904),('2016_08_12_132048_558',1,3,0,1483495904),('2016_08_16_171553_1098',1,1,0,1483495904),('2016_08_25_083636_1087',1,3,0,1483495904),('2016_08_25_093740_558',1,1,0,1483495904),('2016_08_25_111933_1081',1,1,0,1483495904),('2016_08_26_143049_1090',1,1,0,1483495904),('2016_09_01_091420_1110',1,1,0,1483495904),('2016_09_06_143101_1101',1,2,0,1483495904),('2016_09_13_121207_358',1,1,0,1483495904),('2016_09_13_122218_1118',1,1,0,1483495904),('2016_09_16_083715_1004',1,2,0,1483495904),('2016_10_05_085608_1184',1,2,0,1483495904),('2016_10_05_100952_558',1,5,0,1483495904),('2016_10_14_152629_558',1,1,0,1483495904),('2016_10_14_153051_558',1,1,0,1483495904),('2016_10_20_145751_1126',1,1,0,1483495904),('2016_11_03_123219_1031',1,2,0,1483495904),('2016_11_04_095730_1306',1,3,0,1483495904),('2016_11_11_085655_1354',1,1,0,1483495904),('2016_11_15_172222_532',1,2,0,1483495904),('2016_11_23_121842_1342',1,2,0,1483495905),('2016_11_28_102729_1426',1,1,0,1483495905),('2016_12_07_115513_558',1,1,0,1483495905),('2017_01_03_201034_1508',1,2,0,1483495905),('2016_01_30_124831_502',1,4,0,1492431737),('2016_06_10_182935_900',1,29,0,1492431737),('2016_06_10_201813_900',1,2,0,1492431737),('2016_06_10_203558_900',1,1,0,1492431737),('2016_07_12_182633_900',1,2,0,1492431737),('2016_07_13_162523_900',1,0,0,1492431737),('2016_07_18_161953_175',1,1,0,1492431737),('2016_07_18_163204_175',1,0,0,1492431737),('2016_07_18_185148_175',1,1,0,1492431737),('2016_07_21_102058_1443',1,1,0,1492431737),('2016_08_07_002215_1060',1,1,0,1492431737),('2016_08_07_002634_1060',1,1,0,1492431737),('2016_08_22_153916_1529',1,1,0,1492431737),('2016_08_25_101403_1541',1,0,0,1492431738),('2016_09_01_214358_1547',1,1,0,1492431738),('2016_09_07_192943_1548',1,1,0,1492431738),('2016_09_18_124637_1573',1,2,0,1492431738),('2016_09_19_155932_1330',1,2,0,1492431738),('2016_09_19_183432_1573',1,3,0,1492431738),('2016_10_14_102857_1583',1,1,0,1492431738),('2016_10_14_104207_1583',1,0,0,1492431738),('2016_10_15_111346_1605',1,3,0,1492431738),('2016_10_17_185451_1605',1,1,0,1492431738),('2016_10_19_100101_502',1,1,0,1492431738),('2016_10_28_150043_558',1,1,0,1492431738),('2016_11_16_215252_1633',1,1,0,1492431738),('2017_01_03_124412_1506',1,1,0,1492431738),('2017_01_04_095257_1292',1,9,0,1492431738),('2017_01_25_103134_1700',1,0,0,1492431738),('2017_01_31_081059_558',1,1,0,1492431738),('2017_02_03_133221_558',1,1,0,1492431738),('2017_02_09_102028_558',1,0,0,1492431738),('2017_02_09_145025_558',1,1,0,1492431738),('2017_02_10_135318_558',1,1,0,1492431738),('2017_02_14_021253_1618',1,1,0,1492431738),('2017_02_15_133254_1594',1,1,0,1492431738),('2017_02_17_095629_1622',1,1,0,1492431738),('2017_02_23_100009_558',1,8,0,1492431738),('2017_03_01_161920_900',1,3,0,1492431738),('2017_03_09_124107_1679',1,1,0,1492431738),('2017_03_13_132425_1692',1,1,0,1492431738),('2017_03_14_143617_900',1,1,0,1492431739),('2017_03_14_151620_1695',1,1,0,1492431739),('2017_03_27_212435_1155',1,2,0,1492431739),('2017_03_28_162020_1693',1,1,0,1492431739),('2017_03_28_162825_1693',1,1,0,1492431739),('2017_03_31_094258_900',1,3,0,1492431739),('2017_04_05_123631_1764',1,1,0,1492431739),('2017_04_07_112731_1807',1,1,0,1492431739),('2017_04_17_081350_1805',1,2,0,1492431739);
+INSERT INTO `migrations` VALUES ('2015_01_28_143720_556',1,0,0,1450108251),('2015_10_05_115238_571',1,1,0,1450108251),('2015_10_07_140708_607',1,1,0,1450108251),('2015_11_09_114101_211',1,3,0,1450108251),('2015_11_19_141523_555',1,1,0,1450108251),('2015_12_14_100257_655',1,0,0,1450108251),('2015_02_06_141230_501',1,14,0,1464582935),('2015_02_10_162530_501',1,4,0,1464582935),('2015_04_23_213148_701',1,2,0,1464582935),('2015_11_02_143612_445',1,3,0,1464582935),('2015_12_23_000231_648',1,2,0,1464582935),('2016_01_14_163721_658',1,250,0,1464582935),('2016_01_29_151435_666',1,3,0,1464582936),('2016_03_10_124616_686',1,1,0,1464582936),('2016_03_23_225930_706',1,1,0,1464582936),('2016_03_28_202227_707',1,1,0,1464582936),('2016_03_28_211819_726',1,3,0,1464582936),('2016_03_29_113528_696',1,3,0,1464582936),('2016_04_05_105040_745',1,3,0,1464582936),('2016_04_05_145610_747',1,3,0,1464582936),('2016_05_29_235550_857',1,2,0,1464582936),('2015_01_28_154313_558',1,48,0,1483495901),('2015_02_13_100237_558',1,1,0,1483495901),('2015_02_20_103041_560',1,2,0,1483495901),('2015_02_20_130446_558',1,4,0,1483495901),('2015_02_24_083616_558',1,0,0,1483495902),('2015_02_24_124946_558',1,1,0,1483495902),('2015_02_24_142830_558',1,3,0,1483495902),('2015_02_24_160446_558',1,6,0,1483495902),('2015_02_25_160706_558',1,1,0,1483495902),('2015_02_25_161433_558',1,2,0,1483495902),('2015_02_25_194020_558',1,1,0,1483495902),('2015_02_25_200000_558',1,1,0,1483495902),('2015_02_26_094149_558',1,3,0,1483495902),('2015_02_26_143839_558',1,9,0,1483495902),('2015_02_26_173341_558',1,1,0,1483495902),('2015_02_26_191105_558',1,1,0,1483495902),('2015_03_03_131415_558',1,1,0,1483495902),('2015_03_03_141256_558',1,2,0,1483495902),('2015_04_10_145114_558',1,1,0,1483495902),('2015_05_15_130638_558',1,3,0,1483495902),('2015_05_20_125455_558',1,1,0,1483495902),('2015_05_22_093608_558',1,1,0,1483495902),('2015_05_22_105753_558',1,1,0,1483495902),('2015_05_27_141448_558',1,1,0,1483495902),('2015_06_25_162521_558',1,1,0,1483495902),('2015_06_26_103137_558',1,2,0,1483495902),('2015_06_30_132039_558',1,1,0,1483495902),('2015_07_07_112833_558',1,3,0,1483495902),('2015_07_15_134443_558',1,1,0,1483495902),('2015_07_27_085651_558',1,4,0,1483495902),('2015_07_27_110335_558',1,4,0,1483495902),('2015_07_27_123307_558',1,1,0,1483495902),('2015_08_07_134306_558',1,8,0,1483495902),('2015_08_12_120043_558',1,3,0,1483495902),('2015_08_12_145426_558',1,2,0,1483495902),('2015_08_25_100105_558',1,1,0,1483495902),('2015_08_27_131116_558',1,1,0,1483495902),('2015_09_01_134859_558',1,1,0,1483495902),('2015_09_03_094219_558',1,1,0,1483495902),('2015_09_08_105058_558',1,2,0,1483495902),('2015_09_10_090232_573',1,2,0,1483495902),('2015_09_11_104429_558',1,1,0,1483495902),('2015_09_16_142818_558',1,3,0,1483495902),('2015_09_29_101115_558',1,2,0,1483495902),('2015_10_02_144459_558',1,2,0,1483495902),('2015_10_08_114141_558',1,1,0,1483495902),('2015_10_15_105816_558',1,3,0,1483495902),('2015_11_18_091429_558',1,9,0,1483495903),('2015_11_18_133543_558',1,1,0,1483495903),('2015_11_30_105832_558',1,1,0,1483495903),('2015_12_03_100956_558',1,1,0,1483495903),('2015_12_10_104135_558',1,1,0,1483495903),('2016_01_14_104922_558',1,1,0,1483495903),('2016_01_20_121723_558',1,3,0,1483495903),('2016_01_21_143258_558',1,1,0,1483495903),('2016_01_22_091315_558',1,1,0,1483495903),('2016_01_28_111745_558',1,0,0,1483495903),('2016_02_03_145049_558',1,1,0,1483495903),('2016_03_01_093559_558',1,2,0,1483495903),('2016_03_07_104809_558',1,1,0,1483495903),('2016_04_05_094031_558',1,2,0,1483495903),('2016_04_07_164823_695',1,1,0,1483495903),('2016_04_08_093542_762',1,3,0,1483495903),('2016_04_08_163323_744',1,5,0,1483495903),('2016_04_22_113127_780',1,2,0,1483495903),('2016_04_28_111323_29',1,5,0,1483495903),('2016_05_02_152214_695',1,14,0,1483495903),('2016_05_05_145709_695',1,2,0,1483495903),('2016_05_06_094958_695',1,1,0,1483495903),('2016_05_06_100718_695',1,1,0,1483495903),('2016_05_06_133104_695',1,1,0,1483495903),('2016_05_09_095058_806',1,1,0,1483495903),('2016_05_09_145312_793',1,1,0,1483495903),('2016_05_10_085657_558',1,3,0,1483495903),('2016_05_13_145916_695',1,3,0,1483495903),('2016_05_20_084021_841',1,1,0,1483495903),('2016_05_24_102734_558',1,1,0,1483495903),('2016_05_24_105810_695',1,1,0,1483495903),('2016_05_26_132210_558',1,2,0,1483495903),('2016_05_30_095337_695',1,1,0,1483495903),('2016_05_31_133812_558',1,1,0,1483495903),('2016_06_06_114233_885',1,3,0,1483495903),('2016_06_09_150429_889',1,2,0,1483495903),('2016_06_09_152346_901',1,4,0,1483495904),('2016_06_13_083546_883',1,1,0,1483495904),('2016_06_13_114418_810',1,1,0,1483495904),('2016_06_14_100522_914',1,1,0,1483495904),('2016_06_14_102557_923',1,1,0,1483495904),('2016_06_16_115300_932',1,1,0,1483495904),('2016_06_17_131437_558',1,3,0,1483495904),('2016_06_21_162705_957',1,1,0,1483495904),('2016_06_27_090833_949',1,1,0,1483495904),('2016_06_30_100114_971',1,1,0,1483495904),('2016_07_04_141351_695',1,1,0,1483495904),('2016_07_04_163356_695',1,1,0,1483495904),('2016_07_04_164821_695',1,1,0,1483495904),('2016_07_06_125605_994',1,1,0,1483495904),('2016_07_11_085528_942',1,4,0,1483495904),('2016_07_11_141024_558',1,3,0,1483495904),('2016_07_25_092223_1040',1,1,0,1483495904),('2016_07_25_093116_1028',1,1,0,1483495904),('2016_08_12_132048_558',1,3,0,1483495904),('2016_08_16_171553_1098',1,1,0,1483495904),('2016_08_25_083636_1087',1,3,0,1483495904),('2016_08_25_093740_558',1,1,0,1483495904),('2016_08_25_111933_1081',1,1,0,1483495904),('2016_08_26_143049_1090',1,1,0,1483495904),('2016_09_01_091420_1110',1,1,0,1483495904),('2016_09_06_143101_1101',1,2,0,1483495904),('2016_09_13_121207_358',1,1,0,1483495904),('2016_09_13_122218_1118',1,1,0,1483495904),('2016_09_16_083715_1004',1,2,0,1483495904),('2016_10_05_085608_1184',1,2,0,1483495904),('2016_10_05_100952_558',1,5,0,1483495904),('2016_10_14_152629_558',1,1,0,1483495904),('2016_10_14_153051_558',1,1,0,1483495904),('2016_10_20_145751_1126',1,1,0,1483495904),('2016_11_03_123219_1031',1,2,0,1483495904),('2016_11_04_095730_1306',1,3,0,1483495904),('2016_11_11_085655_1354',1,1,0,1483495904),('2016_11_15_172222_532',1,2,0,1483495904),('2016_11_23_121842_1342',1,2,0,1483495905),('2016_11_28_102729_1426',1,1,0,1483495905),('2016_12_07_115513_558',1,1,0,1483495905),('2017_01_03_201034_1508',1,2,0,1483495905),('2016_01_30_124831_502',1,4,0,1492431737),('2016_06_10_182935_900',1,29,0,1492431737),('2016_06_10_201813_900',1,2,0,1492431737),('2016_06_10_203558_900',1,1,0,1492431737),('2016_07_12_182633_900',1,2,0,1492431737),('2016_07_13_162523_900',1,0,0,1492431737),('2016_07_18_161953_175',1,1,0,1492431737),('2016_07_18_163204_175',1,0,0,1492431737),('2016_07_18_185148_175',1,1,0,1492431737),('2016_07_21_102058_1443',1,1,0,1492431737),('2016_08_07_002215_1060',1,1,0,1492431737),('2016_08_07_002634_1060',1,1,0,1492431737),('2016_08_22_153916_1529',1,1,0,1492431737),('2016_08_25_101403_1541',1,0,0,1492431738),('2016_09_01_214358_1547',1,1,0,1492431738),('2016_09_07_192943_1548',1,1,0,1492431738),('2016_09_18_124637_1573',1,2,0,1492431738),('2016_09_19_155932_1330',1,2,0,1492431738),('2016_09_19_183432_1573',1,3,0,1492431738),('2016_10_14_102857_1583',1,1,0,1492431738),('2016_10_14_104207_1583',1,0,0,1492431738),('2016_10_15_111346_1605',1,3,0,1492431738),('2016_10_17_185451_1605',1,1,0,1492431738),('2016_10_19_100101_502',1,1,0,1492431738),('2016_10_28_150043_558',1,1,0,1492431738),('2016_11_16_215252_1633',1,1,0,1492431738),('2017_01_03_124412_1506',1,1,0,1492431738),('2017_01_04_095257_1292',1,9,0,1492431738),('2017_01_25_103134_1700',1,0,0,1492431738),('2017_01_31_081059_558',1,1,0,1492431738),('2017_02_03_133221_558',1,1,0,1492431738),('2017_02_09_102028_558',1,0,0,1492431738),('2017_02_09_145025_558',1,1,0,1492431738),('2017_02_10_135318_558',1,1,0,1492431738),('2017_02_14_021253_1618',1,1,0,1492431738),('2017_02_15_133254_1594',1,1,0,1492431738),('2017_02_17_095629_1622',1,1,0,1492431738),('2017_02_23_100009_558',1,8,0,1492431738),('2017_03_01_161920_900',1,3,0,1492431738),('2017_03_09_124107_1679',1,1,0,1492431738),('2017_03_13_132425_1692',1,1,0,1492431738),('2017_03_14_143617_900',1,1,0,1492431739),('2017_03_14_151620_1695',1,1,0,1492431739),('2017_03_27_212435_1155',1,2,0,1492431739),('2017_03_28_162020_1693',1,1,0,1492431739),('2017_03_28_162825_1693',1,1,0,1492431739),('2017_03_31_094258_900',1,3,0,1492431739),('2017_04_05_123631_1764',1,1,0,1492431739),('2017_04_07_112731_1807',1,1,0,1492431739),('2017_04_17_081350_1805',1,2,0,1492431739),('2016_03_28_194377_640',1,4,0,1500348839),('2016_09_21_110533_494',1,2,0,1500348839),('2017_02_17_150147_1646',1,3,0,1500348839),('2017_04_24_173650_1855',1,1,0,1500348839),('2017_04_26_152826_494',1,1,0,1500348839),('2017_05_01_120247_1896',1,3,0,1500348839),('2017_05_05_105255_1855',1,1,0,1500348839),('2017_05_05_112829_1855',1,3,0,1500348839),('2017_05_09_155431_1099',1,6,0,1500348839),('2017_05_10_141501_1855',1,1,0,1500348839),('2017_05_15_130941_1917',1,1,0,1500348839),('2017_05_16_085408_1699',1,1,0,1500348839),('2017_05_31_153320_1957',1,1,0,1500348839),('2017_06_06_125950_1981',1,3,0,1500348839),('2017_06_07_103838_1988',1,1,0,1500348840),('2017_06_13_190540_1928',1,2,0,1500348840),('2017_06_15_143816_1779',1,1,0,1500348840),('2017_06_20_140212_2041',1,2,0,1500348840),('2017_06_20_140332_2041',1,1,0,1500348840),('2017_06_29_154727_2082',1,1,0,1500348840),('2017_07_07_091424_2105',1,0,0,1500348840),('2017_07_17_225402_2151',1,2,0,1500348840),('2016_03_03_140754_670',1,2,0,1510375498),('2016_03_18_130654_670',1,1,0,1510375499),('2016_06_08_165817_902',1,5,0,1510375499),('2016_06_10_121603_902',1,1,0,1510375499),('2016_07_06_172924_000',1,1,0,1510375499),('2016_07_19_164804_1023',1,1,0,1510375499),('2016_07_22_132727_1023',1,1,0,1510375499),('2016_07_27_142633_1023',1,2,0,1510375499),('2016_08_02_150657_1023',1,1,0,1510375499),('2016_08_02_162650_1023',1,1,0,1510375499),('2016_08_04_124811_1023',1,1,0,1510375499),('2016_08_04_173453_1023',1,1,0,1510375499),('2016_08_05_172223_1023',1,1,0,1510375499),('2016_08_05_185507_1023',1,1,0,1510375499),('2016_08_08_140019_1023',1,1,0,1510375499),('2016_08_09_152643_1023',1,1,0,1510375499),('2016_08_16_151741_1072',1,1,0,1510375499),('2016_08_24_155228_1072',1,1,0,1510375499),('2016_08_24_155601_1072',1,1,0,1510375499),('2016_09_06_184418_1072',1,1,0,1510375499),('2016_10_24_183148_1182',1,0,0,1510375499),('2016_11_06_103801_1082',1,6,0,1510375500),('2016_11_18_150018_1391',1,1,0,1510375500),('2016_11_23_170858_558',1,14,0,1510375500),('2016_12_06_163749_1391',1,1,0,1510375500),('2017_01_11_093418_558',1,2,0,1510375500),('2017_01_16_081101_558',1,2,0,1510375500),('2017_01_16_154551_558',1,5,0,1510375500),('2017_01_18_131738_558',1,13,0,1510375501),('2017_01_26_114159_558',1,1,0,1510375501),('2017_01_31_154701_558',1,1,0,1510375501),('2017_02_03_101938_558',1,4,0,1510375501),('2017_02_03_215956_units',1,0,0,1510375501),('2017_02_13_092722_558',1,1,0,1510375501),('2017_02_16_100856_558',1,1,0,1510375501),('2017_02_23_103108_558',1,4,0,1510375501),('2017_02_27_112704_558',1,2,0,1510375501),('2017_03_01_123517_558',1,2,0,1510375501),('2017_03_02_133337_558',1,9,0,1510375501),('2017_03_06_095940_558',1,2,0,1510375502),('2017_03_07_152626_558',1,3,0,1510375502),('2017_03_08_152522_558',1,4,0,1510375502),('2017_03_09_123944_558',1,1,0,1510375502),('2017_03_13_093227_558',1,3,0,1510375502),('2017_03_13_094539_558',1,1,0,1510375502),('2017_03_16_104744_558',1,8,0,1510375502),('2017_03_16_135210_558',1,4,0,1510375502),('2017_03_17_152438_558',1,12,0,1510375503),('2017_03_20_085128_558',1,3,0,1510375503),('2017_03_21_141211_558',1,1,0,1510375503),('2017_03_24_094203_558',1,2,0,1510375503),('2017_03_24_102101_558',1,1,0,1510375503),('2017_03_28_103552_558',1,1,0,1510375503),('2017_04_03_155026_558',1,1,0,1510375503),('2017_04_04_130332_558',1,1,0,1510375503),('2017_04_07_143522_1381',1,1,0,1510375503),('2017_04_07_145011_558',1,4,0,1510375503),('2017_04_12_110900_558',1,1,0,1510375503),('2017_04_19_135311_1381',1,1,0,1510375503),('2017_04_20_092417_558',1,1,0,1510375503),('2017_04_20_112808_558',1,1,0,1510375503),('2017_04_21_090045_558',1,1,0,1510375503),('2017_04_25_082919_558',1,1,0,1510375503),('2017_04_25_140512_558',1,1,0,1510375503),('2017_04_26_094144_558',1,9,0,1510375504),('2017_04_27_085017_558',1,2,0,1510375504),('2017_04_27_095507_558',1,1,0,1510375504),('2017_04_27_144954_558',1,1,0,1510375504),('2017_05_05_095904_558',1,2,0,1510375504),('2017_05_16_145557_558',1,5,0,1510375504),('2017_05_17_104914_558',1,3,0,1510375504),('2017_05_17_105328_558',1,1,0,1510375504),('2017_05_18_144912_558',1,3,0,1510375504),('2017_05_23_105137_558',1,1,0,1510375504),('2017_05_25_142831_558',1,1,0,1510375504),('2017_05_29_104331_558',1,1,0,1510375504),('2017_06_01_113027_558',1,3,0,1510375504),('2017_06_02_093520_558',1,3,0,1510375505),('2017_06_06_093810_1850',1,24,0,1510375505),('2017_06_09_141256_558',1,3,0,1510375505),('2017_06_12_085412_1850',1,5,0,1510375505),('2017_06_12_112448_558',1,1,0,1510375505),('2017_06_15_113638_558',1,2,0,1510375506),('2017_06_16_161308_558',1,1,0,1510375506),('2017_06_22_090031_558',1,1,0,1510375506),('2017_06_29_145530_558',1,1,0,1510375506),('2017_06_30_091900_558',1,6,0,1510375506),('2017_07_11_113433_558',1,1,0,1510375506),('2017_07_11_184003_1482',1,2,0,1510375506),('2017_07_12_101353_558',1,7,0,1510375506),('2017_07_12_154650_2122',1,1,0,1510375506),('2017_07_18_105302_2108',1,1,0,1510375506),('2017_07_18_124834_558',1,3,0,1510375506),('2017_07_18_134945_558',1,1,0,1510375506),('2017_07_20_111114_1850',1,1,0,1510375506),('2017_07_24_183958_2178',1,2,0,1510375506),('2017_07_25_141505_558',1,1,0,1510375506),('2017_07_28_115956_558',1,1,0,1510375506),('2017_08_02_130152_558',1,2,0,1510375506),('2017_08_08_103125_558',1,1,0,1510375506),('2017_08_08_135144_558',1,2,0,1510375507),('2017_08_09_123058_1955',1,6,0,1510375507),('2017_08_09_155747_1955',1,1,0,1510375507),('2017_08_16_100159_1955',1,3,0,1510375508),('2017_08_29_100605_558',1,1,0,1510375508),('2017_09_05_084508_558',1,1,0,1510375508),('2017_09_05_093949_558',1,1,0,1510375508),('2017_09_05_094150_558',1,1,0,1510375508),('2017_09_07_085754_2029',1,4,0,1510375508),('2017_09_14_143027_1955',1,1,0,1510375508),('2017_09_18_134331_558',1,0,0,1510375508),('2017_09_22_110736_558',1,1,0,1510375508),('2017_09_22_151148_558',1,2,0,1510375508),('2017_09_28_114432_558',1,1,0,1510375508),('2017_10_03_111249_558',1,1,0,1510375508),('2017_10_03_112606_2350',1,1,0,1510375508),('2017_10_10_115902_558',1,1,0,1510375508),('2017_10_19_130551_558',1,4,0,1510375508),('2017_10_24_125559_2388',1,2,0,1510375508),('2017_10_26_095137_2398',1,2,0,1510375508),('2017_10_31_130445_1946',1,1,0,1510375509),('2017_10_31_150445_1946',1,1,0,1510375509),('2017_11_01_143730_558',1,1,0,1510375509),('2017_11_03_100712_2430',1,1,0,1510375509),('2017_11_08_085227_2444',1,6,0,1510375509),('2017_11_08_120827_558',1,1,0,1510375509),('2017_11_10_232247_2429',1,2,0,1510375509),('2017_11_16_095123_558',1,2,0,1511726333),('2017_11_26_145640_2509',1,2,0,1511726333),('2017_12_05_122229_2550',1,1,0,1521496137),('2017_12_10_130453_2550',1,1,0,1521496137),('2018_01_23_151834_2678',1,1,0,1521496137),('2018_01_26_135653_2678',1,1,0,1521496137),('2018_01_28_161014_2678',1,1,0,1521496137),('2018_03_19_174726_2894',1,2,0,1521496137),('2017_02_27_095212_1606',1,1,0,1521522163),('2017_02_27_140733_1606',1,0,0,1521522163),('2017_02_28_213416_1606',1,0,0,1521522163),('2017_05_16_095210_1781',1,2,0,1521522163),('2017_06_03_101951_1791',1,1,0,1521522163),('2017_06_03_115641_1791',1,1,0,1521522163),('2017_06_05_205130_1791',1,1,0,1521522163),('2017_06_05_211842_1791',1,2,0,1521522163),('2017_06_07_124324_1791',1,1,0,1521522163),('2017_07_17_203832_191',1,4,0,1521522163),('2017_09_13_130012_1939',1,1,0,1521522163),('2017_09_13_130415_1939',1,1,0,1521522163),('2017_09_25_143258_2338',1,1,0,1521522163),('2017_09_26_122639_2338',1,1,0,1521522163),('2017_10_17_155454_558',1,1,0,1521522163),('2017_10_26_164845_2406',1,1,0,1521522163),('2017_11_29_092935_2520',1,1,0,1521522163),('2017_12_04_102257_558',1,1,0,1521522163),('2017_12_12_114856_2507',1,12,0,1521522163),('2017_12_18_085231_558',1,1,0,1521522163),('2017_12_20_143137_2567',1,3,0,1521522163),('2018_01_03_125914_558',1,5,0,1521522163),('2018_01_17_135956_558',1,1,0,1521522163),('2018_01_23_130934_558',1,1,0,1521522163),('2018_01_31_092020_558',1,1,0,1521522163),('2018_02_06_094310_2507',1,1,0,1521522163),('2018_02_07_141333_2507',1,2,0,1521522163),('2018_02_12_093535_2507',1,2,0,1521522163),('2018_02_12_095404_2507',1,1,0,1521522163),('2018_02_14_121300_2507',1,2,0,1521522163),('2018_02_14_175622_1569',1,2,0,1521522163),('2018_02_15_020201_925',1,6,0,1521522164),('2018_02_16_144234_1539',1,1,0,1521522164),('2018_02_20_105831_2507',1,1,0,1521522164),('2018_02_20_122533_558',1,9,0,1521522164),('2018_02_21_142251_558',1,1,0,1521522164),('2018_03_07_113443_558',1,2,0,1521522164),('2018_03_09_205633_2865',1,1,0,1521522164),('2018_03_18_211752_2507',1,1,0,1521522164),('2018_03_20_005112_2899',1,2,0,1521522164),('2018_03_19_133603_2943',1,2,0,1521840810),('2018_03_19_201452_2941',1,1,0,1521840810);
 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -6671,6 +8322,19 @@ CREATE TABLE `notices` (
 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `notices_read` (
+  `notice_read_id` int(12) unsigned NOT NULL AUTO_INCREMENT,
+  `proxy_id` int(12) unsigned NOT NULL,
+  `notice_id` int(12) unsigned NOT NULL,
+  `created_date` bigint(64) unsigned NOT NULL,
+  PRIMARY KEY (`notice_read_id`),
+  KEY `proxy_notice_id` (`proxy_id`,`notice_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `notification_users` (
   `nuser_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `proxy_id` int(11) NOT NULL,
@@ -6722,6 +8386,21 @@ INSERT INTO `objective_audience` VALUES (1,1,1,'COURSE','all',0,0),(2,200,1,'COU
 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `objective_history` (
+  `objective_history_id` int(12) NOT NULL AUTO_INCREMENT,
+  `objective_id` int(10) NOT NULL DEFAULT '0',
+  `proxy_id` int(10) NOT NULL DEFAULT '0',
+  `history_message` varchar(300) NOT NULL,
+  `history_display` int(1) NOT NULL DEFAULT '0',
+  `history_timestamp` bigint(64) NOT NULL DEFAULT '0',
+  PRIMARY KEY (`objective_history_id`),
+  KEY `idx_objective_history` (`objective_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `objective_organisation` (
   `objective_id` int(12) NOT NULL,
   `organisation_id` int(12) NOT NULL,
@@ -6730,6 +8409,83 @@ CREATE TABLE `objective_organisation` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 INSERT INTO `objective_organisation` VALUES (1,1),(2,1),(3,1),(4,1),(5,1),(6,1),(7,1),(8,1),(9,1),(10,1),(11,1),(12,1),(13,1),(14,1),(15,1),(16,1),(17,1),(18,1),(19,1),(20,1),(21,1),(22,1),(23,1),(24,1),(25,1),(26,1),(27,1),(28,1),(29,1),(30,1),(32,1),(33,1),(34,1),(35,1),(36,1),(37,1),(38,1),(39,1),(40,1),(41,1),(42,1),(43,1),(44,1),(45,1),(46,1),(47,1),(48,1),(49,1),(50,1),(51,1),(52,1),(53,1),(54,1),(55,1),(56,1),(57,1),(58,1),(59,1),(60,1),(61,1),(62,1),(63,1),(64,1),(65,1),(66,1),(67,1),(68,1),(69,1),(70,1),(71,1),(72,1),(73,1),(74,1),(75,1),(76,1),(77,1),(78,1),(79,1),(80,1),(81,1),(82,1),(83,1),(84,1),(85,1),(86,1),(87,1),(88,1),(89,1),(90,1),(91,1),(92,1),(93,1),(94,1),(95,1),(96,1),(97,1),(98,1),(99,1),(100,1),(101,1),(102,1),(103,1),(104,1),(105,1),(106,1),(107,1),(108,1),(109,1),(110,1),(111,1),(112,1),(113,1),(114,1),(115,1),(116,1),(117,1),(118,1),(119,1),(120,1),(121,1),(122,1),(123,1),(124,1),(125,1),(126,1),(127,1),(128,1),(129,1),(130,1),(131,1),(132,1),(133,1),(134,1),(135,1),(136,1),(137,1),(138,1),(139,1),(140,1),(141,1),(142,1),(143,1),(144,1),(145,1),(146,1),(147,1),(148,1),(149,1),(150,1),(151,1),(152,1),(153,1),(154,1),(155,1),(156,1),(157,1),(158,1),(159,1),(160,1),(161,1),(162,1),(163,1),(164,1),(165,1),(166,1),(167,1),(168,1),(169,1),(170,1),(171,1),(172,1),(173,1),(174,1),(175,1),(176,1),(177,1),(178,1),(179,1),(180,1),(181,1),(182,1),(183,1),(184,1),(185,1),(186,1),(187,1),(188,1),(189,1),(190,1),(191,1),(200,1),(201,1),(202,1),(203,1),(204,1),(205,1),(206,1),(207,1),(208,1),(209,1),(210,1),(211,1),(212,1),(213,1),(214,1),(215,1),(216,1),(217,1),(218,1),(219,1),(221,1),(222,1),(223,1),(224,1),(225,1),(226,1),(228,1),(233,1),(234,1),(235,1),(236,1),(237,1),(238,1),(239,1),(240,1),(241,1),(242,1),(257,1),(258,1),(259,1),(260,1),(261,1),(262,1),(263,1),(264,1),(265,1),(266,1),(267,1),(268,1),(269,1),(270,1),(271,1),(272,1),(273,1),(274,1),(275,1),(276,1),(277,1),(278,1),(279,1),(280,1),(281,1),(282,1),(283,1),(284,1),(286,1),(287,1),(288,1),(289,1),(290,1),(291,1),(292,1),(293,1),(294,1),(295,1),(296,1),(299,1),(300,1),(303,1),(304,1),(305,1),(306,1),(307,1),(308,1),(309,1),(310,1),(311,1),(312,1),(313,1),(314,1),(315,1),(316,1),(317,1),(318,1),(319,1),(320,1),(321,1),(322,1),(323,1),(324,1),(325,1),(326,1),(327,1),(328,1),(329,1),(330,1),(331,1),(332,1),(333,1),(334,1),(335,1),(336,1),(337,1),(338,1),(339,1),(340,1),(341,1),(342,1),(343,1),(344,1),(345,1),(346,1),(347,1),(348,1),(349,1),(350,1),(351,1),(352,1),(353,1),(354,1),(355,1),(356,1),(357,1),(358,1),(359,1),(360,1),(361,1),(362,1),(363,1),(364,1),(365,1),(366,1),(367,1),(368,1),(369,1),(370,1),(371,1),(372,1),(373,1),(374,1),(375,1),(376,1),(377,1),(378,1),(379,1),(380,1),(381,1),(382,1),(383,1),(384,1),(385,1),(386,1),(387,1),(388,1),(389,1),(390,1),(391,1),(392,1),(393,1),(394,1),(395,1),(396,1),(397,1),(398,1),(399,1),(400,1),(401,1),(402,1),(403,1),(404,1),(405,1),(406,1),(407,1),(408,1),(409,1),(410,1),(411,1),(412,1),(413,1),(414,1),(415,1),(416,1),(417,1),(418,1),(419,1),(420,1),(421,1),(422,1),(423,1),(424,1),(425,1),(426,1),(427,1),(428,1),(429,1),(430,1),(431,1),(432,1),(433,1),(434,1),(435,1),(436,1),(437,1),(438,1),(439,1),(440,1),(441,1),(442,1),(443,1),(444,1),(445,1),(446,1),(447,1),(448,1),(449,1),(450,1),(451,1),(452,1),(453,1),(454,1),(455,1),(456,1),(457,1),(458,1),(459,1),(460,1),(461,1),(462,1),(463,1),(464,1),(465,1),(466,1),(467,1),(468,1),(469,1),(470,1),(471,1),(472,1),(473,1),(474,1),(475,1),(476,1),(477,1),(478,1),(479,1),(480,1),(481,1),(482,1),(483,1),(484,1),(485,1),(486,1),(487,1),(488,1),(489,1),(490,1),(491,1),(492,1),(493,1),(494,1),(495,1),(496,1),(497,1),(498,1),(499,1),(500,1),(501,1),(502,1),(503,1),(504,1),(505,1),(506,1),(507,1),(508,1),(509,1),(510,1),(511,1),(512,1),(513,1),(514,1),(515,1),(516,1),(517,1),(518,1),(519,1),(520,1),(521,1),(522,1),(523,1),(524,1),(525,1),(526,1),(527,1),(528,1),(529,1),(2328,1),(2329,1),(2330,1),(2331,1),(2332,1),(2333,1),(2334,1),(2335,1),(2336,1),(2337,1),(2338,1),(2339,1),(2340,1),(2341,1),(2342,1),(2343,1),(2344,1),(2345,1),(2346,1),(2347,1),(2348,1),(2349,1),(2350,1),(2351,1),(2352,1),(2353,1),(2354,1),(2355,1),(2356,1),(2357,1),(2358,1),(2359,1),(2360,1),(2361,1),(2362,1),(2363,1),(2364,1),(2365,1),(2366,1),(2367,1),(2368,1),(2369,1),(2370,1),(2371,1),(2372,1),(2373,1),(2374,1),(2375,1),(2376,1),(2377,1),(2378,1),(2379,1),(2380,1),(2381,1),(2382,1),(2383,1),(2384,1),(2385,1),(2386,1),(2387,1),(2388,1),(2389,1),(2390,1),(2391,1),(2392,1),(2393,1),(2394,1),(2395,1),(2396,1),(2397,1),(2398,1),(2399,1),(2400,1),(2401,1),(2402,1);
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `objective_status` (
+  `objective_status_id` int(12) NOT NULL AUTO_INCREMENT,
+  `objective_status_description` varchar(50) NOT NULL,
+  `updated_date` bigint(20) NOT NULL,
+  `updated_by` int(11) NOT NULL,
+  PRIMARY KEY (`objective_status_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+INSERT INTO `objective_status` VALUES (1,'Draft',0,0),(2,'Active',0,0),(3,'Retired',0,0);
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `objective_tag_attributes` (
+  `otag_attribute_id` int(11) NOT NULL AUTO_INCREMENT,
+  `objective_set_id` int(11) NOT NULL,
+  `target_objective_set_id` int(11) NOT NULL,
+  `updated_date` bigint(64) NOT NULL,
+  `updated_by` int(11) NOT NULL,
+  PRIMARY KEY (`otag_attribute_id`),
+  KEY `objective_set_id` (`objective_set_id`),
+  KEY `target_objective_set_id` (`target_objective_set_id`),
+  CONSTRAINT `objective_tag_attributes_ibfk_1` FOREIGN KEY (`objective_set_id`) REFERENCES `global_lu_objective_sets` (`objective_set_id`),
+  CONSTRAINT `objective_tag_attributes_ibfk_2` FOREIGN KEY (`target_objective_set_id`) REFERENCES `global_lu_objective_sets` (`objective_set_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `objective_tag_levels` (
+  `otag_level_id` int(11) NOT NULL AUTO_INCREMENT,
+  `objective_set_id` int(11) NOT NULL,
+  `level` int(2) NOT NULL,
+  `label` varchar(36) DEFAULT NULL,
+  `updated_date` bigint(64) NOT NULL,
+  `updated_by` int(11) NOT NULL,
+  PRIMARY KEY (`otag_level_id`),
+  KEY `objective_set_id` (`objective_set_id`),
+  CONSTRAINT `objective_tag_levels_ibfk_1` FOREIGN KEY (`objective_set_id`) REFERENCES `global_lu_objective_sets` (`objective_set_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `objective_translation` (
+  `objective_translation_id` int(12) NOT NULL AUTO_INCREMENT,
+  `objective_id` int(12) NOT NULL,
+  `language_id` int(12) NOT NULL,
+  `objective_name` text,
+  `objective_description` text,
+  `updated_date` bigint(20) NOT NULL,
+  `updated_by` int(11) NOT NULL,
+  PRIMARY KEY (`objective_translation_id`),
+  KEY `idx_objective_translation` (`objective_id`),
+  KEY `idx_objective_translation_1` (`language_id`),
+  CONSTRAINT `fk_objective_translation_0` FOREIGN KEY (`language_id`) REFERENCES `language` (`language_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB AUTO_INCREMENT=11983 DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `objective_translation_status` (
+  `objective_translation_status_id` int(12) NOT NULL AUTO_INCREMENT,
+  `objective_translation_status_description` varchar(30) NOT NULL,
+  `updated_date` bigint(20) NOT NULL,
+  `updated_by` int(11) NOT NULL,
+  PRIMARY KEY (`objective_translation_status_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=latin1 COMMENT='A status of requested or completed and possibly not required.';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+INSERT INTO `objective_translation_status` VALUES (1,'Requested',1,1),(2,'Completed',1,1);
 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -6935,6 +8691,9 @@ CREATE TABLE `portfolio_entries` (
   `flag` tinyint(1) unsigned NOT NULL DEFAULT '0',
   `flagged_by` int(10) unsigned NOT NULL,
   `flagged_date` bigint(64) unsigned NOT NULL,
+  `is_assessable` tinyint(1) unsigned DEFAULT '1',
+  `is_assessable_set_by` int(10) unsigned DEFAULT NULL,
+  `is_assessable_set_date` bigint(64) unsigned DEFAULT NULL,
   `active` tinyint(1) NOT NULL DEFAULT '1',
   `updated_date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `updated_by` int(11) unsigned NOT NULL COMMENT 'proxy_id of users from entrada_auth.user_data.id',
@@ -7016,7 +8775,7 @@ CREATE TABLE `portfolio_folder_artifacts` (
 CREATE TABLE `portfolio_folders` (
   `pfolder_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `portfolio_id` int(11) unsigned NOT NULL,
-  `title` varchar(32) NOT NULL,
+  `title` varchar(64) NOT NULL,
   `description` text NOT NULL,
   `allow_learner_artifacts` tinyint(1) NOT NULL DEFAULT '0',
   `order` int(3) NOT NULL DEFAULT '0',
@@ -7321,6 +9080,37 @@ CREATE TABLE `rp_now_users` (
 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `sandbox` (
+  `id` int(12) unsigned NOT NULL AUTO_INCREMENT,
+  `title` varchar(128) NOT NULL DEFAULT '',
+  `description` text,
+  `created_date` bigint(64) unsigned DEFAULT NULL,
+  `created_by` int(12) unsigned DEFAULT NULL,
+  `updated_date` bigint(64) unsigned DEFAULT NULL,
+  `updated_by` int(12) unsigned DEFAULT NULL,
+  `deleted_date` bigint(64) unsigned DEFAULT NULL,
+  `deleted_by` int(12) unsigned DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `sandbox_contacts` (
+  `id` int(12) unsigned NOT NULL AUTO_INCREMENT,
+  `sandbox_id` int(12) unsigned DEFAULT NULL,
+  `proxy_id` int(12) unsigned DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `sandbox_id` (`sandbox_id`),
+  KEY `proxy_id` (`proxy_id`),
+  CONSTRAINT `sandbox_ibfk_1` FOREIGN KEY (`sandbox_id`) REFERENCES `sandbox` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `secure_access_files` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `resource_type` enum('exam_post','attached_quiz') DEFAULT 'exam_post',
@@ -7361,10 +9151,10 @@ CREATE TABLE `settings` (
   `organisation_id` int(12) DEFAULT NULL,
   `value` text NOT NULL,
   PRIMARY KEY (`setting_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=25 DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM AUTO_INCREMENT=50 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
-INSERT INTO `settings` VALUES (1,'version_db',NULL,'19000'),(2,'version_entrada',NULL,'1.9.0'),(3,'export_weighted_grade',NULL,'1'),(4,'export_calculated_grade',NULL,'{\"enabled\":0}'),(5,'course_webpage_assessment_cohorts_count',NULL,'4'),(6,'valid_mimetypes',NULL,'{\"default\":[\"image\\/jpeg\",\"image\\/gif\",\"image\\/png\",\"text\\/csv\",\"text\\/richtext\",\"application\\/rtf\",\"application\\/pdf\",\"application\\/zip\",\"application\\/msword\",\"application\\/vnd.ms-office\",\"application\\/vnd.ms-powerpoint\",\"application\\/vnd.ms-write\",\"application\\/vnd.ms-excel\",\"application\\/vnd.ms-access\",\"application\\/vnd.ms-project\",\"application\\/vnd.openxmlformats-officedocument.wordprocessingml.document\",\"application\\/vnd.openxmlformats-officedocument.wordprocessingml.template\",\"application\\/vnd.openxmlformats-officedocument.spreadsheetml.sheet\",\"application\\/vnd.openxmlformats-officedocument.spreadsheetml.template\",\"application\\/vnd.openxmlformats-officedocument.presentationml.presentation\",\"application\\/vnd.openxmlformats-officedocument.presentationml.slideshow\",\"application\\/vnd.openxmlformats-officedocument.presentationml.template\",\"application\\/vnd.openxmlformats-officedocument.presentationml.slide\",\"application\\/onenote\",\"application\\/vnd.apple.keynote\",\"application\\/vnd.apple.numbers\",\"application\\/vnd.apple.pages\"],\"lor\":[\"image\\/jpeg\",\"image\\/gif\",\"image\\/png\",\"text\\/csv\",\"text\\/richtext\",\"application\\/rtf\",\"application\\/pdf\",\"application\\/zip\",\"application\\/msword\",\"application\\/vnd.ms-office\",\"application\\/vnd.ms-powerpoint\",\"application\\/vnd.ms-write\",\"application\\/vnd.ms-excel\",\"application\\/vnd.ms-access\",\"application\\/vnd.ms-project\",\"application\\/vnd.openxmlformats-officedocument.wordprocessingml.document\",\"application\\/vnd.openxmlformats-officedocument.wordprocessingml.template\",\"application\\/vnd.openxmlformats-officedocument.spreadsheetml.sheet\",\"application\\/vnd.openxmlformats-officedocument.spreadsheetml.template\",\"application\\/vnd.openxmlformats-officedocument.presentationml.presentation\",\"application\\/vnd.openxmlformats-officedocument.presentationml.slideshow\",\"application\\/vnd.openxmlformats-officedocument.presentationml.template\",\"application\\/vnd.openxmlformats-officedocument.presentationml.slide\",\"application\\/onenote\",\"application\\/vnd.apple.keynote\",\"application\\/vnd.apple.numbers\",\"application\\/vnd.apple.pages\"]}'),(7,'lrs_endpoint',NULL,''),(8,'lrs_version',NULL,''),(9,'lrs_username',NULL,''),(10,'lrs_password',NULL,''),(24,'bookmarks_display_sidebar',NULL,'1'),(12,'flagging_notifications',1,'1'),(13,'twitter_consumer_key',NULL,''),(14,'twitter_consumer_secret',NULL,''),(15,'twitter_language',NULL,'en'),(16,'twitter_sort_order',NULL,'recent'),(17,'twitter_update_interval',NULL,'5'),(18,'caliper_endpoint',NULL,''),(19,'caliper_sensor_id',NULL,''),(20,'caliper_api_key',NULL,''),(21,'caliper_debug',NULL,'0'),(22,'prizm_doc_settings',NULL,'{\"url\" : \"\\/\\/api.accusoft.com\\/v1\\/viewer\\/\",\"key\" : \"b2GVmI5r7iL2zAKFZDww4HqCCmac5NRnFzgfDzco_xEIdZz3rbwrsX4o4-7lOF7L\",\"viewertype\" : \"html5\",\"viewerheight\" : \"600\",\"viewerwidth\" : \"100%\",\"upperToolbarColor\" : \"000000\",\"lowerToolbarColor\" : \"88909e\",\"bottomToolbarColor\" : \"000000\",\"backgroundColor\" : \"e4eaee\",\"fontColor\" : \"ffffff\",\"buttonColor\" : \"white\",\"hidden\" : \"esign,redact\"}'),(23,'podcast_display_sidebar',NULL,'1');
+INSERT INTO `settings` VALUES (1,'version_db',NULL,'112000'),(2,'version_entrada',NULL,'1.12.0'),(3,'export_weighted_grade',NULL,'1'),(4,'export_calculated_grade',NULL,'{\"enabled\":0}'),(5,'course_webpage_assessment_cohorts_count',NULL,'4'),(6,'valid_mimetypes',NULL,'{\"default\":[\"image\\/jpeg\",\"image\\/gif\",\"image\\/png\",\"text\\/csv\",\"text\\/richtext\",\"application\\/rtf\",\"application\\/pdf\",\"application\\/zip\",\"application\\/msword\",\"application\\/vnd.ms-office\",\"application\\/vnd.ms-powerpoint\",\"application\\/vnd.ms-write\",\"application\\/vnd.ms-excel\",\"application\\/vnd.ms-access\",\"application\\/vnd.ms-project\",\"application\\/vnd.openxmlformats-officedocument.wordprocessingml.document\",\"application\\/vnd.openxmlformats-officedocument.wordprocessingml.template\",\"application\\/vnd.openxmlformats-officedocument.spreadsheetml.sheet\",\"application\\/vnd.openxmlformats-officedocument.spreadsheetml.template\",\"application\\/vnd.openxmlformats-officedocument.presentationml.presentation\",\"application\\/vnd.openxmlformats-officedocument.presentationml.slideshow\",\"application\\/vnd.openxmlformats-officedocument.presentationml.template\",\"application\\/vnd.openxmlformats-officedocument.presentationml.slide\",\"application\\/onenote\",\"application\\/vnd.apple.keynote\",\"application\\/vnd.apple.numbers\",\"application\\/vnd.apple.pages\"],\"lor\":[\"image\\/jpeg\",\"image\\/gif\",\"image\\/png\",\"text\\/csv\",\"text\\/richtext\",\"application\\/rtf\",\"application\\/pdf\",\"application\\/zip\",\"application\\/msword\",\"application\\/vnd.ms-office\",\"application\\/vnd.ms-powerpoint\",\"application\\/vnd.ms-write\",\"application\\/vnd.ms-excel\",\"application\\/vnd.ms-access\",\"application\\/vnd.ms-project\",\"application\\/vnd.openxmlformats-officedocument.wordprocessingml.document\",\"application\\/vnd.openxmlformats-officedocument.wordprocessingml.template\",\"application\\/vnd.openxmlformats-officedocument.spreadsheetml.sheet\",\"application\\/vnd.openxmlformats-officedocument.spreadsheetml.template\",\"application\\/vnd.openxmlformats-officedocument.presentationml.presentation\",\"application\\/vnd.openxmlformats-officedocument.presentationml.slideshow\",\"application\\/vnd.openxmlformats-officedocument.presentationml.template\",\"application\\/vnd.openxmlformats-officedocument.presentationml.slide\",\"application\\/onenote\",\"application\\/vnd.apple.keynote\",\"application\\/vnd.apple.numbers\",\"application\\/vnd.apple.pages\"]}'),(7,'lrs_endpoint',NULL,''),(8,'lrs_version',NULL,''),(9,'lrs_username',NULL,''),(10,'lrs_password',NULL,''),(24,'bookmarks_display_sidebar',NULL,'1'),(12,'flagging_notifications',1,'1'),(13,'twitter_consumer_key',NULL,''),(14,'twitter_consumer_secret',NULL,''),(15,'twitter_language',NULL,'en'),(16,'twitter_sort_order',NULL,'recent'),(17,'twitter_update_interval',NULL,'5'),(18,'caliper_endpoint',NULL,''),(19,'caliper_sensor_id',NULL,''),(20,'caliper_api_key',NULL,''),(21,'caliper_debug',NULL,'0'),(22,'prizm_doc_settings',NULL,'{\"url\" : \"\\/\\/api.accusoft.com\\/v1\\/viewer\\/\",\"key\" : \"b2GVmI5r7iL2zAKFZDww4HqCCmac5NRnFzgfDzco_xEIdZz3rbwrsX4o4-7lOF7L\",\"viewertype\" : \"html5\",\"viewerheight\" : \"600\",\"viewerwidth\" : \"100%\",\"upperToolbarColor\" : \"000000\",\"lowerToolbarColor\" : \"88909e\",\"bottomToolbarColor\" : \"000000\",\"backgroundColor\" : \"e4eaee\",\"fontColor\" : \"ffffff\",\"buttonColor\" : \"white\",\"hidden\" : \"esign,redact\"}'),(23,'podcast_display_sidebar',NULL,'1'),(25,'profile_name_extensions',NULL,''),(26,'eportfolio_entry_is_assessable_by_default',NULL,'1'),(27,'eportfolio_entry_is_assessable_set_by_learner',NULL,'1'),(28,'eportfolio_entry_is_assessable_set_by_advisor',NULL,'1'),(29,'eportfolio_can_attach_to_gradebook_assessment',NULL,'1'),(30,'eportfolio_show_comments_in_gradebook_assessment',NULL,'0'),(31,'calendar_display_start_hour',NULL,'7'),(32,'calendar_display_last_hour',NULL,'19'),(33,'exams_html_encode_import_questions',NULL,'1'),(34,'personnel_api_director_show_all_faculty',NULL,'0'),(35,'personnel_api_curriculum_coord_show_all_faculty',NULL,'0'),(36,'personnel_api_curriculum_coord_show_all_staff',NULL,'0'),(37,'community_course_outline_hide_pcoordinators',NULL,'0'),(38,'language_supported',NULL,'{\"en\":{\"name\" : \"English\"}}'),(39,'curriculum_tagsets_allow_attributes ',NULL,'1'),(40,'curriculum_tagsets_max_allow_levels ',NULL,'9'),(41,'curriculum_tags_default_status',NULL,'2'),(42,'curriculum_weeks_enabled',NULL,'0'),(43,'assessment_tasks_show_all_multiphase_assessments',NULL,'0'),(44,'cbme_enabled',NULL,'0'),(45,'community_share_show_file_versions',NULL,'1'),(46,'cbme_standard_kc_ec_objectives',NULL,'0'),(47,'sites_enabled',NULL,'0'),(48,'filesystem_hash',NULL,'sha256'),(49,'filesystem_chunksplit',NULL,'8');
 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -7687,6 +9477,61 @@ CREATE TABLE `tweets` (
 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `user_access_requests` (
+  `user_access_request_id` int(12) unsigned NOT NULL AUTO_INCREMENT,
+  `receiving_proxy_id` int(12) unsigned NOT NULL,
+  `requested_user_firstname` varchar(35) NOT NULL,
+  `requested_user_lastname` varchar(35) NOT NULL,
+  `requested_user_email` varchar(255) NOT NULL,
+  `requested_user_number` int(12) DEFAULT NULL,
+  `requested_group` varchar(35) NOT NULL,
+  `requested_role` varchar(35) NOT NULL,
+  `additional_comments` text,
+  `created_date` bigint(64) unsigned NOT NULL,
+  `created_by` int(12) unsigned NOT NULL,
+  `updated_date` bigint(64) unsigned DEFAULT NULL,
+  `updated_by` int(12) unsigned DEFAULT NULL,
+  `deleted_date` bigint(64) unsigned DEFAULT NULL,
+  PRIMARY KEY (`user_access_request_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `user_learner_levels` (
+  `user_learner_level_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `proxy_id` int(11) unsigned NOT NULL,
+  `level_id` int(11) unsigned NOT NULL,
+  `seniority` enum('junior','senior') COLLATE utf8_unicode_ci DEFAULT NULL,
+  `course_id` int(11) unsigned DEFAULT NULL,
+  `cbme` tinyint(1) NOT NULL DEFAULT '0',
+  `stage_objective_id` int(11) unsigned DEFAULT NULL,
+  `cperiod_id` int(11) unsigned NOT NULL,
+  `start_date` bigint(64) unsigned NOT NULL,
+  `finish_date` bigint(64) DEFAULT NULL,
+  `status_id` int(11) unsigned NOT NULL,
+  `active` tinyint(1) NOT NULL DEFAULT '1',
+  `notes` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `created_date` bigint(64) unsigned NOT NULL,
+  `created_by` int(11) unsigned NOT NULL,
+  `updated_by` int(11) unsigned DEFAULT NULL,
+  `updated_date` bigint(64) unsigned DEFAULT NULL,
+  `updated_by_type` varchar(50) COLLATE utf8_unicode_ci NOT NULL,
+  `deleted_date` bigint(64) unsigned DEFAULT NULL,
+  `deleted_by` int(11) unsigned DEFAULT NULL,
+  PRIMARY KEY (`user_learner_level_id`),
+  KEY `proxy_id` (`proxy_id`),
+  KEY `user_learner_levels_level_id` (`level_id`),
+  KEY `user_learner_levels_status_id` (`status_id`),
+  CONSTRAINT `user_learner_levels_level_id` FOREIGN KEY (`level_id`) REFERENCES `global_lu_learner_levels` (`level_id`),
+  CONSTRAINT `user_learner_levels_status_id` FOREIGN KEY (`status_id`) REFERENCES `global_lu_learner_statuses` (`status_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `users_online` (
   `session_id` varchar(32) NOT NULL,
   `ip_address` varchar(32) NOT NULL,
@@ -7700,6 +9545,24 @@ CREATE TABLE `users_online` (
   KEY `proxy_id` (`proxy_id`),
   KEY `timestamp` (`timestamp`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `weeks` (
+  `week_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `curriculum_type_id` int(12) unsigned NOT NULL,
+  `week_title` varchar(128) NOT NULL DEFAULT '',
+  `updated_date` bigint(64) DEFAULT NULL,
+  `updated_by` int(11) DEFAULT NULL,
+  `created_date` bigint(64) NOT NULL,
+  `created_by` int(11) NOT NULL,
+  `deleted_date` bigint(64) DEFAULT NULL,
+  `week_order` int(12) NOT NULL DEFAULT '0',
+  PRIMARY KEY (`week_id`),
+  KEY `curriculum_type_id` (`curriculum_type_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 

@@ -26,6 +26,19 @@
 class Views_Assessments_Forms_Sections_Feedback extends Views_Assessments_Forms_Sections_Base {
 
     /**
+     * Validate required view options.
+     *
+     * @param array $options
+     * @return bool
+     */
+    protected function validateOptions($options = array()) {
+        if (!$this->validateIsSet($options, array("actor_id", "actor_type", "feedback_actor_is_target", "assessment_complete", "assessor_id", "assessor_type"))) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
      * Render view.
      *
      * @param array $options
@@ -33,249 +46,180 @@ class Views_Assessments_Forms_Sections_Feedback extends Views_Assessments_Forms_
     protected function renderView($options = array()) {
         global $translate;
 
-        $target_record_id     = $options["target_record_id"];
-        $distribution         = $options["distribution"];
-        $hide_from_approver   = $options["hide_from_approver"];
-        $actor_proxy_id       = $options["actor_proxy_id"];
-        $progress_record      = $options["progress_record"];
-        $assessment_record    = $options["assessment_record"];
-        $feedback_record      = $options["feedback_record"];
-        $is_pdf               = isset($options["is_pdf"]) ? $options["is_pdf"] : false;
-        $use_disable_override = false;
-        $disable_override     = false;
-        if (array_key_exists("disabled", $options)) {
-            $use_disable_override = true;
-            $disable_override = $options["disabled"];
+        $actor_id                   = $options["actor_id"];
+        $actor_type                 = $options["actor_type"];
+        $assessor_id                = $options["assessor_id"];
+        $assessor_type              = $options["assessor_type"];
+        $assessment_complete        = $options["assessment_complete"];
+        $feedback_actor_is_target   = $options["feedback_actor_is_target"];
+
+        $edit_state                 = array_key_exists("edit_state", $options) ? $options["edit_state"] : null; // boolean; null if ignore this value.
+        $include_preceptor_label    = array_key_exists("include_preceptor_label", $options) ? $options["include_preceptor_label"] : false;
+        $is_pdf                     = array_key_exists("is_pdf", $options) ? $options["is_pdf"] : false;
+
+        $assessor_feedback_value    = array_key_exists("assessor_feedback", $options) ? $options["assessor_feedback"] : null;
+        $target_feedback_value      = array_key_exists("target_feedback", $options) ? $options["target_feedback"] : null;
+        $hide_target_comments       = array_key_exists("hide_target_comments", $options) ? $options["hide_target_comments"] : false;
+        $target_feedback_comments   = array_key_exists("comments", $options) ? $options["comments"] : null;
+        $target_feedback_progress   = array_key_exists("target_progress_value", $options) ? $options["target_progress_value"] : null;
+
+        $disabled_text = "disabled='disabled'";
+        $target_disabled_text = "";
+        $assessor_disabled_text = "";
+
+        $display_target_feedback = false;
+
+        // If the assessment is complete, then we display no target feedback, only the assessor feedback window
+        if ($assessment_complete) {
+            $assessor_disabled_text = $disabled_text;
+            if ($target_feedback_progress == "complete") {
+                $display_target_feedback = true;
+                $target_disabled_text = $disabled_text;
+            } else if ($feedback_actor_is_target) {
+                $display_target_feedback = true;
+            }
         }
-
-        // Only attempt to render progress for logged in users.
-        // Distributions do not allow external feedback, but you can still add an external as an additional task to a distribution that does allow feedback.
+        if ($edit_state) {
+            // If a particular state was specified, we determine what it was to set editability.
+            // This forced state applies to both assessor and target feedback fields.
+            if ($edit_state == "editable" || $edit_state == "edit") {
+                $target_disabled_text = $assessor_disabled_text = "";
+            } else if ($edit_state == "readonly") {
+                $target_disabled_text = $assessor_disabled_text = $disabled_text;
+            }
+        }
         ?>
-        <?php if ($actor_proxy_id): ?>
-
-            <?php if ($assessment_record && !$hide_from_approver): ?>
-
-                <?php if ($assessment_record->getAssessorValue() == $actor_proxy_id): // The actor is the assessor ?>
-
-                    <?php
-                        $disabled_text = "";
-                        if (($progress_record && $progress_record->getProgressValue() == "complete") || ($distribution->getDeletedDate())) {
-                            $disabled_text = "disabled";
-                        }
-                        if ($use_disable_override) {
-                            $disabled_text = ($disable_override) ? "disabled" : "";
-                        }
-                    ?>
-                    <!-- // Note that the submit buttons for this case will be rendered as part of the overall assessment form, as it is the preceptor completing feedback on a target. -->
-                    <h3 class="assessment-feedback-heading"><?php echo $translate->_("Assessment Feedback") ?></h3>
-                    <div class="form-item">
-                        <div class="item-container">
-                            <table class="item-table">
-                                <tbody>
-                                <tr class="heading">
-                                    <td colspan="2">
-                                        <h3><?php echo $translate->_("Did you meet with this trainee to discuss their performance?") ?></h3>
-                                    </td>
-                                </tr>
-                                <tr class="vertical-choice-row">
-                                    <?php $checked_yes_text = ($feedback_record && $feedback_record->getAssessorFeedback() == "1") ? 'checked="checked"' : "";?>
-                                    <td class="vertical-response-input" width="5%">
-                                        <input id="assessor_feedback_yes"
-                                               type="radio"
-                                               name="assessor_feedback_response"
-                                               value="yes"
-                                            <?php echo $checked_yes_text ?>
-                                            <?php echo $disabled_text ?>
-                                        />
-                                    </td>
-                                    <td class="vertical-response-label" width="95%">
-                                        <label for="feedback_yes">
-                                            <?php echo $translate->_("Yes") ?>
-                                        </label>
-                                    </td>
-                                </tr>
-                                <tr class="vertical-choice-row">
-                                    <?php $checked_no_text = $feedback_record && $feedback_record->getAssessorFeedback() == "0" ? 'checked="checked"' : ""; ?>
-                                    <td class="vertical-response-input" width="5%">
-                                        <input id="assessor_feedback_no"
-                                               type="radio"
-                                               name="assessor_feedback_response"
-                                               value="no"
-                                            <?php echo $checked_no_text ?>
-                                            <?php echo $disabled_text ?>
-                                        />
-                                    </td>
-                                    <td class="vertical-response-label" width="95%">
-                                        <label for="feedback_no">
-                                            <?php echo $translate->_("No") ?>
-                                        </label>
-                                    </td>
-                                </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                <?php else: // The actor is not the assessor ?>
-                    <!-- Display all feedback for non-preceptors (learner, PAs, distribution authors, etc.) -->
-
-                    <?php if (!$progress_record || $progress_record->getAssessorType() == "internal"): ?>
-
-                        <?php
-                            //$disabled_text = ($progress_record && $progress_record->getProgressValue() == "complete") || ($distribution->getDeletedDate()) ? "disabled" : "";
-                            $disabled_text = $use_disable_override ? ($disable_override ? "disabled" : "") : "disabled";
-                        ?>
-                        <h3 class="assessment-feedback-heading"><?php echo $translate->_("Assessment Feedback") ?></h3>
-
-                        <div class="form-item">
-                            <div class="item-container">
-                                <table class="item-table">
-                                    <tbody>
-                                    <tr class="heading">
-                                        <td colspan="2">
-                                            <h3><?php echo $translate->_("<strong>Preceptor response: </strong>Did you meet with this trainee to discuss their performance?") ?></h3>
-                                        </td>
-                                    </tr>
-                                    <tr class="vertical-choice-row">
-                                        <td class="vertical-response-input" width="5%">
-                                            <?php $checked_yes_text = ($feedback_record && $feedback_record->getAssessorFeedback() == "1") ? 'checked="checked"' : "";?>
-                                            <input id="assessor_feedback_yes"
-                                                   type="radio"
-                                                   name="assessor_feedback_response"
-                                                   value="yes"
-                                                   <?php echo $checked_yes_text ?>
-                                                   <?php echo $disabled_text ?> />
-                                        </td>
-                                        <td class="vertical-response-label" width="95%">
-                                            <label for="assessor_feedback_yes">
-                                                <?php echo $translate->_("Yes") ?>
-                                            </label>
-                                        </td>
-                                    </tr>
-                                    <tr class="vertical-choice-row">
-                                        <td class="vertical-response-input" width="5%">
-                                            <?php $checked_no_text = ($feedback_record && $feedback_record->getAssessorFeedback() == "0") ? 'checked="checked"' : ""; ?>
-                                            <input id="assessor_feedback_no"
-                                                   type="radio"
-                                                   name="assessor_feedback_response"
-                                                   value="no"
-                                                   <?php echo $checked_no_text ?>
-                                                   <?php echo $disabled_text ?> />
-                                        </td>
-                                        <td class="vertical-response-label" width="95%">
-                                            <label for="assessor_feedback_no">
-                                                <?php echo $translate->_("No") ?>
-                                            </label>
-                                        </td>
-                                    </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-
-                        <!-- // Only display learner feedback if the feedback is complete. It should be disabled for everyone but the learner themselves -->
-                        <?php if ($progress_record && $progress_record->getProgressValue() == "complete") : ?>
-                            <?php
-                            $disabled_text = "";
-                            if (($feedback_record && $feedback_record->getTargetProgressValue() == "complete") || ($distribution->getDeletedDate() || $target_record_id != $actor_proxy_id)) {
-                                $disabled_text = "disabled";
-                            }
-                            if ($use_disable_override) {
-                                $disabled_text = ($disable_override) ? "disabled" : "";
-                            }
-                            ?>
-                            <div class="form-item">
-                                <div class="item-container">
-                                    <table class="item-table">
-                                        <tbody>
-                                        <tr class="heading">
-                                            <td colspan="2">
-                                                <h3><?php echo $translate->_("Did you meet with your preceptor to discuss your performance?") ?></h3>
-                                            </td>
-                                        </tr>
-                                        <tr class="vertical-choice-row">
-                                            <?php $checked_yes_text = $feedback_record && $feedback_record->getTargetFeedback() == "1" ? 'checked="checked"' : "";?>
-                                            <td class="vertical-response-input" width="5%">
-                                                <input  id="feedback_yes"
-                                                        type="radio"
-                                                        name="feedback_response"
-                                                        value="yes"
-                                                        <?php echo $checked_yes_text ?>
-                                                        <?php echo $disabled_text ?>
-                                                />
-                                            </td>
-                                            <td class="vertical-response-label" width="95%">
-                                                <label for="feedback_yes">
-                                                    <?php echo $translate->_("Yes") ?>
-                                                </label>
-                                            </td>
-                                        </tr>
-                                        <tr class="vertical-choice-row">
-                                            <?php $checked_no_text = $feedback_record && $feedback_record->getTargetFeedback() == "0" ? 'checked="checked"' : ""; ?>
-                                            <td class="vertical-response-input" width="5%">
-                                                <input  id="feedback_no"
-                                                        type="radio"
-                                                        name="feedback_response"
-                                                        value="no"
-                                                        <?php echo $checked_no_text ?>
-                                                        <?php echo $disabled_text ?>
-                                                />
-                                            </td>
-                                            <td class="vertical-response-label" width="95%">
-                                                <label for="feedback_no">
-                                                    <?php echo $translate->_("No") ?>
-                                                </label>
-                                            </td>
-                                        </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                            <div class="form-item">
-                                <div class="item-container">
-                                    <table class="item-table">
-                                        <tbody>
-                                        <tr class="heading">
-                                            <td colspan="2">
-                                                <h3><?php echo $translate->_("Comments (optional)") ?></h3>
-                                            </td>
-                                        </tr>
-                                        <tr class="item-response-view">
-                                            <td class="item-type-control">
-                                                <?php if (!$is_pdf) { ?>
-                                                    <textarea class="expandable" name="feedback_meeting_comments" <?php echo $disabled_text ?>><?php if ($feedback_record && $feedback_record->getComments()): ?><?php echo html_encode($feedback_record->getComments()) ?><?php endif; ?></textarea>
-                                                <?php } else { ?>
-                                                    <p style='text-align:left'><?php echo ($feedback_record && $feedback_record->getComments() ? nl2br($feedback_record->getComments()) : ""); ?></p>
-                                                 <?php } ?>
-                                            </td>
-                                        </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-
-                            <!-- // Display submission buttons for target learners when the feedback has not been completed. -->
-                            <?php if (!$is_pdf && $target_record_id == $actor_proxy_id && (!$feedback_record || ($feedback_record && $feedback_record->getTargetProgressValue() != "complete"))): ?>
-                                <div class="row-fluid">
-                                    <div class="pull-right">
-                                        <input type="submit" id="save-form" class="btn btn-warning" name="save_form_progress" value="<?php echo $translate->_("Save as Draft")?>" />
-                                        <span class="or"><?php echo $translate->_("or") ?></span>
-                                        <input class="btn btn-primary" type="submit" id="submit_form" name="submit_form" value="<?php echo $translate->_("Submit") ?>" />
-                                    </div>
-                                </div>
-
+        <h3 class="assessment-feedback-heading"><?php echo $translate->_("Assessment Feedback") ?></h3>
+        <div class="form-item">
+            <div class="item-container">
+                <table class="item-table">
+                    <tbody>
+                    <tr class="heading">
+                        <td colspan="2">
+                            <?php if ($feedback_actor_is_target || $include_preceptor_label): // The assessed/target ?>
+                                <h3 id="assessor-feedback-question-text" data-feedback-question-text=""><?php echo $translate->_("<strong>Preceptor response: </strong>Did you meet with this trainee to discuss their performance?") ?></h3>
+                            <?php else: // The assessor ?>
+                                <h3 id="assessor-feedback-question-text" data-feedback-question-text="<?php echo html_encode($translate->_("Did you meet with this trainee to discuss their performance?")) ?>"><?php echo $translate->_("Did you meet with this trainee to discuss their performance?") ?></h3>
                             <?php endif; ?>
+                        </td>
+                    </tr>
+                    <tr class="vertical-choice-row item-response-view">
+                        <td class="vertical-response-input <?php echo $assessor_disabled_text && $assessor_feedback_value == "1" ? "selected-response" : "" ?>" width="5%">
+                            <input  id="assessor_feedback_yes"
+                                    type="radio"
+                                    name="assessor_feedback_response"
+                                    value="yes"
+                                    <?php echo $assessor_disabled_text ? "class=\"hide\"" : "" ?>
+                                    <?php echo $assessor_feedback_value == "1" ? "checked='checked'" : "" ?>
+                                    <?php echo $assessor_disabled_text ?>
+                            />
+                        </td>
+                        <td class="vertical-response-label" width="95%">
+                            <label for="assessor_feedback_yes">
+                                <?php echo $translate->_("Yes") ?>
+                            </label>
+                        </td>
+                    </tr>
+                    <tr class="vertical-choice-row  item-response-view">
+                        <td class="vertical-response-input <?php echo $assessor_disabled_text && $assessor_feedback_value == "0" ? "selected-response" : "" ?>" width="5%">
+                            <input  id="assessor_feedback_no"
+                                    type="radio"
+                                    name="assessor_feedback_response"
+                                    value="no"
+                                    <?php echo $assessor_disabled_text ? "class=\"hide\"" : "" ?>
+                                    <?php echo $assessor_feedback_value == "0" ? "checked='checked'" : "" ?>
+                                    <?php echo $assessor_disabled_text ?>
+                            />
+                        </td>
+                        <td class="vertical-response-label" width="95%">
+                            <label for="assessor_feedback_no">
+                                <?php echo $translate->_("No") ?>
+                            </label>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
-                        <?php endif; ?>
+        <?php if ($display_target_feedback && !$hide_target_comments): // Only display learner feedback if the feedback is complete. It should be disabled for everyone but the learner themselves ?>
 
-                    <?php endif; ?>
+            <div class="form-item">
+                <div class="item-container">
+                    <table class="item-table">
+                        <tbody>
+                        <tr class="heading">
+                            <td colspan="2">
+                                <h3 id="target-feedback-question-text" data-feedback-question-text="<?php echo html_encode($translate->_("Did you meet with your preceptor to discuss your performance?")) ?>"><?php echo $translate->_("Did you meet with your preceptor to discuss your performance?") ?></h3>
+                            </td>
+                        </tr>
+                        <tr class="vertical-choice-row item-response-view">
+                            <td class="vertical-response-input <?php echo $target_disabled_text &&  $target_feedback_value == "1" ? "selected-response" : "" ?>" width="5%">
+                                <input  id="target_feedback_yes"
+                                        type="radio"
+                                        name="target_feedback_response"
+                                        value="yes"
+                                        <?php echo $target_disabled_text ? "class=\"hide\"" : "" ?>
+                                        <?php echo $target_feedback_value == "1" ? "checked='checked'" : "" ?>
+                                        <?php echo $target_disabled_text ?>
+                                />
+                            </td>
+                            <td class="vertical-response-label" width="95%">
+                                <label for="target_feedback_yes">
+                                    <?php echo $translate->_("Yes") ?>
+                                </label>
+                            </td>
+                        </tr>
+                        <tr class="vertical-choice-row item-response-view">
+                            <td class="vertical-response-input <?php echo $target_disabled_text &&  $target_feedback_value == "0" ? "selected-response" : "" ?>" width="5%">
+                                <input  id="target_feedback_no"
+                                        type="radio"
+                                        name="target_feedback_response"
+                                        value="no"
+                                        <?php echo $target_disabled_text ? "class=\"hide\"" : "" ?>
+                                        <?php echo $target_feedback_value == "0" ? "checked='checked'" : "" ?>
+                                        <?php echo $target_disabled_text ?>
+                                />
+                            </td>
+                            <td class="vertical-response-label" width="95%">
+                                <label for="target_feedback_no">
+                                    <?php echo $translate->_("No") ?>
+                                </label>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="form-item">
+                <div class="item-container">
+                    <table class="item-table">
+                        <tbody>
+                        <tr class="heading">
+                            <td colspan="2">
+                                <h3><?php echo $translate->_("Comments (optional)") ?></h3>
+                            </td>
+                        </tr>
+                        <tr class="item-response-view">
+                            <td class="item-type-control">
+                                <?php if ($is_pdf): ?>
+                                    <p class="text-left"><?php echo $target_feedback_comments ? nl2br($target_feedback_comments) : ""; ?></p>
+                                <?php else: ?>
+                                    <textarea class="expandable" title="<?php echo $translate->_("Comments") ?>" name="feedback_meeting_comments" <?php echo $target_disabled_text ?>><?php echo $target_feedback_comments ? html_encode($target_feedback_comments) : "" ?></textarea>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
 
-                <?php endif; ?>
-
-            <?php endif; ?>
-            <input type="hidden" name="feedback_proxy_id" value="<?php echo html_encode($actor_proxy_id) ?>" />
         <?php endif; ?>
+
+        <input type="hidden" name="feedback_actor_id" value="<?php echo $actor_id ?>" />
+        <input type="hidden" name="feedback_actor_type" value="<?php echo $actor_type ?>" />
+        <input type="hidden" name="feedback_assessor_id" value="<?php echo $assessor_id ?>" />
+        <input type="hidden" name="feedback_assessor_type" value="<?php echo $assessor_type ?>" />
         <?php
     }
-
 }

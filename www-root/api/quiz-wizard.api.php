@@ -1762,12 +1762,12 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 												?>
 												<div class="modal-dialog" id="quiz-wizard">
 													<div id="wizard">
-                                                        <h3 class="border-below">Quiz Wizard <span class="content-small space-left large"><strong>Updating</strong> attached community page quiz</span></h3>
+                                                        <h3 class="border-below">Quiz Wizard <span class="content-small space-left large"><?php echo $translate->_("<strong>Updating</strong> attached community page quiz"); ?></span></h3>
 														<div id="body">
 															<h2>Quiz Updated Successfully</h2>
 
 															<div class="display-success">
-																You have successfully updated <strong><?php echo html_encode($PROCESSED["quiz_title"]); ?></strong> under this community page.
+																You have successfully updated <strong><?php echo html_encode($PROCESSED["quiz_title"]); ?></strong> <?php echo $translate->_("under this community page."); ?>
 															</div>
 
 															To <strong>re-edit this quiz</strong> or <strong>close this window</strong> please use the buttons below.
@@ -1795,7 +1795,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 													}
 													?>
 													<div id="wizard">
-                                                        <h3 class="border-below">Quiz Wizard <span class="content-small space-left large"><strong>Updating</strong> attached community page quiz</span></h3>
+                                                        <h3 class="border-below">Quiz Wizard <span class="content-small space-left large"><?php echo $translate->_("<strong>Updating</strong> attached community page quiz"); ?></span></h3>
 														<div id="body">
 															<h2>Failed To Update Attached Quiz</h2>
 															<?php
@@ -1845,7 +1845,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 												}
 												?>
 												<div id="wizard">
-                                                    <h3 class="border-below">Quiz Wizard <span class="content-small space-left large"><strong>Updating</strong> attached community page quiz</span></h3>
+                                                    <h3 class="border-below">Quiz Wizard <span class="content-small space-left large"><?php echo $translate->_("<strong>Updating</strong> attached community page quiz"); ?></span></h3>
 													<div id="body">
 														<h2>Step 3: Quiz Availability</h2>
 														<?php
@@ -1901,7 +1901,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 												}
 												?>
 												<div id="wizard">
-                                                    <h3 class="border-below">Quiz Wizard <span class="content-small space-left large"><strong>Updating</strong> attached community page quiz</span></h3>
+                                                    <h3 class="border-below">Quiz Wizard <span class="content-small space-left large"><?php echo $translate->_("<strong>Updating</strong> attached community page quiz"); ?></span></h3>
 													<div id="body">
 														<h2>Step 2: Choose Quiz Options</h2>
 														<?php
@@ -1986,7 +1986,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 												}
 												?>
 												<div id="wizard">
-                                                    <h3 class="border-below">Quiz Wizard <span class="content-small space-left large"><strong>Updating</strong> attached community page quiz</span></h3>
+                                                    <h3 class="border-below">Quiz Wizard <span class="content-small space-left large"><?php echo $translate->_("<strong>Updating</strong> attached community page quiz"); ?></span></h3>
 													<div id="body">
 														<h2>Step 1: Basic Quiz Information</h2>
 														<?php
@@ -2294,12 +2294,12 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 										?>
 										<div class="modal-dialog" id="quiz-wizard">
 											<div id="wizard">
-                                                <h3 class="border-below">Quiz Wizard <span class="content-small space-left large"><strong>Attaching</strong> new community page quiz</span></h3>
+                                                <h3 class="border-below">Quiz Wizard <span class="content-small space-left large"><?php echo $translate->_("<strong>Attaching</strong> new community page quiz"); ?></span></h3>
 												<div id="body">
 													<h2>Quiz Attached Successfully</h2>
 
 													<div class="display-success">
-														You have successfully attached <strong><?php echo html_encode($PROCESSED["quiz_title"]); ?></strong> to this community page.
+														You have successfully attached <strong><?php echo html_encode($PROCESSED["quiz_title"]); ?></strong> <?php echo $translate->_("to this community page."); ?>
 													</div>
 
 													To <strong>attach another quiz</strong> or <strong>close this window</strong> please use the buttons below.
@@ -2327,7 +2327,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 											}
 											?>
 											<div id="wizard">
-                                                <h3 class="border-below">Quiz Wizard <span class="content-small space-left large"><strong>Attaching</strong> new community page quiz</span></h3>
+                                                <h3 class="border-below">Quiz Wizard <span class="content-small space-left large"><?php echo $translate->_("<strong>Attaching</strong> new community page quiz"); ?></span></h3>
 												<div id="body">
 													<h2>Failed To Attach Quiz</h2>
 													<?php
@@ -2377,7 +2377,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 										}
 										?>
 										<div id="wizard">
-                                            <h3 class="border-below">Quiz Wizard <span class="content-small space-left large"><strong>Attaching</strong> new community page quiz</span></h3>
+                                            <h3 class="border-below">Quiz Wizard <span class="content-small space-left large"><?php echo $translate->_("<strong>Attaching</strong> new community page quiz"); ?></span></h3>
 											<div id="body">
 												<h2>Step 4: Quiz Availability</h2>
 												<?php
@@ -2433,7 +2433,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 										}
 										?>
 										<div id="wizard">
-                                            <h3 class="border-below">Quiz Wizard <span class="content-small space-left large"><strong>Attaching</strong> new community page quiz</span></h3>
+                                            <h3 class="border-below">Quiz Wizard <span class="content-small space-left large"><?php echo $translate->_("<strong>Attaching</strong> new community page quiz"); ?></span></h3>
 											<div id="body">
 												<h2>Step 3: Choose Quiz Options</h2>
 												<?php
@@ -2517,7 +2517,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 										}
 										?>
 										<div id="wizard">
-                                            <h3 class="border-below">Quiz Wizard <span class="content-small space-left large"><strong>Attaching</strong> new community page quiz</span></h3>
+                                            <h3 class="border-below">Quiz Wizard <span class="content-small space-left large"><?php echo $translate->_("<strong>Attaching</strong> new community page quiz"); ?></span></h3>
 											<div id="body">
 												<h2>Step 2: Basic Quiz Information</h2>
 												<?php
@@ -2581,7 +2581,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 											}
 											?>
 											<div id="wizard">
-                                                <h3 class="border-below">Quiz Wizard <span class="content-small space-left large"><strong>Attaching</strong> new community page quiz</span></h3>
+                                                <h3 class="border-below">Quiz Wizard <span class="content-small space-left large"><?php echo $translate->_("<strong>Attaching</strong> new community page quiz"); ?></span></h3>
 												<div id="body">
 													<h2>Step 1: Select Quiz</h2>
 													<?php
@@ -2640,11 +2640,11 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 										?>
 										<div class="modal-dialog" id="quiz-wizard">
 											<div id="wizard">
-                                                <h3 class="border-below">Quiz Wizard <span class="content-small space-left large"><strong>Attaching</strong> new community page quiz</span></h3>
+                                                <h3 class="border-below">Quiz Wizard <span class="content-small space-left large"><?php echo $translate->_("<strong>Attaching</strong> new community page quiz"); ?></span></h3>
 												<div id="body" style="margin-top: 25px">
 													<?php
 													$NOTICE++;
-													$NOTICESTR[] = "You have not yet created any quizzes to attach to this community page.<br /><br />To author a new Quiz, close this window and click the <strong>Manage Quizzes</strong> tab.";
+													$NOTICESTR[] = $translate->_("You have not yet created any quizzes to attach to this community page.<br /><br />To author a new Quiz, close this window and click the <strong>Manage Quizzes</strong> tab.");
 
 													echo display_notice();
 													?>

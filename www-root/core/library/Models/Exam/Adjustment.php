@@ -76,7 +76,7 @@ class Models_Exam_Adjustment extends Models_Base {
     }
     
     public static function setAllDeletedByElementIDExamIDType($exam_element_id, $exam_id, $type) {
-        global $db;
+        global $db, $ENTRADA_USER, $translate;
         $ret = true;
         $db->StartTrans();
         $adjustments = self::fetchAllByElementIDExamIDType($exam_element_id, $exam_id, $type);
@@ -87,6 +87,21 @@ class Models_Exam_Adjustment extends Models_Base {
                     $db->FailTrans();
                     $ret = false;
                     break;
+                } else {
+                    $history = new Models_Exam_Creation_History(array(
+                        "exam_id" => $exam_id,
+                        "proxy_id" => $ENTRADA_USER->getID(),
+                        "action" => "delete_adjust_score",
+                        "action_resource_id" => $exam_element_id,
+                        "secondary_action" => $type,
+                        "secondary_action_resource_id" => $adjustment->getValue(),
+                        "history_message" => NULL,
+                        "timestamp" => time(),
+                    ));
+
+                    if (!$history->insert()) {
+                        echo json_encode(array("status" => "error", "data" => array($translate->_("Failed to insert history log for Edit Exam."))));
+                    }
                 }
             }
         } else {

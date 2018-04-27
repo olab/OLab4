@@ -47,7 +47,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP"))) {
 		if ($PROCESSED) {
 			$BREADCRUMB[]	= array("url" => ENTRADA_URL."/admin/clerkship/clerk?ids=".$PROCESSED["proxy_id"], "title" => "Clerk Management");
 			$BREADCRUMB[]	= array("url" => ENTRADA_URL."/clerkship/logbook?".replace_query(array("section" => "flag")), "title" => "Flag Logbook Entry");
-			echo "<h1>Flagging Clerkship Logbook Entry</h1>\n";
+			echo "<h1>" . $translate->_("Flagging Clerkship Logbook Entry") . "</h1>\n";
 			switch($STEP) {
 				case 2 :
 					$query = "UPDATE `".CLERKSHIP_DATABASE."`.`logbook_entries` SET `entry_active` = 0 WHERE `lentry_id`=".$db->qstr($RECORD_ID);

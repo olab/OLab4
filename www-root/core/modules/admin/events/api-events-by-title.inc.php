@@ -58,18 +58,24 @@ if (!defined("IN_EVENTS")) {
         $parent_id = 0;
     }
 
+    if (isset($_GET["draft_id"]) && ($tmp_input = clean_input($_GET["draft_id"], array("trim", "int")))) {
+        $draft_id = $tmp_input;
+    } else {
+        $draft_id = false;
+    }
+
     if ($course_id && $event_title) {
         echo "<ul>\n";
 
-        $events = Models_Event::fetchAllByCourseIdTitle($course_id, $event_title);
+        $events = ($draft_id ? Models_Event_Draft_Event::fetchAllByCourseIdTitleDraftId($draft_id, $course_id, $event_title) : Models_Event::fetchAllByCourseIdTitle($course_id, $event_title));
+
         if ($events) {
             foreach($events as $event) {
-                if ($parent_id != $event->getParentID()) {
+                if ((!$draft_id && $parent_id != $event->getParentID()) || ($draft_id && $parent_id != $event->getDraftParentID())) {
                     echo "<li id=\"" . (int) $event->getID() . "\">";
                     echo html_encode($event->getEventTitle());
-                    echo "  <div class=\"informal\"><small>" . date(DEFAULT_DATE_FORMAT, $event->getEventStart()) . " / ID: " . (int) $event->getID() . "</small></div>";
+                    echo "  <div class=\"informal\"><small>" . date(DEFAULT_DATETIME_FORMAT, $event->getEventStart()) . " / ID: " . (int) $event->getID() . "</small></div>";
                     echo "</li>";
-
                 }
             }
         } else {

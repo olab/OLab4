@@ -40,9 +40,12 @@ if (!defined("PARENT_INCLUDED")) {
 
 	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] do not have access to this module [".$MODULE."]");
 } else {
-    
-    echo "<h1>Portfolio Reflection</h1>";
-    
+
+    echo "<p>";
+    echo "<h1>" . $translate->_("Portfolio Reflection") . "</h1>";
+    echo "<a href=\"" . ENTRADA_URL . "/profile/eportfolio\" class=\"btn\"><i class=\"fa fa-arrow-left\"></i> " . $translate->_("Return to ePortfolio") . "</a>";
+    echo "</p>";
+
     if (isset($_GET["entry_id"]) && $tmp_input = clean_input($_GET["entry_id"], "int")) {
         $reflection = Models_Eportfolio_Entry::fetchRow($tmp_input);
     }
@@ -52,15 +55,17 @@ if (!defined("PARENT_INCLUDED")) {
         $reflection_data = $reflection->getEdataDecoded();
         
         ?>
-        <h2><?php echo $reflection_data["title"]; ?></h2>
-        <div class="well">
+        <div class="card">
+        <h2 class="card-title"><?php echo $reflection_data["title"]; ?></h2>
+        <div class="card-block">
             <?php echo $reflection_data["description"]; ?>
         </div>
-        <a href="<?php echo ENTRADA_URL; ?>/profile/eportfolio" class="btn">Back</a>
+        </div>
+        <a href="<?php echo ENTRADA_URL; ?>/profile/eportfolio" class="btn"><i class="fa fa-arrow-left"></i> <?php echo $translate->_("Return to ePortfolio"); ?></a>
         <?php
         
     } else {
-        add_error("Reflection not found.");
+        add_error($translate->_("Reflection not found") . ".");
         echo display_error();
     }
     

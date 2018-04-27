@@ -30,7 +30,7 @@ if(!defined("PARENT_INCLUDED")) {
 } elseif((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
     header("Location: ".ENTRADA_URL);
     exit;
-} elseif (!$ENTRADA_ACL->amIAllowed('assessment', 'read', false)) {
+} elseif (!$ENTRADA_ACL->amIAllowed('assessments', 'read', false)) {
     $ONLOAD[]	= "setTimeout('window.location=\\'".ENTRADA_URL."\\'', 15000)";
 
     add_error(sprintf($translate->_("Your account does not have the permissions required to use this feature of this module.<br /><br />If you believe you are receiving this message in error please contact <a href=\"mailto:%s\">%s</a> for assistance."), html_encode($AGENT_CONTACTS["administrator"]["email"]), html_encode($AGENT_CONTACTS["administrator"]["name"])));

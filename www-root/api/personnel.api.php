@@ -126,11 +126,45 @@ if ((isset($_SESSION["isAuthorized"])) && ((bool) $_SESSION["isAuthorized"])) {
 			case "learners" :
 				$query .= "	AND (b.`group` = 'resident' OR (b.`group` = 'student' AND b.`role` >= '".(date("Y") - ((date("m") < 7) ? 2 : 1))."'))";
 			break;
+			break;
 			case "director" :
-				$query .= "	AND b.`group` = 'faculty' AND (b.`role` = 'director' OR b.`role` = 'admin')";
+				$settings = new Entrada_Settings();
+
+				// optional. If value is set, include ALL faculty as potential directors. #1482
+				if ($settings->read("personnel_api_director_show_all_faculty") == '1') {
+					$query .= " AND b.`group` = 'faculty'";
+				} else {
+					$query .= " AND b.`group` = 'faculty' AND (b.`role` = 'director' OR b.`role` = 'admin')";
+				}
+			break;
+			case "director" :
+				$settings = new Entrada_Settings();
+
+				// optional. If value is set, include ALL faculty as potential directors. #1482
+				if ($settings->read("personnel_api_director_show_all_faculty") == '1') {
+					$query .= " AND b.`group` = 'faculty'";
+				} else {
+					$query .= " AND b.`group` = 'faculty' AND (b.`role` = 'director' OR b.`role` = 'admin')";
+				}
 			break;
 			case "coordinator" :
-				$query .= "	AND b.`group` = 'staff' AND b.`role` = 'admin'";
+				$settings = new Entrada_Settings();
+
+				// optional. If value is set, include ALL faculty as potential coordinators. #1482
+
+				if ($settings->read("personnel_api_director_show_all_faculty") == '1') {
+					if ($settings->read("personnel_api_curriculum_coord_show_all_staff") == '1') {
+						$query .= "	AND (b.`group` = 'faculty' OR (b.`group` = 'staff'))";
+					} else {
+						$query .= "	AND (b.`group` = 'faculty' OR (b.`group` = 'staff' AND b.`role` = 'admin'))";
+					}
+				} else {
+					if ($settings->read("personnel_api_curriculum_coord_show_all_staff") == '1') {
+						$query .= "	AND b.`group` = 'staff'";
+					} else {
+						$query .= "	AND b.`group` = 'staff' AND b.`role` = 'admin'";
+					}
+				}
 			break;
 			case "program_coordinator" :
 			case "pcoordinator" :

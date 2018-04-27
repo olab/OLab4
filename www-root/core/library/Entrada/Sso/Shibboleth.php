@@ -65,11 +65,10 @@ class Entrada_Sso_Shibboleth implements Entrada_Sso_Provider
     /**
      * Process Authentication tokens from SSO provider and map to local authorization database
      *
-     * @return array | null
+     * @return array|bool
      */
     public function validateUser()
     {
-        $result = false;
         if (!empty($_SERVER[AUTH_SHIB_SESSION]) && !empty($_SERVER[AUTH_SHIB_ID])) {
             $user_id = User::fetchProxyBySuppliedField($_SERVER[AUTH_SHIB_ID], AUTH_SSO_LOCAL_USER_QUERY_FIELD);
             $user_details = (!empty($user_id) ? User::fetchRowById($user_id) : false);
@@ -78,12 +77,14 @@ class Entrada_Sso_Shibboleth implements Entrada_Sso_Provider
                 $result["username"] = $user_details->getUserName();
                 $result["password"] = $user_details->getPassword();
                 $result["access_id"] = $user_details->getAccessId();
+
+                return $result;
             } else {
                 // the user record was not found. Log the details
                 application_log("error", "SSO login: Unable to find user with identifier: [".$_SERVER[AUTH_SHIB_ID]."] in the database column: [".AUTH_SSO_LOCAL_USER_QUERY_FIELD."].");
             }
         }
-        return $result;
+        return false;
     }
 
     /**

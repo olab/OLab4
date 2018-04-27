@@ -19,6 +19,14 @@
  * @author Developer: Frederic Turmel <ft11@queensu.ca>
  * @copyright Copyright 2016 Queen's University. All Rights Reserved.
  *
+ * The session timeout widget observes user activity by storing a timestamp in local storage
+ * whenever the user opens a page that contains the entrada footer. The widget periodically
+ * checks the timestamp to determine whether a warning countdown dialog should be displayed.
+ * When warning time (defaults to 3 minutes) counts down without user activity the user is logged out.
+ *
+ * localStorage.auth_session_last_active - a timestamp indicating last user active time.
+ * localStorage.auth_timer - the session timeout callback on interval session-time minus the warn-time.
+ *
  */
 (function($) {
     'use strict';
@@ -48,122 +56,152 @@
         /**
          * Create the modal box
          */
-        $('body').append('<div id="session-timeout-modal" class="modal hide fade"> \
+        $('body').append('<div id="session-timeout-modal" class="modal hide fade responsive-modal" tabindex="-1" role="dialog" aria-labelledby="session-timeout-modal-title" aria-hidden="true"> \
                 <div class="modal-header"> \
-                    <h3 id="session-timeout-title">' + opt.title + '</h3> \
+                    <h3 id="session-timeout-modal-title">' + opt.title + '</h3> \
                 </div> \
                 <div class="modal-body"> \
                 </div> \
-                <div id="event-modal-footer"> \
+                <div id="session-timeout-modal-footer" class="modal-footer"> \
                     <button type="button" id="btn-timeout-logout" class="btn">'+opt.logoutBtn+'</button> \
                     <button type="button" id="btn-timeout-keep-alive" class="btn btn-primary pull-right">' + opt.extendBtn + '</button> \
                 </div> \
             </div>');
 
+        /*
+         * Show the next User Disclaimer after one is hidden
+         * */
+        $("#session-timeout-modal").on("hidden", function() {
+            localStorage.auth_session_last_active = Date.now();
+            $('.modal-backdrop:last').remove();
+        });
+
         // Logout button
         $('#btn-timeout-logout').on("click", function() {
-            clearStorage();
-            window.location = opt.logoutURL;
+            doLogOut();
         });
 
         // Extend session button
         $('#btn-timeout-keep-alive').on("click", function() {
-            extendSession();
+            jQuery("#session-timeout-modal").modal("hide");
         });
 
+        clearStorage();
+
+        // Set last active to current time.
+        var currentTime = Date.now();
+        localStorage.auth_session_last_active = currentTime;
+
+        // Start the session timeout.
+        timer = setTimeout(sessionTimeout, (opt.sessionTime - opt.warnTime));
+
         /**
-         * Function that ping the specified url to keep the session alive.
+         * Session timeout callback.
+         * The callback checks the user's last activity time and initiates logout
+         * or warning countdown as required.
          */
-        function keepAlive() {
+        function sessionTimeout() {
+            clearTimeout(timer);
+
+            var lastActive = getLocalLastActive(),
+                timeForWarning = 0,
+                timeForLogout = lastActive + opt.sessionTime,
+                currentTime = Date.now();
+
+            if (currentTime >= timeForLogout) {
+                // Get the session last active.
+                var sessionLastActive = getSessionLastActive();
+                if (sessionLastActive > lastActive) {
+                    lastActive = sessionLastActive;
+                }
+            }
+
+            timeForWarning = lastActive + opt.sessionTime - opt.warnTime;
+            timeForLogout = lastActive + opt.sessionTime;
+
+            if (currentTime >= timeForLogout) {
+                doLogOut();
+
+            } else if (currentTime >= timeForWarning) {
+                doCountdown(timeForLogout - currentTime);
+                timer = setTimeout(sessionTimeout, 1000);
+
+            } else {
+                // Reset the session time out as required.
+                timer = setTimeout(sessionTimeout, timeForWarning - currentTime);
+                $('#session-timeout-modal').modal('hide');
+            }
+        }
+
+
+        /**
+         * Returns the last active time from local storage, or 0
+         * if not a number.
+         */
+        function getLocalLastActive() {
+            var lastActive = parseInt(localStorage.auth_session_last_active);
+
+            if (isNaN(lastActive)) {
+                return 0;
+            }
+
+            return lastActive;
+        }
+
+        /**
+         * Returns the last active time from the session, or 0 if undefined or failed request.
+         */
+        function getSessionLastActive() {
+
+            var lastActive = 0;
+
             $.ajax({
                 type: 'GET',
-                url: opt.keepAliveUrl,
+                url: opt.keepAliveURL,
                 data: opt.keepAliveData,
                 success: function(data) {
-                    startSessionTimer();
-                    $('#session-timeout-modal').modal('hide');
-                }
+                    if (typeof data !== undefined) {
+                        $('#session-timeout-modal').modal('hide');
+                    } else {
+                        doLogOut();
+                    }
+                },
+                async: false
             });
+
+            return lastActive;
         }
 
         /**
-         * Extend the session and close the dialogue
+         * Logs the user out at the end of the count down, unless the user engaged with the portal.
          */
-        function extendSession() {
-            keepAlive();
-        }
-
-        /**
-         * Start the timeout before showing the warning dialog
-         */
-        function startSessionTimer() {
+        function doLogOut() {
             clearStorage();
-            localStorage.auth_session_state = 1;
-            localStorage.auth_timer = setTimeout(function() {
-                if (opt.warnTime != undefined) {
-                    $('#session-timeout-modal .modal-body').html(opt.message.replace('%%timeleft%%', (opt.warnTime > 60 ? Math.ceil(opt.warnTime/60) + ' minutes' : opt.warnTime + ' seconds')));
-                }
-                $('#session-timeout-modal').modal('show');
-                startDialogTimer();
-            }, (opt.sessionTime - opt.warnTime));
-        }
-
-        /**
-         * Start the timeout
-         */
-        function startDialogTimer() {
-            clearTimeout(localStorage.auth_timer);
-            doCountdown(true);
+            window.location = opt.logoutURL;
         }
 
         /* Remove all the localStorage variables*/
 
         function clearStorage() {
-            clearTimeout(localStorage.auth_timer);
-            clearTimeout(localStorage.auth_logout_timer);
-            clearTimeout(countdown.timer);
-            localStorage.removeItem('auth_session_state');
-            localStorage.removeItem('auth_timer');
-            localStorage.removeItem('auth_logout_timer');
-            localStorage.removeItem('auth_countdown_timer');
-            localStorage.removeItem('auth_timeLeft');
+            clearTimeout(timer);
+            localStorage.removeItem('auth_session_last_active');
         }
 
         /**
-         * Manage the countdown to the redirection for the dialog. Redirection is handled
-         * by startDialogueTimer()
+         * Manage the countdown to the redirection for the dialog.
          *
-         * @param reset
+         * @param timeleft
          */
-        function doCountdown(reset) {
-            clearTimeout(countdown.timer);
+        function doCountdown(timeLeft) {
+            var timeLeftSeconds = Math.floor(timeLeft / 1000);
+            var timeLeftMinutes = Math.floor(timeLeftSeconds / 60);
+            var timeLeftSecPart = timeLeftSeconds - (timeLeftMinutes * 60);
 
-            if (reset && (localStorage.auth_session_state == 1)) {
-                localStorage.auth_timeLeft = Math.floor(opt.warnTime / 1000);
-                localStorage.auth_session_state = 0;
-            } else {
-                if (localStorage.auth_session_state == 1) {
-                    extendSession();
-                } else if (!localStorage.auth_session_state) {
-                    clearStorage();
-                    window.location = opt.logoutURL;
-                } else if (localStorage.auth_timeLeft > 0) {
-                    localStorage.auth_timeLeft = localStorage.auth_timeLeft - 1;
-                } else {
-                    clearStorage();
-                    window.location = opt.logoutURL;
-                }
-            }
+            var minutesStr = timeLeftMinutes ? timeLeftMinutes + ' minutes and ' : '';
 
-            // Update the dialog
-            if (localStorage.auth_timeLeft != undefined) {
-                $('#session-timeout-modal .modal-body').html(opt.message.replace('%%timeleft%%', (localStorage.auth_timeLeft > 60 ? Math.ceil(localStorage.auth_timeLeft/60) + ' minutes' : localStorage.auth_timeLeft + ' seconds')));
-            }
-
-            countdown.timer = setTimeout(function() {
-                doCountdown(false);
-            }, 1000);
+            $('#session-timeout-modal .modal-body').html(opt.message.replace('%%timeleft%%', minutesStr + timeLeftSecPart + ' seconds'));
+            $('#session-timeout-modal').modal("show");
+            $('.modal-backdrop:last').css('z-index', 999);
         }
-        startSessionTimer();
     };
 })(jQuery);

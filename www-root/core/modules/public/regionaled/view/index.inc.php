@@ -58,7 +58,7 @@ if (!defined("IN_REGIONALED_VIEW")) {
 			case "accept" :
 				if ($db->AutoExecute(CLERKSHIP_DATABASE.".apartment_schedule", array("confirmed" => 1), "UPDATE", "`aschedule_id` = ".$db->qstr($ASCHEDULE_ID)." AND `apartment_id` = ".$db->qstr($APARTMENT_INFO["apartment_id"])." AND `proxy_id` = ".$db->qstr($ENTRADA_USER->getID()))) {
 					$SUCCESS++;
-					$SUCCESSSTR[] = "You have successfully confirmed your accommodation in this apartment from ".date(DEFAULT_DATE_FORMAT, $APARTMENT_INFO["inhabiting_start"])." until ".date(DEFAULT_DATE_FORMAT, $APARTMENT_INFO["inhabiting_finish"]).".";
+					$SUCCESSSTR[] = "You have successfully confirmed your accommodation in this apartment from ".date(DEFAULT_DATETIME_FORMAT, $APARTMENT_INFO["inhabiting_start"])." until ".date(DEFAULT_DATETIME_FORMAT, $APARTMENT_INFO["inhabiting_finish"]).".";
 
 					$APARTMENT_INFO["confirmed"] = 1;
 					
@@ -100,8 +100,8 @@ if (!defined("IN_REGIONALED_VIEW")) {
 								"region" => $APARTMENT_INFO["region_name"],
 								"reason" => $rejection_reason,
 								"apartment_address" => strip_tags($apartment_address),
-								"inhabiting_start" => date(DEFAULT_DATE_FORMAT, $APARTMENT_INFO["inhabiting_start"]),
-								"inhabiting_finish" => date(DEFAULT_DATE_FORMAT, $APARTMENT_INFO["inhabiting_finish"]),
+								"inhabiting_start" => date(DEFAULT_DATETIME_FORMAT, $APARTMENT_INFO["inhabiting_start"]),
+								"inhabiting_finish" => date(DEFAULT_DATETIME_FORMAT, $APARTMENT_INFO["inhabiting_finish"]),
 								"application_name" => APPLICATION_NAME,
 								"department_id" => $APARTMENT_INFO["department_id"]								
 							);
@@ -291,7 +291,7 @@ if (!defined("IN_REGIONALED_VIEW")) {
 				foreach ($apt_occupants as $result) {
 					echo "<li class=\"".(($result["group"] == "student") ? "undergrad" : "postgrad")."\">\n";
 					echo	(($result["fullname"]) ? (($result["gender"]) ? ($result["gender"] == 1 ? "F: " : "M: ") : "")."<a href=\"".ENTRADA_URL."/people?profile=".html_encode($result["username"])."\" target=\"_blank\">".$result["fullname"]."</a>" : $result["occupant_title"]);
-					echo "	<div class=\"content-small\">".date(DEFAULT_DATE_FORMAT, $result["inhabiting_start"])." until ".date(DEFAULT_DATE_FORMAT, $result["inhabiting_finish"])."</div>";
+					echo "	<div class=\"content-small\">".date(DEFAULT_DATETIME_FORMAT, $result["inhabiting_start"])." until ".date(DEFAULT_DATETIME_FORMAT, $result["inhabiting_finish"])."</div>";
 					echo "</li>";
 				}
 				echo "</ul>\n";
@@ -338,7 +338,7 @@ if (!defined("IN_REGIONALED_VIEW")) {
 		<div id="reject-accommodation-box" class="modal-confirmation" style="height: 300px">
 			<h1>Reject <strong>Accommodation</strong> Confirmation</h1>
 			<div class="display-notice">
-				Please confirm that you <strong>do not</strong> wish to reside in this apartment between <?php echo date(DEFAULT_DATE_FORMAT, $APARTMENT_INFO["inhabiting_start"]); ?> and <?php echo date(DEFAULT_DATE_FORMAT, $APARTMENT_INFO["inhabiting_finish"]); ?>.
+				Please confirm that you <strong>do not</strong> wish to reside in this apartment between <?php echo date(DEFAULT_DATETIME_FORMAT, $APARTMENT_INFO["inhabiting_start"]); ?> and <?php echo date(DEFAULT_DATETIME_FORMAT, $APARTMENT_INFO["inhabiting_finish"]); ?>.
 			</div>
 			<p>
 				<label for="reject-accommodation-details" class="form-required">Please provide an explanation for this decision:</label><br />

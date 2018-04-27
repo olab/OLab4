@@ -29,23 +29,32 @@ if ($ENTRADA_ACL->isUserAuthorized("gradebook", "update", false, array("PARENT_I
 
         // If user can read gradebooks, generate page
         if ($ENTRADA_ACL->amIAllowed(new GradebookResource($course->getID(), $course->getOrganisationID()), "read")) {
-
             // Add breadcrumb
             $BREADCRUMB[] = array("title" => $course->getCourseCode());
             $BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/gradebook?".replace_query(array("section" => "view", "id" => $COURSE_ID, "step" => false)), "title" => $translate->_($page_title));
-            $PREFERENCES = preferences_load('courses');
+            $PREFERENCES = preferences_load("courses");
+
+            $curriculum_periods = Models_Curriculum_Period::fetchAllByCurriculumTypeIDCourseID($course->getCurriculumTypeID(), $course->getID());
+
+            if ($curriculum_periods && is_array($curriculum_periods) && count($curriculum_periods) == 1) {
+                $period = $curriculum_periods[0];
+                if ($period && is_object($period)) {
+                    $PREFERENCES["selected_curriculum_period"] = $period->getID();
+                    preferences_update("courses", $PREFERENCES);
+                }
+            }
 
             // Load css and javascript
-            $HEAD[]   = '<link rel="stylesheet" type="text/css" href='.ENTRADA_URL.'/css/gradebook/view.css?release='. html_encode(APPLICATION_VERSION) .'"/>';
-            $JQUERY[] = '<script>var COURSE_ID = '.$COURSE_ID.', CPERIOD_ID = '.$PREFERENCES["selected_curriculum_period"].', VIEW_ASSIGNMENT_TEXT = "'.$translate->_('View Drop Box').'", NEW_ASSIGNMENT_TEXT = "'.$translate->_('Add Drop Box').'", NO_RESULTS_MESSAGE = "'.$translate->_('No assessments found.').'", COPY_ASSESSMENTS_TEXT = "'.$translate->_('Copying...').'", DELETE_ASSESSMENTS_TEXT = "'.$translate->_('Deleting...').'";</script>';
+            $HEAD[]   = "<link rel=\"stylesheet\" type=\"text/css\" href=\"" . ENTRADA_URL . "/css/gradebook/view.css?release=" . html_encode(APPLICATION_VERSION) . "\"/>";
+            $JQUERY[] = '<script>var COURSE_ID = '.$COURSE_ID.', CPERIOD_ID = "' . $PREFERENCES["selected_curriculum_period"] . '", VIEW_ASSIGNMENT_TEXT = "'.$translate->_('View Drop Box').'", NEW_ASSIGNMENT_TEXT = "'.$translate->_('Add Drop Box').'", NO_RESULTS_MESSAGE = "'.$translate->_('No assessments found.').'", COPY_ASSESSMENTS_TEXT = "'.$translate->_('Copying...').'", DELETE_ASSESSMENTS_TEXT = "'.$translate->_('Deleting...').'";</script>';
             $JQUERY[] = '<script src="'.ENTRADA_URL.'/javascript/jquery/jquery.dataTables-1.10.11.min.js?release='.html_encode(APPLICATION_VERSION).'"></script>';
             $JQUERY[] = '<script src="'.ENTRADA_URL.'/javascript/jquery/jquery.modal.js?release='.html_encode(APPLICATION_VERSION).'"></script>';
             $JQUERY[] = '<script src="'.ENTRADA_URL.'/javascript/jquery/dataTables.rowReorder.min.js?release='.html_encode(APPLICATION_VERSION).'"></script>';
             $JQUERY[] = '<script src="'.ENTRADA_URL.'/javascript/gradebook/view.js?release='.html_encode(APPLICATION_VERSION).'"></script>';
             $JQUERY[] = '<script src="'.ENTRADA_URL.'/javascript/gradebook.js?release='.html_encode(APPLICATION_VERSION).'"></script>';
             $JQUERY[] = '<script src="'.ENTRADA_URL.'/javascript/gradebook/spreadsheet_modal.js"></script>';
-            $HEAD[]   = '<link rel="stylesheet" type="text/css" href='.ENTRADA_URL.'/css/gradebook/mark-assignment.css?release='. html_encode(APPLICATION_VERSION) .'"/>';
-            $HEAD[]   = '<link rel="stylesheet" type="text/css" href='.ENTRADA_URL.'/css/assessments/assessments.css?release='. html_encode(APPLICATION_VERSION) .'"/>';
+            $HEAD[]   = '<link rel="stylesheet" type="text/css" href="' . ENTRADA_URL . '/css/gradebook/mark-assignment.css?release=' . html_encode(APPLICATION_VERSION) . '"/>';
+            $HEAD[]   = '<link rel="stylesheet" type="text/css" href="' . ENTRADA_URL . '/css/assessments/assessments.css?release=' . html_encode(APPLICATION_VERSION) . '"/>';
 
             // Generate page header
             $page_header = new Views_Gradebook_PageHeader(array("course" => $course, "module" => "gradebook", "page_title" => $page_title));
@@ -55,16 +64,22 @@ if ($ENTRADA_ACL->isUserAuthorized("gradebook", "update", false, array("PARENT_I
             $add_new_assignments_url = ENTRADA_URL."/admin/".$MODULE."/assessments/?".replace_query(array("section" => "add", "step" => false));
 
             // Get curriculum periods. If there are none, print a warning
-            if ($curriculum_periods = Models_Curriculum_Period::fetchRowByCurriculumTypeIDCourseID($course->getCurriculumTypeID(), $course->getID())) {
-
-                // Load the Preference from the 'courses' Module, in order to get and set the selected_curriculum_period setting
-//                $PREFERENCES = preferences_load('courses');
-
+            if ($curriculum_periods && is_array($curriculum_periods)) {
                 // Get period selector; pass in the selected_curriculum_period setting
-                $period_selector = new Views_Gradebook_PeriodSelector(array("id" => "select-period","course" => $course, "curriculum_periods" => $curriculum_periods, "class" => "pull-right form-horizontal", "selected_curriculum_period" => $PREFERENCES["selected_curriculum_period"], "label" => $translate->_("Period:")));
+                $period_selector = new Views_Gradebook_PeriodSelector(array(
+                    "id" => "select-period",
+                    "course" => $course,
+                    "curriculum_periods" => $curriculum_periods,
+                    "class" => "pull-right form-horizontal",
+                    "selected_curriculum_period" => $PREFERENCES["selected_curriculum_period"],
+                    "label" => $translate->_("Period:"))
+                );
 
                 // Get search bar
-                $search_bar = new Views_Gradebook_SearchBar(array("id" => "search-assessments", "placeholder" => $translate->_("Search Assessments")));
+                $search_bar = new Views_Gradebook_SearchBar(array(
+                    "id" => "search-assessments",
+                    "placeholder" => $translate->_("Search Assessments"))
+                );
 
                 // Get all records within ID array
                 $assessment_model = new Models_Gradebook_Assessment();
@@ -185,12 +200,12 @@ if ($ENTRADA_ACL->isUserAuthorized("gradebook", "update", false, array("PARENT_I
                     "dismiss_button" => $translate->_("Close")
                 ));
 
-                $mark_assignment_modal->setHeaderContent('<div class="pull-left selector-documents"></div>');
+                $mark_assignment_modal->setHeaderContent('<div class="selector-documents form-horizontal"></div>');
                 $mark_assignment_modal->setBody('
 					<div class="loading"><img src="'.ENTRADA_URL.'/images/loading.gif" alt="Loading..." /></div>
 			      	<div class="container-fluid">
 			      		<div class="file"></div>
-			        	<div class="marking-scheme"></div>
+			      		<div class="marking-scheme"></div>
 			      	</div>
 				');
                 $mark_assignment_modal->setFooterContent('

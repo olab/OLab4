@@ -54,6 +54,35 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
     switch ($request_method) {
         case "POST" :
             switch ($request["method"]) {
+                    case "update-sub-folder-search-preference" :
+                        if (isset($request["action"]) && $tmp_input = clean_input($request["action"], "int")) {
+                            $PROCESSED["action"] = $tmp_input;
+                        }
+
+                        if ($PROCESSED["action"] === 1) {
+                            $action = "on";
+                        } else {
+                            $action = "off";
+                        }
+
+                        global $PREFERENCES;
+                        $success = 0;
+
+                        if (!empty($action)) {
+                            $_SESSION[APPLICATION_IDENTIFIER]["exams"]["exams"]["sub_folder_search"] = $action;
+
+                            if (preferences_update("exams", $PREFERENCES)) {
+                                $success = 1;
+                            }
+                        }
+
+                        if ($success) {
+                            echo json_encode(array("status" => "success", "message" => "Updated successfully."));
+                        } else {
+                            echo json_encode(array("status" => "error", "message" => "Failed to update."));
+                        }
+
+                        break;
                 case "exam-wizard" :
 
                     if (isset($request["step"]) && $tmp_input = clean_input($request["step"], array("trim", "int"))) {
@@ -316,6 +345,21 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
                                 if (!$exam->update()) {
                                     echo json_encode(array("status" => "error", "data" => $translate->_("Failed to update exam.")));
                                 }
+
+                                $history = new Models_Exam_Creation_History(array(
+                                    "exam_id" => $exam->getExamID(),
+                                    "proxy_id" => $ENTRADA_USER->getID(),
+                                    "action" => "exam_element_order",
+                                    "action_resource_id" => NULL,
+                                    "secondary_action" => NULL,
+                                    "secondary_action_resource_id" => NULL,
+                                    "history_message" => NULL,
+                                    "timestamp" => time(),
+                                ));
+
+                                if (!$history->insert()) {
+                                    echo json_encode(array("status" => "error", "data" => array($translate->_("Failed to insert history log for Edit Exam."))));
+                                }
                             }
                         }
 
@@ -371,7 +415,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
                                 $order = 0;
                                 $sorted_groups = array();
                                 foreach($exam_elements as $key=>$exam_element) {
-                                    if (NULL !== $exam_element->getGroupID()){
+                                    if (NULL !== $exam_element->getGroupID()) {
                                         if (!in_array($exam_element->getGroupID(), $sorted_groups)) {
                                             $group_questions = Models_Exam_Group_Question::fetchAllByGroupID($exam_element->getGroupID());
                                             foreach ($group_questions as $group_question) {
@@ -380,6 +424,22 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
                                                     $exam_group_element->setOrder($order);
                                                     if ($exam_group_element->update()) {
                                                         $ENTRADA_LOGGER->log("", "update-exam-element-group-order", "exam_element_id", $exam_group_element->getID(), 4, __FILE__, $ENTRADA_USER->getID());
+
+                                                        $history = new Models_Exam_Creation_History(array(
+                                                            "exam_id" => $exam->getExamID(),
+                                                            "proxy_id" => $ENTRADA_USER->getID(),
+                                                            "action" => "exam_element_group_edit",
+                                                            "action_resource_id" => $group_question->getGroupID(),
+                                                            "secondary_action" => "version_id",
+                                                            "secondary_action_resource_id" => $group_question->getVersionID(),
+                                                            "history_message" => NULL,
+                                                            "timestamp" => time(),
+                                                        ));
+
+                                                        if (!$history->insert()) {
+                                                            echo json_encode(array("status" => "error", "data" => array($translate->_("Failed to insert history log for Edit Exam."))));
+                                                        }
+
                                                     } else {
                                                         $ERROR++;
                                                         echo json_encode(array("status" => "error", "data" => $translate->_("Error updating the exam element order for element " . $exam_group_element->getElementID())));
@@ -446,6 +506,21 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
                                         $ERROR++;
                                     }
 
+                                    $history = new Models_Exam_Creation_History(array(
+                                        "exam_id" => $exam->getExamID(),
+                                        "proxy_id" => $ENTRADA_USER->getID(),
+                                        "action" => "exam_element_delete",
+                                        "action_resource_id" => $exam_element_id,
+                                        "secondary_action" => "version_id",
+                                        "secondary_action_resource_id" => $exam_element->getElementID(),
+                                        "history_message" => NULL,
+                                        "timestamp" => time(),
+                                    ));
+
+                                    if (!$history->insert()) {
+                                        echo json_encode(array("status" => "error", "data" => array($translate->_("Failed to insert history log for Edit Exam."))));
+                                    }
+
                                     if ($exam_element->getGroupID() != NULL && $exam_element->getGroupID() > 0) {
                                         $group_question = Models_Exam_Group_Question::fetchRowByVersionIDGroupID($exam_element->getElementID(), $exam_element->getGroupID());
                                         if ($group_question && is_object($group_question)) {
@@ -455,7 +530,23 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
                                             if (!$group_question->update()) {
                                                 $ERROR++;
                                             }
+
+                                            $history = new Models_Exam_Creation_History(array(
+                                                "exam_id" => $exam->getExamID(),
+                                                "proxy_id" => $ENTRADA_USER->getID(),
+                                                "action" => "exam_element_group_delete",
+                                                "action_resource_id" => $exam_element->getGroupID(),
+                                                "secondary_action" => "version_id",
+                                                "secondary_action_resource_id" => $exam_element->getElementID(),
+                                                "history_message" => NULL,
+                                                "timestamp" => time(),
+                                            ));
+
+                                            if (!$history->insert()) {
+                                                echo json_encode(array("status" => "error", "data" => array($translate->_("Failed to insert history log for Edit Exam."))));
+                                            }
                                         }
+
                                         $deleted_elements[] = array("element" => $exam_element->getID(), "group" => $exam_element->getGroupID());
                                     } else {
                                         $deleted_elements[] = $exam_element->getID();
@@ -465,7 +556,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
                         }
 
                         if ($exam && is_object($exam)) {
-                            $exam_elements = $exam->getExamElements();
+                            $exam_elements = Models_Exam_Exam_Element::fetchAllByExamID($exam->getID(), "order");
                             if ($exam_elements && is_array($exam_elements)) {
                                 $count = 0;
                                 foreach ($exam_elements as $element) {
@@ -557,6 +648,21 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
 
                                         // remove group_id from exam_element
                                         $form_element->setGroupID(NULL);
+
+                                        $history = new Models_Exam_Creation_History(array(
+                                            "exam_id" => $exam->getExamID(),
+                                            "proxy_id" => $ENTRADA_USER->getID(),
+                                            "action" => "exam_element_group_delete",
+                                            "action_resource_id" => $group_id,
+                                            "secondary_action" => "version_id",
+                                            "secondary_action_resource_id" => $form_element->getElementID(),
+                                            "history_message" => NULL,
+                                            "timestamp" => time(),
+                                        ));
+
+                                        if (!$history->insert()) {
+                                            echo json_encode(array("status" => "error", "data" => array($translate->_("Failed to insert history log for Edit Exam."))));
+                                        }
 
                                     } else {
                                         $deleted_elements[] = $form_element->getID();
@@ -793,6 +899,36 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
                                 // error updating exam
                                 echo json_encode(array("status" => "error", "data" => array($translate->_("Error updating exam."))));
                             }
+
+                            $history = new Models_Exam_Creation_History(array(
+                                "exam_id" => $exam->getExamID(),
+                                "proxy_id" => $ENTRADA_USER->getID(),
+                                "action" => "exam_element_add",
+                                "action_resource_id" => $element->getID(),
+                                "secondary_action" => NULL,
+                                "secondary_action_resource_id" => NULL,
+                                "history_message" => "Added Free Text",
+                                "timestamp" => time(),
+                            ));
+
+                            if (!$history->insert()) {
+                                echo json_encode(array("status" => "error", "data" => array($translate->_("Failed to insert history log for Edit Exam."))));
+                            }
+
+                            $history = new Models_Exam_Creation_History(array(
+                                "exam_id" => $exam->getExamID(),
+                                "proxy_id" => $ENTRADA_USER->getID(),
+                                "action" => "exam_edit",
+                                "action_resource_id" => NULL,
+                                "secondary_action" => NULL,
+                                "secondary_action_resource_id" => NULL,
+                                "history_message" => NULL,
+                                "timestamp" => time(),
+                            ));
+
+                            if (!$history->insert()) {
+                                echo json_encode(array("status" => "error", "data" => array($translate->_("Failed to insert history log for Edit Exam."))));
+                            }
                         }
 
                         if ($success) {
@@ -838,6 +974,36 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
                                 // error updating exam
                                 echo json_encode(array("status" => "error", "data" => array($translate->_("Error updating exam."))));
                             }
+
+                            $history = new Models_Exam_Creation_History(array(
+                                "exam_id" => $exam->getExamID(),
+                                "proxy_id" => $ENTRADA_USER->getID(),
+                                "action" => "exam_element_add",
+                                "action_resource_id" => $element->getID(),
+                                "secondary_action" => NULL,
+                                "secondary_action_resource_id" => NULL,
+                                "history_message" => "Added Page Break",
+                                "timestamp" => time(),
+                            ));
+
+                            if (!$history->insert()) {
+                                echo json_encode(array("status" => "error", "data" => array($translate->_("Failed to insert history log for Edit Exam."))));
+                            }
+
+                            $history = new Models_Exam_Creation_History(array(
+                                "exam_id" => $exam->getExamID(),
+                                "proxy_id" => $ENTRADA_USER->getID(),
+                                "action" => "exam_edit",
+                                "action_resource_id" => NULL,
+                                "secondary_action" => NULL,
+                                "secondary_action_resource_id" => NULL,
+                                "history_message" => NULL,
+                                "timestamp" => time(),
+                            ));
+
+                            if (!$history->insert()) {
+                                echo json_encode(array("status" => "error", "data" => array($translate->_("Failed to insert history log for Edit Exam."))));
+                            }
                         }
 
                         if ($success) {
@@ -869,6 +1035,36 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
                                 if (!$exam->update()) {
                                     // error updating exam
                                     echo json_encode(array("status" => "error", "data" => array($translate->_("Error updating exam."))));
+                                }
+
+                                $history = new Models_Exam_Creation_History(array(
+                                    "exam_id" => $exam->getExamID(),
+                                    "proxy_id" => $ENTRADA_USER->getID(),
+                                    "action" => "exam_element_edit",
+                                    "action_resource_id" => $element->getID(),
+                                    "secondary_action" => NULL,
+                                    "secondary_action_resource_id" => NULL,
+                                    "history_message" => "Edited Free Text",
+                                    "timestamp" => time(),
+                                ));
+
+                                if (!$history->insert()) {
+                                    echo json_encode(array("status" => "error", "data" => array($translate->_("Failed to insert history log for Edit Exam."))));
+                                }
+
+                                $history = new Models_Exam_Creation_History(array(
+                                    "exam_id" => $exam->getExamID(),
+                                    "proxy_id" => $ENTRADA_USER->getID(),
+                                    "action" => "exam_edit",
+                                    "action_resource_id" => NULL,
+                                    "secondary_action" => NULL,
+                                    "secondary_action_resource_id" => NULL,
+                                    "history_message" => NULL,
+                                    "timestamp" => time(),
+                                ));
+
+                                if (!$history->insert()) {
+                                    echo json_encode(array("status" => "error", "data" => array($translate->_("Failed to insert history log for Edit Exam."))));
                                 }
                             }
                         }
@@ -902,6 +1098,36 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
                                     // error updating exam
                                     echo json_encode(array("status" => "error", "data" => array($translate->_("Error updating exam."))));
                                 }
+
+                                $history = new Models_Exam_Creation_History(array(
+                                    "exam_id" => $element->getExamID(),
+                                    "proxy_id" => $ENTRADA_USER->getID(),
+                                    "action" => "exam_element_points",
+                                    "action_resource_id" => $element->getID(),
+                                    "secondary_action" => "points",
+                                    "secondary_action_resource_id" => $PROCESSED["points"],
+                                    "history_message" => NULL,
+                                    "timestamp" => time(),
+                                ));
+
+                                if (!$history->insert()) {
+                                    echo json_encode(array("status" => "error", "data" => array($translate->_("Failed to insert history log for Edit Exam."))));
+                                }
+
+                                $history = new Models_Exam_Creation_History(array(
+                                    "exam_id" => $element->getExamID(),
+                                    "proxy_id" => $ENTRADA_USER->getID(),
+                                    "action" => "exam_edit",
+                                    "action_resource_id" => NULL,
+                                    "secondary_action" => NULL,
+                                    "secondary_action_resource_id" => NULL,
+                                    "history_message" => NULL,
+                                    "timestamp" => time(),
+                                ));
+
+                                if (!$history->insert()) {
+                                    echo json_encode(array("status" => "error", "data" => array($translate->_("Failed to insert history log for Edit Exam."))));
+                                }
                             }
                         }
                         if ($element->fromArray(array("points" => $PROCESSED["points"]))->update()) {
@@ -925,6 +1151,37 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
                     if (isset($PROCESSED["not_scored"]) && $PROCESSED["not_scored"] != "") {
                         $element = Models_Exam_Exam_Element::fetchRowByID($PROCESSED["exam_element_id"]);
                         if ($element->fromArray(array("not_scored" => $PROCESSED["not_scored"]))->update()) {
+
+                            $history = new Models_Exam_Creation_History(array(
+                                "exam_id" => $element->getExamID(),
+                                "proxy_id" => $ENTRADA_USER->getID(),
+                                "action" => "exam_element_points",
+                                "action_resource_id" => $element->getID(),
+                                "secondary_action" => "scoring",
+                                "secondary_action_resource_id" => $PROCESSED["not_scored"],
+                                "history_message" => NULL,
+                                "timestamp" => time(),
+                            ));
+
+                            if (!$history->insert()) {
+                                echo json_encode(array("status" => "error", "data" => array($translate->_("Failed to insert history log for Edit Exam."))));
+                            }
+
+                            $history = new Models_Exam_Creation_History(array(
+                                "exam_id" => $element->getExamID(),
+                                "proxy_id" => $ENTRADA_USER->getID(),
+                                "action" => "exam_edit",
+                                "action_resource_id" => NULL,
+                                "secondary_action" => NULL,
+                                "secondary_action_resource_id" => NULL,
+                                "history_message" => NULL,
+                                "timestamp" => time(),
+                            ));
+
+                            if (!$history->insert()) {
+                                echo json_encode(array("status" => "error", "data" => array($translate->_("Failed to insert history log for Edit Exam."))));
+                            }
+
                             echo json_encode(array("status" => "success", "data" => array("exam_element_id" => $element->getID())));
                         } else {
                             echo json_encode(array("status" => "error", "data" => array($translate->_("Failed to update scoring"))));
@@ -957,6 +1214,21 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
                                 } else {
                                     $ENTRADA_LOGGER->log("", "delete", "exam_id", $exam_id, 4, __FILE__, $ENTRADA_USER->getID());
                                     $deleted_exams[] = $exam_id;
+
+                                    $history = new Models_Exam_Creation_History(array(
+                                        "exam_id" => $exam->getExamID(),
+                                        "proxy_id" => $ENTRADA_USER->getID(),
+                                        "action" => "exam_delete",
+                                        "action_resource_id" => NULL,
+                                        "secondary_action" => NULL,
+                                        "secondary_action_resource_id" => NULL,
+                                        "history_message" => NULL,
+                                        "timestamp" => time(),
+                                    ));
+
+                                    if (!$history->insert()) {
+                                        echo json_encode(array("status" => "error", "data" => array($translate->_("Failed to insert history log for Edit Exam."))));
+                                    }
                                 }
                             }
                         }
@@ -990,6 +1262,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
                             if ($exam) {
                                 $exam_array = $exam->toArray();
                                 if (isset($exam_array) && is_array($exam_array)) {
+                                    $old_exam_id = $exam_array["exam_id"];
                                     unset($exam_array["exam_id"]);
                                     $exam_array["updated_date"] = time();
                                     $exam_array["updated_by"]   = $ENTRADA_USER->getID();
@@ -999,12 +1272,58 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
                                         // Error
                                         application_log("error", "Error inserting new exam, db said : " . $db->ErrorMsg());
                                     } else {
+                                        $history = new Models_Exam_Creation_History(array(
+                                            "exam_id" => $new_exam->getID(),
+                                            "proxy_id" => $ENTRADA_USER->getID(),
+                                            "action" => "exam_copy",
+                                            "action_resource_id" => $old_exam_id,
+                                            "secondary_action" => NULL,
+                                            "secondary_action_resource_id" => NULL,
+                                            "history_message" => NULL,
+                                            "timestamp" => time(),
+                                        ));
+
+                                        if (!$history->insert()) {
+                                            echo json_encode(array("status" => "error", "data" => array($translate->_("Failed to insert history log for Edit Exam."))));
+                                        }
+
                                         $new_exam_id = $new_exam->getID();
                                         $new_exam_ids[] = $new_exam_id;
                                         $exams_copied++;
                                         // Proceed with inserting the exam elements and the exam authors
                                         $exam_authors   = Models_Exam_Exam_Author::fetchAllByExamID($exam_id);
                                         $exam_elements  = Models_Exam_Exam_Element::fetchAllByExamID($exam_id);
+                                        $exam_files     = Models_Exam_Exam_File::fetchAllByExamId($exam_id);
+
+                                        if ($exam_files && is_array($exam_files)) {
+                                            foreach ($exam_files as $file) {
+                                                if ($file && is_object($file)) {
+                                                    $file_array = $file->toArray();
+                                                    unset($file_array["file_id"]);
+                                                    $new_file = new Models_Exam_Exam_File($file_array);
+                                                    $new_file->setExamID($new_exam_id);
+                                                    if (!$new_file->insert()) {
+                                                        application_log("error", "Error inserting new exam file, db said: " . $db->ErrorMsg());
+                                                    } else {
+                                                        $EFILE_ID = $file->getID();
+
+                                                        if ((@is_dir(EXAM_STORAGE_PATH)) && (@is_writable(EXAM_STORAGE_PATH))) {
+                                                            if (@file_exists(EXAM_STORAGE_PATH . "/" . $EFILE_ID)) {
+                                                                // file exists try to copy it
+                                                                $source     = EXAM_STORAGE_PATH . "/" . $EFILE_ID;
+                                                                $destination = EXAM_STORAGE_PATH . "/" . $new_file->getID();
+                                                                if (!copy($source, $destination)) {
+                                                                    add_error("The exam file was not successfully saved. The administrators has been informed of this error, please try again later.");
+                                                                }
+                                                            }
+                                                        } else {
+                                                            add_error("The new file was not successfully saved. The administrators has been informed of this error, please try again later.");
+                                                            application_log("error", "The directory is not writable for exam files.");
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
 
                                         if (isset($exam_authors) && is_array($exam_authors)) {
                                             foreach ($exam_authors as $author) {
@@ -1051,6 +1370,21 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
                                                         if (!$new_element->insert()) {
                                                             // Error
                                                             application_log("error", "Error inserting new exam element, db said : " . $db->ErrorMsg());
+                                                        } else {
+                                                            $history = new Models_Exam_Creation_History(array(
+                                                                "exam_id" => $new_exam->getID(),
+                                                                "proxy_id" => $ENTRADA_USER->getID(),
+                                                                "action" => "exam_element_add",
+                                                                "action_resource_id" => $new_element->getExamElementID(),
+                                                                "secondary_action" => "version_id",
+                                                                "secondary_action_resource_id" => $new_element->getElementID(),
+                                                                "history_message" => NULL,
+                                                                "timestamp" => time(),
+                                                            ));
+
+                                                            if (!$history->insert()) {
+                                                                echo json_encode(array("status" => "error", "data" => array($translate->_("Failed to insert history log for Edit Exam."))));
+                                                            }
                                                         }
                                                     }
                                                 }
@@ -1073,6 +1407,72 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
                     } else {
                         echo json_encode(array("status" => "error", "msg" => $translate->_("Nothing to copy.")));
                     }
+                    break;
+                case "move-exams":
+
+                    if (isset($request["destination_folder_id"]) && $tmp_input = clean_input($request["destination_folder_id"], array("trim", "int"))) {
+                        $PROCESSED["destination_folder_id"] = $tmp_input;
+                    } else {
+                        add_error($translate->_("No destination folder provided."));
+                    }
+
+                    if (!$ERROR) {
+                        $PROCESSED["move_ids"] = array();
+                        if (isset($request["move_ids"]) && is_array($request["move_ids"])) {
+                            foreach ($request["move_ids"] as $exam_id) {
+                                $tmp_input = clean_input($exam_id, "int");
+                                if ($tmp_input) {
+                                    $PROCESSED["move_ids"][] = $tmp_input;
+                                }
+                            }
+                        }
+
+                        if (!empty($PROCESSED["move_ids"])) {
+                            $moved_exams = array();
+                            foreach ($PROCESSED["move_ids"] as $exam_id) {
+                                $exam = Models_Exam_Exam::fetchRowByID($exam_id);
+                                if ($exam) {
+
+                                    $exam->fromArray(array(
+                                        "folder_id" => $PROCESSED["destination_folder_id"],
+                                        "updated_date" => time(),
+                                        "updated_by" => $ENTRADA_USER->getActiveID()));
+                                    if (!$exam->update()) {
+                                        add_error($translate->_("Unable to move an exam"));
+                                    } else {
+                                        $ENTRADA_LOGGER->log("", "move", "exam_id", $exam_id, 4, __FILE__, $ENTRADA_USER->getID());
+                                        $moved_exams[] = $exam_id;
+
+                                        $history = new Models_Exam_Creation_History(array(
+                                            "exam_id" => $exam->getExamID(),
+                                            "proxy_id" => $ENTRADA_USER->getID(),
+                                            "action" => "exam_move",
+                                            "action_resource_id" => $PROCESSED["destination_folder_id"],
+                                            "secondary_action" => NULL,
+                                            "secondary_action_resource_id" => NULL,
+                                            "history_message" => NULL,
+                                            "timestamp" => time(),
+                                        ));
+
+                                        if (!$history->insert()) {
+                                            echo json_encode(array("status" => "error", "data" => array($translate->_("Failed to insert history log for Edit Exam."))));
+                                        }
+                                    }
+                                }
+                            }
+                            if (!$ERROR) {
+                                echo json_encode(array("status" => "success", "msg" => sprintf($translate->_("Successfully moved %d exam(s)."), count($moved_exams)), "exam_ids" => $moved_exams));
+                            } else {
+                                echo json_encode(array("status" => "error", "msg" => $translate->_("There was an error when attempting to move an Exam.")));
+                            }
+                        } else {
+                            echo json_encode(array("status" => "error", "msg" => $translate->_("Nothing to move.")));
+                        }
+                    } else {
+                        echo json_encode(array("status" => "error", "msg" => $translate->_("No destination folder provided.")));
+                    }
+
+
                     break;
                 case "set-filter-preferences" :
                     if (isset($request)) {
@@ -1160,6 +1560,20 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
                             $progress->setUpdatedDate(time());
                             $progress->setUpdateBy($PROCESSED["proxy_id"]);
                             if ($progress->update()) {
+                                $history = new Models_Exam_Creation_History(array(
+                                    "exam_id" => $progress->getExamID(),
+                                    "proxy_id" => $ENTRADA_USER->getID(),
+                                    "action" => "reopen_progress",
+                                    "action_resource_id" => $progress->getID(),
+                                    "secondary_action" => NULL,
+                                    "secondary_action_resource_id" => NULL,
+                                    "history_message" => NULL,
+                                    "timestamp" => time(),
+                                ));
+
+                                if (!$history->insert()) {
+                                    echo json_encode(array("status" => "error", "data" => array($translate->_("Failed to insert history log for Edit Exam."))));
+                                }
                                 echo json_encode(array("status" => "success", "msg" => $translate->_("Successfully updated the re-open the progress record.")));
                             } else {
                                 echo json_encode(array("status" => "error", "msg" => $translate->_("Failed to updated the re-open the progress record.")));
@@ -1188,6 +1602,20 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
                             if ($progress->update()) {
                                 $progress_view = new Views_Exam_Progress($progress);
                                 $progress_view_data = $progress_view->renderAdminRow("data");
+                                $history = new Models_Exam_Creation_History(array(
+                                    "exam_id" => $progress->getExamID(),
+                                    "proxy_id" => $ENTRADA_USER->getID(),
+                                    "action" => "delete_progress",
+                                    "action_resource_id" => $progress->getID(),
+                                    "secondary_action" => NULL,
+                                    "secondary_action_resource_id" => NULL,
+                                    "history_message" => NULL,
+                                    "timestamp" => time(),
+                                ));
+
+                                if (!$history->insert()) {
+                                    echo json_encode(array("status" => "error", "data" => array($translate->_("Failed to insert history log for Edit Exam."))));
+                                }
                                 echo json_encode(array("status" => "success", "msg" => $translate->_("Successfully deleted the progress record."), "row_data" => $progress_view_data));
                             } else {
                                 echo json_encode(array("status" => "error", "msg" => $translate->_("Failed to delete the progress record.")));
@@ -1311,6 +1739,22 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
                                 }
 
                                 if (!$ERROR) {
+
+                                    $history = new Models_Exam_Creation_History(array(
+                                        "exam_id" => $exam->getExamID(),
+                                        "proxy_id" => $ENTRADA_USER->getID(),
+                                        "action" => "exam_element_group_add",
+                                        "action_resource_id" => $exam_group_question->getGroupID(),
+                                        "secondary_action" => "version_id",
+                                        "secondary_action_resource_id" => $exam_group_question->getQuestionVersion()->getVersionID(),
+                                        "history_message" => NULL,
+                                        "timestamp" => time(),
+                                    ));
+
+                                    if (!$history->insert()) {
+                                        echo json_encode(array("status" => "error", "data" => array($translate->_("Failed to insert history log for Edit Exam."))));
+                                    }
+
                                     Entrada_Utilities_Flashmessenger::addMessage(sprintf($translate->_("Successfully added the group <strong>" . $exam_group->getGroupTitle() . "</strong> containing <strong>%d</strong> questions to the exam."), $inserted), "success", "exams");
                                     echo json_encode(array("status" => "success", "data" => $translate->_("Successfully added the group to the exam")));
                                 }
@@ -1356,6 +1800,21 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
                             $exam_element->setUpdatedDate(time());
                             $exam_element->setElementID($PROCESSED["version_id"]);
                             if ($exam_element->update()) {
+                                $history = new Models_Exam_Creation_History(array(
+                                    "exam_id" => $exam_element->getExamID(),
+                                    "proxy_id" => $ENTRADA_USER->getID(),
+                                    "action" => "exam_element_edit",
+                                    "action_resource_id" => $PROCESSED["element_id"],
+                                    "secondary_action" => "version_id",
+                                    "secondary_action_resource_id" => $PROCESSED["version_id"],
+                                    "history_message" => NULL,
+                                    "timestamp" => $exam_element->getUpdatedDate(),
+                                ));
+
+                                if (!$history->insert()) {
+                                    echo json_encode(array("status" => "error", "data" => array($translate->_("Failed to insert history log for Edit Exam."))));
+                                }
+
                                 $exam = $exam_element->getExam();
                                 if ($exam) {
                                     $exam->setUpdatedDate(time());
@@ -1363,6 +1822,21 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
                                     if (!$exam->update()) {
                                         // error updating exam
                                         echo json_encode(array("status" => "error", "data" => array($translate->_("Error updating exam."))));
+                                    }
+
+                                    $history = new Models_Exam_Creation_History(array(
+                                        "exam_id" => $exam_element->getExamID(),
+                                        "proxy_id" => $ENTRADA_USER->getID(),
+                                        "action" => "exam_edit",
+                                        "action_resource_id" => NULL,
+                                        "secondary_action" => NULL,
+                                        "secondary_action_resource_id" => NULL,
+                                        "history_message" => NULL,
+                                        "timestamp" => time(),
+                                    ));
+
+                                    if (!$history->insert()) {
+                                        echo json_encode(array("status" => "error", "data" => array($translate->_("Failed to insert history log for Edit Exam."))));
                                     }
                                 }
                             } else {
@@ -1441,6 +1915,21 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
                                         // error updating exam
                                         echo json_encode(array("status" => "error", "data" => array($translate->_("Error updating exam."))));
                                     }
+
+                                    $history = new Models_Exam_Creation_History(array(
+                                        "exam_id" => $exam_element->getExamID(),
+                                        "proxy_id" => $ENTRADA_USER->getID(),
+                                        "action" => "exam_edit",
+                                        "action_resource_id" => NULL,
+                                        "secondary_action" => NULL,
+                                        "secondary_action_resource_id" => NULL,
+                                        "history_message" => NULL,
+                                        "timestamp" => time(),
+                                    ));
+
+                                    if (!$history->insert()) {
+                                        echo json_encode(array("status" => "error", "data" => array($translate->_("Failed to insert history log for Edit Exam."))));
+                                    }
                                 }
 
                                 if ($PROCESSED["group_id"]) {
@@ -1452,6 +1941,21 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
                                         if (!$group_question->update()) {
                                             // error updating exam
                                             echo json_encode(array("status" => "error", "data" => array($translate->_("Error updating group question."))));
+                                        }
+
+                                        $history = new Models_Exam_Creation_History(array(
+                                            "exam_id" => $exam_element->getExamID(),
+                                            "proxy_id" => $ENTRADA_USER->getID(),
+                                            "action" => "exam_element_group_edit",
+                                            "action_resource_id" => $PROCESSED["group_id"],
+                                            "secondary_action" => "version_id",
+                                            "secondary_action_resource_id" => $group_question->getVersionID(),
+                                            "history_message" => NULL,
+                                            "timestamp" => time(),
+                                        ));
+
+                                        if (!$history->insert()) {
+                                            echo json_encode(array("status" => "error", "data" => array($translate->_("Failed to insert history log for Edit Exam."))));
                                         }
                                     }
                                 }
@@ -1547,6 +2051,61 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
                         } else {
                             echo json_encode(array("status" => "success"));
                         }
+                    }
+
+                    break;
+                case "preview-settings":
+                    $exam_id = $use_calculator = $use_self_timer = null;
+
+                    if (isset($request["exam_id"]) && $tmp_input = clean_input($request["exam_id"], "int")) {
+                        $exam_id = $tmp_input;
+                    }
+
+                    if (isset($request["use_calculator"])) {
+                        $use_calculator = $request["use_calculator"] == 'true' ? true : false;
+                    }
+
+                    if (isset($request["use_self_timer"])) {
+                        $use_self_timer = $request["use_self_timer"] == 'true' ? true : false;
+                    }
+
+                    // We have to have the exam_id and at least one of the settings must be changed.
+                    if ($exam_id && $exam_id >= 1 && ($use_calculator !== null || $use_self_timer !== null)) {
+                        $post = Models_Exam_Post::fetchRowByExamIDType($exam_id, "preview");
+
+                        if ($post) {
+                            if ($use_calculator !== null) {
+                                $post->setUseCalculator($use_calculator);
+                            }
+
+                            if ($use_self_timer !== null) {
+                                $post->setUseSelfTimer($use_self_timer);
+                            }
+
+                            if (! $post->update()) {
+                                echo json_encode(array(
+                                    "status" => "error",
+                                    "data" => array($translate->_("Error updating preview settings."))
+                                ));
+                            }
+
+                            echo json_encode(array(
+                                "status" => "success",
+                                "use_calculator" => (bool) $post->getUseCalculator(),
+                                "use_self_timer" => (bool) $post->getUseSelfTimer(),
+                            ));
+                        } else {
+                            echo json_encode(array(
+                                "status" => "error",
+                                "data" => "Post not found.",
+                            ));
+                        }
+
+                    } else {
+                        echo json_encode(array(
+                            "status" => "error",
+                            "data" => "Invalid params.",
+                        ));
                     }
 
                     break;
@@ -1805,11 +2364,23 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
                     if (isset($_SESSION[APPLICATION_IDENTIFIER]["exams"]["exams"]["selected_filters"])) {
                         $PROCESSED["filters"] = $_SESSION[APPLICATION_IDENTIFIER]["exams"]["exams"]["selected_filters"];
                     }
-                    
+
+                    if ($_SESSION[APPLICATION_IDENTIFIER]["exams"]["exams"]["sub_folder_search"] == "on") {
+                        $PROCESSED["sub_folder_search"] = 1;
+                    } else {
+                        $PROCESSED["sub_folder_search"] = 0;
+                    }
+
                     if (isset($request["search_term"]) && $tmp_input = clean_input(strtolower($request["search_term"]), array("trim", "striptags"))) {
                         $PROCESSED["search_term"] = "%".$tmp_input."%";
                     } else {
                         $PROCESSED["search_term"] = "";
+                    }
+
+                    if (isset($request["folder_id"]) && $tmp_input = clean_input(strtolower($request["folder_id"]), array("trim", "int"))) {
+                        $PROCESSED["folder_id"] = $tmp_input;
+                    } else {
+                        $PROCESSED["folder_id"] = 0;
                     }
 
                     if (isset($request["limit"]) && $tmp_input = clean_input(strtolower($request["limit"]), array("trim", "int"))) {
@@ -1835,9 +2406,104 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
                     } else {
                         $PROCESSED["sort_column"] = "exam_id";
                     }
-                    
-                    $exams          = Models_Exam_Exam::fetchAllRecordsBySearchTerm($PROCESSED["search_term"], $PROCESSED["limit"], $PROCESSED["offset"], $PROCESSED["sort_direction"], null, $PROCESSED["filters"]);
-                    $total_exams    = Models_Exam_Exam::countAllRecordsBySearchTerm($PROCESSED["search_term"], $PROCESSED["filters"]);
+
+                    $exams          = Models_Exam_Exam::fetchAllRecordsBySearchTerm($PROCESSED["search_term"], $PROCESSED["limit"], $PROCESSED["offset"], $PROCESSED["sort_direction"], null, $PROCESSED["filters"], $PROCESSED["folder_id"], $PROCESSED["sub_folder_search"]);
+                    $total_exams    = Models_Exam_Exam::countAllRecordsBySearchTerm($PROCESSED["search_term"], $PROCESSED["filters"], $PROCESSED["folder_id"], $PROCESSED["sub_folder_search"]);
+
+                    /*
+                     * Breadcrumb section
+                     */
+                    $return = array();
+                    $path   = array();
+                    $folder = Models_Exam_Bank_Folders::fetchRowByID($PROCESSED["folder_id"]);
+
+                    if (isset($folder) && is_object($folder)) {
+                        $breadcrumbs_html = $folder->getBreadcrumbsByFolderID();
+                        if ($breadcrumbs_html) {
+                            $return["status_breadcrumbs"] = "success";
+                            $return["breadcrumb_data"] = $breadcrumbs_html;
+                        } else {
+                            $return["status_breadcrumbs"] = "error";
+                            $return["status_breadcrumbs_error"] = $translate->_("Error fetching breadcrumbs for this folder(". $PROCESSED["folder_id"].")");
+                        }
+                    } else if ($PROCESSED["folder_id"] == 0) {
+                        $index_folder = new Models_Exam_Bank_Folders(array(
+                            "folder_id" => 0,
+                            "parent_folder_id" => 0,
+                            "folder_title" => "Index",
+                            "folder_type" => "exam"
+                        ));
+
+                        $breadcrumbs_html = $index_folder->getBreadcrumbsByFolderID();
+                        if ($breadcrumbs_html) {
+                            $return["status_breadcrumbs"] = "success";
+                            $return["breadcrumb_data"] = $breadcrumbs_html;
+                        } else {
+                            $return["status_breadcrumbs"] = "success";
+                            $return["status_breadcrumbs_error"] = $translate->_("Error fetching breadcrumbs for this folder.");
+                        }
+
+                    } else {
+                        $return["status_breadcrumbs"] = "error";
+                        $return["status_breadcrumbs_error"] = $translate->_("Error fetching data for this folder.");
+                    }
+
+                    /*
+                     * Title section
+                     */
+                    if (isset($folder) && is_object($folder)) {
+                        $title = $folder->getFolderTitle();
+                        $parent_parent_folder = $folder->getParentFolderID();
+                        $return["title"] = $title;
+                    } else {
+                        $return["title"] = "Index";
+                        $parent_parent_folder = 0;
+                    }
+
+                    /**
+                     * Sub folder section
+                     */
+                    $subfolder_html = "";
+                    $folders = Models_Exam_Bank_Folders::fetchAllByParentID($PROCESSED["folder_id"], "exam");
+                    if (isset($folders) && is_array($folders) && !empty($folders)) {
+                        $subfolder_html .= "<ul id=\"folder_ul\">";
+                        $folder_count = count($folders);
+                        foreach ($folders as $key => $folder) {
+                            if (isset($folder) && is_object($folder)) {
+                                if ($key === 0 && $PROCESSED["folder_id"] != 0) {
+                                    $subfolder_html .= Views_Exam_Bank_Folder::renderBackNavigation($parent_parent_folder);
+                                }
+                                $folder_view = new Views_Exam_Bank_Folder($folder);
+                                $subfolder_html .= $folder_view->render();
+                                if ($folder_count === $key + 1) {
+                                    $subfolder_html .= "</ul>";
+                                }
+                            }
+                        }
+                        $return["status_folder"] = "success";
+                        $return["subfolder_html"] = $subfolder_html;
+                    } else {
+                        $subfolder_html .= "<ul>";
+                        $subfolder_html .= Views_Exam_Bank_Folder::renderBackNavigation($parent_parent_folder);
+                        $subfolder_html .= "</ul>";
+                        $return["status_folder"] = "success";
+                        $return["subfolder_html"] = $subfolder_html;
+                    }
+
+                    /*
+                     * Folder sort check
+                     */
+
+                    if (!$ENTRADA_ACL->amIAllowed("examfolder", "update", true)) {
+                        $edit_folder = $ENTRADA_ACL->amIAllowed(new ExamFolderResource($PROCESSED["folder_id"], true), "update");
+                        if ($edit_folder) {
+                            $return["edit_folder"] = 1;
+                        } else {
+                            $return["edit_folder"] = 0;
+                        }
+                    } else {
+                        $return["edit_folder"] = 1;
+                    }
 
                     if ($exams) {
                         $data = array();
@@ -1848,10 +2514,13 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
                                 $data[] = $exam_view->render();
                             }
                         }
-                        echo json_encode(array("results" => count($data), "data" => array("total_forms" => $total_exams), "exams" => $data));
-                    } else {
-                        echo json_encode(array("results" => "0", "data" => $SUBMODULE_TEXT["index"]["no_exams_found"]));
                     }
+
+                    $return["exams"] = $data;
+                    $return["total_forms"] = $total_exams;
+
+                    echo json_encode(array("results" => count($data), "data" => $return));
+
                 break;
                 case "get-exam-elements" :
                     if (isset($request["exam_id"]) && $tmp_input = clean_input($request["exam_id"], "int")) {
@@ -1878,6 +2547,67 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
                     } else {
                         echo json_encode(array("status" => "error", "data" => $translate->_("No elements found to display.")));
 
+                    }
+
+                    break;
+                case "get-version-preview" :
+                    if (isset($request["version_id"]) && $tmp_input = clean_input($request["version_id"], "int")) {
+                        $PROCESSED["version_id"] = $tmp_input;
+                    }
+
+                    if (isset($request["answer_correct"]) && $tmp_input = clean_input($request["answer_correct"], "int")) {
+                        $PROCESSED["answer_correct"] = $tmp_input;
+                    } else {
+                        $PROCESSED["answer_correct"] = NULL;
+                    }
+
+                    if (isset($request["answer_incorrect"]) && $tmp_input = clean_input($request["answer_incorrect"], "int")) {
+                        $PROCESSED["answer_incorrect"] = $tmp_input;
+                    } else {
+                        $PROCESSED["answer_incorrect"] = NULL;
+                    }
+
+                    $correct = array();
+                    if ($PROCESSED["answer_correct"]) {
+                        $correct[$PROCESSED["answer_correct"]] = "correct";
+                    }
+
+                    if ($PROCESSED["answer_incorrect"]) {
+                        $correct[$PROCESSED["answer_incorrect"]] = "incorrect";
+                    }
+
+                    if ($PROCESSED["version_id"]) {
+                        $version = Models_Exam_Question_Versions::fetchRowByVersionID($PROCESSED["version_id"]);
+                        if ($version && is_object($version)) {
+                            $version_view = new Views_Exam_Question($version);
+                            $version_html = $version_view->render(false, array(), NULL, "details", false, NULL, NULL, NULL, 1, 1, $correct);
+                        }
+                    }
+
+                    if ($version_html) {
+                        echo json_encode(array("status" => "success", "html" => $version_html));
+                    } else {
+                        echo json_encode(array("status" => "error", "data" => $translate->_("No elements found to display.")));
+                    }
+
+                    break;
+                case "get-group-preview":
+                    if (isset($request["group_id"]) && $tmp_input = clean_input($request["group_id"], "int")) {
+                        $PROCESSED["group_id"] = $tmp_input;
+                    }
+
+                    if ($PROCESSED["group_id"]) {
+                        $group = Models_Exam_Group::fetchRowByID($PROCESSED["group_id"]);
+                        if ($group && is_object($group)) {
+                            $group_version = new Views_Exam_Group($group);
+                            $group_version_html = $group_version->render();
+                        }
+                    }
+
+                    if ($group_version_html) {
+                        echo json_encode(array("status" => "success", "html" => $group_version_html));
+                    } else {
+                        echo json_encode(array("status" => "error", "data" => $translate->_("No elements found to display.")));
                     }
 
                     break;
@@ -2012,10 +2742,10 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
                     }
                     break;
                 case "get-user-events" :
-                    /**
-                     * This will return the learning events the user has update rights to.
-                     * @todo I've used the pre-existing function for this. This should probably be changed to use the newer models instead.
-                     */
+                    // We use a dot to separate the ID from the requested filter.
+                    // I.E. course.95 will return all periods in the course which has the ID 95.
+                    // We do this because we're using the same API method for all filters.
+                    // Also, the advancedSearch component only supports 2 different data sources by default.
 
                     if (isset($request["search_value"]) && $tmp_input = clean_input(strtolower($request["search_value"]), array("trim", "striptags"))) {
                         $PROCESSED["search_value"] = $tmp_input;
@@ -2023,77 +2753,138 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
                         $PROCESSED["search_value"] = "";
                     }
 
-                    if (isset($request["parent_id"]) && $tmp_input = clean_input(strtolower($request["parent_id"]), array("trim", "int"))) {
-                        $PROCESSED["parent_id"] = $tmp_input;
+                    // If the parent id is zero, we're at the root.
+                    if ($request["parent_id"] == "0") {
+                        $current_type = "root";
+                        $parent_id = 0;
                     } else {
-                        $PROCESSED["parent_id"] = "0";
+                        // Gets the separates the filter type and id. (filter.id).
+                        $current_type = explode(".", $request["parent_id"])[0];
+                        $parent_id = explode(".", $request["parent_id"])[1];
                     }
 
-                    if (isset($request["context"]) && $tmp_input = clean_input(strtolower($request["context"]), array("trim", "striptags"))) {
-                        $PROCESSED["context"] = $tmp_input;
-                    }
+                    $CASE_ROOT = "root";
+                    $CASE_COURSE = "course";
+                    $CASE_CPERIOD = "cperiod";
 
-                    if (isset($request["previous_context"]) && $tmp_input = clean_input(strtolower($request["previous_context"]), array("trim", "striptags"))) {
-                        $PROCESSED["previous_context"] = $tmp_input;
-                    }
+                    switch ($current_type) {
+                        case $CASE_ROOT :
+                            // Root, will show a list of courses.
+                            $user_courses = Models_Course::getUserCourses($ENTRADA_USER->getActiveID(), $ENTRADA_USER->getActiveOrganisation(), $PROCESSED["search_value"], 1, true);
+                            if ($user_courses && is_array($user_courses) && !empty($user_courses)) {
+                                $data = array();
 
-                    if (isset($request["next_context"]) && $tmp_input = clean_input(strtolower($request["next_context"]), array("trim", "striptags"))) {
-                        $PROCESSED["next_context"] = $tmp_input;
-                    }
-
-                    if (isset($request["current_context"]) && $tmp_input = clean_input(strtolower($request["current_context"]), array("trim", "striptags"))) {
-                        $PROCESSED["current_context"] = $tmp_input;
-                    }
-
-                    if ($PROCESSED["parent_id"] != "0") {
-                        $learning_events = Models_Event::fetchAllByCourseIdTitle($PROCESSED["parent_id"], $PROCESSED["search_value"]);
-                        if ($learning_events) {
-                            foreach ($learning_events as $event_obj) {
-                                $event = $event_obj->toArray();
-                                $event_start = date(DEFAULT_DATE_FORMAT, $event["event_start"]);
-                                $data[] = array("target_id" => $event["event_id"], "target_label" => $event_start . " - " . $event["event_title"]);
+                                foreach ($user_courses as $course) {
+                                    $data[] = array(
+                                        "target_id" => "course." . $course->getID(),
+                                        "target_label" => $course->getCourseCode() . " - " . $course->getCourseName(),
+                                        "target_parent" => 0,
+                                        "target_children" => 1,
+                                        "level_selectable" => 0, // Do not let the user select this level. (Hides checkboxes/radio buttons).
+                                    );
+                                }
+                                if ($PROCESSED["context"] == "search" && $PROCESSED["search_value"]) {
+                                    $search_value = $PROCESSED["search_value"];
+                                    $data = array_filter($data, function ($element) use ($search_value) {
+                                        $pos = stripos($element["target_label"], $search_value);
+                                        return $pos !== false;
+                                    });
+                                }
+                                echo json_encode(array(
+                                    "status" => "success",
+                                    "data" => $data,
+                                    "parent_id" => "0",
+                                    "parent_name" => "0",
+                                ));
+                            } else {
+                                echo json_encode(array("status" => "error", "data" => $translate->_("No courses were found.")));
+                            }
+                            break;
+                        // Received a course_id, will show a list of all curriculum periods attached to that course.
+                        case $CASE_COURSE :
+                            $cperiods = Models_Curriculum_Period::fetchAllByCourseID($parent_id);
+                            $data = [];
+                            if ($cperiods) {
+                                foreach ($cperiods as $cperiod) {
+                                    $start_date = date(DEFAULT_DATE_FORMAT, $cperiod->getStartDate());
+                                    $finish_date = date(DEFAULT_DATE_FORMAT, $cperiod->getFinishDate());
+                                    $period_label = $start_date . " - " . $finish_date;
+                                    $period_label .= $cperiod->getCurriculumPeriodTitle() != "" ? ": " . $cperiod->getCurriculumPeriodTitle() : "";
+                                    array_push($data, array(
+                                        "target_id" => "cperiod." . $cperiod->getId() . "." . $parent_id,
+                                        "target_label" => $period_label,
+                                        "target_parent" => $parent_id,
+                                        "target_children" => 1,
+                                        "level_selectable" => 0,
+                                    ));
+                                }
                             }
 
-                            if ($PROCESSED["context"] == "search" && $PROCESSED["search_value"]) {
-                                $search_value = $PROCESSED["search_value"];
+                            // We also add an extra option 'Show All Events' so the user can browse events
+                            // that are schedule on date not contained in a curriculum period.
+                            // We will always have this option, even if there are no curriculum periods for a course.
+                            array_push($data, array(
+                                "target_id" => "cperiod.all." . $parent_id, // Flag to display all curriculum periods.
+                                "target_label" => "Show All Events",
+                                "target_parent" => $parent_id,
+                                "target_children" => 1,
+                                "level_selectable" => 0,
+                            ));
 
-                                $data = array_filter($data, function ($element) use ($search_value) {
-                                    $pos = stripos($element["target_label"], $search_value);
+                            echo json_encode(array(
+                                "status" => "success",
+                                "data" => $data,
+                                "parent_id" => 0, // Go back to courses...
+                                "parent_name" => "Curriculum Periods",
+                                "level_selectable" => 0
+                            ));
+                            break;
+                        // Received a curriculum period_id, will return a list of events
+                        // from a course within the curriculum period start and end dates.
+                        case $CASE_CPERIOD :
+                            // This has a third section which is the course id (cperiod.period_id.course_id)
+                            // We'll use this to pass it back to advanced search, so we can go back to the previous level.
+                            $course_id = explode(".", $request["parent_id"])[2];
 
-                                    return $pos !== false;
-                                });
+                            if ($parent_id == "all") {
+                                $learning_events = Models_Event::fetchAllByCourseID($course_id);
+                            } else {
+                                $cperiod = Models_Curriculum_Period::fetchRowByID($parent_id);
+                                $learning_events = Models_Event::fetchAllByCourseIdDates($course_id, $cperiod->getStartDate(), $cperiod->getFinishDate());
                             }
 
-                            $course = $event_obj->getCourse();
-                            echo json_encode(array("status" => "success", "data" => $data, "level_selectable" => 1, "next_context" => "course_id", "current_context" => "event_id", "course_id" => $PROCESSED["parent_id"], "parent_name" => "Events in ".$course->getCourseCode() . " - " . $course->getCourseName()));
-                        } else {
-                            echo json_encode(array("status" => "error", "data" => $translate->_("No learning events were found.")));
-                        }
-                    } else {
-                        $user_courses = Models_Course::getUserCourses($ENTRADA_USER->getActiveID(), $ENTRADA_USER->getActiveOrganisation(), $PROCESSED["search_value"]);
-
-                        if ($user_courses && is_array($user_courses) && !empty($user_courses)) {
-                            $data = array();
-                            foreach ($user_courses as $course) {
-                                $data[] = array("target_id" => $course->getID(), "target_label" => $course->getCourseCode() . " - " . $course->getCourseName(), "target_parent" => 0, "target_children" => "1");
+                            if ($learning_events) {
+                                foreach ($learning_events as $event_obj) {
+                                    $event = $event_obj->toArray();
+                                    $event_start = date(DEFAULT_DATETIME_FORMAT, $event["event_start"]);
+                                    $data[] = array(
+                                        "target_id" => $event["event_id"],
+                                        "target_label" => $event_start . " - " . $event["event_title"]
+                                    );
+                                }
+                                if ($PROCESSED["context"] == "search" && $PROCESSED["search_value"]) {
+                                    $search_value = $PROCESSED["search_value"];
+                                    $data = array_filter($data, function ($element) use ($search_value) {
+                                        $pos = stripos($element["target_label"], $search_value);
+                                        return $pos !== false;
+                                    });
+                                }
+                                $course = $event_obj->getCourse();
+                                echo json_encode(array(
+                                    "status" => "success",
+                                    "data" => $data,
+                                    "level_selectable" => 1,
+                                    "parent_name" => "Events in ".$course->getCourseCode() . " - " . $course->getCourseName(),
+                                    "parent_id" => "course." . $course_id,
+                                ));
+                            } else {
+                                echo json_encode(array(
+                                    "status" => "error",
+                                    "data" => $translate->_("No learning events were found for the selected period."),
+                                ));
                             }
-
-                            if ($PROCESSED["context"] == "search" && $PROCESSED["search_value"]) {
-                                $search_value = $PROCESSED["search_value"];
-
-                                $data = array_filter($data, function ($element) use ($search_value) {
-                                    $pos = stripos($element["target_label"], $search_value);
-
-                                    return $pos !== false;
-                                });
-                            }
-
-                            echo json_encode(array("status" => "success", "data" => $data, "parent_id" => "0", "parent_name" => "0", "level_selectable" => false));
-                        } else {
-                            echo json_encode(array("status" => "error", "data" => $translate->_("No courses were found.")));
-                        }
+                            break;
                     }
-
                     break;
                 case "get-user-organisations" :
                     $user_organisations = $ENTRADA_USER->getAllOrganisations();
@@ -2138,15 +2929,15 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
                         $PROCESSED["course_id"] = $tmp_input;
                     }
 
-                    //get the exam grade book id for your org
+                    // Get the exam grade book id for your org.
                     $meta = Models_Gradebook_Assessment_LuMeta::fetchRowByOrganisationIdTypeTitle($ENTRADA_USER->getActiveOrganisation(), "exam", "Computer Exam Module");
                     if (isset($meta) && is_object($meta)) {
                         if ($PROCESSED["course_id"]) {
                             $grade_books = Models_Gradebook_Assessment::fetchAllByCourseIdMetaId($PROCESSED["course_id"], $meta->getID());
                             if ($grade_books) {
                                 $data = array();
-                                foreach ($grade_books as $grade_books) {
-                                    $data[] = array("target_id" => $grade_books->getAssessmentID(), "target_label" => $grade_books->getName());
+                                foreach ($grade_books as $grade_book) {
+                                    $data[] = array("target_id" => $grade_book->getAssessmentID(), "target_label" => $grade_book->getName());
                                 }
                                 echo json_encode(array("status" => "success", "data" => $data, "level_selectable" => 1));
                             } else {
@@ -2170,33 +2961,41 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
                     if (isset($request["event_id"])) {
                         $tmp_input = (int)$request["event_id"];
                         $PROCESSED["event_id"] = $tmp_input;
+                    } else {
+                        add_error("Missing event id.");
+                    }
+
+                    if (!has_error()) {
+                        $event = Models_Event::fetchRowByID($PROCESSED["event_id"]);
+                        if ($event && is_object($event)) {
+                            $cperiod = $event->getCurriculumPeriod();
+                            $course = $event->getCourse();
+                        }
                     }
 
                     //get the exam grade book id for your org
-                    $meta = Models_Gradebook_Assessment_LuMeta::fetchRowByOrganisationIdTypeTitle($ENTRADA_USER->getActiveOrganisation(), "exam", "Computer Exam Module");
-                    if (isset($meta) && is_object($meta)) {
-                        if ($PROCESSED["event_id"]) {
+                    if ($cperiod && is_object($cperiod)) {
+                        if ($course && is_object($course)) {
                             $event = Models_Event::fetchRowByID($PROCESSED["event_id"]);
                             if ($event) {
-                                $grade_books = Models_Gradebook_Assessment::fetchAllByCourseIdMetaIdSearch($event->getCourseID(), $meta->getID(), $PROCESSED["search_value"]);
+                                $grade_books = Models_Gradebook_Assessment::fetchAssessmentsByCurriculumPeriodIdTitle($course->getID(), $cperiod->getID(), $PROCESSED["search_value"]);
                                 if ($grade_books) {
                                     $data = array();
-                                    foreach ($grade_books as $grade_books) {
-                                        $data[] = array("target_id" => $grade_books->getAssessmentID(), "target_label" => $grade_books->getName());
+                                    foreach ($grade_books as $grade_book) {
+                                        $data[] = array("target_id" => $grade_book->getAssessmentID(), "target_label" => $grade_book->getName());
                                     }
                                     echo json_encode(array("status" => "success", "data" => $data, "level_selectable" => 1));
                                 } else {
-                                    echo json_encode(array("results" => "0", "data" => $translate->_("No Grade Books found in this course.")));
+                                    echo json_encode(array("status" => "error", "data" => $translate->_("No GradeBooks found in this course.")));
                                 }
                             } else {
-                                echo json_encode(array("results" => "0", "data" => $translate->_("No Grade Books found in this course.")));
+                                echo json_encode(array("status" => "error", "data" => $translate->_("No GradeBooks found in this course.")));
                             }
                         } else {
-                            echo json_encode(array("results" => "0", "data" => $translate->_("No Event ID")));
+                            echo json_encode(array("status" => "error", "data" => $translate->_("Event is not associated to any course.")));
                         }
-
                     } else {
-                        echo json_encode(array("results" => "0", "data" => $translate->_("No Exam Grade Book types for your organisation")));
+                        echo json_encode(array("status" => "error", "data" => $translate->_("Event date is not associated to any curriculum period.")));
                     }
 
                     break;
@@ -2260,13 +3059,119 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
 
                     $filtered_audience  = array();
                     $audience_members = Models_Event_Attendance::fetchAllByEventID($PROCESSED["event_id"], $event_start, $PROCESSED["search_value"]);
-
                     if (isset($audience_members) && is_array($audience_members) && !empty($audience_members)) {
                         foreach ($audience_members as $key => $member) {
                             if (!array_key_exists($key, $filtered_audience)) {
                                 $student = User::fetchRowByID($key);
                                 if ($student) {
                                      $filtered_audience[$key] = array("target_id" => $key, "target_label" => $student->getFullName());
+                                }
+                            }
+                        }
+                    }
+
+                    if ($filtered_audience) {
+                        echo json_encode(array("status" => "success", "data" => $filtered_audience, "level_selectable" => 1));
+                    } else {
+                        echo json_encode(array("status" => "error", "data" => $translate->_("No learners found.")));
+                    }
+                    break;
+                case "get-feedback-report-audience" :
+                    if (isset($request["search_value"]) && $tmp_input = clean_input(strtolower($request["search_value"]), array("trim", "striptags"))) {
+                        $PROCESSED["search_value"] = $tmp_input;
+                    } else {
+                        $PROCESSED["search_value"] = "";
+                    }
+
+                    if (isset($request["exam_id"])) {
+                        $tmp_input = (int)$request["exam_id"];
+                        $PROCESSED["exam_id"] = $tmp_input;
+                    }
+
+                    $audience           = array();
+                    $searched_users     = array();
+                    $filtered_audience  = array();
+
+                    $all_posts = Models_Exam_Post::fetchAllByExamIDNoPreview($PROCESSED["exam_id"]);
+                    if ($all_posts && is_array($all_posts) && !empty($all_posts)) {
+                        $selected_posts = array();
+                        $post_ids = array();
+                        foreach ($all_posts as $post) {
+                            $all_post_ids[] = $post->getID();
+                        }
+                    }
+
+                    if ($all_post_ids && is_array($all_post_ids) && !empty($all_post_ids)) {
+                        $PROCESSED["post_ids"] = $all_post_ids;
+
+                        $completed_records = array();
+
+                        if ($PROCESSED["post_ids"] && is_array($PROCESSED["post_ids"]) && !empty($PROCESSED["post_ids"])) {
+                            foreach ($PROCESSED["post_ids"] as $post_id) {
+                                $post = Models_Exam_Post::fetchRowByID($post_id);
+                                if ($post && is_object($post)) {
+                                    $progress_records = Models_Exam_Progress::fetchAllByPostIDProgressValue($post->getID(), "submitted");
+                                    if ($progress_records && is_array($progress_records) && !empty($progress_records)) {
+                                        foreach ($progress_records as $record) {
+                                            if ($record && is_object($record)) {
+                                                $proxy_id = $record->getProxyID();
+                                                $progress_id = $record->getExamProgressID();
+
+                                                if (!in_array($progress_id, $completed_records)) {
+                                                    $user = Models_User::fetchRowByID($proxy_id);
+                                                    if ($user && is_object($user)) {
+                                                        $completed_records[$progress_id] = array(
+                                                            "progress_id" => $progress_id,
+                                                            "proxy_id" => $proxy_id,
+                                                            "name"  => $user->getName("%l, %f"),
+                                                            "date" => $record->getSubmissionDate()
+                                                        );
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    // Views_Exam_Exam_Sort
+                                    $sort_field = "name";
+                                    $sort_direction = "asc";
+
+                                    $sort = new Views_Exam_Exam_Sort($sort_field, $sort_direction);
+                                    $completed_records = $sort->sort_field_alpha($completed_records);
+
+                                    if ($PROCESSED["search_value"] != "") {
+                                        $filter_users = User::fetchUsersBySearchQueryGroup($PROCESSED["search_value"]);
+                                        if (isset($filter_users) && is_array($filter_users) && !empty($filter_users)) {
+                                            foreach ($filter_users as $user) {
+                                                if (isset($user) && is_object($user)) {
+                                                    $user_id = $user->getID();
+                                                    if (!in_array($user_id, $searched_users)) {
+                                                        $searched_users[] = (int)$user_id;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    if (isset($completed_records) && is_array($completed_records) && !empty($completed_records)) {
+                                        $count = 0;
+                                        foreach ($completed_records as $record) {
+                                            $progress_id = $record["progress_id"];
+                                            $id = $record["proxy_id"];
+                                            $name = $record["name"];
+                                            $date = date("Y-m-d H:i:s", $record["date"]);
+
+                                            if ($PROCESSED["search_value"] != "") {
+                                                if (in_array($id, $searched_users)) {
+                                                    // name is a searched user match
+                                                    $filtered_audience[$count] = array("target_id" => $progress_id, "target_label" => $name . " - " . $date);
+                                                }
+                                            } else {
+                                                $filtered_audience[$count] = array("target_id" => $progress_id, "target_label" => $name . " - " . $date);
+                                            }
+                                            $count++;
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -2343,54 +3248,54 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
                         if ($PROCESSED["post_ids"] && is_array($PROCESSED["post_ids"]) && !empty($PROCESSED["post_ids"])) {
                             foreach ($PROCESSED["post_ids"] as $post_id) {
                                 $post = Models_Exam_Post::fetchRowByID($post_id);
-                            if ($post && is_object($post)) {
-                                $progress_records = Models_Exam_Progress::fetchAllByPostIDProgressValue($post->getID(), "submitted");
-                                if ($progress_records && is_array($progress_records) && !empty($progress_records)) {
-                                    foreach ($progress_records as $record) {
-                                        $proxy_id = $record->getProxyID();
-                                        if (!in_array($proxy_id, $completed_audience)) {
-                                            $completed_audience[] = $proxy_id;
+                                if ($post && is_object($post)) {
+                                    $progress_records = Models_Exam_Progress::fetchAllByPostIDProgressValue($post->getID(), "submitted");
+                                    if ($progress_records && is_array($progress_records) && !empty($progress_records)) {
+                                        foreach ($progress_records as $record) {
+                                            $proxy_id = $record->getProxyID();
+                                            if (!in_array($proxy_id, $completed_audience)) {
+                                                $completed_audience[] = $proxy_id;
+                                            }
                                         }
                                     }
-                                }
 
-                                if ($PROCESSED["search_value"] != "") {
-                                    $filter_users = User::fetchUsersBySearchQueryGroup($PROCESSED["search_value"]);
-                                    if (isset($filter_users) && is_array($filter_users) && !empty($filter_users)) {
-                                        foreach ($filter_users as $user) {
-                                            if (isset($user) && is_object($user)) {
-                                                $user_id = $user->getID();
-                                                if (!in_array($user_id, $searched_users)) {
-                                                    $searched_users[] = (int)$user_id;
+                                    if ($PROCESSED["search_value"] != "") {
+                                        $filter_users = User::fetchUsersBySearchQueryGroup($PROCESSED["search_value"]);
+                                        if (isset($filter_users) && is_array($filter_users) && !empty($filter_users)) {
+                                            foreach ($filter_users as $user) {
+                                                if (isset($user) && is_object($user)) {
+                                                    $user_id = $user->getID();
+                                                    if (!in_array($user_id, $searched_users)) {
+                                                        $searched_users[] = (int)$user_id;
+                                                    }
+                                                }
+                                            }
+
+                                            if (isset($completed_audience) && is_array($completed_audience) && !empty($completed_audience)) {
+                                                foreach ($completed_audience as $member) {
+                                                    $member_obj = User::fetchRowByID($member);
+                                                    if (isset($member_obj) && is_object($member_obj)) {
+                                                        $name = $member_obj->getName("%l, %f");
+                                                        $id = $member;
+                                                        if (in_array($id, $searched_users)) {
+                                                            // name is a searched user match
+                                                            if (!array_key_exists($id, $filtered_audience)) {
+                                                                $filtered_audience[$name] = array("target_id" => $id, "target_label" => $name);
+                                                            }
+                                                        }
+                                                    }
                                                 }
                                             }
                                         }
-
+                                    } else {
                                         if (isset($completed_audience) && is_array($completed_audience) && !empty($completed_audience)) {
                                             foreach ($completed_audience as $member) {
                                                 $member_obj = User::fetchRowByID($member);
                                                 if (isset($member_obj) && is_object($member_obj)) {
                                                     $name = $member_obj->getName("%l, %f");
                                                     $id = $member;
-                                                    if (in_array($id, $searched_users)) {
-                                                        // name is a searched user match
-                                                        if (!array_key_exists($id, $filtered_audience)) {
-                                                                $filtered_audience[$name] = array("target_id" => $id, "target_label" => $name);
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                } else {
-                                    if (isset($completed_audience) && is_array($completed_audience) && !empty($completed_audience)) {
-                                        foreach ($completed_audience as $member) {
-                                            $member_obj = User::fetchRowByID($member);
-                                            if (isset($member_obj) && is_object($member_obj)) {
-                                                $name = $member_obj->getName("%l, %f");
-                                                $id = $member;
 
-                                                if (!array_key_exists($id, $filtered_audience)) {
+                                                    if (!array_key_exists($id, $filtered_audience)) {
                                                         $filtered_audience[$name] = array("target_id" => $id, "target_label" => $name);
                                                     }
                                                 }
@@ -2556,7 +3461,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
                             if ($secure_file) {
                                 $data["secure_access_file"]['id'] = $secure_file->getID();
                                 $data["secure_access_file"]['file_name'] = $secure_file->getFileName();
-                                $data["secure_access_file"]['updated_date'] = date(DEFAULT_DATE_FORMAT, $secure_file->getUpdatedDate());
+                                $data["secure_access_file"]['updated_date'] = date(DEFAULT_DATETIME_FORMAT, $secure_file->getUpdatedDate());
                             }
 
                             $secure_keys = $post->getSecureAccessKeys();
@@ -2656,21 +3561,27 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
                 case "get-post-exceptions" :
                     if (isset($request["post_id"]) && $tmp_input = clean_input(strtolower($request["post_id"]), array("trim", "int"))) {
                         $PROCESSED["post_id"] = $tmp_input;
+                    } else if (isset($request["event_id"]) && $tmp_input = clean_input(strtolower($request["event_id"]), array("trim", "int"))) {
+                        $PROCESSED["event_id"] = $tmp_input;
                     } else {
-                        add_error($translate->_("Please provide a <strong>Post ID</strong>."));
+                        add_error($translate->_("Please provide a <strong>Post ID</strong> or <strong>Event ID</strong>."));
                     }
-                    if (isset($PROCESSED["post_id"]) && $PROCESSED["post_id"] !== "") {
+
+                    $data["exam_exceptions"] = array();
+
+                    // Get the current exceptions...
+                    if (isset($PROCESSED["post_id"]) && $PROCESSED["post_id"] > 0) {
                         $post = Models_Exam_Post::fetchRowByID($PROCESSED["post_id"]);
                         if ($post) {
                             //exceptions
                             $exam_exceptions = $post->getExamExceptions();
                             if (isset($exam_exceptions) && is_array($exam_exceptions) && !empty($exam_exceptions)) {
-                                $data["exam_exceptions"] = array();
                                 foreach ($exam_exceptions as $exam_exception) {
                                     if (isset($exam_exception) && is_object($exam_exception)) {
                                         $proxy_id = $exam_exception->getProxyID();
                                         $user = User::fetchRowByID($proxy_id);
                                         $label = $user->getName("%l, %f");
+                                        $data["exam_exceptions"][$proxy_id]["label"] = $label;
                                         $data["exam_exceptions"][$proxy_id]["use_exception_max_attempts"] = $exam_exception->getUseExceptionMaxAttempts();
                                         $data["exam_exceptions"][$proxy_id]["max_attempts"] = $exam_exception->getAttempts();
                                         $data["exam_exceptions"][$proxy_id]["exception_start_date"] = $exam_exception->getStartDate();
@@ -2682,17 +3593,61 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
                                         $data["exam_exceptions"][$proxy_id]["exception_time_factor"] = $exam_exception->getExceptionTimeFactor();
                                         $data["exam_exceptions"][$proxy_id]["use_exception_time_factor"] = $exam_exception->getUseExceptionTimeFactor();
                                         $data["exam_exceptions"][$proxy_id]["excluded"] = $exam_exception->getExcluded();
-                                        $data["exam_exceptions"][$proxy_id]["label"] = $label;
+                                        $data["exam_exceptions"][$proxy_id]["selected"] = 1;
                                     }
                                 }
                             }
                         }
                     }
 
-                    if (isset($data)) {
-                        echo json_encode(array("status" => "success", "data" => $data));
+                    // Add remaining exam takers to the list.
+                    if (isset($post) && $post) {
+                        $event = $post->getEvent();
+                    } else if (isset($PROCESSED["event_id"]) && $PROCESSED["event_id"] > 0) {
+                        $event = Models_Event::fetchRowByID($PROCESSED["event_id"]);
+                    }
+
+                    if ($event) {
+                        $audience_members = Models_Event_Attendance::fetchAllByEventID($event->getID(), $event->getEventStart());
+
+                        foreach ($audience_members as $proxy_id => $member) {
+                            if (! array_key_exists($proxy_id, $data["exam_exceptions"])) {
+                                $student = User::fetchRowByID($proxy_id);
+
+                                if ($student) {
+                                    $data["exam_exceptions"][$proxy_id]["label"] = $student->getName("%l, %f");
+                                    $data["exam_exceptions"][$proxy_id]["use_exception_max_attempts"] = 0;
+                                    $data["exam_exceptions"][$proxy_id]["max_attempts"] = 1;
+                                    $data["exam_exceptions"][$proxy_id]["exception_start_date"] = 0;
+                                    $data["exam_exceptions"][$proxy_id]["exception_end_date"] = 0;
+                                    $data["exam_exceptions"][$proxy_id]["exception_submission_date"] = 0;
+                                    $data["exam_exceptions"][$proxy_id]["use_exception_start_date"] = 0;
+                                    $data["exam_exceptions"][$proxy_id]["use_exception_end_date"] = 0;
+                                    $data["exam_exceptions"][$proxy_id]["use_exception_submission_date"] = 0;
+                                    $data["exam_exceptions"][$proxy_id]["exception_time_factor"] = 0;
+                                    $data["exam_exceptions"][$proxy_id]["use_exception_time_factor"] = 0;
+                                    $data["exam_exceptions"][$proxy_id]["excluded"] = 0;
+                                    $data["exam_exceptions"][$proxy_id]["selected"] = 0;
+                                }
+                            }
+                        }
+                    }
+
+                    if (has_error()) {
+                        echo json_encode([
+                            "status" => "error",
+                            "data" => $ERRORSTR
+                        ]);
+                    } else if (isset($data) && count($data["exam_exceptions"]) > 0) {
+                        echo json_encode(array(
+                            "status" => "success",
+                            "data" => $data
+                        ));
                     } else {
-                        echo json_encode(array("status" => "empty", "data" => $translate->_("No exceptions were found for this exam post.")));
+                        echo json_encode(array(
+                            "status" => "empty",
+                            "data" => $translate->_("No audience members were found for the event attached to this post.")
+                        ));
                     }
 
                     break;

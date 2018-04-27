@@ -1,0 +1,7 @@
+#version-period-select div.controls select {
+    width: 250px;
+}
+
+#version-select div.controls select {
+    width: 250px;
+}

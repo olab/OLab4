@@ -737,7 +737,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUIZZES"))) {
                                             echo "	<img src=\"".ENTRADA_URL."/images/view-stats-disabled.gif\" width=\"16\" height=\"16\" alt=\"No completed quizzes at this time.\" title=\"No completed quizzes at this time.\" style=\"vertical-align: middle\" border=\"0\" />\n";
                                         }
                                         echo "	</td>\n";
-                                        echo "	<td class=\"date\"><a href=\"".$url."\" title=\"Event Date\">".date(DEFAULT_DATE_FORMAT, $attached_quiz->getEventStart())."</a></td>\n";
+                                        echo "	<td class=\"date\"><a href=\"".$url."\" title=\"Event Date\">".date(DEFAULT_DATETIME_FORMAT, $attached_quiz->getEventStart())."</a></td>\n";
                                         echo "	<td class=\"title\"><a href=\"".$url."\" title=\"Event Title: ".html_encode($attached_quiz->getEventTitle())."\">".html_encode($attached_quiz->getEventTitle())."</a></td>\n";
                                         echo "	<td class=\"title\"><a href=\"".$url."\" title=\"Quiz Title: ".html_encode($attached_quiz->getQuizTitle())."\">".html_encode($attached_quiz->getQuizTitle())."</a></td>\n";
                                         echo "	<td class=\"completed\">".(int) $completed_attempts."</td>\n";
@@ -755,7 +755,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUIZZES"))) {
                     </div>
 
                     <a name="community_pages_section"></a>
-                    <h2 id="community_pages_section" class="collapsed" title="Community Pages Section">Community Pages</h2>
+                    <h2 id="community_pages_section" class="collapsed" title="Community Pages Section"><?php echo $translate->_("Community Pages"); ?></h2>
                     <div id="community-pages-section">
                         <?php
                         /**
@@ -767,12 +767,12 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUIZZES"))) {
                         if (!(int) count($questions)) {
                             ?>
                             <div class="display-generic">
-                                Once you create questions for this quiz you will be able to assign it to pages in communities you administrate.
+                                <?php echo $translate->_("Once you create questions for this quiz you will be able to assign it to pages in communities you administrate."); ?>
                             </div>
                             <?php
                         } else {
                             ?>
-                            <a href="<?php echo ENTRADA_URL; ?>/admin/<?php echo $MODULE; ?>?section=attach&amp;community=true&amp;id=<?php echo $RECORD_ID; ?>" class="btn btn-success pull-right"><i class="icon-plus-sign icon-white"></i> Attach To Community Page</a>
+                            <a href="<?php echo ENTRADA_URL; ?>/admin/<?php echo $MODULE; ?>?section=attach&amp;community=true&amp;id=<?php echo $RECORD_ID; ?>" class="btn btn-success pull-right"><i class="icon-plus-sign icon-white"></i> <?php echo $translate->_("Attach To Community Page"); ?></a>
                             <div class="clear" style="margin-bottom: 15px"></div>
                             <?php
                             $community_page_attachments = Models_Quiz_Attached_CommunityPage::fetchAllByQuizID($RECORD_ID);
@@ -788,7 +788,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUIZZES"))) {
                                     <thead>
                                     <tr>
                                         <td class="modified">&nbsp;</td>
-                                        <td class="title sortedASC">Community Page</td>
+                                        <td class="title sortedASC"><?php echo $translate->_("Community Page"); ?></td>
                                         <td class="title">Quiz Title</td>
                                         <td class="completed">Completed</td>
                                     </tr>
@@ -818,7 +818,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUIZZES"))) {
                                 </table>
                                 <?php
                             } else {
-                                echo display_notice(array("This quiz is not currently attached to any community pages.<br /><br />To add this quiz to an page you are have administrative rights to, click the <strong>Attach To Community Page</strong> link above."));
+                                echo display_notice(array($translate->_("This quiz is not currently attached to any community pages.<br /><br />To add this quiz to a page you are have administrative rights to, click the <strong>Attach To Community Page</strong> link above.")));
                             }
                         }
                         ?>

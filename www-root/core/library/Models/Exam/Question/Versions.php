@@ -377,6 +377,12 @@ class Models_Exam_Question_Versions extends Models_Base {
     public static function fetchAllRecordsBySearchTerm($search_value = null, $limit = null, $offset = null, $sort_direction = null, $sort_column = null, $group_width = null, $question_type = null, $group_questions = null, $group_descriptors = null, $exclude_question_ids = null, $exam_id = null, $filters = array(), $folder_id = null, $search_sub_folders = false) {
         global $db, $ENTRADA_USER;
 
+        $use_highest_version = true;
+
+        if (array_key_exists("exam", $filters)) {
+            $use_highest_version = false;
+        }
+
         if (isset($sort_column) && $tmp_input = clean_input($sort_column, array("trim", "striptags"))) {
             $sort_column = $tmp_input;
         } else {
@@ -389,44 +395,81 @@ class Models_Exam_Question_Versions extends Models_Base {
             $sort_direction = "ASC";
         }
 
-        if (isset($folder_id)) {
-            $tmp_input = clean_input($folder_id, array("trim", "int"));
-            if ($search_sub_folders === 1) {
-                $folder_array = array($folder_id);
-                $folder_children = Models_Exam_Question_Bank_Folders::getChildrenFolders($tmp_input, $folder_array);
+        $restrict_to_folder = false;
+        $restrict_folder_ids = array();
+        $restrict_folder_array_children = array();
+        $group = $ENTRADA_USER->getActiveGroup();
+        if ($group === "student") {
+            $restrict_to_folder = true;
+
+            $folders = Models_Exam_Bank_Folders::fetchAllByTypeAuthor("question", $ENTRADA_USER->getID());
+
+            if ($folders && is_array($folders) && !empty($folders)) {
+                foreach ($folders as $folder) {
+                    $restrict_folder_ids[] = (int)$folder->getID();
+                }
+            }
+
+            if ($restrict_folder_ids && is_array($restrict_folder_ids) && !empty($restrict_folder_ids)) {
+                foreach ($restrict_folder_ids as $folder_restricted) {
+                    if (!in_array($folder_restricted, $restrict_folder_array_children)) {
+                        $restrict_folder_array_children[(int)$folder_restricted] = (int)$folder_restricted;
+                    }
+                    $restrict_folder_array_children = Models_Exam_Bank_Folders::getChildrenFolders($folder_restricted, $restrict_folder_array_children, "question");
+                }
+            }
+
+            if (isset($folder_id)) {
+                $tmp_input = clean_input($folder_id, array("trim", "int"));
+
+                if ($search_sub_folders === 1) {
+                    $folder_array = array($folder_id);
+                    $folder_children = Models_Exam_Bank_Folders::getChildrenFolders($tmp_input, $folder_array, "question");
+                } else {
+                    if (in_array($tmp_input, $restrict_folder_array_children)) {
+                        $restrict_folder_array_children = array($tmp_input);
+                    }
+                }
+            }
+
+            if ($folder_children && is_array($folder_children) && !empty($folder_children) && $restrict_folder_array_children && is_array($restrict_folder_array_children) && !empty($restrict_folder_array_children)) {
+                $folder_children = array_intersect($restrict_folder_array_children, $folder_children);
+            }
+        } else {
+            if (isset($folder_id)) {
+                $tmp_input = clean_input($folder_id, array("trim", "int"));
+                if ($search_sub_folders === 1) {
+                    $folder_array = array($folder_id);
+                    $folder_children = Models_Exam_Bank_Folders::getChildrenFolders($tmp_input, $folder_array, "question");
+                }
             }
         }
-
-        $course_permissions = $ENTRADA_USER->getCoursePermissions();
 
         $query = "SELECT `versions`.`version_id`, `versions`.`question_id`, `versions`.`version_count`, `versions`.`questiontype_id`, `versions`.`question_text`, `versions`.`question_description`, `versions`.`question_rationale`, `versions`.`question_correct_text`, `versions`.`question_code`, `versions`.`grading_scheme`, `versions`.`organisation_id`, `versions`.`created_date`, `versions`.`created_by`, `versions`.`updated_date`, `versions`.`updated_by`, `versions`.`deleted_date`, `versions`.`examsoft_id`, `versions`.`examsoft_images_added`, `versions`.`examsoft_flagged`, `questions`.`folder_id`
                     FROM `exam_question_versions` AS versions
                         JOIN `exam_questions` AS `questions` 
-                          ON `versions`.`question_id` = `questions`.`question_id` 
-                        JOIN 
-                        (
-                            SELECT `v`.`question_id`, MAX(`v`.`version_id`) AS highest_version_id, `v`.`version_id`
-                                FROM `exam_question_versions` as `v`";
+                          ON `versions`.`question_id` = `questions`.`question_id`";
 
-
-
-        $query .= " WHERE `v`.`deleted_date` IS NULL
-                    AND
-                    (
-                        `v`.`question_text` LIKE (". $db->qstr("%". $search_value ."%") .")
-                        OR `v`.`question_id` LIKE (". $db->qstr("%". $search_value ."%") .")
-                        OR `v`.`question_description` LIKE (". $db->qstr("%". $search_value ."%") .")
-                        OR `v`.`question_code` LIKE (". $db->qstr("%". $search_value ."%") .")
-                        OR `v`.`question_rationale` LIKE (". $db->qstr("%". $search_value ."%") .")
-                        OR `v`.`question_id` LIKE (". $db->qstr("%". $search_value ."%") .")
-                        OR `v`.`examsoft_id` LIKE (". $db->qstr("%". $search_value ."%") .")
-                )";
-
-        //restricts to active org
-        $query .= " AND `v`.`organisation_id` = ". $db->qstr($ENTRADA_USER->getActiveOrganisation());
-        $query .= " GROUP BY `v`.`question_id`
-        ) as `qv`
-	ON `qv`.`highest_version_id` = `versions`.`version_id`";
+        if ($use_highest_version) {
+            $query .= "JOIN (
+                                SELECT `v`.`question_id`, MAX(`v`.`version_id`) AS highest_version_id, `v`.`version_id`
+                                FROM `exam_question_versions` as `v`
+                                WHERE `v`.`deleted_date` IS NULL
+                                AND
+                                (
+                                    `v`.`question_text` LIKE (" . $db->qstr("%" . $search_value . "%") . ")
+                                    OR `v`.`question_id` LIKE (" . $db->qstr("%" . $search_value . "%") . ")
+                                    OR `v`.`question_description` LIKE (". $db->qstr("%" . $search_value . "%") . ")
+                                    OR `v`.`question_code` LIKE (" . $db->qstr("%" . $search_value . "%") . ")
+                                    OR `v`.`question_rationale` LIKE (" . $db->qstr("%" . $search_value . "%") . ")
+                                    OR `v`.`question_id` LIKE (" . $db->qstr("%" . $search_value . "%") . ")
+                                    OR `v`.`examsoft_id` LIKE (" . $db->qstr("%" . $search_value . "%") . ")
+                                )
+                                AND `v`.`organisation_id` = " . $db->qstr($ENTRADA_USER->getActiveOrganisation()) . "
+                                GROUP BY `v`.`question_id`
+                            ) as `qv`
+                        ON `qv`.`highest_version_id` = `versions`.`version_id`";
+        }
 
         if ($filters) {
             if (array_key_exists("author", $filters)) {
@@ -434,6 +477,10 @@ class Models_Exam_Question_Versions extends Models_Base {
                             ON `versions`.`question_id` = `authors`.`question_id`
                             AND `authors`.`author_type` = 'proxy_id'
                             AND `authors`.`author_id`  IN (". implode(",", array_keys($filters["author"])) .")";
+            } else if (array_key_exists("author[]", $filters)) {
+                $query .= " JOIN `exam_question_authors` AS `authors`
+                            ON `versions`.`question_id` = `authors`.`question_id`
+                            AND `authors`.`author_id`  IN (". implode(",", $filters["author[]"]) .")";
             }
 
             if (array_key_exists("organisation", $filters)) {
@@ -454,6 +501,10 @@ class Models_Exam_Question_Versions extends Models_Base {
                 $query .= " JOIN `exam_question_objectives` AS g
                             ON `versions`.`question_id` = g.`question_id`
                             AND g.`objective_id` IN (". implode(",", array_keys($filters["curriculum_tag"])) .")";
+            } else if (array_key_exists("curriculum_tag[]", $filters)) {
+                $query .= " JOIN `exam_question_objectives` AS g
+                            ON `versions`.`question_id` = g.`question_id`
+                            AND g.`objective_id` IN (". implode(",", $filters["curriculum_tag[]"]) .")";
             }
 
             if (array_key_exists("exam", $filters)) {
@@ -462,39 +513,52 @@ class Models_Exam_Question_Versions extends Models_Base {
                             JOIN `exams` AS exams
                             ON `ee`.`exam_id` = `exams`.`exam_id`
                             AND `exams`.`exam_id` IN (". implode(",", array_keys($filters["exam"])) .")";
+            } else if(array_key_exists("exam[]", $filters)){
+                $query .= " JOIN `exam_elements` AS ee
+                            ON `versions`.`version_id` = `ee`.`element_id`
+                            JOIN `exams` AS exams
+                            ON `ee`.`exam_id` = `exams`.`exam_id`
+                            AND `exams`.`exam_id` IN (". implode(",", $filters["exam[]"]) .")";
             }
 
-        } else {
-            if ($ENTRADA_USER->getActiveGroup() != "medtech") {
-                /*
-                 * hides query that restricts non authors from viewing versions
-                $query .= " JOIN `exam_question_authors` AS `authors`
-                            ON `versions`.`question_id` = `authors`.`question_id`
-                            AND
-                            ("
-                    .(isset($course_permissions["director"]) && $course_permissions["director"] ? "(`authors`.`author_type` = 'course_id' AND `authors`.`author_id` = ".$db->qstr($course_permissions["director"]).") OR" : "")
-                    .(isset($course_permissions["pcoordinator"]) && $course_permissions["pcoordinator"] ? "(`authors`.`author_type` = 'course_id' AND `authors`.`author_id` = ".$db->qstr($course_permissions["pcoordinator"]).") OR" : "")
-                    .(isset($course_permissions["ccoordinator"]) && $course_permissions["ccoordinator"] ? "(`authors`.`author_type` = 'course_id' AND `authors`.`author_id` = ".$db->qstr($course_permissions["ccoordinator"]).") OR" : "")
-                    .(isset($course_permissions["pcoord_id"]) && $course_permissions["pcoord_id"] ? "(`authors`.`author_type` = 'course_id' AND `authors`.`author_id` = ".$db->qstr($course_permissions["pcoord_id"]).") OR" : "")."
-                                (`authors`.`author_type` = 'proxy_id' AND `authors`.`author_id` = " . $db->qstr($ENTRADA_USER->getActiveID()) . ") OR
-                                (`authors`.`author_type` = 'organisation_id' AND `authors`.`author_id` = " . $db->qstr($ENTRADA_USER->getActiveOrganisation()) . ")
-                )
-                */
 
-            }
+        }
+
+        if (!$use_highest_version) {
+            $query .= " WHERE `versions`.`deleted_date` IS NULL
+                        AND
+                        (
+                            `versions`.`question_text` LIKE (". $db->qstr("%". $search_value ."%") .")
+                            OR `versions`.`question_description` LIKE (". $db->qstr("%". $search_value ."%") .")
+                            OR `versions`.`question_code` LIKE (". $db->qstr("%". $search_value ."%") .")
+                            OR `versions`.`question_rationale` LIKE (". $db->qstr("%". $search_value ."%") .")
+                            OR `versions`.`examsoft_id` LIKE (". $db->qstr("%". $search_value ."%") .")
+                    )
+                    AND `versions`.`organisation_id` = ". $db->qstr($ENTRADA_USER->getActiveOrganisation());
         }
 
         if (isset($folder_id) && $folder_id === 0 && isset($search_sub_folders) && $search_sub_folders === 1) {
-            //no folder restrictions
+            if ($restrict_to_folder) {
+                $folder_ids =  implode(",", $restrict_folder_array_children);
+                $query .= " AND `questions`.`folder_id` IN (" . $folder_ids . ")";
+            }
         } else if (isset($folder_children) && is_array($folder_children)) {
             $folder_ids =  implode(",", $folder_children);
             $query .= " AND `questions`.`folder_id` IN (" . $folder_ids . ")";
         } else {
-            $query .= " AND `questions`.`folder_id` = " . $folder_id;
+            if ($restrict_to_folder) {
+                if (!in_array($folder_id, $restrict_folder_array_children)) {
+                    return false;
+                } else {
+                    $query .= " AND `questions`.`folder_id` = " . $folder_id;
+                }
+            } else {
+                $query .= " AND `questions`.`folder_id` = " . $folder_id;
+            }
         }
 
         if ($filters) {
-            if (array_key_exists("author", $filters)) {
+            if (array_key_exists("author", $filters) || array_key_exists("author[]", $filters)) {
                 $query .= " AND `authors`.`deleted_date` IS NULL";
             }
 
@@ -506,22 +570,17 @@ class Models_Exam_Question_Versions extends Models_Base {
                 $query .= " AND e.`deleted_date` IS NULL";
             }
 
-            if (array_key_exists("curriculum_tag", $filters)) {
+            if (array_key_exists("curriculum_tag", $filters) || array_key_exists("curriculum_tag[]", $filters)) {
                 $query .= " AND g.`deleted_date` IS NULL";
             }
 
-            if (array_key_exists("exam", $filters)) {
+            if (array_key_exists("exam", $filters) || array_key_exists("exam[]", $filters)) {
                 $query .= " AND `ee`.`deleted_date` IS NULL";
             }
-
-        } else if ($ENTRADA_USER->getActiveGroup() != "medtech") {
-            /*
-             * hides query used to restrict to authors own questions
-            $query .= " AND `authors`.`deleted_date` IS NULL";
-            */
         }
 
-        $query .= " ORDER BY `" . $sort_column . "` " . $sort_direction . "
+        $query .= " GROUP BY `versions`.`version_id`
+                    ORDER BY `" . $sort_column . "` " . $sort_direction . "
                     LIMIT " . ($offset ? (int) $offset : 0) . ", " . (int) $limit;
 
         $results = $db->GetAll($query);
@@ -532,6 +591,12 @@ class Models_Exam_Question_Versions extends Models_Base {
     public static function countAllRecordsBySearchTerm($search_value = null, $limit = null, $offset = null, $sort_direction = null, $sort_column = null, $group_width = null, $question_type = null, $group_questions = null, $group_descriptors = null, $exclude_question_ids = null, $exam_id = null, $filters = array(), $folder_id = null, $search_sub_folders = false) {
         global $db, $ENTRADA_USER;
 
+        $use_highest_version = true;
+
+        if (array_key_exists("exam", $filters)) {
+            $use_highest_version = false;
+        }
+
         if (isset($sort_column) && $tmp_input = clean_input($sort_column, array("trim", "striptags"))) {
             $sort_column = $tmp_input;
         } else {
@@ -544,20 +609,82 @@ class Models_Exam_Question_Versions extends Models_Base {
             $sort_direction = "ASC";
         }
 
-        if (isset($folder_id)) {
-            $tmp_input = clean_input($folder_id, array("trim", "int"));
-            if ($search_sub_folders === 1) {
-                $folder_array = array($folder_id);
-                $folder_children = Models_Exam_Question_Bank_Folders::getChildrenFolders($tmp_input, $folder_array);
+        $restrict_to_folder = false;
+        $restrict_folder_ids = array();
+        $restrict_folder_array_children = array();
+        $group = $ENTRADA_USER->getActiveGroup();
+        if ($group === "student") {
+            $restrict_to_folder = true;
+
+            $folders = Models_Exam_Bank_Folders::fetchAllByTypeAuthor("question", $ENTRADA_USER->getID());
+
+            if ($folders && is_array($folders) && !empty($folders)) {
+                foreach ($folders as $folder) {
+                    $restrict_folder_ids[] = (int)$folder->getID();
+                }
+            }
+
+            if ($restrict_folder_ids && is_array($restrict_folder_ids) && !empty($restrict_folder_ids)) {
+                foreach ($restrict_folder_ids as $folder_restricted) {
+                    if (!in_array($folder_restricted, $restrict_folder_array_children)) {
+                        $restrict_folder_array_children[(int)$folder_restricted] = (int)$folder_restricted;
+                    }
+                    $restrict_folder_array_children = Models_Exam_Bank_Folders::getChildrenFolders($folder_restricted, $restrict_folder_array_children, "question");
+                }
+            }
+
+            if (isset($folder_id)) {
+                $tmp_input = clean_input($folder_id, array("trim", "int"));
+
+                if ($search_sub_folders === 1) {
+                    $folder_array = array($folder_id);
+                    $folder_children = Models_Exam_Bank_Folders::getChildrenFolders($tmp_input, $folder_array, "question");
+                } else {
+                    if (in_array($tmp_input, $restrict_folder_array_children)) {
+                        $restrict_folder_array_children = array($tmp_input);
+                    }
+                }
+            }
+
+            if ($folder_children && is_array($folder_children) && !empty($folder_children) && $restrict_folder_array_children && is_array($restrict_folder_array_children) && !empty($restrict_folder_array_children)) {
+                $folder_children = array_intersect($restrict_folder_array_children, $folder_children);
+            }
+        } else {
+            if (isset($folder_id)) {
+                $tmp_input = clean_input($folder_id, array("trim", "int"));
+                if ($search_sub_folders === 1) {
+                    $folder_array = array($folder_id);
+                    $folder_children = Models_Exam_Bank_Folders::getChildrenFolders($tmp_input, $folder_array, "question");
+                }
             }
         }
 
-        $course_permissions = $ENTRADA_USER->getCoursePermissions();
 
         $query = "  SELECT count(DISTINCT `versions`.`question_id`) as `total_questions`
-                      FROM `exam_question_versions` AS `versions`
+                    FROM `exam_question_versions` AS `versions`
                     JOIN `exam_questions` AS `questions`
                     ON `versions`.`question_id` = `questions`.`question_id`";
+
+        if ($use_highest_version) {
+            $query .= "JOIN (
+                                SELECT `v`.`question_id`, MAX(`v`.`version_id`) AS highest_version_id, `v`.`version_id`
+                                FROM `exam_question_versions` as `v`
+                                WHERE `v`.`deleted_date` IS NULL
+                                AND
+                                (
+                                    `v`.`question_text` LIKE (" . $db->qstr("%" . $search_value . "%") . ")
+                                    OR `v`.`question_id` LIKE (" . $db->qstr("%" . $search_value . "%") . ")
+                                    OR `v`.`question_description` LIKE (". $db->qstr("%" . $search_value . "%") . ")
+                                    OR `v`.`question_code` LIKE (" . $db->qstr("%" . $search_value . "%") . ")
+                                    OR `v`.`question_rationale` LIKE (" . $db->qstr("%" . $search_value . "%") . ")
+                                    OR `v`.`question_id` LIKE (" . $db->qstr("%" . $search_value . "%") . ")
+                                    OR `v`.`examsoft_id` LIKE (" . $db->qstr("%" . $search_value . "%") . ")
+                                )
+                                AND `v`.`organisation_id` = " . $db->qstr($ENTRADA_USER->getActiveOrganisation()) . "
+                                GROUP BY `v`.`question_id`
+                            ) as `qv`
+                        ON `qv`.`highest_version_id` = `versions`.`version_id`";
+        }
 
         if ($filters) {
             if (array_key_exists("author", $filters)) {
@@ -565,6 +692,10 @@ class Models_Exam_Question_Versions extends Models_Base {
                             ON `versions`.`question_id` = `authors`.`question_id`
                             AND `authors`.`author_type` = 'proxy_id'
                             AND `authors`.`author_id`  IN (". implode(",", array_keys($filters["author"])) .")";
+            } else if (array_key_exists("author[]", $filters)) {
+                $query .= " JOIN `exam_question_authors` AS `authors`
+                            ON `versions`.`question_id` = `authors`.`question_id`
+                            AND `authors`.`author_id`  IN (". implode(",", $filters["author[]"]) .")";
             }
 
             if (array_key_exists("organisation", $filters)) {
@@ -585,6 +716,10 @@ class Models_Exam_Question_Versions extends Models_Base {
                 $query .= " JOIN `exam_question_objectives` AS g
                             ON `versions`.`question_id` = g.`question_id`
                             AND g.`objective_id` IN (". implode(",", array_keys($filters["curriculum_tag"])) .")";
+            } else if (array_key_exists("curriculum_tag[]", $filters)) {
+                $query .= " JOIN `exam_question_objectives` AS g
+                            ON `versions`.`question_id` = g.`question_id`
+                            AND g.`objective_id` IN (". implode(",", $filters["curriculum_tag[]"]) .")";
             }
 
             if (array_key_exists("exam", $filters)) {
@@ -593,52 +728,51 @@ class Models_Exam_Question_Versions extends Models_Base {
                             JOIN `exams` AS exams
                             ON `ee`.`exam_id` = `exams`.`exam_id`
                             AND `exams`.`exam_id` IN (". implode(",", array_keys($filters["exam"])) .")";
+            } else if(array_key_exists("exam[]", $filters)){
+                $query .= " JOIN `exam_elements` AS ee
+                            ON `versions`.`version_id` = `ee`.`element_id`
+                            JOIN `exams` AS exams
+                            ON `ee`.`exam_id` = `exams`.`exam_id`
+                            AND `exams`.`exam_id` IN (". implode(",", $filters["exam[]"]) .")";
             }
 
-        } else {
-            if ($ENTRADA_USER->getActiveGroup() != "medtech") {
-                /*
-                 * hides query that restricts non authors from viewing versions
-                $query .= " JOIN `exam_question_authors` AS `authors`
-                            ON `versions`.`question_id` = `authors`.`question_id`
-                            AND
-                            ("
-                    .(isset($course_permissions["director"]) && $course_permissions["director"] ? "(`authors`.`author_type` = 'course_id' AND `authors`.`author_id` = ".$db->qstr($course_permissions["director"]).") OR" : "")
-                    .(isset($course_permissions["pcoordinator"]) && $course_permissions["pcoordinator"] ? "(`authors`.`author_type` = 'course_id' AND `authors`.`author_id` = ".$db->qstr($course_permissions["pcoordinator"]).") OR" : "")
-                    .(isset($course_permissions["ccoordinator"]) && $course_permissions["ccoordinator"] ? "(`authors`.`author_type` = 'course_id' AND `authors`.`author_id` = ".$db->qstr($course_permissions["ccoordinator"]).") OR" : "")
-                    .(isset($course_permissions["pcoord_id"]) && $course_permissions["pcoord_id"] ? "(`authors`.`author_type` = 'course_id' AND `authors`.`author_id` = ".$db->qstr($course_permissions["pcoord_id"]).") OR" : "")."
-                                (`authors`.`author_type` = 'proxy_id' AND `authors`.`author_id` = " . $db->qstr($ENTRADA_USER->getActiveID()) . ") OR
-                                (`authors`.`author_type` = 'organisation_id' AND `authors`.`author_id` = " . $db->qstr($ENTRADA_USER->getActiveOrganisation()) . ")
-                )
-                */
-
-            }
         }
 
-        $query .= " WHERE `versions`.`deleted_date` IS NULL
-                    AND
-                    (
-                        `versions`.`question_text` LIKE (". $db->qstr("%". $search_value ."%") .")
-                        OR `versions`.`question_description` LIKE (". $db->qstr("%". $search_value ."%") .")
-                        OR `versions`.`question_code` LIKE (". $db->qstr("%". $search_value ."%") .")
-                        OR `versions`.`question_rationale` LIKE (". $db->qstr("%". $search_value ."%") .")
-                        OR `versions`.`examsoft_id` LIKE (". $db->qstr("%". $search_value ."%") .")
-                )";
-
-        //restricts to active org
-        $query .= " AND `versions`.`organisation_id` = ". $db->qstr($ENTRADA_USER->getActiveOrganisation());
+        if (!$use_highest_version) {
+            $query .= " WHERE `versions`.`deleted_date` IS NULL
+                        AND
+                        (
+                            `versions`.`question_text` LIKE (". $db->qstr("%". $search_value ."%") .")
+                            OR `versions`.`question_description` LIKE (". $db->qstr("%". $search_value ."%") .")
+                            OR `versions`.`question_code` LIKE (". $db->qstr("%". $search_value ."%") .")
+                            OR `versions`.`question_rationale` LIKE (". $db->qstr("%". $search_value ."%") .")
+                            OR `versions`.`examsoft_id` LIKE (". $db->qstr("%". $search_value ."%") .")
+                    )
+                    AND `versions`.`organisation_id` = ". $db->qstr($ENTRADA_USER->getActiveOrganisation());
+        }
 
         if (isset($folder_id) && $folder_id === 0 && isset($search_sub_folders) && $search_sub_folders === 1) {
-            //no folder restrictions
+            if ($restrict_to_folder) {
+                $folder_ids =  implode(",", $restrict_folder_array_children);
+                $query .= " AND `questions`.`folder_id` IN (" . $folder_ids . ")";
+            }
         } else if (isset($folder_children) && is_array($folder_children)) {
             $folder_ids =  implode(",", $folder_children);
             $query .= " AND `questions`.`folder_id` IN (" . $folder_ids . ")";
         } else {
-            $query .= " AND `questions`.`folder_id` = " . $folder_id;
+            if ($restrict_to_folder) {
+                if (!in_array($folder_id, $restrict_folder_array_children)) {
+                    return false;
+                } else {
+                    $query .= " AND `questions`.`folder_id` = " . $folder_id;
+                }
+            } else {
+                $query .= " AND `questions`.`folder_id` = " . $folder_id;
+            }
         }
 
         if ($filters) {
-            if (array_key_exists("author", $filters)) {
+            if (array_key_exists("author", $filters) || array_key_exists("author[]", $filters)) {
                 $query .= " AND `authors`.`deleted_date` IS NULL";
             }
 
@@ -650,26 +784,21 @@ class Models_Exam_Question_Versions extends Models_Base {
                 $query .= " AND e.`deleted_date` IS NULL";
             }
 
-            if (array_key_exists("curriculum_tag", $filters)) {
+            if (array_key_exists("curriculum_tag", $filters) || array_key_exists("curriculum_tag[]", $filters)) {
                 $query .= " AND g.`deleted_date` IS NULL";
             }
 
-            if (array_key_exists("exam", $filters)) {
+            if (array_key_exists("exam", $filters) || array_key_exists("exam[]", $filters)) {
                 $query .= " AND `ee`.`deleted_date` IS NULL";
             }
 
-        } else if ($ENTRADA_USER->getActiveGroup() != "medtech") {
-            /*
-             * hides query used to restrict to authors own versions
-            $query .= " AND `authors`.`deleted_date` IS NULL";
-            */
         }
 
         $results = $db->GetRow($query);
-
         if ($results) {
             return $results["total_questions"];
         }
+
         return 0;
     }
 
@@ -777,7 +906,7 @@ class Models_Exam_Question_Versions extends Models_Base {
         return $this->question_tags;
     }
 
-    /* @return bool|Models_Exam_Question_Bank_Folders */
+    /* @return bool|Models_Exam_Bank_Folders */
     public function getParentFolder() {
         $question = $this->getQuestion();
 

@@ -140,7 +140,8 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ROTATION_SCHEDULE"))) {
                                 foreach ($PROCESSED["draft_author_proxy_id"] as $author_proxy) {
                                     $draft_author_data = array(
                                         "cbl_schedule_draft_id" => $PROCESSED["draft_id"],
-                                        "proxy_id" => $author_proxy,
+                                        "author_value" => $author_proxy,
+                                        "author_type" => "proxy_id",
                                         "created_date" => time(),
                                         "created_by" => $ENTRADA_USER->getActiveID()
                                     );
@@ -207,7 +208,8 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ROTATION_SCHEDULE"))) {
                 parent_form: $("#rotation-form"),
                 results_parent: $("#book-slot"),
                 search_target_form_action: ENTRADA_URL + "/admin/rotationschedule/form",
-                width: 325
+                width: 325,
+                modal: true
             });
         });
     </script>
@@ -340,12 +342,18 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ROTATION_SCHEDULE"))) {
                                 $course = Models_Course::get($schedule->getCourseID());
                                 $children = $schedule->getChildren();
                                 $url = ENTRADA_URL . "/admin/" . $MODULE . "?section=edit&schedule_id=" . $schedule->getID();
+                                $mapping_url = ENTRADA_URL . "/admin/" . $MODULE . "?section=map-objectives&schedule_id=" . $schedule->getID();
                                 ?>
+
                                 <tr>
                                     <td>
                                         <input type="checkbox" name="delete[]" value="<?php echo $schedule->getID(); ?>"/>
                                     </td>
-                                    <td><a href="<?php echo $url; ?>"><?php echo $schedule->getTitle(); ?></a></td>
+                                    <td>
+                                        <a href="<?php echo $url; ?>"><?php echo $schedule->getTitle(); ?></a>
+                                        <a href="<?php echo $mapping_url; ?>" id="tag-objectives" class="btn pull-right"><i class="fa fa-map" aria-hidden="true"></i> <?php echo $translate->_("Objectives") ?>
+                                        </a>
+                                    </td>
                                     <td><a href="<?php echo $url; ?>"><?php echo $schedule->getCode(); ?></a></td>
                                     <td><a href="<?php echo $url; ?>"><?php echo $course->getCourseName(); ?></a></td>
                                     <td>

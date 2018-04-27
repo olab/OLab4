@@ -77,10 +77,12 @@ class Entrada_Cli_Setup extends Entrada_Cli {
                         "number" => 0,
                         "username" => "'%ADMIN_USERNAME%'",
                         "password" => "'%ADMIN_PASSWORD_HASH%'",
-                        "salt" => "NULL",
+                        "salt" => "'%ADMIN_PASSWORD_SALT%'",
                         "organisation_id" => "1",
                         "department" => "NULL",
                         "prefix" => "''",
+                        "suffix_post_nominal" => "''",
+                        "suffix_gen" => "''",
                         "firstname" => "'%ADMIN_FIRSTNAME%'",
                         "lastname" => "'%ADMIN_LASTNAME%'",
                         "date_of_birth" => "NULL",
@@ -102,11 +104,13 @@ class Entrada_Cli_Setup extends Entrada_Cli {
                         "privacy_level" => "0",
                         "copyright" => "0",
                         "notifications" => "1",
+                        "admin_access" => "0",
                         "entry_year" => "NULL",
                         "grad_year" => "NULL",
                         "gender" => "0",
                         "clinical" => "1",
                         "uuid" => "UUID()",
+                        "pin" => "NULL",
                         "created_date" => "UNIX_TIMESTAMP()",
                         "created_by" => "1",
                         "updated_date" => "0",
@@ -335,8 +339,32 @@ class Entrada_Cli_Setup extends Entrada_Cli {
                             print "\n";
                         }
 
+                        print "\n";
+                        print "Recreating empty " . (implode(", ", array_values($databases))) . " databases: ";
+
+                        if ($setup->recreateDatabases()) {
+                            print $this->color("COMPLETE", "green");
+                        } else {
+                            print $this->color("FAILED", "red");
+                            print "\n\n";
+
+                            return false;
+                        }
+
                         print "\n\n";
-                        print $this->color("All finished! Your new Entrada install SQL files have been created.", "yellow");
+                        print "Deleting old config.inc.php file: ";
+
+                        if (@unlink(ENTRADA_CORE . "/config/config.inc.php")) {
+                            print $this->color("COMPLETE", "green");
+                        } else {
+                            print $this->color("FAILED", "red");
+                            print "\n\n";
+
+                            return false;
+                        }
+
+                        print "\n\n";
+                        print $this->color("All finished! Your new Entrada install SQL files have been created. Proceed to setup.", "yellow");
                         print "\n";
                     } catch (\Exception $e) {
                         print "\n\n";

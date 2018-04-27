@@ -1,0 +1,24 @@
+.animated-notification {
+    position: fixed;
+    left: 0;
+    right: 0;
+    background-color: #fff;
+    text-align: center;
+}
+
+#animated-notification-wrapper {
+    display: block;
+    margin: 0 auto;
+    width: 200px;
+}
+
+#animated-notification-content {
+    display: table-cell;
+    vertical-align: middle;
+}
+
+.animated-notification-text {
+    padding-top: 15px;
+    margin-left: 50px;
+    font-weight: 700;
+}

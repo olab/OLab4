@@ -134,6 +134,14 @@ class Models_Assessments_Form_Author extends Models_Base {
         ));
     }
 
+    public static function fetchAllByAuthorTypeAuthorID($author_type, $author_id) {
+        $self = new self();
+        return $self->fetchAll(array(
+            array("key" => "author_id", "value" => $author_id, "method" => "="),
+            array("key" => "author_type", "value" => $author_type, "method" => "=")
+        ));
+    }
+
     public static function fetchAllRecords($form_id = NULL) {
         $constraints = array(
             array("key" => "afauthor_id", "value" => 0, "method" => ">="),

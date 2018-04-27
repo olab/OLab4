@@ -5,7 +5,6 @@ var show_loading_message = true;
 var questions_checked = {};
 
 jQuery(function($) {
-    
     $(".panel .remove-target-toggle").on("click", function (e) {
         e.preventDefault();
         
@@ -194,18 +193,18 @@ jQuery(function($) {
     }
 
     function selectQuestion(clicked) {
-        var icon            = jQuery(clicked).find(".icon-select-question");
+        var icon            = jQuery(clicked).find(".question-icon-select");
         var question_id     = icon.data("question-id");
         var version_id      = icon.data("version-id");
         var version_count   = icon.data("version-count");
 
         /* Details View */
-        var icon_details    = jQuery(".pull-right .icon-select-question[data-version-id=" + version_id + "]");
+        var icon_details    = jQuery(".pull-right .question-icon-select[data-version-id=" + version_id + "]");
         var span_details    = icon_details.closest("span");
         var object_details  = span_details.closest("table");
 
         /* List View */
-        var icon_list       = jQuery(".icon-select-question[data-version-id=" + version_id + "]");
+        var icon_list       = jQuery(".question-icon-select[data-version-id=" + version_id + "]");
         var span_list       = icon_list.closest("span");
         var object_list     = span_list.closest("tr.question-row");
 

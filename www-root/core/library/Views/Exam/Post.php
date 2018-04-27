@@ -132,26 +132,26 @@ class Views_Exam_Post extends Views_Deprecated_Base {
                         switch ($entry->getProgressValue()) {
                             case "complete" :
                                 if ($post->isScoreStartValid()) {
-                                    $html .= "<li>" . date(DEFAULT_DATE_FORMAT, $entry->getUpdatedDate()) . " - <strong>Completed</strong></li>";
+                                    $html .= "<li>" . date(DEFAULT_DATETIME_FORMAT, $entry->getUpdatedDate()) . " - <strong>Completed</strong></li>";
                                 } else {
                                     if ($post->getReleaseScore() === 1) {
                                         if ($post->getUseReleaseStartDate()) {
                                             if (NULL !== $post->getReleaseStartDate() && $post->getReleaseEndDate() <= time()) {
-                                                $html .= "<li>" . date(DEFAULT_DATE_FORMAT, $entry->getUpdatedDate()) . " <strong>Score:</strong> To Be Released " . date(DEFAULT_DATE_FORMAT, $post->getReleaseStartDate()) . "</li>";
+                                                $html .= "<li>" . date(DEFAULT_DATETIME_FORMAT, $entry->getUpdatedDate()) . " <strong>Score:</strong> To Be Released " . date(DEFAULT_DATETIME_FORMAT, $post->getReleaseStartDate()) . "</li>";
                                             } else {
-                                                $html .= "<li>" . date(DEFAULT_DATE_FORMAT, $entry->getUpdatedDate()) . " - <strong>Completed</strong></li>";
+                                                $html .= "<li>" . date(DEFAULT_DATETIME_FORMAT, $entry->getUpdatedDate()) . " - <strong>Completed</strong></li>";
                                             }
                                         } else {
-                                            $html .= "<li>" . date(DEFAULT_DATE_FORMAT, $entry->getUpdatedDate()) . " - <strong>Completed</strong></li>";
+                                            $html .= "<li>" . date(DEFAULT_DATETIME_FORMAT, $entry->getUpdatedDate()) . " - <strong>Completed</strong></li>";
                                         }
                                     }
                                 }
                                 break;
                             case "expired" :
-                                $html .= "<li class=\"incorrect\">" . date(DEFAULT_DATE_FORMAT, $entry->getUpdatedDate()) . " <strong>Expired Attempt</strong>: not completed.</li>";
+                                $html .= "<li class=\"incorrect\">" . date(DEFAULT_DATETIME_FORMAT, $entry->getUpdatedDate()) . " <strong>Expired Attempt</strong>: not completed.</li>";
                                 break;
                             case "inprogress" :
-                                $html .= "<li>" . date(DEFAULT_DATE_FORMAT, $entry->getUpdatedDate()) . " <strong>Attempt In Progress</strong> ( <a class=\"start-exam\" data-href=\"" . $secure_exam_url . "\" data-resource-id=\"".$post->getID()."\">continue exam</a> )</li>";
+                                $html .= "<li>" . date(DEFAULT_DATETIME_FORMAT, $entry->getUpdatedDate()) . " <strong>Attempt In Progress</strong> ( <a class=\"start-exam\" data-href=\"" . $secure_exam_url . "\" data-resource-id=\"".$post->getID()."\">continue exam</a> )</li>";
 
                                 break;
                             default :
@@ -163,7 +163,7 @@ class Views_Exam_Post extends Views_Deprecated_Base {
             }
             $html .= "</td>\n";
             $html .= "<td class=\"date\" style=\"vertical-align: top\">";
-            $html .= (((int) $post->getEndDate()) ? date(DEFAULT_DATE_FORMAT, $post->getEndDate()) : $MODULE_TEXT["posts"]["text_no_expiration"]);
+            $html .= (((int) $post->getEndDate()) ? date(DEFAULT_DATETIME_FORMAT, $post->getEndDate()) : $MODULE_TEXT["posts"]["text_no_expiration"]);
             $html .= "</td>\n";
             $html .= "</tr>\n";
 
@@ -375,23 +375,23 @@ class Views_Exam_Post extends Views_Deprecated_Base {
                     switch ($entry->getProgressValue()) {
                         case "complete" :
                             if ($post->isScoreStartValid()) {
-                                $html .= "<li>" . date(DEFAULT_DATE_FORMAT, $entry->getUpdatedDate()) . " - <strong>Completed</strong></li>";
+                                $html .= "<li>" . date(DEFAULT_DATETIME_FORMAT, $entry->getUpdatedDate()) . " - <strong>Completed</strong></li>";
                             } else {
                                 if ($post->getReleaseScore() === 1) {
                                     if ($post->getUseReleaseStartDate()) {
                                         if (NULL !== $post->getReleaseStartDate() && $post->getReleaseEndDate() <= time()) {
-                                            $html .= "<li>" . date(DEFAULT_DATE_FORMAT, $entry->getUpdatedDate()) . " <strong>Score:</strong> To Be Released " . date(DEFAULT_DATE_FORMAT, $post->getReleaseStartDate()) . "</li>";
+                                            $html .= "<li>" . date(DEFAULT_DATETIME_FORMAT, $entry->getUpdatedDate()) . " <strong>Score:</strong> To Be Released " . date(DEFAULT_DATETIME_FORMAT, $post->getReleaseStartDate()) . "</li>";
                                         } else {
-                                            $html .= "<li>" . date(DEFAULT_DATE_FORMAT, $entry->getUpdatedDate()) . " - <strong>Completed</strong></li>";
+                                            $html .= "<li>" . date(DEFAULT_DATETIME_FORMAT, $entry->getUpdatedDate()) . " - <strong>Completed</strong></li>";
                                         }
                                     } else {
-                                        $html .= "<li>" . date(DEFAULT_DATE_FORMAT, $entry->getUpdatedDate()) . " - <strong>Completed</strong></li>";
+                                        $html .= "<li>" . date(DEFAULT_DATETIME_FORMAT, $entry->getUpdatedDate()) . " - <strong>Completed</strong></li>";
                                     }
                                 }
                             }
                             break;
                         case "inprogress" :
-                            $html .= "<li>" . date(DEFAULT_DATE_FORMAT, $entry->getUpdatedDate()) . " <strong>Attempt In Progress</strong> ( <a class=\"start-exam\" data-href=\"" . $secure_exam_url . "\" data-resource-id=\"".$post->getID()."\">continue quiz</a> )</li>";
+                            $html .= "<li>" . date(DEFAULT_DATETIME_FORMAT, $entry->getUpdatedDate()) . " <strong>Attempt In Progress</strong> ( <a class=\"start-exam\" data-href=\"" . $secure_exam_url . "\" data-resource-id=\"".$post->getID()."\">continue quiz</a> )</li>";
                             break;
                         default :
                             break;
@@ -402,7 +402,7 @@ class Views_Exam_Post extends Views_Deprecated_Base {
         }
         $html .= "</td>\n";
         $html .= "<td class=\"date\" style=\"vertical-align: top\">";
-        $html .= (((int) $post->getEndDate()) ? date(DEFAULT_DATE_FORMAT, $post->getEndDate()) : $MODULE_TEXT["posts"]["text_no_expiration"]);
+        $html .= (((int) $post->getEndDate()) ? date(DEFAULT_DATETIME_FORMAT, $post->getEndDate()) : $MODULE_TEXT["posts"]["text_no_expiration"]);
         $html .= "</td>\n";
         $html .= "</tr>\n";
 
@@ -476,12 +476,12 @@ class Views_Exam_Post extends Views_Deprecated_Base {
                 $html .= "</td>\n";
             $html .= "<td class=\"date-small\">\n";
                 $html .= "<span class=\"content-date\">\n";
-                    $html .= (((int) $exam_post->getStartDate()) ? date(DEFAULT_DATE_FORMAT, $exam_post->getStartDate()) : "No Restrictions");
+                    $html .= (((int) $exam_post->getStartDate()) ? date(DEFAULT_DATETIME_FORMAT, $exam_post->getStartDate()) : "No Restrictions");
                 $html .= "</span>\n";
             $html .= "</td>\n";
             $html .= "<td class=\"date-small\">\n";
                 $html .= "<span class=\"content-date\">\n";
-                    $html .= (((int) $exam_post->getEndDate()) ? date(DEFAULT_DATE_FORMAT, $exam_post->getEndDate()) : "No Restrictions");
+                    $html .= (((int) $exam_post->getEndDate()) ? date(DEFAULT_DATETIME_FORMAT, $exam_post->getEndDate()) : "No Restrictions");
                 $html .= "</span>\n";
             $html .= "</td>\n";
             $html .= "<td class=\"accesses\" style=\"text-align: center\">\n";
@@ -762,7 +762,6 @@ class Views_Exam_Post extends Views_Deprecated_Base {
                 */
             }
 
-
             if ($can_delete) {
                 /*
                 $html .= "<li><a href=\"#\" >" . $MENU_TEXT["delete"] . "</a></li>\n";
@@ -819,6 +818,29 @@ class Views_Exam_Post extends Views_Deprecated_Base {
         }
 
         return $url;
+    }
+
+    public function renderHonorCode() {
+        global $translate;
+
+        $html = "<hr />";
+        $html .= "<div class=\"well\">";
+        $html .= "    <div class=\"row-fluid\" id=\"honor-code-instructions\">";
+        $html .= "        <div class=\"span3\"><strong>" . $translate->_("Honor Code") . "</strong></div>";
+        $html .= "        <div class=\"span9\">" .  $this->post->getHonorCode() . "</div>";
+        $html .= "    </div>";
+        $html .= "    <div class=\"row-fluid\">";
+        $html .= "        <div class=\"span9\">";
+        $html .= "            <input type=\"checkbox\" id=\"honor-code-ok\" name=\"honor-code-ok\"/>";
+        $html .= "            <label for=\"honor-code-ok\">";
+        $html .=  $translate->_("I acknowledge the above Honor Code.");
+        $html .= "            </label>";
+        $html .= "        </div>";
+        $html .= "    </div>";
+        $html .= "</div>";
+        $html .= "<hr />";
+
+        return $html;
     }
 
     public function renderPublicPostSettings() {

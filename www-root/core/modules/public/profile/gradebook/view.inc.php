@@ -36,14 +36,22 @@ if ($COURSE_ID) {
 
   	$BREADCRUMB[] = array("url" => ENTRADA_URL."/profile/gradebook", "title" => $course_title);
 
-	$group_ids = groups_get_enrolled_group_ids($ENTRADA_USER->getId());
+    $proxy_id = $ENTRADA_USER->getId();
 
-	$group_ids_string = implode(', ',$group_ids);
-	$query = "	SELECT b.*, c.*, d.`handler`, AVG(e.`value`) as `mean`
+	$query = "	SELECT b.*, c.*, d.`handler`, AVG(e.`value`) as `mean`, cp.`cperiod_id`
 				FROM `courses` AS a
 				JOIN `assessments` AS b
 				ON a.`course_id` = b.`course_id`
-				AND b.`cohort` IN(".$group_ids_string.")
+				LEFT JOIN `course_audience` AS `course_a`
+                ON `course_a`.`course_id` = a.`course_id`
+                AND `course_a`.`audience_active` = 1
+                LEFT JOIN `groups` AS `g`
+                ON `course_a`.`audience_type` = 'group_id'
+                AND `course_a`.`audience_value` = `g`.`group_id`
+                LEFT JOIN `group_members` AS `gm`
+                ON `gm`.`group_id` = `g`.`group_id`
+                LEFT JOIN `curriculum_periods` AS `cp`
+                ON `course_a`.`cperiod_id` = `cp`.`cperiod_id`
 				JOIN `assessment_grades` AS c
 				ON b.`assessment_id` = c.`assessment_id`
 				AND c.`proxy_id` = ".$db->qstr($ENTRADA_USER->getID())."
@@ -56,6 +64,10 @@ if ($COURSE_ID) {
 				AND (b.`release_date` = '0' OR b.`release_date` <= ".$db->qstr(time()).")
 				AND (b.`release_until` = '0' OR b.`release_until` >= ".$db->qstr(time()).")
 				AND b.`show_learner` = '1'
+				AND (
+                      (`course_a`.`audience_value` = " . $db->qstr($proxy_id) . " AND `course_a`.`audience_type` = 'proxy_id') 
+                        OR (`gm`.`proxy_id`= " . $db->qstr($proxy_id) . " AND `course_a`.`audience_type` = 'group_id')
+                    )
                 GROUP BY e.`assessment_id`
 				ORDER BY `order` ASC";
 	$results = $db->GetAll($query);
@@ -132,7 +144,6 @@ if ($COURSE_ID) {
                                 FROM `courses` AS a
                                 JOIN `assessments` AS b
                                 ON a.`course_id` = b.`course_id`
-                                AND b.`cohort` IN(".$group_ids_string.")
                                 JOIN `assessment_grades` AS c
                                 ON b.`assessment_id` = c.`assessment_id`
                                 JOIN `assessment_marking_schemes` AS d
@@ -160,7 +171,7 @@ if ($COURSE_ID) {
                     echo "	<td>".trim($median_value).assessment_suffix($result)."</td>\n";
                 }
 				if (defined("GRADEBOOK_DISPLAY_WEIGHTED_TOTAL") && GRADEBOOK_DISPLAY_WEIGHTED_TOTAL) {
-					$gradebook = gradebook_get_weighted_grades($result["course_id"], $ENTRADA_USER->getCohort(), $ENTRADA_USER->getID(), $result["assessment_id"]);
+					$gradebook = gradebook_get_weighted_grades($result["course_id"], $result["cperiod_id"], $ENTRADA_USER->getID(), $result["assessment_id"]);
 					echo "	<td>".round(trim($gradebook["grade"]), 2)." / ".trim($gradebook["total"])."</td>\n";
 				}
 				echo "	<td style=\"text-align: right;\">".(($grade_value === "-") ? "-" : (($result["handler"] == "Numeric" ? ($result["value"] === "0" ? "0" : trim(trim(number_format(($grade_value / $result["numeric_grade_points_total"] * 100), 2), "0"), "."))."%" : (($result["handler"] == "Percentage" ? ("N/A") : $grade_value)))))."</td>\n";

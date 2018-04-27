@@ -5,7 +5,7 @@ jQuery(document).ready(function($){
 		$('#change_next_nav_button').hide();
 	}
 	
-	$('#show_right_nav').live("click", function() {
+	jQuery(document).on("click", '#show_right_nav', function() {
 		if ($(this).is(':checked')) {
 			$('#change_next_nav_button').show();
 		} else {
@@ -19,7 +19,7 @@ jQuery(document).ready(function($){
 		$('#change_previous_nav_button').hide();
 	}
 	
-	$('#show_left_nav').live("click", function() {
+	jQuery(document).on("click", '#show_left_nav', function() {
 		if ($(this).is(':checked')) {
 			$('#change_previous_nav_button').show();
 		} else {
@@ -29,7 +29,7 @@ jQuery(document).ready(function($){
 	
 	$('#next_page_list input:radio[value=\'' + $('#selected_nav_next_page_id').val() + '\']').attr('checked', 'checked');
 	
-	$("#change_next_nav_button").live("click", function() {
+	jQuery(document).on("click", "#change_next_nav_button", function() {
 		var modal_container = $("#modal_page_navigation");
 		
 		modal_container.dialog({
@@ -60,7 +60,7 @@ jQuery(document).ready(function($){
 	
 	$('#previous_page_list input:radio[value=\'' + $('#selected_nav_previous_page_id').val() + '\']').attr('checked', 'checked');
 	
-	$("#change_previous_nav_button").live("click", function() {
+	jQuery(document).on("click", "#change_previous_nav_button", function() {
 		var modal_container = $("#modal_previous_page_navigation");
 		
 		modal_container.dialog({

@@ -119,7 +119,11 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_DISTRIBUTIONS"))) {
     $distribution_methods[] = array("target_id" => "delegation", "target_label" => $translate->_("Delegation"));
 
     $assessment_evaluation_tabs = new Views_Assessments_Dashboard_NavigationTabs();
-    $assessment_evaluation_tabs->render(array("active" => "distributions"));
+    $assessment_evaluation_tabs->render(array(
+        "active" => "distributions",
+        "group" => $ENTRADA_USER->getActiveGroup(),
+        "role" => $ENTRADA_USER->getActiveRole()
+    ));
     ?>
 
     <h1><?php echo $translate->_("Distributions"); ?></h1>

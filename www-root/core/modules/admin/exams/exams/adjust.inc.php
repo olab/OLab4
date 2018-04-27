@@ -109,11 +109,41 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
                                 if (!$old_adjustment->update()) {
                                     $db->FailTrans();
                                     add_error($translate->_("Failed to delete old grading adjustment that marked this answer as ".($mark_correct ? "incorrect" : "correct").". Please try again later."));
+                                } else {
+                                    $history = new Models_Exam_Creation_History(array(
+                                        "exam_id" => $exam->getExamID(),
+                                        "proxy_id" => $ENTRADA_USER->getID(),
+                                        "action" => "adjust_score",
+                                        "action_resource_id" => $old_adjustment->getExamElementID(),
+                                        "secondary_action" => $old_adjustment->getType(),
+                                        "secondary_action_resource_id" => $old_adjustment->getValue(),
+                                        "history_message" => NULL,
+                                        "timestamp" => time(),
+                                    ));
+
+                                    if (!$history->insert()) {
+                                        echo json_encode(array("status" => "error", "data" => array($translate->_("Failed to insert history log for Edit Exam."))));
+                                    }
                                 }
                             }
                             if (!$new_adjustment->insert()) {
                                 $db->FailTrans();
                                 add_error($translate->_("Failed to add grading adjustment that marked this answer as ".($mark_correct ? "correct" : "incorrect").". Please try again later."));
+                            } else {
+                                $history = new Models_Exam_Creation_History(array(
+                                    "exam_id" => $exam->getExamID(),
+                                    "proxy_id" => $ENTRADA_USER->getID(),
+                                    "action" => "adjust_score",
+                                    "action_resource_id" => $new_adjustment->getExamElementID(),
+                                    "secondary_action" => $new_adjustment->getType(),
+                                    "secondary_action_resource_id" => $new_adjustment->getValue(),
+                                    "history_message" => NULL,
+                                    "timestamp" => time(),
+                                ));
+
+                                if (!$history->insert()) {
+                                    echo json_encode(array("status" => "error", "data" => array($translate->_("Failed to insert history log for Edit Exam."))));
+                                }
                             }
                         }
                     } else {
@@ -150,6 +180,21 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
                             } else if (!$adjustment->insert()) {
                                 add_error($error_str);
                                 $db->FailTrans();
+                            } else {
+                                $history = new Models_Exam_Creation_History(array(
+                                    "exam_id" => $exam->getExamID(),
+                                    "proxy_id" => $ENTRADA_USER->getID(),
+                                    "action" => "adjust_score",
+                                    "action_resource_id" => $adjustment->getExamElementID(),
+                                    "secondary_action" => $adjustment->getType(),
+                                    "secondary_action_resource_id" => $adjustment->getValue(),
+                                    "history_message" => NULL,
+                                    "timestamp" => time(),
+                                ));
+
+                                if (!$history->insert()) {
+                                    echo json_encode(array("status" => "error", "data" => array($translate->_("Failed to insert history log for Edit Exam."))));
+                                }
                             }
                         }
                     }

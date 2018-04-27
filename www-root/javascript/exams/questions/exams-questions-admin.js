@@ -21,6 +21,7 @@ jQuery(document).ready(function ($) {
     question_type_id = $("#question-type").val();
 
     manageCorrectAnswer();
+    manageLockedAnswers();
     updateMatchCorrectCollection();
 
     if (typeof folder_id_get != "undefined") {
@@ -75,21 +76,38 @@ jQuery(document).ready(function ($) {
         loadDefaults(this);
     }).trigger("change");
 
+    var new_answer_lock_open = true;
     $(".add-answer").on("click", function (e) {
         e.preventDefault();
+        $(this).addClass("disabled");
         var current_answer = parseInt($(".answer-row").length);
-        if (max_answers > current_answer) {
+        if (max_answers > current_answer && new_answer_lock_open) {
+            new_answer_lock_open = false;
             build_answer_row(0);
         }
+        var button = $(this);
+        setTimeout(function(){
+            new_answer_lock_open = true;
+            $(button).removeClass("disabled");
+        }, 1000);
+
     });
 
+    var new_steam_lock_open = true;
     //manages the item stems for Match Question types
     $(".add-item-stem").on("click", function (e) {
         e.preventDefault();
+        $(this).addClass("disabled");
         var current_answer = parseInt($(".stem-row").length);
-        if (max_answers > current_answer) {
+        if (max_answers > current_answer && new_steam_lock_open) {
+            new_steam_lock_open = false;
             build_stem_row(0);
         }
+        var button = $(this);
+        setTimeout(function(){
+            new_steam_lock_open = true;
+            $(button).removeClass("disabled");
+        }, 1000);
     });
 
     $("#item-stem-table").on("change", ".add-match-correct", function(e) {
@@ -143,21 +161,53 @@ jQuery(document).ready(function ($) {
         }
     });
 
-    $("#exam-question-bank-container").on("click", ".bank-folder", function() {
+    $("#exam-bank-container").on("click", ".bank-folder", function() {
         var clicked = $(this);
         var folder_id = clicked.data("folder-id");
         renderFolderView(folder_id, true, "");
         folderNavigator(folder_id, "right");
     });
 
-    $("#exam-question-bank-breadcrumbs").on("click", "a", function() {
+    $("#exam-bank-breadcrumbs").on("click", "a", function() {
         var clicked = $(this);
         var folder_id = clicked.data("id");
         renderFolderView(folder_id, true, "");
         folderNavigator(folder_id, "right");
     });
 
-    $("#qbf-selector").on("click", ".folder-selector", function() {
+    $("#exam-bank-tree").on("mouseenter", ".folder-edit-btn", function() {
+        var row = $(this).parents("li");
+        $(row).addClass("active");
+        highlightFolderRow(row);
+    }).on("mouseleave", ".folder-edit-btn", function() {
+        var row = $(this).parents("li");
+        $(row).removeClass("active");
+        removeFolderRowHighlight(row);
+    });
+
+    function highlightFolderRow(row) {
+        $(row).addClass("AnimationTransparentToYellow");
+
+        if ($(row).hasClass("active")) {
+            setTimeout(function () {
+                if ($(row).hasClass("active")) {
+                    $(row).removeClass("AnimationTransparentToYellow");
+                    $(row).css("background-color", "#C8F253");
+                }
+            }, 500);
+        }
+    }
+
+    function removeFolderRowHighlight(row) {
+        $(row).addClass("AnimationYellowToTransparent");
+        $(row).css("background-color", "transparent");
+
+        setTimeout(function() {
+            $(row).removeClass("AnimationYellowToTransparent");
+        }, 500);
+    }
+
+    $(".qbf-selector").on("click", ".folder-selector", function() {
         folder_id = $(this).data("id");
         $(".folder-selector").removeClass("folder-selected");
         $(this).addClass("folder-selected");
@@ -176,12 +226,12 @@ jQuery(document).ready(function ($) {
         $("#parent-folder-modal").modal("hide");
     });
 
-    $("#qbf-selector").on("click", ".qbf-back-nav", function() {
+    $(".qbf-selector").on("click", ".qbf-back-nav", function() {
         var folder_selected = $(this).data("folder-id");
         folderNavigator(folder_selected, "left");
     });
 
-    $("#qbf-selector").on("click", ".sub-folder-selector", function() {
+    $(".qbf-selector").on("click", ".sub-folder-selector", function() {
         var folder_selected = $(this).data("id");
         folderNavigator(folder_selected, "right");
     });
@@ -241,6 +291,15 @@ jQuery(document).ready(function ($) {
 
     $("#answer-table").on("change", ".answer-correct", function () {
         onAnswerCorrect($(this));
+    });
+
+    $("#answer-table").on("click", ".lock", function (e) {
+        e.preventDefault();
+        $(this).trigger("change");
+    });
+
+    $("#answer-table").on("change", ".lock", function () {
+        onAnswerLocked($(this));
     });
 
     $("#answer-table").on("click", ".select-answer", function (e) {
@@ -337,9 +396,17 @@ jQuery(document).ready(function ($) {
                 var sortable_id = $(value).data("sortable-element-id");
                 order_object[new_order] = sortable_id;
             });
+
+            //Locked elements have to update the data-order-id property
+            panelList.find("i[data-order-id]").each(function(index, value){
+                var new_order = index + 1;
+                $(value).data("order-id", new_order)
+            });
+
             var temp_values = JSON.stringify(order_object);
 
             $("#answers_fnb_order").val(temp_values);
+            manageLockedAnswers();
         }
     });
 
@@ -638,12 +705,25 @@ jQuery(document).ready(function ($) {
         }
     }
 
+    function updateCheckedAnswers() {
+        var checked_answer_elements = jQuery("span.select-answer.selected");
+        if (checked_answer_elements.length > 0) {
+            answers_checked = {};
+        }
+        jQuery.each(checked_answer_elements, function (key, answer_element) {
+            var checked_element_id = $(answer_element).find("i").attr("data-sortable-element-id");
+            answers_checked[key] = {
+                element_id: parseInt(checked_element_id)
+            }
+        });
+    }
+
     function onDeleteAnswerModal() {
         answers_to_delete = [];
         $("#msgs").html("");
         $("#answers-selected").addClass("hide");
         $("#no-answers-selected").addClass("hide");
-
+        updateCheckedAnswers();
         jQuery.each(answers_checked, function(key, value) {
             answers_to_delete.push(key);
         });
@@ -689,10 +769,19 @@ jQuery(document).ready(function ($) {
 
             $("#answers-selected").removeClass("hide");
             $("#delete-answers-modal-delete").removeClass("hide");
-
+            updateCheckedAnswers();
             $.each(answers_checked, function(key, value) {
                 var container = $(".exam-question-answer[data-sortable-element-id=" + value.element_id + "]");
                 container.remove();
+                $("select").find("option[data-option-number='" + value.element_id + "']").remove();
+                if (correct_answer.indexOf(value.element_id) != -1) {
+                    // IF deleteing a checked answer that is set as correct
+                    // we should delete it from the correct answer array too
+                    correct_answer.splice(correct_answer.indexOf(value.element_id), 1);
+                }
+                if ($("#correct_answers_fnb").val() !== undefined && $("#correct_answers_fnb").val() !== "") {
+                    manageCorrectAnswerFNB(value.element_id);
+                }
                 $("#delete-answers-modal").modal("hide");
             });
         } else {
@@ -709,7 +798,7 @@ jQuery(document).ready(function ($) {
         if (span.closest("table").hasClass("selected")) {
             span.closest("table").removeClass("selected");
             span.removeClass("selected");
-            icon.addClass("fa-square-o").removeClass("fa-check-square-o");
+            icon.addClass("fa-square-o").removeClass("white-icon").removeClass("fa-check-square-o");
 
             if (answers_match_checked[element_id]) {
                 delete answers_match_checked[element_id];
@@ -717,7 +806,7 @@ jQuery(document).ready(function ($) {
         } else {
             span.closest("table").addClass("selected");
             span.addClass("selected");
-            icon.addClass("fa-check-square-o").removeClass("fa-square-o");
+            icon.addClass("fa-check-square-o").addClass("white-icon").removeClass("fa-square-o");
 
             if (!answers_match_checked[element_id]) {
                 answers_match_checked[element_id] = {
@@ -788,6 +877,23 @@ jQuery(document).ready(function ($) {
         manageCorrectAnswer();
     }
 
+    function onAnswerLocked(clicked) {
+
+        var icon = jQuery(clicked).find(".icon-lock-answer");
+        if ($(icon).hasClass("locked")) {
+            $(icon).addClass("unlocked").removeClass("locked");
+            $(icon).addClass("fa-unlock-alt").removeClass("fa-lock");
+            $(icon).parent("a").prop('title', 'Lock at this position');
+        } else {
+            $(icon).addClass("locked").removeClass("unlocked");
+            $(icon).addClass("fa-lock").removeClass("fa-unlock-alt");
+            $(icon).parent("a").prop('title', 'Unlock from this position');
+        }
+
+        manageLockedAnswers();
+
+    }
+
     function selectElement(clicked) {
         var span = clicked;
         var icon = clicked.find(".icon-select-answer");
@@ -796,7 +902,7 @@ jQuery(document).ready(function ($) {
         if (span.closest("table").hasClass("selected")) {
             span.closest("table").removeClass("selected");
             span.removeClass("selected");
-            icon.addClass("fa-square-o").removeClass("fa-check-square-o");
+            icon.addClass("fa-square-o").removeClass("white-icon").removeClass("fa-check-square-o");
 
             if (answers_checked[element_id]) {
                 delete answers_checked[element_id];
@@ -804,7 +910,7 @@ jQuery(document).ready(function ($) {
         } else {
             span.closest("table").addClass("selected");
             span.addClass("selected");
-            icon.addClass("fa-check-square-o").removeClass("fa-square-o");
+            icon.addClass("fa-check-square-o").addClass("white-icon").removeClass("fa-square-o");
 
             if (!answers_checked[element_id]) {
                 answers_checked[element_id] = {
@@ -851,10 +957,10 @@ jQuery(document).ready(function ($) {
 
         if ($(clicked).hasClass("active")) {
             $(clicked).removeClass("active");
-        //    $(clicked).find("i").removeClass("white-icon");
+            $(clicked).find("i").removeClass("white-icon");
         } else {
             $(clicked).addClass("active");
-        //    $(clicked).find("i").addClass("white-icon");
+            $(clicked).find("i").addClass("white-icon");
             active = true;
         }
 
@@ -887,7 +993,7 @@ jQuery(document).ready(function ($) {
         }
 
         jQuery(clicked).toggleClass("active");
-        //jQuery(clicked).find("i").toggleClass("white-icon");
+        jQuery(clicked).find("i").toggleClass("white-icon");
     }
 
     function manageDetailsVisibility(detail_row, state) {
@@ -897,11 +1003,11 @@ jQuery(document).ready(function ($) {
         if (state === "show") {
             answer_details.removeClass("hide");
             parent.find(".answer-details").addClass("active");
-            //parent.find(".answer-details i").addClass("white-icon");
+            parent.find(".answer-details i").addClass("white-icon");
         } else {
             answer_details.addClass("hide");
             parent.find(".answer-details").removeClass("active");
-            //parent.find(".answer-details i").removeClass("white-icon");
+            parent.find(".answer-details i").removeClass("white-icon");
         }
 
         var text_area = jQuery(answer_details).find("textarea");
@@ -1061,6 +1167,7 @@ jQuery(document).ready(function ($) {
                             $("#custom_grading").removeClass("hide");
                             $("td.grading_weight").removeClass("hide");
                             $("#answer-section").removeClass("hide");
+                            $("#question_correct_text_group").addClass("hide");
                             jQuery("tr.answer-details-row td.rationale").attr("colspan", 1);
                             break;
                         case "mc_h" :
@@ -1068,33 +1175,39 @@ jQuery(document).ready(function ($) {
                         case "drop_s" :
                             $("#custom_grading").addClass("hide");
                             $("td.grading_weight").addClass("hide");
+                            $("#question_correct_text_group").addClass("hide");
                             $("#answer-section").removeClass("hide");
                             break;
                         case "short" :
                             $("#custom_grading").addClass("hide");
                             $("td.grading_weight").addClass("hide");
                             $("#answer-section").addClass("hide");
+                            $("#question_correct_text_group").removeClass("hide");
                             break;
                         case "essay" :
                             $("#custom_grading").addClass("hide");
                             $("td.grading_weight").addClass("hide");
                             $("#answer-section").addClass("hide");
+                            $("#question_correct_text_group").removeClass("hide");
                             break;
                         case "text" :
                             $("#custom_grading").addClass("hide");
                             $("td.grading_weight").addClass("hide");
                             $("#answer-section").addClass("hide");
+                            $("#question_correct_text_group").addClass("hide");
                             break;
                         case "fnb" :
                             $("#custom_grading").addClass("hide");
                             $("td.grading_weight").addClass("hide");
                             $("#update-fnb-stem").removeClass("hide");
+                            $("#question_correct_text_group").addClass("hide");
                             break;
                         case "match":
                             $("#custom_grading").addClass("hide");
                             $("td.grading_weight").addClass("hide");
                             $("#item-section").removeClass("hide");
                             $("#answer-section").removeClass("hide");
+                            $("#question_correct_text_group").addClass("hide");
                             break;
                     }
 
@@ -1195,7 +1308,7 @@ jQuery(document).ready(function ($) {
                             CKEDITOR.replace("question_answer_" + answer_number);
                         }
                         if (shortname === "match") {
-                            var html_option = "<option value=\"" + answer_number + "\">" + answer_number + "</option>";
+                            var html_option = "<option value=\"" + answer_number + "\" data-option-number=\"" + answer_number + "\">" + answer_number + "</option>";
                             jQuery(".add-match-correct").append(html_option);
                         }
 
@@ -1206,6 +1319,14 @@ jQuery(document).ready(function ($) {
                             // Activate details view since the overall details is activated.
                             var answer_details = jQuery("div.exam-question-answer[data-sortable-element-id=" + answer_number + "]").find("tr.answer-details-row");
                             manageDetailsVisibility(answer_details, "show");
+                        }
+                        // Screen now scrolls to the new added answer
+                        if (!new_answer_lock_open) {
+                            $('html, body').animate({
+                                scrollTop: $("#answer-table").find(
+                                    "div[data-sortable-element-id='" + answer_number + "']"
+                                ).offset().top
+                            }, 1000);
                         }
                     } else if (jsonAnswer.status == "error") {
                         jQuery("#msgs").append("<p>error</p>");
@@ -1252,7 +1373,14 @@ jQuery(document).ready(function ($) {
                                 jQuery(stem_option).append(html_option);
                             }
                         }
-
+                        // Screen now scrolls to the new added answer
+                        if (!new_steam_lock_open) {
+                            $('html, body').animate({
+                                scrollTop: $("#item-stem-table").find(
+                                    "div[data-sortable-element-id='" + answer_number + "']"
+                                ).offset().top
+                            }, 1000);
+                        }
                     } else if (jsonAnswer.status == "error") {
                         jQuery("#msgs").append("<p>error</p>");
                     } else if (jsonAnswer.status == "notice") {
@@ -1439,25 +1567,44 @@ jQuery(document).ready(function ($) {
         jQuery("#correct-answer-input").val(correct_string);
     }
 
-    function manageCorrectAnswerFNB() {
-        var text            = jQuery("#add-correct-answer").val();
-        var answer_div      = jQuery(".exam-question-answer[data-sortable-element-id=\"" + sortable_id + "\"]").find(".span8");
-        if (!fnb_answers[sortable_id]) {
-            var answer_array = [];
-            answer_array.push(text);
-            fnb_answers[sortable_id] = answer_array;
-            jQuery(answer_div).append("<span class=\"correct-answer-fnb label label-info\">" + text + "</span>");
-        } else {
-            var answer_array = fnb_answers[sortable_id];
-            var found = jQuery.inArray(text, answer_array) > -1;
+    function manageLockedAnswers(){
 
-            if (!found) {
+        var initial_locked = jQuery(".locked");
+        var locked_answers = [];
+
+        jQuery.each(initial_locked, function(key, value) {
+            var element_id = jQuery(value).data("order-id");
+            locked_answers.push(element_id);
+        });
+
+        var locked_as_string = JSON.stringify(locked_answers);
+        $("#locked-answers-input").val(locked_as_string);
+    }
+
+    function manageCorrectAnswerFNB(element_id) {
+        if (element_id == undefined) {
+            var text = jQuery("#add-correct-answer").val();
+            var answer_div = jQuery(".exam-question-answer[data-sortable-element-id=\"" + sortable_id + "\"]").find(".span8");
+            if (!fnb_answers[sortable_id]) {
+                var answer_array = [];
                 answer_array.push(text);
                 fnb_answers[sortable_id] = answer_array;
                 jQuery(answer_div).append("<span class=\"correct-answer-fnb label label-info\">" + text + "</span>");
+            } else {
+                var answer_array = fnb_answers[sortable_id];
+                var found = jQuery.inArray(text, answer_array) > -1;
+
+                if (!found) {
+                    answer_array.push(text);
+                    fnb_answers[sortable_id] = answer_array;
+                    jQuery(answer_div).append("<span class=\"correct-answer-fnb label label-info\">" + text + "</span>");
+                }
             }
+            jQuery("#correct_answers_fnb").val(JSON.stringify(fnb_answers));
+        } else {
+            delete fnb_answers[element_id];
+            jQuery("#correct_answers_fnb").val(JSON.stringify(fnb_answers));
         }
-        jQuery("#correct_answers_fnb").val(JSON.stringify(fnb_answers));
     }
 
     function removeItemAnswerArray(clicked) {
@@ -1485,7 +1632,7 @@ jQuery(document).ready(function ($) {
             ajax_in_progress = true;
             jQuery.ajax({
                 url: FOLDER_API_URL,
-                data: "method=get-sub-folder-selector&folder_id=" + folder_selected + "&parent_folder_id=" + parent_folder_id,
+                data: "method=get-sub-folder-selector&folder_type=question&folder_id=" + folder_selected + "&parent_folder_id=" + parent_folder_id,
                 type: "GET",
                 success: function (data) {
                     var jsonAnswer      = JSON.parse(data);
@@ -1507,7 +1654,7 @@ jQuery(document).ready(function ($) {
                     if (jsonAnswer.status_folder == "success") {
                         var subfolder_html = jsonAnswer.subfolder_html;
                         jQuery(sub_folders).append(subfolder_html);
-                        jQuery("#qbf-selector").append(sub_folders);
+                        jQuery(".qbf-selector").append(sub_folders);
                         jQuery(current_folder).removeClass("active");
                         var new_folder = jQuery("#qbf-folder-" + folder_selected);
 
@@ -1519,7 +1666,7 @@ jQuery(document).ready(function ($) {
                             });
 
                             jQuery(new_folder).animate({
-                                right: "0"
+                                right: "10"
                             }, 350);
                         } else {
                             jQuery(current_folder).animate({
@@ -1551,7 +1698,7 @@ jQuery(document).ready(function ($) {
                         adjusted_height = 350;
                     }
 
-                    jQuery("#qbf-selector").css("height", adjusted_height + "px");
+                    jQuery(".qbf-selector").css("height", adjusted_height + "px");
                 }
             });
         }
@@ -1785,10 +1932,16 @@ function renderFolderView(folder_id, popstate, offset) {
     var exclude_question_ids = {exclude_question_ids : []};
     var question_ids = [];
 
-    if (jQuery("#search-targets-exam").length > 0) {
+    if (jQuery("#search-targets-exam") !== undefined && jQuery("#search-targets-exam").length > 0) {
         total_questions = 0;
         show_loading_message = true;
         var filters = jQuery("#search-targets-exam").serialize();
+    }
+
+    if (jQuery("#search-targets-form") !== undefined && jQuery("#search-targets-form").length > 0) {
+        total_questions = 0;
+        show_loading_message = true;
+        var filters = jQuery("#search-targets-form").serializeArray();
     }
 
     if (question_offset < 0) {
@@ -1818,7 +1971,6 @@ function renderFolderView(folder_id, popstate, offset) {
 
     exclude_question_ids = {exclude_question_ids : question_ids};
 
-
     var show_all_button = jQuery("#toggle-all-question-bank");
     if (jQuery(show_all_button).hasClass("active")) {
         var active_details = 1;
@@ -1826,17 +1978,43 @@ function renderFolderView(folder_id, popstate, offset) {
         active_details = 0;
     }
 
-    var data_string = "method=get-questions&search_term=" + search_term + "&offset=" + question_offset + "&limit=" + question_limit + "&view=" + VIEW_PREFERENCE +
-            //(group_questions["group_questions"].length > 0 ? "&" + jQuery.param(group_questions) : "") +
-        (exclude_question_ids["exclude_question_ids"].length > 0 ? "&" + jQuery.param(exclude_question_ids) : "") +
-        (jQuery("#exam_id").val() !== "" ? "&exam_id=" + jQuery("#exam_id").val() : "") +
-        (typeof filters !== "undefined" ? "&" + filters : "") +
-        (typeof folder_id !== "undefined" ? "&folder_id=" + folder_id : "" ) +
-        (typeof sub_folder_search !== "undefined" ? "&sub_folder_search=" + sub_folder_search : "" ) +
-        (typeof sort_direction !== "undefined" ? "&sort_direction=" + sort_direction : "" ) +
-        (typeof sort_column !== "undefined" ? "&sort_column=" + sort_column : "" ) +
-        "&active_details=" + active_details +
-        "&exam_mode=false";
+    var data_object = {
+        method: "get-questions",
+        search_term: search_term,
+        offset: question_offset,
+        limit: question_limit,
+        view: VIEW_PREFERENCE,
+        active_details: active_details,
+        exam_mode: false
+    };
+
+    if(jQuery("#exam_id").val() !== ""){
+        data_object.exam_id = jQuery("#exam_id").val();
+    }
+
+    if(exclude_question_ids["exclude_question_ids"].length > 0){
+        data_object.exclude_question_ids = exclude_question_ids["exclude_question_ids"];
+    }
+
+    if (filters !== undefined){
+        data_object.filters = filters;
+    }
+
+    if (folder_id !== undefined){
+        data_object.folder_id = folder_id;
+    }
+
+    if (sub_folder_search !== undefined){
+        data_object.sub_folder_search = sub_folder_search;
+    }
+
+    if(typeof sort_direction !== "undefined"){
+        data_object.sort_direction = sort_direction;
+    }
+
+    if(typeof sort_direction !== "undefined"){
+        data_object.sort_column = sort_column;
+    }
 
 
     if (xhr) {
@@ -1844,7 +2022,7 @@ function renderFolderView(folder_id, popstate, offset) {
     }
     xhr = jQuery.ajax({
         url: API_URL,
-        data: data_string,
+        data: data_object,
         type: "GET",
         success: function (data) {
             jQuery("#msgs").html("");
@@ -1904,7 +2082,7 @@ function renderFolderView(folder_id, popstate, offset) {
                 // Breadcrumbs
                 if (jsonAnswer.status_breadcrumbs == "success") {
                     var html_breadcrumbs = jsonAnswer.breadcrumb_data;
-                    jQuery("#exam-question-bank-breadcrumbs").html(html_breadcrumbs);
+                    jQuery("#exam-bank-breadcrumbs").html(html_breadcrumbs);
                 } else if (jsonAnswer.status_breadcrumbs == "error") {
                     jQuery("#msgs").append("<p>" + jsonAnswer.status_breadcrumbs_error + "</p>");
                 } else if (jsonAnswer.status_breadcrumbs == "notice") {
@@ -1915,7 +2093,7 @@ function renderFolderView(folder_id, popstate, offset) {
                 if (jsonAnswer.status_folder == "success") {
                     var html_folders = jsonAnswer.subfolder_html;
                     var title = jsonAnswer.title;
-                    jQuery("#exam-question-bank-tree #folders").html(html_folders);
+                    jQuery("#exam-bank-tree #folders").html(html_folders);
                     /*
                      Initiates the folder sorting if the user can edit the parent folders
                      */
@@ -1923,7 +2101,7 @@ function renderFolderView(folder_id, popstate, offset) {
                         jQuery("#folder_ul").each(makeSortable);
                     }
 
-                    jQuery("#exam-question-bank-tree-title").text(title);
+                    jQuery("#exam-bank-tree-title").text(title);
                 } else if (jsonAnswer.status_folder == "error") {
                     jQuery("#msgs").append("<p>" + jsonAnswer.status_folder_error + "</p>");
                 } else if (jsonAnswer.status_folder == "notice") {
@@ -1935,7 +2113,7 @@ function renderFolderView(folder_id, popstate, offset) {
                 if (select_object.hasClass("selected")) {
                     select_object.removeClass("selected");
                     icon = $(select_object).find(".fa-check-square-o");
-                    icon.addClass("fa-square-o").removeClass("fa-check-square-o");
+                    icon.addClass("fa-square-o").removeClass("white-icon").removeClass("fa-check-square-o");
                 }
 
                 // renders url window for reloads or copying the url.
@@ -1967,6 +2145,10 @@ function renderFolderView(folder_id, popstate, offset) {
                 //stores the new folder_id in the local variable for other functions to use.
                 current_folder_id = folder_id;
 
+                var final_add_attach_url = ADD_ATTACH_QUESTION_URL + "&folder_id=" + current_folder_id;
+
+                jQuery("#btn-add-attach-question").attr("href", final_add_attach_url);
+
                 toggleActionBtn();
 
             } else {
@@ -1981,28 +2163,24 @@ function makeSortable() {
     jQuery(this).sortable({
         opacity: 0.7,
         update: function () {
-            //, {'attribute': 'data-sortable-folder-id'}
-            if (jQuery(this).data("sortable-folder-id")) {
-                var folder_order = jQuery(this).sortable("serialize");
+            var folder_order = jQuery(this).sortable("serialize");
+            var data_str = "method=update-exam-folder-order&" + folder_order;
 
-                var data_str = "method=update-exam-folder-order&" + folder_order;
+            jQuery.ajax({
+                url: FOLDER_API_URL,
+                data: data_str,
+                type: "POST",
+                cache: false,
+                success: function(data) {
+                    var jsonAnswer = JSON.parse(data);
 
-                jQuery.ajax({
-                    url: FOLDER_API_URL,
-                    data: data_str,
-                    type: "POST",
-                    cache: false,
-                    success: function(data) {
-                        var jsonAnswer = JSON.parse(data);
-
-                        if (jsonAnswer.status == "success") {
-                            jQuery.growl({ title: "Success", message: jsonAnswer.message });
-                        } else {
-                            jQuery.growl.error({ title: "Error", message: jsonAnswer.message });
-                        }
+                    if (jsonAnswer.status == "success") {
+                        jQuery.growl({ title: "Success", message: jsonAnswer.message });
+                    } else {
+                        jQuery.growl.error({ title: "Error", message: jsonAnswer.message });
                     }
-                });
-            }
+                }
+            });
         }
     });
 }

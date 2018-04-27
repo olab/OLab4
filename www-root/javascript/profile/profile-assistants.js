@@ -63,7 +63,7 @@ jQuery(document).ready(function ($) {
 
     function createAuto (element_id, type) {
         var auto_item = $("#"+element_id).autocomplete({
-            source: "/api/personnel.api.php?out=json",
+            source: ENTRADA_RELATIVE + "/api/personnel.api.php?out=json",
             minLength: 2,
             appendTo: $("#autocomplete-list-container"),
             open: function () {

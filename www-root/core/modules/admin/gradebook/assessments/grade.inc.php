@@ -39,8 +39,13 @@ if ($ENTRADA_ACL->isUserAuthorized("gradebook", "update", false, array("PARENT_I
 				// Mark assignments modal and page-specific
 				'<link href="'.ENTRADA_URL.'/css/gradebook/mark-assignment.css" rel="stylesheet" />',
 				'<link href="'.ENTRADA_URL.'/css/assessments/assessments.css" rel="stylesheet" />',
-				'<script>var COURSE_ID = "'.$COURSE_ID.'", ASSESSMENT_ID = "'.$ASSESSMENT_ID.'", DELETE_EXCEPTION_TEXT = "'.$translate->_("Delete Grade Exception").'", DELETE_LINK_TITLE_TEXT = "'.$translate->_("Delete Grade Weighting Exception for").'", WEIGHTING_TEXT = "'.$translate->_("Weighting:").'", VIEW_GROUP_MEMBERS_TEXT = "'.$translate->_("View Group Members").'";</script>',
-				'<script src="'.ENTRADA_URL.'/javascript/gradebook/mark-assignment.js"></script>',
+                '<link href="'.ENTRADA_URL.'/css/assessments/items.css" rel="stylesheet" />',
+                '<link href="'.ENTRADA_URL.'/css/assessments/rubrics.css" rel="stylesheet" />',
+                '<link href="'.ENTRADA_URL.'/css/assessments/assessment-form.css" rel="stylesheet" />',
+
+				'<script>var COURSE_ID = "'.$COURSE_ID.'", CPERIOD_ID = "'.$assessment["cperiod_id"].'", ASSESSMENT_ID = "'.$ASSESSMENT_ID.'", TITLE = "'.$course->getCourseCode().'", DELETE_EXCEPTION_TEXT = "'.$translate->_("Delete Grade Exception").'", DELETE_LINK_TITLE_TEXT = "'.$translate->_("Delete Grade Weighting Exception for").'", WEIGHTING_TEXT = "'.$translate->_("Weighting:").'", VIEW_GROUP_MEMBERS_TEXT = "'.$translate->_("View Group Members").'";</script>',
+
+                '<script src="'.ENTRADA_URL.'/javascript/gradebook/mark-assignment.js"></script>',
 				'<script src="'.ENTRADA_URL.'/javascript/gradebook/grade.js"></script>',
 				'<script type="text/javascript" src="'.ENTRADA_URL.'/javascript/assessments/forms/view.js?release='.html_encode(APPLICATION_VERSION).'"></script>',
 
@@ -69,6 +74,30 @@ if ($ENTRADA_ACL->isUserAuthorized("gradebook", "update", false, array("PARENT_I
 			if ($assessment["form_id"]) {
 				$JQUERY[] = '<script>var FORM_ID = '.$assessment["form_id"].';</script>';
 			}
+			
+            $posts = Models_Exam_Post::fetchAllByGradeBookAssessmentID($assessment_model->getID());
+            if (!empty($posts)) {
+                $number_posts = count($posts);
+                if ($number_posts == 1 && is_object($number_posts)) {
+                    // if it's a single post make it an array for easier handling
+                    $posts = array($posts);
+                }
+
+                if ($number_posts > 1 || is_array($posts)) {
+                // Should be an array of posts
+                    if (is_array($posts)) {
+                        foreach ($posts as $post) {
+                            $post_info[] = array(
+                                "title"     => $post->getTitle(),
+                                "type"      => $post->getTargetType(),
+                                "target_id" => $post->getTargetID(),
+                                "exam_id"   => $post->getExamID(),
+                                "post_id"	=> $post->getID()
+                            );
+                        }
+                    }
+                }
+            }
 
 			// Get students
 			if (isset($_POST["grader-filter"]) && $tmp_uploads = clean_input($_POST["grader-filter"],array("trim","int"))){
@@ -200,7 +229,7 @@ if ($ENTRADA_ACL->isUserAuthorized("gradebook", "update", false, array("PARENT_I
 				"class" => "modal-mark-assignment fullscreen-modal",
 				"additional_button" => array(
 					"text" => $translate->_("Save and Close"),
-					"class" => "btn-info btn-save-assignment"
+					"class" => "btn-primary btn-save-assignment"
 				),
 				"success_button" => array(
 					"text" => $translate->_("Save and Go to Next"),
@@ -223,18 +252,18 @@ if ($ENTRADA_ACL->isUserAuthorized("gradebook", "update", false, array("PARENT_I
 	                </div>
 	            </div>
 
-	            <p><?php echo html_encode($assessment["description"]); ?></p>
+	            <p><?php echo $assessment["description"]; ?></p>
 
 	            <div class="btn-toolbar">
 	            	<div class="span6">
 	            		<div class="btn-group">
-							<?php if ($assessment["assignment_id"]): ?>
+							<?php if ($assessment["assignment_id"]) { ?>
 	            				<a href="<?php echo ENTRADA_URL; ?>/admin/gradebook/assignments?section=grade&id=<?php echo $COURSE_ID;?>&assignment_id=<?php echo $assessment["assignment_id"]; ?>" class="btn btn-default"><i class="fa fa-eye"></i> <?php echo $translate->_("View Drop Box"); ?></a>
-							<?php endif; ?>
+							<?php } ?>
 
-	            			<?php if ($assessment["form_id"]): ?>
+	            			<?php if ($assessment["form_id"]) { ?>
 	            				<a href="#modal-preview-assessment-form" class="btn btn-default" data-toggle="modal"><i class="fa fa-eye"></i> <?php echo $translate->_("Preview Assessment Form"); ?></a>
-	            			<?php endif; ?>
+	            			<?php } ?>
 	            		</div>
 	            	</div>
 	            	<div class="span6">
@@ -279,28 +308,62 @@ if ($ENTRADA_ACL->isUserAuthorized("gradebook", "update", false, array("PARENT_I
 
 	            	<div class="row-fluid">
 
-		            	<div class="span6">
+		            	<div class="span7">
 		            		<?php $graph_data = $assessment_utilities->renderGraphDataJSON(); ?>
 							<p><strong class="span6"><?php echo $translate->_("Assessment Type:"); ?></strong> <?php echo $assessment["type"]; ?> <?php echo $translate->_("Assessment"); ?></p>
 							<p><strong class="span6"><?php echo $translate->_("Assessment Weighting:"); ?></strong> <?php echo $assessment["grade_weighting"]."%"; ?></p>
 							<p><strong class="span6"><?php echo $translate->_("Unentered Grades:"); ?></strong> <?php echo $assessment_utilities->getUnenteredGrades(); ?></p>
 
-							<?php if ($graph_data["mean"]): ?>
+							<?php if ($graph_data["mean"]) { ?>
 								<p><strong class="span6"><?php echo $translate->_("Mean Grade:"); ?></strong> <?php echo $graph_data["mean"]; ?>%</p>
-							<?php endif; ?>
+							<?php } ?>
 
-							<?php if ($graph_data["median"]): ?>
+							<?php if ($graph_data["median"]) { ?>
 								<p><strong class="span6"><?php echo $translate->_("Median Grade:"); ?></strong> <?php echo $graph_data["median"]; ?>%</p>
-							<?php endif; ?>
+							<?php } ?>
 
-							<?php if ($graph_data["standard_deviation"]): ?>
+							<?php if ($graph_data["standard_deviation"]) { ?>
 								<p><strong class="span6"><?php echo $translate->_("Standard Deviation"); ?></strong> <?php echo $graph_data["standard_deviation"]; ?>%</p>
-							<?php endif; ?>
+							<?php } ?>
+						<?php
+						if ($post_info && is_array($post_info) && !empty($post_info)) {
+							$post_numbers = count($post_info) - 1;
+                            ?>
+                            <p><strong class="span6">Post:</strong>
+                                <?php
+                                foreach ($post_info as $key => $post_details) {
+                                    //todo update with correct link
+                                    $link = "";
+                                    if ($post_details["type"] === "event") {
+                                        // Event
+                                        $link = ENTRADA_RELATIVE . "/admin/events?rid=" . $post_details["target_id"] . "&section=content&id=" . $post_details["target_id"];
+                                    } else {
+                                        // Todo update link with community URL link
+                                        // Community
+                                    }
+                                    $stats = "<a href=\"" . ENTRADA_RELATIVE . "/admin/exams/exams?section=activity&id=" . $post_details["post_id"] . "\" target=\"_blank\">";
+                                    $stats .= "<img src=\"".ENTRADA_URL."/images/view-stats.gif\" width=\"16\" height=\"16\" style=\"vertical-align: middle\" border=\"0\" />";
+                                    $stats .= "</a>\n";
+
+									if ($key !== 0) {
+                                        echo "<br />\n";
+                                        echo "<span class=\"span6 gb-exam-spacer\">&nbsp;</span>\n";
+                                    }
+
+									echo "<a href=\"" . $link . "\" class=\"post_link\" target=\"_blank\">" . $post_details["title"] . "</a>";
+									echo $stats;
+
+								}
+                            ?>
+                            </p>
+                            <?php
+						}
+                        ?>
 		            	</div>
 
-						<div class="span6">
+						<div class="span5">
 							<div id="graph" class="pull-right"></div>
-							<?php if ($graph_data): ?>
+							<?php if ($graph_data) { ?>
 								<script type="text/javascript" charset="utf-8">
 									var data = <?php echo $graph_data["data"]; ?>;
 									var plotter = PlotKit.EasyPlot(
@@ -312,7 +375,7 @@ if ($ENTRADA_ACL->isUserAuthorized("gradebook", "update", false, array("PARENT_I
 										[data]
 									);
 								</script>
-							<?php endif; ?>
+							<?php } ?>
 						</div>
 
 					</div>
@@ -458,11 +521,13 @@ if ($ENTRADA_ACL->isUserAuthorized("gradebook", "update", false, array("PARENT_I
 				$preview_assessment_form_modal->render();
 
 				// Mark assignment
-				$mark_assignment_modal->setHeaderContent('<div class="pull-left selector-documents"></div>');
+
+				$mark_assignment_modal->setHeaderContent('<div class="selector-documents form-horizontal"></div><div class="selector-portfolio"></div>');
 				$mark_assignment_modal->setBody('
 					<div class="loading"><img src="'.ENTRADA_URL.'/images/loading.gif" alt="Loading..." /></div>
 			      	<div class="container-fluid">
 			      		<div class="file"></div>
+			      		<div class="portfolio"></div>
 			        	<div class="marking-scheme"></div>
 			      	</div>
 				');

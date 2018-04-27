@@ -45,7 +45,7 @@ if ((isset($_SESSION["isAuthorized"])) && ((bool) $_SESSION["isAuthorized"])) {
 	}
 	?>
     <div class="control-group">
-        <label class="control-label form-required">Community Template</label>
+        <label class="control-label form-required"><?php echo $translate->_("Community Template"); ?></label>
         <div class="controls">
             <?php
             $query = "SELECT a.* FROM `community_templates` AS a
@@ -90,7 +90,7 @@ if ((isset($_SESSION["isAuthorized"])) && ((bool) $_SESSION["isAuthorized"])) {
     </div>
     <div class="clearfix"></div>
 
-    <h3>Community Pages</h3>
+    <h3><?php echo $translate->_("Community Pages"); ?></h3>
     <div class="control-group">
         <label class="control-label form-required">Default Pages</label>
         <div class="controls">
@@ -113,7 +113,7 @@ if ((isset($_SESSION["isAuthorized"])) && ((bool) $_SESSION["isAuthorized"])) {
         foreach ($type_options as $type_option => $active) {
             if ($type_option == "course_website" && $active && $ENTRADA_ACL->amIAllowed("course", "create", false)) {
                 ?>
-                <h3>Community Courses</h3>
+                <h3><?php echo $translate->_("Community Courses"); ?></h3>
                 <div class="control-group">
                     <label class="control-label form-required">Select course(s)</label>
                     <div class="controls">

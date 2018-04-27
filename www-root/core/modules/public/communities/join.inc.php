@@ -35,7 +35,7 @@ if ($MAILING_LISTS["active"]) {
 	require_once("Entrada/mail-list/mail-list.class.php");
 }
 
-$BREADCRUMB[]		= array("url" => ENTRADA_URL."/communities", "title" => "Community Registration");
+$BREADCRUMB[]		= array("url" => ENTRADA_URL."/communities", "title" => $translate->_("Community Registration"));
 
 $COMMUNITY_ID		= 0;
 
@@ -87,35 +87,53 @@ if($COMMUNITY_ID) {
 				case 2 :	// Selected Group Registration
 					$ALLOW_MEMBERSHIP = false;
 
-					if(($community_details["community_members"] != "") && ($community_members = @unserialize($community_details["community_members"])) && (is_array($community_members)) && (count($community_members))) {
-						if(in_array($_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"], $community_members)) {
-							$ALLOW_MEMBERSHIP = true;
-						} else {
-							foreach($community_members as $member_group) {
-								if($member_group) {
-									$pieces = explode("_", $member_group);
+					if (($community_details["community_members"] != "") && ($community_members = @unserialize($community_details["community_members"])) && is_array($community_members) && count($community_members)) {
+                        if ($_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"] == "student") {
+                        	$query = "SELECT `group_id`
+                                      FROM `group_members`
+                                      WHERE `proxy_id` = ?
+                                      AND `member_active` = 1
+                                      AND ((`start_date` IS NULL OR `start_date` = 0 OR `start_date` <= UNIX_TIMESTAMP())
+                                      AND (`finish_date` IS NULL OR `finish_date` = 0 OR `finish_date` > UNIX_TIMESTAMP()))";
+                            $student_group_ids = $db->GetAll($query, [$ENTRADA_USER->getActiveId()]);
+                            if ($student_group_ids) {
+                                foreach ($student_group_ids as $student_group_id) {
+                                    $student_group_id = (int) $student_group_id["group_id"];
+                                    if ($student_group_id && in_array("student_" . $student_group_id, $community_members)) {
+                                        $ALLOW_MEMBERSHIP = true;
+                                        break;
+                                    }
+                                }
+                            }
+                        } else {
+                            if (in_array($_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"], $community_members)) {
+                                $ALLOW_MEMBERSHIP = true;
+                            } else {
+                                foreach ($community_members as $member_group) {
+                                    if ($member_group) {
+                                        $pieces = explode("_", $member_group);
 
-									if((isset($pieces[0])) && ($group = trim($pieces[0]))) {
-										if($_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"] == $group) {
-											if((isset($pieces[1])) && ($role = trim($pieces[1]))) {
-												if($_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"] == $role) {
-													$ALLOW_MEMBERSHIP = true;
-													break;
-												}
-											} else {
-												$ALLOW_MEMBERSHIP = true;
-												break;
-											}
-										}
-									}
-								}
-							}
-						}
+                                        if (isset($pieces[0]) && ($group = trim($pieces[0]))) {
+                                            if ($_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"] == $group) {
+                                                if (isset($pieces[1]) && ($role = trim($pieces[1]))) {
+                                                    if ($_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"] == $role) {
+                                                        $ALLOW_MEMBERSHIP = true;
+                                                        break;
+                                                    }
+                                                } else {
+                                                    $ALLOW_MEMBERSHIP = true;
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
 					}
 
-					if(!$ALLOW_MEMBERSHIP) {
-						$ERROR++;
-						$ERRORSTR[] = "Your account (".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]." &rarr; ".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"].") does not meet the group requirements setup by the community administrators.";
+					if (!$ALLOW_MEMBERSHIP) {
+						add_error("Your account (".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]." &rarr; ".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"].") does not meet the group requirements setup by the community administrators.");
 						$display_admin_list = true;
 						application_log("notice", "User id ".$ENTRADA_USER->getID()." was not have the proper group requirements to join community id ".$COMMUNITY_ID);
 					}
@@ -276,4 +294,3 @@ if($COMMUNITY_ID) {
 	header("Location: ".ENTRADA_URL."/communities");
 	exit;
 }
-?>

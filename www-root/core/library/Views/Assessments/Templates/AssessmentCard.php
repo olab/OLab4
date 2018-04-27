@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Entrada [ http://www.entrada-project.org ]
  *
@@ -19,120 +20,227 @@
  * related delivery information.
  *
  * @author Organization: Queen's University.
- * @author Developer: Josh Dillon <jdillon@queensu.ca>
- * @copyright Copyright 2016 Queen's University. All Rights Reserved.
+ * @author Developer: Adrian Mellognio <adrian.mellognio@queensu.ca>
+ * @copyright Copyright 2017 Queen's University. All Rights Reserved.
  *
  */
-
 class Views_Assessments_Templates_AssessmentCard extends Views_HTML {
 
     /**
-     * Validate our options array.
-     *
-     * @param array $options
-     * @return bool
-     */
-    protected function validateOptions($options = array()) {
-        return true;
-    }
-
-    /**
-     * Render the modal view.
+     * Render the template.
      *
      * @param $options
      */
     protected function renderView($options = array()) {
         global $translate;
-        $this->addHeadScripts();
+        Entrada_Utilities_jQueryHelper::addScriptsToHead();
         ?>
         <script type="text/html" id="assessment-card">
-            <li>
-                <div class="assessment-task">
-                    <div class="assessment-task-wrapper">
-                        <div class="distribution">
-                            <div class="assessment-task-title-div">
-                                <span class="assessment-task-title" data-content="assessment_task_title"></span>
-                            </div>
-                            <div class="label assessment-task-event-info-badge" data-content="event_details_label"></div>
-                            <div class="label assessment-task-schedule-info-badge" data-content="schedule_details"></div>
-                            <div class="label assessment-task-delegation-badge" data-content="delegation_label"></div>
-                            <div class="label assessment-task-release-schedule-info-badge" data-content="approver_label"></div>
-                            <div class="assessment-task-date-range">
-                                <em data-content="date_range"></em>
-                            </div>
-                            <div class="assessment-task-date-range event-date-range" data-content="event_date_range"></div>
-                            <div class="assessment-task-date assessment-delivery-date" data-content="delivery_date"></div>
-                            <div class="assessment-task-date completed_date" data-content="completed_date"></div>
-                            <div class="assessment-task-date delegated-by" data-content="delegated_by"></div>
-                            <div class="assessment-task-date delegated-date" data-content="delegated_date"></div>
+            <div class="assessment-task">
+                <div class="assessment-task-wrapper">
+                    <div class="distribution">
+                        <div>
+                            <span class="assessment-task-title" data-content="task_title"></span>
                         </div>
-                        <div class="assessment-progress">
-                            <span class="progress-title" data-content="progress_text"></span>
-                            <span class="pending">
-                                <a class="progress-circle tooltip-tag" href="#" data-placement="bottom" data-toggle="tooltip" data-template-bind='[{"attribute": "title", "value": "progress_title_pending"}, {"attribute": "data-original-title", "value": "progress_title_pending"}, {"attribute": "href", "value": "task_url"}]'>
-                                    <div class="pending-attempts-text" data-content="pending_attempts"></div>
-                                </a>
-                            </span>
-                            <span class="inprogress">
-                                <a class="progress-circle tooltip-tag" href="#" data-placement="bottom" data-toggle="tooltip" data-template-bind='[{"attribute": "title", "value": "progress_title_inprogress"}, {"attribute": "data-original-title", "value": "progress_title_inprogress"}, {"attribute": "href", "value": "task_url"}]'>
-                                    <div class="inprogress-attempts-text" data-content="inprogress_attempts"></div>
-                                </a>
-                            </span>
-                            <span class="complete">
-                                <a class="progress-circle tooltip-tag" href="#" data-placement="bottom" data-toggle="tooltip" data-template-bind='[{"attribute": "title", "value": "progress_title_complete"}, {"attribute": "data-original-title", "value": "progress_title_complete"}, {"attribute": "href", "value": "task_url"}]'>
-                                    <div data-content="complete_attempts"></div>
-                                </a>
-                            </span>
-                            <div class="clearfix"></div>
+
+                        <!-- Badge labels -->
+                        <div class="hide tpl-task-badge-text label assessment-task-schedule-info-badge" data-content="task_badge_text"></div>
+                        <div class="hide tpl-schedule-badge-text label assessment-task-schedule-info-badge" data-content="schedule_badge_text"></div>
+                        <div class="hide tpl-event-badge-text label assessment-task-event-info-badge" data-content="event_badge_text"></div>
+                        <div class="hide tpl-delegation-badge-text label assessment-task-delegation-badge"><?php echo html_encode($translate->_("Delegation Task")); ?></div>
+                        <div class="hide tpl-reviewer-badge-text label assessment-task-release-schedule-info-badge"><?php echo html_encode($translate->_("Reviewer Task")); ?></div>
+
+                        <!-- Event time frame-->
+                        <div class="hide tpl-event-timeframe assessment-task-date-range">
+                            <em>
+                                <?php
+                                echo sprintf(
+                                    $translate->_("%s to %s"),
+                                    "<span data-content='event_timeframe_start'></span>",
+                                    "<span data-content='event_timeframe_end'></span>");
+                                ?>
+                            </em>
                         </div>
-                        <div class="details" data-content="task_details"></div>
-                        <div class="task-description" data-content="task_description"></div>
-                        <div class="assessor hide">
-                            <div  data-content="assessor_data" class="assessor-data hide"></div>
-                            <span data-content="assessor_group_role" class="label assessment-task-meta assessor-group-role hide"></span>
-                            <div  data-content="external_badge" class="label assessment-task-meta assessor-external-badge"></div>
+
+                        <!-- Rotation schedule dates -->
+                        <div class="hide tpl-rotation-dates assessment-task-date-range">
+                            <em>
+                                <?php
+                                echo sprintf(
+                                    $translate->_("%s to %s"),
+                                    "<span data-content='rotation_start_date'></span>",
+                                    "<span data-content='rotation_end_date'></span>");
+                                ?>
+                            </em>
                         </div>
-                        <div class="assessment-task-select task-reminder">
-                            <div class="fa-wrapper">
-                                <span class="fa fa-bell"></span>
-                            </div>
-                            <label class="remind-label checkbox">
-                                <input class="remind" type="checkbox" name="remind[]" data-template-bind='[{"attribute": "data-assessor-name", "value": "data_assessor_name"}, {"attribute": "data-assessor-id", "value": "data_assessor_id"}, {"attribute": "value", "value": "data_assessment_id"}, {"attribute": "data-task-type", "value": "data_task_type"}, {"attribute": "data-addelegation-id", "value": "data_assessment_id"}, {"attribute": "data-adistribution-id", "value": "data_adistribution_id"}]'>
-                                <span class="send-reminder-text" data-content="send_reminder_text"></span>
-                            </label>
+
+                        <!-- Standard date range -->
+                        <div class="hide tpl-date-range assessment-task-date-range">
+                            <em>
+                                <?php
+                                echo sprintf(
+                                    $translate->_("%s to %s"),
+                                    "<span data-content='task_start_date'></span>",
+                                    "<span data-content='task_end_date'></span>");
+                                ?>
+                            </em>
                         </div>
-                        <div class="assessment-task-select pdf-download">
-                            <div class="fa-wrapper">
-                                <span class="fa fa-download"></span>
-                            </div>
-                            <label class="checkbox">
-                                <input class="generate-pdf" type="checkbox" name="generate-pdf[]" data-template-bind='[{"attribute": "data-assessor-name", "value": "data_assessor_name"}, {"attribute": "data-assessor-value", "value": "data_assessor_value"}, {"attribute": "data-targets", "value": "data_targets"}, {"attribute": "data-assessment-id", "value": "data_assessment_id"}, {"attribute": "data-adistribution-id", "value": "data_adistribution_id"}, {"attribute": "value", "value": "value"}]'>
-                                <span class="generate-pdf-text" data-content="generate_pdf_text"></span>
-                            </label>
+
+                        <div class="hide tpl-future-delivery-date assessment-task-date">
+                            <?php echo sprintf($translate->_("Will be delivered on <strong>%s</strong>"), "<span data-content='delivery_date'></span>"); ?>
+                        </div>
+
+                        <div class="hide tpl-delivery-date assessment-task-date">
+                            <?php echo sprintf($translate->_("Delivered on <strong>%s</strong>"), "<span data-content='delivery_date'></span>"); ?>
+                        </div>
+
+                        <div class="hide tpl-completion-date assessment-task-date">
+                            <?php echo sprintf($translate->_("Completed on <strong>%s</strong>"), "<span data-content='task_completion_date'></span>"); ?>
+                        </div>
+
+                        <div class="hide tpl-delegator-name assessment-task-date">
+                            <?php echo sprintf($translate->_("Delegated by <strong>%s</strong>"), "<span data-content='delegator_name'></span>"); ?>
                         </div>
                     </div>
-                    <div class="assessment-task-link btn-group">
-                        <a class="view-task-link" data-href="task_url"><?php echo $translate->_("View Task") ?> &rtrif;</a>
-                        <span class="remove" data-assessment="" data-toggle="modal" data-target="#remove_form_modal" data-template-bind='[{"attribute": "data-assessor-type", "value": "data_assessor_type"}, {"attribute": "data-assessor-value", "value": "data_assessor_value"}, {"attribute": "data-target-id", "value": "data_target_id"}, {"attribute": "data-distribution-id", "value": "data_adistribution_id"}, {"attribute": "data-assessment-id", "value": "data_assessment_id"}, {"attribute": "data-delivery-date", "value": "value"}, {"attribute": "data-task-type", "value": "data_task_type"}]'>
-                            <a class="remove-task-link" href="#remove_form_modal" data-content="remove_task_text"></a>
-                        </span>
+                    <div class="hide tpl-progress-section assessment-progress">
+                        <span class="progress-title"><?php echo $translate->_("Progress"); ?></span>
+                        <span class="hide tpl-progress-pending pending">
+                                <a class="progress-circle tooltip-tag assessment-card-target-circle"
+                                   title="<?php echo $translate->_("Loading Targets..."); ?>"
+                                   data-toggle="tooltip"
+                                   data-placement="bottom"
+                                   data-progress-type="pending"
+                                   data-targets-loaded="0"
+                                   data-href="task_url"
+                                   data-template-bind='[
+                                       {"attribute": "data-dassessment-id", "value": "dassessment_id"}
+                                   ]'>
+                                    <div data-content="targets_pending"></div>
+                                </a>
+                            </span>
+                        <span class="hide tpl-progress-inprogress inprogress">
+                                <a class="progress-circle tooltip-tag assessment-card-target-circle"
+                                   title="<?php echo $translate->_("Loading Targets..."); ?>"
+                                   data-href="task_url"
+                                   data-toggle="tooltip"
+                                   data-placement="bottom"
+                                   data-progress-type="inprogress"
+                                   data-targets-loaded="0"
+                                   data-template-bind='[
+                                       {"attribute": "data-dassessment-id", "value": "dassessment_id"}
+                                   ]'>
+                                    <div data-content="targets_in_progress"></div>
+                                </a>
+                            </span>
+                        <span class="hide tpl-progress-complete complete">
+                                <a class="progress-circle tooltip-tag assessment-card-target-circle"
+                                   title="<?php echo $translate->_("Loading Targets..."); ?>"
+                                   data-href="task_url"
+                                   data-toggle="tooltip"
+                                   data-placement="bottom"
+                                   data-progress-type="complete"
+                                   data-targets-loaded="0"
+                                   data-template-bind='[
+                                       {"attribute": "data-dassessment-id", "value": "dassessment_id"}
+                                   ]'>
+                                    <div data-content="targets_completed"></div>
+                                </a>
+                            </span>
+                        <div class="clearfix"></div>
+                    </div>
+                    <div class="hide tpl-task-details details" data-content="task_details"></div>
+
+                    <!-- For a single target -->
+                    <div class="hide tpl-task-target assessor">
+                        <div>
+                            <?php echo sprintf($translate->_("Target: <strong>%s</strong>"), "<span data-content='single_target_name'></span>"); ?>
+                        </div>
+                        <div class="hide tpl-task-target-group-role label assessment-task-meta">
+                            <span data-content="single_target_group"></span>&nbsp;&bull;&nbsp;<span data-content="single_target_role"></span>
+                        </div>
+                        <div class="hide tpl-task-target-role label assessment-task-meta">
+                            <span data-content="single_target_role"></span>
+                        </div>
+                        <div class="hide tpl-task-target-group label assessment-task-meta">
+                            <span data-content="single_target_group"></span>
+                        </div>
+                    </div>
+
+                    <!-- For an assessor -->
+                    <div class="hide tpl-task-assessor assessor">
+                        <div>
+                            <?php echo sprintf($translate->_("Assessor: <strong>%s</strong>"), "<span data-content='assessor_name'></span>"); ?>
+                        </div>
+                        <div class="hide tpl-task-assessor-group-role label assessment-task-meta">
+                            <span data-content="assessor_group"></span>&nbsp;&bull;&nbsp;<span data-content="assessor_role"></span>
+                        </div>
+                        <div class="hide tpl-task-assessor-role label assessment-task-meta">
+                            <span data-content="assessor_role"></span>
+                        </div>
+                        <div class="hide tpl-task-assessor-group label assessment-task-meta">
+                            <span data-content="assessor_group"></span>
+                        </div>
+                    </div>
+
+                    <!-- Reminder checkbox -->
+                    <div class="hide tpl-task-reminder assessment-task-select task-reminder">
+                        <div class="fa-wrapper">
+                            <span class="fa fa-bell"></span>
+                        </div>
+                        <label class="remind-label checkbox">
+                            <input class="remind"
+                                   type="checkbox"
+                                   name="remind[]"
+                                   value="1"
+                                   data-template-bind='[
+                                       {"attribute": "data-task-id", "value": "task_id"},
+                                       {"attribute": "data-task-type", "value": "task_type"},
+                                       {"attribute": "data-assessor-name", "value": "assessor_name"},
+                                       {"attribute": "data-assessor-value", "value": "assessor_value"},
+                                       {"attribute": "data-dassessment-id", "value": "dassessment_id"},
+                                       {"attribute": "data-adistribution-id", "value": "adistribution_id"},
+                                       {"attribute": "data-aprogress-id", "value": "aprogress_id"}
+                                   ]'
+                            />
+                            <?php echo $translate->_(" Select and click the <strong>Send Reminders</strong> button above to send a reminder for all selected tasks."); ?>
+                        </label>
+                    </div>
+
+                    <!-- PDF Download checkbox -->
+                    <div class="hide tpl-task-pdf-download assessment-task-select pdf-download">
+                        <div class="fa-wrapper">
+                            <span class="fa fa-download"></span>
+                        </div>
+                        <label class="checkbox">
+                            <input class="generate-pdf"
+                                   type="checkbox"
+                                   name="generate-pdf[]"
+                                   value="1"
+                                   data-template-bind='[
+                                       {"attribute": "data-dassessment-id", "value": "dassessment_id"},
+                                       {"attribute": "data-aprogress-id", "value": "aprogress_id"}
+                                   ]'
+                            />
+                            <?php echo $translate->_(" Select and click on the <strong>Download PDF(s)</strong> button above to download a PDF of all selected tasks."); ?>
+                        </label>
                     </div>
                 </div>
-            </li>
+                <div class="assessment-task-link btn-group">
+                    <a class="hide tpl-task-view view-task-link full-width" data-href="task_url"><?php echo $translate->_("View Task") ?> &rtrif;</a>
+                    <a class="hide tpl-task-remove remove full-width"
+                       href="#"
+                       data-template-bind='[
+                           {"attribute": "data-task-id", "value": "task_id"},
+                           {"attribute": "data-task-type", "value": "task_type"},
+                           {"attribute": "data-target-list", "value": "task_targets"},
+                           {"attribute": "data-adistribution-id", "value": "adistribution_id"},
+                           {"attribute": "data-dassessment-id", "value": "dassessment_id"}
+                       ]'>
+                        <?php echo $translate->_("Remove Task"); ?>
+                    </a>
+                </div>
+            </div>
         </script>
-    <?php
-    }
-
-    /**
-     * @param string $entrada_url
-     * @param int $course_id
-     * @param string $module
-     *
-     * Adds required CSS and JS files to the $HEAD array and adds entry to the $BREADCRUMB array for this view.
-     */
-    protected function addHeadScripts () {
-        global $HEAD;
-        $HEAD[] = Entrada_Utilities_jQueryHelper::addjQuery();
-        $HEAD[] = Entrada_Utilities_jQueryHelper::addjQueryLoadTemplate();
+        <?php
     }
 }

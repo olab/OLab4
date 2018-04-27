@@ -69,6 +69,15 @@ class Models_Province extends Models_Base {
         ));
     }
 
+    /* @return bool|Models_Province */
+    public static function fetchRowByAbbreviation($country_id, $abbreviation) {
+        $self = new self();
+        return $self->fetchRow(array(
+            array("key" => "abbreviation", "method" => "=", "value" => $abbreviation),
+            array("key" => "country_id", "method" => "=", "value" => $country_id)
+        ));
+    }
+
     /* @return ArrayObject|Models_Province[] */
     public static function fetchAllRecords() {
         $self = new self();

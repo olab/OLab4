@@ -3,7 +3,7 @@
 <phpunit colors="true" bootstrap="../../www-root/core/library/vendor/autoload.php">
     <testsuites>
         <testsuite name="Entrada">
-            <directory>./classes</directory>
+            <directory>./Entrada</directory>
             <directory>./models</directory>
             <directory>./views</directory>
             <directory>./functions</directory>

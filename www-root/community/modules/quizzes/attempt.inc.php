@@ -108,6 +108,8 @@ if ($LOGGED_IN) {
 															FROM `quiz_questions` AS a
 															WHERE a.`quiz_id` = ".$db->qstr($progress_record["quiz_id"])."
 															AND a.`question_active` = '1'
+															AND a.`questiontype_id` <> 2
+															AND a.`questiontype_id` <> 3
 															ORDER BY a.`question_order` ASC";
 											$questions	= $db->GetAll($query);
 											if ($questions) {
@@ -117,7 +119,7 @@ if ($LOGGED_IN) {
 
 												foreach ($questions as $question) {
 													/**
-													 * Checking to see if the qquestion_id was submitted with the
+													 * Checking to see if the question_id was submitted with the
 													 * response $_POST, and if they've actually answered the question.
 													 */
 													if ((isset($_POST["responses"][$question["qquestion_id"]])) && ($qqresponse_id = clean_input($_POST["responses"][$question["qquestion_id"]], "int"))) {
@@ -214,7 +216,7 @@ if ($LOGGED_IN) {
 													} else {
 														$url = ENTRADA_URL."/community".$quiz_record["community_url"].":".$quiz_record["page_url"];
 
-														add_success("Thank-you for completing the <strong>".html_encode($quiz_record["quiz_title"])."</strong> quiz. Your responses have been successfully recorded, and your grade and any feedback will be released <strong>".date(DEFAULT_DATE_FORMAT, $quiz_record["release_until"])."</strong>.<br /><br />You will now be redirected back to the learning event; this will happen <strong>automatically</strong> in 15 seconds or <a href=\"".$url."\" style=\"font-weight: bold\">click here</a> to continue.");
+														add_success("Thank-you for completing the <strong>".html_encode($quiz_record["quiz_title"])."</strong> quiz. Your responses have been successfully recorded, and your grade and any feedback will be released <strong>".date(DEFAULT_DATETIME_FORMAT, $quiz_record["release_until"])."</strong>.<br /><br />You will now be redirected back to the learning event; this will happen <strong>automatically</strong> in 15 seconds or <a href=\"".$url."\" style=\"font-weight: bold\">click here</a> to continue.");
 
 														$ONLOAD[] = "setTimeout('window.location=\\'".$url."\\'', 15000)";
 													}
@@ -246,7 +248,7 @@ if ($LOGGED_IN) {
 
 										$completed_attempts += 1;
 
-                                        add_error("We were unable to save your previous quiz attempt because your time limit expired <strong>".date(DEFAULT_DATE_FORMAT, $quiz_end_time)."</strong>, and you submitted your quiz <strong>".date(DEFAULT_DATE_FORMAT)."</strong>.");
+                                        add_error("We were unable to save your previous quiz attempt because your time limit expired <strong>".date(DEFAULT_DATETIME_FORMAT, $quiz_end_time)."</strong>, and you submitted your quiz <strong>".date(DEFAULT_DATETIME_FORMAT)."</strong>.");
 
 										application_log("notice", "Unable to save qprogress_id [".$qprogress_id."] because it expired.");
 									}
@@ -333,7 +335,7 @@ if ($LOGGED_IN) {
 										if ($quiz_end_time) {
 											?>
 											<div id="display-quiz-timeout" class="display-generic">
-												You have until <strong><?php echo date(DEFAULT_DATE_FORMAT, $quiz_end_time); ?></strong> to complete this quiz.
+												You have until <strong><?php echo date(DEFAULT_DATETIME_FORMAT, $quiz_end_time); ?></strong> to complete this quiz.
 
 												<div id="quiz-timer" style="margin-top: 15px; display: none"></div>
 											</div>
@@ -517,21 +519,25 @@ if ($LOGGED_IN) {
 															if ($grouped_qquestions) {
 																$quiz_markup .= "</ol><ol class=\"questions group\" start=\"".$counter."\">";
 																foreach ($grouped_qquestions as $question) {
-																	$quiz_markup .= "<li>".clean_input($question->getQuestionText(), "trim");
-																	$responses	= Models_Quiz_Question_Response::fetchAllRecords($question->getQquestionID());
-																	if ($responses) {
-																		$quiz_markup .= "<ul class=\"responses\">";
-																		foreach ($responses as $r) {
-																			$response = $r->toArray();
-																			$quiz_markup .= "<li  class=\"row-fluid\">";
-																			$quiz_markup .= "	<span class=\"span1\"><input type=\"radio\" id=\"response_".$question->getQquestionID()."_".$response["qqresponse_id"]."\" name=\"responses[".$question->getQquestionID()."]\" value=\"".$response["qqresponse_id"]."\"".(($ajax_load_progress[$question->getQquestionID()] == $response["qqresponse_id"]) ? " checked=\"checked\"" : "")." onclick=\"((this.checked == true) ? storeResponse('".$question->getQquestionID()."', '".$response["qqresponse_id"]."') : false)\" /></span>";
-																			$quiz_markup .= "	<label class=\"span11\" for=\"response_".$question->getQquestionID()."_".$response["qqresponse_id"]."\">".clean_input($response["response_text"], (($response["response_is_html"] == 1) ? "trim" : "encode"))."</label>";
-																			$quiz_markup .= "</li>\n";
-																		}
-																		$quiz_markup .= "</ul>";
-																	}
-																	$quiz_markup .= "</li>";
-																	$counter ++;
+																    if ($question->getQuestiontypeID() == 2) {
+																        $quiz_markup .= "<p>" . clean_input($question->getQuestionText(), "trim") . "</p>";
+                                                                    } else {
+                                                                        $quiz_markup .= "<li class=\"" . ($question->getQuestiontypeID() == 3 ? "hide" : "") . "\">" . clean_input($question->getQuestionText(), "trim");
+                                                                        $responses	= Models_Quiz_Question_Response::fetchAllRecords($question->getQquestionID());
+                                                                        if ($responses) {
+                                                                            $quiz_markup .= "<ul class=\"responses\">";
+                                                                            foreach ($responses as $r) {
+                                                                                $response = $r->toArray();
+                                                                                $quiz_markup .= "<li  class=\"row-fluid\">";
+                                                                                $quiz_markup .= "	<span class=\"span1\"><input type=\"radio\" id=\"response_".$question->getQquestionID()."_".$response["qqresponse_id"]."\" name=\"responses[".$question->getQquestionID()."]\" value=\"".$response["qqresponse_id"]."\"".(($ajax_load_progress[$question->getQquestionID()] == $response["qqresponse_id"]) ? " checked=\"checked\"" : "")." onclick=\"((this.checked == true) ? storeResponse('".$question->getQquestionID()."', '".$response["qqresponse_id"]."') : false)\" /></span>";
+                                                                                $quiz_markup .= "	<label class=\"span11\" for=\"response_".$question->getQquestionID()."_".$response["qqresponse_id"]."\">".clean_input($response["response_text"], (($response["response_is_html"] == 1) ? "trim" : "encode"))."</label>";
+                                                                                $quiz_markup .= "</li>\n";
+                                                                            }
+                                                                            $quiz_markup .= "</ul>";
+                                                                        }
+                                                                        $quiz_markup .= "</li>";
+                                                                        $counter ++;
+                                                                    }
 																}
 																$quiz_markup .= "</ol><ol class=\"questions\" start=\"".$counter."\">\n";
 															}
@@ -640,7 +646,7 @@ if ($LOGGED_IN) {
 											var total_pages = jQuery(".pagination-top").length >= 1 ? jQuery(".pagination-top ul li").length - 2 : 1;
 											var active_page = 1;
 											jQuery(function(){
-												jQuery(".pagination ul li a").live("click", function() {
+												jQuery(document).on("click", ".pagination ul li a", function() {
 													if (jQuery(this).hasClass("prev") || jQuery(this).hasClass("next")) {
 														old_page = active_page;
 														if (jQuery(this).hasClass("prev") && active_page > 1) {
@@ -738,14 +744,14 @@ if ($LOGGED_IN) {
 						application_log("notice", "Someone attempted to complete aquiz_id [".$RECORD_ID."] (quiz_id [".$quiz_record["quiz_id"]."] / event_id [".$quiz_record["content_id"]."]) more than the total number of possible attempts [".$quiz_record["quiz_attempts"]."].");
 					}
 				} else {
-					add_notice("You were only able to attempt this quiz until <strong>".date(DEFAULT_DATE_FORMAT, $quiz_record["release_until"])."</strong>.<br /><br />Please contact a teacher if you require further assistance.");
+					add_notice("You were only able to attempt this quiz until <strong>".date(DEFAULT_DATETIME_FORMAT, $quiz_record["release_until"])."</strong>.<br /><br />Please contact a teacher if you require further assistance.");
 
 					echo display_notice();
 
 					application_log("error", "Someone attempted to complete aquiz_id [".$RECORD_ID."] (quiz_id [".$quiz_record["quiz_id"]."] / event_id [".$quiz_record["content_id"]."] after the release date.");
 				}
 			} else {
-                add_notice("You cannot attempt this quiz until <strong>".date(DEFAULT_DATE_FORMAT, $quiz_record["release_date"])."</strong>.<br /><br />Please contact a teacher if you require further assistance.");
+                add_notice("You cannot attempt this quiz until <strong>".date(DEFAULT_DATETIME_FORMAT, $quiz_record["release_date"])."</strong>.<br /><br />Please contact a teacher if you require further assistance.");
 
 				echo display_notice();
 

@@ -54,7 +54,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_NOTICES"))) {
 				$PROCESSED["target"] = 'updated';
 			}
 
-			if ((isset($_POST["notice_summary"])) && ($notice_summary = strip_tags(clean_input($_POST["notice_summary"], "trim"), "<a><br><p>"))) {
+            if (isset($_POST["notice_summary"]) && ($notice_summary = clean_input($_POST["notice_summary"], "html"))) {
 				$PROCESSED["notice_summary"] = $notice_summary;
 			} else {
 				add_error("You must provide a notice summary.");
@@ -233,7 +233,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_NOTICES"))) {
 			/**
 			 * Load the rich text editor.
 			 */
-			load_rte("minimal");
+			load_rte("advanced");
 
 			if ($ERROR) {
 				echo display_error();

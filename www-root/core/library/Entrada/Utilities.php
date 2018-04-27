@@ -296,7 +296,7 @@ class Entrada_Utilities {
         return $timestamp;
     }
 
-    public static function fetchUserPhotoDetails($proxy_id, $privacy_level = 1) {
+    public static function fetchUserPhotoDetails($proxy_id, $privacy_level = 1, $photo_access_override = false) {
         global $ENTRADA_ACL, $db;
 
         $photo_details                      = array();
@@ -312,30 +312,66 @@ class Entrada_Utilities {
          *  If the user is trying to view their own photo, or
          *  If the proxy_id has their privacy set to "Any Information"
          */
-        if ((@file_exists(STORAGE_USER_PHOTOS."/".$proxy_id."-official")) && ($ENTRADA_ACL->amIAllowed(new PhotoResource($proxy_id, (int) $privacy_level, "official"), "read"))) {
+        if ($photo_access_override) {
+            $acl_allowed = true;
+            $acl_upload_check_passed = true;
+        } else {
+            $acl_allowed = false;
+            $acl_upload_check_passed = true;
+            if ($ENTRADA_ACL) {
+                $acl_allowed = ($ENTRADA_ACL->amIAllowed(new PhotoResource($proxy_id, (int)$privacy_level, "official"), "read"));
+                $acl_upload_check_passed = ($ENTRADA_ACL->amIAllowed(new PhotoResource($proxy_id, (int) $privacy_level, "upload"), "read"));
+            }
+        }
+        if ((@file_exists(STORAGE_USER_PHOTOS."/".$proxy_id."-official")) && $acl_allowed) {
             $photo_details["official_active"]	= true;
             $photo_details["official_url"]= webservice_url("photo", array($proxy_id, "official"));
         } else {
             $photo_details["official_url"] = ENTRADA_URL."/images/headshot-male.gif";
         }
-
         /**
          * If the photo file actually exists, and
          * If the uploaded file is active in the user_photos table, and
          * If the proxy_id has their privacy set to "Basic Information" or higher.
          */
         $query = "SELECT `photo_active` FROM `".AUTH_DATABASE."`.`user_photos` WHERE `photo_type` = '1' AND `photo_active` = '1' AND `proxy_id` = ".$db->qstr($proxy_id);
-        $photo_active	= $db->GetOne($query);
-        if ((@file_exists(STORAGE_USER_PHOTOS."/".$proxy_id."-upload")) && ($photo_active) && ($ENTRADA_ACL->amIAllowed(new PhotoResource($proxy_id, (int) $privacy_level, "upload"), "read"))) {
+        $photo_active = $db->GetOne($query);
+        if ((@file_exists(STORAGE_USER_PHOTOS."/".$proxy_id."-upload")) &&
+            ($photo_active) &&
+            $acl_upload_check_passed
+        ) {
             $photo_details["uploaded_active"] = true;
             $photo_details["uploaded_url"] = webservice_url("photo", array($proxy_id, "upload"));
             if (!$photo_details["official_active"]) {
                 $photo_details["default_photo"] = "uploaded";
             }
         }
-
         return $photo_details;
     }
+
+    /**
+     * Using the user photo details, return which photo is the current default.
+     * Returns empty string when unable to determine a default.
+     *
+     * Specifying true for photo_access_override will ignore ACL check that
+     * fetchUserPhotoDetails is dependent on.
+     *
+     * @param int $proxy_id
+     * @param int $privacy_level
+     * @param bool $photo_access_override
+     * @return string
+     */
+    public static function fetchUserDefaultPhotoURL($proxy_id, $privacy_level, $photo_access_override = false) {
+        $user_photo_details = self::fetchUserPhotoDetails($proxy_id, $privacy_level, $photo_access_override);
+        if (is_array($user_photo_details) && !empty($user_photo_details) && array_key_exists("default_photo", $user_photo_details)) {
+            $photo_key = "{$user_photo_details["default_photo"]}_url";
+            if (array_key_exists($photo_key, $user_photo_details)) {
+                return $user_photo_details[$photo_key];
+            }
+        }
+        return "";
+    }
+
     
      public static function myEntradaSidebar($returnHtml = NULL) {
         global $translate, $ENTRADA_USER, $ENTRADA_CACHE;
@@ -485,16 +521,18 @@ class Entrada_Utilities {
         }
 
         $sidebar_html = "<ul class=\"nav nav-list\">\n";
-        $sidebar_html .= "<li><a href=\"" . ENTRADA_RELATIVE . "/exams" . "\">" . $my_entrada["links"]["exams"] . "</a>" . $exam_badge . "</li>\n";
-        $sidebar_html .= "<li><a href=\"" . ENTRADA_RELATIVE . "/profile/gradebook" . "\">" . $my_entrada["links"]["gradebook"] . "</a></li>\n";
-        $sidebar_html .= "<li><a href=\"" . ENTRADA_RELATIVE . "/profile/gradebook/assignments" . "\">" . $my_entrada["links"]["assignments"] . "</a>" . $assignment_badge . "</li>\n";
+        $sidebar_html .= "<li><a href=\"" . ENTRADA_RELATIVE . "/exams" . "\">" . $translate->_("My Exams") . "</a>" . $exam_badge . "</li>\n";
+        $sidebar_html .= "<li><a href=\"" . ENTRADA_RELATIVE . "/profile/gradebook" . "\">" . $translate->_("My Gradebook") . "</a></li>\n";
+        $sidebar_html .= "<li><a href=\"" . ENTRADA_RELATIVE . "/profile/gradebook/assignments" . "\">" .$translate->_("My Assignments") . "</a>" . $assignment_badge . "</li>\n";
+//        $sidebar_html .= "<li><a href=\"" . ENTRADA_RELATIVE . "/evaluations" . "\">" . $translate->_("My Clerkship Evaulations") . "</a>" . $evaluation_badge . "</li>\n";
+//        $sidebar_html .= "<li><a href=\"" . ENTRADA_RELATIVE . "/assessments" . "\">" . $translate->_("My Assessments & Evaulation") . "</a>" . $evaluation_badge . "</li>\n";
         $sidebar_html .= "</ul>\n";
 
         if ($returnHtml === true) {
             if ($ENTRADA_USER->getActiveGroup() === "student" || $ENTRADA_USER->getActiveGroup() === "resident") {
                 $export_html = "<div summary=\"my_entrada\" id=\"my_entrada\" class=\"panel\">";
                 $export_html .= "<div class=\"panel-head\">";
-                $export_html .= "<h3>" . $my_entrada["title"] . "</h3>";
+                $export_html .= "<h3>" . $translate->_("My Entrada") . "</h3>";
                 $export_html .= "</div>";
                 $export_html .= "<div class=\"clearfix panel-body\">";
                 $export_html .= $sidebar_html;
@@ -505,7 +543,7 @@ class Entrada_Utilities {
         }
 
         if ($ENTRADA_USER->getActiveGroup() === "student" || $ENTRADA_USER->getActiveGroup() === "resident") {
-            new_sidebar_item($my_entrada["title"], $sidebar_html, "my_entrada", "open", 1);
+            new_sidebar_item($translate->_("My Entrada"), $sidebar_html, "my_entrada", "open", 1);
         }
     }
 
@@ -518,10 +556,11 @@ class Entrada_Utilities {
 
         $organisations = $ENTRADA_USER->getAllOrganisations();
 
-        if (($organisations && count($organisations)) || ($ENTRADA_USER->getOrganisationGroupRole() && max(array_map("count", $ENTRADA_USER->getOrganisationGroupRole())) > 1)) {
+        if ($organisations && count($organisations) && $ENTRADA_USER->getOrganisationGroupRole() && ((count($organisations) > 1) || (max(array_map("count", $ENTRADA_USER->getOrganisationGroupRole())) > 1))) {
             $org_group_role = $ENTRADA_USER->getOrganisationGroupRole();
 
             $sidebar_html = "<ul class=\"menu org-selector\">\n";
+
             foreach ($organisations as $key => $organisation_title) {
                 $sidebar_html .= "<li class=\"nav-header\">" . $organisation_title . "</li>\n";
 
@@ -540,15 +579,28 @@ class Entrada_Utilities {
         }
     }
 
-    /*
-    * Return the URL of the current page
-    */
-
+    /**
+     * Return the URL of the current page. This will be constructed using the ENTRADA_URL constant and the
+     * $SERVER["REQUEST_URI"] with any unwanted tokens removed (defined in setting BOOKMARK_REMOVE_URL_TOKENS).
+     */
     public static function getCurrentUrl() {
-        $url  = isset( $_SERVER["HTTPS"] ) && "on" === $_SERVER["HTTPS"] ? "https" : "http";
-        $url .= "://" . $_SERVER["SERVER_NAME"];
-        $url .= in_array( $_SERVER["SERVER_PORT"], array("80", "443") ) ? "" : ":" . $_SERVER["SERVER_PORT"];
-        $url .= $_SERVER["REQUEST_URI"];
+        global $BOOKMARK_REMOVE_URL_TOKENS;
+
+        $request_uri = $_SERVER["REQUEST_URI"];
+        $tokens_to_remove = $BOOKMARK_REMOVE_URL_TOKENS;
+
+        if ($tokens_to_remove) {
+            $uri_pieces = explode("/", $request_uri);
+
+            $filtered_uri_pieces = array_filter($uri_pieces, function($token) use ($tokens_to_remove) {
+                return !in_array($token, $tokens_to_remove);
+            });
+
+            $request_uri = $filtered_uri_pieces ? $request_uri = implode("/", $filtered_uri_pieces) : "";
+        }
+
+        $url = ENTRADA_URL . $request_uri;
+
         return $url;
     }
 
@@ -687,4 +739,410 @@ class Entrada_Utilities {
         return $new_audience;
     }
 
+
+    /**
+     * Turn the output from print_r into a collapsible tree.
+     * Optionally include a title and wrap in <pre> tags.
+     *
+     * @param mixed $data
+     * @param string $title
+     * @param bool $include_pre
+     */
+    public static function print_r_tree($data, $title = "", $include_pre = true) {
+        $js = '<script language="Javascript">function jsPrintRTreeToggleDisplay(id) { document.getElementById(id).style.display = (document.getElementById(id).style.display === "block") ? "none" : "block";}</script>';
+
+        // Generate print_r output
+        $output = print_r($data, true);
+
+        // Replace something like '[element] => <newline> (' with <a href="javascript:jsPrintRTreeToggleDisplay('...');">...</a><div id="..." style="display: none;">
+        $output = preg_replace_callback(
+            '/([ \t]*)(\[[^\]]+\][ \t]*\=\>[ \t]*[a-z0-9 \t_]+)\n[ \t]*\(/iU',
+            function ($matches) {
+                $id = substr(md5(rand(). $matches[0]), 0, 7);
+                $replaced = "{$matches[1]}<a href=\"javascript:jsPrintRTreeToggleDisplay('$id');\">{$matches[2]}</a><div id='$id' style='display: none;'>";
+                return $replaced;
+            },
+            $output
+        );
+
+        // replace ')' on its own on a new line with '</div>'
+        $output = preg_replace('/^\s*\)\s*$/m', '</div>', $output);
+
+        // Replace the final </div> with ')'
+        $search = '</div>';
+        $replacement = "\n)";
+        $replaced = strrev(implode(strrev($replacement), explode(strrev($search), strrev($output), 2)));
+
+        echo ($include_pre) ? '<pre>' : '';
+        echo $js;
+        echo $title ? "$title\n" : '';
+        echo $replaced;
+        echo ($include_pre) ? '</pre>' : '';
+    }
+
+    /**
+     * Adds a single localized string to the $JAVASCRIPT_TRANSLATIONS global array.
+     *
+     * The default variable it adds is called "javascript_translations". This can be referenced in any javascript (where this function is called on the
+     * respective index page) via "javascript_translations.your_message_name". This outputs an html_encoded string declaration of a localized string.
+     * The resulting variable usable in javascript will have a property based on $message_name, lower-cased, underscore separated.
+     *
+     * Usage:
+     * This string being localized should be defined in the language file for the related template.
+     * To use the localized string in JavaScript, first, in PHP, define your localization in your relevant file.
+     *
+     * For example, in your index, add:
+     *     Entrada_Utilities::addJavascriptTranslation("I want <stong>this</strong> text translated", "Translate This"); // "Translate This" will be converted
+     *
+     * Then in JavaScript, you can reference the variable like so:
+     *     alert(javascript_translations.translate_this);
+     *
+     * This particular JavaScript would create an alert box with "I want &lt;strong&gt;this&lt;strong&gt; text translated". If the original string was
+     * is in the language file, the localized version would appear as the string, html_encoded after translation.
+     *
+     * @param string $message_text
+     * @param string $message_name
+     * @param string $translation_variable
+     * @param bool $html_encode
+     */
+    public static function addJavascriptTranslation($message_text, $message_name, $translation_variable = "javascript_translations", $html_encode = true) {
+        global $JAVASCRIPT_TRANSLATIONS, $translate;
+        if (!$translation_variable || !is_string($translation_variable)) {
+            $translation_variable = "javascript_translations";
+        }
+        $message_name = clean_input($message_name, array("trim", "notags", "lowercase", "underscores", "module"));
+        $message_enc = $translate->_($message_text); // Translate the given string
+        if ($html_encode) {
+            // HTML encode it if specified
+            $message_enc = html_encode($message_enc);
+        }
+        // Add the usable javascript object (if not already defined)
+        $translation_decl = "var $translation_variable = {};";
+        if (!in_array($translation_decl, $JAVASCRIPT_TRANSLATIONS)) {
+            $JAVASCRIPT_TRANSLATIONS[] = $translation_decl;
+        }
+        // Add this property to the object
+        $JAVASCRIPT_TRANSLATIONS[] = "{$translation_variable}.{$message_name} = \"$message_enc\";";
+    }
+
+    /**
+     * Return the value of an array for a given index; if the source is not an array or the index does not exist, use a default value instead.
+     * The default value is null, unless otherwise specified.
+     *
+     * @param array|mixed $source_array
+     * @param string $index
+     * @param mixed|null $default_value
+     * @return mixed
+     */
+    public static function arrayValueOrDefault(&$source_array, $index, $default_value = null) {
+        if (is_array($source_array)) {
+            if (array_key_exists($index, $source_array)) {
+                return $source_array[$index];
+            }
+        }
+        return $default_value;
+    }
+
+    /**
+     * For the given source array, check if the value at the given index is an array and return it, otherwise, return an empty array.
+     * The default can be overridden; it may be useful to return false instead of empty array in some situations.
+     *
+     * @param mixed $source_array
+     * @param string $index
+     * @param mixed|array $default_value
+     * @return array
+     */
+    public static function arrayValueArrayOrEmpty(&$source_array, $index, $default_value = array()) {
+        $return_value = $default_value;
+        if (is_array($source_array)) {
+            $return_value = array_key_exists($index, $source_array)
+                ? is_array($source_array[$index])
+                    ? $source_array[$index]
+                    : $default_value
+                : $default_value;
+        }
+        return $return_value;
+    }
+
+    /**
+     * Drill down into a multi level array and determine if the given indecies exist in order.
+     * This function requires at least 3 parameters; the source to examine, the default, and the index of the source.
+     * Any number of parameters can be specified.
+     *
+     * Examples:
+     *
+     *    $source_array = array("1" => array("2" => array("3" => "Value we want")));
+     *    $result = multidimensionalArrayValue($source_array, false, "1", "2", "3");   // $result = "Value we want"
+     *    $result = multidimensionalArrayValue($source_array, false, "1", "2");        // $result = array("3" => "Value we want")
+     *    $result = multidimensionalArrayValue($source_array, false, "1");             // $result = array("2" => array("3" => "Value we want"))
+     *    $result = multidimensionalArrayValue($source_array, false, "z");             // $result = false
+     *    $result = multidimensionalArrayValue($source_array, false);                  // $result = false
+     *    $result = multidimensionalArrayValue($source_array, false, "1", "b");        // $result = false
+     *    $result = multidimensionalArrayValue($source_array, false, "b", "2");        // $result = false
+     *
+     *    $source_array = array();
+     *    $result = multidimensionalArrayValue($source_array, false, "b", "2");        // $result = false
+     *    $result = multidimensionalArrayValue($source_array);                         // $result = null
+     *
+     *    $source_array = array("abc");
+     *    $result = multidimensionalArrayValue($source_array, false, "b", "2");        // $result = false
+     *    $result = multidimensionalArrayValue($source_array, false, 0);               // $result = "abc"
+     *
+     *    $source_array = "string";
+     *    $result = multidimensionalArrayValue($source_array, false, "b", "2");        // $result = false
+     *    $result = multidimensionalArrayValue($source_array, false, 0);               // $result = false
+     *
+     * @param mixed $source
+     * @param null $default_value
+     * @return mixed
+     */
+    public static function multidimensionalArrayValue(&$source, $default_value = null) {
+        $args = func_get_args();
+        if (count($args) == 1) {
+            return null;
+        }
+        if (count($args) == 2) {
+            return $default_value;
+        }
+        if (count($args) >= 3) {
+            // Remove the first two arguments (source and default value)
+            array_shift($args);
+            array_shift($args);
+
+            // Get the first argument
+            $index = array_shift($args);
+            $array_pointer = &$source;
+            $search_complete = false;
+
+            // Iterate through the arguments, checking the array for those indecies at each level of the array.
+            while (!$search_complete) {
+                if (is_array($array_pointer)
+                    && array_key_exists($index, $array_pointer)
+                ) {
+                    if (empty($args)) {
+                        $search_complete = true;
+                    }
+                    // Move to the next level
+                    $array_pointer = &$array_pointer[$index];
+                    if (!empty($args)) {
+                        $index = array_shift($args);
+                    }
+                } else {
+                    // Not found, so return the default
+                    return $default_value;
+                }
+            }
+            // We got this far, meaning the search is complete.
+            // We would have quit if we previously didn't find anything when we expected to, so we can safely return the value at current array pointer.
+            return $array_pointer;
+        }
+        return $default_value;
+    }
+
+    /**
+     * Determine if a value is in both arrays.
+     *
+     * @param string $value
+     * @param array $first_array
+     * @param array $second_array
+     * @return bool
+     */
+    public static function inBothArrays($value, &$first_array, &$second_array) {
+        if (is_array($first_array)
+            && is_array($second_array)
+        ) {
+            if (in_array($value, $first_array)
+                && in_array($value, $second_array)
+            ) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Check if the current logged in user is considered a super-user/super-admin.
+     *
+     * Additional ACL checks can be passed along that will grant Super Admin access when passed.
+     * The additional_acl_checks describes the acl resource; the structure of the array matches the amIAllowed function signature.
+     *
+     * $additional_acl_checks should be defined (similarly) as:
+     *
+     *      $checks = array(
+     *          array(
+     *              "resource" => "assessmentreportadmin",
+     *              "action" => "read",
+     *              "assert" => true
+     *          )
+     *      );
+     *
+     * Then, executing this method as follows will return a boolean result that can be used to determine if the
+     * logged in user is a super admin:
+     *      Entrada_Utilities::isCurrentUserSuperAdmin($checks);
+     *
+     * Each entry in the array describes one ACL check. Action and Assert are optional (they use $default_action and $default_assert
+     * respectively when not set); the only required definition is the resource.
+     *
+     * For example, this would be a valid array (assuming the resource names or objects are valid and defined in the database):
+     *
+     *      $checks = array(
+     *          array("resource" => "reportadmin"),
+     *          array("resource" => "secondaryadministrator", "assert" => "false"),
+     *          array("resource" => "useradmin", "action" => "read", "assert" => false),
+     *          array("resource" => new ACLResourceObject(), "action" => "write", "assert" => true)
+     *      );
+     *
+     * @param array $additional_acl_checks
+     * @param string $default_action
+     * @param bool $default_assert
+     * @return bool
+     */
+    public static function isCurrentUserSuperAdmin($additional_acl_checks = array(), $default_action = "read", $default_assert = true) {
+        global $ENTRADA_ACL, $ENTRADA_USER;
+        if ($ENTRADA_USER->getActiveRole() == "admin" && $ENTRADA_USER->getActiveGroup() == "medtech") {
+            return true;
+        }
+        $default_resource_info = array("resource" => "", "action" => $default_action, "assert" => $default_assert);
+        if (is_array($additional_acl_checks)) {
+            foreach ($additional_acl_checks as $acl_resource_info) {
+                if (array_key_exists("resource", $acl_resource_info)) {
+                    $resource_info = array_merge($default_resource_info, $acl_resource_info);
+                    if ($resource_info["resource"]) {
+                        if ($ENTRADA_ACL->amIAllowed($resource_info["resource"], $resource_info["action"], $resource_info["assert"])) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        // Didn't explicitly pass, so the user is not a super user.
+        return false;
+    }
+  
+    /**
+     * Validate and sanitize the provided array with each of the sanitization flags provided.
+     *
+     * @param $array
+     * @param $sanitization_params
+     * @param $glue
+     * @return string
+     */
+    public static function sanitizeArrayAndImplode($array, $sanitization_params, $glue = ",") {
+        if (!is_array($array) || empty($array)) {
+            return false;
+        }
+        $data_array = array_map(function ($v) use ($sanitization_params) {
+            return clean_input($v, $sanitization_params);
+        }, $array);
+        if (!$data_array) {
+            return false;
+        }
+        $string = implode($glue, array_filter($data_array));
+        return $string;
+    }
+
+    /**
+     * Build a translate object for use with a specific organisation.
+     * Defaults to "default" if the organisation is not found.
+     * This function is useful in contexts where organisations are iterated on, such as cron jobs.
+     *
+     * @param $organisation_id
+     * @return Entrada_Translate
+     */
+    public static function buildTranslateByOrganisation($organisation_id) {
+        $template = "default";
+        if ($organisation = Models_Organisation::fetchRowByID($organisation_id)) {
+            $template = $organisation->getTemplate();
+        }
+        $translate = new Entrada_Translate(
+            array (
+                "adapter" => "array",
+                "disableNotices" => (DEVELOPMENT_MODE ? false : true)
+            )
+        );
+        $translate->addTranslation(
+            array(
+                'adapter' => 'array',
+                'content' => ENTRADA_ABSOLUTE . "/templates/{$template}/languages",
+                'locale'  => 'auto',
+                "scan" => Entrada_Translate::LOCALE_FILENAME
+            )
+        );
+        return $translate;
+    }
+
+    /**
+     * Return the timestamp for a specific time of the day of a given timestamp.
+     * Useful for checking start/end/middle of day using DateTime object with timezones.
+     *
+     * Example: assuming "America/Toronto" timezone, this:
+     *    createTimestampForDay(1509983275); // Timestamp = 2016-11-06 10:47:55 AM
+     *
+     * Returns:
+     *    1509944400 (2017-11-06 12:00:00 AM)
+     *
+     * And this:
+     *    createTimestampForDay(1509983275, 23, 59, 59);
+     *
+     * Returns:
+     *    1510030799 (2017-11-06 11:59:59 PM)
+     *
+     * @param int $timestamp
+     * @param int $hour
+     * @param int $minute
+     * @param int $second
+     * @param null|string $timezone
+     * @return string
+     */
+    public static function createTimestampForDay($timestamp, $hour = 0, $minute = 0, $second = 0, $timezone = null) {
+        if (!$timezone) {
+            $timezone = DEFAULT_TIMEZONE;
+        }
+        $dt = DateTime::createFromFormat("U", (int)$timestamp);
+        $dt->setTimeZone(new DateTimeZone($timezone))->format("Y-m-d");
+        $dt->setTime($hour, $minute, $second);
+        return $dt->format("U");
+    }
+
+    /**
+     * Get exclusive access to a resource via mysql lock mechanism.
+     * Attempt to get exclusive access using the named lock, waiting for a specific amount of
+     * time (defaults to waiting 0 seconds) before giving up.
+     *
+     * @param string $named_lock
+     * @param int $timeout
+     * @return mixed
+     */
+    public static function obtainExclusiveAccess($named_lock = "default_lockname", $timeout = 0) {
+        global $db;
+        return $db->GetOne("SELECT GET_LOCK(?,?)", array($named_lock, $timeout));
+    }
+
+    /**
+     * Release the exclusive access lock.
+     * This occurs automatically when the DB connection is closed.
+     *
+     * @param string $named_lock
+     * @return mixed
+     */
+    public static function releaseExclusiveAccess($named_lock = "default_lockname") {
+        global $db;
+        return $db->GetOne("SELECT RELEASE_LOCK(?)", array($named_lock));
+    }
+
+    /**
+     * This function will search an array for all occurrences of a string and return an array with those locations
+     * @param array $haystack
+     * @param string $needle
+     * @return array
+     */
+    public static function strpos_all($haystack, $needle) {
+        $offset = 0;
+        $allpos = array();
+        while (($pos = strpos($haystack, $needle, $offset)) !== FALSE) {
+            $offset   = $pos + 1;
+            $allpos[] = $pos;
+        }
+        return $allpos;
+    }
 }

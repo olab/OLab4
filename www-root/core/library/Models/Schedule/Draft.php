@@ -80,6 +80,31 @@ class Models_Schedule_Draft extends Models_Base {
         $course = Models_Course::fetchRowByID($this->course_id);
         if ($course) {
 
+            $cperiod = Models_Curriculum_Period::fetchRowByID($this->cperiod_id);
+            $ctype = new Models_Curriculum_Type();
+            $organisation_id = null;
+            $start = null;
+            $end = null;
+            $level_model = new Models_User_LearnerLevel();
+
+            if ($cperiod) {
+                $organisation_id = $ctype->fetchOrganisationIDByCPeriod($cperiod->getID());
+                if ($organisation_id) {
+                    // If this is the current cperiod, we need to ensure we only fetch levels that have started.
+                    // If the cperiod has passed, fetch the most recent up until the end of the cperiod.
+                    // If the cperiod has not started yet, fetch what the learner will be at the beginning of the period.
+                    $start = $cperiod->getStartDate();
+                    $end = $cperiod->getFinishDate();
+                    if (time() >= $cperiod->getStartDate()) {
+                        if (time() <= $cperiod->getFinishDate()) {
+                            $end = time();
+                        }
+                    } else {
+                        $end = $cperiod->getStartDate();
+                    }
+                }
+            }
+
             $schedule_data = array();
             $schedule_data["unscheduled_on_service_audience"] = array();
             $schedule_data["on_service_audience"] = array();
@@ -167,6 +192,17 @@ class Models_Schedule_Draft extends Models_Base {
                     if ($u) {
                         $member["name"] = $u->getFullname();
                         $member["user_data"] = $u->toArray();
+
+                        $learner_level = false;
+                        // Fetch learner level information.
+                        if ($cperiod && $organisation_id) {
+                            $levels = $level_model->fetchAllByProxyIDOrganisationIDDateRange($proxy_id, $organisation_id, $start, $end);
+                            if ($levels) {
+                                // Levels come back ordered by the most recent first.
+                                $learner_level = $levels[0]["level_title"];
+                            }
+                        }
+                        $member["learner_level"] = $learner_level;
                     }
 
                     if (!isset($member["slots"]) || empty($member["slots"])) {
@@ -186,6 +222,17 @@ class Models_Schedule_Draft extends Models_Base {
                                 $schedule_data["off_service_audience"][$member["audience_value"]]["name"] = $u->getFullname();
                                 $schedule_data["off_service_audience"][$member["audience_value"]]["slots"][$slot["schedule_order"]] = $slot;
                                 $schedule_data["off_service_audience"][$member["audience_value"]]["user_data"] = $u->toArray();
+
+                                $learner_level = false;
+                                // Fetch learner level information.
+                                if ($cperiod && $organisation_id) {
+                                    $levels = $level_model->fetchAllByProxyIDOrganisationIDDateRange($slot["audience_value"], $organisation_id, $start, $end);
+                                    if ($levels) {
+                                        // Levels come back ordered by the most recent first.
+                                        $learner_level = $levels[0]["level_title"];
+                                    }
+                                }
+                                $member["learner_level"] = $learner_level;
                             }
                         }
                     }
@@ -220,9 +267,11 @@ class Models_Schedule_Draft extends Models_Base {
                     FROM `cbl_schedule_drafts` AS a
                     JOIN `cbl_schedule_draft_authors` AS b
                     ON a.`cbl_schedule_draft_id` = b.`cbl_schedule_draft_id`
-                    WHERE b.`proxy_id` = ?
+                    WHERE b.`author_value` = ?
+                    AND b.`author_type` = 'proxy_id'
                     AND a.`status` = ?
-                    AND a.`deleted_date` IS NULL";
+                    AND a.`deleted_date` IS NULL
+                    GROUP BY b.`cbl_schedule_draft_id`";
         $results = $db->GetAll($query, array($proxy_id, $status));
         if ($results) {
             $drafts = array();
@@ -233,15 +282,38 @@ class Models_Schedule_Draft extends Models_Base {
         return $drafts;
     }
 
-    public static function fetchAllLiveDraftsByOrg($organisation_id) {
+    public static function fetchAllByProxyIDCourseID($proxy_id, $course_id, $status = "draft") {
         global $db;
-        $query = "SELECT a.*
+        $drafts = array();
+        $query = "  SELECT a.*
                     FROM `cbl_schedule_drafts` AS a
-                    JOIN `courses` AS b
-                    ON a.`course_id` = b.`course_id`
-                    WHERE a.`status` = 'live'
-                    AND b.`organisation_id` = ?";
-        $results = $db->GetAll($query, array($organisation_id));
+                    JOIN `cbl_schedule_draft_authors` AS b
+                    ON a.`cbl_schedule_draft_id` = b.`cbl_schedule_draft_id`
+                    WHERE ((b.`author_value` = ? AND b.`author_type` = 'proxy_id') OR (b.`author_value` = ? AND b.`author_type` = 'course_id'))
+                    AND a.`status` = ?
+                    AND a.`deleted_date` IS NULL
+                    GROUP BY b.`cbl_schedule_draft_id`";
+        $results = $db->GetAll($query, array($proxy_id, $course_id, $status));
+        if ($results) {
+            foreach ($results as $result) {
+                $drafts[] = new self($result);
+            }
+        }
+        return $drafts;
+    }
+
+    public static function fetchAllByProxyIDOrgIDStatus($proxy_id, $organisation_id, $status = "draft") {
+        global $db;
+        $query = "  SELECT d.*
+                    FROM `cbl_schedule_drafts` AS d
+                    JOIN `cbl_schedule_draft_authors` AS da
+                    ON da.`cbl_schedule_draft_id` = d.`cbl_schedule_draft_id`
+                    JOIN `courses` AS c
+                    ON d.`course_id` = c.`course_id`
+                    WHERE b.`proxy_id` = ?
+                    AND a.`status` = ?
+                    AND c.`organisation_id` = ?";
+        $results = $db->GetAll($query, array($proxy_id, $status, $organisation_id));
         if ($results) {
             $output = array();
             foreach ($results as $result) {
@@ -249,8 +321,51 @@ class Models_Schedule_Draft extends Models_Base {
             }
             return $output;
         } else {
-            return false;
+            return $results;
         }
+    }
+
+    /*
+     * This method is deprecated as it made no sense.
+     */
+    public static function fetchAllLiveDraftsByOrg($organisation_id = 0, $order_by = "") {
+        return self::fetchAllByOrg($organisation_id, "live", $order_by);
+    }
+
+    public static function fetchAllByOrg($organisation_id = 0, $status = "live", $order_by = "") {
+        global $db;
+
+        $organisation_id = (int) $organisation_id;
+
+        // Accept either live or draft for status.
+        if ($status != "live") {
+            $status = "draft";
+        }
+
+        if ($order_by) {
+            $order_by = clean_input($order_by, "credentials");
+        } else {
+            $order_by = "draft_title";
+        }
+
+        $query = "SELECT a.*
+                    FROM `cbl_schedule_drafts` AS a
+                    JOIN `courses` AS b
+                    ON a.`course_id` = b.`course_id`
+                    WHERE a.`status` = ?
+                    AND b.`organisation_id` = ?
+                    ORDER BY `" . $order_by . "` ASC";
+        $results = $db->GetAll($query, [$status, $organisation_id]);
+        if ($results) {
+            $output = [];
+            foreach ($results as $result) {
+                $output[] = new self($result);
+            }
+
+            return $output;
+        }
+
+        return false;
     }
 
     public static function fetchAllRecords($deleted_date = NULL) {

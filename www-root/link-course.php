@@ -37,13 +37,11 @@
  */
 require_once("init.inc.php");
 
-require_once("Entrada/xoft/xoft.class.php");
-
 if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 	header("Location: ".ENTRADA_URL.((isset($_SERVER["REQUEST_URI"])) ? "?url=".rawurlencode(clean_input($_SERVER["REQUEST_URI"], array("nows", "url"))) : ""));
 	exit;
 } else {
-	$LINK_ID			= 0;
+	$LINK_ID = 0;
 
 	if((isset($_GET["id"])) && ((int) trim($_GET["id"]))) {
 		$LINK_ID = (int) trim($_GET["id"]);
@@ -68,7 +66,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 				$accesses = $result["accesses"];
 				if(!$is_administrator && ($result["valid_from"]) && ($result["valid_from"] > time())) {
 					$TITLE	= "Not Available";
-					$BODY	= display_notice(array("The link that you are trying to access is not available until <strong>".date(DEFAULT_DATE_FORMAT, $result["valid_from"])."</strong>.<br /><br />For further information or to contact the course director, please see the <a href=\"".ENTRADA_URL."/courses?id=".$result["course_id"]."\" style=\"font-weight: bold\">course website</a>."));
+					$BODY	= display_notice(array("The link that you are trying to access is not available until <strong>".date(DEFAULT_DATETIME_FORMAT, $result["valid_from"])."</strong>.<br /><br />For further information or to contact the course director, please see the <a href=\"".ENTRADA_URL."/courses?id=".$result["course_id"]."\" style=\"font-weight: bold\">course website</a>."));
 
 					$template_html = fetch_template("global/external");
 					if ($template_html) {
@@ -78,7 +76,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 				} else {
 					if(!$is_administrator && ($result["valid_until"]) && ($result["valid_until"] < time())) {
 						$TITLE	= "Not Available";
-						$BODY	= display_notice(array("The link that you are trying to access was only available until <strong>".date(DEFAULT_DATE_FORMAT, $result["valid_from"])."</strong>.<br /><br />For further information or to contact the course director, please see the <a href=\"".ENTRADA_URL."/courses?id=".$result["course_id"]."\" style=\"font-weight: bold\">course website</a>."));
+						$BODY	= display_notice(array("The link that you are trying to access was only available until <strong>".date(DEFAULT_DATETIME_FORMAT, $result["valid_from"])."</strong>.<br /><br />For further information or to contact the course director, please see the <a href=\"".ENTRADA_URL."/courses?id=".$result["course_id"]."\" style=\"font-weight: bold\">course website</a>."));
 
 						$template_html = fetch_template("global/external");
 						if ($template_html) {

@@ -75,7 +75,7 @@
  * assessor_value = proxy | external assessor id
  *
  */
-class Entrada_Utilities_Assessments_DistributionLearningEvent extends Entrada_Utilities_Assessments_Base {
+class Entrada_Utilities_Assessments_DistributionLearningEvent extends Entrada_Assessments_Base {
 
     protected $adistribution_id;
     protected $release_date         = false;
@@ -83,6 +83,7 @@ class Entrada_Utilities_Assessments_DistributionLearningEvent extends Entrada_Ut
     private $assessors_proxy_list   = array();  // List of proxy IDs associated with the distribution_assessors record, grouped by event id
     private $event_list             = array();  // The events (objects) for each event type specified in the distribution
     private $error_text             = "";
+    private $event_type_list        = array();
 
     public function __construct($arr = null) {
         parent::__construct($arr);
@@ -151,7 +152,7 @@ class Entrada_Utilities_Assessments_DistributionLearningEvent extends Entrada_Ut
      * Default is to only create the list for learning events that need to currently exist for the cperiod associated with the
      * distribution. If specified, the start/end dates can be overridden, ignoring cperiods.
      *
-     * @param bool $include_future_events
+     * @param bool $include_future_events // Include events passed the current day (end of day)
      * @param int $filter_start_date
      * @param int $filter_end_date
      * @return array|bool
@@ -184,13 +185,29 @@ class Entrada_Utilities_Assessments_DistributionLearningEvent extends Entrada_Ut
             return false;
         }
 
+        $eventtype_list = array();
         // Populate the event list; fetch all the related event data and store them in our internal event list storage array.
         foreach ($distribution_event_types as $distribution_event_type) {
-            if ($events = Models_Event::fetchAllByCourseIDEventtypeID($this->distribution->getCourseID(), $distribution_event_type->getEventtypeID())) { // fetch the events, by course.
-                foreach ($events as $event) {
-                    $this->event_list[$event->getID()] = $event;
-                }
+            $eventtype_list[] = $distribution_event_type->getEventtypeID();
+        }
+
+        if (empty($eventtype_list)) {
+            $this->error_text = "Event types not found.";
+            return false;
+        }
+
+        $events = Models_Event::fetchAllByEventtypeIDsCourseID($eventtype_list, $this->distribution->getCourseID());
+        if (empty($events)) {
+            $this->error_text = "No events found.";
+            return false;
+        }
+
+        foreach ($events as $event) {
+            if (!array_key_exists($event["event_id"], $this->event_list)) {
+                $this->event_list[$event["event_id"]] = new Models_Event($event);
+
             }
+            $this->event_type_list[$event["event_id"]][] = $event["eventtype_id"];
         }
         if (empty($this->event_list)) {
             $this->error_text = "Unable to fetch the events.";
@@ -206,7 +223,8 @@ class Entrada_Utilities_Assessments_DistributionLearningEvent extends Entrada_Ut
 
         // Curriculum period start and end dates
         $c_start_date = $curriculum_period->getStartDate();
-        $c_end_date = ($include_future_events) ? $curriculum_period->getFinishDate() : time();
+        $end_of_day = strtotime("tomorrow", strtotime("midnight")) - 1;
+        $c_end_date = ($include_future_events) ? $curriculum_period->getFinishDate() : $end_of_day;
 
         // Override cperiod if filter is specified
         if ($filter_start_date) {
@@ -220,11 +238,14 @@ class Entrada_Utilities_Assessments_DistributionLearningEvent extends Entrada_Ut
         foreach ($this->event_list as $i => $event) {
             $e_start_date = $event->getEventStart();
             $e_end_date = $event->getEventFinish();
-            if (($c_start_date <= $e_start_date &&
-                $c_start_date <= $e_end_date &&
-                $c_end_date >= $e_start_date &&
-                $c_end_date >= $e_end_date)
-                && $e_end_date >= $this->release_date) {
+
+            if (($c_start_date <= $e_start_date
+                    && $c_start_date <= $e_end_date
+                    && $c_end_date >= $e_start_date
+                    && $c_end_date >= $e_end_date
+                )
+                && $e_end_date >= $this->release_date
+            ) {
                 // This date is valid
                 continue;
             } else {
@@ -237,7 +258,6 @@ class Entrada_Utilities_Assessments_DistributionLearningEvent extends Entrada_Ut
             $this->error_text = "No events for this date range.";
             return false;
         }
-
         // Passed argument validation. Now iterate through the list of assessors and build assessment tasks per each.
 
         $this->resetTaskList($this->getDistributionID());
@@ -353,6 +373,8 @@ class Entrada_Utilities_Assessments_DistributionLearningEvent extends Entrada_Ut
      * Fetches a structure describing the status of the learning event assessments (based on the given assessment record's ID).
      * This is called by the Distribution Targets model.
      *
+     * DEPRECATED
+     *
      * @param $distribution_id
      * @param $internal_external
      * @param $user_id
@@ -380,52 +402,54 @@ class Entrada_Utilities_Assessments_DistributionLearningEvent extends Entrada_Ut
         }
 
         foreach ($assessment_targets as $adtarget) {
-            $deleted_task = Models_Assessments_DeletedTask::fetchRowByADistributionIDAssessorTypeAssessorValueTargetIDDeliveryDate($distribution_id, $internal_external, $user_id, $adtarget->getTargetValue(), $assessment->getDeliveryDate());
-            if (!$deleted_task) {
-                $target_data = array();
-                $target_data["target_record_id"] = $adtarget->getTargetValue();
-                $target_data["adtarget_id"] = $distribution_target->getID();
+            $target_data = array();
+            $target_data["target_record_id"] = $adtarget->getTargetValue();
+            $target_data["adtarget_id"] = $distribution_target->getID();
 
-                if ($adtarget->getTargetType() == "proxy_id") {
-                    $target_user = $this->getUserByType($adtarget->getTargetValue(), "internal");
-                    $target_data["name"] = "{$target_user->getFirstname()} {$target_user->getLastname()}";
-                    $target_data["email"] = $target_user->getEmail();
-                    $target_data["number"] = $target_user->getNumber();
-                } else {
-                    $target_data["name"] = "";
-                    $target_data["email"] = "";
-                    $target_data["number"] = "";
-                }
+            if ($adtarget->getTargetType() == "proxy_id") {
+                $target_user = $this->getUserByType($adtarget->getTargetValue(), "internal");
+                    if ($target_user) {
+                $target_data["name"] = "{$target_user->getFirstname()} {$target_user->getLastname()}";
+                $target_data["email"] = $target_user->getEmail();
+                $target_data["number"] = $target_user->getNumber();
+                    }
+            } else {
+                $target_data["name"] = "";
+                $target_data["email"] = "";
+                $target_data["number"] = "";
+            }
 
-                $target_data["aprogress_id"] = 0;
-                $target_data["completed_aprogress_id"] = 0;
-                $target_data["completed_attempts"] = 0;
-                $target_data["progress"] = array();
+            $target_data["aprogress_id"] = 0;
+            $target_data["completed_aprogress_id"] = 0;
+            $target_data["completed_attempts"] = 0;
+            $target_data["progress"] = array();
+            $target_data["distribution_target_id"] = $distribution_target->getTargetID();
+            $target_data["distribution_target_type"] = $distribution_target->getTargetType();
+            $target_data["distribution_target_scope"] = $distribution_target->getTargetScope();
 
-                $progress_records = Models_Assessments_Progress::fetchAllByDassessmentIDAssessorTypeAssessorValueTargetRecordID($assessment->getID(), $assessment->getAssessorType(), $assessment->getAssessorValue(), $adtarget->getTargetValue());
-                if ($progress_records) {
-                    foreach ($progress_records as $progress_record) {
-                        $target_data["aprogress_id"] = $progress_record->getID();
-                        if (!in_array($progress_record->getProgressValue(), $target_data["progress"])) {
-                            $target_data["progress"][] = $progress_record->getProgressValue();
+            $progress_records = Models_Assessments_Progress::fetchAllByDassessmentIDAssessorTypeAssessorValueTargetRecordID($assessment->getID(), $assessment->getAssessorType(), $assessment->getAssessorValue(), $adtarget->getTargetValue());
+            if ($progress_records) {
+                foreach ($progress_records as $progress_record) {
+                    $target_data["aprogress_id"] = $progress_record->getID();
+                    if (!in_array($progress_record->getProgressValue(), $target_data["progress"])) {
+                        $target_data["progress"][] = $progress_record->getProgressValue();
+                    }
+                    if ($progress_record->getProgressValue() == "complete") {
+                        $target_data["completed_aprogress_id"] = $progress_record->getID();
+                        if (!isset($target_data["completed_attempts"])) {
+                            $target_data["completed_attempts"] = 0;
                         }
-                        if ($progress_record->getProgressValue() == "complete") {
-                            $target_data["completed_aprogress_id"] = $progress_record->getID();
-                            if (!isset($target_data["completed_attempts"])) {
-                                $target_data["completed_attempts"] = 0;
-                            }
-                            $target_data["completed_attempts"]++;
-                            $all_targets[] = $target_data;
-                        } elseif ($progress_record->getProgressValue() == "inprogress") {
-                            $target_data["inprogress_aprogress_id"] = $progress_record->getID();
-                            $all_targets[] = $target_data;
-                        }
+                        $target_data["completed_attempts"]++;
+                        $all_targets[] = $target_data;
+                    } elseif ($progress_record->getProgressValue() == "inprogress") {
+                        $target_data["inprogress_aprogress_id"] = $progress_record->getID();
+                        $all_targets[] = $target_data;
                     }
                 }
-                if (empty($target_data["progress"])) {
-                    $target_data["progress"][] = "pending";
-                    $all_targets[] = $target_data;
-                }
+            }
+            if (empty($target_data["progress"])) {
+                $target_data["progress"][] = "pending";
+                $all_targets[] = $target_data;
             }
         }
         return $all_targets;
@@ -434,40 +458,13 @@ class Entrada_Utilities_Assessments_DistributionLearningEvent extends Entrada_Ut
     //-- Public static methods --//
 
     /**
-     * Build a date-sensitive set of formatted timestamp strings. If the start and end dates are the same, only the date for the first one is
-     * included in the return value. If both are different, both full timestamps are returned.
-     *
-     * Returns array with false values on failure.
-     *
-     * @param int $start_date
-     * @param int $end_date
-     * @return array
-     */
-    public static function buildTimeframeStrings($start_date, $end_date) {
-        $timeframe_strings = array("timeframe_start" => false, "timeframe_end" => false);
-        if ($start_date && $end_date) {
-            $ymd_start_date = date("Y-m-d", $start_date);
-            $ymd_end_date = date("Y-m-d", $end_date);
-            $hms_start_time = date("H:i", $start_date);
-            $hms_end_time = date("H:i", $end_date);
-            $timeframe_strings["timeframe_start"] = "$ymd_start_date $hms_start_time";
-            if ($ymd_start_date == $ymd_end_date) {
-                $timeframe_strings["timeframe_end"] = $hms_end_time;
-            } else {
-                $timeframe_strings["timeframe_end"] = "$ymd_end_date $hms_end_time";
-            }
-        }
-        return $timeframe_strings;
-    }
-
-    /**
      * Using related assessment, progress, and deleted task records, build a string that best represents the status of the assessment.
      *
      * If debug_verbose is set true, the string has some additional information appended to it that indicates how the string was dervied.
      *
      * @param Models_Assessments_Assessor $assessment
      * @param Models_Assessments_Progress $progress
-     * @param Models_Assessments_DeletedTask $deleted_task
+     * @param Models_Assessments_AssessmentTarget $deleted_task
      * @param array Models_Assessments_TaskDeletedReason $deleted_task_reasons
      * @param bool $debug_verbose (Debug flag)
      * @return string
@@ -476,7 +473,7 @@ class Entrada_Utilities_Assessments_DistributionLearningEvent extends Entrada_Ut
         global $translate;
         $status_string = "";
         if ($deleted_task) {
-            $status_string = sprintf($translate->_("Deleted on %s"), strftime("%Y-%m-%d", $deleted_task->getCreatedDate()));
+            $status_string = sprintf($translate->_("Deleted on %s"), strftime("%Y-%m-%d", $deleted_task->getDeletedDate()));
             $status_string .= ($debug_verbose) ? " (by UI) " : "";
             foreach ($deleted_task_reasons as $reason) {
                 if ($reason->getID() == $deleted_task->getDeletedReasonID()) {
@@ -556,7 +553,8 @@ class Entrada_Utilities_Assessments_DistributionLearningEvent extends Entrada_Ut
                     "lastname" => $user->getLastname(),
                     "proxy_id" => $user->getID(),
                     "email" => $user->getEmail(),
-                    "number" => $user->getNumber()
+                    "number" => $user->getNumber(),
+                    "assessor_type" => "internal"
                 );
                 $this->addToStorage("proxy", $proxy_list["$user_id-internal"], $user_id);
             }
@@ -579,7 +577,8 @@ class Entrada_Utilities_Assessments_DistributionLearningEvent extends Entrada_Ut
                 "lastname" => $user->getLastname(),
                 "proxy_id" => $user->getID(),
                 "email" => $user->getEmail(),
-                "number" => $translate->_("External")
+                "number" => $translate->_("External"),
+                "assessor_type" => "external"
             );
             $this->addToStorage("external", $proxy_list["$external_assessor_id-external"], $external_assessor_id);
         }
@@ -639,6 +638,7 @@ class Entrada_Utilities_Assessments_DistributionLearningEvent extends Entrada_Ut
         $proxy_list = array();
         switch ($audience_type) {
             case "proxy_id":
+            case "faculty_id":
                 // Single proxy id
                 $this->addUserDataByUser($proxy_list, $audience_value);
                 break;
@@ -679,7 +679,7 @@ class Entrada_Utilities_Assessments_DistributionLearningEvent extends Entrada_Ut
                 if ($this->isInStorage("course_group_audience", $audience_value)) {
                     $course_group_audience = $this->fetchFromStorage("course_group_audience", $audience_value);
                 } else {
-                    $course_group_audience = Models_Course_Group_Audience::fetchAllByCGroupID($audience_value);
+                    $course_group_audience = Models_Course_Group_Audience::fetchAllByCGroupIDActive($audience_value);
                     $this->addToStorage("course_group_audience", $course_group_audience, $audience_value);
                 }
                 // Everyone in a course group
@@ -732,7 +732,7 @@ class Entrada_Utilities_Assessments_DistributionLearningEvent extends Entrada_Ut
     private function buildTaskListByAssessorsFaculty($distribution_target, $distribution_assessor) {
         $relevant_events = array();
         foreach ($this->event_list as $event_id => $event) {
-            if ($event->getEventTypeID() == $distribution_target->getTargetID()) {
+            if (in_array($distribution_target->getTargetID(), $this->event_type_list[$event->getID()])) {
                 $relevant_events[] = $event_id;
             }
         }
@@ -757,7 +757,7 @@ class Entrada_Utilities_Assessments_DistributionLearningEvent extends Entrada_Ut
     private function buildTaskListByAssessorsProxyID($distribution_target, $distribution_assessor) {
         $relevant_events = array();
         foreach ($this->event_list as $event_id => $event) {
-            if ($event->getEventTypeID() == $distribution_target->getTargetID()) {
+            if (in_array($distribution_target->getTargetID(), $this->event_type_list[$event->getID()])) {
                 $relevant_events[] = $event_id;
             }
         }
@@ -779,7 +779,7 @@ class Entrada_Utilities_Assessments_DistributionLearningEvent extends Entrada_Ut
     private function buildTaskListByAssessorsExternal($distribution_target, $distribution_assessor) {
         $relevant_events = array();
         foreach ($this->event_list as $event_id => $event) {
-            if ($event->getEventTypeID() == $distribution_target->getTargetID()) {
+            if (in_array($distribution_target->getTargetID(), $this->event_type_list[$event->getID()])) {
                 $relevant_events[] = $event_id;
             }
         }
@@ -803,7 +803,7 @@ class Entrada_Utilities_Assessments_DistributionLearningEvent extends Entrada_Ut
         // Build our assessor proxy list based on event scope.
         $relevant_events = array();
         foreach ($this->event_list as $event_id => $event) {
-            if ($event->getEventTypeID() == $distribution_target->getTargetID()) {
+            if (in_array($distribution_target->getTargetID(), $this->event_type_list[$event->getID()])) {
                 $relevant_events[] = $event_id;
             }
         }
@@ -870,15 +870,24 @@ class Entrada_Utilities_Assessments_DistributionLearningEvent extends Entrada_Ut
 
             foreach ($proxy_list as $proxy_id => $user) {
                 // In the future, we can set the delivery date here by using an offset, similar to $this->calculateDateByOffset()
-                // For now, the end date is always the end of the event + 1 day.
-                $delivery_date = $this->event_list[$event_id]->getEventFinish() + 86400;
+
+                // Round the delivery date to the beginning of the day.
+                $dt = DateTime::createFromFormat("U", $this->event_list[$event_id]->getEventStart());
+                $dt->setTimeZone(new DateTimeZone(DEFAULT_TIMEZONE))->format("Y-m-d H:i");
+                $dt->setTime(0,0,0);
+                $delivery_date = (int) $dt->format("U");
+
                 $release_date = (is_null($this->distribution->getReleaseDate()) ? 0 : (int) $this->distribution->getReleaseDate());
+                $expiry_date = ($this->distribution->getExpiryOffset() ? ($delivery_date + $this->distribution->getExpiryOffset()) : null);
+                $expiry_notification_date = ($expiry_date && $this->distribution->getExpiryNotificationOffset() ? ($expiry_date - $this->distribution->getExpiryNotificationOffset()) : null);
 
                 // Add this would-be task to the internal task list
                 $this->addToTaskList(
                     $this->getDistributionID(),
                     $delivery_date, // This date determines whether this task "should_exist" or not. Release date is taken into account, if one exists.
                     $release_date,
+                    $expiry_date,
+                    $expiry_notification_date,
                     $this->event_list[$event_id]->getEventStart(),
                     $this->event_list[$event_id]->getEventFinish(),
                     $target_list,
@@ -946,4 +955,179 @@ class Entrada_Utilities_Assessments_DistributionLearningEvent extends Entrada_Ut
         }
         return $proxy_list;
     }
+
+    public function getLearningEventsWithAssessments($filter_start_date = null, $filter_end_date = null) {
+        $events = array();
+        $this->buildLearningEventAssessmentTaskList(false, $filter_start_date, $filter_end_date);
+        if (empty($this->event_list)) {
+            return $events;
+        }
+
+        // Fetch all progress.
+        $progress = Models_Assessments_Progress::fetchAllByDistributionID($this->adistribution_id);
+
+        // Fetch all deleted targets.
+        $deleted_targets = Models_Assessments_AssessmentTarget::fetchAllByDistributionID($this->adistribution_id, time());
+
+        // Fetch all non-deleted targets.
+        $active_targets = Models_Assessments_AssessmentTarget::fetchAllByDistributionID($this->adistribution_id);
+
+        foreach ($this->event_list as $event) {
+            // Fetch assessor and target information from the internal task list.
+            if (!array_key_exists($event->getID(), $this->task_list[$this->adistribution_id])) {
+                continue;
+            }
+            $task_info = $this->task_list[$this->adistribution_id][$event->getID()];
+
+            // Fetch all assessments that pertained to this event for this distribution.
+            $assessments = Models_Assessments_Assessor::fetchAllByDistributionIDAssociatedRecordTypeAssociatedRecordID($this->adistribution_id, "event_id", $event->getID());
+
+            // Maintain a list of progress for each event.
+            $global_progress_list = array("pending" => array(), "inprogress" => array(), "complete" => array());
+            $global_progress_counts = array("pending" => 0, "inprogress" => 0, "complete" => 0);
+
+            foreach ($assessments as &$assessment) {
+                // Maintain a list of progress for each assessment.
+                $progress_list = array("pending" => array(), "inprogress" => array(), "complete" => array());
+                $progress_counts = array("pending" => 0, "inprogress" => 0, "complete" => 0);
+
+                // Pull out any progress for this assessment.
+                $progress_records = array();
+                foreach ($progress as $potential_progress) {
+                    if ($potential_progress->getDAssessmentID() == $assessment->getID()) {
+                        $progress_records[$potential_progress->getID()] = $potential_progress;
+                    }
+                }
+
+                // Assessors are internally stored with a target_value-target_type key.
+                if (!empty($task_info["assessors"])
+                    && array_key_exists("{$assessment->getAssessorValue()}-{$assessment->getAssessorType()}", $task_info["assessors"])
+                ) {
+                    $assessor_info = $task_info["assessors"]["{$assessment->getAssessorValue()}-{$assessment->getAssessorType()}"];
+                    $assessment->assessor = $assessor_info;
+                    $assessment->assessor["name"] = "{$assessor_info["firstname"]} {$assessor_info["lastname"]}";
+                    $assessment->assessor["id"] = $assessor_info["proxy_id"];
+                } else {
+                    // Fall back on fetching the assessor manually.
+                    $entrada_base = new Entrada_Assessments_Base();
+                    $assessor_info = $entrada_base->getUserByType($assessment->getAssessorValue(), $assessment->getAssessorType());
+                    $assessment->assessor = $assessor_info->toArray();
+                    $assessment->assessor["name"] = "{$assessor_info->getFirstname()} {$assessor_info->getLastname()}";
+                    $assessment->assessor["id"] = $assessor_info->getID();
+                }
+
+                // Targets are also stored with a target_value-target_type key.
+                $targets = array();
+                foreach ($task_info["targets"] as $key => $target) {
+                    // Split the key to determine the target id and type.
+                    $pieces = explode("-", $key);
+                    $target_id = $pieces[0];
+                    $raw_target_type = $pieces[1];
+                    $target_type = false;
+                    switch ($raw_target_type) {
+                        case "eventtype":
+                            $target_type = "event_id";
+                            $target = array(
+                                "id" => $target_id
+                            );
+                            break;
+                        case "internal":
+                        case "proxy_id":
+                            $target_type = "proxy_id";
+                            break;
+                    }
+                    if (!$target_type) {
+                        continue;
+                    }
+
+                    // We need to check if targets are deleted on a case-by-case basis.
+                    $valid_target = true;
+                    foreach ($deleted_targets as $deleted_target) {
+                        if ($deleted_target->getDassessmentID() == $assessment->getID()
+                            && $deleted_target->getTargetType() == $target_type
+                            && $deleted_target->getTargetValue() == $target_id
+                        ) {
+                            $valid_target = false;
+                        }
+                    }
+                    $target["should_exist"] = $valid_target ? true : false;
+
+                    // Add properties that the view expects.
+                    $target["id"] = $target_id;
+                    $target["target_type"] = $target_type;
+                    switch ($target_type) {
+                        case "proxy_id":
+                            $target["name"] = "{$target["firstname"]} {$target["lastname"]}";
+                            break;
+                        case "event_id":
+                            $target["name"] = $event->getEventTitle();
+                            break;
+                    }
+                    foreach ($active_targets as $active_target) {
+                        if ($active_target->getDassessmentID() == $assessment->getID()
+                            && $active_target->getTargetType() == $target_type
+                            && $active_target->getTargetValue() == $target_id) {
+                            $target["current_record"] = array(0 => $active_target);
+                        }
+                    }
+
+                    // If the target was not deleted, we are good to store it.
+                    $targets[$target_id] = $target;
+
+                    // We also want to check progress for this target.
+                    $progress_found = false;
+                    if (@count($progress_records)) {
+                        foreach ($progress_records as $progress_record) {
+                            if ($progress_record->getTargetType() == $target_type
+                                && $progress_record->getTargetRecordID() == $target_id
+                            ) {
+                                $progress_found = true;
+
+                                // Store target.
+                                $progress_list[$progress_record->getProgressValue()][] = $target;
+                                $global_progress_list[$progress_record->getProgressValue()][] = $target;
+
+                                // If the target is deleted, they should not be added to the count unless it was fully complete.
+                                if ($target["should_exist"]
+                                    || $progress_record->getProgressValue() == "complete"
+                                ) {
+                                    // Adjust count.
+                                    $progress_counts[$progress_record->getProgressValue()]++;
+                                    $global_progress_counts[$progress_record->getProgressValue()]++;
+                                }
+                            }
+                        }
+                    }
+                    if (!$progress_found) {
+                        // Store target.
+                        $progress_list["pending"][] = $target;
+                        $global_progress_list["pending"][] = $target;
+                        // Adjust count if the target is not deleted.
+                        if ($target["should_exist"]) {
+                            $global_progress_counts["pending"]++;
+                            $progress_counts["pending"]++;
+                        }
+                    }
+                }
+
+                // Store processed targets and progress.
+                $assessment->targets = $targets;
+                $assessment->progress_list = $progress_list;
+                $assessment->progress_counts = $progress_counts;
+            }
+
+            // We're finished building data for this event.
+            $events[$event->getID()] = array(
+                "event_title" => $event->getEventTitle(),
+                "event_start_date" => $event->getEventStart(),
+                "event_end_date" => $event->getEventFinish(),
+                "assessments" => $assessments,
+                "progress_list" => $global_progress_list,
+                "progress_counts" => $global_progress_counts
+            );
+        }
+
+        return $events;
+    }
+
 }

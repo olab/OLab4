@@ -38,6 +38,7 @@ class Entrada_Event_Draft_CsvImporter {
         $this->validation_rules = array(
             "original_event"            => array("int"),
             "parent_event"              => array("int"),
+            "parent_id"                 => array("int"),
             "recurring_event"           => array("int"),
             "course_code"               => array("trim", "striptags"),
             "course_name"               => array("trim", "striptags"),
@@ -57,7 +58,8 @@ class Entrada_Event_Draft_CsvImporter {
             "teacher_names"             => array("trim", "striptags"),
             "teacher_numbers"           => array("trim", "striptags"),
             "objectives_release_date"   => array("trim", "striptags"),
-            "event_tutors"              => array("trim", "striptags")
+            "event_tutors"              => array("trim", "striptags"),
+            "free_text_objectives"      => array("trim", "striptags")
         );
         $this->delimited_fields = array(
             "event_type_durations", "event_types", "audience_groups", 
@@ -104,9 +106,9 @@ class Entrada_Event_Draft_CsvImporter {
                 }
             }
         }
-        
+
 		$event_duration			= 0;
-		
+
 		// check draft for existing event_id and get the devent_id if found
 		if ($mapped_cols["original_event"] != 0) {
 
@@ -117,7 +119,7 @@ class Entrada_Event_Draft_CsvImporter {
 			if ($result = $db->GetRow($query)) {
 				$output[$mapped_cols["original_event"]]["devent_id"] = $result["devent_id"];
 			}
-			
+
 			$query = "	SELECT * FROM `events` WHERE `event_id` = ".$db->qstr($mapped_cols["original_event"]);
 			$old_event_data = $db->GetRow($query);
 		}
@@ -126,6 +128,13 @@ class Entrada_Event_Draft_CsvImporter {
 		$output[$mapped_cols["original_event"]]["event_id"] = $mapped_cols["original_event"];
 
 		// check the parent_id column
+        if (isset($mapped_cols["parent_id"]) && (int) $mapped_cols["parent_id"]) {
+            $output[$mapped_cols["original_event"]]["parent_id"] = $mapped_cols["parent_id"];
+        } else {
+            $mapped_cols["parent_id"] = null;
+        }
+
+		// check the parent_event column
 		if (!is_null($mapped_cols["parent_event"])) {
 			if ($mapped_cols["parent_event"] === 1) {
 				$output[$mapped_cols["original_event"]]["parent_event"] = 0;
@@ -133,9 +142,6 @@ class Entrada_Event_Draft_CsvImporter {
 			} else if ($mapped_cols["parent_event"] === 0) {
 				$output[$mapped_cols["original_event"]]["parent_event"] = $this->last_parent;
 			}
-		} else {
-			$err["errors"][] = "Parent ID field must be 1 or 0.";
-			$skip_row = true;
 		}
 
 		// term - not required
@@ -151,6 +157,7 @@ class Entrada_Event_Draft_CsvImporter {
 		$query = "	SELECT `course_id`, `organisation_id`, `permission`
 					FROM `courses`
 					WHERE `course_code` = ".$db->qstr($mapped_cols["course_code"])."
+					AND `organisation_id` = ".$db->qstr($organisation_id)."
                     AND `course_active` = '1'";
         $result = $db->getRow($query);
 		if ($result) {
@@ -228,6 +235,15 @@ class Entrada_Event_Draft_CsvImporter {
 				$output[$mapped_cols["original_event"]]["event_description"] = $old_event_data["event_description"];
 			}
 		}
+
+        // event free-text objectives, not required
+        if (strlen($mapped_cols["free_text_objectives"]) > 0) {
+            $output[$mapped_cols["original_event"]]["free_text_objectives"] = $mapped_cols["free_text_objectives"];
+        } else {
+            if ($old_event_data) {
+                $output[$mapped_cols["original_event"]]["free_text_objectives"] = $old_event_data["event_objectives"];
+            }
+        }
 
 		// event location, not required
 		if (strlen($mapped_cols["location"]) > 0) {
@@ -361,26 +377,37 @@ class Entrada_Event_Draft_CsvImporter {
 
         if (is_array($valid_row)) {
             foreach ($valid_row as $row) {
+                
+                if (isset($row["parent_id"])) {
+                    $draft_parent = Models_Event_Draft_Event::fetchRowByEventIdDraftId($row["parent_id"], $this->draft_id);
+                    $draft_parent_id = ($draft_parent ? $draft_parent->getID() : null);
+                } else {
+                    $draft_parent_id = null;
+                }
 
                 if (isset($row["devent_id"])) {
                     $update = true;
                     $where = " WHERE `devent_id` = ".$db->qstr($row["devent_id"]);
                     $query = "UPDATE `draft_events`
                                 SET `parent_id` = ".$db->qstr($row["parent_event"]).",
+                                    `draft_parent_id` = ".$db->qstr($row["draft_parent_id"]).",
                                     `recurring_id` = ".$db->qstr($row["recurring_event"]).",
                                     `course_id` = ".$db->qstr($row["course_id"]).",
                                     `event_title` = ".$db->qstr($row["event_title"]).",
                                     `event_description` = ".$db->qstr($row["event_description"]).",
+                                    `event_objectives` = ".$db->qstr($row["free_text_objectives"]).",
                                     `event_start` = ".$db->qstr($row["event_start"]).",
                                     `event_finish` = ".$db->qstr(($row["event_start"] + ($row["total_duration"] * 60))).",
                                     `event_duration` = ".$db->qstr($row["total_duration"]).",
+                                    `attendance_required` = ".$db->qstr($row["attendance_required"]).",
                                     `event_location` = ".$db->qstr($row["event_location"]).",
                                     `room_id` = ".$db->qstr($row["room_id"])."
                                     WHERE `devent_id` = ".$db->qstr($row["devent_id"]);
                 } else {
                     $update = false;
-                    $query = "INSERT INTO `draft_events` (`draft_id`, `event_id`, `parent_id`, `recurring_id`, `course_id`, `event_title`, `event_description`, `event_start`, `event_finish`, `event_duration`, `event_location`, `room_id`)
-                                VALUES (".$this->draft_id.", ".$db->qstr($row["event_id"]).", ".$db->qstr($row["parent_event"]).", ".$db->qstr($row["recurring_event"]).", ".$db->qstr($row["course_id"]).", ".$db->qstr($row["event_title"]).", ".$db->qstr($row["event_description"]).", ".$db->qstr($row["event_start"]).", ".$db->qstr($row["event_start"] + ($row["total_duration"] * 60)).", ".$db->qstr($row["total_duration"]).", ".$db->qstr($row["event_location"]).", ".$db->qstr($row["room_id"]).")";
+
+                    $query = "INSERT INTO `draft_events` (`draft_id`, `event_id`, `parent_id`, `draft_parent_id`, `recurring_id`, `course_id`, `event_title`, `event_description`, `event_objectives`, `event_start`, `event_finish`, `event_duration`, `attendance_required`, `event_location`, `room_id`)
+                                VALUES (".$this->draft_id.", ".$db->qstr($row["event_id"]).", ".$db->qstr($row["parent_event"]).", ".$db->qstr($draft_parent_id).", ".$db->qstr($row["recurring_event"]).", ".$db->qstr($row["course_id"]).", ".$db->qstr($row["event_title"]).", ".$db->qstr($row["event_description"]).", ".$db->qstr($row["free_text_objectives"]).", ".$db->qstr($row["event_start"]).", ".$db->qstr($row["event_start"] + ($row["total_duration"] * 60)).", ".$db->qstr($row["total_duration"]).", ".$db->qstr($row["attendance_required"]).", ".$db->qstr($row["event_location"]).", ".$db->qstr($row["room_id"]).")";
                 }
 
                 $result = $db->Execute($query);

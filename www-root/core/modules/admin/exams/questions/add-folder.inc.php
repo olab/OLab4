@@ -41,7 +41,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUESTIONS"))) {
     $SECTION_TEXT = $SUBMODULE_TEXT[$SECTION];
     $BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/" . $MODULE . "/" . $SUBMODULE . "/" . $SECTION, "title" => $SECTION_TEXT["breadcrumb"]["title"]);
 
-    $folder = new Models_Exam_Question_Bank_Folders();
+    $folder = new Models_Exam_Bank_Folders();
     $PROCESSED = $folder->toArray();
     $METHOD = "insert";
     ?>

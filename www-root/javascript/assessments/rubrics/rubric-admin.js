@@ -129,7 +129,7 @@ jQuery(function($) {
         self.parent().find("select").hide();
         self.parent().find(".category-loading").show();
 
-        $("#rubric-error-msg").empty();
+        $(".rubric-error-msg").empty();
 
         //var descriptor_id = (self.attr("data-descriptor-id"));
         var rubric_id = (self.attr("data-rubric-id"));
@@ -149,7 +149,7 @@ jQuery(function($) {
             if (data.status == "success") {
                 self.parent().find("h3").html(self.parent().find("select option:selected").text());
             } else if(data.status == "error") {
-                display_error([data.msg], "#rubric-error-msg");
+                display_error([data.msg], ".rubric-error-msg");
             }
         },
         "json"
@@ -167,6 +167,11 @@ jQuery(function($) {
         $("#add-rubric-msgs").html("");
         var url = $(this).attr("action");
         var form_data = $(this).serialize();
+
+        if ($(".rating_scale_search_target_control").length > 0) {
+            form_data += "&rating_scale_id=" + $(".rating_scale_search_target_control").val();
+        }
+
         var method = "add-rubric";
         if ($("#rubric_id").val() !== undefined && $("#rubric_id").val() != '') {
             method = "update-rubric";
@@ -174,7 +179,7 @@ jQuery(function($) {
         form_data += "&method=" + encodeURIComponent(method);
         var jqxhr = $.post(url, form_data, function(data) {
                 if (data.status == "success") {
-                    $("#rubric_id").val(data.rubric_id)
+                    $("#rubric_id").val(data.rubric_id);
                     $("#rubric-items").removeClass("hide");
                     window.location.href = ENTRADA_URL+"/admin/assessments/rubrics?section=edit-rubric&rubric_id="+data.rubric_id;
                 } else if(data.status == "error") {
@@ -226,7 +231,6 @@ jQuery(function($) {
         });
     });
 
-
     $("#copy-rubric").on("click", function (e) {
 
         var rubric_id = $(this).attr("data-rubric-id");
@@ -268,11 +272,12 @@ jQuery(function($) {
         var form_id = $(this).attr("data-form-id");
         var fref = $(this).attr("data-fref");
         var new_rubric_title = $("#new-rubric-title").val();
+        var new_rubric_scale_id = $("#create-attach-rubric-modal-form input[name='rating_scale_id']").val();
 
         // Make a rubric creation request to the Rubric API
         var add_rubric_request = $.ajax({
             url: API_URL,
-            data: "?section=api-rubric&method=create-attach-rubric&form_id=" + form_id + "&rubric_title=" + new_rubric_title + "&fref=" + fref,
+            data: "?section=api-rubric&method=create-attach-rubric&form_id=" + form_id + "&rubric_title=" + new_rubric_title + "&fref=" + fref + "&rating_scale_id=" + new_rubric_scale_id,
             type: "POST",
             beforeSend: function () {
                 $("#create-attach-rubric").prop("disabled", true);
@@ -348,6 +353,7 @@ jQuery(function($) {
                                 display_success([data.msg], "#msgs")
                             });
                             jQuery("#load-rubrics").html("Showing " + (parseInt(jQuery("#load-rubrics").html().split(" ")[1]) - data.rubric_ids.length) + " of " + (parseInt(jQuery("#load-rubrics").html().split(" ")[3]) - data.rubric_ids.length) + " total items");
+                            window.location.reload();
                         } else if(data.status == "error") {
                             display_error([data.msg], "#msgs");
                         }
@@ -480,7 +486,6 @@ jQuery(function($) {
                 $.ajax({
                     url: API_URL,
                     type: "POST",
-                    async: false,
                     data: {
                         "method" : "update-rubric-item-order",
                         "rubric_id" : $(".rubric-item").data("rubric-id"),
@@ -488,6 +493,9 @@ jQuery(function($) {
                     },
                     success : function(data) {
                         var jsonResponse = JSON.parse(data);
+                        if (jsonResponse.status && jsonResponse.data) {
+                            jQuery.animatedNotice(jsonResponse.data, jsonResponse.status, {"resourceUrl": ENTRADA_URL})
+                        }
                     }
                 });
             }
@@ -500,6 +508,37 @@ jQuery(function($) {
             get_rubrics();
         }
     });
+
+    $("#item-rating-scale-btn").on("change", function() {
+        var rref = $("#post_rref").val();
+        var scale_id = $("input[name='rating_scale_id']").val();
+        if (rref) {
+            $.ajax({
+                url: API_URL,
+                type: "POST",
+                async: false,
+                data: {
+                    "method" : "update-rubric-scale",
+                    "rating_scale_id" : scale_id,
+                    "rref" : rref
+                },
+                beforeSend : function() {
+                    $("#create-and-attach-add-element").addClass("disabled");
+                    $("#add-element").addClass("disabled");
+                },
+                success : function(data) {
+                    var jsonResponse = safeParseJson(data);
+                    if (jsonResponse.status == "error") {
+                        display_error([jsonResponse.data], "#msgs");
+                    } else {
+                        $("#create-and-attach-add-element").removeClass("disabled");
+                        $("#add-element").removeClass("disabled");
+                    }
+                }
+            });
+        }
+    });
+
 });
 
 function add_element_url() {
@@ -813,7 +852,7 @@ function build_vertical_choice_matrix (item) {
         jQuery(response_text_label).html(response.text);
         jQuery(item_response_text_td).append(response_text_label).addClass("vertical-response-label").attr({width: "95%"});
 
-        jQuery(item_response_tr).append(item_response_input_td).append(item_response_text_td).addClass("vertical-choice-row");
+        jQuery(item_response_tr).append(item_response_input_td).append(item_response_text_td).addClass("vertical-choice-row item-response-view");
         jQuery("div[data-item-id=\"" + item.item_id + "\"]").find(".item-table tbody").append(item_response_tr);
     });
 }

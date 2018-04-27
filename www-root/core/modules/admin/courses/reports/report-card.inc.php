@@ -50,7 +50,7 @@ if (!defined("IN_COURSE_REPORTS")) {
 
 	$BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/".$MODULE."?".replace_query(array("section" => "report", "id" => $COURSE_ID, "step" => false)), "title" => "Report Card");
 
-	$curriculum_periods = Models_Curriculum_Period::fetchRowByCurriculumTypeIDCourseID($course_details["curriculum_type_id"], $course_details["course_id"]);
+	$curriculum_periods = Models_Curriculum_Period::fetchAllByCurriculumTypeIDCourseID($course_details["curriculum_type_id"], $course_details["course_id"]);
 	foreach ($curriculum_periods as $curriculum_period) {
 		if ($curriculum_period->getStartDate() <= time() && $curriculum_period->getFinishDate() >= time()) {
 			$audience_value = $curriculum_period->getAudienceValue();

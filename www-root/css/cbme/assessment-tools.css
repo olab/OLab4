@@ -1,0 +1,247 @@
+.tooltip {
+    text-align: left !important;
+    position: fixed;
+}
+
+.tooltip-inner {
+    font-size: 12px;
+    line-height: 18px;
+    text-align: left;
+}
+
+.user-list-card li {
+    border: 2px solid #f1f1f1;
+    border-radius: 4px;
+    float: left;
+    margin-bottom: 17px;
+    margin-right: 12px;
+    width: 51%;
+}
+
+.user-card-container {
+    margin-bottom: 15px;
+}
+
+.user-list-card h3 {
+    line-height: 20px;
+    margin-bottom: 2px;
+    margin-top: 15px;
+    padding-left: 15px;
+    padding-right: 15px;
+}
+
+.user-list-card p {
+    padding-left: 15px;
+    padding-right: 15px;
+}
+
+.user-list-card {
+    list-style-type: none;
+    margin-left: 0;
+}
+
+.user-card-parent {
+    width: 100%;
+    display: table;
+    table-layout: fixed;
+    background-color: #fbfbfa;
+    text-align: center;
+}
+
+.user-list-card a.all-assessments {
+    background: #fbfbfa;
+    border-top: 1px solid #f1f1f1;
+    display: block;
+    padding-bottom: 8px;
+    padding-top: 8px;
+}
+
+.assessor-type-badge {
+    border-left: 1px solid #f1f1f1;
+    border-bottom: 1px solid #f1f1f1;
+    background: #fbfbfa;
+    border-radius: 4px;
+    padding: 3px 8px;
+    font-size: 11px;
+    color: #000;
+}
+
+.no-epas {
+    font-weight: bold;
+    padding-bottom: 20px;
+    padding-top: 20px;
+}
+
+#select-attending-btn, #select-epa-btn {
+    text-align: left;
+    z-index: 9998 !important;
+    min-width: 130px;
+}
+
+.assessment-type-description {
+    display: block;
+    margin-bottom: 15px;
+    width: 65%;
+}
+
+.hide {
+    display: none !important;
+}
+
+.pin-warning {
+    color: #b94a48;
+    display: block;
+    font-weight: bold;
+    margin-bottom: 15px;
+}
+
+.disabled-overlay {
+    background-color: #fff;
+    height: inherit;
+    opacity: 0.7;
+    position: absolute;
+    text-align: center;
+    width: inherit;
+    z-index: 3;
+}
+
+.disabled-overlay span {
+    background: #000;
+    color: #fff;
+    display: inline-block;
+    margin-top: 100px;
+    padding: 10px 16px 10px 16px;
+}
+
+#disabled-controls {
+    height: 100%;
+    position: relative;
+    width: 100%;
+}
+
+.epa-help {
+    display: inline-block !important;
+    color: black;
+}
+
+.card-child-divider {
+    border-right: 1px solid #d9dee2;
+}
+
+.user-card-child {
+    display: table-cell;
+    text-align: center;
+}
+
+#assessment-tool-picker-list {
+    list-style: none;
+}
+
+.center-align {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.square-image {
+    width: 64px;
+    height: 84px;
+}
+
+.popover {
+    z-index: 9999;
+    width: 100%;
+    min-width: 250px;
+}
+
+.truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.popover-content {
+    height: 230px;
+    width: 250px;
+}
+
+.inner-popover-content {
+    position: absolute;
+    min-height: 230px;
+    width: 250px
+}
+
+#preceptor-access-request-modal {
+    z-index: 9999;
+}
+
+span.learner-level-badge.cbme {
+    background-color: #00a8be !important;
+}
+
+.display-block {
+    display: block !important;
+}
+
+.no-assessment-search-results {
+    width: 40%;
+}
+
+#search-assessment-tools {
+    width: 334px;
+}
+
+#date-of-encounter-error {
+    background: #fff;
+    border: 3px solid #f02c56;
+    display: inline-block;
+    font-size: 14px;
+    font-weight: bold;
+    margin-bottom: 20px;
+    margin-top: 10px;
+    padding: 10px;
+    z-index: 1;
+}
+
+/*
+.stage-D-epas-item .stage-D-epas-anchor {
+    background: #00a8bc;
+    border-color: #00a8bc;
+}
+
+.stage-F-epas-item .stage-F-epas-anchor {
+    background: #5bb75b;
+    border-color: #5bb75b;
+}
+
+.stage-C-epas-item .stage-C-epas-anchor {
+    background: #f07f2c;
+    border-color: #f07f2c;
+}
+
+.stage-P-epas-item .stage-P-epas-anchor {
+    background: #f02c56;
+    border-color: #f02c56;
+}
+*/
+
+.form-label {
+    width: 100%;
+    color: #8b959d;
+    font-size: 13px;
+    font-family: "Lucida Grande", Geneva, Verdana, Arial, Helvetica, sans-serif;
+}
+
+.cue-text-area {
+    width: 100%;
+}
+
+#assessment-tool-form-preview {
+    background: #fff;
+    display: block;
+    margin: 10% auto 0 auto;
+    padding: 20px;
+    vertical-align: middle;
+    width: 65% !important;
+    z-index: 1;
+}

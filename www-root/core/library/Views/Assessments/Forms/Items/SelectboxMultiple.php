@@ -33,9 +33,25 @@ class Views_Assessments_Forms_Items_SelectboxMultiple extends Views_Assessments_
     protected function renderView($options = array()) {
         global $translate; ?>
         <div class="item-container" data-item-id="<?php echo $this->item["item_id"] ?>" data-comment-type="<?php echo html_encode($this->item["comment_type"]) ?>">
+
+            <?php $this->buildItemDisabledOverlay(); ?>
+
             <table class="item-table <?php echo str_replace("_", "-", $this->item["shortname"]) ?>">
 
                 <?php $this->buildItemHeader(); ?>
+
+                <?php
+                if ($this->item["allow_default"] && $this->item["default_response"]) {
+                    $has_response_selected = false;
+                    foreach ($this->responses as $response) {
+                        if ($response["is_selected"]) {
+                            $has_response_selected = true;
+                        }
+                    }
+                } else {
+                    $has_response_selected = true;
+                }
+                ?>
 
                 <?php if ($this->responses): ?>
 
@@ -49,11 +65,15 @@ class Views_Assessments_Forms_Items_SelectboxMultiple extends Views_Assessments_
                                     size="10"
                                     <?php echo $this->disabled ? "disabled" : "" ?>>
 
-                                <?php foreach ($this->responses as $iresponse_id => $response): ?>
+                                <?php $count=0; foreach ($this->responses as $iresponse_id => $response): $count++; ?>
                                     <option value="<?php echo $response["iresponse_id"]; ?>"
-                                        <?php echo $response["is_selected"] ? "selected" : "" ?>
+                                        <?php echo ($response["is_selected"] || (!$has_response_selected && $this->item["default_response"] == $count)) ? "selected" : ""; ?>
                                         <?php echo $response["flag_response"] ? " data-response-flagged='true'" : ""; ?>>
-                                        <?php echo html_encode($response["response_text"]); ?>
+                                            <?php if (Entrada_Assessments_Forms::usesDescriptorInsteadOfResponseText($this->item["shortname"])): ?>
+                                                <?php echo html_decode($response["response_descriptor_text"]) ?>
+                                            <?php else: ?>
+                                                <?php echo html_decode($response["text"]) ?>
+                                            <?php endif; ?>
                                     </option>
                                 <?php endforeach; ?>
 
@@ -65,7 +85,7 @@ class Views_Assessments_Forms_Items_SelectboxMultiple extends Views_Assessments_
                         <?php $this->buildItemDetails(); ?>
                     <?php endif; ?>
 
-                    <?php $this->buildItemComments(); ?>
+                    <?php $this->buildItemComments($options); ?>
 
                 <?php else: ?>
 

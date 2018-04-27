@@ -37,19 +37,17 @@ class Views_Assessments_Dashboard_CurrentAndUpcomingLeave extends Views_Assessme
         <div class="pull-right quadrant-wrapper">
             <h2 class="header-nospace"><?php echo $translate->_("Current and Upcoming Leave"); ?></h2>
             <?php if (!empty($options["tracked_vacation"])) : ?>
-                <div class="card-deck scrollable">
+                <div class="card-deck leave-deck">
                     <?php foreach ($options["tracked_vacation"] as $vacation) : ?>
                         <a href="<?php echo $vacation["url"]; ?>" class="leave-link">
-                            <div class="profile-card">
-                                <div class="leave-details space-above">
-                                    <strong><?php echo $vacation["full_name"]; ?></strong> • <?php echo $vacation["leave_type"]; ?><br>
-                                    <span><?php echo date("Y-m-d", $vacation["start_date"]); ?></span><?php echo $translate->_(" to "); ?><span><?php echo date("Y-m-d", $vacation["end_date"]); ?></span>
-                                </div>
-                                <div class="leave-count pull-right">
-                                    <h4 class="absent-label"><?php echo $translate->_("Total Days"); ?></h4>
-                                    <div class="large-bold-font">
-                                        <?php echo $vacation["days_used"]; ?>
-                                    </div>
+                            <div class="leave-details">
+                                <strong><?php echo $vacation["full_name"]; ?></strong> • <?php echo $vacation["leave_type"]; ?><br>
+                                <span><?php echo date("Y-m-d", $vacation["start_date"]); ?></span><?php echo $translate->_(" to "); ?><span><?php echo date("Y-m-d", $vacation["end_date"]); ?></span>
+                            </div>
+                            <div class="leave-count">
+                                <h4 class="absent-label"><?php echo $translate->_("Total Days"); ?></h4>
+                                <div class="large-bold-font">
+                                    <?php echo $vacation["days_used"]; ?>
                                 </div>
                             </div>
                         </a>

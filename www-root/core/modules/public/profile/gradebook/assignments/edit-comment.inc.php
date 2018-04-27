@@ -203,7 +203,7 @@ if ($RECORD_ID && $ASSIGNMENT_ID) {
 			$ONLOAD[]		= "setTimeout('window.location=\\'".$url."\\'', 5000)";
 			
 			$NOTICE++;
-			$NOTICESTR[] = "The comment that you are trying to edit was deactivated <strong>".date(DEFAULT_DATE_FORMAT, $comment_record["updated_date"])."</strong> by <strong>".html_encode(get_account_data("firstlast", $comment_record["updated_by"]))."</strong>.<br /><br />If there has been a mistake or you have questions relating to this issue please contact the MEdTech Unit directly.<br /><br />You will now be redirected back to the assignment index; this will happen <strong>automatically</strong> in 5 seconds or <a href=\"".$url."\" style=\"font-weight: bold\">click here</a> to continue";
+			$NOTICESTR[] = "The comment that you are trying to edit was deactivated <strong>".date(DEFAULT_DATETIME_FORMAT, $comment_record["updated_date"])."</strong> by <strong>".html_encode(get_account_data("firstlast", $comment_record["updated_by"]))."</strong>.<br /><br />If there has been a mistake or you have questions relating to this issue please contact the MEdTech Unit directly.<br /><br />You will now be redirected back to the assignment index; this will happen <strong>automatically</strong> in 5 seconds or <a href=\"".$url."\" style=\"font-weight: bold\">click here</a> to continue";
 
 			echo display_notice();
 

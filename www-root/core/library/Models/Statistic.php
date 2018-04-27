@@ -336,5 +336,19 @@ class Models_Statistic extends Models_Base {
         return $output;
     }
     
+    /**
+     * Function is responsible for adding statistics to the database.
+     *
+     * @param string $module_name
+     * @param string $action
+     * @param string $action_field
+     * @param string $action_value
+     *
+     * @return bool
+     */
+    public function addStatistic($module_name = "", $action = "", $action_field = "", $action_value = "", $proxy_id = 0) {
+
+        return add_statistic($module_name, $action, $action_field, $action_value, $proxy_id);
+    }
 }
 

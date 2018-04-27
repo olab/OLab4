@@ -82,7 +82,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ASSESSMENT"))) {
             $BREADCRUMB[] = array("url" => ENTRADA_URL . "/$MODULE/$SUBMODULE/$SECTION", "title" => ($distribution ? sprintf($translate->_("%s - Select Targets"), $distribution->getTitle()) : "Delegation"));
             $HEAD[] = "<script type=\"text/javascript\">var ENTRADA_URL = '" . ENTRADA_URL . "'</script>";
             $HEAD[] = "<script type=\"text/javascript\" src=\"" . ENTRADA_URL . "/javascript/assessments/delegation.js?release=" . html_encode(APPLICATION_VERSION) . "\"></script>";
-            $HEAD[] = "<link href=\"" . ENTRADA_URL . "/css/assessments/delegation.css\" rel=\"stylesheet\" type=\"text/css\" media=\"all\" />";
+            $HEAD[] = "<link href=\"" . ENTRADA_URL . "/css/assessments/delegation.css?release=" . html_encode(APPLICATION_VERSION)."\" rel=\"stylesheet\" type=\"text/css\" media=\"all\" />";
 
             $show_block_controls = false; // In the future, if the block controls are required, toggle this to true to enable them. Currently, although supported and functional, they are not used on this page.
 
@@ -306,7 +306,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ASSESSMENT"))) {
                                             </td>
                                             <td class="target-block-target-details">
                                                 <div class="userAvatar target-selection-avatar pull-left delegation-target-img" data-target-checkbox-id="<?php echo "target-checkbox-id-$i"; ?>">
-                                                    <img src="<?php echo webservice_url("photo", array($target_data["member_id"], "official")); ?>" width="42" height="42" alt="<?php echo html_encode($target_data["member_fullname"]) ?>" class="img-circle" />
+                                                    <img src="<?php echo webservice_url("photo", array($target_data["member_id"], "official")); ?>" alt="<?php echo html_encode($target_data["member_fullname"]) ?>" class="img-polaroid user-image-size" />
                                                 </div>
                                                 <div class="pull-left">
                                                     <p>

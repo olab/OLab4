@@ -1,0 +1,100 @@
+.hide {
+    display: none !important;
+}
+
+.assessment-plan-objective-list .assessment-plan-list-item-status {
+    white-space: nowrap;
+
+}
+
+.assessment-plan-objective-list .assessment-plan-list-item-status .status-icon {
+    display: inline-block;
+    font-size: 26px;
+    vertical-align: middle;
+}
+
+.assessment-plan-objective-list .assessment-plan-list-item-status .has-plan {
+    color: #5bb75b;
+}
+
+.assessment-plan-heading .has-plan {
+    color: #5bb75b;
+}
+
+.assessment-plan-objective-list .assessment-plan-list-item-status .no-plan {
+    color: #C3CCD3;
+}
+
+.assessment-plan-heading .no-plan {
+    color: #C3CCD3;
+}
+
+.assessment-plan-objective-list .assessment-plan-list-item-status .plan-error {
+    color: #f02c56;
+}
+
+.assessment-plan-objective-list .assessment-plan-list-item-status .plan-warning {
+    color: #f27f19;
+}
+
+.assessment-plan-heading .plan-error {
+    color: #f02c56;
+}
+
+.assessment-plan-objective-list .assessment-plan-list-item-status .arrow-icon {
+    color: #8b959d;
+    display: inline-block;
+    font-size: 14px;
+    margin-left: 8px;
+    vertical-align: middle;
+}
+
+.assessment-plan-container {
+    background-color: #fff;
+    border: 2px solid #d9dee2;
+    border-radius: 5px;
+    padding: 0 12px;
+}
+
+.assessment-plan-container .contextual-variable-response-list input[type=text] {
+    margin-bottom: 0;
+}
+
+.remove-contextual-variable-container {
+    margin-bottom: 10px;
+}
+
+.remove-contextual-variable-response-container {
+    padding: 10px 15px 10px 5px !important;
+}
+
+.remove-contextual-variable-response-container a {
+    color: #f02c56;
+}
+
+.remove-contextual-variable-response-container a:hover {
+    color: #f02c56;
+}
+
+.remove-form-container {
+    margin-bottom: 10px;
+}
+
+.inline-control-wrapper {
+    float: left;
+    margin-right: 20px;
+}
+
+.rating-scale-response-btn {
+    min-width: 170px;
+    text-align: left;
+}
+
+.disabled {
+    cursor: not-allowed !important;
+    background-color: #eeeeee !important;
+}
+
+.nowrap {
+    white-space: nowrap;
+}

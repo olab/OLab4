@@ -46,7 +46,7 @@ if (!defined("PARENT_INCLUDED")) {
 	load_rte("minimal");
 	$HEAD[] = "<script type=\"text/javascript\" src=\"".ENTRADA_URL."/javascript/ckeditor/adapters/jquery.js\"></script>\n";
 	?>
-	<h1>Entrada ePortfolio</h1>
+	<h1><?php echo $translate->_("Entrada ePortfolio"); ?></h1>
 	<?php
 	$eportfolio = Models_Eportfolio::fetchRowByGroupID($ENTRADA_USER->getCohort());
 	$folders = $eportfolio->getFolders();

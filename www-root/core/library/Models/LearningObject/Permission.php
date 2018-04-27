@@ -133,5 +133,3 @@ class Models_LearningObject_Permission extends Models_Base {
     }
 
 }
-
-?>

@@ -76,7 +76,7 @@ if (!defined("PARENT_INCLUDED")) {
                     $group_author_id = isset($question["author_id"]) ? $question["author_id"] : $ENTRADA_USER->getProxyID();
                     if ($last_title != $group_title) {
                         $group_record = new Models_Exam_Group(array(
-                            "organisation_id"   => $ENTRADA_USER->getOrganisationID(),
+                            "organisation_id"   => $ENTRADA_USER->getActiveOrganisation(),
                             "group_title"       => $group_title,
                             "created_date"      => time(),
                             "created_by"        => $group_author_id
@@ -211,7 +211,7 @@ if (!defined("PARENT_INCLUDED")) {
         case 2:
             if (!isset($_POST["folder_id"]) || !$_POST["folder_id"]) {
                 add_error($translate->_("You must choose a folder to import the questions into."));
-            } else if (!Models_Exam_Question_Bank_Folders::fetchRowByID($_POST["folder_id"])) {
+            } else if (!Models_Exam_Bank_Folders::fetchRowByID($_POST["folder_id"])) {
                 add_error($translate->_("You must provide a valid folder to import the questions into."));
             } else {
                 $folder_id = (int)$_POST["folder_id"];
@@ -314,7 +314,7 @@ if (!defined("PARENT_INCLUDED")) {
                             <option value="0">-- <?php echo $translate->_("Select a folder"); ?> --</option>
                             <?php
                             function output_folder_options($parent_folder_id, $prefix = "/") {
-                                $folders = Models_Exam_Question_Bank_Folders::fetchAllByParentID($parent_folder_id);
+                                $folders = Models_Exam_Bank_Folders::fetchAllByParentID($parent_folder_id);
                                 foreach ($folders as $folder) {
                                     $folder_path = $prefix.$folder->getFolderTitle();
                                     echo "<option value=\"".$folder->getID()."\">".html_encode($folder_path)."</option>\n";

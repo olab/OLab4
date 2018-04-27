@@ -52,6 +52,7 @@ if ((!defined("PARENT_INCLUDED"))) {
 
     // Fetch the editability state of the rubric
     $rubric_editability = $forms_api->getRubricEditabilityState(@$form_referrer_data["form_id"]);
+    $scale_disable = true;
 
     /** Determine editability of the various parts of the rubric. Warn the user about all the possible actions, in context. **/
 
@@ -80,7 +81,15 @@ if ((!defined("PARENT_INCLUDED"))) {
 
         case "editable": // Not in use anywhere
         case "editable-attached": // In use by only one form, and it was the referrer specified
-            $rubric_view_state = "rubric-edit-clean"; // Allow full editability
+            if (@$rubric_data["rubric"]["rating_scale_id"]) {
+                // We're using a predefined rating scale, so disallow full editability.
+                $rubric_view_state = "rubric-edit-modify";
+                $scale_disable = true;
+            } else {
+                // Allow full editability if we have no predefined scale
+                $rubric_view_state = "rubric-edit-clean";
+                $scale_disable = false;
+            }
             break;
 
         case "editable-attached-multiple":
@@ -109,6 +118,13 @@ if ((!defined("PARENT_INCLUDED"))) {
             $rubric_view_state = "rubric-edit-modify";
             break;
 
+        case "editable-descriptors-locked-has-scale":
+            // Items of this rubric have rating_scale_ids set. This makes them scale items and their descriptors cannot be modified (they must always inherit descriptors from the scale)
+            // So we can edit the rubric, but can't change the descriptors.
+            $warning_message = $translate->_("Because this <strong>Grouped Item</strong> contains items that are part of a rating scale, the descriptors of the associated items cannot be modified.");
+            $rubric_view_state = "rubric-edit-modify";
+            break;
+
         case "editable-descriptors-locked":
             // Items of this rubric are in use somewhere in the system, but they haven't been delivered.
             // So we can edit the rubric, but can't change the descriptors.
@@ -128,7 +144,6 @@ if ((!defined("PARENT_INCLUDED"))) {
             $rubric_view_state = "rubric-edit-modify";
             break;
     }
-
 
     if ($warning_message): ?>
         <div class="alert alert-info">
@@ -156,21 +171,25 @@ if ((!defined("PARENT_INCLUDED"))) {
         }
     }
 
-    $HEAD[] = "<script type=\"text/javascript\">var rubric_in_use = \"". ($rubric_readonly ? "true" : "false") ."\"</script>";
+    $HEAD[] = "<script type=\"text/javascript\">var rubric_in_use = \"". ($rubric_readonly ? "true" : "false") ."\";</script>";
     if ($page_request_mode == "edit") {
-        $HEAD[] = "<script type=\"text/javascript\">var ENTRADA_URL = \"" . ENTRADA_URL . "\";</script>";
         $HEAD[] = "<script type=\"text/javascript\">var API_URL = \"" . ENTRADA_URL . "/admin/" . $MODULE . "/" . $SUBMODULE . "?section=api-rubric" . "\";</script>";
         $HEAD[] = "<script type=\"text/javascript\" src=\"" . ENTRADA_URL . "/javascript/jquery/jquery.audienceselector.js?release=" . html_encode(APPLICATION_VERSION) . "\"></script>";
         $HEAD[] = "<link rel=\"stylesheet\" type=\"text/css\" href=\"" . ENTRADA_URL . "/css/jquery/jquery.audienceselector.css?release=" . html_encode(APPLICATION_VERSION) . "\" />";
+        $HEAD[] = "<script src=\"" . ENTRADA_URL . "/javascript/jquery/jquery.advancedsearch.js\"></script>";
+        $HEAD[] = "<link rel=\"stylesheet\" href=\"" . ENTRADA_URL . "/css/jquery/jquery.advancedsearch.css\" />";
+        $HEAD[] = "<script type=\"text/javascript\" src=\"" . ENTRADA_URL . "/javascript/jquery/jquery.animated-notices.js?release=" . html_encode(APPLICATION_VERSION) . "\"></script>";
+        $HEAD[] = "<link rel=\"stylesheet\" type=\"text/css\" href=\"" . ENTRADA_URL . "/css/jquery/jquery.animated-notices.css?release=" . html_encode(APPLICATION_VERSION) . "\" />";
+
         ?>
         <script type="text/javascript">
             var rubric_localizations = {};
             rubric_localizations.error_default = '<?php echo $translate->_("The action could not be completed. Please try again later"); ?>';
             rubric_localizations.error_unable_to_copy = '<?php echo $translate->_("The action could not be completed. Please try again later"); ?>';
+            var form_referrer_hash = '<?php echo $PROCESSED["fref"]; ?>';
 
-            var form_referrer_hash = "<?php echo $PROCESSED["fref"] ?>";
             jQuery(function ($) {
-                jQuery("#contact-selector").audienceSelector({
+                $("#contact-selector").audienceSelector({
                     "filter": "#contact-type",
                     "target": "#author-list",
                     "content_type": "rubric-author",
@@ -180,12 +199,25 @@ if ((!defined("PARENT_INCLUDED"))) {
                 });
             });
         </script>
+        <script type="text/javascript" src="<?php echo ENTRADA_URL; ?>/javascript/assessments/rubrics/rubric-admin.js"></script>
         <?php
+
+        if (isset($PROCESSED["rating_scale_id"]) && $PROCESSED["rating_scale_id"]) {
+            $rating_scale_model = Models_Assessments_RatingScale::fetchRowByID($PROCESSED["rating_scale_id"]);
+            if ($rating_scale_model) {
+                $PROCESSED["rating_scale_type_id"] = $rating_scale_model->getRatingScaleType();
+                $PROCESSED["rating_scale_title"] = $rating_scale_model->getRatingScaleTitle();
+            } else {
+                $PROCESSED["rating_scale_type_id"] = 0;
+            }
+        } else {
+            $PROCESSED["rating_scale_type_id"] = 0;
+        }
+
 
         $render_page = true;
         switch ($STEP) {
             case 2 :
-
                 if (!$rubric_readonly) {
                     if ((isset($_POST["rubric_title"])) && ($tmp_input = clean_input($_POST["rubric_title"], array("trim", "notags")))) {
                         $PROCESSED["rubric_title"] = $tmp_input;
@@ -204,11 +236,39 @@ if ((!defined("PARENT_INCLUDED"))) {
                     } else {
                         $PROCESSED["rubric_item_code"] = "";
                     }
+
+                    if ((isset($_POST["rating_scale_id"])) && ($tmp_input = clean_input($_POST["rating_scale_id"], array("trim", "int")))) {
+                        $PROCESSED["rating_scale_id"] = $tmp_input;
+                    } else {
+                        $PROCESSED["rating_scale_id"] = null;
+                    }
+
+                    if ((isset($_POST["rating_scale_type_id"])) && ($tmp_input = clean_input($_POST["rating_scale_type_id"], array("trim", "int")))) {
+                        $PROCESSED["rating_scale_type_id"] = $tmp_input;
+                    } else {
+                        $PROCESSED["rating_scale_type_id"] = null;
+                    }
+
+                    if ((isset($_POST["item_rating_scale_type"])) && ($tmp_input = clean_input($_POST["item_rating_scale_type"], array("trim", "int")))) {
+                        $item_rating_scale_type_hidden_id = $tmp_input;
+                    } else {
+                        $item_rating_scale_type_hidden_id = null;
+                    }
+
+                    if ($item_rating_scale_type_hidden_id) {
+                        $PROCESSED["rating_scale_type_id"] = $item_rating_scale_type_hidden_id;
+                    }
+
+                    $rating_scale_model = Models_Assessments_RatingScale::fetchRowByID($PROCESSED["rating_scale_id"]);
+                    if ($rating_scale_model) {
+                        $PROCESSED["rating_scale_title"] = $rating_scale_model->getRatingScaleTitle();
+                    }
+
                 }
 
                 if (!$ERROR) {
                     $forms_api->setRubricID($PROCESSED["rubric_id"]);
-                    $saved = $forms_api->saveRubric($PROCESSED["rubric_title"], @$PROCESSED["rubric_description"], @$PROCESSED["rubric_item_code"], @$form_referrer_data["form_id"]);
+                    $saved = $forms_api->saveRubric($PROCESSED["rubric_title"], @$PROCESSED["rubric_description"], @$PROCESSED["rubric_item_code"], @$PROCESSED["rating_scale_id"], @$form_referrer_data["form_id"]);
                     if (!$saved) {
                         foreach ($forms_api->getErrorMessages() as $error_message) {
                             add_error($error_message);
@@ -254,6 +314,7 @@ if ((!defined("PARENT_INCLUDED"))) {
         }
 
         if ($render_page) {
+            $rating_scale_id = isset($PROCESSED["rating_scale_id"]) ? $PROCESSED["rating_scale_id"] : "null";
             $form_action_url = Entrada_Utilities_FormStorageSessionHelper::buildRefURL(ENTRADA_URL . "/admin/assessments/rubrics?section=edit-rubric&rubric_id={$PROCESSED["rubric_id"]}", $PROCESSED["fref"], $PROCESSED["rref"]);
             $items_url = Entrada_Utilities_FormStorageSessionHelper::buildRefURL(ENTRADA_URL."/admin/assessments/items?", $PROCESSED["fref"], $PROCESSED["rref"]);
             $add_attach_url = Entrada_Utilities_FormStorageSessionHelper::buildRefURL(ENTRADA_URL."/admin/assessments/items?section=add-item", $PROCESSED["fref"], $PROCESSED["rref"]);
@@ -263,19 +324,39 @@ if ((!defined("PARENT_INCLUDED"))) {
                 <div id="msgs" class="row-fluid"></div>
                 <input type="hidden" name="step" value="2"/>
                 <input type="hidden" name="fref" value="<?php echo $PROCESSED["fref"] ?>"/>
+                <input type="hidden" id="post_rref" name="post_rref" value="<?php echo $PROCESSED["rref"]; ?>" />
+                <input type="hidden" id="rating_scale_hidden_id" value="<?php echo(isset($PROCESSED["rating_scale_id"]) ? $PROCESSED["rating_scale_id"] : ""); ?>"/>
+                <input type="hidden" id="rating_scale_hidden_title" value="<?php echo(isset($PROCESSED["rating_scale_title"]) ? $PROCESSED["rating_scale_title"] : ""); ?>"/>
+                <input type="hidden" id="rating_scale_disable" value="<?php echo(isset($rubric_data["meta"]["lines_count"]) ? $rubric_data["meta"]["lines_count"] : ""); ?>"/>
                 <?php
-                    // Render the information input boxes (title/description/item code/permissions)
-                    $information_view = new Views_Assessments_Forms_Sections_RubricInformation(array("mode" => $view_mode));
-                    $information_view->render(
-                        array(
-                            "in_use" => $rubric_readonly,
-                            "rubric_title" => $PROCESSED["rubric_title"],
-                            "rubric_description" => $PROCESSED["rubric_description"],
-                            "rubric_item_code" => $PROCESSED["rubric_item_code"],
-                            "authors" => Models_Assessments_Rubric_Author::fetchAllRecords($PROCESSED["rubric_id"]),
-                            "form_mode" => $view_mode
-                        )
-                    );
+
+                $scale_type_datasource = Entrada_Utilities_AdvancedSearchHelper::buildSearchSource(
+                    $forms_api->getScaleTypesInUse($ENTRADA_USER->getActiveOrganisation(), true),
+                    "rating_scale_type_id",
+                    "title",
+                    array("shortname") // List of additional properties to include in the data source (from the source records)
+                );
+
+                // Render the information input boxes (title/description/item code/permissions)
+                $information_view = new Views_Assessments_Forms_Sections_RubricInformation(array("mode" => $view_mode));
+                $information_view->render(
+                    array(
+                        "in_use" => $rubric_readonly,
+                        "form_mode" => $view_mode,
+                        "lock_rating_scale" => $rubric_data["meta"]["lines_count"], // Lock the rating scale if there's already responses attached to it.
+                        "rubric_title" => $PROCESSED["rubric_title"],
+                        "rubric_description" => $PROCESSED["rubric_description"],
+                        "rubric_item_code" => $PROCESSED["rubric_item_code"],
+                        "authors" => Models_Assessments_Rubric_Author::fetchAllRecords($PROCESSED["rubric_id"]),
+                        "scale_type_datasource" => $scale_type_datasource, // For advanced search
+                        "rating_scale_id" => @$rubric_data["rating_scale"]["rating_scale_id"],
+                        "rating_scale_title" => @$rubric_data["rating_scale"]["rating_scale_title"],
+                        "rating_scale_type_id" => @$rubric_data["rating_scale_type"]["rating_scale_type_id"],
+                        "rating_scale_type_shortname" => @$rubric_data["rating_scale_type"]["shortname"],
+                        "rating_scale_type_title" => @$rubric_data["rating_scale_type"]["title"],
+                        "rating_scale_deleted" => @$rubric_data["rating_scale"]["deleted_date"],
+                    )
+                );
                 ?>
                 <div class="row-fluid">
                     <?php
@@ -298,7 +379,7 @@ if ((!defined("PARENT_INCLUDED"))) {
                             <?php endif; ?>
                         <?php endif; ?>
                         <?php if (!$rubric_readonly): ?>
-                            <a href="<?php echo $add_attach_url; ?>" class="btn btn-success">
+                            <a id="create-and-attach-add-element" href="<?php echo $add_attach_url; ?>" class="btn btn-success">
                                 <i class="icon-plus-sign icon-white"></i> <?php echo $translate->_("Create & Attach a New Item"); ?>
                             </a>
                             <a id="add-element"

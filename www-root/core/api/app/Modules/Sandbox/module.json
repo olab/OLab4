@@ -1,6 +1,0 @@
-{
-    "name": "Sandbox",
-    "slug": "sandbox",
-    "version": "1.0",
-    "description": "Example of a module that integrates into the Entrada frontend."
-}

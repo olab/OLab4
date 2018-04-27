@@ -23,15 +23,16 @@
  *
  */
 
-class Entrada_Utilities_Cache extends Entrada_Utilities_Assessments_Base {
+class Entrada_Utilities_Cache extends Entrada_Base {
     private $cache = null;
+
+    public function __construct($options = array()) {
+        parent::__construct($options);
+        $this->setZendCache();
+    }
 
     public function getCache() {
         return $this->cache;
-    }
-
-    public function __construct($options = array()) {
-        $this->setZendCache();
     }
 
     private function setZendCache($days = 30) {
@@ -56,34 +57,34 @@ class Entrada_Utilities_Cache extends Entrada_Utilities_Assessments_Base {
     }
 
     public function cacheImage($file_path, $id, $type = null) {
-        if (!empty($file_path) && is_string($file_path) && file_exists($file_path)) {
-            if (is_int($id)) {
-                $id = (string)$id;
-            }
+        if (is_string($file_path) && (is_int($id) || is_string($id))) {
+            if (!$this->loadCache($id)) {
+                if (file_exists($file_path)) {
+                    $file_data["mime_type"] = "";
+                    if (is_null($type)) {
+                        $file_info = finfo_open(FILEINFO_MIME_TYPE);
+                        $file_data["mime_type"] = @finfo_file($file_info, $file_path);
+                        finfo_close($file_info);
+                    } else {
+                        $file_data["mime_type"] = $type;
+                    }
 
-            $file_data["mime_type"] = "";
-            if (is_null($type)) {
-                $file_info = finfo_open(FILEINFO_MIME_TYPE);
-                $file_data["mime_type"] = @finfo_file($file_info, $file_path);
-                finfo_close($file_info);
-            } else {
-                $file_data["mime_type"] = $type;
-            }
-
-            $file_data["photo"] = "";
-            $photo = fopen($file_path, "r");
-            if ($photo) {
-                while (!feof($photo)) {
-                    $plain = fread($photo, 57 * 143);
-                    $encoded = base64_encode($plain);
-                    $encoded = chunk_split($encoded, 76, "\r\n");
-                    $file_data["photo"] .= $encoded;
+                    $file_data["photo"] = "";
+                    $photo = fopen($file_path, "r");
+                    if ($photo) {
+                        while (!feof($photo)) {
+                            $plain = fread($photo, 57 * 143);
+                            $encoded = base64_encode($plain);
+                            $encoded = chunk_split($encoded, 76, "\r\n");
+                            $file_data["photo"] .= $encoded;
+                        }
+                    }
+                    if (isset($file_data["mime_type"]) && !empty($file_data["mime_type"]) && $file_data["mime_type"] != "" &&
+                        isset($file_data["photo"]) && !empty($file_data["photo"]) && $file_data["photo"] != ""
+                    ) {
+                        $this->cache->save($file_data, $id);
+                    }
                 }
-            }
-
-            if (isset($file_data["mime_type"]) && !empty($file_data["mime_type"]) && $file_data["mime_type"] != "" &&
-                isset($file_data["photo"]) && !empty($file_data["photo"]) && $file_data["photo"] != "") {
-                $this->cache->save($file_data, $id);
             }
         }
     }

@@ -46,7 +46,7 @@ class Views_Assessments_Forms_Controls_AudienceSelector extends Views_Assessment
         $related_data_key = $options["related-data-key"];
         ?>
         <div class="control-group">
-            <label class="control-label"><?php echo $translate->_("Permissions"); ?></label>
+            <label for="contact-selector" class="control-label"><?php echo $translate->_("Permissions"); ?></label>
             <div class="controls">
                 <input type="text" name="contact_select" id="contact-selector"/>
                 <select name="contact_type" id="contact-type" class="span3">

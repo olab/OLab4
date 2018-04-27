@@ -1,6 +1,6 @@
 /**
  * Entrada [ http://www.entrada-project.org ]
- * 
+ *
  * Entrada is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -15,11 +15,11 @@
  * along with Entrada.  If not, see <http://www.gnu.org/licenses/>.
  *
  * Gradebook / Assignment Marking In-Browser
- * 
+ *
  * @author Organization: bitHeads, Inc.
  * @author Developer: Jean-Benoit Lesage <jblesage@bitheads.com>
  * @copyright Copyright 2016 Queen"s University. All Rights Reserved.
- * 
+ *
  */
 
 jQuery(document).ready(function($) {
@@ -41,6 +41,7 @@ jQuery(document).ready(function($) {
 		var assessmentId = $this.attr("data-assessment-id");
 		var formId = $this.attr("data-form-id");
 		var gradeId = $this.attr("data-grade-id");
+		var portfolioId = $this.attr("data-portfolio-id");
 		var gradeValue = $this.attr("data-grade-value");
 		var formattedGrade = $this.attr("data-formatted-grade");
 		var inGroup = $this.hasClass("in-group");
@@ -114,30 +115,83 @@ jQuery(document).ready(function($) {
 			proxyQuery = "&proxy_id=" + studentId;
 		}
 
-		$(".selector-documents", $modal).load(ENTRADA_URL + "/admin/assessments/forms?section=api-forms&method=get-rendered-file-selector" + proxyQuery + "&assessment_id=" + assessmentId + "&assignment_id=" + assignment.id + "&course_id=" + courseId, function(e) {
+		$(".selector-documents", $modal).load(ENTRADA_URL + "/admin/gradebook/assessments?section=api-forms&method=get-rendered-file-selector" + proxyQuery + "&assessment_id=" + assessmentId + "&assignment_id=" + assignment.id + "&course_id=" + courseId, function(e) {
 			var afversionId = $(".selector-documents option:first", $modal).val();
 
 			if (afversionId) {
-				$(".file", $modal).load(ENTRADA_URL + "/admin/assessments/forms?section=api-forms&method=get-rendered-assignment-file&assessment_id=" + assessmentId + "&afversion_id=" + afversionId + "&organisation_id=" + organisationId + "&proxy_id=" + studentId);
+				$(".file", $modal).load(ENTRADA_URL + "/admin/gradebook/assessments?section=api-forms&method=get-rendered-assignment-file&assessment_id=" + assessmentId + "&afversion_id=" + afversionId + "&organisation_id=" + organisationId + "&proxy_id=" + studentId);
 				$(".file, .marking-scheme", $modal).removeAttr("style");
-			}
-			else {
-				$(".file", $modal).css("width", "0").css("border", "none");
-				$(".marking-scheme", $modal).css("width", "98%");
+				// files and portfolios together are loosely supported
+				if ( portfolioId ) {
+					$(".file", $modal).css("width", "32%");
+					$(".portfolio", $modal).css("width", "33%");
+					$(".portfolio", $modal).css("left", "33%");
+					$(".selector-portfolio", $modal).css("position", "absolute");
+					$(".selector-portfolio", $modal).css("left", "33%");
+					$(".marking-scheme", $modal).css("width", "32%");
+				}
+			} else {
+				if (portfolioId ) {
+					$(".file", $modal).css("width", "0").css("border", "none");
+				} else {
+					$(".file", $modal).css("width", "0").css("border", "none");
+					$(".marking-scheme", $modal).css("width", "98%");
+				}
 			}
 
 			$("#selector-student-files").on("change", function(e) {
 				var afversionId = $(this).val();
-				$(".file", $modal).load(ENTRADA_URL + "/admin/assessments/forms?section=api-forms&method=get-rendered-assignment-file&assessment_id=" + assessmentId + "&afversion_id=" + afversionId + "&organisation_id=" + organisationId + "&proxy_id=" + studentId);
+				$(".file", $modal).load(ENTRADA_URL + "/admin/gradebook/assessments?section=api-forms&method=get-rendered-assignment-file&assessment_id=" + assessmentId + "&afversion_id=" + afversionId + "&organisation_id=" + organisationId + "&proxy_id=" + studentId);
 			})
 		});
 
-		$(".marking-scheme", $modal).load(ENTRADA_URL + "/admin/assessments/forms?section=api-forms&method=get-rendered-form&form_id=" + formId + "&assessment_id=" + assessmentId + "&proxy_id=" + studentId + "&edit_comments=true", function(e) {
+		if (portfolioId) {
+			$(".selector-portfolio", $modal).load(ENTRADA_URL + "/admin/gradebook/assessments?section=api-forms&method=get-rendered-assignment-portfolio-selector&" +  "&proxy_id=" + studentId + "&portfolio_id=" + portfolioId, function(e) {
+				$(".loading", $modal).hide();
+			});
+			$(".portfolio", $modal).load(ENTRADA_URL + "/admin/gradebook/assessments?section=api-forms&method=get-rendered-assignment-portfolio&" +  "&proxy_id=" + studentId + "&portfolio_id=" + portfolioId, function(e) {
+				$(".loading", $modal).hide();
+			});
+		}
+
+		// When a portfolio folder is selected, update the chooser title
+		$("body").on("show", ".gradebook-assessment-portfolio-folder", function() {
+			$("#gradebook-assessment-portfolio-folder-title").html($(this).data("title"));
+		});
+
+		// Prevents the portfolio folder accordion from freaking out
+		// and all kinds of other modal unpleasantness. -sg
+		// https://github.com/twbs/bootstrap/issues/2752
+		$modal.find(".portfolio").on("hidden", function (e) {
+			e.stopPropagation();
+		});
+
+		// Allow scrollable divs to be scrolled using arrow keys.
+		// An element must receive focus to be navigable via keys.
+		// For some reason (I suspect markup)...
+		// ...these are not natively receiving focus with a click event.
+		// But if we force the issue, arrow keys begin to work.
+		// Behavior NOT fully tested in various browsers. -sg 2017-05-15
+		// http://stackoverflow.com/questions/8805550/scroll-div-with-arrow-keys/15940479
+		$("body").on("click", ".file, .portfolio", function() {
+			$(this).focus();
+		});
+
+		$(".marking-scheme", $modal).load(ENTRADA_URL + "/admin/gradebook/assessments?section=api-forms&method=get-rendered-form&form_id=" + formId + "&assessment_id=" + assessmentId + "&proxy_id=" + studentId + "&edit_comments=true" + "&portfolio_id=" + portfolioId, function(e) {
 			$(".loading", $modal).hide();
+
+            $('.assessment-form-item table td:has(.table-internal)').css('padding', '0');
+
+            $('.match-height').matchHeight({
+                byRow: true,
+                property: 'height',
+                target: null,
+                remove: false
+            });
 
 			function setCheckboxCommentLabel(parent, context) {
 				var label = $(".rubric-comment", parent).find("td label");
-			
+
 				if (label && label.hasClass("form-flagged")) {
 					var closestTBody = $(context).closest("tbody");
 					var allCheckBoxes= $(closestTBody).find("input[type='checkbox']");
@@ -163,7 +217,7 @@ jQuery(document).ready(function($) {
 				var label = $(".rubric-comment", parent).find("td label");
 
 				if (label && label.hasClass("form-flagged")) {
-					
+
 					if ($("#input-score-" + $(context).data("gairesponse-id")).hasClass("flagged")) {
 						$(label).addClass("form-required");
 					} else {
@@ -186,7 +240,7 @@ jQuery(document).ready(function($) {
 				$(".text-score", $(this).parents(".item-response-view")).show();
 
 				var is_disabled = $("#input-score-" + $(this).data("gairesponse-id")).attr("disabled");
-				
+
 				if (typeof is_disabled === 'undefined' || is_disabled === false) {
 					$("#text-score-" + $(this).data("gairesponse-id")).hide();
 					$("#input-score-" + $(this).data("gairesponse-id")).prop("type", "text");
@@ -216,7 +270,7 @@ jQuery(document).ready(function($) {
 				}
 				else {
 					$(".text-score", $(this).parents(".item-response-view")).show();
-					
+
 					if (typeof is_disabled === 'undefined' || is_disabled === false) {
 						$("#text-score-" + $(this).val()).hide();
 						$("#input-score-" + $(this).val()).prop("type", "text");
@@ -240,7 +294,7 @@ jQuery(document).ready(function($) {
 
 				setCheckboxCommentLabel($(this).parents(".item-response-view"), this);
 			}
-			// Calculates the highest score for a given Item ID. 
+			// Calculates the highest score for a given Item ID.
 			// In the case of checkboxes, calculate the total scores possible
             // Note this uses the hidden input 'item-response-score' which is the original score assigned to the form
 			function getHighestScore(itemId) {
@@ -296,7 +350,7 @@ jQuery(document).ready(function($) {
 				var grade = grade ? grade : getCalculatedGrade();
 
 				return $.ajax({
-					url: ENTRADA_URL + "/admin/assessments/forms?section=api-forms&method=get-student-grade&assessment_id=" + assessmentId + "&grade=" + grade + "&proxy_id=" + studentId,
+					url: ENTRADA_URL + "/admin/gradebook/assessments?section=api-forms&method=get-student-grade&assessment_id=" + assessmentId + "&grade=" + grade + "&proxy_id=" + studentId,
 					success: onSuccess
 				});
 			}
@@ -324,11 +378,11 @@ jQuery(document).ready(function($) {
 					}
 				})
 
-				/* hack to temporarily allow TA to change custom grade and item score; for testing adn debug purpose 
+				/* hack to temporarily allow TA to change custom grade and item score; for testing adn debug purpose
 				$("#custom-grade").removeAttr("disabled").show();
 				$("#custom-grade-value").removeAttr("disabled").show();
 				$("input.input-score").removeAttr("disabled").prop("type", "text");
-				$("span.text-score").attr("disabled","disabled").hide(); 
+				$("span.text-score").attr("disabled","disabled").hide();
 				/* ene hack code */
 			}
 
@@ -344,7 +398,7 @@ jQuery(document).ready(function($) {
 					}
 				});
 
-				
+
 				if ((ungraded_count == 0) || ((ungraded_count == 1) && !$this.attr("data-grade-value"))) {
 					$(".btn-save-assignment.btn-save-go-to-next").hide();
 				} else {
@@ -381,7 +435,7 @@ jQuery(document).ready(function($) {
 				var $link = $(this);
 				var scores = {};
                 var comments = {};
-                var flagged_comment_items = {}; 
+                var flagged_comment_items = {};
                 var unfilled_flagged_comment = false;
 
 				$selections.each(function() {
@@ -392,7 +446,7 @@ jQuery(document).ready(function($) {
 					var data_item_id = $(this).attr("data-item-id");
 					if ($("#input-score-" + gairesponse_id).hasClass("flagged")) {
 						flagged_comment_items[data_item_id] = 1;
-					} 
+					}
 				});
 
                 $comments.each(function() {
@@ -411,7 +465,7 @@ jQuery(document).ready(function($) {
                 });
 
                 if (unfilled_flagged_comment) {
-                    alert("Pleaes fill in all comments with asterisk.");
+                    alert("Please fill in all comments with asterisk.");
                     return;
                 }
 
@@ -456,12 +510,12 @@ jQuery(document).ready(function($) {
 						$("#grade_" + assessmentId + "_" + studentId).text(customGrade)
 						$("#grade_" + assessmentId + "_" + studentId).attr("data-formatted-grade", customGrade)
 						/*
-						$.get(ENTRADA_URL + "/admin/assessments/forms?section=api-forms&method=get-storage-grade&grade=" + customGrade + "&assessment_id=" + assessmentId, function(data) {
+						$.get(ENTRADA_URL + "/admin/gradebook/assessments?section=api-forms&method=get-storage-grade&grade=" + customGrade + "&assessment_id=" + assessmentId, function(data) {
 							var json = $.parseJSON(data);
 							$("#grade_" + assessmentId + "_" + studentId).attr("data-grade-value", json.storage_grade)
 						})
 						*/
-						$.get(ENTRADA_URL + "/admin/assessments/forms?section=api-forms&method=get-storage-grade&grade=" + customGrade + "&assessment_id=" + assessmentId + "&proxy_id=" + studentId, function(data) {
+						$.get(ENTRADA_URL + "/admin/gradebook/assessments?section=api-forms&method=get-storage-grade&grade=" + customGrade + "&assessment_id=" + assessmentId + "&proxy_id=" + studentId, function(data) {
 							var json = $.parseJSON(data);
 							$("#grade_" + assessmentId + "_" + studentId).attr("data-grade-value", json.storage_grade);
 
@@ -505,10 +559,10 @@ jQuery(document).ready(function($) {
 
                     if (data_item_id) {
                         var fill_count = $(this).find("[data-item-id='"+data_item_id+"']").filter(function() {
-                                
+
                             if ($(this).is("select")) {
                                 return ($(this).find("option:selected").val() !== null && !isNaN(parseInt($(this).find("option:selected").val())));
-                            } else if (($(this).is(":radio") || $(this).is(":checkbox")) &&  $(this).is(':checked')) { 
+                            } else if (($(this).is(":radio") || $(this).is(":checkbox")) &&  $(this).is(':checked')) {
                                 return $(this).val() !== null;
                             } else {
                                 return false;
@@ -522,7 +576,7 @@ jQuery(document).ready(function($) {
                 });
 
                 if (unfilled_rubric) {
-                    alert("Pleaes make a selection for each rubric item.");
+                    alert("Please make a selection for each rubric item.");
                     return;
                 }
 
@@ -531,12 +585,12 @@ jQuery(document).ready(function($) {
 				if (inGroup) {
 					$(".in-group-" + groupId).each(function(i, grade) {
 						data.proxy_id = $(grade).attr("data-proxy-id");
-						$.post(ENTRADA_URL + "/admin/assessments/forms?section=api-forms&assessment_id=" + assessmentId, data);
+						$.post(ENTRADA_URL + "/admin/gradebook/assessments?section=api-forms&assessment_id=" + assessmentId, data);
 						updateDisplayedGrade(data.proxy_id);
 					});
 				}
 				else {
-					$.post(ENTRADA_URL + "/admin/assessments/forms?section=api-forms&assessment_id=" + assessmentId, data);
+					$.post(ENTRADA_URL + "/admin/gradebook/assessments?section=api-forms&assessment_id=" + assessmentId, data);
 					updateDisplayedGrade(studentId);
 				}
 
@@ -560,7 +614,12 @@ jQuery(document).ready(function($) {
 		});
 	});
 
+    $modal.on("show", function() {
+        $(this).removeClass("hide");
+    });
+
 	$modal.on("hidden", function(e) {
+		//alert('hidden');
 		$("body").removeClass("modal-open");
 		$(".file, .marking-scheme", $modal).empty();
 		$(".btn-save-assignment").off("click");
@@ -579,6 +638,4 @@ jQuery(document).ready(function($) {
 	        $(".modal-body", $modal).height($modal.height() - 142);
 	    }, 250);
 	});
-
-
 });

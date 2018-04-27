@@ -49,7 +49,7 @@ class Models_Course_Audience extends Models_Base {
     public function getCourseID () {
         return $this->course_id;
     } 
-    
+
     public function getCperiodID () {
         return $this->cperiod_id;
     }
@@ -98,10 +98,10 @@ class Models_Course_Audience extends Models_Base {
         return Models_Group_Member::getUser($this->audience_value, $search_term);
     }
 
-    public function getMembers ($search_term = false) {
-        return Models_Group_Member::getUsersByGroupID($this->audience_value, $search_term);
+    public function getMembers ($search_term = false, $include_inactive_accounts = false, $limit = null, $offset = null) {
+        return Models_Group_Member::getUsersByGroupID($this->audience_value, $search_term, 1, $include_inactive_accounts, $limit, $offset);
     }
-    
+
     public function getGroupName() {
         $group = Models_Group::fetchRowByID($this->audience_value);
         if ($group) {
@@ -315,6 +315,51 @@ class Models_Course_Audience extends Models_Base {
             return $course_audience;
         }
         return false;
+    }
+
+    public static function fetchAudienceByUserID($course_id, $user_id) {
+        global $db;
+        $query = "SELECT a.*, b.`finish_date`
+                  FROM `course_audience` AS a
+                  INNER JOIN `curriculum_periods` AS b
+                  ON a.`cperiod_id` = b.`cperiod_id`
+                  WHERE a.`course_id` = ".$db->qstr($course_id)."
+                  AND a.`audience_type` = 'proxy_id'
+                  AND a.`audience_value` = ".$db->qstr($user_id)."
+                  AND a.`audience_active` = 1
+                  AND b.`start_date` <= ".$db->qstr(time())."
+                  AND b.`finish_date` >= ".$db->qstr(time())."
+                  GROUP BY a.`caudience_id`, b.`finish_date`
+
+                  UNION
+
+                  SELECT a.*, b.`finish_date`
+                  FROM `course_audience` AS a
+                  INNER JOIN `curriculum_periods` AS b
+                  ON a.`cperiod_id` = b.`cperiod_id`
+                  INNER JOIN `groups` AS c
+                  ON c.`group_id` = a.`audience_value`
+                  AND a.`audience_type` = 'group_id'
+                  INNER JOIN `group_members` AS d
+                  ON d.`group_id` = c.`group_id`
+                  WHERE a.`course_id` = ".$db->qstr($course_id)."
+                  AND d.`proxy_id` = ".$db->qstr($user_id)."
+                  AND a.`audience_active` = 1
+                  AND c.`group_active` = 1
+                  AND (c.`start_date` <= ".$db->qstr(time())." OR c.`start_date` = 0 OR c.`start_date` IS NULL)
+                  AND (c.`expire_date` >= ".$db->qstr(time())." OR c.`expire_date` = 0 OR c.`expire_date` IS NULL)
+                  GROUP BY a.`caudience_id`, b.`finish_date`
+
+                  ORDER BY `finish_date` DESC";
+
+        $results = $db->GetAll($query);
+        if ($results === false) {
+            application_log("error", "Database error in ".get_called_class().". DB Said: " . $db->ErrorMsg());
+            throw new Exception("Database error fetching data in ".get_called_class()." records");
+        }
+        return array_map(function (array $result) {
+            return new self($result);
+        }, $results);
     }
 
     public static function getAllByGroupIDProxyID($group_id = array(), $proxy_id = 0) {

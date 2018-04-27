@@ -32,19 +32,27 @@ class Views_Assessments_Forms_Items_Date extends Views_Assessments_Forms_Items_B
      */
     protected function renderView($options = array()) {
         $date_value = Entrada_Assessments_Forms::getItemComment($this->element, $this->progress);
-        $value = ($date_value) ? date("Y-m-d", $date_value) : "";
+        $dt = DateTime::createFromFormat("U", $date_value);
+        if ($dt === false || array_sum($dt->getLastErrors())) {
+            $value = "";
+        } else {
+            $value = $dt->format("Y-m-d");
+        }
         ?>
         <div class="item-container" data-item-id="<?php echo $this->item["item_id"]; ?>">
+
+            <?php $this->buildItemDisabledOverlay(); ?>
+
             <table class="item-table <?php echo str_replace("_", "-", $this->item["shortname"]) ?>">
 
                 <?php $this->buildItemHeader(); ?>
 
                 <tr class="response-label item-response-view">
                     <td class="item-type-control">
-                        <div class="input-append">
+                        <div class="input-append full-width">
                             <input type="text"
                                    name="<?php echo "item-{$this->item["item_id"]}"; ?>"
-                                   class="datepicker item-control input-large"
+                                   class="item-element-date-picker datepicker item-control input-large"
                                    <?php echo ($this->disabled) ? "disabled" : ""; ?>
                                    value="<?php echo ($value) ? $value : ""; ?>"
                             />

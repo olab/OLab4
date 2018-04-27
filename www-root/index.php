@@ -48,44 +48,40 @@ $PATH_SEPARATED = explode("/", $PATH_INFO);
  * If we are here because of a submit on the login form, the ssobypass POST variable will be set
  */
 $sso_bypass = (!empty($_POST["ssobypass"]) ? true : false);
+$sso = false;
 
 /**
- * Do SSO login processing, if enabled
+ * if SSO is enabled, get it initialized
  */
-if (!$sso_bypass && defined("AUTH_SSO_ENABLED") && (bool) AUTH_SSO_ENABLED && defined("AUTH_SSO_TYPE")) {
+if (defined("AUTH_SSO_ENABLED") && (bool) AUTH_SSO_ENABLED && defined("AUTH_SSO_TYPE")) {
+    $sso = Entrada_Sso_Sso::getInstance(AUTH_SSO_TYPE);
+    if (!$sso) {
+        add_error("Unable to initialize SSO type: ".AUTH_SSO_TYPE."<br /><br />Please contact a system administrator for further information.");
+        $SSO_ERROR = true;
+    }
+}
+
+/**
+ * If we don't have a valid session yet and SSO is enabled, see if there are SSO tokens present
+ */
+if ($sso && !$sso_bypass) {
     if (!isset($_SESSION["isAuthorized"]) || !(bool) $_SESSION["isAuthorized"]) {
-        $mySso = Entrada_Sso_Sso::getInstance(AUTH_SSO_TYPE);
-        if ($mySso) {
-            /**
-             * If the SSO tokens are present, extract the details and try to map to a user in the Entrada database.
-             * Once we have that mapping, the normal login process is followed to authorize the user and set up the session
-             */
-            if ($mySso->isSsoAuthenticated()) {
-                $result = $mySso->validateUser();
-                if ($result) {
-                    $SSO_AUTHENTICATED = true;
-                    $username = $result["username"];
-                    $password = $result["password"];
-                    $USER_ACCESS_ID = $result["access_id"];
-                } else {
-                    add_error("Your login credentials are not recognized.<br /><br />Please contact a system administrator for further information.");
-                    $SSO_ERROR = true;
-                }
-                $ACTION = "login";
+        /**
+         * If the SSO tokens are present, extract the details and try to map to a user in the Entrada database.
+         * Once we have that mapping, the normal login process is followed to authorize the user and set up the session
+         */
+        if ($sso->isSsoAuthenticated()) {
+            $result = $sso->validateUser();
+            if ($result) {
+                $SSO_AUTHENTICATED = true;
+                $username = $result["username"];
+                $password = $result["password"];
+                $USER_ACCESS_ID = $result["access_id"];
             } else {
-                /**
-                 * Redirect to the SSO provider for the following three situations:
-                 * - SSO Login button selected on the login screen (&action="ssologin") or provided as a GET parameter
-                 * - The SSO provider requires it (based on the SSO implementation)
-                 * - The only available AUTH_METHOD is "sso". In which case, there is no local login possible
-                 */
-                if (($ACTION == "ssologin") || $mySso->requiresLogin() || (defined("AUTH_METHOD") && AUTH_METHOD == "sso")) {
-                    $mySso->login(ENTRADA_URL . (($PROCEED_TO) ? "/?url=" . rawurlencode($PROCEED_TO) : ""));
-                }
+                add_error("Your login credentials are not recognized.<br /><br />Please contact a system administrator for further information.");
+                $SSO_ERROR = true;
             }
-        } else {
-            add_error("Unable to initialize SSO type: ".AUTH_SSO_TYPE."<br /><br />Please contact a system administrator for further information.");
-            $SSO_ERROR = true;
+            $ACTION = "login";
         }
     }
 }
@@ -150,17 +146,17 @@ if ($ACTION == "login") {
         $method = ($SSO_AUTHENTICATED) ? "sso" : AUTH_METHOD;
 
         $auth_result = $auth->authenticate($username, $password, $method);
-        if (!empty($auth_result["status"]) && $auth_result["status"] == "success" && !empty($auth_result["token"])) {
-            $auth_result = Entrada_Auth::login($auth_result["token"]);
+        if (!empty($auth_result["response"]["status"]) && $auth_result["response"]["status"] == "success" && !empty($auth_result["response"]["token"])) {
+            $login_result = Entrada_Auth::login($auth_result["response"]["token"]);
         }
     }
 
-    if (($ERROR === 0) && !empty($auth_result["status"]) && ($auth_result["status"] == "success")) {
+    if (($ERROR === 0) && !empty($login_result["status"]) && ($login_result["status"] == "success")) {
         /**
          * Reset the login attempts counter on successful login
          */
-		if (!empty($USER_ACCESS_ID) || !empty($auth_result["access_id"])) {
-			if (!$db->Execute("UPDATE `".AUTH_DATABASE."`.`user_access` SET `login_attempts` = NULL, `last_login` = ".$db->qstr(time()).", `last_ip` = ".$db->qstr((isset($_SERVER["REMOTE_ADDR"]) ? $_SERVER["REMOTE_ADDR"] : 0))." WHERE `id` = ".(!empty($USER_ACCESS_ID) ? (int) $USER_ACCESS_ID : (int) $auth_result["access_id"])." AND `app_id` = ".$db->qstr(AUTH_APP_ID))) {
+		if (!empty($USER_ACCESS_ID) || !empty($login_result["access_id"])) {
+			if (!$db->Execute("UPDATE `".AUTH_DATABASE."`.`user_access` SET `login_attempts` = NULL, `last_login` = ".$db->qstr(time()).", `last_ip` = ".$db->qstr((isset($_SERVER["REMOTE_ADDR"]) ? $_SERVER["REMOTE_ADDR"] : 0))." WHERE `id` = ".(!empty($USER_ACCESS_ID) ? (int) $USER_ACCESS_ID : (int) $login_result["access_id"])." AND `app_id` = ".$db->qstr(AUTH_APP_ID))) {
 				application_log("error", "Unable to reset the login attempt counter for user [".$username."]. Database said ".$db->ErrorMsg());
 			}
 		}
@@ -215,7 +211,7 @@ if ($ACTION == "login") {
 		if ($ERROR === 0) {
 			$remaining_attempts = (AUTH_MAX_LOGIN_ATTEMPTS - (isset($LOGIN_ATTEMPTS) && ((int)$LOGIN_ATTEMPTS) ? $LOGIN_ATTEMPTS : 0));
 
-			$error_message = $auth_result["message"];
+			$error_message = $auth_result["response"]["message"];
 
 			if ($remaining_attempts > 1 && $remaining_attempts <= (AUTH_MAX_LOGIN_ATTEMPTS - 1)) {
 				$error_message .= "<br /><br />You have <strong>".$remaining_attempts." attempts</strong> remaining before your account is locked for ".round((AUTH_LOCKOUT_TIMEOUT / 60))." minutes.";
@@ -241,7 +237,7 @@ if ($ACTION == "login") {
 		}
 	}
 
-	unset($auth_result, $username, $password);
+	unset($auth_result, $login_result, $username, $password);
 } elseif ($ACTION == "logout") {
 	add_statistic("index", "logout", "access_id", $_SESSION["details"]["access_id"], $_SESSION["details"]["id"]);
 
@@ -253,6 +249,13 @@ if ($ACTION == "login") {
      */
     if (isset($_SESSION["previous_session"]) && $_SESSION["previous_session"]) {
         $previous_session = $_SESSION["previous_session"];
+    }
+
+    /**
+     * We are logging out so remove this user from the cache if present
+     */
+    if (isset($ENTRADA_CACHE) && $ENTRADA_CACHE && isset($ENTRADA_USER) && $ENTRADA_USER) {
+        $ENTRADA_CACHE->remove("user_".AUTH_APP_ID."_".$ENTRADA_USER->getID());
     }
 
     $_SESSION = array();
@@ -274,11 +277,8 @@ if ($ACTION == "login") {
      * SSO Logout delayed until the very end, in case you are using masquerade, in which case the session is re-established
      * for the original user (which is the one that SSO may have authenticated in the first place)
      */
-    if ((defined("AUTH_SSO_ENABLED")) && (AUTH_SSO_ENABLED == true) && defined("AUTH_SSO_TYPE")) {
-        $mySso = Entrada_Sso_Sso::getInstance(AUTH_SSO_TYPE);
-        if ($mySso) {
-            $mySso->logout();
-        }
+    if ($sso) {
+        $sso->logout();
     }
 
     header("Location: ".ENTRADA_URL);
@@ -303,6 +303,7 @@ if (!isset($_SESSION["isAuthorized"]) || !(bool) $_SESSION["isAuthorized"]) {
             case "login_secure" :
             case "secure" :
                 $MODULE = "secure";
+            break;
 			case "assessment" :
 				$MODULE = "assessment";
 			break;
@@ -398,6 +399,25 @@ if (!isset($_SESSION["isAuthorized"]) || !(bool) $_SESSION["isAuthorized"]) {
 }
 
 /**
+ * SSO redirection
+ *
+ * If SSO is enabled, we might have to redirect to the external authentication source if not authenticated yet.
+ * Redirect to the SSO provider for the following situations:
+ * - SSO Login button selected on the login screen (&action="ssologin") or provided as a GET parameter
+ * - The SSO provider requires it (based on the SSO implementation)
+ * - The only available AUTH_METHOD is "sso". In which case, there is no local login possible
+ *
+ * Redirection is not done if:
+ * - there was a previous SSO error or SSO was bypassed on the login page
+ * - the page does not require authentication
+ */
+if ((!isset($_SESSION["isAuthorized"]) || !(bool) $_SESSION["isAuthorized"]) && $sso && !$sso_bypass && !$SSO_ERROR && in_array($MODULE, ["login","secure","login_secure"])) {
+    if (($ACTION == "ssologin") || $sso->requiresLogin() || (defined("AUTH_METHOD") && AUTH_METHOD == "sso")) {
+        $sso->login(rawurlencode((isset($_SERVER["HTTPS"]) ? "https" : "http") . "://" . $_SERVER["HTTP_HOST"] . ($PROCEED_TO ? $PROCEED_TO : "")));
+    }
+}
+
+/**
  * Make sure that the login page is accessed via SSL if either the AUTH_FORCE_SSL is not defined in
  * the settings.inc.php file or it's set to true.
  */
@@ -421,7 +441,7 @@ switch ($MODULE) {
 	case "exams":
 		if ($SECTION === "attempt") {
 			require_once (ENTRADA_ABSOLUTE."/templates/".$ENTRADA_TEMPLATE->activeTemplate()."/layouts/public/header_exam.tpl.php");
-		} else if ($PATH_SEPARATED[2] === "reports") {
+		} else if (isset($PATH_SEPARATED[2]) &&  $PATH_SEPARATED[2] === "reports") {
 			require_once (ENTRADA_ABSOLUTE."/templates/".$ENTRADA_TEMPLATE->activeTemplate()."/layouts/public/header_no_prototype.tpl.php");
 		} else {
 			require_once (ENTRADA_ABSOLUTE."/templates/".$ENTRADA_TEMPLATE->activeTemplate()."/layouts/public/header.tpl.php");
@@ -431,7 +451,7 @@ switch ($MODULE) {
     case "secure":
     case "login_secure" :
     
-        if ($PATH_SEPARATED[1] === "secure") {
+        if (isset($PATH_SEPARATED[1]) && $PATH_SEPARATED[1] === "secure") {
             require_once (ENTRADA_ABSOLUTE."/templates/".$ENTRADA_TEMPLATE->activeTemplate()."/layouts/public/header_secure.tpl.php");
         } else {
             require_once (ENTRADA_ABSOLUTE."/templates/".$ENTRADA_TEMPLATE->activeTemplate()."/layouts/public/header.tpl.php");
@@ -453,7 +473,7 @@ switch ($MODULE) {
 	case "help" :
 	case "login_secure" :
     case "login" :
-        if ($PATH_SEPARATED[1] === "secure") {
+        if (isset($PATH_SEPARATED[1]) && $PATH_SEPARATED[1]=== "secure") {
             require_once(ENTRADA_ABSOLUTE . DIRECTORY_SEPARATOR . "default-pages" . DIRECTORY_SEPARATOR . "login_secure.inc.php");
         } else {
             require_once(ENTRADA_ABSOLUTE . DIRECTORY_SEPARATOR . "default-pages" . DIRECTORY_SEPARATOR . $MODULE . ".inc.php");
@@ -550,7 +570,7 @@ switch ($MODULE) {
     case "news" :
     case "news_stream":
 	case "exams":
-		if ($PATH_SEPARATED[1] === "secure") {
+		if (isset($PATH_SEPARATED[1]) && $PATH_SEPARATED[1] === "secure") {
 			require_once(ENTRADA_ABSOLUTE."/templates/".$ENTRADA_TEMPLATE->activeTemplate()."/layouts/public/footer_secure.tpl.php");
 		} else {
             require_once(ENTRADA_ABSOLUTE."/templates/".$ENTRADA_TEMPLATE->activeTemplate()."/layouts/public/footer.tpl.php");

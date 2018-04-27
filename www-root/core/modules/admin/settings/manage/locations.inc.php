@@ -22,41 +22,34 @@
  *
  */
 
-if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CONFIGURATION"))) {
+if (!defined("PARENT_INCLUDED")) {
     exit;
-} elseif ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
-    header("Location: ".ENTRADA_URL);
+} elseif (!isset($_SESSION["isAuthorized"]) || !(bool)$_SESSION["isAuthorized"]) {
+    header("Location: " . ENTRADA_URL);
     exit;
-} elseif (!$ENTRADA_ACL->amIAllowed("configuration", "read",false)) {
-    add_error("Your account does not have the permissions required to use this feature of this module.<br /><br />If you believe you are receiving this message in error please contact <a href=\"mailto:".html_encode($AGENT_CONTACTS["administrator"]["email"])."\">".html_encode($AGENT_CONTACTS["administrator"]["name"])."</a> for assistance.");
+} elseif (!$ENTRADA_ACL->amIAllowed("configuration", "read")) {
+    add_error($translate->_("Your account does not have the permissions required to use this module."));
 
     echo display_error();
 
-    application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] do not have access to this module [".$MODULE."]");
+    application_log("error", "Group [" . $ENTRADA_USER->getActiveGroup() . "] and role [" . $ENTRADA_USER->getActiveRole() . "] do not have access to this module [" . $MODULE . "]");
 } else {
-    if (($router) && ($router->initRoute())) {
-        $PREFERENCES = preferences_load($MODULE);
+    $PAGE_META["title"] = $translate->_("Location Management");
+    $PAGE_META["description"] = "";
+    $PAGE_META["keywords"] = "";
 
+    $BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/settings/manage/locations?org=".$ORGANISATION['organisation_id'], "title" => $translate->_("Location Management"));
+    $BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/settings/manage/locations?org=".$ORGANISATION['organisation_id'], "title" => "Sites");
 
-        $BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/settings/manage/locations?org=".$ORGANISATION['organisation_id'], "title" => "Manage Locations");
+    $JAVASCRIPT_TRANSLATIONS[] = "let organisation_id = " . $ORGANISATION['organisation_id'] . ";";
+    // These are temporary translations for the Locations module until the proper entradajs way is ready
+    $JAVASCRIPT_TRANSLATIONS[] = "let global_translations = {};";
+    $JAVASCRIPT_TRANSLATIONS[] = "global_translations.Province = '" . html_encode($translate->_("Province / State")) . "';";
+    $JAVASCRIPT_TRANSLATIONS[] = "global_translations.PostalCode = '" . html_encode($translate->_("Postal Code")) . "';";
+    ?>
 
-        if((isset($_GET["building_id"])) && ((int) trim($_GET["building_id"]))) {
-            $BUILDING_ID = (int) trim($_GET["building_id"]);
-        }
+    <!-- EntradaJS Entry Point -->
+    <div id="app-root" data-route="locations.index" data-layout="NoComponentsLayout"></div>
 
-        $module_file = $router->getRoute();
-        if ($module_file) {
-            require_once($module_file);
-        }
-        /**
-         * Check if preferences need to be updated on the server at this point.
-         */
-        preferences_update($MODULE, $PREFERENCES);
-    } else {
-        $url = ENTRADA_URL."/admin/".$MODULE;
-        application_log("error", "The Entrada_Router failed to load a request. The user was redirected to [".$url."].");
-
-        header("Location: ".$url);
-        exit;
-    }
+    <?php
 }

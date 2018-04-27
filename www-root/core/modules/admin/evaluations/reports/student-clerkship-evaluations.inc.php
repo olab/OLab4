@@ -39,7 +39,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVALUATIONS"))) {
 
 	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] does not have access to this module [".$MODULE."]");
 } else {
-    $BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/evaluations/reports?section=student-clerkship-evalutions", "title" => "Clerkship Core Rotation Evaluation Reports");
+    $BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/evaluations/reports?section=student-clerkship-evalutions", "title" => $translate->_("Clerkship Core Rotation Evaluation Reports"));
 	switch ($STEP) {
         case 3 :
             $report_questions = array();
@@ -361,7 +361,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVALUATIONS"))) {
                     $targets_string .= "<strong>".html_encode($report_target["event_title"])."</strong> (<em>".html_encode($rotation_title)."</em> - <em>".html_encode($report_target["region_name"])."</em>) [<strong>".(array_key_exists($report_target["event_id"], $report_targets_responses_count) && ((int)$report_targets_responses_count[$report_target["event_id"]]) ? ((int)$report_targets_responses_count[$report_target["event_id"]]) : "0")."</strong> evaluations completed for <strong>".$count."</strong> events]<br />\n";
                 }
                 $targets_string .= "<br /><br />Total of <strong>".$total_completed."</strong> evaluations completed for <strong>".$total_events."</strong> events.";
-                echo "<h1>Clerkship Core Rotation Evaluation Reports</h1>\n";
+                echo "<h1>" . $translate->_("Clerkship Core Rotation Evaluation Reports") . "</h1>\n";
                 echo "<div id=\"evaluation-report-body\">\n";
                 echo "<div class=\"row-fluid\"><h2 class=\"span4\">Services reported on:</h2></div>\n";
                 echo "<div class=\"row-fluid space-below\"><span class=\"span9 offset3 question-content\">".$targets_string."</span></div>\n";
@@ -405,7 +405,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVALUATIONS"))) {
             }
             break;
         case 2 :
-            echo "<h1>Clerkship Core Rotation Evaluation Reports</h1>\n";
+            echo "<h1>" . $translate->_("Clerkship Core Rotation Evaluation Reports") . "</h1>\n";
             if (has_success()) {
                 echo display_success();
             }
@@ -595,7 +595,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVALUATIONS"))) {
                         <td>&nbsp;</td>
                         <td colspan="4" style="padding-top: 15px">
                             <?php
-                            echo display_notice("No completed clerkship events were found.");
+                            echo display_notice("No completed " . $translate->_("clerkship") ." events were found.");
                             ?>
                         </td>
                     <?php
@@ -608,7 +608,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVALUATIONS"))) {
             break;
         case 1 :
         default :
-            echo "<h1>Clerkship Core Rotation Evaluation Reports</h1>\n";
+            echo "<h1>" . $translate->_("Clerkship Core Rotation Evaluation Reports") . "</h1>\n";
             if (has_success()) {
                 echo display_success();
             }

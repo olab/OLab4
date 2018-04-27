@@ -88,7 +88,7 @@ class Models_Exam_Category extends Models_Base {
         return $this->deleted_date;
     }
 
-    /* @return bool|Models_Exam_Question_Versions */
+    /* @return ArrayObject|Models_Exam_Category_Set[] */
     public function getSets() {
         if (NULL === $this->sets) {
             $this->sets = Models_Exam_Category_Set::fetchAllByCategoryID($this->category_id);

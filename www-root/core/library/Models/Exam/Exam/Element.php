@@ -310,12 +310,43 @@ class Models_Exam_Exam_Element extends Models_Base {
     }
 
     /* @return ArrayObject|Models_Exam_Exam_Element[] */
-    public static function fetchAllByExamID($exam_id, $deleted_date = NULL) {
+    public static function fetchAllByExamID($exam_id, $order = null, $deleted_date = NULL) {
         $self = new self();
         return $self->fetchAll(array(
             array("key" => "exam_id", "value" => $exam_id, "method" => "="),
             array("key" => "deleted_date", "value" => ($deleted_date ? $deleted_date : NULL), "method" => ($deleted_date ? "<=" : "IS"))
-        ));
+        ), "=", "AND", ($order ? $order : static::$default_sort_column));
+    }
+
+    /* @return ArrayObject|Models_Exam_Exam_Element[] */
+    public static function fetchAllByExamIDGrouped($exam_id, $search_value = null, $deleted_date = NULL) {
+        if (!is_null($search_value)) {
+            global $db;
+            $query = "  SELECT a.*, b.*
+                        FROM `exam_elements` AS a
+                        JOIN `exam_groups` AS b
+                        ON a.`group_id` = b.`group_id`
+                        WHERE a.`exam_id` = ?
+                        AND b.`group_title` LIKE (" . $db->qstr("%".$search_value."%") . ")";
+                        //AND a.`deleted_date` " . ($deleted_date ? "<= " . $deleted_date : "IS NULL");
+            $elements = false;
+            $results = $db->GetAll($query, array($exam_id));
+            if ($results) {
+                foreach ($results as $result) {
+                    $elements[] = new self($result);
+                }
+            }
+
+            return $elements;
+
+        } else {
+            $self = new self();
+            return $self->fetchAll(array(
+                array("key" => "exam_id", "value" => $exam_id, "method" => "="),
+                array("key" => "group_id", "value" => (NULL), "method" => "IS NOT"),
+                array("key" => "deleted_date", "value" => ($deleted_date ? $deleted_date : NULL), "method" => ($deleted_date ? "<=" : "IS"))
+            ));
+        }
     }
 
     /* @return ArrayObject|Models_Exam_Exam_Element[] */

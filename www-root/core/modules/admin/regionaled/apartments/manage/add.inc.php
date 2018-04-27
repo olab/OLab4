@@ -161,7 +161,7 @@ if (!defined("IN_MANAGE")) {
 					}
 				} else {
 					$ERROR++;
-					$ERRORSTR[] = "There is no availability in this accommodation between ".date(DEFAULT_DATE_FORMAT, $PROCESSED["inhabiting_start"])." and ".date(DEFAULT_DATE_FORMAT, $PROCESSED["inhabiting_finish"]).".";
+					$ERRORSTR[] = "There is no availability in this accommodation between ".date(DEFAULT_DATETIME_FORMAT, $PROCESSED["inhabiting_start"])." and ".date(DEFAULT_DATETIME_FORMAT, $PROCESSED["inhabiting_finish"]).".";
 				}
 			}
 
@@ -212,7 +212,7 @@ if (!defined("IN_MANAGE")) {
 					$url = ENTRADA_URL."/admin/regionaled/apartments/manage?id=".$APARTMENT_ID."&dstamp=".$PROCESSED["inhabiting_start"];
 
 					$SUCCESS++;
-					$SUCCESSSTR[] = "Successfully scehduled a new occupant in <strong>".html_encode($APARTMENT_INFO["apartment_title"])."</strong> from ".date(DEFAULT_DATE_FORMAT, $PROCESSED["inhabiting_start"])." and ".date(DEFAULT_DATE_FORMAT, $PROCESSED["inhabiting_finish"]).".<br /><br />You will now be redirected to the apartment index; this will happen <strong>automatically</strong> in 5 seconds or <a href=\"".$url."\" style=\"font-weight: bold\">click here</a> to continue.";
+					$SUCCESSSTR[] = "Successfully scehduled a new occupant in <strong>".html_encode($APARTMENT_INFO["apartment_title"])."</strong> from ".date(DEFAULT_DATETIME_FORMAT, $PROCESSED["inhabiting_start"])." and ".date(DEFAULT_DATETIME_FORMAT, $PROCESSED["inhabiting_finish"]).".<br /><br />You will now be redirected to the apartment index; this will happen <strong>automatically</strong> in 5 seconds or <a href=\"".$url."\" style=\"font-weight: bold\">click here</a> to continue.";
 
 					$ONLOAD[] = "setTimeout('window.location=\\'".$url."\\'', 5000)";
 

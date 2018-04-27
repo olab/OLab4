@@ -89,4 +89,62 @@ class Models_Assessment_Statistic extends Models_Base {
         $constraints[] = array("mode" => "AND", "key" => "proxy_id", "value" => (is_null($proxy_id) ? $this->proxy_id : $proxy_id), "method" => "=");
         return $self->fetchAll($constraints);
     }
+
+    /**
+     * Fetch the latest statistic for the given assessment
+     *
+     * @param $dassessment_id
+     * @return mixed
+     */
+    public static function fetchRowByAssessmentID($dassessment_id) {
+        global $db;
+        $query = "SELECT * FROM `assessment_statistics` WHERE `assessment_id` = ? ORDER BY `created_date` DESC LIMIT 1";
+        return $db->GetRow($query, array($dassessment_id));
+    }
+
+    /**
+     * Fetch all records that marks a saving point for a progress record
+     *
+     * @param $aprogress_id
+     * @return mixed
+     */
+    public static function fetchProgressEndTimes($aprogress_id) {
+        global $db;
+
+        $query = "SELECT * 
+                  FROM `assessment_statistics`
+                  WHERE `progress_id` = ?
+                  AND `action` = 'submit'
+                  ORDER BY `created_date`";
+
+        return $db->GetAll($query, array($aprogress_id));
+    }
+
+    /**
+     * Find and return the start time record associated with saving record
+     *
+     * @param $end_record
+     * @return mixed
+     */
+    public static function getRelatedStartTime($end_record) {
+        global $db;
+
+        $params = array(
+            $end_record["assessment_id"],
+            $end_record["proxy_id"],
+            $end_record["target_id"],
+            $end_record["created_date"]
+        );
+
+        $query = "SELECT *
+                  FROM `assessment_statistics`
+                  WHERE `action` = 'view'
+                  AND `assessment_id` = ?
+                  AND `proxy_id` = ?
+                  AND `target_id` = ?
+                  AND `created_date` < ?
+                  ORDER BY `created_date` DESC";
+
+        return $db->GetRow($query, $params);
+    }
 }

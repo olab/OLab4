@@ -66,7 +66,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                 
                 events_subnavigation($event_info,'statistics');
 				?>
-                <div class="content-small"><?php echo fetch_course_path($event_info["course_id"]); ?></div>
+                <div class="content-small"><?php echo fetch_course_path($event_info["course_id"], $event_info["cunit_id"]); ?></div>
                 <h1 id="page-top" class="event-title"><?php echo html_encode($event_info["event_title"]); ?></h1>
                 <h2 title="Event Statistics Section">Event Statistics</h2>
                 <?php

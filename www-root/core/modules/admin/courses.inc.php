@@ -30,7 +30,7 @@ if(!defined("PARENT_INCLUDED")) {
 } elseif((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 	header("Location: ".ENTRADA_URL);
 	exit;
-} elseif(!$ENTRADA_ACL->amIAllowed("coursecontent", "update", false)) {
+} elseif(!$ENTRADA_ACL->amIAllowed("coursecontent", "update", false) && !$ENTRADA_ACL->amIAllowed("unitcontent", "update", false)) {
 	add_error("Your account does not have the permissions required to use this module.<br /><br />If you believe you are receiving this message in error please contact <a href=\"mailto:".html_encode($AGENT_CONTACTS["administrator"]["email"])."\">".html_encode($AGENT_CONTACTS["administrator"]["name"])."</a> for assistance.");
 
 	echo display_error();
@@ -80,10 +80,11 @@ if(!defined("PARENT_INCLUDED")) {
 			}
 
 			$sidebar_html  = "<ul class=\"menu\">\n";
-			$sidebar_html .= "	<li class=\"off\"><a href=\"".ENTRADA_URL."/courses".(($COURSE_ID) ? "?".replace_query(array("id" => $COURSE_ID, "action" => false, "section" => false)) : "")."\">Learner View</a></li>\n";
-			if($admin_wording) {
-				$sidebar_html .= "<li class=\"on\"><a href=\"".ENTRADA_URL."/admin/courses".(($COURSE_ID) ? "?".replace_query(array("id" => $COURSE_ID, "action" => "edit")) : "")."\">".html_encode($admin_wording)."</a></li>\n";
-			}
+            $sidebar_html .= "    <li class=\"off\"><a href=\"".ENTRADA_URL."/courses".(($COURSE_ID) ? "?".replace_query(array("id" => $COURSE_ID, "action" => false, "section" => false, "step" => false)) : "")."\">Learner View</a></li>\n";
+            if($admin_wording) {
+                $sidebar_html .= "<li class=\"on\"><a href=\"".ENTRADA_URL."/admin/courses".(($COURSE_ID) ? "?".replace_query(array("id" => $COURSE_ID, "action" => "edit", "step" => false)) : "")."\">".html_encode($admin_wording)."</a></li>\n";
+
+            }
 			$sidebar_html .= "</ul>\n";
 
 			new_sidebar_item("Display Style", $sidebar_html, "display-style", "open");

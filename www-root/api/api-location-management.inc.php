@@ -44,23 +44,49 @@ if ((isset($_SESSION["isAuthorized"])) && ((bool) $_SESSION["isAuthorized"])) {
     }
 
     switch ($method) {
+        case "get-buildings-by-site":
+            if (isset($_POST["site_id"]) && $tmp_input = (int) clean_input($_POST["site_id"], array("trim", "int"))) {
+                $site_id = $tmp_input;
+            } else {
+                $site_id = null;
+            }
+
+            $building_array = array();
+
+            if ($site_id) {
+                $buildings = Models_Location_Building::fetchBuildingsWithRoomsBySiteId($site_id);
+                if ($buildings) {
+                    foreach ($buildings as $building) {
+                        $building_array[] = array(
+                            "building_id" => $building->getBuildingID(),
+                            "building_name" => $building->getBuildingName()
+                        );
+                    }
+                }
+            }
+            echo json_encode(array("status" => (empty($building_array) ? "error" : "success"), "data" => $building_array));
+
+            break;
         case "get-rooms-by-building":
             if (isset($_POST["building_id"]) && $tmp_input = (int) clean_input($_POST["building_id"], array("trim", "int"))) {
                 $building_id = $tmp_input;
+            } else {
+                $building_id = null;
             }
 
             $room_array = array();
 
-            $rooms = Models_Location_Room::fetchAllByBuildingId($building_id);
-            if ($rooms) {
-                foreach ($rooms as $room) {
-                    $room_array[] = array(
-                        "room_id" => $room->getRoomId(),
-                        "room_name" => $room->getRoomNumber() . ($room->getRoomName() ? " - " . $room->getRoomName() : "")
-                    );
+            if ($building_id) {
+                $rooms = Models_Location_Room::fetchAllByBuildingId($building_id);
+                if ($rooms) {
+                    foreach ($rooms as $room) {
+                        $room_array[] = array(
+                            "room_id" => $room->getRoomId(),
+                            "room_name" => $room->getRoomNumber() . ($room->getRoomName() ? " - " . $room->getRoomName() : "")
+                        );
+                    }
                 }
             }
-
             echo json_encode(array("status" => (empty($room_array) ? "error" : "success"), "data" => $room_array));
 
             break;
@@ -68,11 +94,15 @@ if ((isset($_SESSION["isAuthorized"])) && ((bool) $_SESSION["isAuthorized"])) {
 
             if (isset($_POST["room_id"]) && $tmp_input = (int) clean_input($_POST["room_id"], array("trim", "int"))) {
                 $room_id = $tmp_input;
+            } else {
+                $room_id = null;
             }
+            $building_id = 0;
 
-            $rooms = Models_Location_Room::fetchRowByID($room_id);
-            $building_id = ($rooms ? $rooms->getBuildingId() : 0);
-
+            if ($room_id) {
+                $rooms = Models_Location_Room::fetchRowByID($room_id);
+                $building_id = ($rooms ? $rooms->getBuildingId() : 0);
+            }
             echo json_encode(array("status" => ($building_id == 0 ? "error" : "success"), "data" => $building_id));
 
             break;

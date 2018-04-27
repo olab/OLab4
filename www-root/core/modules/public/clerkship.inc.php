@@ -162,7 +162,7 @@ if(!defined("PARENT_INCLUDED")) {
         $rotation = 0;
     }
 
-    $BREADCRUMB[] = array("url" => ENTRADA_URL."/".$MODULE, "title" => "Clerkship");
+    $BREADCRUMB[] = array("url" => ENTRADA_URL."/".$MODULE, "title" => $translate->_("Clerkship"));
 
     $HEAD[] = "<script type=\"text/javascript\" src=\"".ENTRADA_URL."/javascript/clerkship.js?release=".html_encode(APPLICATION_VERSION)."\"></script>\n";
     $HEAD[] = "<script type=\"text/javascript\" src=\"".ENTRADA_URL."/javascript/tabpane/tabpane.js?release=".html_encode(APPLICATION_VERSION)."\"></script>\n";
@@ -317,7 +317,7 @@ if(!defined("PARENT_INCLUDED")) {
             }
             if ($rotation) {
                 $sidebar_html .= "<div class=\"space-above\">\n";
-                $sidebar_html .= "	You have ".$remaining_weeks["yet"]." weeks remaining in this ".$remaining_weeks["total"]." week clerkship. To change rotations, <a href=\"".ENTRADA_URL."/clerkship/logbook?section=select\">click here</a>.";
+                $sidebar_html .= "	You have ".$remaining_weeks["yet"]." weeks remaining in this ".$remaining_weeks["total"]." week " . $translate->_("clerkship") . ". To change rotations, <a href=\"".ENTRADA_URL."/clerkship/logbook?section=select\">click here</a>.";
                 $sidebar_html .= "</div>\n";
 
                 if ($SHOW_LOGBOOK) {
@@ -344,7 +344,7 @@ if(!defined("PARENT_INCLUDED")) {
             $deficient_current_events = $db->GetAll($query);
             if (!$deficient_current_events) {
                 $sidebar_html  = "<a href=\"".ENTRADA_URL."/clerkship/logbook?section=deficiency-plan&rotation=".$overdue["rotation_id"]."\"><img src=\"".ENTRADA_URL."/images/icon-important.gif\" width=\"48\" height=\"48\" alt=\"Clerkship Deficiency Plan Submission\" title=\"Clerkship Deficiency Plan Submission\" border=\"0\"  border=\"0\" align=\"right\" hspace=\"3\" vspace=\"5\" /></a>\n";
-                $sidebar_html .= "Due to reported deficiencies in your clerkship logging for the <strong>".$overdue["rotation_title"]."</strong> rotation, it is asked that you submit a plan detailing how you intend to attain the deficient requirements at a later date. <br/><br/>To submit your plan for this rotation, please <a href=\"".ENTRADA_URL."/clerkship/logbook?section=deficiency-plan&rotation=".$overdue["rotation_id"]."\" style=\"font-size: 11px; font-weight: bold\">click here</a>.\n";
+                $sidebar_html .= "Due to reported deficiencies in your " . $translate->_("clerkship") . " logging for the <strong>".$overdue["rotation_title"]."</strong> rotation, it is asked that you submit a plan detailing how you intend to attain the deficient requirements at a later date. <br/><br/>To submit your plan for this rotation, please <a href=\"".ENTRADA_URL."/clerkship/logbook?section=deficiency-plan&rotation=".$overdue["rotation_id"]."\" style=\"font-size: 11px; font-weight: bold\">click here</a>.\n";
             }
         }
         $query = "SELECT a.*, b.`rotation_title` FROM `".CLERKSHIP_DATABASE."`.`logbook_deficiency_plans` AS a

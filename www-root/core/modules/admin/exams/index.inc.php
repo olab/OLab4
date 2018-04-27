@@ -141,9 +141,9 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
                 <table class="table table-bordered table-striped" id="exams-table">
                     <thead>
                         <tr>
-                            <th width="65%"><?php echo $SUBMODULE_TEXT["index"]["title_heading"]; ?></th>
+                            <th width="50%"><?php echo $SUBMODULE_TEXT["index"]["title_heading"]; ?></th>
                             <th width="15%"><?php echo $SUBMODULE_TEXT["index"]["updated_heading"]; ?></th>
-                            <th width="10%"><?php echo $SUBMODULE_TEXT["index"]["questions_heading"]; ?></th>
+                            <th width="9%"><?php echo $SUBMODULE_TEXT["index"]["questions_heading"]; ?></th>
                             <th width="5%"><?php echo $SUBMODULE_TEXT["index"]["posts_heading"]; ?></th>
                             <th width="5%"></th>
                         </tr>

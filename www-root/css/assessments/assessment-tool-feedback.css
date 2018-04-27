@@ -1,0 +1,10 @@
+#select-course-btn, #select-tools-btn {
+    min-width: 200px;
+    text-align: left;
+}
+
+#select-course-btn i, #select-tools-btn i {
+    display:inline-block;
+    float: right;
+    margin-top: 3px;
+}

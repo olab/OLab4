@@ -111,14 +111,14 @@ if((!defined("PARENT_INCLUDED")) || (!defined("ADMIN_OBSERVERSHIP_FORM"))) {
 				jQuery(this).trigger('change');
 			});
 
-			jQuery("#countries_id").live("change", function() {
+			jQuery(document).on("change", "#countries_id", function() {
 				jQuery("#country").attr("value", jQuery(this).children("option[value="+jQuery(this).val()+"]").html());
 			});
-			jQuery("#prov_state").live("change", function() {
+			jQuery(document).on("change", "#prov_state", function() {
 				jQuery("#prov").attr("value", jQuery(this).val());
 			});
 			
-			jQuery("#preceptor_email").live("blur", function() {
+			jQuery(document).on("blur", "#preceptor_email", function() {
 				jQuery.ajax({
 					url: "<?php echo ENTRADA_URL; ?>/api/personnel.api.php",
 					data: "email=" + jQuery(this).val() + "",

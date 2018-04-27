@@ -5,8 +5,8 @@ jQuery(function($) {
         "bPaginate": false,
         "bInfo": false,
         'oLanguage': {
-            'sEmptyTable': 'There is currently no leave tracked by the system. Use the add leave button above to create a new leave record.',
-            'sZeroRecords': 'No leave records have been found to display.'
+            'sEmptyTable': javascript_translations.no_leave_in_system,
+            'sZeroRecords': javascript_translations.no_leave_records_found
         }
     });
 
@@ -14,11 +14,9 @@ jQuery(function($) {
         "bPaginate": false,
         "bInfo": false,
         "oLanguage": {
-            "sEmptyTable": "There is currently no leave tracked by the system. Use the add leave button above to create a new leave record.",
-            "sZeroRecords": "No leave records have been found to display."
+            "sZeroRecords": javascript_translations.no_leave_records_found
         },
         "aoColumnDefs": [
-            {"bSortable": false, "aTargets": [0]},
             {"sType": "numeric-html", "aTargets": [2]}
         ],
         "aaSorting": [[ 1, "asc" ]]
@@ -254,9 +252,9 @@ jQuery(function($) {
             success: function (data) {
                 var jsonResponse = JSON.parse(data);
                 if (jsonResponse.status == "success") {
-                    console.log("Successfully updated curriculum period preference.")
+                    console.log("Successfully updated curriculum period preference.");
                 } else {
-                    console.log("Unable to update curriculum period preference.")
+                    console.log("Unable to update curriculum period preference.");
                 }
             }
         });
@@ -264,20 +262,44 @@ jQuery(function($) {
         if ($(this).val() == 0) {
             $(".no-results").remove();
             $(".leave-tracking-table tbody tr").each(function (key, value) {
+                var tr_total_days = $(value).attr("data-total-days");
+                if (typeof tr_total_days !== "undefined") {
+                    tr_total_days = tr_total_days.split(",");
+                    if (tr_total_days[0] == "") {
+                        tr_total_days[0] = javascript_translations.please_update;
+                    }
+                    $(value).find(".total-days-count").html(tr_total_days[0]);
+                }
                 $(value).removeClass("hide");
             });
         } else {
             var start_date = $(this).find(":selected").attr("data-start-date");
             var end_date = $(this).find(":selected").attr("data-end-date");
             var results = false;
+            var selected_cperiod_index = $(this).prop('selectedIndex');
             $(".no-results").remove();
 
             $(".leave-tracking-table tbody tr").each(function (key, value) {
                 var tr_start_dates = $(value).attr("data-start-dates");
                 var tr_end_dates   = $(value).attr("data-end-dates");
+                var tr_total_days  = $(value).attr("data-total-days");
 
+                if (typeof tr_total_days !== "undefined") {
+                    tr_total_days = tr_total_days.split(",");
+                }
                 tr_start_dates = tr_start_dates.split(",");
                 tr_end_dates = tr_end_dates.split(",");
+
+                if (typeof tr_total_days !== "undefined") {
+                    for (var j = 0; j < tr_total_days.length; j++) {
+                        if (tr_total_days[j] == 0 || tr_total_days[j] == "") {
+                            tr_total_days[j] = javascript_translations.please_update;
+                        }
+                        if (selected_cperiod_index == j) {
+                            $(value).find(".total-days-count").html(tr_total_days[j]);
+                        }
+                    }
+                }
 
                 for (var i = 0; i < tr_start_dates.length; i++) {
                     if (tr_start_dates[i] >= start_date && tr_end_dates[i]   <= end_date ||
@@ -298,10 +320,30 @@ jQuery(function($) {
         }
     });
 
+    $("#leave-curriculum-period-select").on("change", function () {
+        $.ajax({
+            url: ENTRADA_URL + "/admin/" + MODULE + "?section=api-schedule",
+            data: {
+                method: "set-curriculum-period",
+                cperiod_id: $("#leave-curriculum-period-select").val()
+            },
+            type: "POST",
+            success: function (data) {
+                var jsonResponse = JSON.parse(data);
+                if (jsonResponse.status == "success") {
+                    console.log("Successfully updated curriculum period preference.");
+                    location.reload();
+                } else {
+                    console.log("Unable to update curriculum period preference.");
+                }
+            }
+        });
+    });
+
     function display_no_results() {
         var no_results_tr = jQuery(document.createElement("tr")).addClass("no-results").css({"background-color": "#f9f9f9"});
         var no_results_td = jQuery(document.createElement("td")).attr({"colspan": jQuery(".leave-tracking-table").attr("data-colspan")});
-        var no_results_span = jQuery(document.createElement("span")).html("No records found in the selected curriculum period.");
+        var no_results_span = jQuery(document.createElement("span")).html(javascript_translations.no_records_found_in_cperiod);
         jQuery(".leave-tracking-table tbody").append(no_results_tr.append(no_results_td.append(no_results_span)));
     }
 

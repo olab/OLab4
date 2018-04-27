@@ -107,17 +107,17 @@ if ($RECORD_ID) {
              */
             if (($release_date = (int) $html_record["release_date"]) && ($release_date > time())) {
                 $NOTICE++;
-                $NOTICESTR[] = "This HTML document will not be accessible to others until <strong>".date(DEFAULT_DATE_FORMAT, $release_date)."</strong>.";
+                $NOTICESTR[] = "This HTML document will not be accessible to others until <strong>".date(DEFAULT_DATETIME_FORMAT, $release_date)."</strong>.";
             } elseif ($release_until = (int) $html_record["release_until"]) {
                 if ($release_until > time()) {
                     $NOTICE++;
-                    $NOTICESTR[] = "This HTML document will be accessible until <strong>".date(DEFAULT_DATE_FORMAT, $release_until)."</strong>.";
+                    $NOTICESTR[] = "This HTML document will be accessible until <strong>".date(DEFAULT_DATETIME_FORMAT, $release_until)."</strong>.";
                 } else {
                     /**
                      * Only administrators or people who wrote the post will get this.
                      */
                     $NOTICE++;
-                    $NOTICESTR[] = "This HTML document was only accessible until <strong>".date(DEFAULT_DATE_FORMAT, $release_until)."</strong> by others.";
+                    $NOTICESTR[] = "This HTML document was only accessible until <strong>".date(DEFAULT_DATETIME_FORMAT, $release_until)."</strong> by others.";
                 }
             }
 

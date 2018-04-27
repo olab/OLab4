@@ -101,7 +101,7 @@ class Models_Assessments_Response_Descriptor extends Models_Base {
         $self = new self();
         return $self->fetchAll(array(array("key" => "deleted_date", "value" => ($deleted_date ? $deleted_date : NULL), "method" => ($deleted_date ? "<=" : "IS"))));
     }
-    
+
     public static function fetchAllByOrganisationID($organisation_id = null, $deleted_date = NULL) {
         $self = new self();
         return $self->fetchAll(array(
@@ -175,11 +175,17 @@ class Models_Assessments_Response_Descriptor extends Models_Base {
 
     public static function fetchRowByOrganisationIDDescriptorText($organisation_id, $descriptor, $deleted_date = NULL) {
         $self = new self();
-        return $self->fetchRow(array(
+        $all_descriptors = $self->fetchAll(array(
             array("key" => "organisation_id", "value" => $organisation_id, "method" => "="),
             array("key" => "descriptor", "value" => $descriptor, "method" => "="),
             array("key" => "deleted_date", "value" => ($deleted_date ? $deleted_date : NULL), "method" => ($deleted_date ? "<=" : "IS"))
         ));
+        if (empty($all_descriptors)) {
+            return false;
+        }
+        else {
+            return end($all_descriptors);
+        }
     }
 
     public static function fetchDistinctByOrganisationID($organisation_id, $deleted_date = NULL) {

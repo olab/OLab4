@@ -33,6 +33,9 @@ class Views_Assessments_Forms_Items_Numeric extends Views_Assessments_Forms_Item
     protected function renderView($options = array()) {
         $numeric_value = Entrada_Assessments_Forms::getItemComment($this->element, $this->progress); ?>
         <div class="item-container" data-item-id="<?php echo $this->item["item_id"]; ?>">
+
+            <?php $this->buildItemDisabledOverlay(); ?>
+
             <table class="item-table <?php echo str_replace("_", "-", $this->item["shortname"]) ?>">
 
                 <?php $this->buildItemHeader(); ?>
@@ -45,7 +48,7 @@ class Views_Assessments_Forms_Items_Numeric extends Views_Assessments_Forms_Item
                             name="<?php echo "item-{$this->item["item_id"]}"; ?>"
                             type="text"
                             class="form-control item-control input-small"
-                            value="<?php echo html_encode($numeric_value); ?>"
+                            value="<?php echo html_decode($numeric_value); ?>"
                       />
                   </td>
                 </tr>

@@ -36,6 +36,7 @@ if ((isset($_SESSION["isAuthorized"])) && ((bool) $_SESSION["isAuthorized"])) {
                     
                     $PROCESSED["bookmark_title"] = clean_input($_POST["bookmarkTitle"],array("trim","notags"));
                     $PROCESSED["proxy_id"] = $ENTRADA_USER->getID();
+                    $PROCESSED["organisation_id"] = $ENTRADA_USER->getActiveOrganisation();
                     $PROCESSED["updated_date"] = time();
                     $PROCESSED["order"] = 0; //Add it to the top of the bookmark list
                     
@@ -102,7 +103,7 @@ if ((isset($_SESSION["isAuthorized"])) && ((bool) $_SESSION["isAuthorized"])) {
 
                 $Bookmarks = new Models_Bookmarks();
                 
-                $Bookmarks = $Bookmarks->fetchAllByProxyId($ENTRADA_USER->getID(), $PROCESSED["search_value"]);
+                $Bookmarks = $Bookmarks->fetchAllByProxyIdOrganisationId($ENTRADA_USER->getID(), $ENTRADA_USER->getActiveOrganisation(), $PROCESSED["search_value"]);
                 
                 if ($Bookmarks) {
                     foreach($Bookmarks as $Bookmark) {

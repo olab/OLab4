@@ -68,7 +68,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COMMUNITIES"))) {
 		$BREADCRUMB[] = array("url" => ENTRADA_URL."/".$MODULE, "title" => "Report for page `".$page."'");
 
 
-		echo "<h1>Community Usage Report for Page '".$page."'</h1>";
+		echo "<h1>" . $translate->_("Community Usage Report for Page '") .$page."'</h1>";
 
 		$query = "	SELECT DISTINCT `proxy_id` 
 					FROM `statistics` WHERE `module` 
@@ -112,7 +112,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COMMUNITIES"))) {
 		<thead>
 			<tr>
 				<td class="modified">&nbsp;</td>
-				<td class="user">Community Member</td>
+				<td class="user"><?php echo $translate->_("Community Member"); ?></td>
 				<td class="views">Views</td>
 				<td class="views">Submissions</td>						
 			</tr>
@@ -159,7 +159,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COMMUNITIES"))) {
 		<thead>
 			<tr>
 				<td class="modified">&nbsp;</td>
-				<td class="user">Community Member</td>
+				<td class="user"><?php echo $translate->_("Community Member"); ?></td>
 			</tr>
 		</thead>
 		<tbody>

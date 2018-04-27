@@ -132,7 +132,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_CURRICULUM"))) {
                     $i = 0;
                     foreach ($child_objectives as $child) {
                         if (in_array("courses", $PROCESSED["count"])) {
-                            $course_count = array_sum(Entrada_Curriculum_Explorer::count_objective_child_courses($child["objective_id"]));
+                            $course_count = array_sum(Entrada_Curriculum_Explorer::count_objective_child_courses($child["objective_id"], $PROCESSED["course_id"], $PROCESSED["group_id"]));
                         } else {
                             $course_count = 0;
                         }
@@ -165,6 +165,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_CURRICULUM"))) {
 
                         $i++;
                     }
+                    $child_objectives = array_values($child_objectives);
                 }
 
                 $objective_parents = Entrada_Curriculum_Explorer::fetch_objective_parents($PROCESSED["objective_parent"]);

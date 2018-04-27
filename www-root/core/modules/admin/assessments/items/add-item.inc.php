@@ -54,6 +54,9 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ITEMS"))) {
     if ($PROCESSED["rref"] = Entrada_Utilities_FormStorageSessionHelper::getRubricRef()) {
         $rubric_referrer_data = Entrada_Utilities_FormStorageSessionHelper::fetch($PROCESSED["rref"]);
     }
+    if (isset($_GET["rating_scale_id"])) {
+        $PROCESSED["rating_scale_id"] = $_GET["rating_scale_id"];
+    }
 
     echo "<h1>{$translate->_("Create New Item")}</h1>";
 

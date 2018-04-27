@@ -37,6 +37,7 @@
             "label": "",
             "type": "",
             "form_name": "",
+            "input_name": "",
             "modal" : 0,
             "value": $(self).val(),
             "open": 0
@@ -94,7 +95,12 @@
                 $(self).text(text + " - " + settings.label);
                 self.data("value", text);
             }
+
             $(self).val(text);
+
+            if (settings.input_name != "") {
+                $(settings.input_name).val(text);
+            }
         }
 
         function toggleSelectorMenu () {

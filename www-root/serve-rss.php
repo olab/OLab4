@@ -189,7 +189,7 @@ switch ($ACTION) {
 		if ($results) {
 			foreach ($results as $result) {
 				$item = new FeedItem();
-				$item->title = "New Notice: ".date(DEFAULT_DATE_FORMAT, (int) $result["display_from"]);
+				$item->title = "New Notice: ".date(DEFAULT_DATETIME_FORMAT, (int) $result["display_from"]);
 				$item->link = ENTRADA_URL."/dashboard";
 				$item->description = html_decode($result["notice_summary"]);
 				$item->descriptionHtmlSyndicated = true;

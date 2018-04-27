@@ -98,15 +98,30 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ROTATION_SCHEDULE"))) {
                         if ($draft->insert()) {
                             $draft_author_data = array(
                                 "cbl_schedule_draft_id" => $draft->getID(),
-                                "proxy_id" => $ENTRADA_USER->getActiveID(),
+                                "author_value" => $ENTRADA_USER->getActiveID(),
+                                "author_type" => "proxy_id",
                                 "created_date" => time(),
                                 "created_by" => $ENTRADA_USER->getActiveID()
                             );
                             $author = new Models_Schedule_Draft_Author($draft_author_data);
-                            if ($author->insert()) {
+                            if (!$author->insert()) {
+                                add_error($translate->_("Failed to add draft author."));
+                            }
+                            $draft_course_author_data = array(
+                                "cbl_schedule_draft_id" => $draft->getID(),
+                                "author_value" => $draft->getCourseID(),
+                                "author_type" => "course_id",
+                                "created_date" => time(),
+                                "created_by" => $ENTRADA_USER->getActiveID()
+                            );
+                            $course_author = new Models_Schedule_Draft_Author($draft_course_author_data);
+                            if (!$course_author->insert()) {
+                                add_error($translate->_("Failed to add course draft author."));
+                            }
+                            if (!has_error()) {
                                 echo json_encode(array("status" => "success", "data" => $draft->getID()));
                             } else {
-                                echo json_encode(array("status" => "error", "data" => $translate->_("Failed to add draft author")));
+                                echo json_encode(array("status" => "error", "data" => $ERRORSTR));
                             }
                         } else {
                             echo json_encode(array("status" => "error", "data" => $translate->_("Failed to add draft")));
@@ -891,7 +906,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ROTATION_SCHEDULE"))) {
                         } else {
                             add_error($translate->_("No block ids provided."));
                         }
-                        
+
                         $PROCESSED["slot_type_ids"] = array();
                         if (isset($request["slot_type_ids"]) && is_array($request["slot_type_ids"])) {
                             foreach ($request["slot_type_ids"] as $slot_type_id) {
@@ -1117,13 +1132,14 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ROTATION_SCHEDULE"))) {
                     if (!$ERROR) {
                         $draft_author_data = array(
                             "cbl_schedule_draft_id" => $PROCESSED["draft_id"],
-                            "proxy_id" => $PROCESSED["proxy_id"]
+                            "author_value" => $PROCESSED["proxy_id"],
+                            "author_type" => "proxy_id"
                         );
 
                         $draft_authors = new Models_Schedule_Draft_Author($draft_author_data);
-                        $draft_authors_exits = Models_Schedule_Draft_Author::isAuthor($PROCESSED["draft_id"], $PROCESSED["proxy_id"]);
+                        $draft_authors_exists = Models_Schedule_Draft_Author::isAuthor($PROCESSED["draft_id"], $PROCESSED["proxy_id"]);
                         $user = User::fetchRowByID($PROCESSED["proxy_id"]);
-                        if ($draft_authors_exits) {
+                        if ($draft_authors_exists) {
                             if ($draft_authors->delete()) {
                                 add_success("Successfully updated ");
                                 echo json_encode(array("status" => "success", "data" => array("proxy_id" => $PROCESSED["proxy_id"], "draft_id" => $PROCESSED["draft_id"])));
@@ -1293,6 +1309,157 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ROTATION_SCHEDULE"))) {
                     $assessments_base->updateAssessmentPreferences("rotationschedule");
 
                     echo json_encode(array("status" => "success", "msg" => $translate->_("Successfully changed curriculum period setting"), "data" => $cperiod_id));
+                    break;
+                case "switch-rotation-mapped-objective":
+
+                    if (isset($request["schedule_id"]) && $tmp_input = clean_input($request["schedule_id"], "int")) {
+                        $PROCESSED["schedule_id"] = $tmp_input;
+                    } else {
+                        add_error($translate->_("No schedule provided."));
+                    }
+
+                    if (isset($request["course_id"]) && $tmp_input = clean_input($request["course_id"], "int")) {
+                        $PROCESSED["course_id"] = $tmp_input;
+                    } else {
+                        add_error($translate->_("No course provided."));
+                    }
+
+                    if (isset($request["objective_id"]) && $tmp_input = clean_input($request["objective_id"], "int")) {
+                        $PROCESSED["objective_id"] = $tmp_input;
+                    } else {
+                        add_error($translate->_("No objective provided."));
+                    }
+
+                    if (isset($request["likelihood_id"]) && $tmp_input = clean_input($request["likelihood_id"], "int")) {
+                        $PROCESSED["likelihood_id"] = $tmp_input;
+                    } else {
+                        $PROCESSED["likelihood_id"] = null;
+                    }
+
+                    if (!isset($request["priority"]) && $PROCESSED["likelihood_id"]) {
+                        add_error($translate->_("No priority provided."));
+                    } else if (isset($request["priority"]) && $tmp_input = clean_input($request["priority"], "trim")) {
+                        $PROCESSED["priority"] = ($tmp_input == "true") ? true : false;
+                    } else {
+                        $PROCESSED["priority"] = false;
+                    }
+
+                    if (has_error()) {
+                        echo json_encode(array("status" => "error", "data" => $ERROR));
+                        exit;
+                    }
+
+                    $remap = false;
+                    $rotation_course_objectives_model = new Models_Schedule_CourseObjective();
+
+                    // Remove previous mapping for this objective and rotation.
+                    $previous_mappings = $rotation_course_objectives_model->fetchAllByScheduleIDObjectiveIDCourseID($PROCESSED["schedule_id"], $PROCESSED["objective_id"], $PROCESSED["course_id"]);
+                    if ($previous_mappings) {
+                        foreach ($previous_mappings as $previous_mapping) {
+                            if (!$previous_mapping->fromArray(
+                                array(
+                                    "deleted_date"  => time(),
+                                    "deleted_by"    => $ENTRADA_USER->getActiveID()
+                                )
+                            )->update()) {
+                                add_error($translate->_("Unable to remove previous mapping."));
+                                application_log("error", "Unable to remove previous mappings for rotation objectives, DB said " . $db->ErrorMsg());
+                            }
+                        }
+                    }
+
+                    if (has_error()) {
+                        echo json_encode(array("status" => "error", "data" => $ERROR));
+                        exit;
+                    }
+
+                    // If provided with a new likelihood, save it as the new mapping, otherwise we are done.
+                    if ($PROCESSED["likelihood_id"]) {
+                        $remap = true;
+                        $rotation_course_objectives_model = new Models_Schedule_CourseObjective(array(
+                            "schedule_id"       => $PROCESSED["schedule_id"],
+                            "objective_id"      => $PROCESSED["objective_id"],
+                            "course_id"         => $PROCESSED["course_id"],
+                            "likelihood_id"     => $PROCESSED["likelihood_id"],
+                            "priority"          => $PROCESSED["priority"],
+                            "created_date"      => time(),
+                            "created_by"        => $ENTRADA_USER->getActiveID()
+                        ));
+                        if (!$rotation_course_objectives_model->insert()) {
+                            add_error($translate->_("Unable to add new mapping."));
+                            application_log("error", "Unable to add new mapping for rotation objective, DB said " . $db->ErrorMsg());
+                        }
+                    }
+
+                    if (has_error()) {
+                        echo json_encode(array("status" => "error", "data" => $ERRORSTR));
+                    } else {
+                        $msg = $remap ? $translate->_("Successfully mapped objective.") : $translate->_("Successfully un-mapped objective.");
+                        echo json_encode(array("status" => "success", "data" => array($msg)));
+                    }
+
+                    break;
+                case "switch-rotation-mapped-objective-priority":
+
+                    if (isset($request["schedule_id"]) && $tmp_input = clean_input($request["schedule_id"], "int")) {
+                        $PROCESSED["schedule_id"] = $tmp_input;
+                    } else {
+                        add_error($translate->_("No schedule provided."));
+                    }
+
+                    if (isset($request["course_id"]) && $tmp_input = clean_input($request["course_id"], "int")) {
+                        $PROCESSED["course_id"] = $tmp_input;
+                    } else {
+                        add_error($translate->_("No course provided."));
+                    }
+
+                    if (isset($request["objective_id"]) && $tmp_input = clean_input($request["objective_id"], "int")) {
+                        $PROCESSED["objective_id"] = $tmp_input;
+                    } else {
+                        add_error($translate->_("No objective provided."));
+                    }
+
+                    if (!isset($request["priority"])) {
+                        add_error($translate->_("No priority provided."));
+                    } else if ($tmp_input = clean_input($request["priority"], "trim")) {
+                        $PROCESSED["priority"] = $tmp_input == "true" ? true : false;
+                    } else {
+                        $PROCESSED["priority"] = false;
+                    }
+
+                    if (has_error()) {
+                        echo json_encode(array("status" => "error", "data" => $ERRORSTR));
+                        exit;
+                    }
+
+                    $rotation_course_objectives_model = new Models_Schedule_CourseObjective();
+
+                    // Fetch and update likelihoods for previous mapping for this objective and rotation.
+                    $previous_mappings = $rotation_course_objectives_model->fetchAllByScheduleIDObjectiveIDCourseID($PROCESSED["schedule_id"], $PROCESSED["objective_id"], $PROCESSED["course_id"]);
+
+                    if ($previous_mappings) {
+                        foreach ($previous_mappings as $previous_mapping) {
+                            if (!$previous_mapping->fromArray(
+                                array(
+                                    "priority"      => $PROCESSED["priority"],
+                                    "updated_date"  => time(),
+                                    "updated_by"    => $ENTRADA_USER->getActiveID()
+                                )
+                            )->update()) {
+                                add_error($translate->_("Unable to update priority of previous mapping."));
+                                application_log("error", "Unable to update priority of mapping for rotation objectives, DB said " . $db->ErrorMsg());
+                            }
+                        }
+                    } else {
+                        add_error($translate->_("You are attempting to add priority to an objective without a likelihood. Please set a likelihood and try again."));
+                    }
+
+                    if (has_error()) {
+                        echo json_encode(array("status" => "error", "data" => $ERRORSTR));
+                    } else {
+                        echo json_encode(array("status" => "success", "data" => array($translate->_("Successfully switched objective priority."))));
+                    }
+
                     break;
                 default:
                     echo json_encode(array("status" => "error", "data" => $DEFAULT_TEXT_LABELS["invalid_post_method"]));

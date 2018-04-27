@@ -136,7 +136,7 @@ if ($cperiod_ids_string && $courses_ids_string) {
                     </td>
                     <td><?php echo html_encode($result["course_code"]); ?></td>
                     <td><?php echo (isset($result["grade_value"]) && $result["show_learner"] ? $result["grade_value"] : $translate->_("N/A")); ?></td>
-                    <td><?php echo ($result["due_date"] == 0 ? '-' : date(DEFAULT_DATE_FORMAT, $result["due_date"])); ?></td>
+                    <td><?php echo ($result["due_date"] == 0 ? '-' : date(DEFAULT_DATETIME_FORMAT, $result["due_date"])); ?></td>
                 </tr>
                 <?php
             }

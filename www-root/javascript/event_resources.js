@@ -1,8 +1,13 @@
+/*
+ * @var Global function to load event resources onto the event content page.
+ */
+var event_resources_load;
+
 jQuery(document).ready(function ($) {
-    
-    
+
+
     get_event_resources();
-    
+
     var edit_mode = false;
     var next_step_control = $("#resource_next_step");
     var previous_step_control = $("#resource_previous_step");
@@ -11,6 +16,7 @@ jQuery(document).ready(function ($) {
     var resource_type_value_control = $("#event_resource_type_value");
     var resource_required_value_control = $("#event_resource_required_value");
     var resource_release_value_control = $("#event_resource_release_value");
+    var resource_draft_value_control = $("#event_resource_draft_value");
     var resource_timeframe_value_control = $("#event_resource_timeframe_value");
     var resource_release_start_control = $("#event_resource_release_start_value");
     var resource_release_start_time_control = $("#event_resource_release_start_time_value");
@@ -23,34 +29,34 @@ jQuery(document).ready(function ($) {
     var event_resource_drop_overlay = $("#event_resource_drop_overlay");
     var event_resource_id_value = $("#resource_id");
     var resource_attach_file = $("#event_resource_attach_file");
-    
+
     var dragdrop = false;
-    
+
     if (window.File && window.FileReader && window.FileList && window.Blob) {
         dragdrop = true;
     }
-    
+
     if (dragdrop) {
-        
+
         /**
-        *
-        * Event listeners for drag and drop file uploading
-        *
-        */
-       
-       var timer;
+         *
+         * Event listeners for drag and drop file uploading
+         *
+         */
 
-       $(".modal-body").on("dragover", function (event) {
-           clearTimeout(timer);
-           event.preventDefault();
-           event.stopPropagation();
-           if ($(".modal-body").hasClass("upload")) {
-               $("#event_resource_form").addClass("hide");
-               event_resource_drop_overlay.removeClass("hide");
-           }
-       });
+        var timer;
 
-       $(".modal-body").on("dragleave", function (event) {
+        $(".modal-body").on("dragover", function (event) {
+            clearTimeout(timer);
+            event.preventDefault();
+            event.stopPropagation();
+            if ($(".modal-body").hasClass("upload")) {
+                $("#event_resource_form").addClass("hide");
+                event_resource_drop_overlay.removeClass("hide");
+            }
+        });
+
+        $(".modal-body").on("dragleave", function (event) {
             event.preventDefault();
             event.stopPropagation();
             if ($(".modal-body").hasClass("upload")) {
@@ -60,12 +66,12 @@ jQuery(document).ready(function ($) {
                 }, 200);
             }
             return false;
-       });
+        });
 
-       $(".modal-body").on("drop", function (event) {
+        $(".modal-body").on("drop", function (event) {
             event.preventDefault();
             event.stopPropagation();
-           
+
             event.dataTransfer = event.originalEvent.dataTransfer;
             var file = event.dataTransfer.files[0];
 
@@ -77,9 +83,9 @@ jQuery(document).ready(function ($) {
             if ($(".modal-body").hasClass("upload")) {
                 upload_file(file);
             }
-       });
+        });
     }
-    
+
     /*
      *
      * The abilty to see who has viewed a resource has been removed for the moment as per request.
@@ -130,7 +136,7 @@ jQuery(document).ready(function ($) {
         $("#event-resource-view-modal").modal("show");
     });
 
-    
+
     $("#event-resource-step").on("change", "#event_resource_upload", function (event) {
         if (dragdrop) {
             event.target = event.originalEvent.target;
@@ -140,44 +146,68 @@ jQuery(document).ready(function ($) {
             $("#event_resource_form").submit();
         }
     });
-    
+
     /**
-     * 
+     *
      *  Event listeners for common wizard controls
-     * 
+     *
      */
-    
+
+    function activateTab(tab){
+
+        console.log(tab);
+        // Both inputs for the module url tab will have the same name initially, but they should change as
+        // the tabs are selected
+        if(tab == "set_existing_resource_url"){
+            // If the input is select, lets change the name and id from the text input
+            $(".event_resource_module_url_text").attr({ name: "event_resource_module_url_disabled", id: "event_resource_module_url_disabled"});
+            $(".event_resource_module_url_select").attr({ name: "event_resource_module_url", id: "event_resource_module_url"});
+        }else{
+            // If the input is text, lets change the name and id from the select input
+            $(".event_resource_module_url_select").attr({ name: "event_resource_module_url_disabled", id: "event_resource_module_url_disabled"});
+            $(".event_resource_module_url_text").attr({ name: "event_resource_module_url", id: "event_resource_module_url"});
+        }
+    };
+
+    $("#event-resource-step").on("click", "#set_existing_resource_url_tab", function(){
+        activateTab("set_existing_resource_url");
+    });
+
+    $("#event-resource-step").on("click", "#set_new_resource_url_tab", function(){
+        activateTab("set_new_resource_url");
+    });
+
     $("#event-resource-step").on("change", "input[name=event_resource_type]", function () {
         resource_type_value_control.val($(this).val());
         if ($(".resource_type_control").length) {
             $(".resource_type_control").remove();
         }
     });
-    
+
     $("#event-resource-step").on("change", "input[name=event_resource_required]", function () {
         $("#event_resource_required_value").val($(this).val());
     });
-    
+
     $("#event-resource-step").on("change", "input[name=event_resource_timeframe]", function () {
         resource_timeframe_value_control.val($(this).val());
     });
-    
+
     $("#event-resource-step").on("change", "input[name=event_resource_release_start]", function () {
         resource_release_start_control.val($(this).val());
     });
-    
+
     $("#event-resource-step").on("change", "input[name=event_resource_release_start_time]", function () {
         resource_release_start_time_control.val($(this).val());
     });
-    
+
     $("#event-resource-step").on("change", "input[name=event_resource_release_finish]", function () {
         resource_release_finish_control.val($(this).val());
     });
-    
+
     $("#event-resource-step").on("change", "input[name=event_resource_release_finish_time]", function () {
         resource_release_finish_time_control.val($(this).val());
     });
-    
+
     $("#event-resource-step").on("change", "input[name=resource_release]", function () {
         resource_release_value_control.val($(this).val());
         if ($(this).val() == "yes") {
@@ -186,7 +216,12 @@ jQuery(document).ready(function ($) {
             $("#resource_release_container").addClass("hide");
         }
     });
-    
+
+    $("#event-resource-step").on("change", "input[name=resource_draft]", function () {
+        resource_draft_value_control.val($(this).val());
+    });
+
+
     $("#event-resource-step").on("click", ".datepicker", function () {
         $(this).datepicker({
             dateFormat: "yy-mm-dd",
@@ -198,10 +233,10 @@ jQuery(document).ready(function ($) {
                 }
             }
         });
-        
+
         $(this).datepicker("show");
     });
-    
+
     $("#event-resource-step").on("click", ".timepicker", function () {
         $(this).timepicker({
             onSelect: function (time) {
@@ -212,10 +247,10 @@ jQuery(document).ready(function ($) {
                 }
             }
         });
-        
+
         $(this).timepicker("show");
     });
-    
+
     $("#event-resource-step").on("click", ".r_events", function () {
         var r_e_ids = $(".r_events:checked");
         resource_recurring_event_ids = [];
@@ -227,10 +262,10 @@ jQuery(document).ready(function ($) {
 
     $("#event-resources-container").on("click", ".resource-link", function () {
         edit_mode = true;
-        
+
         var title_modal = "Edit Event Resource";
         $("#event_resource_modal_title").html(title_modal);
-        
+
         var event_resource_id = $(this).parent().attr("data-id");
         var data_string;
         if (resource_recurring_bool == 1) {
@@ -259,19 +294,26 @@ jQuery(document).ready(function ($) {
                     resource_release_finish_time_control.val(jsonResponse.data.finish_time);
                     event_resource_id_value.val(jsonResponse.data.resource_id);
                     $("#event_resource_entity_id").val(jsonResponse.data.entity_id);
-                    
+
                     if (jsonResponse.data.release_date != "" || jsonResponse.data.release_until != "") {
                         resource_release_value_control.val("yes");
                     } else {
                         resource_release_value_control.val("no");
                     }
-                    
+
+                    if (jsonResponse.data.draft) {
+                        resource_draft_value_control.val(jsonResponse.data.draft);
+                    } else {
+                        resource_draft_value_control.val(0);
+                    }
+
+
                     if (jsonResponse.data.required == "1") {
                         resource_required_value_control.val("yes");
                     } else {
                         resource_required_value_control.val("no");
                     }
-                    
+
                     switch (parseInt(jsonResponse.data.resource_type)) {
                         case 1 :
                         case 5 :
@@ -282,29 +324,29 @@ jQuery(document).ready(function ($) {
                             $("#event_resource_file_description_value").val(jsonResponse.data.description);
                             $(title_span).html(jsonResponse.data.title);
                             $("#event_resource_modal_title").append("<br/>").append(title_span);
-                        break;
+                            break;
                         case 2 :
                             $("#event_resource_bring_description_value").val(jsonResponse.data.description);
-                        break;
+                            break;
                         case 3 :
-                            
+
                             var proxyify = "";
                             if (jsonResponse.data.proxyify == "1") {
                                 proxyify = "yes";
                             } else {
                                 proxyify = "no";
                             }
-                            
+
                             $("#event_resource_link_proxy_value").val(proxyify);
                             $("#event_resource_link_url_value").val(jsonResponse.data.link);
                             $("#event_resource_link_title_value").val(jsonResponse.data.title);
                             $("#event_resource_link_description_value").val(jsonResponse.data.description);
                             $(title_span).html(jsonResponse.data.title);
                             $("#event_resource_modal_title").append("<br/>").append(title_span);
-                        break;
+                            break;
                         case 4 :
                             $("#event_resource_homework_description_value").val(jsonResponse.data.description);
-                        break;
+                            break;
                         case 7 :
                             $("#event_resource_module_proxy_value").val((jsonResponse.data.proxyify == "1" ? "yes" : "no"));
                             $("#event_resource_module_url_value").val(jsonResponse.data.link);
@@ -312,11 +354,11 @@ jQuery(document).ready(function ($) {
                             $("#event_resource_module_description_value").val(jsonResponse.data.description);
                             $(title_span).html(jsonResponse.data.title);
                             $("#event_resource_modal_title").append("<br/>").append(title_span);
-                        break;
+                            break;
                         case 8 :
                             var quiz_type = parseInt(jsonResponse.data.quiztype_id);
                             var quiz_results = "";
-                            
+
                             if (quiz_type == 1) {
                                 quiz_results = "delayed";
                             } else if (quiz_type == 2) {
@@ -324,7 +366,7 @@ jQuery(document).ready(function ($) {
                             } else {
                                 quiz_results = "hide";
                             }
-                            
+
                             $("#event_resource_quiz_id_value").val(jsonResponse.data.quiz_id);
                             $("#event_resource_quiz_title_value").val(jsonResponse.data.title);
                             $("#event_resource_quiz_instructions_value").val(jsonResponse.data.description);
@@ -335,11 +377,11 @@ jQuery(document).ready(function ($) {
                             $("#event_resource_quiz_results_value").val(quiz_results);
                             $(title_span).html(jsonResponse.data.title);
                             $("#event_resource_modal_title").append("<br/>").append(title_span);
-                            
-                        break;
-                        case 9 : 
+
+                            break;
+                        case 9 :
                             $("#event_resource_textbook_description_value").val(jsonResponse.data.description);
-                        break;
+                            break;
                         case 10 :
                             $("#event_resource_lti_title_value").val(jsonResponse.data.title);
                             $("#event_resource_lti_description_value").val(jsonResponse.data.description);
@@ -350,13 +392,16 @@ jQuery(document).ready(function ($) {
                             $(title_span).html(jsonResponse.data.title);
                             $("#event_resource_modal_title").append("<br/>").append(title_span);
                         break;
+                        case 13 :
+                            $("#event_resource_module_form_id").val(jsonResponse.data.form_id);
+                            break;
                     }
                     show_step();
                 } else {
                     display_error(jsonResponse.data, "#event-resource-msgs", "append");
                 }
             },
-            beforeSend: function () {  
+            beforeSend: function () {
                 $("#event_resource_loading_msg").html("Loading Event Resource...");
                 $("#event_resource_form").addClass("hide");
                 $("#event_resource_loading").removeClass("hide");
@@ -367,30 +412,30 @@ jQuery(document).ready(function ($) {
                 $("#event_resource_form").removeClass("hide");
             }
         });
-        
+
     });
-    
+
     $("#event-resource-toggle").on("click", function (e) {
         $("#event-resources-delete-confirmation").empty();
         show_step();
         $("#event-resource-modal").modal("show");
     });
-    
+
     $("#event-resource-previous").on("click", function () {
         $("#event-resource-msgs").empty();
         previous_step();
     });
-    
+
     $("#event-resource-modal").on("hide", function () {
         $("#event_resource_modal_title").html("Add Event Resource");
         $("#event_resource_type_1").prop("checked", true);
         $("#event_resource_required_no").prop("checked", true);
         $("#event_resource_timeframe_pre").prop("checked", true);
-        
+
         if (resource_step_control.val() == "3") {
             $(".datepicker").datepicker("destroy");
         }
-        
+
         resource_step_control.val("1");
         resource_type_value_control.val("11");
         resource_required_value_control.val("no");
@@ -398,36 +443,65 @@ jQuery(document).ready(function ($) {
         resource_release_value_control.val("no");
         resource_release_start_control.val("");
         resource_release_finish_control.val("");
-        
+
         resource_release_finish_time_control.val("");
         event_resource_id_value.val("");
         resource_attach_file.val("no");
         $("#event_resource_entity_id").val("");
-        
+
         if ($(".resource_type_control").length) {
             $(".resource_type_control").remove();
         }
-        
+
         if ($(".modal-body").hasClass("upload")) {
             $(".modal-body").removeClass("upload");
         }
-        
+
         $("#event-resource-msgs").empty();
         $("#event_resource_loading").addClass("hide");
-        
+
         if (!$("#copyright").hasClass("hide")) {
             $("#copyright").addClass("hide");
         }
-        
+
         if (edit_mode) {
             edit_mode = false;
         }
     });
-    
+
+    $("body").on("change", "#choose-exam-btn", function(){
+        $("#event-resource-next").prop("disabled", false);
+    });
+
+    function show_exam_step() {
+        var step = parseInt(resource_step_control.val());
+        resource_step_container.empty();
+
+        if (step == 1) {
+            $("#event-resource-previous").removeClass("hide");
+            $("#event-resource-next").prop("disabled", true);
+            $("#event-resource-step-exam").show();
+        } else if (step == 2) {
+            if ($('.exam-id').length > 0) {
+                var exam_id = $('.exam-id').val();
+                var event_id = $("#event_id").val();
+                var url = ENTRADA_URL + "/admin/exams/exams?section=form-post&id=" + exam_id + "&target_type=event&target_id=" + event_id;
+                window.location = url;
+            }
+        }
+
+        // Advance step counter.
+        resource_step_control.val(step + 1);
+    }
+
     $("#event-resource-next").on("click", function () {
         var step = parseInt(resource_step_control.val());
         var selected_resource_type = resource_type_value_control.val();
         $("#event-resource-msgs").empty();
+
+        if (selected_resource_type == 12) {
+            show_exam_step();
+        } else {
             if (step == 6) {
                 edit_mode = false;
                 resource_step_control.val("1");
@@ -440,7 +514,7 @@ jQuery(document).ready(function ($) {
                 resource_release_value_control.val("no");
                 resource_release_start_control.val("");
                 resource_release_finish_control.val("");
-                
+
                 event_resource_id_value.val("");
                 resource_attach_file.val("no");
 
@@ -451,7 +525,7 @@ jQuery(document).ready(function ($) {
                 if ($(".modal-body").hasClass("upload")) {
                     $(".modal-body").removeClass("upload");
                 }
-                
+
                 show_step();
             } else {
                 var data_string;
@@ -469,20 +543,11 @@ jQuery(document).ready(function ($) {
                         if ($("#event-resource-next").is(":disabled")) {
                             $("#event-resource-next").removeAttr("disabled");
                         }
-                        
+
                         if ($("#event-resource-previous").is(":disabled")) {
                             $("#event-resource-previous").removeAttr("disabled");
                         }
-                        
-                        if (jsonResponse.data.next_step == "2") {
-                            if (selected_resource_type == "12") {
-                                var event_id = $("#event_id").val();
-                                var url = ENTRADA_URL + "/admin/exams/exams?event_id=" + event_id;
 
-                                window.location = url;
-                            }
-                        }
-                        
                         if (jsonResponse.data.next_step == "3") {
                             if (!edit_mode) {
                                 resource_release_start_control.val(jsonResponse.data.default_dates.release_start);
@@ -491,7 +556,7 @@ jQuery(document).ready(function ($) {
                                 resource_release_finish_time_control.val(jsonResponse.data.default_dates.release_until_time);
                             }
                         }
-                        
+
                         if (jsonResponse.status === "success") {
                             next_step_control.val(jsonResponse.data.next_step);
                             resource_substep_control.val(jsonResponse.data.sub_step);
@@ -517,169 +582,175 @@ jQuery(document).ready(function ($) {
                     }
                 });
             }
+        }
+
     });
-    
+
     /**
      *
      * Event listeners for file controls
      *
      */
-    
+
     $("#event-resource-step").on("change", "input[name=event_resource_file_view_option]", function () {
         $("#event_resource_file_view_value").val($(this).val());
     });
-    
+
     $("#event-resource-step").on("keyup", "input[name=event_resource_file_title]", function () {
         $("#event_resource_file_title_value").val($(this).val());
     });
-    
+
     $("#event-resource-step").on("keyup", "textarea[name=event_resource_file_description]", function () {
         $("#event_resource_file_description_value").val($(this).val());
     });
-    
+
     /**
      *
      * Event listeners for link controls
      *
      */
-    
+
     $("#event-resource-step").on("change", "input[name=event_resource_link_proxy]", function () {
         $("#event_resource_link_proxy_value").val($(this).val());
     });
-    
+
     $("#event-resource-step").on("keyup", "input[name=event_resource_link_url]", function () {
         $("#event_resource_link_url_value").val($(this).val());
     });
-    
+
     $("#event-resource-step").on("keyup", "input[name=event_resource_link_title]", function () {
         $("#event_resource_link_title_value").val($(this).val());
     });
-    
+
     $("#event-resource-step").on("keyup", "textarea[name=event_resource_link_description]", function () {
         $("#event_resource_link_description_value").val($(this).val());
     });
-    
+
     /**
      *
      * Event listeners for module controls
      *
      */
-    
+
     $("#event-resource-step").on("change", "input[name=event_resource_module_proxy]", function () {
         $("#event_resource_module_proxy_value").val($(this).val());
     });
-    
+
     $("#event-resource-step").on("keyup", "input[name=event_resource_module_url]", function () {
         $("#event_resource_module_url_value").val($(this).val());
     });
-    
+
+    $("#event-resource-step").on("change", "select#event_resource_module_url", function () {
+        $("#event_resource_module_url_value").val($(this).val());
+    });
+
     $("#event-resource-step").on("keyup", "input[name=event_resource_module_title]", function () {
         $("#event_resource_module_title_value").val($(this).val());
     });
-    
+
     $("#event-resource-step").on("keyup", "textarea[name=event_resource_module_description]", function () {
         $("#event_resource_module_description_value").val($(this).val());
     });
-    
+
     /**
      *
      * Event listeners for lti controls
      *
      */
-    
+
     $("#event-resource-step").on("keyup", "input[name=event_resource_lti_title]", function () {
         $("#event_resource_lti_title_value").val($(this).val());
     });
-    
+
     $("#event-resource-step").on("keyup", "input[name=event_resource_lti_url]", function () {
         $("#event_resource_lti_url_value").val($(this).val());
     });
-    
+
     $("#event-resource-step").on("keyup", "input[name=event_resource_lti_key]", function () {
         $("#event_resource_lti_key_value").val($(this).val());
     });
-    
+
     $("#event-resource-step").on("keyup", "input[name=event_resource_lti_secret]", function () {
         $("#event_resource_lti_secret_value").val($(this).val());
     });
-    
+
     $("#event-resource-step").on("keyup", "textarea[name=event_resource_lti_description]", function () {
         $("#event_resource_lti_description_value").val($(this).val());
     });
-    
+
     $("#event-resource-step").on("keyup", "textarea[name=event_resource_lti_parameters]", function () {
         $("#event_resource_lti_parameters_value").val($(this).val());
     });
-    
+
     /**
      *
      * Event listeners for homework controls
      *
      */
-    
+
     $("#event-resource-step").on("keyup", "textarea[name=event_resource_homework_description]", function () {
         $("#event_resource_homework_description_value").val($(this).val());
     });
-    
+
     /**
      *
      * Event listeners for bring to class controls
      *
      */
-    
+
     $("#event-resource-step").on("keyup", "textarea[name=event_resource_bring_description]", function () {
         $("#event_resource_bring_description_value").val($(this).val());
     });
-    
+
     /**
      *
      * Event listeners for textbook reading controls
      *
      */
-    
+
     $("#event-resource-step").on("keyup", "textarea[name=event_resource_textbook_description]", function () {
         $("#event_resource_textbook_description_value").val($(this).val());
     });
-    
+
     /**
      *
      * Event listeners for quiz controls
      *
      */
-    
+
     $("#event-resource-step").on("change", "input[name=event_resource_quiz_id]", function () {
         $("#event_resource_quiz_id_value").val($(this).val());
         $("#event_resource_quiz_title_value").val($(this).attr("data-title"));
     });
-    
+
     $("#event-resource-step").on("keyup", "input[name=event_resource_quiz_title]", function () {
         $("#event_resource_quiz_title_value").val($(this).val());
     });
-    
+
     $("#event-resource-step").on("keyup", "textarea[name=event_resource_quiz_instructions]", function () {
         $("#event_resource_quiz_instructions_value").val($(this).val());
     });
-    
+
     $("#event-resource-step").on("keyup", "input[name=event_resource_quiz_time]", function () {
         $("#event_resource_quiz_time_value").val($(this).val());
     });
-    
+
     $("#event-resource-step").on("keyup", "input[name=event_resource_quiz_attempts]", function () {
         $("#event_resource_quiz_attempts_value").val($(this).val());
     });
-    
+
     $("#event-resource-step").on("change", "input[name=event_resource_quiz_attendance]", function () {
         $("#event_resource_quiz_attendance_value").val($(this).val());
     });
-    
+
     $("#event-resource-step").on("change", "input[name=event_resource_quiz_shuffled]", function () {
         $("#event_resource_quiz_shuffled_value").val($(this).val());
     });
-    
+
     $("#event-resource-step").on("change", "input[name=event_resource_quiz_results]", function () {
         $("#event_resource_quiz_results_value").val($(this).val());
     });
-    
+
     /**
      *
      * Event listener for exam stats
@@ -699,17 +770,17 @@ jQuery(document).ready(function ($) {
      * Event listener for attach new file controls
      *
      */
-    
+
     $("#event-resource-step").on("change", "input[name=event_resource_attach_file]", function () {
         $("#event_resource_attach_file").val($(this).val());
     });
-    
+
     /**
      *
      * Event listener for the delete modal
      *
      */
-    
+
     $("#event-resources-container").on("click", ".delete-resource", function (e) {
         e.preventDefault();
 
@@ -740,11 +811,9 @@ jQuery(document).ready(function ($) {
                         if (recurring_events && html) {
                             msg += "<br/>You can also delete it from the following recurring events in this series.";
                             $("#delete-event-resource-modal .modal-body").append(html);
-                            $("#delete-event-resource-modal").css({"max-height": 425});
                             display_notice([msg], "#delete-event-resource-msgs", "append");
                         } else {
                             display_notice([msg], "#delete-event-resource-msgs", "append");
-                            $("#delete-event-resource-modal").css({"max-height": 230});
                         }
                     } else {
                         display_error(jsonResponse.data, "#event-resource-msgs", "append");
@@ -758,39 +827,39 @@ jQuery(document).ready(function ($) {
                 }
             });
         } else {
-        display_notice([msg], "#delete-event-resource-msgs", "append");
-        
-        var delete_table = document.createElement("table");
-        var delete_table_thead = document.createElement("thead");
-        var delete_table_tbody = document.createElement("tbody");
-        var delete_headings_tr = document.createElement("tr");
-        var delete_row_tr = document.createElement("tr");
-        var delete_title_th = document.createElement("th");
-        var delete_description_th = document.createElement("th");
-        var delete_title_td = document.createElement("td");
-        var delete_description_td = document.createElement("td");
-        
-        $(delete_title_th).html("Resource Title").width("30%");
-        $(delete_description_th).html("Resource Description").width("70%");
-        $(delete_title_td).html($(this).siblings(".resource-link").html());
-        $(delete_description_td).html($(this).siblings(".resource-description").html() );
-        $(delete_headings_tr).append(delete_title_th).append(delete_description_th);
-        $(delete_row_tr).append(delete_title_td).append(delete_description_td);
-        $(delete_table_thead).append(delete_headings_tr);
-        $(delete_table_tbody).append(delete_row_tr);
-        $(delete_table).append(delete_table_thead).append(delete_table_tbody).addClass("table table-striped table-bordered");
-        $("#delete-event-resource-modal .modal-body").append(delete_table);
+            display_notice([msg], "#delete-event-resource-msgs", "append");
+
+            var delete_table = document.createElement("table");
+            var delete_table_thead = document.createElement("thead");
+            var delete_table_tbody = document.createElement("tbody");
+            var delete_headings_tr = document.createElement("tr");
+            var delete_row_tr = document.createElement("tr");
+            var delete_title_th = document.createElement("th");
+            var delete_description_th = document.createElement("th");
+            var delete_title_td = document.createElement("td");
+            var delete_description_td = document.createElement("td");
+
+            $(delete_title_th).html("Resource Title").width("30%");
+            $(delete_description_th).html("Resource Description").width("70%");
+            $(delete_title_td).html($(this).siblings(".resource-link").html());
+            $(delete_description_td).html($(this).siblings(".resource-description").html() );
+            $(delete_headings_tr).append(delete_title_th).append(delete_description_th);
+            $(delete_row_tr).append(delete_title_td).append(delete_description_td);
+            $(delete_table_thead).append(delete_headings_tr);
+            $(delete_table_tbody).append(delete_row_tr);
+            $(delete_table).append(delete_table_thead).append(delete_table_tbody).addClass("table table-striped table-bordered");
+            $("#delete-event-resource-modal .modal-body").append(delete_table);
         }
-        
+
         $("#delete-event-resource-modal").modal("show");
         $("#delete-event-resource").attr({"data-id": data_id});
     });
-    
+
     $("#delete-event-resource-modal").on("hide", function () {
         $("#delete-event-resource-msgs").empty();
         $("#delete-event-resource-modal .modal-body table").remove();
     });
-    
+
     $("#delete-event-resource").on("click", function () {
         var entity_id = $(this).attr("data-id");
         var data = $("#delete-event-resource-modal input.entity:checked");
@@ -816,23 +885,23 @@ jQuery(document).ready(function ($) {
                 }
             },
             beforeSend: function () {
-                
+
             },
             complete: function () {
-                
+
             }
         });
     });
-    
+
     function next_step () {
         resource_step_control.val(next_step_control.val());
         show_step();
     }
-    
+
     function previous_step () {
         var step = parseInt(resource_step_control.val());
         var substep = parseInt(resource_substep_control.val());
-        
+
         if (substep == 1) {
             if (step == 5) {
                 if (resource_recurring_bool == 1) {
@@ -846,45 +915,49 @@ jQuery(document).ready(function ($) {
         } else {
             resource_substep_control.val(substep -1);
         }
-        
+
         if ($(".modal-body").hasClass("upload")) {
             $(".modal-body").removeClass("upload");
         }
-        
+
+        if (! $("#event-resource-step-exam").is(":hidden")) {
+            $("#event-resource-step-exam").hide();
+        }
+
         show_step();
     }
-    
+
     function show_step () {
         $("#event-resource-next").html("Next Step");
-        
+
         if ($("#event-resource-next").is(":disabled")) {
             $("#event-resource-next").removeAttr("disabled");
         }
-        
+
         var step = parseInt(resource_step_control.val());
         var selected_resource_type = parseInt(resource_type_value_control.val());
         var sub_step = parseInt(resource_substep_control.val());
-        
+
         if (step > 1) {
             $("#event-resource-previous").removeClass("hide");
         } else {
             $("#event-resource-previous").addClass("hide");
         }
-        
+
         if (step == 2 && $("#event_resource_entity_id").val()) {
             $("#event-resource-previous").addClass("hide");
         }
-       
+
         resource_step_container.empty();
         switch (step) {
             case 1 :
-                
+
                 /**
                  *
                  * Builds resource type options
                  *
                  */
-                
+
                 $.ajax({
                     url: SITE_URL + "/admin/events?section=api-resource-wizard",
                     data: "method=event_resource_types",
@@ -895,24 +968,24 @@ jQuery(document).ready(function ($) {
                         if (jsonResponse.status === "success") {
                             var step_heading = document.createElement("h3");
                             var step_control_group = document.createElement("div");
-                            
+
                             $(step_heading).html("What type of resource would you like to add?");
-                            
+
                             $.each(jsonResponse.data, function (key, event_resource) {
                                 var resource_label = document.createElement("label");
                                 var resource_radio = document.createElement("input");
                                 var resource_p = document.createElement("span");
-                                
+
                                 $(resource_label).attr({"for": "event_resource_type_" + event_resource.event_resource_type_id}).addClass("radio");
                                 $(resource_radio).attr({type: "radio", id: "event_resource_type_" + event_resource.event_resource_type_id, value: event_resource.event_resource_type_id, name: "event_resource_type"});
-                                $(resource_p).html(event_resource.description).addClass("muted resource-type-description");
+                                $(resource_p).html(" - " + event_resource.description).addClass("muted resource-type-description");
                                 $(resource_label).append(resource_radio).append(event_resource.resource_type).append(resource_p);
-                                
+
                                 $(step_control_group).append(resource_label).addClass("control-group");
                             });
-                            
+
                             resource_step_container.append(step_heading).append(step_control_group);
-                            
+
                             $("#event_resource_type_" + selected_resource_type).prop("checked", true);
                         } else {
                             display_error(jsonResponse.data, "#event-resource-msgs", "append");
@@ -929,57 +1002,57 @@ jQuery(document).ready(function ($) {
                         if ($("#event-resource-next").is(":disabled")) {
                             $("#event-resource-next").removeAttr("disabled");
                         }
-                        
+
                         if ($("#event-resource-previous").is(":disabled")) {
                             $("#event-resource-previous").removeAttr("disabled");
                         }
-                        
+
                         $("#event_resource_loading").addClass("hide");
                         $("#event_resource_form").removeClass("hide");
                         $("#event_resource_loading_msg").html("");
                     }
                 });
-                
-            break;
+
+                break;
             case 2 :
-                
+
                 /**
                  *
                  * Builds required options
                  *
                  */
-                
+
                 var selected_resource_required = resource_required_value_control.val();
-                
+
                 var resource_required_heading = document.createElement("h3");
                 var resource_required_control_group = document.createElement("div");
                 var resource_required_label = document.createElement("label");
                 var resource_required_radio = document.createElement("input");
                 var resource_optional_label = document.createElement("label");
                 var resource_optional_radio = document.createElement("input");
-                
+
                 $(resource_required_heading).html("Should viewing this resource be considered optional or required?");
-                
+
                 $(resource_optional_label).attr({"for": "event-resource-required-no"}).addClass("radio");
                 $(resource_optional_radio).attr({type: "radio", id: "event-resource-required-no", value: "no", name: "event_resource_required"});
                 $(resource_optional_label).append(resource_optional_radio).append("Optional");
-                
+
                 $(resource_required_label).attr({"for": "event-resource-required-yes"}).addClass("radio");
                 $(resource_required_radio).attr({type: "radio", id: "event-resource-required-yes", value: "yes", name: "event_resource_required"});
                 $(resource_required_label).append(resource_required_radio).append("Required");
-                
+
                 $(resource_required_control_group).append(resource_optional_label).append(resource_required_label).addClass("control-group");
                 $("#event-resource-step").append(resource_required_heading).append(resource_required_control_group);
                 $("#event-resource-required-" + selected_resource_required).prop("checked", true);
-                
+
                 /**
                  *
                  * Builds timeframe options
                  *
                  */
-                
+
                 var selected_resource_timefarme = resource_timeframe_value_control.val();
-               
+
                 var resource_heading_timeframe = document.createElement("h3");
                 var resource_timeframe_control_group = document.createElement("div");
                 var resource_timeframe_pre_label = document.createElement("label");
@@ -990,78 +1063,78 @@ jQuery(document).ready(function ($) {
                 var resource_timeframe_post_radio = document.createElement("input");
                 var resource_timeframe_none_label = document.createElement("label");
                 var resource_timeframe_none_radio = document.createElement("input");
-                
+
                 $(resource_heading_timeframe).html("When should this resource be used by the learner?");
-                
+
                 $(resource_timeframe_pre_label).attr({"for": "event-resource-timeframe-pre"}).addClass("radio");
                 $(resource_timeframe_pre_radio).attr({type: "radio", id: "event-resource-timeframe-pre", value: "pre", name: "event_resource_timeframe"});
                 $(resource_timeframe_pre_label).append(resource_timeframe_pre_radio).append("Before Class");
-                
+
                 $(resource_timeframe_during_label).attr({"for": "event-resource-timeframe-during"}).addClass("radio");
                 $(resource_timeframe_during_radio).attr({type: "radio", id: "event-resource-timeframe-during", value: "during", name: "event_resource_timeframe"});
                 $(resource_timeframe_during_label).append(resource_timeframe_during_radio).append("During Class");
-                
+
                 $(resource_timeframe_post_label).attr({"for": "event-resource-timeframe-post"}).addClass("radio");
                 $(resource_timeframe_post_radio).attr({type: "radio", id: "event-resource-timeframe-post", value: "post", name: "event_resource_timeframe"});
                 $(resource_timeframe_post_label).append(resource_timeframe_post_radio).append("After Class");
-                
+
                 $(resource_timeframe_none_label).attr({"for": "event-resource-timeframe-none"}).addClass("radio");
                 $(resource_timeframe_none_radio).attr({type: "radio", id: "event-resource-timeframe-none", value: "none", name: "event_resource_timeframe"});
                 $(resource_timeframe_none_label).append(resource_timeframe_none_radio).append("No Timeframe");
-                
+
                 $(resource_timeframe_control_group).append(resource_timeframe_pre_label).append(resource_timeframe_during_label).append(resource_timeframe_post_label).append(resource_timeframe_none_label).addClass("control-group");
                 $(resource_timeframe_control_group).append(resource_timeframe_pre_label).append(resource_timeframe_during_label).append(resource_timeframe_post_label).append(resource_timeframe_none_label).addClass("control-group");
-                
+
                 resource_step_container.append(resource_heading_timeframe).append(resource_timeframe_control_group);
                 $("#event-resource-required-" + selected_resource_required).prop("checked", true);
                 $("#event-resource-timeframe-" + selected_resource_timefarme).prop("checked", true);
-            break;
+                break;
             case 3 :
-                
+
                 /**
                  *
                  * Builds time release options
                  *
                  */
-                
+
                 var selected_resource_release_option = resource_release_value_control.val();
                 var start_date_value = resource_release_start_control.val();
                 var finish_date_value = resource_release_finish_control.val();
                 var start_time_value = resource_release_start_time_control.val();
                 var finish_time_value = resource_release_finish_time_control.val();
-                
+
                 var resource_release_heading = document.createElement("h3");
                 var resource_release_control_group = document.createElement("div");
                 var resource_release_no_label = document.createElement("label");
                 var resource_release_no_radio = document.createElement("input");
                 var resource_release_yes_label = document.createElement("label");
                 var resource_release_yes_radio = document.createElement("input");
-                
+
                 $(resource_release_heading).html("Would you like to add timed release dates to this resource?");
-                
+
                 $(resource_release_no_label).attr({"for": "resource_release_no"}).addClass("radio");
                 $(resource_release_no_radio).attr({type: "radio", id: "resource_release_no", value: "no", name: "resource_release"});
                 $(resource_release_no_label).append(resource_release_no_radio).append("No, this resource is accessible any time");
-                
+
                 $(resource_release_yes_label).attr({"for": "resource_release_yes"}).addClass("radio");
                 $(resource_release_yes_radio).attr({type: "radio", id: "resource_release_yes", value: "yes", name: "resource_release"});
                 $(resource_release_yes_label).append(resource_release_yes_radio).append("Yes, this resource should only be available for a certain time period");
-                
+
                 $(resource_release_control_group).append(resource_release_no_label).append(resource_release_yes_label).addClass("control-group");
-                
+
                 resource_step_container.append(resource_release_heading).append(resource_release_control_group);
-                
+
                 $("#resource_release_"  + selected_resource_release_option).prop("checked", true);
-                
+
                 var release_options_container = document.createElement("div");
                 var resource_release_options_heading = document.createElement("h3");
-                
+
                 /**
                  *
                  *  Builds release start controls
                  *
                  */
-                
+
                 var resource_release_start_control_group = document.createElement("div");
                 var resource_release_start_controls = document.createElement("div");
                 var resource_release_start_date_append = document.createElement("div");
@@ -1073,13 +1146,13 @@ jQuery(document).ready(function ($) {
                 var resource_release_start_label = document.createElement("label");
                 var resource_release_start_date_input = document.createElement("input");
                 var resource_release_start_time_input = document.createElement("input");
-                
+
                 $(resource_release_start_label).attr({"for": "event_resource_release_start"}).html("Release Start: ").addClass("control-label");
                 $(resource_release_start_date_input).attr({type: "text", id: "event_resource_release_start", name: "event_resource_release_start"}).addClass("input-small datepicker start-date").val(start_date_value);
                 $(resource_release_start_date_append).addClass("input-append space-right");
                 $(resource_release_start_date_span).addClass("add-on pointer");
                 $(resource_release_start_date_icon).addClass("icon-calendar");
-                
+
                 $(resource_release_start_time_input).attr({type: "text", id: "event_resource_release_start_time", name: "event_resource_release_start_time"}).addClass("input-mini timepicker start-time").val(start_time_value);
                 $(resource_release_start_time_append).addClass("input-append");
                 $(resource_release_start_time_span).addClass("add-on pointer");
@@ -1087,18 +1160,18 @@ jQuery(document).ready(function ($) {
                 $(resource_release_start_date_span).append(resource_release_start_date_icon);
                 $(resource_release_start_date_append).append(resource_release_start_date_input).append(resource_release_start_date_span);
                 $(resource_release_start_controls).append(resource_release_start_date_append).addClass("controls");
-                
+
                 $(resource_release_start_time_span).append(resource_release_start_time_icon);
                 $(resource_release_start_time_append).append(resource_release_start_time_input).append(resource_release_start_time_span);
                 $(resource_release_start_controls).append(resource_release_start_time_append);
                 $(resource_release_start_control_group).append(resource_release_start_label).append(resource_release_start_controls).addClass("control-group");
-                
+
                 /**
                  *
                  *  Builds release finish controls
                  *
                  */
-                
+
                 var resource_release_finish_control_group = document.createElement("div");
                 var resource_release_finish_controls = document.createElement("div");
                 var resource_release_finish_date_append = document.createElement("div");
@@ -1110,13 +1183,13 @@ jQuery(document).ready(function ($) {
                 var resource_release_finish_label = document.createElement("label");
                 var resource_release_finish_date_input = document.createElement("input");
                 var resource_release_finish_time_input = document.createElement("input");
-                
+
                 $(resource_release_finish_label).attr({"for": "event_resource_release_finish"}).html("Release Finish: ").addClass("control-label");
                 $(resource_release_finish_date_input).attr({type: "text", id: "event_resource_release_finish", name: "event_resource_release_finish"}).addClass("input-small datepicker fnish-date").val(finish_date_value);
                 $(resource_release_finish_date_append).addClass("input-append space-right");
                 $(resource_release_finish_date_span).addClass("add-on pointer");
                 $(resource_release_finish_date_icon).addClass("icon-calendar");
-                
+
                 $(resource_release_finish_time_input).attr({type: "text", id: "event_resource_release_finish_time", name: "event_resource_release_finish_time"}).addClass("input-mini timepicker finish-time").val(finish_time_value);
                 $(resource_release_finish_time_append).addClass("input-append");
                 $(resource_release_finish_time_span).addClass("add-on pointer");
@@ -1129,49 +1202,101 @@ jQuery(document).ready(function ($) {
                 $(resource_release_finish_time_append).append(resource_release_finish_time_input).append(resource_release_finish_time_span);
                 $(resource_release_finish_controls).append(resource_release_finish_time_append);
                 $(resource_release_finish_control_group).append(resource_release_finish_label).append(resource_release_finish_controls).addClass("control-group");
-                
+
                 $(release_options_container).attr({id: "resource_release_container"}).append(resource_release_start_control_group).append(resource_release_finish_control_group);
-                
+
                 if (selected_resource_release_option == "no") {
                     $(release_options_container).addClass("hide");
                 }
-                
+
                 $(resource_step_container).append(resource_release_options_heading).append(release_options_container);
-                
+
+                var resource_types = ["1","3","5","6","7","8","11"];
+                var resource_type = resource_type_value_control.val();
+
+                if (jQuery.inArray(resource_type, resource_types) !== -1) {
+
+                    /**
+                     *
+                     * Builds draft resource options
+                     *
+                     */
+
+                    if (resource_draft_value_control.val() == 1) {
+                        var selected_resource_draft_option = "draft";
+                    } else {
+                        var selected_resource_draft_option = "published";
+                    }
+
+                    var resource_draft_heading = document.createElement("h3");
+                    var resource_draft_control_group = document.createElement("div");
+                    var resource_published_label = document.createElement("label");
+                    var resource_published_radio = document.createElement("input");
+                    var resource_draft_label = document.createElement("label");
+                    var resource_draft_radio = document.createElement("input");
+
+                    $(resource_draft_heading).html("Resource Publish/Draft Status:");
+                    $(resource_published_label).attr({"for": "resource_draft"}).addClass("radio");
+                    $(resource_published_radio).attr({
+                        type: "radio",
+                        id: "resource_draft_published",
+                        value: "0",
+                        name: "resource_draft"
+                    });
+                    $(resource_published_label).append(resource_published_radio).append("Published");
+                    $(resource_draft_label).attr({"for": "resource_draft"}).addClass("radio");
+                    $(resource_draft_radio).attr({
+                        type: "radio",
+                        id: "resource_draft_draft",
+                        value: "1",
+                        name: "resource_draft"
+                    });
+                    $(resource_draft_label).append(resource_draft_radio).append("Draft");
+                    $(resource_draft_control_group).append(resource_published_label).append(resource_draft_label).addClass("control-group");
+                    $(resource_step_container).append(resource_draft_heading).append(resource_draft_control_group);
+
+                    $("#resource_draft_" + selected_resource_draft_option).prop("checked", true);
+
+                    var release_draft_container = document.createElement("div");
+                    var resource_draft_heading = document.createElement("h3");
+
+                    $(resource_step_container).append(resource_draft_heading).append(release_draft_container);
+                }
+
                 /*if (!resource_release_start_control.val()) {
-                    var now     = new Date(); 
-                    var year    = now.getFullYear();
-                    var month   = now.getMonth()+1; 
-                    var day     = now.getDate();
-                    var hour    = now.getHours();
-                    var minute  = now.getMinutes();
+                 var now     = new Date();
+                 var year    = now.getFullYear();
+                 var month   = now.getMonth()+1;
+                 var day     = now.getDate();
+                 var hour    = now.getHours();
+                 var minute  = now.getMinutes();
 
-                    if (month.toString().length == 1) {
-                        var month = "0" + month;
-                    }
+                 if (month.toString().length == 1) {
+                 var month = "0" + month;
+                 }
 
-                    if (day.toString().length == 1) {
-                        var day = "0" + day;
-                    } 
+                 if (day.toString().length == 1) {
+                 var day = "0" + day;
+                 }
 
-                    if (hour.toString().length == 1) {
-                        var hour = "0" + hour;
-                    }
+                 if (hour.toString().length == 1) {
+                 var hour = "0" + hour;
+                 }
 
-                    if (minute.toString().length == 1) {
-                        var minute = "0" + minute;
-                    }
+                 if (minute.toString().length == 1) {
+                 var minute = "0" + minute;
+                 }
 
-                    var date = year + '-' + month + '-' + day;
-                    var time = hour + ":" + minute;
-                    
-                    $("#event_resource_release_start").val(date);
-                    $("#event_resource_release_start_time").val(time);
-                    resource_release_start_control.val(date);
-                    resource_release_start_time_control.val(time);
-                }*/
-                
-            break;
+                 var date = year + '-' + month + '-' + day;
+                 var time = hour + ":" + minute;
+
+                 $("#event_resource_release_start").val(date);
+                 $("#event_resource_release_start_time").val(time);
+                 resource_release_start_control.val(date);
+                 resource_release_start_time_control.val(time);
+                 }*/
+
+                break;
             case 4 :
                 if (resource_recurring_bool == 1) {
                     var data_object = {
@@ -1214,13 +1339,13 @@ jQuery(document).ready(function ($) {
                     case 5 :
                     case 6 :
                     case 11 :
-                        
+
                         build_hidden_form_controls (selected_resource_type);
-                        
+
                         switch (sub_step) {
                             case 1 :
                                 if (selected_resource_type != 1) {
-                                    
+
                                     /**
                                      *
                                      * Builds file view controls
@@ -1246,29 +1371,29 @@ jQuery(document).ready(function ($) {
                                     $(resource_file_option_view_label).append(resource_file_option_view_radio).append("Attempt to view it directly in the web-browser.");
                                     $(resource_file_view_option_control_group).append(resource_file_view_option_heading).append(resource_file_option_download_label).append(resource_file_option_view_label).addClass("control-group");
                                 }
-                                
-                                    /**
-                                     *
-                                     * Builds file title controls
-                                     *
-                                     */
 
-                                    var resource_file_title_heading = document.createElement("h3");
-                                    var resource_file_title_control_group = document.createElement("div");
-                                    var resource_file_title_controls = document.createElement("div");
-                                    var resource_file_title_input = document.createElement("input");
+                                /**
+                                 *
+                                 * Builds file title controls
+                                 *
+                                 */
 
-                                    $(resource_file_title_heading).html("You can optionally provide a different title for this file.");
-                                    $(resource_file_title_input).attr({type: "text", id: "event_resource_file_title", name: "event_resource_file_title"}).addClass("input-xlarge").val($("#event_resource_file_title_value").val());
-                                    $(resource_file_title_controls).append(resource_file_title_input);
-                                    $(resource_file_title_control_group).append(resource_file_title_heading).append(resource_file_title_controls).addClass("control-group");
-                                
+                                var resource_file_title_heading = document.createElement("h3");
+                                var resource_file_title_control_group = document.createElement("div");
+                                var resource_file_title_controls = document.createElement("div");
+                                var resource_file_title_input = document.createElement("input");
+
+                                $(resource_file_title_heading).html("You can optionally provide a different title for this file.");
+                                $(resource_file_title_input).attr({type: "text", id: "event_resource_file_title", name: "event_resource_file_title"}).addClass("input-xlarge").val($("#event_resource_file_title_value").val());
+                                $(resource_file_title_controls).append(resource_file_title_input);
+                                $(resource_file_title_control_group).append(resource_file_title_heading).append(resource_file_title_controls).addClass("control-group");
+
                                 /**
                                  *
                                  * Builds file description controls
                                  *
                                  */
-                                
+
                                 var resource_file_description_heading = document.createElement("h3");
                                 var resource_file_description_control_group = document.createElement("div");
                                 var resource_file_description_controls = document.createElement("div");
@@ -1278,9 +1403,9 @@ jQuery(document).ready(function ($) {
                                 $(resource_file_description_textarea).attr({name: "event_resource_file_description", id: "event_resource_file_description", rows: "6"}).addClass("input-xxlarge").val($("#event_resource_file_description_value").val());
                                 $(resource_file_description_controls).append(resource_file_description_textarea);
                                 $(resource_file_description_control_group).append(resource_file_description_heading).append(resource_file_description_controls).addClass("control-group");
-                                
+
                                 resource_step_container.append(resource_file_title_control_group).append(resource_file_description_control_group);
-                                
+
                                 if (edit_mode) {
                                     var attach_file_heading = document.createElement("h3");
                                     var attach_file_control_group = document.createElement("div");
@@ -1288,34 +1413,34 @@ jQuery(document).ready(function ($) {
                                     var attach_file_yes_radio = document.createElement("input");
                                     var attach_file_no_label = document.createElement("label");
                                     var attach_file_no_radio = document.createElement("input");
-                                    
-                                    
+
+
                                     $(attach_file_heading).html("Would you like to replace the current file with a new one?");
                                     $(attach_file_yes_radio).attr({type: "radio", name: "event_resource_attach_file", id: "event_resource_attach_file_yes"}).val("yes");
                                     $(attach_file_no_radio).attr({type: "radio", name: "event_resource_attach_file", id: "event_resource_attach_file_no"}).val("no");
                                     $(attach_file_yes_label).attr({"for": "event_resource_attach_file_yes"}).append(attach_file_yes_radio).append("Yes, I would like to replace the existing file.").addClass("radio");
                                     $(attach_file_no_label).attr({"for": "event_resource_attach_file_no"}).append(attach_file_no_radio).append("No, I do not wish to replace current file.").addClass("radio");
-                                    
+
                                     $(attach_file_control_group).append(attach_file_heading).append(attach_file_no_label).append(attach_file_yes_label).addClass("control-group");
                                     resource_step_container.prepend(attach_file_control_group);
                                 }
-                                
+
                                 if (selected_resource_type != 1) {
                                     resource_step_container.prepend(resource_file_view_option_control_group);
                                 }
-                                
+
                                 var selected_attach_file_option = $("#event_resource_attach_file").val();
                                 $("#event_resource_file_" + selected_file_view_option).prop("checked", true);
                                 $("#event_resource_attach_file_" + selected_attach_file_option).prop("checked", true);
-                            break;
+                                break;
                             case 2 :
-                                
+
                                 /**
                                  *
                                  * Gets and builds UI for the file upload copyright statement
                                  *
                                  */
-                                
+
                                 $.ajax({
                                     url: SITE_URL + "/admin/events?section=api-resource-wizard",
                                     data: "method=copyright",
@@ -1325,7 +1450,7 @@ jQuery(document).ready(function ($) {
                                         if (jsonResponse.status === "success") {
                                             var copyright_heading = document.createElement("h3");
                                             var copyright_div = document.createElement("div");
-                                            
+
                                             $(copyright_heading).html(jsonResponse.data.app_name + " File Upload Copyright Statement");
                                             $(copyright_div).html(jsonResponse.data.copyright_statement);
                                             resource_step_container.append(copyright_heading).append(copyright_div);
@@ -1348,23 +1473,23 @@ jQuery(document).ready(function ($) {
                                         if ($("#event-resource-previous").is(":disabled")) {
                                             $("#event-resource-previous").removeAttr("disabled");
                                         }
-                                        
+
                                         $("#event_resource_loading").addClass("hide");
                                         $("#event_resource_form").removeClass("hide");
                                         $("#event_resource_loading_msg").html("");
                                     }
                                 });
-                                
-                                
-                            break;
+
+
+                                break;
                             case 3 :
-                                
+
                                 /**
-                                *
-                                * Builds drag and drop interface
-                                *
-                                */
-                               
+                                 *
+                                 * Builds drag and drop interface
+                                 *
+                                 */
+
 
                                 var upload_input = document.createElement("input");
                                 var upload_input_div = document.createElement("div");
@@ -1373,7 +1498,7 @@ jQuery(document).ready(function ($) {
                                 var upload_span = document.createElement("span");
 
                                 $(upload_span).html("No file selected").addClass("span6 event-resource-upload-span");
-                                
+
                                 $(upload_input).attr({type: "file", id: "event_resource_upload", name: "file"}).addClass("hide");
                                 $(upload_label).addClass("btn btn-success span3").append("Browse").append(upload_input);
                                 $(upload_input_div).append(upload_label).append(upload_span).addClass("event-resource-upload-input-div");
@@ -1390,48 +1515,48 @@ jQuery(document).ready(function ($) {
                                 }
                                 resource_step_container.append(drag_drop_p);
                                 resource_step_container.append(upload_input_div);
-                                
+
                                 $("#event-resource-next").attr({disabled: "disabled"}).html("Save Resource");
                                 $(".modal-body").addClass("upload");
 
-                            break;
+                                break;
                         }
-                    break;
+                        break;
                     case 2 :
-                        
+
                         build_hidden_form_controls(selected_resource_type);
-                        
+
                         /**
                          *
                          * Builds bring to class controls
                          *
                          */
-                        
+
                         var resource_bring_description_heading = document.createElement("h3");
                         var resource_bring_description_control_group = document.createElement("div");
                         var resource_bring_description_controls = document.createElement("div");
                         var resource_bring_description_textarea = document.createElement("textarea");
-                        
+
                         $(resource_bring_description_heading).html("Please provide a description of what students should bring to class");
                         $(resource_bring_description_textarea).attr({id: "event_resource_bring_description", name: "event_resource_bring_description", rows: 8}).addClass("input-xxlarge").val($("#event_resource_bring_description_value").val());
                         $(resource_bring_description_controls).append(resource_bring_description_textarea);
                         $(resource_bring_description_control_group).append(resource_bring_description_heading).append(resource_bring_description_controls).addClass("control-group");
-                        
+
                         $("#event-resource-next").html("Save Resource");
                         resource_step_container.append(resource_bring_description_control_group);
-                    break;
+                        break;
                     case 3 :
-                        
+
                         build_hidden_form_controls (selected_resource_type);
-                        
+
                         /**
-                         * 
+                         *
                          * Builds proxy required controls
-                         * 
+                         *
                          */
-                        
+
                         var selected_link_proxy_option = $("#event_resource_link_proxy_value").val();
-                        
+
                         var link_proxy_heading = document.createElement("h3");
                         var link_proxy_control_group = document.createElement("div");
                         var link_proxy_controls = document.createElement("div");
@@ -1439,7 +1564,7 @@ jQuery(document).ready(function ($) {
                         var link_proxy_yes_radio = document.createElement("input");
                         var link_proxy_no_label = document.createElement("label");
                         var link_proxy_no_radio = document.createElement("input");
-                        
+
                         $(link_proxy_heading).html("Does this link require the proxy to be enabled?");
                         $(link_proxy_yes_label).attr({"for": "event_resource_link_proxy_yes"}).addClass("radio");
                         $(link_proxy_yes_radio).attr({type: "radio", id: "event_resource_link_proxy_yes", value: "yes", name: "event_resource_link_proxy"});
@@ -1449,94 +1574,94 @@ jQuery(document).ready(function ($) {
                         $(link_proxy_yes_label).append(link_proxy_yes_radio).append("Yes, the proxy is required to be enabled");
                         $(link_proxy_controls).append(link_proxy_no_label).append(link_proxy_yes_label);
                         $(link_proxy_control_group).append(link_proxy_heading).append(link_proxy_controls).addClass("control-group");
-                        
+
                         /**
-                         * 
+                         *
                          * Builds link url controls
-                         * 
+                         *
                          */
-                        
+
                         var link_url_heading = document.createElement("h3");
                         var link_url_control_group = document.createElement("div");
                         var link_url_controls = document.createElement("div");
                         var link_url_input = document.createElement("input");
-                        
+
                         $(link_url_heading).html("Please provide the full URL of the link");
                         $(link_url_input).attr({type: "text", id: "event_resource_link_url", name: "event_resource_link_url"}).val($("#event_resource_link_url_value").val()).addClass("input-xlarge");
                         $(link_url_controls).append(link_url_input);
                         $(link_url_control_group).append(link_url_heading).append(link_url_controls).addClass("control-group");
-                        
+
                         /**
-                         * 
-                         * Builds link title controls 
-                         * 
+                         *
+                         * Builds link title controls
+                         *
                          */
-                        
+
                         var link_title_heading = document.createElement("h3");
                         var link_title_control_group = document.createElement("div");
                         var link_title_controls = document.createElement("div");
                         var link_title_input = document.createElement("input");
-                        
+
                         $(link_title_heading).html("You can optionally provide a different title for this link");
                         $(link_title_input).attr({type: "text", id: "event-resource-link-title", name: "event_resource_link_title"}).addClass("input-xlarge").val($("#event_resource_link_title_value").val());
                         $(link_title_controls).append(link_title_input);
                         $(link_title_control_group).append(link_title_heading).append(link_title_controls).addClass("control-group");
-                        
+
                         /**
-                         * 
+                         *
                          * Builds link description controls
-                         * 
+                         *
                          */
-                        
+
                         var link_description_heading = document.createElement("h3");
                         var link_description_control_group = document.createElement("div");
                         var link_description_controls = document.createElement("div");
                         var link_description_textarea = document.createElement("textarea");
-                        
+
                         $(link_description_heading).html("Please provide a description for this link");
                         $(link_description_textarea).attr({name: "event_resource_link_description", id: "event-resource-link-description", rows: "4"}).addClass("input-xxlarge").val($("#event_resource_link_description_value").val());
                         $(link_description_controls).append(link_description_textarea);
                         $(link_description_control_group).append(link_description_heading).append(link_description_controls);
-                        
+
                         $("#event-resource-next").html("Save Resource");
                         resource_step_container.append(link_proxy_control_group).append(link_url_control_group).append(link_title_control_group).append(link_description_control_group);
                         $("#event_resource_link_proxy_" + selected_link_proxy_option).prop("checked", true);
-                    break;
+                        break;
                     case 4 :
-                        
+
                         build_hidden_form_controls (selected_resource_type);
-                        
+
                         /**
-                         * 
+                         *
                          * Builds homework controls
-                         * 
+                         *
                          */
-                        
+
                         var resource_homework_description_heading = document.createElement("h3");
                         var resource_homework_description_control_group = document.createElement("div");
                         var resource_homework_description_controls = document.createElement("div");
                         var resource_homework_description_textarea = document.createElement("textarea");
-                        
+
                         $(resource_homework_description_heading).html("Please provide a Homework description");
                         $(resource_homework_description_textarea).attr({id: "event_resource_homework_description", name: "event_resource_homework_description", rows: 8}).addClass("input-xxlarge").val($("#event_resource_homework_description_value").val());
                         $(resource_homework_description_controls).append(resource_homework_description_textarea);
                         $(resource_homework_description_control_group).append(resource_homework_description_heading).append(resource_homework_description_controls).addClass("control-group");
-                        
+
                         $("#event-resource-next").html("Save Resource");
                         resource_step_container.append(resource_homework_description_control_group);
-                    break;
+                        break;
                     case 7 :
-                        
+
                         build_hidden_form_controls (selected_resource_type);
-                        
+
                         /**
-                         * 
+                         *
                          * Builds proxy required controls
-                         * 
+                         *
                          */
-                        
+
                         var selected_module_proxy_option = $("#event_resource_module_proxy_value").val();
-                        
+
                         var module_proxy_heading = document.createElement("h3");
                         var module_proxy_control_group = document.createElement("div");
                         var module_proxy_controls = document.createElement("div");
@@ -1544,7 +1669,7 @@ jQuery(document).ready(function ($) {
                         var module_proxy_yes_radio = document.createElement("input");
                         var module_proxy_no_label = document.createElement("label");
                         var module_proxy_no_radio = document.createElement("input");
-                        
+
                         $(module_proxy_heading).html("Does this module require the proxy to be enabled?");
                         $(module_proxy_yes_label).attr({"for": "event_resource_module_proxy_yes"}).addClass("radio");
                         $(module_proxy_yes_radio).attr({type: "radio", id: "event_resource_module_proxy_yes", value: "yes", name: "event_resource_module_proxy"});
@@ -1554,178 +1679,260 @@ jQuery(document).ready(function ($) {
                         $(module_proxy_yes_label).append(module_proxy_yes_radio).append("Yes, the proxy is required to be enabled");
                         $(module_proxy_controls).append(module_proxy_no_label).append(module_proxy_yes_label);
                         $(module_proxy_control_group).append(module_proxy_heading).append(module_proxy_controls).addClass("control-group");
-                        
+
                         /**
-                         * 
+                         *
                          * Builds link url controls
-                         * 
+                         *
                          */
-                        
-                        var module_url_heading = document.createElement("h3");
-                        var module_url_control_group = document.createElement("div");
-                        var module_url_controls = document.createElement("div");
-                        var module_url_input = document.createElement("input");
-                        
-                        $(module_url_heading).html("Please provide the full URL of the module");
-                        $(module_url_input).attr({type: "text", id: "event_resource_module_url", name: "event_resource_module_url"}).val($("#event_resource_module_url_value").val()).addClass("input-xlarge");
-                        $(module_url_controls).append(module_url_input);
-                        $(module_url_control_group).append(module_url_heading).append(module_url_controls).addClass("control-group");
-                        
+
+                        var event_resouce_exiting_urls = [];
+                        $.ajax({
+                            url: SITE_URL + "/api/lor.api.php",
+                            data: { method: "get-lor-active-resources" },
+                            async: false,
+                            type: 'GET',
+                            success: function (data) {
+                                var response = JSON.parse(data);
+                                if (response.status === "success") {
+                                    var lorns = response.data;
+                                    lorns.forEach(function (lorn){
+                                        var lorn_obj = {};
+                                        lorn_obj.label = lorn.title;
+                                        lorn_obj.url = SITE_URL + "/object/?id=" + lorn.learning_object_id;
+                                        event_resouce_exiting_urls.push(lorn_obj);
+                                    });
+                                }
+                            }
+                        });
+
+                        if (event_resouce_exiting_urls.length == 0) {
+                            var module_url_heading = document.createElement("h3");
+                            var module_url_control_group = document.createElement("div");
+                            var module_url_controls = document.createElement("div");
+                            var module_url_input = document.createElement("input");
+
+                            $(module_url_heading).html("Please provide the full URL of the module");
+                            $(module_url_input).attr({
+                                type: "text",
+                                id: "event_resource_module_url",
+                                name: "event_resource_module_url"
+                            }).val($("#event_resource_module_url_value").val()).addClass("input-xlarge");
+                            $(module_url_controls).append(module_url_input);
+                            $(module_url_control_group).append(module_url_heading).append(module_url_controls).addClass("control-group");
+                        } else {
+                            // Creating heading
+                            var module_url_heading = document.createElement("h3");
+                            $(module_url_heading).html("Please provide the full URL of the module or choose a existing one");
+
+                            // Create tab menu options
+                            var module_url_tab_list = document.createElement("ul");
+                            $(module_url_tab_list).attr({class: "nav nav-tabs"})
+                            var module_url_tab_list_item_a = document.createElement("li");
+                            $(module_url_tab_list_item_a).html("<a href=\"#set_new_resource_url\" id=\"set_new_resource_url_tab\" data-toggle=\"tab\">Provide URL</a>");
+                            var module_url_tab_list_item_b = document.createElement("li");
+                            $(module_url_tab_list_item_b).html("<a href=\"#set_existing_resource_url\" id=\"set_existing_resource_url_tab\" data-toggle=\"tab\">Choose an existing</a>");
+                            $(module_url_tab_list).append(module_url_tab_list_item_a).append(module_url_tab_list_item_b);
+
+                            // Create tab body
+                            var module_url_tab_body = document.createElement("div");
+                            $(module_url_tab_body).attr({class: "tab-content", id: "tabs", style: "background: none;"});
+
+                            // Create tab body provide url option
+                            var module_url_provide_url_tab = document.createElement("div");
+                            $(module_url_provide_url_tab).attr({class: "tab-pane", id: "set_new_resource_url"});
+                            var module_url_input = document.createElement("input");
+                            $(module_url_input).attr(
+                                {
+                                    type: "text", id: "event_resource_module_url",
+                                    name: "event_resource_module_url", placeholder: "Enter the URL here",
+                                    class: "event_resource_module_url_text"
+                                }
+                            ).val($("#event_resource_module_url_value").val()).addClass("input-xlarge");
+                            $(module_url_provide_url_tab).append(module_url_input);
+                            $(module_url_tab_body).append(module_url_provide_url_tab);
+
+                            // Create tab body choose url option
+                            var module_url_choose_url_tab = document.createElement("div");
+                            $(module_url_choose_url_tab).attr({class: "tab-pane", id: "set_existing_resource_url"});
+                            var module_url_existing_urls_select = document.createElement("select");
+                            $(module_url_existing_urls_select).attr({id: "event_resource_module_url", name: "event_resource_module_url", class: "event_resource_module_url_select"});
+                            // Add options to the select input
+                            // Default option
+                            $(module_url_existing_urls_select).append("<option disabled selected value=\"http://\">-- select a module url --</option>")
+                            // Actual options
+                            event_resouce_exiting_urls.forEach(function (uri){
+                                var option = document.createElement("option");
+                                $(option).attr({value: uri.url}).html(uri.label);
+                                $(module_url_existing_urls_select).append(option);
+                            });
+                            $(module_url_existing_urls_select).val($("#event_resource_module_url_value").val());
+                            $(module_url_choose_url_tab).append(module_url_existing_urls_select);
+                            $(module_url_tab_body).append(module_url_choose_url_tab);
+
+                            var module_url_control_group = document.createElement("div");
+                            $(module_url_control_group).append(module_url_heading);
+                            var module_url_controls = document.createElement("div");
+                            $(module_url_controls).append(module_url_tab_list).append(module_url_tab_body);
+                            $(module_url_control_group).append(module_url_controls).addClass("control-group");
+                        }
+
                         /**
-                         * 
-                         * Builds link title controls 
-                         * 
+                         *
+                         * Builds link title controls
+                         *
                          */
-                        
+
                         var module_title_heading = document.createElement("h3");
                         var module_title_control_group = document.createElement("div");
                         var module_title_controls = document.createElement("div");
                         var module_title_input = document.createElement("input");
-                        
+
                         $(module_title_heading).html("You can optionally provide a different title for this module");
                         $(module_title_input).attr({type: "text", id: "event-resource-module-title", name: "event_resource_module_title"}).addClass("input-xlarge").val($("#event_resource_module_title_value").val());
                         $(module_title_controls).append(module_title_input);
                         $(module_title_control_group).append(module_title_heading).append(module_title_controls).addClass("control-group");
-                        
+
                         /**
-                         * 
+                         *
                          * Builds module description controls
-                         * 
+                         *
                          */
-                        
+
                         var module_description_heading = document.createElement("h3");
                         var module_description_control_group = document.createElement("div");
                         var module_description_controls = document.createElement("div");
                         var module_description_textarea = document.createElement("textarea");
-                        
+
                         $(module_description_heading).html("Please provide a description for this module");
                         $(module_description_textarea).attr({name: "event_resource_module_description", id: "event-resource-module-description", rows: "4"}).addClass("input-xxlarge").val($("#event_resource_module_description_value").val());
                         $(module_description_controls).append(module_description_textarea);
                         $(module_description_control_group).append(module_description_heading).append(module_description_controls);
-                        
+
                         $("#event-resource-next").html("Save Resource");
                         resource_step_container.append(module_proxy_control_group).append(module_url_control_group).append(module_title_control_group).append(module_description_control_group);
                         $("#event_resource_module_proxy_" + selected_module_proxy_option).prop("checked", true);
-                    break;
+                        // activateTab('set_new_resource_url');
+                        break;
                     case 10 :
                         build_hidden_form_controls(selected_resource_type);
-                        
+
                         /**
-                         * 
-                         * Builds link title controls 
-                         * 
+                         *
+                         * Builds link title controls
+                         *
                          */
-                        
+
                         var lti_title_heading = document.createElement("h3");
                         var lti_title_control_group = document.createElement("div");
                         var lti_title_controls = document.createElement("div");
                         var lti_title_input = document.createElement("input");
-                        
+
                         $(lti_title_heading).html("Please provide a title for this LTI Provider");
                         $(lti_title_input).attr({type: "text", id: "event-resource-lti-title", name: "event_resource_lti_title"}).addClass("input-xlarge").val($("#event_resource_lti_title_value").val());
                         $(lti_title_controls).append(lti_title_input);
                         $(lti_title_control_group).append(lti_title_heading).append(lti_title_controls).addClass("control-group");
-                        
-                        
+
+
                         /**
-                         * 
+                         *
                          * Builds LTI description controls
-                         * 
+                         *
                          */
-                        
+
                         var lti_description_heading = document.createElement("h3");
                         var lti_description_control_group = document.createElement("div");
                         var lti_description_controls = document.createElement("div");
                         var lti_description_textarea = document.createElement("textarea");
-                        
+
                         $(lti_description_heading).html("You must provide a description for this LTI Provider");
                         $(lti_description_textarea).attr({name: "event_resource_lti_description", id: "event-resource-lti-description", rows: "4"}).addClass("input-xxlarge").val($("#event_resource_lti_description_value").val());
                         $(lti_description_controls).append(lti_description_textarea);
                         $(lti_description_control_group).append(lti_description_heading).append(lti_description_controls);
-                        
+
                         /**
-                         * 
+                         *
                          * Builds lti url controls
-                         * 
+                         *
                          */
-                        
+
                         var lti_url_heading = document.createElement("h3");
                         var lti_url_control_group = document.createElement("div");
                         var lti_url_controls = document.createElement("div");
                         var lti_url_input = document.createElement("input");
-                        
+
                         $(lti_url_heading).html("Please provide the full external LTI launch URL:");
                         $(lti_url_input).attr({type: "text", id: "event_resource_lti_url", name: "event_resource_lti_url"}).val($("#event_resource_lti_url_value").val()).addClass("input-xlarge");
                         $(lti_url_controls).append(lti_url_input);
                         $(lti_url_control_group).append(lti_url_heading).append(lti_url_controls).addClass("control-group");
-                        
+
                         /**
-                         * 
+                         *
                          * Builds lti key controls
-                         * 
+                         *
                          */
-                        
+
                         var lti_key_heading = document.createElement("h3");
                         var lti_key_control_group = document.createElement("div");
                         var lti_key_controls = document.createElement("div");
                         var lti_key_input = document.createElement("input");
-                        
+
                         $(lti_key_heading).html("Please provide the LTI Key / Username:");
                         $(lti_key_input).attr({type: "text", id: "event_resource_lti_key", name: "event_resource_lti_key"}).val($("#event_resource_lti_key_value").val()).addClass("input-xlarge");
                         $(lti_key_controls).append(lti_key_input);
                         $(lti_key_control_group).append(lti_key_heading).append(lti_key_controls).addClass("control-group");
-                        
-                        
+
+
                         /**
-                         * 
+                         *
                          * Builds lti secret controls
-                         * 
+                         *
                          */
-                        
+
                         var lti_secret_heading = document.createElement("h3");
                         var lti_secret_control_group = document.createElement("div");
                         var lti_secret_controls = document.createElement("div");
                         var lti_secret_input = document.createElement("input");
-                        
+
                         $(lti_secret_heading).html("Please provide the LTI Secret / Password:");
                         $(lti_secret_input).attr({type: "text", id: "event_resource_lti_secret", name: "event_resource_lti_secret"}).val($("#event_resource_lti_secret_value").val()).addClass("input-xlarge");
                         $(lti_secret_controls).append(lti_secret_input);
                         $(lti_secret_control_group).append(lti_secret_heading).append(lti_secret_controls).addClass("control-group");
-                        
+
                         /**
-                         * 
+                         *
                          * Builds LTI description controls
-                         * 
+                         *
                          */
-                        
+
                         var lti_parameters_heading = document.createElement("h3");
                         var lti_parameters_control_group = document.createElement("div");
                         var lti_parameters_controls = document.createElement("div");
                         var lti_parameters_textarea = document.createElement("textarea");
-                        
+
                         $(lti_parameters_heading).html("Please provide a additional parameters for this LTI Provider");
                         $(lti_parameters_textarea).attr({name: "event_resource_lti_parameters", id: "event-resource-lti-description", rows: "4"}).addClass("input-xxlarge").val($("#event_resource_lti_parameters_value").val());
                         $(lti_parameters_controls).append(lti_parameters_textarea);
                         $(lti_parameters_control_group).append(lti_parameters_heading).append(lti_parameters_controls);
-                        
+
                         $("#event-resource-next").html("Save Resource");
                         resource_step_container.append(lti_title_control_group).append(lti_description_control_group).append(lti_url_control_group).append(lti_key_control_group).append(lti_secret_control_group).append(lti_parameters_control_group);
-                    break;
+                        break;
                     case 8 :
-                        
+
                         build_hidden_form_controls(selected_resource_type);
-                        
+
                         switch (sub_step) {
                             case 1 :
-                                
+
                                 /**
                                  *
                                  * Gets and builds a list of quizzes associated with the current user
                                  *
                                  */
-                                
+
                                 var quiz_id = $("#event_resource_quiz_id_value").val();
-                                
+
                                 $.ajax({
                                     url: SITE_URL + "/admin/events?section=api-resource-wizard",
                                     data: "method=quizzes&quiz_id=" + quiz_id,
@@ -1770,12 +1977,12 @@ jQuery(document).ready(function ($) {
                                         } else {
                                             $("#event-resource-next").prop("disabled", true);
                                             $("#event-resource-previous").prop("disabled", true);
-                                            
+
                                             var no_quiz_p = document.createElement("p");
                                             var create_quiz_div = document.createElement("div");
                                             var create_quiz_i = document.createElement("i");
                                             var create_quiz_a = document.createElement("a");
-                                            
+
                                             $(create_quiz_i).addClass("icon-plus-sign icon-white");
                                             $(create_quiz_a).attr({href: SITE_URL + "/admin/quizzes?section=add"}).addClass("btn btn-large btn-success").append(create_quiz_i).append(" Create a new Quiz");
                                             $(no_quiz_p).html("You currently have no Quizzes to display, if you would like to create a Quiz, click the button below.").addClass("no-quizzes");
@@ -1798,81 +2005,81 @@ jQuery(document).ready(function ($) {
                                         $("#event_resource_loading_msg").html("");
                                     }
                                 });
-                            break;
+                                break;
                             case 2 :
-                                
+
                                 /**
                                  *
                                  * Builds quiz title and description controls
                                  *
                                  */
-                                
+
                                 var attached_quiz_title_heading = document.createElement("h3");
                                 var attached_quiz_title_control_group = document.createElement("div");
                                 var attached_quiz_title_controls = document.createElement("div");
                                 var attached_quiz_title_input = document.createElement("input");
-                                
+
                                 $(attached_quiz_title_heading).html("You can optionally provide a different title for this quiz");
                                 $(attached_quiz_title_input).attr({type: "text", id: "event_resource_quiz_title", name: "event_resource_quiz_title"}).addClass("input-xlarge").val($("#event_resource_quiz_title").val());
                                 $(attached_quiz_title_controls).append(attached_quiz_title_input);
                                 $(attached_quiz_title_control_group).append(attached_quiz_title_heading).append(attached_quiz_title_controls).addClass("control-group");
-                                
+
                                 var attached_quiz_instrucion_heading = document.createElement("h3");
                                 var attached_quiz_instrucion_control_group = document.createElement("div");
                                 var attached_quiz_instrucion_controls = document.createElement("div");
                                 var attached_quiz_instrucion_textarea = document.createElement("textarea");
                                 var attached_quiz_instrucion_hint = document.createElement("div");
-                                
+
                                 $(attached_quiz_instrucion_heading).html("You can optionally provide more detailed instructions for this quiz");
                                 $(attached_quiz_instrucion_textarea).attr({id: "event_resource_quiz_instructions", name: "event_resource_quiz_instructions", rows: 8}).addClass("input-xxlarge").val($("#event_resource_quiz_instructions").val());
                                 $(attached_quiz_instrucion_controls).append(attached_quiz_instrucion_textarea);
                                 $(attached_quiz_title_control_group).append(attached_quiz_instrucion_heading).append(attached_quiz_instrucion_controls).addClass("control-group");
                                 $(attached_quiz_instrucion_hint).html("<strong>Hint</strong>: this information is visibile to the learners at the top of the quiz.").addClass("content-small");
-                                
+
                                 resource_step_container.append(attached_quiz_title_control_group).append(attached_quiz_instrucion_control_group).append(attached_quiz_instrucion_hint);
-                                
+
                                 $("#event_resource_quiz_title").val($("#event_resource_quiz_title_value").val());
                                 $("#event_resource_quiz_instructions").val($("#event_resource_quiz_instructions_value").val());
-                            break;
+                                break;
                             case 3 :
-                                
+
                                 /**
                                  *
                                  * Builds quiz attendance controls
                                  *
                                  */
-                                
+
                                 var selected_attendance_option = $("#event_resource_quiz_attendance_value").val();
                                 var selected_shuffle_option = $("#event_resource_quiz_shuffled_value").val();
                                 var selected_result_option = $("#event_resource_quiz_results_value").val();
-                                
+
                                 var attached_quiz_attendance_heading = document.createElement("h3");
                                 var attached_quiz_attendance_control_group = document.createElement("div");
                                 var attached_quiz_attendance_radio_yes = document.createElement("input");
                                 var attached_quiz_attendance_label_yes = document.createElement("label");
                                 var attached_quiz_attendance_radio_no = document.createElement("input");
                                 var attached_quiz_attendance_label_no = document.createElement("label");
-                                
+
                                 $(attached_quiz_attendance_heading).html("Is attendance required for this quiz to be completed?");
                                 $(attached_quiz_attendance_radio_yes).attr({type: "radio", id: "event_resource_quiz_attendance_yes", name: "event_resource_quiz_attendance"}).val("yes");
                                 $(attached_quiz_attendance_label_yes).attr({"for": "event_resource_quiz_attendance_yes"}).append(attached_quiz_attendance_radio_yes).append("Required").addClass("radio");
                                 $(attached_quiz_attendance_radio_no).attr({type: "radio", id: "event_resource_quiz_attendance_no", name: "event_resource_quiz_attendance"}).val("no");
                                 $(attached_quiz_attendance_label_no).attr({"for": "event_resource_quiz_attendance_no"}).append(attached_quiz_attendance_radio_no).append("Not Required").addClass("radio");
                                 $(attached_quiz_attendance_control_group).append(attached_quiz_attendance_heading).append(attached_quiz_attendance_label_no).append(attached_quiz_attendance_label_yes).addClass("control-group");
-                                
+
                                 /**
                                  *
                                  * Builds quiz shuffled controls
                                  *
                                  */
-                                
+
                                 var attached_quiz_shuffled_heading = document.createElement("h3");
                                 var attached_quiz_shuffled_control_group = document.createElement("div");
                                 var attached_quiz_shuffled_radio_yes = document.createElement("input");
                                 var attached_quiz_shuffled_label_yes = document.createElement("label");
                                 var attached_quiz_shuffled_radio_no = document.createElement("input");
                                 var attached_quiz_shuffled_label_no = document.createElement("label");
-                                
+
                                 $(attached_quiz_shuffled_heading).html("Should the order of the questions be shuffled for this quiz?");
                                 $(attached_quiz_shuffled_radio_yes).attr({type: "radio", id: "event_resource_quiz_shuffled_radio_yes", name: "event_resource_quiz_shuffled"}).val("yes");
                                 $(attached_quiz_shuffled_label_yes).attr({"for": "event_resource_quiz_shuffled_radio_yes"}).addClass("radio").html("Shuffled");
@@ -1881,176 +2088,237 @@ jQuery(document).ready(function ($) {
                                 $(attached_quiz_shuffled_label_yes).append(attached_quiz_shuffled_radio_yes);
                                 $(attached_quiz_shuffled_label_no).append(attached_quiz_shuffled_radio_no);
                                 $(attached_quiz_shuffled_control_group).append(attached_quiz_shuffled_heading).append(attached_quiz_shuffled_label_no).append(attached_quiz_shuffled_label_yes).addClass("control-group");
-                                
+
                                 /**
                                  *
                                  * Builds quiz time controls
                                  *
                                  */
-                                
+
                                 var attached_quiz_time_heading = document.createElement("h3");
                                 var attached_quiz_time_control_group = document.createElement("div");
                                 var attached_quiz_time_controls = document.createElement("div");
                                 var attached_quiz_time_hint_div = document.createElement("div");
                                 var attached_quiz_time_input = document.createElement("input");
-                                
+
                                 $(attached_quiz_time_heading).html("How much time (in minutes) can the learner spend taking this quiz?");
                                 $(attached_quiz_time_input).attr({type: "text", id: "event_resource_quiz_time", name: "event_resource_quiz_time"}).addClass("input-mini").val($("#event_resource_quiz_time_value").val());
                                 $(attached_quiz_time_hint_div).html("<strong>Hint</strong>: enter 0 to allow unlimited time").addClass("content-small");
                                 $(attached_quiz_time_controls).append(attached_quiz_time_input).append(attached_quiz_time_hint_div);
                                 $(attached_quiz_time_control_group).append(attached_quiz_time_heading).append(attached_quiz_time_controls);
-                                
+
                                 /**
                                  *
                                  * Builds quiz attemps controls
                                  *
                                  */
-                                
+
                                 var attached_quiz_attempts_heading = document.createElement("h3");
                                 var attached_quiz_attempts_control_group = document.createElement("div");
                                 var attached_quiz_attempts_controls = document.createElement("div");
                                 var attached_quiz_attempts_hint_div = document.createElement("div");
                                 var attached_quiz_attempts_input = document.createElement("input");
-                                
+
                                 $(attached_quiz_attempts_heading).html("How many attempts can a learner take at completing this quiz?");
                                 $(attached_quiz_attempts_input).attr({type: "text", id: "event_resource_quiz_attempts", name: "event_resource_quiz_attempts"}).addClass("input-mini").val($("#event_resource_quiz_attempts_value").val());
                                 $(attached_quiz_attempts_hint_div).html("<strong>Hint</strong>: enter 0 to allow <strong>unlimited</strong> attempts").addClass("content-small");
                                 $(attached_quiz_attempts_controls).append(attached_quiz_attempts_input).append(attached_quiz_attempts_hint_div);
                                 $(attached_quiz_attempts_control_group).append(attached_quiz_attempts_heading).append(attached_quiz_attempts_controls);
-                                
+
                                 /**
                                  *
                                  * Builds quiz result controls
                                  *
                                  */
-                                
+
                                 var attached_quiz_results_heading = document.createElement("h3");
                                 var attached_quiz_results_immediate_control_group = document.createElement("div");
                                 var attached_quiz_results_immediate_radio = document.createElement("input");
                                 var attached_quiz_results_immediate_label = document.createElement("label");
                                 var attached_quiz_results_immediate_div = document.createElement("div");
-                                
+
                                 $(attached_quiz_results_heading).html("When should learners be allowed to view the results of the quiz?");
                                 $(attached_quiz_results_immediate_radio).attr({type: "radio", id: "event_resource_quiz_results_immediate", name: "event_resource_quiz_results"}).val("immediate");
                                 $(attached_quiz_results_immediate_label).attr({"for": "event_resource_quiz_results_immediate"}).append(attached_quiz_results_immediate_radio).append("Immediate Quiz Results").addClass("radio");
                                 $(attached_quiz_results_immediate_div).html("This option will allow the learner to review the results of a quiz attempt (i.e. score, correct / incorrect responses, and question feedback) immediately after they complete the quiz.").addClass("content-small");
                                 $(attached_quiz_results_immediate_control_group).append(attached_quiz_results_heading).append(attached_quiz_results_immediate_label).append(attached_quiz_results_immediate_div).addClass("control-group");
-                                
+
                                 var attached_quiz_results_delayed_control_group = document.createElement("div");
                                 var attached_quiz_results_delayed_radio = document.createElement("input");
                                 var attached_quiz_results_delayed_label = document.createElement("label");
                                 var attached_quiz_results_delayed_div = document.createElement("div");
-                                
+
                                 $(attached_quiz_results_delayed_radio).attr({type: "radio", id: "event_resource_quiz_results_delayed", name: "event_resource_quiz_results"}).val("delayed");
                                 $(attached_quiz_results_delayed_label).attr({"for": "event_resource_quiz_results_delayed"}).append(attached_quiz_results_delayed_radio).append("Delayed Quiz Results").addClass("radio");
                                 $(attached_quiz_results_delayed_div).html("This option restricts the learners ability to review the results of a quiz attempt (i.e. score, correct / incorrect responses, and question feedback) until after the time release period has expired.").addClass("content-small");
                                 $(attached_quiz_results_delayed_control_group).append(attached_quiz_results_delayed_label).append(attached_quiz_results_delayed_div).addClass("control-group");
-                                
+
                                 var attached_quiz_results_hide_control_group = document.createElement("div");
                                 var attached_quiz_results_hide_label = document.createElement("label");
                                 var attached_quiz_results_hide_div = document.createElement("div");
                                 var attached_quiz_results_hide_radio = document.createElement("input");
-                                
+
                                 $(attached_quiz_results_hide_radio).attr({type: "radio", id: "event_resource_quiz_results_hide", name: "event_resource_quiz_results"}).val("hide");
                                 $(attached_quiz_results_hide_label).attr({"for": "event_resource_quiz_results_hide"}).append(attached_quiz_results_hide_radio).append("Hide Quiz Results").addClass("radio");
                                 $(attached_quiz_results_hide_div).html("This option restricts the learners ability to review the results of a quiz attempt (i.e. score, correct / incorrect responses, and question feedback), and requires either manual release of the results to the students, or use of a Gradebook Assessment to release the resulting score.").addClass("content-small");
                                 $(attached_quiz_results_hide_control_group).append(attached_quiz_results_hide_label).append(attached_quiz_results_hide_div).addClass("control-group");
-                                
+
                                 resource_step_container.append(attached_quiz_attendance_control_group).append(attached_quiz_shuffled_control_group).append(attached_quiz_time_control_group).append(attached_quiz_attempts_control_group).append(attached_quiz_results_immediate_control_group).append(attached_quiz_results_delayed_control_group).append(attached_quiz_results_hide_control_group);
-                                
+
                                 $("#event-resource-next").html("Save Resource");
                                 $("#event_resource_quiz_attendance_" + selected_attendance_option).prop("checked", true);
                                 $("#event_resource_quiz_shuffled_radio_" + selected_shuffle_option).prop("checked", true);
                                 $("#event_resource_quiz_results_" + selected_result_option).prop("checked", true);
-                            break;
+                                break;
                         }
-                    break;
+                        break;
                     case 9 :
-                        
+
                         build_hidden_form_controls (selected_resource_type);
-                        
+
                         /**
-                         * 
+                         *
                          * Builds textbook reading controls
-                         * 
+                         *
                          */
-                        
+
                         var resource_textbook_description_heading = document.createElement("h3");
                         var resource_textbook_description_control_group = document.createElement("div");
                         var resource_textbook_description_controls = document.createElement("div");
                         var resource_textbook_description_textarea = document.createElement("textarea");
-                        
+
                         $(resource_textbook_description_heading).html("Please provide Textbook Reading Details");
                         $(resource_textbook_description_textarea).attr({id: "event_resource_textbook_description", name: "event_resource_textbook_description", rows: 8}).addClass("input-xxlarge").val($("#event_resource_textbook_description_value").val());
                         $(resource_textbook_description_controls).append(resource_textbook_description_textarea);
                         $(resource_textbook_description_control_group).append(resource_textbook_description_controls).addClass("control-group");
-                        
+
                         $("#event-resource-next").html("Save Resource");
                         resource_step_container.append(resource_textbook_description_heading).append(resource_textbook_description_control_group);
                     break;
-                    
+                    case 13 :
+                        build_hidden_form_controls(selected_resource_type);
+
+                        var heading = $(document.createElement("h3")).html("Please select a Feedback Form");
+                        var control_group = $(document.createElement("div")).addClass("control-group").attr({"id": "form-selector"});
+                        var controls_label = $(document.createElement("label")).addClass("control-label").attr({"for": "choose-form-btn"}).html("Select Form:");
+                        var controls = $(document.createElement("div")).addClass("controls");
+                        var anchor = $(document.createElement("a")).addClass("btn").attr({"href": "#", "id": "choose-form-btn", "type": "button"}).html("Browse Forms ");
+                        var icon = $(document.createElement("i")).addClass("icon-chevron-down");
+
+                        control_group.append(controls_label, controls.append(anchor.append(icon)));
+
+                        $("#event-resource-next").html("Save Resource");
+                        resource_step_container.append(heading, control_group);
+
+                        if ($("#event_resource_module_form_id").val()) {
+                            var get_form_id = $.ajax({
+                                url: ENTRADA_URL + "/admin/events?section=api-resource-wizard&method=get-form-name-by-id&form_id=" + $("#event_resource_module_form_id").val(),
+                                type: "GET"
+                            });
+
+                            jQuery.when(get_form_id).done(function (data) {
+                                var jsonResponse = JSON.parse(data);
+                                if (jsonResponse.status == "success") {
+                                    var icon = $(document.createElement("i")).addClass("icon-chevron-down");
+                                    $("#choose-form-btn").html(jsonResponse.data + " ").append(icon);
+                                }
+                            });
+
+                            var selected_form = $(document.createElement("input")).addClass("search-target-control form_search_target_control form-selector").attr({
+                                "data-label": "Form Label",
+                                "id": "form_" + $("#event_resource_module_form_id").val(),
+                                "type": "hidden"
+                            }).val($("#event_resource_module_form_id").val());
+
+                            resource_step_container.find(".control-group").append(selected_form);
+                        }
+
+                        $("#choose-form-btn").advancedSearch({
+                            api_url : ENTRADA_URL + "/admin/events?section=api-resource-wizard",
+                            resource_url: ENTRADA_URL,
+                            filters: {
+                                form: {
+                                    label: "Forms",
+                                    data_source: "get-user-forms",
+                                    mode: "radio"
+                                }
+                            },
+                            no_results_text: "No forms found matching the search criteria.",
+                            parent_form: $("#form-selector"),
+                            control_class: "form-selector",
+                            width: 300,
+                            modal: true
+                        });
+
+                        $("#choose-form-btn").on("change", function(e) {
+                            $("#event_resource_module_form_id").val($(".form_search_target_control").val());
+                        });
+                        break;
                 }
-            break;
+                break;
             case 6 :
                 get_event_resources ();
                 $(".modal-body").removeClass("upload");
                 $("#event_resource_entity_id").val("");
                 var resource_type = "";
-                
+
                 switch (selected_resource_type) {
                     case 1 :
                         resource_type = "Podcast";
-                    break;
+                        break;
                     case 5 :
                         resource_type = "Lecture Note";
-                    break;
+                        break;
                     case 6 :
                         resource_type = "Lecture Slide";
-                    break;
+                        break;
                     case 11 :
                         resource_type = "File";
-                    break;
+                        break;
                     case 2 :
                         resource_type = "Class Work";
-                    break;
+                        break;
                     case 3 :
                         resource_type = "External Link";
-                    break;
+                        break;
                     case 4 :
                         resource_type = "Homework";
-                    break;
+                        break;
                     case 7 :
                         resource_type = "Online Learning Module";
-                    break;
+                        break;
                     case 8 :
                         resource_type = "Quiz";
-                    break;
+                        break;
                     case 9 :
                         resource_type = "Textbook Reading";
-                    break;
+                        break;
                     case 10 :
                         resource_type = "LTI Provider";
                     break;
+                    case 13 :
+                        resource_type = "Feedback Form";
+                    break;
                 }
-                
+
                 var success_p = document.createElement("p");
                 var success_text_p = document.createElement("p");
-                
+
                 $(success_p).html((edit_mode ? "Successfully updated the selected <strong>" + resource_type + "</strong>" : "Successfully attached a <strong>" + resource_type + "</strong> Resource to this event.")).attr({id: "event-resource-success-msg"});
                 $(success_text_p).html("You may continue to add resources to this event by clicking the <strong>Attach another Resource</strong> button, or you may close this dialog by clicking the <strong>Close</strong> button.").attr({id: "event-resource-success-text"});
                 resource_step_container.append(success_p).append(success_text_p);
-                
+
                 $("#event-resource-next").html("Attach another Resource");
                 $("#event-resource-previous").addClass("hide");
-                
-            break;
+
+                break;
         }
     }
-    
+
     function get_event_resources () {
         var event_id = $("#event_id").val();
         $(".resource-list").remove();
-        
+
         $.ajax({
             url: SITE_URL + "/admin/events?section=api-resource-wizard",
             data: "method=event_resources&event_id=" + event_id,
@@ -2073,35 +2341,37 @@ jQuery(document).ready(function ($) {
             }
         });
     }
-    
+
+    event_resources_load = get_event_resources;
+
     function build_event_resource_list (resources) {
         $('#event-resources-msgs').empty();
-        
+
         jQuery.each(resources, function (key, resources) {
             var timeframe = key;
 
             var heading = '';
-            
+
             switch (timeframe) {
                 case 'pre' :
                     heading = 'Before Class';
-                break;
+                    break;
                 case 'during' :
                     heading = "During Class";
-                break;
+                    break;
                 case 'post' :
                     heading = "After Class";
-                break;
+                    break;
                 case 'none' :
                     heading = "No Timeframe";
-                break;
+                    break;
             }
 
             if (resources && resources.length) {
                 var timeframe_ul = document.createElement("ul");
                 var timeframe_resource_div = document.createElement("div");
                 var timeframe_container_div = document.createElement("div");
-                var timeframe_heading_p = document.createElement("p");
+                var timeframe_heading_p = document.createElement("h2");
 
                 $(timeframe_ul).attr({id: "timeframe-" + timeframe}).addClass("timeframe");
                 $(timeframe_resource_div).attr({id: "event-resource-timeframe-" + timeframe + "-container"}).addClass("resource-list");
@@ -2124,7 +2394,7 @@ jQuery(document).ready(function ($) {
                     var release_date = (resource.release_date != "" ? resource.release_date : "");
                     var release_until = (resource.release_until != "" ? resource.release_until : "");
 
-                    $(resource_delete_i).addClass("icon-white icon-trash");
+                    $(resource_delete_i).addClass("fa fa-trash");
                     if (release_date && release_until) {
                         $(resource_time_p).html(release_date + " " + release_until).addClass("muted").addClass("event-resource-release-dates");
                     }
@@ -2160,6 +2430,19 @@ jQuery(document).ready(function ($) {
                         $(resource_stats_div).append(resource_hidden_span);
                     }
 
+
+                    if (resource.draft && resource.draft == 1) {
+                        var draft_resource = document.createElement("div");
+                        var draft_resource_btn = document.createElement("span");
+                        var draft_resource_icon = document.createElement("i");
+
+                        $(draft_resource_icon).addClass("fa").addClass("fa-file");
+                        $(draft_resource_btn).addClass("event-resource-stat-label").addClass("label-warning").addClass("label").append(draft_resource_icon).append(" Draft");
+
+                        $(draft_resource).addClass("space-below").append(draft_resource_btn);
+                        $(resource_li).append(draft_resource);
+                    }
+
                     $(resource_details_div).append(resource_delete_span).append(resource_description_p).attr({"data-id": resource.entity_id});
                     $(resource_stats_div).append(resource_required_span).append(resource_type_span);
                     $(resource_li).append(resource_details_div).append(resource_stats_div);
@@ -2177,7 +2460,7 @@ jQuery(document).ready(function ($) {
                             var download_a = document.createElement("a");
 
                             $(resource_type_span).html(resource.resource_type_title + " " + resource.file_size);
-                            $(download_i).addClass("icon-download-alt");
+                            $(download_i).addClass("fa fa-download");
                             $(download_a).attr({href: resource.url}).prepend(download_i);
                             $(download_span).append(download_a);
                             $(resource_accesses_i).addClass("icon-white icon-eye-open");
@@ -2302,176 +2585,184 @@ jQuery(document).ready(function ($) {
             }
         });
     }
-    
+
     function build_hidden_form_controls (selected_resource_type) {
-        
+
         switch (parseInt(selected_resource_type)) {
             case 1 :
             case 5 :
             case 6 :
             case 11 :
-                
+
                 /**
-                *
-                * Builds the hidden inputs for the file controls
-                *
-                */
+                 *
+                 * Builds the hidden inputs for the file controls
+                 *
+                 */
 
-               if (!$(".resource_type_control").length) {
-                   var event_resource_file_view_value = document.createElement("input");
-                   var event_resource_file_title_value = document.createElement("input");
-                   var event_resource_file_description_value = document.createElement("input");
+                if (!$(".resource_type_control").length) {
+                    var event_resource_file_view_value = document.createElement("input");
+                    var event_resource_file_title_value = document.createElement("input");
+                    var event_resource_file_description_value = document.createElement("input");
 
-                   $(event_resource_file_view_value).attr({type: "hidden", id: "event_resource_file_view_value",  name: "event_resource_file_view_value"}).val("download").addClass("resource_type_control");
-                   $(event_resource_file_title_value).attr({type: "hidden", id: "event_resource_file_title_value", name: "event_resource_file_title_value"}).val("").addClass("resource_type_control");
-                   $(event_resource_file_description_value).attr({type: "hidden", id: "event_resource_file_description_value", name: "event_resource_file_description_value"}).val("").addClass("resource_type_control");
+                    $(event_resource_file_view_value).attr({type: "hidden", id: "event_resource_file_view_value",  name: "event_resource_file_view_value"}).val("download").addClass("resource_type_control");
+                    $(event_resource_file_title_value).attr({type: "hidden", id: "event_resource_file_title_value", name: "event_resource_file_title_value"}).val("").addClass("resource_type_control");
+                    $(event_resource_file_description_value).attr({type: "hidden", id: "event_resource_file_description_value", name: "event_resource_file_description_value"}).val("").addClass("resource_type_control");
 
-                   $("#event_resource_form").append(event_resource_file_view_value).append(event_resource_file_title_value).append(event_resource_file_description_value);
-               }
-            break;
+                    $("#event_resource_form").append(event_resource_file_view_value).append(event_resource_file_title_value).append(event_resource_file_description_value);
+                }
+                break;
             case 2 :
-                
-                /**
-                *
-                * Builds the hidden inputs for the bring to class controls
-                *
-                */
 
-               if (!$(".resource_type_control").length) {
-                   var event_resource_bring_description_value = document.createElement("input");
-                   $(event_resource_bring_description_value).attr({type: "hidden", id: "event_resource_bring_description_value", name: "event_resource_bring_description_value"}).val("").addClass("resource_type_control");
-                   $("#event_resource_form").append(event_resource_bring_description_value);
-               }
-            break;
+                /**
+                 *
+                 * Builds the hidden inputs for the bring to class controls
+                 *
+                 */
+
+                if (!$(".resource_type_control").length) {
+                    var event_resource_bring_description_value = document.createElement("input");
+                    $(event_resource_bring_description_value).attr({type: "hidden", id: "event_resource_bring_description_value", name: "event_resource_bring_description_value"}).val("").addClass("resource_type_control");
+                    $("#event_resource_form").append(event_resource_bring_description_value);
+                }
+                break;
             case 3 :
-                
+
                 /**
-                *
-                * Builds the hidden inputs for each link control
-                *
-                */
+                 *
+                 * Builds the hidden inputs for each link control
+                 *
+                 */
 
-               if (!$(".resource_type_control").length) {
-                   var event_resource_link_proxy_value = document.createElement("input");
-                   var event_resource_link_url_value = document.createElement("input");
-                   var event_resource_link_title_value = document.createElement("input");
-                   var event_resource_link_description_value = document.createElement("input");
+                if (!$(".resource_type_control").length) {
+                    var event_resource_link_proxy_value = document.createElement("input");
+                    var event_resource_link_url_value = document.createElement("input");
+                    var event_resource_link_title_value = document.createElement("input");
+                    var event_resource_link_description_value = document.createElement("input");
 
-                   $(event_resource_link_proxy_value).attr({type: "hidden", id: "event_resource_link_proxy_value", name: "event_resource_link_proxy_value"}).val("no").addClass("resource_type_control");
-                   $(event_resource_link_url_value).attr({type: "hidden", id: "event_resource_link_url_value", name: "event_resource_link_url_value"}).val("http://").addClass("resource_type_control");
-                   $(event_resource_link_title_value).attr({type: "hidden", id: "event_resource_link_title_value", name: "event_resource_link_title_value"}).val("").addClass("resource_type_control");
-                   $(event_resource_link_description_value).attr({type: "hidden", id: "event_resource_link_description_value", name: "event_resource_link_description_value"}).val("").addClass("resource_type_control");
+                    $(event_resource_link_proxy_value).attr({type: "hidden", id: "event_resource_link_proxy_value", name: "event_resource_link_proxy_value"}).val("no").addClass("resource_type_control");
+                    $(event_resource_link_url_value).attr({type: "hidden", id: "event_resource_link_url_value", name: "event_resource_link_url_value"}).val("http://").addClass("resource_type_control");
+                    $(event_resource_link_title_value).attr({type: "hidden", id: "event_resource_link_title_value", name: "event_resource_link_title_value"}).val("").addClass("resource_type_control");
+                    $(event_resource_link_description_value).attr({type: "hidden", id: "event_resource_link_description_value", name: "event_resource_link_description_value"}).val("").addClass("resource_type_control");
 
-                   $("#event_resource_form").append(event_resource_link_proxy_value).append(event_resource_link_url_value).append(event_resource_link_title_value).append(event_resource_link_description_value);
-               }
-            break;
+                    $("#event_resource_form").append(event_resource_link_proxy_value).append(event_resource_link_url_value).append(event_resource_link_title_value).append(event_resource_link_description_value);
+                }
+                break;
             case 4 :
                 /**
-                *
-                * Builds the hidden inputs for the bring to class controls
-                *
-                */
+                 *
+                 * Builds the hidden inputs for the bring to class controls
+                 *
+                 */
 
-               if (!$(".resource_type_control").length) {
-                   var event_resource_homework_description_value = document.createElement("input");
-                   $(event_resource_homework_description_value).attr({type: "hidden", id: "event_resource_homework_description_value", name: "event_resource_homework_description_value"}).val("").addClass("resource_type_control");
-                   $("#event_resource_form").append(event_resource_homework_description_value);
-               }
-            break;
+                if (!$(".resource_type_control").length) {
+                    var event_resource_homework_description_value = document.createElement("input");
+                    $(event_resource_homework_description_value).attr({type: "hidden", id: "event_resource_homework_description_value", name: "event_resource_homework_description_value"}).val("").addClass("resource_type_control");
+                    $("#event_resource_form").append(event_resource_homework_description_value);
+                }
+                break;
             case 7 :
-                
+
                 /**
-                *
-                * Builds the hidden inputs for each module control
-                *
-                */
+                 *
+                 * Builds the hidden inputs for each module control
+                 *
+                 */
 
-               if (!$(".resource_type_control").length) {
-                   var event_resource_module_proxy_value = document.createElement("input");
-                   var event_resource_module_url_value = document.createElement("input");
-                   var event_resource_module_title_value = document.createElement("input");
-                   var event_resource_module_description_value = document.createElement("input");
+                if (!$(".resource_type_control").length) {
+                    var event_resource_module_proxy_value = document.createElement("input");
+                    var event_resource_module_url_value = document.createElement("input");
+                    var event_resource_module_title_value = document.createElement("input");
+                    var event_resource_module_description_value = document.createElement("input");
 
-                   $(event_resource_module_proxy_value).attr({type: "hidden", id: "event_resource_module_proxy_value", name: "event_resource_module_proxy_value"}).val("no").addClass("resource_type_control");
-                   $(event_resource_module_url_value).attr({type: "hidden", id: "event_resource_module_url_value", name: "event_resource_module_url_value"}).val("http://").addClass("resource_type_control");
-                   $(event_resource_module_title_value).attr({type: "hidden", id: "event_resource_module_title_value", name: "event_resource_module_title_value"}).val("").addClass("resource_type_control");
-                   $(event_resource_module_description_value).attr({type: "hidden", id: "event_resource_module_description_value", name: "event_resource_module_description_value"}).val("").addClass("resource_type_control");
+                    $(event_resource_module_proxy_value).attr({type: "hidden", id: "event_resource_module_proxy_value", name: "event_resource_module_proxy_value"}).val("no").addClass("resource_type_control");
+                    $(event_resource_module_url_value).attr({type: "hidden", id: "event_resource_module_url_value", name: "event_resource_module_url_value"}).val("http://").addClass("resource_type_control");
+                    $(event_resource_module_title_value).attr({type: "hidden", id: "event_resource_module_title_value", name: "event_resource_module_title_value"}).val("").addClass("resource_type_control");
+                    $(event_resource_module_description_value).attr({type: "hidden", id: "event_resource_module_description_value", name: "event_resource_module_description_value"}).val("").addClass("resource_type_control");
 
-                   $("#event_resource_form").append(event_resource_module_proxy_value).append(event_resource_module_url_value).append(event_resource_module_title_value).append(event_resource_module_description_value);
-               }
-            break;
+                    $("#event_resource_form").append(event_resource_module_proxy_value).append(event_resource_module_url_value).append(event_resource_module_title_value).append(event_resource_module_description_value);
+                }
+                break;
             case 8 :
-                
+
                 /**
-                *
-                * Builds the hidden inputs for the quiz controls
-                *
-                */
+                 *
+                 * Builds the hidden inputs for the quiz controls
+                 *
+                 */
 
-               if (!$(".resource_type_control").length) {
-                   var event_resource_quiz_id_value = document.createElement("input");
-                   var event_resource_quiz_title_value = document.createElement("input");
-                   var event_resource_quiz_instructions_value = document.createElement("input");
-                   var event_resource_quiz_attendance_value = document.createElement("input");
-                   var event_resource_quiz_shuffled_value = document.createElement("input");
-                   var event_resource_quiz_time_value = document.createElement("input");
-                   var event_resource_quiz_attempts_value = document.createElement("input");
-                   var event_resource_quiz_results_value = document.createElement("input");
+                if (!$(".resource_type_control").length) {
+                    var event_resource_quiz_id_value = document.createElement("input");
+                    var event_resource_quiz_title_value = document.createElement("input");
+                    var event_resource_quiz_instructions_value = document.createElement("input");
+                    var event_resource_quiz_attendance_value = document.createElement("input");
+                    var event_resource_quiz_shuffled_value = document.createElement("input");
+                    var event_resource_quiz_time_value = document.createElement("input");
+                    var event_resource_quiz_attempts_value = document.createElement("input");
+                    var event_resource_quiz_results_value = document.createElement("input");
 
-                   $(event_resource_quiz_id_value).attr({type: "hidden", id: "event_resource_quiz_id_value", name: "event_resource_quiz_id_value"}).val("").addClass("resource_type_control");
-                   $(event_resource_quiz_title_value).attr({type: "hidden", id: "event_resource_quiz_title_value", name: "event_resource_quiz_title_value"}).val("").addClass("resource_type_control");
-                   $(event_resource_quiz_instructions_value).attr({type: "hidden", id: "event_resource_quiz_instructions_value", name: "event_resource_quiz_instructions_value"}).val("").addClass("resource_type_control");
-                   $(event_resource_quiz_attendance_value).attr({type: "hidden", id: "event_resource_quiz_attendance_value", name: "event_resource_quiz_attendance_value"}).val("no").addClass("resource_type_control");
-                   $(event_resource_quiz_shuffled_value).attr({type: "hidden", id: "event_resource_quiz_shuffled_value", name: "event_resource_quiz_shuffled_value"}).val("no").addClass("resource_type_control");
-                   $(event_resource_quiz_time_value).attr({type: "hidden", id: "event_resource_quiz_time_value", name: "event_resource_quiz_time_value"}).val("0").addClass("resource_type_control");
-                   $(event_resource_quiz_attempts_value).attr({type: "hidden", id: "event_resource_quiz_attempts_value", name: "event_resource_quiz_attempts_value"}).val("0").addClass("resource_type_control");
-                   $(event_resource_quiz_results_value).attr({type: "hidden", id: "event_resource_quiz_results_value", name: "event_resource_quiz_results_value"}).val("immediate").addClass("resource_type_control");
+                    $(event_resource_quiz_id_value).attr({type: "hidden", id: "event_resource_quiz_id_value", name: "event_resource_quiz_id_value"}).val("").addClass("resource_type_control");
+                    $(event_resource_quiz_title_value).attr({type: "hidden", id: "event_resource_quiz_title_value", name: "event_resource_quiz_title_value"}).val("").addClass("resource_type_control");
+                    $(event_resource_quiz_instructions_value).attr({type: "hidden", id: "event_resource_quiz_instructions_value", name: "event_resource_quiz_instructions_value"}).val("").addClass("resource_type_control");
+                    $(event_resource_quiz_attendance_value).attr({type: "hidden", id: "event_resource_quiz_attendance_value", name: "event_resource_quiz_attendance_value"}).val("no").addClass("resource_type_control");
+                    $(event_resource_quiz_shuffled_value).attr({type: "hidden", id: "event_resource_quiz_shuffled_value", name: "event_resource_quiz_shuffled_value"}).val("no").addClass("resource_type_control");
+                    $(event_resource_quiz_time_value).attr({type: "hidden", id: "event_resource_quiz_time_value", name: "event_resource_quiz_time_value"}).val("0").addClass("resource_type_control");
+                    $(event_resource_quiz_attempts_value).attr({type: "hidden", id: "event_resource_quiz_attempts_value", name: "event_resource_quiz_attempts_value"}).val("0").addClass("resource_type_control");
+                    $(event_resource_quiz_results_value).attr({type: "hidden", id: "event_resource_quiz_results_value", name: "event_resource_quiz_results_value"}).val("immediate").addClass("resource_type_control");
 
-                   $("#event_resource_form").append(event_resource_quiz_id_value).append(event_resource_quiz_title_value).append(event_resource_quiz_instructions_value).append(event_resource_quiz_attendance_value).append(event_resource_quiz_shuffled_value).append(event_resource_quiz_time_value).append(event_resource_quiz_attempts_value).append(event_resource_quiz_results_value);
-               }
-            break;
+                    $("#event_resource_form").append(event_resource_quiz_id_value).append(event_resource_quiz_title_value).append(event_resource_quiz_instructions_value).append(event_resource_quiz_attendance_value).append(event_resource_quiz_shuffled_value).append(event_resource_quiz_time_value).append(event_resource_quiz_attempts_value).append(event_resource_quiz_results_value);
+                }
+                break;
             case 9 :
                 /**
-                *
-                * Builds the hidden inputs for the Textbook reading controls
-                *
-                */
+                 *
+                 * Builds the hidden inputs for the Textbook reading controls
+                 *
+                 */
 
-               if (!$(".resource_type_control").length) {
-                   var event_resource_textbook_description_value = document.createElement("input");
-                   $(event_resource_textbook_description_value).attr({type: "hidden", id: "event_resource_textbook_description_value", name: "event_resource_textbook_description_value"}).val("").addClass("resource_type_control");
-                   $("#event_resource_form").append(event_resource_textbook_description_value);
-               }
-            break;
+                if (!$(".resource_type_control").length) {
+                    var event_resource_textbook_description_value = document.createElement("input");
+                    $(event_resource_textbook_description_value).attr({type: "hidden", id: "event_resource_textbook_description_value", name: "event_resource_textbook_description_value"}).val("").addClass("resource_type_control");
+                    $("#event_resource_form").append(event_resource_textbook_description_value);
+                }
+                break;
             case 10 :
                 /**
-                *
-                * Builds the hidden inputs for each link control
-                *
-                */
+                 *
+                 * Builds the hidden inputs for each link control
+                 *
+                 */
 
-               if (!$(".resource_type_control").length) {
-                   var event_resource_lti_title_value = document.createElement("input");
-                   var event_resource_lti_description_value = document.createElement("input");
-                   var event_resource_lti_url_value = document.createElement("input");
-                   var event_resource_lti_key_value = document.createElement("input");
-                   var event_resource_lti_secret_value = document.createElement("input");
-                   var event_resource_lti_parameters_value = document.createElement("input");
+                if (!$(".resource_type_control").length) {
+                    var event_resource_lti_title_value = document.createElement("input");
+                    var event_resource_lti_description_value = document.createElement("input");
+                    var event_resource_lti_url_value = document.createElement("input");
+                    var event_resource_lti_key_value = document.createElement("input");
+                    var event_resource_lti_secret_value = document.createElement("input");
+                    var event_resource_lti_parameters_value = document.createElement("input");
 
-                   $(event_resource_lti_title_value).attr({type: "hidden", id: "event_resource_lti_title_value", name: "event_resource_lti_title_value"}).val("").addClass("resource_type_control");
-                   $(event_resource_lti_description_value).attr({type: "hidden", id: "event_resource_lti_description_value", name: "event_resource_lti_description_value"}).val("").addClass("resource_type_control");
-                   $(event_resource_lti_url_value).attr({type: "hidden", id: "event_resource_lti_url_value", name: "event_resource_lti_url_value"}).val("http://").addClass("resource_type_control");
-                   $(event_resource_lti_key_value).attr({type: "hidden", id: "event_resource_lti_key_value", name: "event_resource_lti_key_value"}).val("").addClass("resource_type_control");
-                   $(event_resource_lti_secret_value).attr({type: "hidden", id: "event_resource_lti_secret_value", name: "event_resource_lti_secret_value"}).val("").addClass("resource_type_control");
-                   $(event_resource_lti_parameters_value).attr({type: "hidden", id: "event_resource_lti_parameters_value", name: "event_resource_lti_parameters_value"}).val("").addClass("resource_type_control");
+                    $(event_resource_lti_title_value).attr({type: "hidden", id: "event_resource_lti_title_value", name: "event_resource_lti_title_value"}).val("").addClass("resource_type_control");
+                    $(event_resource_lti_description_value).attr({type: "hidden", id: "event_resource_lti_description_value", name: "event_resource_lti_description_value"}).val("").addClass("resource_type_control");
+                    $(event_resource_lti_url_value).attr({type: "hidden", id: "event_resource_lti_url_value", name: "event_resource_lti_url_value"}).val("http://").addClass("resource_type_control");
+                    $(event_resource_lti_key_value).attr({type: "hidden", id: "event_resource_lti_key_value", name: "event_resource_lti_key_value"}).val("").addClass("resource_type_control");
+                    $(event_resource_lti_secret_value).attr({type: "hidden", id: "event_resource_lti_secret_value", name: "event_resource_lti_secret_value"}).val("").addClass("resource_type_control");
+                    $(event_resource_lti_parameters_value).attr({type: "hidden", id: "event_resource_lti_parameters_value", name: "event_resource_lti_parameters_value"}).val("").addClass("resource_type_control");
 
                    $("#event_resource_form").append(event_resource_lti_title_value).append(event_resource_lti_description_value).append(event_resource_lti_url_value).append(event_resource_lti_key_value).append(event_resource_lti_secret_value).append(event_resource_lti_parameters_value);
                }
+            case 13 :
+                if (!$(".resource_type_control").length) {
+                    var event_resource_module_form_id = $(document.createElement("input")).attr({
+                        type: "hidden", id: "event_resource_module_form_id", name: "event_resource_module_form_id"
+                    }).val("").addClass("resource_type_control");
+
+                    $("#event_resource_form").append(event_resource_module_form_id);
+                }
             break;
         }
     }
-    
-    function upload_file (file) {  
+
+    function upload_file (file) {
         var selected_resource = parseInt(resource_type_value_control.val());
         var xhr = new XMLHttpRequest();
         var fd = new FormData();
@@ -2486,10 +2777,10 @@ jQuery(document).ready(function ($) {
                     case "video/mp4" :
                     case "video/avi" :
                         valid_file_type = true;
-                    break;
+                        break;
 
                 }
-            break;
+                break;
             case 5 :
             case 6 :
             case 11 :
@@ -2521,9 +2812,9 @@ jQuery(document).ready(function ($) {
                     case "text/plain" :
                     case "text/richtext" :
                         valid_file_type = true;
-                    break;
+                        break;
                 }
-            break;
+                break;
         }
 
         if (file_size <= 300000000) {
@@ -2531,7 +2822,7 @@ jQuery(document).ready(function ($) {
             $("#event_resource_loading_msg").html("Uploading file, this may take a few moments.");
             $("#event_resource_form").addClass("hide");
             $("#event_resource_loading").removeClass("hide");
-            
+
             fd.append("file", file);
             fd.append("method", "add");
             fd.append("event_id", $("#event_id").val());
@@ -2540,6 +2831,7 @@ jQuery(document).ready(function ($) {
             fd.append("event_resource_required_value", resource_required_value_control.val());
             fd.append("event_resource_timeframe_value", resource_timeframe_value_control.val());
             fd.append("event_resource_release_value", resource_release_value_control.val());
+            fd.append("event_resource_draft_value", resource_draft_value_control.val());
             fd.append("event_resource_release_start_value", resource_release_start_control.val());
             fd.append("event_resource_release_start_time_value", resource_release_start_time_control.val());
             fd.append("event_resource_release_finish_value", resource_release_finish_control.val());
@@ -2554,7 +2846,7 @@ jQuery(document).ready(function ($) {
             fd.append("resource_id", event_resource_id_value.val());
             fd.append("event_resource_entity_id", $("#event_resource_entity_id").val());
 
-            xhr.open('POST', SITE_URL + "/admin/events?section=api-resource-wizard", true);		
+            xhr.open('POST', SITE_URL + "/admin/events?section=api-resource-wizard", true);
             xhr.send(fd);
 
             xhr.onreadystatechange = function() {

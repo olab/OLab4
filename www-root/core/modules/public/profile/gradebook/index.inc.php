@@ -69,38 +69,45 @@ if (isset($_GET["so"])) {
  */
 switch ($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["gradebook"]["sb"]) {
 	case "title" :
-		$sort_by = "a.`course_name` ".strtoupper($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["gradebook"]["so"]);
+		$sort_by = "`courses`.`course_name` ".strtoupper($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["gradebook"]["so"]);
 	break;
 	case "assessments" :
 		$sort_by = "`assessments` ".strtoupper($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["gradebook"]["so"]);
 	break;
 	case "code" :
 	default :
-		$sort_by = "a.`course_code` ".strtoupper($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["gradebook"]["so"]);
+		$sort_by = "`courses`.`course_code` ".strtoupper($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["gradebook"]["so"]);
 	break;
 }
 
-$group_ids = groups_get_enrolled_group_ids($ENTRADA_USER->getId());
-if ($group_ids) {
-    $group_ids_string = implode(', ', $group_ids);
-} else {
-    $group_ids_string = "";
-}
+$proxy_id = $ENTRADA_USER->getId();
 
-if ($group_ids_string) {
-    $query = "SELECT a.*, COUNT(b.`assessment_id`) AS `assessments`
-                FROM `courses` AS a
-                JOIN `assessments` AS b
-                ON a.`course_id` = b.`course_id`
-                AND b.`active` = 1
-                AND b.`cohort` IN (" . $group_ids_string . ")
-                AND (b.`release_date` = '0' OR b.`release_date` <= " . $db->qstr(time()) . ")
-                AND (b.`release_until` = '0' OR b.`release_until` > " . $db->qstr(time()) . ")
-                AND b.`show_learner` = '1'
-                JOIN `assessment_grades` AS c
-                ON b.`assessment_id` = c.`assessment_id`
-                AND c.`proxy_id` = " . $db->qstr($ENTRADA_USER->getID()) . "
-                GROUP BY a.`course_id`
+if ($proxy_id) {
+    $query = "  SELECT `courses`.*, COUNT(`assessments`.`assessment_id`) AS `assessments`, cp.`cperiod_id`
+                FROM `courses` AS `courses`
+                LEFT JOIN `assessments` AS `assessments`
+                ON `courses`.`course_id` = `assessments`.`course_id`
+                LEFT JOIN `course_audience` AS `course_a`
+                ON `course_a`.`course_id` = `courses`.`course_id`
+                AND `course_a`.`audience_active` = 1
+                LEFT JOIN `groups` AS `g`
+                ON `course_a`.`audience_type` = 'group_id'
+                AND `course_a`.`audience_value` = `g`.`group_id`
+                LEFT JOIN `group_members` AS `gm`
+                ON `gm`.`group_id` = `g`.`group_id`
+                LEFT JOIN `curriculum_periods` AS `cp`
+                ON `course_a`.`cperiod_id` = `cp`.`cperiod_id`
+                WHERE `assessments`.`cperiod_id` = `cp`.`cperiod_id`
+                AND `assessments`.`active` = 1
+                AND `courses`.`course_active` = 1
+                AND `assessments`.`show_learner` = 1
+                AND (`assessments`.`release_date` = 0 OR `assessments`.`release_date` <= " . $db->qstr(time()) . ")
+                AND (`assessments`.`release_until` = 0 OR `assessments`.`release_until` > " . $db->qstr(time()) . ")
+                AND (
+                      (`course_a`.`audience_value` = " . $db->qstr($proxy_id) . " AND `course_a`.`audience_type` = 'proxy_id') 
+                        OR (`gm`.`proxy_id`= " . $db->qstr($proxy_id) . " AND `course_a`.`audience_type` = 'group_id')
+                    )
+                GROUP BY `courses`.`course_id`
                 ORDER BY " . $sort_by;
     $results = $db->GetAll($query);
     if ($results) {
@@ -129,7 +136,7 @@ if ($group_ids_string) {
                 echo "  <td" . ((!$result["course_active"]) ? " class=\"disabled\"" : "") . "><a href=\"" . ENTRADA_URL . "/" . $MODULE . "/gradebook?section=view&amp;id=" . $result["course_id"] . "\">" . ($result["assessments"]) . "</a></td>\n";
                 if (defined("GRADEBOOK_DISPLAY_WEIGHTED_TOTAL") && GRADEBOOK_DISPLAY_WEIGHTED_TOTAL) {
                     echo "<td>";
-                    $gradebook = gradebook_get_weighted_grades($result["course_id"], $ENTRADA_USER->getCohort(), $ENTRADA_USER->getID());
+                    $gradebook = gradebook_get_weighted_grades($result["course_id"], $result["cperiod_id"], $ENTRADA_USER->getID());
                     if ($gradebook) {
                         echo round(trim($gradebook["grade"]), 2) . " / " . trim($gradebook["total"]) . "</td>\n";
                     } else {

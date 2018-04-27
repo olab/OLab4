@@ -1,0 +1,160 @@
+thead h3 {
+    line-height: 24px;
+}
+.odd-row {
+    background-color: #ffffff;
+}
+
+.even-row {
+    background-color: #f9f9f9;
+}
+
+.scale-item {
+    background:#fff;
+    padding:10px 20px;
+    margin:10px 0px;
+    border:1px solid rgba(0, 0, 0, 0.075);
+    border-radius:5px;
+}
+
+.scale-response {
+    vertical-align: top;
+}
+
+.scale-actions {
+    vertical-align: top;
+    text-align: right;
+}
+
+.scale-response input {
+    margin-bottom: 10px;
+}
+
+.sortable-placeholder {
+    border: 1px solid red;
+    background-color: lightgoldenrodyellow;
+}
+
+tr.scale-controls td {
+    background-color: #EFEFEF;
+    border-top: 1px solid #DDDDDD;
+}
+
+.sortable-scale-item {
+    background-color: #FFFFFF;
+}
+
+.ind-drag.sortable-scale-item {
+    padding-left: 20px !important;
+    background-color: white;
+}
+
+.drag {
+    border-radius:2px;
+    padding:5px;
+    column-rule: #777777;
+    font-size: 10px
+}
+
+table tr.scale-response-input td label {
+    display: block;
+    min-height: 100%; /* for the latest browsers which support min-height */
+    height: auto !important; /* for newer IE versions */
+    height: 100%; /* the only height-related attribute that IE6 does not ignore  */
+    margin-bottom:0;
+    text-align: center;
+    padding:10px 10px 10px 10px;
+}
+
+table tr.scale-response-input td {
+    text-align: center;
+}
+
+.scale-table tbody.ui-state-default {
+
+}
+.scale-table tbody.ui-state-default:first-child {
+    border-top: 0;
+}
+.scale-table tbody.ui-state-default:last-child {
+    border-bottom: 0;
+}
+
+table.scale-table .btn-group {
+    margin: 2px 2px 2px 0;
+}
+
+table.scale-table .btn {
+    background: #fff;
+    background-image: none;
+    border: 1px solid #efefef;
+    box-shadow: none;
+    padding: 4px 9px 5px 9px;
+    text-shadow: none;
+}
+
+table.scale-table .btn.active, table.scale-table .btn.active:hover {
+    background: #00a8bc;
+}
+
+table.scale-table .btn:hover {
+    background: #f9f9f9;
+}
+
+.btn-search-filter {
+    border-radius: 0 4px 4px 0 !important;
+}
+
+.category-editable {
+    position: relative;
+    height: 85px;
+}
+
+.category-editable select {
+    width: 110px;
+    margin-bottom: 8px;
+    display: none;
+}
+
+.category-loading{
+    position: absolute;
+    margin: auto;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+}
+.icon-category-pencil {
+    position: absolute;
+    top: 3px;
+    right: 5px;
+    cursor: pointer;
+}
+.btn-category-remove{
+    padding: 4px 6px !important;
+    min-width:40px;
+    margin: 1px 2px;
+}
+.btn-category-ok{
+    padding: 4px 6px !important;
+    background-color: #5bb75b !important;
+    color: #fff;
+    min-width:40px;
+    margin: 1px 2px;
+    border-color: #51A151 !important;
+}
+
+.btn-category-ok:hover{
+    color: #fff !important;
+    background-color: #51A151 !important;
+}
+
+#item-form .btn-search-filter {
+    min-width: 200px;
+    text-align: left;
+}
+
+#response-table tr td:nth-child(1),
+#response-table tr td:nth-child(2) {
+    text-align: left;
+}

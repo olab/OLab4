@@ -206,7 +206,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_REPORTS"))) {
 		
 		echo "<h1>Teaching Faculty Contact Details</h1>";
 		echo "<div class=\"content-small\" style=\"margin-bottom: 10px\">\n";
-		echo "	<strong>Date Range:</strong> ".date(DEFAULT_DATE_FORMAT, $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_start"])." <strong>to</strong> ".date(DEFAULT_DATE_FORMAT, $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_finish"]).".";
+		echo "	<strong>Date Range:</strong> ".date(DEFAULT_DATETIME_FORMAT, $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_start"])." <strong>to</strong> ".date(DEFAULT_DATETIME_FORMAT, $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_finish"]).".";
 		echo "</div>\n";
 
 		$organisation_where = " AND (b.`organisation_id` = ".$ENTRADA_USER->getActiveOrganisation().") ";

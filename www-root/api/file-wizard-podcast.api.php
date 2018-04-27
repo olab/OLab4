@@ -124,8 +124,8 @@ if((!isset($_SESSION["isAuthorized"])) || (!(bool) $_SESSION["isAuthorized"])) {
 						if(isset($_FILES["filename"])) {
 							switch($_FILES["filename"]["error"]) {
 								case 0 :
-									if(@in_array(strtolower(trim($_FILES["filename"]["type"])), $VALID_PODCASTS)) {
-										$PROCESSED["file_type"]		= trim($_FILES["filename"]["type"]);
+									if(@in_array(mime_content_type($_FILES["filename"]["tmp_name"]), $VALID_PODCASTS)) {
+										$PROCESSED["file_type"]		= mime_content_type($_FILES["filename"]["tmp_name"]);
 										$PROCESSED["file_size"]		= (int) trim($_FILES["filename"]["size"]);
 										$PROCESSED["file_name"]		= useable_filename(trim($_FILES["filename"]["name"]));
 
@@ -135,7 +135,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!(bool) $_SESSION["isAuthorized"])) {
 											$PROCESSED["file_title"]	= $PROCESSED["file_name"];
 										}
 									} else {
-										$modal_onload[]		= "alert('The podcast file that uploaded does not appear to be a valid podcast file.\\n\\nPlease make sure you upload an MP3, MP4, M4A, MOV or PDF document.".trim($_FILES["filename"]["type"])."')";
+										$modal_onload[]		= "alert('The podcast file that uploaded does not appear to be a valid podcast file.\\n\\nPlease make sure you upload an MP3, MP4, M4A, MOV or PDF document.".mime_content_type($_FILES["filename"]["tmp_name"])."')";
 
 										$ERROR++;
 										$ERRORSTR[]		= "q1";

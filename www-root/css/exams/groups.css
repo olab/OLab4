@@ -81,6 +81,9 @@ table.group-table .btn.active, table.group-table .btn.active:hover {
     background: #00a8bc;
 }
 
+.btn-search-filter {
+    border-radius: 0 4px 4px 0 !important;
+}
 
 li.permission-error {
     color: red;

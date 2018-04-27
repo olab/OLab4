@@ -424,7 +424,7 @@ if ($RECORD_ID) {
                                                 </colgroup>
                                                 <tr>
                                                     <td><input id="community-all-checkbox" class="permission-type-checkbox" type="radio" name="permission_acl_style" value="CourseCommunityEnrollment" <?php if ($permission_db['assertion'] == 'CourseCommunityEnrollment') { echo "checked='checked'"; } ?> /></td>
-                                                    <td><label for="community-all-checkbox" class="content-small">All Community Members</label></td>
+                                                    <td><label for="community-all-checkbox" class="content-small"><?php echo $translate->_("All Community Members"); ?></label></td>
                                                 </tr>
                                                 <tr>
                                                     <td><input id="course-group-checkbox" class="permission-type-checkbox" type="radio" name="permission_acl_style" value="CourseGroupMember" <?php if ($permission_db['assertion'] == 'CourseGroupMember') { echo "checked='checked'"; } ?>/></td>
@@ -584,7 +584,7 @@ if ($RECORD_ID) {
                                             <tbody>
                                                 <tr>
                                                     <td class="left">
-                                                        <strong>Community Administrators</strong>
+                                                        <strong><?php echo $translate->_("Community Administrators"); ?></strong>
                                                     </td>
                                                     <td class="on">
                                                         <input type="checkbox" id="allow_admin_read" name="allow_admin_read" value="1" checked="checked" onclick="this.checked = true" />
@@ -595,7 +595,7 @@ if ($RECORD_ID) {
                                                 </tr>
                                                 <tr>
                                                     <td class="left">
-                                                        <strong>Community Members</strong>
+                                                        <strong><?php echo $translate->_("Community Members"); ?></strong>
                                                     </td>
                                                     <td class="on">
                                                         <input type="checkbox" id="allow_member_read" name="allow_member_read" value="1"<?php echo (((!isset($PROCESSED["allow_member_read"])) || ((isset($PROCESSED["allow_member_read"])) && ($PROCESSED["allow_member_read"] == 1))) ? " checked=\"checked\"" : ""); ?> />
@@ -659,7 +659,7 @@ if ($RECORD_ID) {
 			}
 		} else {
 			$NOTICE++;
-			$NOTICESTR[] = "The file that you are trying to edit was deactivated <strong>".date(DEFAULT_DATE_FORMAT, $file_record["updated_date"])."</strong> by <strong>".html_encode(get_account_data("firstlast", $file_record["updated_by"]))."</strong>.<br /><br />If there has been a mistake or you have questions relating to this issue please contact the MEdTech Unit directly.";
+			$NOTICESTR[] = "The file that you are trying to edit was deactivated <strong>".date(DEFAULT_DATETIME_FORMAT, $file_record["updated_date"])."</strong> by <strong>".html_encode(get_account_data("firstlast", $file_record["updated_by"]))."</strong>.<br /><br />If there has been a mistake or you have questions relating to this issue please contact the MEdTech Unit directly.";
 
 			echo display_notice();
 

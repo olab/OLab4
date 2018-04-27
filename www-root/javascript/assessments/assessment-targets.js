@@ -1,4 +1,5 @@
 jQuery(document).ready(function ($) {
+    /*
     $("#targets-pending-btn").on("click", function (e) {
         $(".targets-container").addClass("hide");
         $("#targets-pending-container").removeClass("hide");
@@ -27,9 +28,29 @@ jQuery(document).ready(function ($) {
 
         save_preferences();
         e.preventDefault();
-    });
+    }); */
 
-    $("#target-search-input").on("keyup", function () {
+    $(".target-status-btn").on("click", function (e) {
+        var target = $(this).data("target-status");
+        var event_id = $(this).closest(".event-div").data("event-id");
+
+        if (parseInt(event_id) > 0) {
+            $("#event-" + event_id).find(".targets-container").addClass("hide");
+            $("#targets-" + target + "-container").removeClass("hide");
+            $("#event-" + event_id).find(".target-status-btn").removeClass("active");
+            $(this).addClass("active");
+        } else {
+            $(".targets-container").addClass("hide");
+            $("#targets-" + target + "-container").removeClass("hide");
+            $(".target-status-btn").removeClass("active");
+            $(this).addClass("active");
+        }
+
+        save_preferences();
+        e.preventDefault();
+    })
+
+    $(".target-search-input").on("keyup", function () {
         var show_no_targets_message = true;
         if ($("#delegation-progress-mode").length) {
             show_no_targets_message = $("#delegation-progress-mode").val();
@@ -147,9 +168,10 @@ jQuery(document).ready(function ($) {
         var selected_target_status = $(".target-status-btn.active").attr("data-target-status");
         var selected_view = $(".view-toggle.active").attr("data-view");
 
+
         var preference_request = $.ajax({
             url: ENTRADA_URL + "/assessments/assessment?section=api-assessment",
-            data: "method=save-view-preferences&distribution_id="+ distribution_id +"&target_status_view=" + selected_target_status + "&view=" + selected_view,
+            data: "method=save-view-preferences&target_status_view=" + selected_target_status + "&view=" + selected_view,
             type: "POST"
         });
 

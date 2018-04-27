@@ -365,7 +365,7 @@ switch($ACTION) {
 
 				$description .= "Cohort: ".html_encode(groups_get_name($result["event_cohort"]))."<br />";
 				$description .= "Phase: ".strtoupper($result["event_phase"])."<br />";
-				$description .= "Event Date/Time: ".date(DEFAULT_DATE_FORMAT, $result["event_start"])."<br />";
+				$description .= "Event Date/Time: ".date(DEFAULT_DATETIME_FORMAT, $result["event_start"])."<br />";
 				$description .= "Event Duration: ".(($result["event_duration"]) ? $result["event_duration"]." minutes" : "Not provided")."<br />";
 				$description .= "Event Location: ".(($result["event_location"]) ? $result["event_location"] : "Not provided")."<br />";
 				$description .= "<br />Podcast Description / Details:<br />";

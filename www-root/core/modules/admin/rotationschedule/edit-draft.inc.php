@@ -35,26 +35,28 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ROTATION_SCHEDULE"))) {
     application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] do not have access to this module [".$MODULE."]");
 } else {
 
+    $draft = false;
     if (isset($_GET["draft_id"]) && $tmp_input = clean_input($_GET["draft_id"])) {
         $PROCESSED["draft_id"] = $tmp_input;
+        $draft = Models_Schedule_Draft::fetchRowByID($PROCESSED["draft_id"]);
     }
 
     $SECTION_TEXT = $MODULE_TEXT[$SECTION];
     define("EDIT_DRAFT", true);
 
-    if ($PROCESSED["draft_id"]) {
-        $draft = Models_Schedule_Draft::fetchRowByID($PROCESSED["draft_id"]);
+    if ($draft) {
         ?>
         <h1><?php echo ($draft->getStatus() == "live" ? $translate->_("Edit Rotation Schedule") : $translate->_("Edit Draft Rotation Schedule")); ?></h1>
         <?php
         $draft_authors  = Models_Schedule_Draft_Author::fetchAllByDraftID($PROCESSED["draft_id"]);
-
-        $is_author = false;
-        if (Models_Schedule_Draft_Author::isAuthor($draft->getID(), $ENTRADA_USER->getActiveID())) {
-            $is_author = true;
-        }
-
-        if ($is_author) {
+        $is_author = Entrada_Utilities_ScheduleAuthor::isAuthor(
+            $ENTRADA_USER->getActiveId(),
+            $ENTRADA_USER->getActiveOrganisation(),
+            $draft->getCourseID(),
+            $draft->getID()
+        );
+        $is_admin = Entrada_Utilities::isCurrentUserSuperAdmin(array(array("resource" => "assessmentreportadmin")));
+        if ($is_author || $is_admin) {
             if ($draft->getStatus() == "draft") {
                 $BREADCRUMB[] = array("url" => ENTRADA_URL . "/admin/" . $MODULE . "?section=drafts", "title" => $translate->_("My Drafts"));
             }

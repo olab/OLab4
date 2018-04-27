@@ -27,7 +27,7 @@ class Models_Quiz_Attached extends Models_Base {
     protected $aquiz_id, $content_type, $content_id, $required, $require_attendance, 
               $random_order, $timeframe, $quiz_id, $quiz_title, $quiz_notes, 
               $quiztype_id, $quiz_timeout, $quiz_attempts, $accesses, $release_date, 
-              $release_until, $updated_date, $updated_by;
+              $release_until, $updated_date, $updated_by, $draft;
     
     protected static $table_name = "attached_quizzes";
     protected static $default_sort_column = "aquiz_id";
@@ -111,6 +111,10 @@ class Models_Quiz_Attached extends Models_Base {
 
     public function getUpdatedBy() {
         return $this->updated_by;
+    }
+
+    public function getDraft() {
+        return $this->draft;
     }
 
     /* @return bool|Models_Quiz_Attached */

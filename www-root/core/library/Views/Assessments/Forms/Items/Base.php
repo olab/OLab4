@@ -33,6 +33,7 @@ class Views_Assessments_Forms_Items_Base extends Views_Assessments_Forms_Base {
     protected $progress       = array();    // Progress record information for the responses (includes related progress_response data)
     protected $tags           = array();    // Any associated tags for this item
     protected $header_html    = null;       // Optional header HTML for the item (not always visible)
+    protected $draw_overlay   = false;      // Draw an optional gray overlay that renders the entire item as disabled
 
     protected function validateOptions($options = array()) {
         $this->setFormElementData($options);
@@ -70,6 +71,9 @@ class Views_Assessments_Forms_Items_Base extends Views_Assessments_Forms_Base {
                     break;
                 case "element":
                     $this->element = $option;
+                    break;
+                case "draw_overlay":
+                    $this->draw_overlay = $option;
                     break;
             }
         }
@@ -120,6 +124,7 @@ class Views_Assessments_Forms_Items_Base extends Views_Assessments_Forms_Base {
                             <div class="btn-group">
                                 <a href="<?php echo $url ?>" title="<?php echo $translate->_("Edit Item"); ?>" class="btn edit-item"><i class="icon-pencil"></i></a>
                                 <a href="#" title="<?php echo $translate->_("View Item Details"); ?>" class="btn item-details"><i class="icon-eye-open"></i></a>
+                                <a class="btn always-enabled" id="move-form-item" title="<?php echo $translate->_("Move"); ?>"><i class="icon-move"></i></a>
                             </div>
                         <?php else: ?>
                             <div class="btn-group">
@@ -132,7 +137,7 @@ class Views_Assessments_Forms_Items_Base extends Views_Assessments_Forms_Base {
         <?php endif; ?>
         <tr class="heading">
             <td colspan="<?php echo $this->response_count ?>">
-                <h3><?php echo html_encode($this->item["item_text"]) ?></h3>
+                <h3><?php echo html_decode($this->item["item_text"]) ?></h3>
             </td>
         </tr>
         <?php
@@ -140,14 +145,46 @@ class Views_Assessments_Forms_Items_Base extends Views_Assessments_Forms_Base {
 
     /**
      * Build the comments window, based on the element it is associated with.
-
      */
-    protected function buildItemComments () {
+    protected function buildItemComments($options = array()) {
         global $translate;
+
+        $disabled_text = "disabled='true'";
+        $placeholder_text = sprintf("placeholder=\"%s\"", html_encode($translate->_("Please select a response before adding a comment.")));
+        $default_response = null;
+        if ($this->item["allow_default"] && $this->item["default_response"]) {
+            $default_response = $this->item["default_response"]; // default_response is the response order (i.e., the nth item is the default response)
+        }
+        $selected_response = $default_response; // null or the default order
+        $response_number = 0;
+        foreach ($this->responses as $response) {
+            $response_number++;
+            if ($response["is_selected"]) {
+                $selected_response = $response_number;
+                $placeholder_text = "";
+            }
+        }
+        if ($selected_response) {
+            // There's a selected response, be it a default or an actual selection, so allow the comments to be editable
+            $disabled_text = "";
+        }
+        if ($this->disabled) {
+            // Always show as disabled if flag is set, regardless of other logic.
+            $disabled_text = "disabled='true'";
+            $placeholder_text = "";
+        }
+        if ($this->mode == "editor" || $this->mode == "editor-readonly") {
+            $placeholder_text = ""; // no placeholder when in editor mode
+        }
+        if ($selected_response) {
+            $placeholder_text = ""; // no need for a placeholder when a response is selected.
+        }
         if (!empty($this->item) && $this->item["render_comment_container"]) {
-            $data_afelement_id_text = $this->item["comment_related_afelement_id"] ? "data-afelement-id=\"{$this->item["comment_related_afelement_id"]}\"" : "";
+            $data_afelement_id_text = $this->item["comment_related_afelement_id"] ?
+                "data-afelement-id=\"{$this->item["comment_related_afelement_id"]}\"" :
+                "";
             ?>
-            <tr class="heading <?php echo $this->item["comment_container_visible"] ? "" : "hide"; ?>" id="<?php echo "item-{$this->item["item_id"]}-comments-header"; ?>">
+            <tr class="heading item-comment <?php echo $this->item["comment_container_visible"] ? "" : "hide"; ?>" id="<?php echo "item-{$this->item["item_id"]}-comments-header"; ?>">
                 <td colspan="<?php echo $this->response_count; ?>">
                     <?php
                     switch ($this->item["comment_type"]) {
@@ -169,11 +206,17 @@ class Views_Assessments_Forms_Items_Base extends Views_Assessments_Forms_Base {
             </tr>
             <tr id="<?php echo "item-{$this->item["item_id"]}-comments-block" ?>" class="item-response-view item-comment <?php echo $this->item["comment_container_visible"] ? "" : "hide" ?>">
                 <td class="item-type-control" colspan="<?php echo $this->response_count ?>">
-                    <textarea title="<?php echo $translate->_("Comment") ?>"
-                              class="expandable <?php echo $this->disabled ? "disabled" : ""; ?>"
-                              id="<?php echo "item-{$this->item["item_id"]}-comments" ?>"
-                              name="<?php echo "item-{$this->item["item_id"]}-comments" ?>"
-                        <?php echo $data_afelement_id_text ?>><?php echo html_encode($this->item["item_comment_text"]) ?></textarea>
+                    <?php if ($this->getMode() == "pdf"): ?>
+                        <p class="text-left"><?php echo nl2br(html_decode($this->item["item_comment_text"])); ?></p>
+                    <?php else: ?>
+                        <textarea title="<?php echo $translate->_("Comment") ?>"
+                                  class="expandable <?php echo $this->disabled ? "disabled" : ""; ?>"
+                                  id="<?php echo "item-{$this->item["item_id"]}-comments" ?>"
+                                  name="<?php echo "item-{$this->item["item_id"]}-comments" ?>"
+                                  <?php echo $placeholder_text ?>
+                                  <?php echo $data_afelement_id_text ?>
+                                  <?php echo $disabled_text ?>><?php echo html_decode($this->item["item_comment_text"]) ?></textarea>
+                    <?php endif; ?>
                 </td>
             </tr>
             <?php
@@ -194,7 +237,7 @@ class Views_Assessments_Forms_Items_Base extends Views_Assessments_Forms_Base {
                         <?php if ($this->tags): ?>
                             <?php foreach ($this->tags as $tag): ?>
                                 <span>
-                                    <a href="#"><?php echo html_encode($tag["tag"]); ?></a>
+                                    <a href="#"><?php echo html_decode($tag["tag"]); ?></a>
                                 </span>
                             <?php endforeach; ?>
                         <?php else: ?>
@@ -202,7 +245,7 @@ class Views_Assessments_Forms_Items_Base extends Views_Assessments_Forms_Base {
                         <?php endif; ?>
                     </div>
                     <ul>
-                        <li>
+                        <li class="pull-left">
                             <?php
                                 switch ($this->item["comment_type"]) {
                                     case "optional" :
@@ -230,5 +273,11 @@ class Views_Assessments_Forms_Items_Base extends Views_Assessments_Forms_Base {
             </td>
         </tr>
         <?php
+    }
+
+    protected function buildItemDisabledOverlay() {
+        if ($this->draw_overlay) : ?>
+        <div class="assessment-item-disabled-overlay"></div>
+        <?php endif;
     }
 }

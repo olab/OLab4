@@ -36,7 +36,11 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 
 	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] do not have access to this module [".$MODULE."]");
 } else {
-	$CLINICAL_ACTIVITY_ID = $_GET["rid"];
+    if (isset($_GET["rid"]) && (int) $_GET["rid"]) {
+        $CLINICAL_ACTIVITY_ID = clean_input($_GET["rid"], "int");
+    } else {
+        $CLINICAL_ACTIVITY_ID = 0;
+    }
 	
 	// This grid should be expanded upon redirecting back to the clinical index.
 	$_SESSION["clinical_expand_grid"] = "clinical_grid";
@@ -172,8 +176,8 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 				default :
 					if(!isset($PROCESSED) || count($PROCESSED) <= 0)
 					{
-						$clinicalQuery = "SELECT * FROM `ar_clinical_activity` WHERE `clinical_activity_id` ='$CLINICAL_ACTIVITY_ID'";						
-						$clinicalResult = $db->GetRow($clinicalQuery);
+						$clinicalQuery = "SELECT * FROM `ar_clinical_activity` WHERE `clinical_activity_id` = ?";
+						$clinicalResult = $db->GetRow($clinicalQuery, array($CLINICAL_ACTIVITY_ID));
 					}
 					
 					if($ERROR) {

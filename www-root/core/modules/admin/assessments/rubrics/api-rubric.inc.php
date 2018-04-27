@@ -64,6 +64,53 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
     switch ($request_method) {
         case "POST" :
             switch ($request["method"]) {
+                case "update-rubric-scale":
+                    // Validate posted scale identifier. Can be null or 0 -- allows removing the scale ID from the item
+                    $rating_scale_id = null;
+                    if (isset($request["rating_scale_id"]) && $tmp_input = clean_input($request["rating_scale_id"], "int")) {
+                        $rating_scale_id = $tmp_input;
+                    }
+
+                    if (isset($_POST["rref"]) && $tmp_input = clean_input($_POST["rref"], array("trim", "striptags"))) {
+                        $PROCESSED["rref"] = $tmp_input;
+                    } else {
+                        add_error($translate->_("Invalid Rubric Reference identifier provided."));
+                    }
+
+                    $rubric_referrer_data = Entrada_Utilities_FormStorageSessionHelper::fetch($PROCESSED["rref"]);
+                    if (!isset($rubric_referrer_data["rubric_id"]) || ! $rubric_referrer_data["rubric_id"]) {
+                        add_error($translate->_("Failed to retrieve rubric ID from referrer"));
+                    }
+
+                    if (!$ERROR) {
+                        $forms_api->setRubricID($rubric_referrer_data["rubric_id"]);
+                        $rubric_data = $forms_api->fetchRubricData();
+                        $rubric_data["rubric"]["rating_scale_id"] = $rating_scale_id;
+                        $forms_api->saveRubric(
+                            $rubric_data["rubric"]["rubric_title"],
+                            $rubric_data["rubric"]["rubric_description"],
+                            $rubric_data["rubric"]["rubric_item_code"],
+                            $rating_scale_id
+                        );
+                        // After updating, re-fetch the updated dataset
+                        $forms_api->clearInternalStorage();
+                        $rubric_data = $forms_api->fetchRubricData();
+
+                        // Add all related rubric referrer data
+                        Entrada_Utilities_FormStorageSessionHelper::addRubricReferrerData(
+                            $rubric_referrer_data["rubric_id"],
+                            $rubric_data,
+                            Entrada_Utilities_FormStorageSessionHelper::buildRefURL(ENTRADA_URL."/admin/assessments/rubrics?section=edit-rubric&rubric_id={$rubric_referrer_data["rubric_id"]}", null, $PROCESSED["rref"])
+                        );
+                    }
+
+                    if ($ERROR) {
+                        echo json_encode(array("status" => "error", "data" => $translate->_("Failed to update Grouped Item scale.")));
+                    } else {
+                        echo json_encode(array("status" => "success"));
+                    }
+                    break;
+
                 case "copy-attach-rubric":
                     // Ensure that a new rubric title was entered
                     if (isset($_POST["new_rubric_title"]) && $tmp_input = clean_input($_POST["new_rubric_title"], array("trim", "striptags"))) {
@@ -142,6 +189,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                     }
                     break;
                 case "create-attach-rubric" :
+
                     // Check for ref attribute.
                     if (isset($_POST["fref"]) && $tmp_input = clean_input($_POST["fref"], array("trim", "alphanumeric"))) {
                         $PROCESSED["fref"] = $tmp_input;
@@ -163,6 +211,12 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                         add_error($translate->_("Invalid form identifier provided."));
                     }
 
+
+                    $PROCESSED["rating_scale_id"] = null;
+                    if (isset($request["rating_scale_id"]) && $tmp_input = clean_input($request["rating_scale_id"], array("trim", "int"))) {
+                        $PROCESSED["rating_scale_id"] = $tmp_input;
+                    }
+
                     if (!$ERROR) {
                         $forms_api->setFormID($PROCESSED["form_id"]);
                         $referrer_data = Entrada_Utilities_FormStorageSessionHelper::fetch($PROCESSED["fref"]);
@@ -171,7 +225,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                             add_error($translate->_("Please specify which form you wish to attach a new rubric to."));
                         } else {
                             // Create the empty rubric, but don't attach it to the form yet. We will pass the ID along in the referrer.
-                            if ($forms_api->createEmptyRubric($PROCESSED["rubric_title"])) {
+                            if ($forms_api->createEmptyRubric($PROCESSED["rubric_title"], $PROCESSED["rating_scale_id"])) {
                                 // We only attach it when there are items to display.
                                 //$new_ref = $forms_api->sessionStorageAddNewRubricToForm($forms_api->getRubricID(), $referrer_data["form_id"], ENTRADA_URL . "/admin/assessments/forms?section=edit-form&id={$referrer_data["form_id"]}"); // Store that this rubric will be used for the new form
                                 //add_error($translate->_("There was an error while trying to add this Grouped Item. The system administrator was informed of this error; please try again later."));
@@ -204,8 +258,22 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                         $PROCESSED["rubric_description"] = "";
                     }
 
+                    $PROCESSED["rating_scale_id"] = "";
+                    $PROCESSED["rating_scale_type_id"] = 0;
+
+                    if (isset($request["rating_scale_id"]) && $tmp_input = clean_input($request["rating_scale_id"], array("trim", "int"))) {
+                        $PROCESSED["rating_scale_id"] = $tmp_input;
+                    }
+
+                    if (array_key_exists("item_rating_scale_type", $request)) {
+                        $PROCESSED["rating_scale_type_id"] = (int)$request["item_rating_scale_type"];
+                        if ($PROCESSED["rating_scale_type_id"] > 0 && $PROCESSED["rating_scale_id"] == "") {
+                            add_error($translate->_("Please select a <strong>Rating Scale</strong>."));
+                        }
+                    }
+
                     if (!$ERROR) {
-                        if (!$forms_api->createEmptyRubric($PROCESSED["rubric_title"])) {
+                        if (!$forms_api->createEmptyRubric($PROCESSED["rubric_title"], $PROCESSED["rating_scale_id"])) {
                             foreach ($forms_api->getErrorMessages() as $error_message) {
                                 add_error($error_message);
                             }
@@ -213,7 +281,6 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                     }
                     if ($ERROR) {
                         echo json_encode(array("status" => "error", $translate->_("There was an error while trying to add this Grouped Item. The system administrator was informed of this error; please try again later."), "msg" => $ERRORSTR));
-                        //echo json_encode(array("status" => "error", $translate->_("Failed to add Grouped Item."), "msg" => $ERRORSTR));
                     } else {
                         $ENTRADA_LOGGER->log("", "add-rubric", "rubric_id", $forms_api->getRubricID(), 4, __FILE__, $ENTRADA_USER->getID());
                         Entrada_Utilities_Flashmessenger::addMessage($translate->_("Successfully created <strong>Grouped Item</strong>."), "success", $MODULE);
@@ -394,7 +461,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                         if ($ERROR) {
                             echo json_encode(array("status" => "error", "data" => $translate->_("Failed to update order")));
                         } else {
-                            echo json_encode(array("status" => "success", "data" => $translate->_("Updated order")));
+                            echo json_encode(array("status" => "success", "data" => $translate->_("Changes Saved")));
                         }
                     }
                 break;
@@ -550,13 +617,13 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                     if (isset($request["sort_direction"]) && $tmp_input = clean_input(strtolower($request["sort_direction"]), array("trim", "int"))) {
                         $PROCESSED["sort_direction"] = $tmp_input;
                     } else {
-                        $PROCESSED["sort_direction"] = "ASC";
+                        $PROCESSED["sort_direction"] = "DESC";
                     }
                     
                     if (isset($request["sort_column"]) && $tmp_input = clean_input(strtolower($request["sort_column"]), array("trim", "int"))) {
                         $PROCESSED["sort_column"] = $tmp_input;
                     } else {
-                        $PROCESSED["sort_column"] = "rubric_id";
+                        $PROCESSED["sort_column"] = "created_date";
                     }
 
                     if (isset($request["itemtype_id"]) && $tmp_input = clean_input(strtolower($request["itemtype_id"]), array("trim", "int"))) {
@@ -592,25 +659,26 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                     }
                 break;
                 case "get-rubric" :
-                    $rubric = Models_Assessments_Rubric::fetchRowByID($PROCESSED["rubric_id"]);
-                    $rubric_data["rubric"] = $rubric->toArray();
+                    $filter_by_rubric["rubric"] = null;
+                    $filter_by_rubric["count"] = null;
+                    $filter_by_rubric["width"] = null;
+                    $filter_by_rubric["elements"] = null;
 
-                    $rubric_elements = Models_Assessments_Rubric_Item::fetchAllRecordsByRubricID($PROCESSED["rubric_id"]);
-                    $rubric_data["elements"] = array();
-                    if ($rubric_elements) {
-                        foreach($rubric_elements as $re) {
-                            $rubric_item = Models_Assessments_Item::fetchRowByID($re->getItemID());
-                            if ($rubric_item) {
-                                $rubric_data["elements"][] = $rubric_item->toArray();
-                            }
-
-                            $item_responses = Models_Assessments_Item_Response::fetchAllRecordsByItemID($re->getItemID());
+                    $rubric_data = $forms_api->fetchRubricData($PROCESSED["rubric_id"]);
+                    // Use the descriptor count as width if appropriate
+                    if (!empty($rubric_data)) {
+                        $filter_by_rubric["rubric"] = $rubric_data["rubric"];
+                        if (!empty($rubric_data["rating_scale"]) && !empty($rubric_data["rating_scale_descriptors"])) {
+                            $filter_by_rubric["count"] = null;
+                            $filter_by_rubric["width"] = count($rubric_data["rating_scale_descriptors"]);
+                            $filter_by_rubric["elements"] = $rubric_data["rating_scale_descriptors"];
+                        } else {
+                            $filter_by_rubric["count"] = $rubric_data["meta"]["lines_count"];
+                            $filter_by_rubric["width"] = $rubric_data["meta"]["width"];
+                            $filter_by_rubric["elements"] = $rubric_data["lines"];
                         }
                     }
-                    $rubric_data["count"] = count($rubric_elements);
-                    $rubric_data["width"] = count($item_responses);
-
-                    echo json_encode(array("status" => "success", "data" => $rubric_data));
+                    echo json_encode(array("status" => "success", "data" => $filter_by_rubric));
 
                 break;
                 case "get-filtered-audience" :

@@ -50,20 +50,22 @@ class Entrada_Utilities_Flashmessenger extends Entrada_Base {
     }
 
     public static function displayMessages($module = "global") {
-        $flash_messages = $_SESSION["flashmessager"][$module];
-        if (isset($flash_messages) && $flash_messages) {
-            foreach ($flash_messages as $message_type => $messages) {
-                switch ($message_type) {
-                    case "error" :
-                        echo display_error($messages);
-                        break;
-                    case "success" :
-                        echo display_success($messages);
-                        break;
-                    case "notice" :
-                    default :
-                        echo display_notice($messages);
-                        break;
+        if (isset($_SESSION["flashmessager"][$module])) {
+            $flash_messages = $_SESSION["flashmessager"][$module];
+            if (isset($flash_messages) && $flash_messages) {
+                foreach ($flash_messages as $message_type => $messages) {
+                    switch ($message_type) {
+                        case "error" :
+                            echo display_error($messages);
+                            break;
+                        case "success" :
+                            echo display_success($messages);
+                            break;
+                        case "notice" :
+                        default :
+                            echo display_notice($messages);
+                            break;
+                    }
                 }
             }
         }

@@ -110,14 +110,10 @@ class Models_UserMobileData extends Models_Base {
         if ($ENTRADA_USER) {
             $total_organisations = count($ENTRADA_USER->getOrganisationGroupRole());
 
-            $query = "SELECT a.*, b.`statistic_id`, MAX(b.`timestamp`) AS `last_read`, CONCAT(c.`firstname`, ' ', c.`lastname`) AS notice_author
+            $query = "SELECT a.*, b.`notice_read_id` AS `statistic_id`, MAX(b.`created_date`) AS `last_read`, CONCAT(c.`firstname`, ' ', c.`lastname`) AS notice_author
                         FROM `notices` AS a
-                        LEFT JOIN `statistics` AS b
-                        ON b.`module` = 'notices'
-                        AND b.`proxy_id` = ".$db->qstr($ENTRADA_USER->getId())."
-                        AND b.`action` = 'read'
-                        AND b.`action_field` = 'notice_id'
-                        AND b.`action_value` = a.`notice_id`
+                        LEFT JOIN `notices_read` AS b
+                        ON b.`proxy_id` = ".$db->qstr($ENTRADA_USER->getId())." AND b.`notice_id` = a.`notice_id`
                         JOIN `notice_audience` AS c
                         ON a.`notice_id` = c.`notice_id`
                         LEFT JOIN `".AUTH_DATABASE."`.`user_data` AS c

@@ -195,7 +195,7 @@ class Views_Exam_Exam extends Views_Deprecated_Base {
                                             $exam_list_view_array[$exam_element->getID()]["version"]    = 0;
                                             $exam_list_view_array[$exam_element->getID()]["description"] = "[Group]";
                                             $exam_list_view_array[$exam_element->getID()]["updated"]    = (int) $group->getUpdatedDate();
-                                            $exam_list_view_array[$exam_element->getID()]["html"]       = $group_view->render(false, NULL, $data_attr_array, $data_attr_element_array, "list");
+                                            $exam_list_view_array[$exam_element->getID()]["html"]       = $group_view->render(false, NULL, $data_attr_array, $data_attr_element_array, "list", $exam->getID());
 
                                             $groups_displayed[$exam_element->getGroupID()] = 1; // Marks the question group as rendered
                                         }
@@ -227,7 +227,7 @@ class Views_Exam_Exam extends Views_Deprecated_Base {
 
                             $control_array = array(
                                 array(
-                                    "<span class=\"flat-btn btn select-item select-question\"><i class=\"icon-select-item icon-select-question fa fa-2x fa-square-o\" data-element-id=\"" . $exam_element->getID() . "\" \"></i></span>"
+                                    "<span class=\"flat-btn btn select-item select-question\"><i class=\"select-item-icon question-icon-select fa fa-2x fa-square-o\" data-element-id=\"" . $exam_element->getID() . "\" \"></i></span>"
                                 ),
                                 $control_group
                             );
@@ -254,7 +254,7 @@ class Views_Exam_Exam extends Views_Deprecated_Base {
 
                             $control_array = array(
                                 array(
-                                    "<span class=\"flat-btn btn select-item select-question\"><i class=\"icon-select-item icon-select-question fa fa-2x fa-square-o\" data-element-id=\"" . $exam_element->getID() . "\"></i></span>"
+                                    "<span class=\"flat-btn btn select-item select-question\"><i class=\"select-item-icon question-icon-select fa fa-2x fa-square-o\" data-element-id=\"" . $exam_element->getID() . "\"></i></span>"
                                 ),
                                 $control_group
                             );
@@ -464,7 +464,7 @@ class Views_Exam_Exam extends Views_Deprecated_Base {
 
         if (isset($show_select_exam) && $show_select_exam === 1) {
             $html .= "<td class=\"text-center\"><span class=\"select-exam\">\n";
-            $html .= "<i class=\"icon-select-exam fa fa-square-o\" data-exam-id=\"" . $exam->getID() . "\" data-title=\"" . $exam->getTitle() . "\"></i>\n";
+            $html .= "<i class=\"select-exam-icon fa fa-square-o\" data-exam-id=\"" . $exam->getID() . "\" data-title=\"" . $exam->getTitle() . "\"></i>\n";
             $html .= "</span></td>";
         }
             $html .= "<td>";
@@ -492,12 +492,13 @@ class Views_Exam_Exam extends Views_Deprecated_Base {
         $MENU_TEXT = $MODULE_TEXT["exams"]["index"]["edit_menu"];
 
         $exam = $this->exam;
+        $show_select_exam = $this->show_select_exam;
 
         $html = "";
 
         $html .= "<div class=\"btn-group\">\n";
         $html .= "<button class=\"flat-btn btn btn-mini dropdown-toggle\" data-toggle=\"dropdown\">\n";
-        $html .= "<i class=\"fa fa-pencil\"></i>\n";
+        $html .= "<i class=\"fa fa-cog\"></i>\n";
         $html .= "</button>\n";
         $html .= "<ul class=\"dropdown-menu toggle-left\">\n";
 
@@ -511,6 +512,7 @@ class Views_Exam_Exam extends Views_Deprecated_Base {
             $links[$MENU_TEXT["preview_post"]] = "<li><a href=\"" . ENTRADA_URL ."/admin/exams/exams?section=preview&id=" . $exam->getID() . "\">" . $MENU_TEXT["preview_post"] . "</a></li>\n";
             $links[$MENU_TEXT["print_view"]] = "<li><a href=\"" . ENTRADA_URL ."/admin/exams/exams?section=print&id=" . $exam->getID() . "\">" . $MENU_TEXT["print_view"] . "</a></li>\n";
             $links[$MENU_TEXT["reports"]] = "<li><a href=\"" . ENTRADA_URL ."/admin/exams/exams?section=reports&id=" . $exam->getID() . "\">" . $MENU_TEXT["reports"] . "</a></li>\n";
+            $links[$MENU_TEXT["export_word"]] = "<li><a href=\"" . ENTRADA_URL ."/admin/exams/exams?section=print-word&id=" . $exam->getID() . "\">" . $MENU_TEXT["export_word"] . "</a></li>\n";
         }
 
         if ($can_update) {
@@ -567,14 +569,19 @@ class Views_Exam_Exam extends Views_Deprecated_Base {
             case "analysis":
             case "learner-comments":
             case "learner-responses":
+            case "report-faculty-feedback":
             case "category":
             case "add-category":
-            case "category-result":
             case "edit-category":
+            case "category-result":
+            case "category-learner-setup":
             case "summary":
             case "score":
             case "print":
                 $section = "reports";
+                break;
+            case "history":
+                $section = "history";
                 break;
         }
 
@@ -592,6 +599,9 @@ class Views_Exam_Exam extends Views_Deprecated_Base {
         $nav .= "    </li>\n";
         $nav .= "   <li" . ($section == "reports" ? " class=\"active\"" : "") . ">\n";
         $nav .= "       <a href=\"" . ENTRADA_URL . "/admin/exams/exams/?section=reports&id=" . $exam->getID() . "\">Reports</a>\n";
+        $nav .= "    </li>\n";
+        $nav .= "   <li" . ($section == "history" ? " class=\"active\"" : "") . ">\n";
+        $nav .= "       <a href=\"" . ENTRADA_URL . "/admin/exams/exams/?section=history&id=" . $exam->getID() . "\">History</a>\n";
         $nav .= "    </li>\n";
         $nav .= "</ul>\n";
 
@@ -785,6 +795,726 @@ class Views_Exam_Exam extends Views_Deprecated_Base {
         $item_analysis .= "</table>\n";
 
         return $item_analysis;
+    }
+
+    public function renderPrintView($exam_elements, $SECTION_TEXT) {
+        $exam = $this->exam;
+        $content = "<div class=\"print-friendly\">";
+        $content .= "<div class=\"exam_id\">";
+        $content .= "<strong>" . $SECTION_TEXT["options"]["exam_id"] . ": </strong>" . $exam->getID();
+        $content .= "</div>";
+        $content .= "<div class=\"exam_created_date\"><strong>" . $SECTION_TEXT["options"]["exam_created_date"] . "</strong> " . date("D, M j, Y @ H:i:s", $exam->getCreatedDate());
+        $content .= "</div>";
+        $content .= "<div class=\"num_questions\">";
+        $content .= "<strong>" . $SECTION_TEXT["options"]["num_questions"] . ": </strong>" . count($exam_elements);
+        $content .= "</div>";
+        $content .= "<div class=\"total_exam_points\">";
+        $content .= "<strong>" . $SECTION_TEXT["options"]["total_exam_points"] . ": </strong>" . $exam->getTotalExamPoints();
+        $content .= "</div>";
+
+        $content .= "<br/>";
+
+        foreach ($exam_elements as $element) {
+            if ($element && is_object($element)) {
+                $content .= "<div class=\"print-question\">";
+                $content .= "<div class=\"question_stem\">";
+                $content .= "<div>";
+                $content .= "<strong>" . $SECTION_TEXT["question_number"] . "</strong>" . ($element->getOrder() + 1);
+                $content .= "</div>";
+                switch ($element->getElementType()) {
+                    case "text":
+                        $content .= $element->getElementText();
+                        break;
+                    case "question":
+                        $question_version = $element->getQuestionVersion();
+                        if ($question_version) {
+                            $folder = Models_Exam_Bank_Folders::fetchRowByID($question_version->getFolderID());
+                            $short_name = $question_version->getQuestionType()->getShortname();
+                            switch ($short_name) {
+                                case "mc_h":
+                                case "mc_h_m":
+                                case "mc_v":
+                                case "mc_v_m":
+                                    $content .=  "<div>";
+                                    $content .=  $question_version->getQuestionText();
+                                    $content .=  "</div>";
+                                    $content .=  "<div>";
+                                    $content .=  "    <table>";
+                                    $answers = Models_Exam_Question_Answers::fetchAllRecordsByVersionID($question_version->getID());
+                                    foreach ($answers as $answer) {
+                                        $letter = chr(ord("A") + $answer->getOrder() - 1);
+                                        $content .= "<tr>";
+                                        $content .= "<td class=\"correct\">" . ($answer->getCorrect() ? "&#x2713;" : "");
+                                        $content .= "</td>";
+                                        $content .= "<td>" . $letter . ". " . $answer->getAnswerText();
+                                        $content .= "</td>";
+                                        $content .= "</tr>";
+                                    }
+                                    $content .= "    </table>";
+                                    $content .= "</div>";
+                                    break;
+                                case "match":
+                                    $content .= "<div>" . $question_version->getQuestionText() . "</div>";
+                                    $content .= "<div>";
+                                    $content .= "<br />";
+                                    $content .= "<table>";
+                                    $content .= "<tr>";
+                                    $content .= "<th>Order</th>";
+                                    $content .= "<th>Stem</th>";
+                                    $content .= "<th>Correct</th>";
+                                    $content .= "</tr>";
+                                    $matching_stems = Models_Exam_Question_Match::fetchAllRecordsByVersionID($question_version->getVersionID());
+                                    if ($matching_stems && is_array($matching_stems)) {
+                                        foreach ($matching_stems as $stem) {
+                                            if ($stem && is_object($stem)) {
+                                                $matching_correct = Models_Exam_Question_Match_Correct::fetchRowByMatchID($stem->getID());
+                                                if ($matching_correct && is_object($matching_correct)) {
+                                                    $answer = $matching_correct->getAnswer();
+                                                    if ($answer && is_object($answer)) {
+                                                        $answer_text = $answer->getAnswerText();
+                                                    }
+                                                }
+                                                $content .= "<tr>";
+                                                $content .= "<td>" . $stem->getOrder() . "</td>";
+                                                $content .= "<td>" . $stem->getMatchText() . "</td>";
+                                                $content .= "<td>" . $answer_text . "</td>";
+                                                $content .= "</tr>";
+                                            }
+                                        }
+                                    }
+                                    $content .= "</table>";
+                                    $content .= "<br />";
+                                    $content .= "</div>";
+                                    break;
+                                case "fnb":
+                                    $question_text      = $question_version->getQuestionText();
+                                    $fnb_count = substr_count($question_version->getQuestionText(), "_?_");
+                                    $question_stem = "";
+                                    $question_text_array = explode("_?_", $question_text);
+                                    if (isset($question_text_array) && is_array($question_text_array)) {
+                                        $part_counter = 1;
+                                        foreach ($question_text_array as $key => $question_part) {
+                                            if ($question_part != "") {
+                                                $question_stem .= $question_part;
+                                                if ($part_counter <= $fnb_count) {
+                                                    // get all correct answers for fnb item
+                                                    $answer = Models_Exam_Question_Answers::fetchRowByVersionIDOrder($question_version->getVersionID(), $part_counter);
+                                                    if ($answer && is_object($answer)) {
+                                                        $correct_options = Models_Exam_Question_Fnb_Text::fetchAllByQuestionAnswerID($answer->getID());
+                                                        $correct = array();
+                                                        foreach ($correct_options as $option) {
+                                                            if ($option && is_object($option)) {
+                                                                $correct[] = $option->getText();
+                                                            }
+                                                        }
+                                                        if ($correct && is_array($correct)) {
+                                                            $question_stem .= "<span class=\"print_fnb_text\">" . implode("/", $correct) . "</span>";
+                                                        }
+                                                    }
+                                                    $part_counter++;
+                                                }
+                                            }
+                                        }
+                                    }
+                                    $content .=  "<div>";
+                                    $content .=  $question_stem;
+                                    $content .=  "</div>";
+                                    break;
+                                default:
+                                    $content .=  "<div>";
+                                    $content .=  $question_version->getQuestionText();
+                                    $content .=  "</div>";
+                                    if ($question_version->getCorrectText()) {
+                                        $content .= "<div class=\"correct\">";
+                                        $content .= "<strong>" . $SECTION_TEXT["options"]["correct"] . ":</strong>" . $question_version->getCorrectText();
+                                        $content .= "</div>";
+                                    }
+                                    break;
+                            }
+                            $content .= "</div>";
+                            if ($question_version->getRationale()) {
+                                $content .= "<div class=\"rationale\">";
+                                $content .= "<strong>" . $SECTION_TEXT["options"]["rationale"] . ":</strong>" . $question_version->getRationale() . "</div>";
+                            }
+                            $content .= "<div class=\"entrada_id\">";
+                            $content .= "<strong>" . $SECTION_TEXT["options"]["entrada_id"] . ":</strong>";
+                            $content .= $question_version->getQuestionID() . "/" .  $question_version->getVersionCount();
+                            $content .= "</div>";
+                            $content .= "<div class=\"examsoft_id\">";
+                            $content .= "<strong>" . $SECTION_TEXT["options"]["examsoft_id"] . ":</strong>";
+                            $content .= ($question_version->getExamsoftID() ? $question_version->getExamsoftID() : "N/A");
+                            $content .= "</div>";
+
+                            if ($question_version->getQuestionDescription()) {
+                                $content .= "<div class=\"description\">";
+                                $content .= "<strong>" . $SECTION_TEXT["options"]["description"] . ":</strong>";
+                                $content .= $question_version->getQuestionDescription();
+                                $content .= "</div>";
+                            }
+                            $content .= "<div class=\"weight\">";
+                            $content .= "<strong>" . $SECTION_TEXT["options"]["weight"] . ":</strong>" . $element->getPoints();
+                            $content .= "</div>";
+                            $content .= "<div class=\"question_folder\">";
+                            $content .= "<strong>";
+                            $content .= $SECTION_TEXT["options"]["question_folder"] . ":</strong>" . $folder->getCompleteFolderTitle() . "</div>";
+                            $content .= "<div class=\"curriculum_tags\">";
+                            $content .= "<strong>" . $SECTION_TEXT["options"]["curriculum_tags"] . ":</strong>";
+
+                            $objectives = Views_Exam_Question_Objective::renderObjectives($question_version->getQuestionID(), true);
+                            if ($objectives) {
+                                $content .= $objectives;
+                            }
+
+                            $content .= "</div>";
+
+                            break;
+                        }
+
+                }
+                $content .= "</div>";
+            }
+            $content .= "<br/>";
+        }
+        $content .= "</div>";
+
+        return $content;
+    }
+
+    public static function getStyles($string, $styles_array) {
+        $style_found    = strpos($string, "style=\"");
+        $style_start    = $style_found + (strlen("style=\""));
+        $style_end      = strpos($string, "\"", $style_start);
+        $styles         = substr($string, $style_start, $style_end - $style_start);
+
+        $tag = stristr($styles, ":", true);
+
+        if ($tag) {
+            $style_value_pos_1    = strpos($styles, ":");
+            $style_value_pos_2    = strpos($styles, ";", $style_value_pos_1);
+
+            $style_value        = substr($styles, $style_value_pos_1 + 1, $style_value_pos_2 - $style_value_pos_1);
+            $style_value        = str_replace(";", "", $style_value);
+
+            switch ($tag) {
+                case "color":
+                case "background-color":
+                    $value_pos          = strpos($style_value, "#");
+                    $value_rgb          = strpos($style_value, "rgb");
+
+                    if ($value_pos === 0) {
+                        $value = substr($style_value, 1);
+                    } else if ($value_rgb === 0) {
+                        $style_value_pos_1    = strpos($styles, "(");
+                        $style_value_pos_2    = strpos($styles, ")", $style_value_pos_1);
+
+                        $rgb_values           = substr($styles, $style_value_pos_1 + 1, $style_value_pos_2 - $style_value_pos_1);
+
+                        if ($rgb_values) {
+                            $rgb_values = explode(",", $rgb_values);
+                            if ($rgb_values && is_array($rgb_values)) {
+                                $value = sprintf("%02x%02x%02x", $rgb_values[0], $rgb_values[1], $rgb_values[2]);
+                            }
+                        }
+                    }
+                    break;
+            }
+
+            if ($value) {
+                if (!is_array($styles_array)) {
+                    $styles_array = array();
+                }
+
+                if (is_array($styles_array)) {
+                    switch ($tag) {
+                        case "color":
+                            $styles_array["color"] = $value;
+                            break;
+                        case "background-color":
+                            $styles_array["fgColor"] = "yellow";
+                            break;
+                    }
+                }
+            }
+        }
+
+        return $styles_array;
+    }
+
+    public static function parseWordHtml($string, $object, $images_removed) {
+        $split = explode("<", $string);
+
+        if ($split && is_array($split) && !empty($split)) {
+            if ($split && count($split) == 1) {
+                \PhpOffice\PhpWord\Shared\Html::addHtml($object, $split[0]);
+            } else {
+                $css_styles = array();
+                foreach ($split as $item) {
+                    $tag = stristr($item, ">", true);
+                    if ($tag) {
+                        switch ($tag) {
+                            case "":
+                                break;
+                            case "br":
+                                $object->addTextBreak(1);
+                                $object->addText(strip_tags("<" . $item));
+                                break;
+                            case "p":
+                                $object->addTextBreak(1);
+                                $object->addText(strip_tags("<" . $item));
+                                break;
+                            case "/p":
+                                $object->addTextBreak(1);
+                                break;
+                            case "span":
+                                $object->addText(strip_tags("<" . $item));
+                                break;
+                            case "/span":
+                                $text = strip_tags(substr($item, strpos($item, ">") + 1));
+                                $css_styles = array();
+                                $object->addText($text, $css_styles);
+                                break;
+                            case "em":
+                                $text = strip_tags(substr($item, strpos($item, ">") + 1));
+                                $css_styles["italic"] = true;
+                                $object->addText($text, $css_styles);
+                                break;
+                            case "/em":
+                                $text = strip_tags(substr($item, strpos($item, ">") + 1));
+                                $css_styles["italic"] = false;
+                                $object->addText($text, $css_styles);
+                                break;
+                            case "strong":
+                                $text = strip_tags(substr($item, strpos($item, ">") + 1));
+                                $css_styles["bold"] = true;
+                                $object->addText($text, $css_styles);
+                                break;
+                            case "/strong":
+                                $text = strip_tags(substr($item, strpos($item, ">") + 1));
+                                $css_styles["bold"] = false;
+                                $object->addText($text, $css_styles);
+                                break;
+                            case "u":
+                                $text = strip_tags(substr($item, strpos($item, ">") + 1));
+                                $css_styles["underline"] = true;
+                                $object->addText($text, $css_styles);
+                                break;
+                            case "/u":
+                                $text = strip_tags(substr($item, strpos($item, ">") + 1));
+                                $css_styles["underline"] = false;
+                                $object->addText($text, $css_styles);
+                                break;
+                            case "s":
+                                $text = strip_tags(substr($item, strpos($item, ">") + 1));
+                                $css_styles["strikethrough"] = true;
+                                $object->addText($text, $css_styles);
+                                break;
+                            case "/s":
+                                $text = strip_tags(substr($item, strpos($item, ">") + 1));
+                                $css_styles["strikethrough"] = false;
+                                $object->addText($text, $css_styles);
+                                break;
+
+                            case "sub":
+                                $text = strip_tags(substr($item, strpos($item, ">") + 1));
+                                $css_styles["subScript"] = true;
+                                $object->addText($text, $css_styles);
+                                break;
+                            case "/sub":
+                                $text = strip_tags(substr($item, strpos($item, ">") + 1));
+                                $css_styles["subScript"] = false;
+                                $object->addText($text, $css_styles);
+                                break;
+                            case "sup":
+                                $text = strip_tags(substr($item, strpos($item, ">") + 1));
+                                $css_styles["superScript"] = true;
+                                $object->addText($text, $css_styles);
+                                break;
+                            case "/sup":
+                                $text = strip_tags(substr($item, strpos($item, ">") + 1));
+                                $css_styles["superScript"] = false;
+                                $object->addText($text, $css_styles);
+                                break;
+                            case "li":
+                                $object->addTextBreak(1);
+                                $text = strip_tags(substr($item, strpos($item, ">") + 1));
+                                $object->addText("* " . $text);
+                                break;
+                            case "/li":
+                                $text = strip_tags(substr($item, strpos($item, ">") + 1));
+                                $object->addText($text);
+                                break;
+                            case "ol":
+                                $object->addTextBreak(1);
+                                break;
+                            case "/ol":
+                                $object->addTextBreak(1);
+                                break;
+                            default:
+                                $tag_styles = stristr($item, " ", true);
+                                if ($tag_styles) {
+                                    switch ($tag_styles) {
+                                        case "span":
+                                            // style
+                                            $css_styles = self::getStyles($item, $css_styles);
+                                            $check_end = strpos($item, ">");
+                                            if ($check_end == strlen($item) - 1) {
+                                                // have to pass on to next object
+                                            } else {
+                                                $object->addText(strip_tags("<" . $item), $css_styles);
+                                                $css_styles = array();
+                                            }
+                                            break;
+                                        case "img":
+                                            $images = self::getImages($item);
+                                            $exam_temp_dir = EXAM_STORAGE_PATH . "/file_temp/";
+
+                                            if ($images && is_array($images)) {
+                                                foreach ($images as $id => $image) {
+                                                    $path = $exam_temp_dir . $image;
+                                                    if ($object->addImage($path)) {
+                                                        // add image to an array to clear images after they are loaded
+                                                        $images_removed[] = $path;
+                                                    }
+                                                }
+                                            }
+                                            break;
+                                        case "p":
+                                            $object->addTextBreak(1);
+                                            $object->addText(strip_tags("<" . $item));
+                                            $object->addTextBreak(1);
+                                            break;
+                                        case "br":
+                                            $object->addTextBreak(1);
+                                            $object->addText(strip_tags("<" . $item));
+                                            break;
+                                        default:
+                                            \PhpOffice\PhpWord\Shared\Html::addHtml($object, "<" . $item);
+                                            break;
+                                    }
+                                } else {
+                                    \PhpOffice\PhpWord\Shared\Html::addHtml($object, "<" . $item);
+                                }
+
+                                break;
+
+                        }
+                    } else {
+                        $object->addText(strip_tags($item));
+                    }
+                }
+            }
+        }
+        return $images_removed;
+    }
+
+    public function renderWordExport($exam_elements, $SECTION_TEXT, $images_removed) {
+        $exam = $this->exam;
+
+        $phpWord = new \PhpOffice\PhpWord\PhpWord();
+        $section = $phpWord->addSection();
+
+        $bold_on  = array(
+            "bold" => true,
+        );
+
+        $bold_off = array(
+            "bold" => false,
+        );
+
+        $title_style = array(
+            "bold" => true,
+            "size" => 18,
+        );
+
+        $section->addText($exam->getTitle(), $title_style, array("alignment" => "center"));
+        $section->addTextBreak(2);
+
+        $header = $section->addTextRun();
+        $header->addText($SECTION_TEXT["options"]["exam_id"] . ": ", $bold_on);
+        $header->addText($exam->getID(), $bold_off);
+        $header->addTextBreak(1);
+        $header->addText($SECTION_TEXT["options"]["exam_created_date"] . ": ", $bold_on);
+        $header->addText(date("D, M j, Y @ H:i:s", $exam->getCreatedDate()), $bold_off);
+        $header->addTextBreak(1);
+        $header->addText($SECTION_TEXT["options"]["num_questions"] . ": ", $bold_on);
+        $header->addText(count($exam_elements), $bold_off);
+        $header->addTextBreak(1);
+        $header->addText($SECTION_TEXT["options"]["total_exam_points"] . ": ", $bold_on);
+        $header->addText($exam->getTotalExamPoints(), $bold_off);
+        $section->addTextBreak(2);
+
+        foreach ($exam_elements as $element) {
+            if ($element && is_object($element)) {
+                $section_q = $phpWord->addSection();
+                $question = $section_q->addTextRun();
+                $question->addText(($element->getOrder() + 1) . ". ", $bold_off);
+                $question->addTextBreak(1);
+                switch ($element->getElementType()) {
+                    case "text":
+                        \PhpOffice\PhpWord\Shared\Html::addHtml($question, $element->getElementText());
+                        $question->addTextBreak(1);
+                        break;
+                    case "question":
+                        $question_version = $element->getQuestionVersion();
+                        if ($question_version) {
+                            $folder = Models_Exam_Bank_Folders::fetchRowByID($question_version->getFolderID());
+                            $short_name = $question_version->getQuestionType()->getShortname();
+                            switch ($short_name) {
+                                case "mc_h":
+                                case "mc_h_m":
+                                case "mc_v":
+                                case "mc_v_m":
+                                    $clean = self::cleanHtml($question_version->getQuestionText());
+                                    $images_removed = self::parseWordHtml($clean, $question, $images_removed);
+
+                                    $question->addTextBreak(1);
+                                    $answers = Models_Exam_Question_Answers::fetchAllRecordsByVersionID($question_version->getID());
+
+                                    $answer_text = $section_q->addTextRun();
+                                    $answer_letter = "";
+                                    $correct_answer = array();
+                                    foreach ($answers as $answer) {
+                                        if ($answer && is_object($answer)) {
+                                            $letter = chr(ord("A") + $answer->getOrder() - 1);
+                                            if ($answer->getCorrect()) {
+                                                $answer_letter = strtolower($letter);
+                                                $correct_answer[] = $answer_letter;
+                                            }
+                                            $answer_text->addText(strtolower($letter) . ". " . strip_tags(self::cleanHtml($answer->getAnswerText())));
+                                            $answer_text->addTextBreak(1);
+                                        }
+                                    }
+
+                                    if ($answer_letter != "") {
+                                        $answer_text->addText("answer: " . (count($correct_answer) > 1 ? implode("," ,$correct_answer) : $answer_letter ));
+                                    }
+
+                                    break;
+                                case "match":
+                                    \PhpOffice\PhpWord\Shared\Html::addHtml($question, $question_version->getQuestionText());
+
+                                    $tableStyle = array(
+                                        "borderColor" => "006699",
+                                        "borderSize"  => 6,
+                                        "cellMargin"  => 50
+                                    );
+                                    $firstRowStyle = array("bgColor" => "66BBFF");
+                                    $phpWord->addTableStyle("myTable", $tableStyle, $firstRowStyle);
+                                    $table = $section_q->addTable("myTable");
+
+                                    $table->addRow();
+                                    $table->addCell()->addText("Order");
+                                    $table->addCell()->addText("Stem");
+                                    $table->addCell()->addText("Correct");
+
+                                    $matching_stems = Models_Exam_Question_Match::fetchAllRecordsByVersionID($question_version->getVersionID());
+                                    if ($matching_stems && is_array($matching_stems)) {
+                                        foreach ($matching_stems as $stem) {
+                                            if ($stem && is_object($stem)) {
+                                                $matching_correct = Models_Exam_Question_Match_Correct::fetchRowByMatchID($stem->getID());
+                                                if ($matching_correct && is_object($matching_correct)) {
+                                                    $answer = $matching_correct->getAnswer();
+                                                    if ($answer && is_object($answer)) {
+                                                        $answer_text = $answer->getAnswerText();
+                                                    }
+                                                }
+                                                $table->addRow();
+                                                $table->addCell()->addText($stem->getOrder());
+                                                $table->addCell()->addText(strip_tags(self::cleanHtml($stem->getMatchText())));
+                                                $table->addCell()->addText(strip_tags(self::cleanHtml($answer_text)));
+                                            }
+                                        }
+                                    }
+                                    break;
+                                case "fnb":
+                                    $question_text = $question_version->getQuestionText();
+                                    $fnb_count = substr_count($question_version->getQuestionText(), "_?_");
+                                    $question_stem = "";
+                                    $question_text_array = explode("_?_", $question_text);
+                                    if (isset($question_text_array) && is_array($question_text_array)) {
+                                        $part_counter = 1;
+                                        foreach ($question_text_array as $key => $question_part) {
+                                            if ($question_part != "") {
+                                                $question_stem .= $question_part;
+                                                if ($part_counter <= $fnb_count) {
+                                                    // get all correct answers for fnb item
+                                                    $answer = Models_Exam_Question_Answers::fetchRowByVersionIDOrder($question_version->getVersionID(), $part_counter);
+                                                    if ($answer && is_object($answer)) {
+                                                        $correct_options = Models_Exam_Question_Fnb_Text::fetchAllByQuestionAnswerID($answer->getID());
+                                                        $correct = array();
+                                                        foreach ($correct_options as $option) {
+                                                            if ($option && is_object($option)) {
+                                                                $correct[] = $option->getText();
+                                                            }
+                                                        }
+                                                        if ($correct && is_array($correct)) {
+                                                            $question_stem .= "<span class=\"print_fnb_text\">" . implode("/", $correct) . "</span>";
+                                                        }
+                                                    }
+                                                    $part_counter++;
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    \PhpOffice\PhpWord\Shared\Html::addHtml($question, $question_stem);
+                                    break;
+                                default:
+                                    \PhpOffice\PhpWord\Shared\Html::addHtml($question, $question_version->getQuestionText());
+
+                                    if ($question_version->getCorrectText()) {
+                                        $question->addText($SECTION_TEXT["options"]["correct"] . ":");
+                                        \PhpOffice\PhpWord\Shared\Html::addHtml($question, $question_version->getCorrectText());
+                                    }
+                                    break;
+                            }
+
+                            $question_footer = $section_q->addTextRun();
+
+                            if ($question_version->getRationale()) {
+                                $question_footer->addTextBreak(1);
+                                $question_footer->addText($SECTION_TEXT["options"]["rationale"] . ": ", $bold_on);
+                                $question_footer->addText(strip_tags(self::cleanHtml($question_version->getRationale())), $bold_off);
+                            }
+
+                            $question_footer->addTextBreak(1);
+                            $question_footer->addText($SECTION_TEXT["options"]["entrada_id"] . ": ", $bold_on);
+                            $question_footer->addText($question_version->getQuestionID() . "/" . $question_version->getVersionCount(), $bold_off);
+
+                            if ($question_version->getExamsoftID()) {
+                                $question_footer->addTextBreak(1);
+                                $question_footer->addText($SECTION_TEXT["options"]["examsoft_id"] . ": ", $bold_on);
+                                $question_footer->addText($question_version->getExamsoftID(), $bold_off);
+                            }
+
+                            if ($question_version->getQuestionDescription()) {
+                                $question_footer->addTextBreak(1);
+                                $question_footer->addText($SECTION_TEXT["options"]["description"] . ": ", $bold_on);
+                                $question_footer->addText(strip_tags(self::cleanHtml($question_version->getQuestionDescription())), $bold_off);
+                            }
+
+                            $question_footer->addTextBreak(1);
+                            $question_footer->addText($SECTION_TEXT["options"]["weight"] . ": ", $bold_on);
+                            $question_footer->addText($element->getPoints(), $bold_off);
+
+                            $question_footer->addTextBreak(1);
+                            $question_footer->addText($SECTION_TEXT["options"]["question_folder"] . ": ", $bold_on);
+                            $question_footer->addText($folder->getCompleteFolderTitle(), $bold_off);
+
+                            $question_footer->addTextBreak(1);
+                            $question_footer->addText($SECTION_TEXT["options"]["curriculum_tags"] . ": ", $bold_on);
+                            $question_footer->addTextBreak(1);
+
+                            $objectives_view = new Views_Exam_Question_Objective();
+                            $objectives = $objectives_view->fetchQuestionObjectives($question_version->getQuestionID());
+                            if ($objectives) {
+                                foreach ($objectives as $key => $objective) {
+
+                                    $text = strip_tags(self::cleanHtml($objective["objective_name"]));
+                                    $question_footer->addText("* " . $text);
+                                    $question_footer->addTextBreak(1);
+
+                                    $set = fetch_objective_set_for_objective_id($objective["objective_id"]);
+                                    if ($set) {
+                                        $question_footer->addText("From the Curriculum Tag Set: ");
+                                        $question_footer->addText(strip_tags(self::cleanHtml($set["objective_name"])), array("bold" => true));
+                                        $question_footer->addTextBreak(1);
+                                    }
+                                    $question_footer->addText(strip_tags(self::cleanHtml($objective["objective_description"])));
+                                    $question_footer->addTextBreak(1);
+                                }
+
+                            }
+
+                            break;
+                        }
+                    break;
+                }
+            }
+        }
+
+        return array("phpWord" => $phpWord, "images_removed" => $images_removed);
+    }
+
+    public static function cleanHtml($html, $fullHTML = false) {
+        $html = str_replace(array("\n", "\r"), '', $html);
+        $html = str_replace(array("&lt;", "&gt;", "&amp;"), array("_lt_", "_gt_", "_amp_"), $html);
+        $html = html_entity_decode($html, ENT_QUOTES, "UTF-8");
+        $html = str_replace("&", "&amp;", $html);
+        $html = str_replace(array("_lt_", "_gt_", "_amp_"), array("&lt;", "&gt;", "&amp;"), $html);
+
+        return $html;
+    }
+
+    public static function getImages($content) {
+        $image_array = false;
+        // set all JPG and PNG to lowercase
+        $content = str_replace(".PNG", ".png", $content);
+        $content = str_replace(".JPG", ".jpg", $content);
+        $content = str_replace(".JPEG", ".jpg", $content);
+        $content = str_replace(".jpeg", ".jpg", $content);
+        $content = str_replace(".GIF", ".gif", $content);
+
+        $lor_address = "/api/serve-learning-object.api.php?id=";
+
+        $url = ENTRADA_URL . $lor_address;
+
+        $occurrences = Entrada_Utilities::strpos_all($content, $url);
+
+        if ($occurrences && is_array($occurrences) && !empty($occurrences)) {
+            $image_array = array();
+            $files_to_delete = array();
+            $found_images = array();
+            $replacement_images = array();
+            foreach ($occurrences as $position1) {
+                $position2 = strpos($content, "=", $position1);
+                $position3 = strpos($content, "&", $position2 + 1);
+                // @todo Seems like this may be a mess.
+                $lor_id = substr($content, $position2 + 1, $position3 - $position2 - 1);
+                $lor_id = (int) $lor_id;
+
+                // now use the LOR to load copy the image to the /api folder which is publicly accessible.
+                // find the type by loading the LOR.
+                $lo_file = Models_LearningObject_Files::fetchRowByID($lor_id);
+                if ($lo_file) {
+                    $file_realpath = LOR_STORAGE_PATH . "/" . $lo_file->getProxyID() . "/" . $lor_id;
+                    if (file_exists($file_realpath) && is_readable($file_realpath)) {
+                        $mime_type = $lo_file->getMimeType();
+                        $file_extension = "";
+                        switch ($mime_type) {
+                            case "image/jpeg":
+                                $file_extension = ".jpg";
+                                break;
+                            case "image/png":
+                                $file_extension = ".png";
+                                break;
+                            case "image/gif":
+                                $file_extension = ".gif";
+                                break;
+                        }
+
+                        if ($file_extension != "") {
+
+
+                            $file_name = $lor_id . $file_extension;
+
+                            if ($temp_file = file_get_contents($file_realpath)) {
+
+                                $exam_temp_dir = EXAM_STORAGE_PATH . "/file_temp";
+                                if (!is_dir($exam_temp_dir)) {
+                                    mkdir($exam_temp_dir);
+                                }
+
+                                if (file_put_contents($exam_temp_dir . "/" . $file_name, $temp_file)) {
+                                    $image_array[$lor_id] = $file_name;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return $image_array;
     }
 
     public function render($show_select_exam = 1) {

@@ -60,10 +60,10 @@ class Models_Exam_Questions extends Models_Base {
         $this->folder_id = $id;
     }
 
-    /* @return bool|Models_Exam_Question_Bank_Folders */
+    /* @return bool|Models_Exam_Bank_Folders */
     public function getParentFolder() {
         if (NULL === $this->parent_folder) {
-            $this->parent_folder = Models_Exam_Question_Bank_Folders::fetchRowByID($this->folder_id);
+            $this->parent_folder = Models_Exam_Bank_Folders::fetchRowByID($this->folder_id);
         }
         return $this->parent_folder;
     }

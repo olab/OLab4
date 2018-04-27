@@ -150,7 +150,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ROTATION_SCHEDULE"))) {
                             data: {"method": "get-slot-data", "slot_id": slot_id},
                             type: "GET",
                             success: function (data) {
-                                var jsonResponse = JSON.parse(data);
+                                var jsonResponse = safeParseJson(data, "Unknown Server Error");
                                 if (jsonResponse.status == "success") {
                                     $("#slot-info .start-date").val(jsonResponse.data.start_date);
                                     $("#slot-info .end-date").val(jsonResponse.data.end_date);

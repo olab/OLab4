@@ -18,3 +18,15 @@
     display: block;
     padding-top: 10px;
 }
+
+#distribution-schedule-datatable tbody tr td {
+    color: #006699;
+}
+#distribution-schedule-datatable tbody tr td:hover {
+    cursor: pointer;
+    color: #f02c56;
+}
+
+#distribution-schedule-datatable tbody tr.distribution-deleted td {
+    background-color: #FFD9D0;
+}

@@ -407,7 +407,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP")) || (!defined("IN
 											$international_msg .= $CLERKSHIP_INTERNATIONAL_LINK."\n\n";
 											
 											$message  = "Attention ".$AGENT_CONTACTS["agent-clerkship-international"]["name"].",\n\n";
-											$message .= "An international clerkship elective has been approved by Queen's University please review this:\n";
+											$message .= "An international " . $translate->_("clerkship elective") . " has been approved by Queen's University please review this:\n";
 											$message .= "=======================================================\n\n";
 											$message .= "Approved At:\t\t".date("r", time())."\n";
 											$message .= "Approved By:\t\t".$_SESSION["details"]["firstname"]." ".$_SESSION["details"]["lastname"]."\n";
@@ -447,7 +447,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP")) || (!defined("IN
 										}
 										
 										$message  = "Attention ".$student_name.",\n\n";
-										$message .= "A Clerkship elective has been approved by the undergraduate office:\n";
+										$message .= "A " . $translate->_("Clerkship elective") . " has been approved by the undergraduate office:\n";
 										$message .= "=======================================================\n\n";
 										$message .= "Approved At:\t\t".date("r", time())."\n";
 										$message .= "Approved By:\t\t".$_SESSION["details"]["firstname"]." ".$_SESSION["details"]["lastname"]." [".$_SESSION["details"]["username"]."]\n";
@@ -484,7 +484,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP")) || (!defined("IN
 										$mail->clearSubject();
 										
 										$message  = "Attention ".(isset($PROCESSED["preceptor_prefix"]) && $PROCESSED["preceptor_prefix"] != "" ? $PROCESSED["preceptor_prefix"] . " " : "")." ".(isset($PROCESSED["preceptor_first_name"]) && $PROCESSED["preceptor_first_name"] != "" ? $PROCESSED["preceptor_first_name"] . " " : "") . $PROCESSED["preceptor_last_name"].",\n\n";
-										$message .= "A Clerkship elective has been approved by Queen's University please review this:\n";
+										$message .= "A " . $translate->_("Clerkship elective") . " has been approved by Queen's University please review this:\n";
 										$message .= "=======================================================\n\n";
 										$message .= "Approved At:\t\t".date("r", time())."\n";
 										$message .= "Approved By:\t\t".$_SESSION["details"]["firstname"]." ".$_SESSION["details"]["lastname"]."\n";
@@ -523,9 +523,9 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP")) || (!defined("IN
 										$mail->clearSubject();
 										
 										if (count($NOTICESTR) == 1 && $msg == "") {
-											$msg	= "You have approved this elective for ".$NOTICESTR[0].".  An email will be sent to this student informing them of this.<br /><br /> You will now be redirected to the clerkship index; this will happen <strong>automatically</strong> in 5 seconds or <a href=\"".$url."\" style=\"font-weight: bold\">click here</a> to continue.";
+											$msg	= "You have approved this elective for ".$NOTICESTR[0].".  An email will be sent to this student informing them of this.<br /><br /> You will now be redirected to the " . $translate->_("clerkship index") . "; this will happen <strong>automatically</strong> in 5 seconds or <a href=\"".$url."\" style=\"font-weight: bold\">click here</a> to continue.";
 										} elseif ($msg == "") {
-											$msg	= "You have approved this elective for ".implode(", ", $NOTICESTR).".  An email will be sent to the students informing them of this.<br /><br /> You will now be redirected to the clerkship index; this will happen <strong>automatically</strong> in 5 seconds or <a href=\"".$url."\" style=\"font-weight: bold\">click here</a> to continue.";
+											$msg	= "You have approved this elective for ".implode(", ", $NOTICESTR).".  An email will be sent to the students informing them of this.<br /><br /> You will now be redirected to the " . $translate->_("clerkship index") . "; this will happen <strong>automatically</strong> in 5 seconds or <a href=\"".$url."\" style=\"font-weight: bold\">click here</a> to continue.";
 										}
 									}
 								} else {

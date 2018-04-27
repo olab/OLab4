@@ -63,25 +63,9 @@ if (($router) && ($router->initRoute())) {
 	$HEAD[] = "<link href=\"".ENTRADA_URL."/css/tabpane.css?release=".html_encode(APPLICATION_VERSION)."\" rel=\"stylesheet\" type=\"text/css\" media=\"all\" />\n";
 	$HEAD[] = "<link href=\"".ENTRADA_URL."/css/communities.css?release=".html_encode(APPLICATION_VERSION)."\" rel=\"stylesheet\" type=\"text/css\" media=\"all\" />\n";
 
-	$query = "	SELECT b.`community_id`, b.`community_url`, b.`community_title`
-				FROM `community_members` AS a
-				LEFT JOIN `communities` AS b
-				ON b.`community_id` = a.`community_id`
-				WHERE a.`proxy_id` = ".$db->qstr($ENTRADA_USER->getActiveId())."
-				AND a.`member_active` = '1'
-				AND b.`community_active` = '1'
-				AND b.`community_template` <> 'course'
-				ORDER BY b.`community_title` ASC";
-	$results = $db->GetAll($query);
-	if ($results) {
-		$sidebar_html  = "<ul class=\"menu\">\n";
-		foreach ($results as $result) {
-			$sidebar_html .= "<li class=\"community\"><a href=\"".ENTRADA_URL."/community".$result["community_url"]."\">".html_encode($result["community_title"])."</a></li>\n";
-		}
-		$sidebar_html .= "</ul>\n";
+    /* Communities Sidebar */
 
-		new_sidebar_item("My Communities", $sidebar_html, "my-communities", "open");
-	}
+    Models_Community::showSidebar();
 
 	$module_file = $router->getRoute();
 	if ($module_file) {

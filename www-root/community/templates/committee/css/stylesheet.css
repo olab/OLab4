@@ -2,6 +2,12 @@
     font-family:Bebas;
     src:url(../fonts/BEBAS.ttf)
 }
+
+
+.modal-lg {
+    width: 800px;
+    margin-left: -420px;
+}
 /**
  *  Twitter Widget
  */
@@ -266,16 +272,6 @@ td.community-page-list {
     margin-bottom:20px
 }
 
-iframe {
-    max-width: 500px;
-}
-
-
-ul.shares li {
-    /*border-bottom:1px solid #ddd;*/
-    padding:15px 0
-}
-
 ul.shares, ul.community-page-list {
     list-style:none;
     padding-left:0;
@@ -369,8 +365,8 @@ i.float-left{
 }
 
 span.iconPlaceholder {
-    height: 16px;
-    width: 16px;
+    height: 14px;
+    width: 14px;
     float: left;
 }
 .clear{
@@ -606,6 +602,10 @@ nav.top-navigation ul,nav.breadcrumb ul,nav.breadcrumb li {
     background-color:#749ea1
 }
 
+ul.shares li {
+    list-style: none;
+}
+
 nav ul,aside ul {
     list-style-type:none;
     margin:0;
@@ -794,11 +794,6 @@ table.discussions tbody td {
 
 table.discussions tbody tr:nth-child(even) {
     background-color:#fafafa
-}
-
-.content ul.shares li {
-    /*border-bottom:1px solid #ddd;*/
-    padding:5px 0
 }
 
 .folder_container{
@@ -1834,11 +1829,6 @@ table.discussions thead,table.tableList thead {
     border-radius:3px 3px 0 0;
     border-bottom:1px dotted #555;
     color:#fff
-}
-
-ul.shares li {
-    /*border-bottom:1px solid #ddd;*/
-    padding:15px 0
 }
 
 .content ul.shares,.content ul.community-page-list {

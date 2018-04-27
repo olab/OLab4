@@ -28,8 +28,7 @@ if(!defined("PARENT_INCLUDED")) {
 	header("Location: ".ENTRADA_URL);
 	exit;
 } elseif (!$ENTRADA_ACL->amIAllowed($MODULES[strtolower($MODULE)]["resource"], $MODULES[strtolower($MODULE)]["permission"], false)) {
-	$ERROR++;
-	$ERRORSTR[]	= "You do not have the permissions required to use this module.<br /><br />If you believe you are receiving this message in error please contact <a href=\"mailto:".html_encode($AGENT_CONTACTS["administrator"]["email"])."\">".html_encode($AGENT_CONTACTS["administrator"]["name"])."</a> for assistance.";
+	add_error("You do not have the permissions required to use this module.<br /><br />If you believe you are receiving this message in error please contact <a href=\"mailto:".html_encode($AGENT_CONTACTS["administrator"]["email"])."\">".html_encode($AGENT_CONTACTS["administrator"]["name"])."</a> for assistance.");
 
 	echo display_error();
 
@@ -72,8 +71,7 @@ if(!defined("PARENT_INCLUDED")) {
 			$url = ENTRADA_URL."/admin/gradebook";
 			$ONLOAD[] = "setTimeout('window.location=\\'".$url."\\'', 5000)";
 			
-			$ERROR++;
-			$ERRORSTR[]	= "You do not have the permissions required to access this assignment.<br /><br />You will now be redirected to the <strong>Gradebook index</strong> page.  This will happen <strong>automatically</strong> in 5 seconds or <a href=\"".$url."\" style=\"font-weight: bold\">click here</a> to continue.";
+			add_error("You do not have the permissions required to access this assignment.<br /><br />You will now be redirected to the <strong>Gradebook index</strong> page.  This will happen <strong>automatically</strong> in 5 seconds or <a href=\"".$url."\" style=\"font-weight: bold\">click here</a> to continue.");
 
 			echo display_error();
 

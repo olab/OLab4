@@ -46,15 +46,21 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUESTIONS"))) {
         $PROCESSED["folder_id"] = $tmp_input;
     }
 
-    $folder = Models_Exam_Question_Bank_Folders::fetchRowByID($PROCESSED["folder_id"]);
+    $folder = Models_Exam_Bank_Folders::fetchRowByID($PROCESSED["folder_id"]);
     if ($folder) {
-        if ($ENTRADA_ACL->amIAllowed(new ExamFolderResource($PROCESSED["folder_id"], true), "update")) {
-            $METHOD = "update";
-            $PROCESSED = $folder->toArray();
-            ?>
-            <h1><?php echo $SECTION_TEXT["title"]; ?></h1>
-            <?php
-            require_once("form-folder.inc.php");
+        if ($ENTRADA_ACL->amIAllowed(new ExamFolderResource($PROCESSED["folder_id"], true), "update") && $ENTRADA_USER->getGroup() !== "student") {
+            if ($folder->getFolderType() != "question") {
+                add_error($translate->_("This is not a question folder and can't be edited here."));
+
+                echo display_error();
+            } else {
+                $METHOD = "update";
+                $PROCESSED = $folder->toArray();
+                ?>
+                <h1><?php echo $SECTION_TEXT["title"]; ?></h1>
+                <?php
+                require_once("form-folder.inc.php");
+            }
         } else {
             add_error(sprintf($translate->_("Your account does not have the permissions required to edit this folder.<br /><br />If you believe you are receiving this message in error please contact <a href=\"mailto:%1\$s\">%2\$s</a> for assistance."), html_encode($AGENT_CONTACTS["administrator"]["email"]), html_encode($AGENT_CONTACTS["administrator"]["name"])));
 

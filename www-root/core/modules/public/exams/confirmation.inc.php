@@ -54,6 +54,7 @@ $HEAD[] = "<link rel=\"stylesheet\" type=\"text/css\" href=\"" .  ENTRADA_URL . 
 $HEAD[] = "<link rel=\"stylesheet\" type=\"text/css\" href=\"" .  ENTRADA_URL . "/css/jquery/jquery.growl.css?release=" . html_encode(APPLICATION_VERSION) . "\" />";
 
 $HEAD[] = "<script type=\"text/javascript\" src=\"" .  ENTRADA_URL . "/javascript/jquery.growl.js?release=" . html_encode(APPLICATION_VERSION) . "\"></script>";
+$HEAD[] = "<script type=\"text/javascript\" src=\"".  ENTRADA_URL ."/javascript/". $MODULE ."/" . $MODULE . "/feedback.js?release=" . html_encode(APPLICATION_VERSION) . "\"></script>";
 $HEAD[] = "<script type=\"text/javascript\">var SECTION_TEXT = ". json_encode($SECTION_TEXT) . "</script>";
 
 // Error checking

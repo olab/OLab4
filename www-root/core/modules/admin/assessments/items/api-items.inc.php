@@ -144,6 +144,9 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 
                             // Set the descriptors
                             $PROCESSED["rubric_descriptors"] = $rubric_referrer_data["descriptors"];
+
+                            // Get the rating scale ID if any to lock item serach to the same type.
+                            $PROCESSED["rating_scale_id"] = $rubric_referrer_data["rating_scale_id"];
                         }
 
                         $PROCESSED["rubric_width"] = null;
@@ -151,6 +154,24 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                             if ($tmp_input) {
                                 $PROCESSED["rubric_width"] = $tmp_input;
                             }
+                            // Set the rubric width
+                            if (isset($rubric_referrer_data["width"]) && $rubric_referrer_data["width"]) {
+                                $PROCESSED["rubric_width"] = $rubric_referrer_data["width"];
+                            }
+
+                            // Set the existing rubric item IDs
+                            $PROCESSED["rubric_items"] = $rubric_referrer_data["items"];
+
+                            // Set the descriptors
+                            $PROCESSED["rubric_descriptors"] = $rubric_referrer_data["descriptors"];
+                        }
+
+                        if (isset($request["rating_scale_id"]) && $tmp_input = clean_input(strtolower($request["rating_scale_id"]), array("trim", "int"))) {
+                            $PROCESSED["rating_scale_id"] = $tmp_input;
+                        }
+
+                        if (!isset($PROCESSED["rating_scale_id"])) {
+                            $PROCESSED["rating_scale_id"] = null;
                         }
 
                         $items = array();
@@ -172,7 +193,9 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                                 $PROCESSED["rubric_descriptors"],
                                 $PROCESSED["exclude_item_ids"],
                                 $PROCESSED["form_id"],
-                                $PROCESSED["filters"]);
+                                $PROCESSED["filters"],
+                                $PROCESSED["rating_scale_id"]
+                            );
                         }
 
                         if (!empty($items)) {
@@ -215,7 +238,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                                 }
                                 $data[] = $item_data;
                             }
-                            echo json_encode(array("results" => count($items), "data" => array("total_items" => Models_Assessments_Item::countAllRecordsBySearchTerm($PROCESSED["search_term"], $PROCESSED["rubric_width"], $PROCESSED["search_itemtype_id"], $PROCESSED["rubric_items"], $PROCESSED["rubric_descriptors"], $PROCESSED["filters"]), "items" => $data)));
+                            echo json_encode(array("results" => count($items), "data" => array("total_items" => Models_Assessments_Item::countAllRecordsBySearchTerm($PROCESSED["search_term"], $PROCESSED["rubric_width"], $PROCESSED["search_itemtype_id"], $PROCESSED["rubric_items"], $PROCESSED["rubric_descriptors"], $PROCESSED["filters"], $PROCESSED["rating_scale_id"]), "items" => $data)));
                         } else {
                             echo json_encode(array("results" => "0", "data" => array($translate->_("No Items Found."))));
                         }
@@ -353,6 +376,25 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                             echo json_encode(array("status" => "error", "data" => $translate->_("No descriptors found")));
                         }
                     break;
+                    case "get-response-flags":
+                        if (isset($request["search_value"]) && $tmp_input = clean_input(strtolower($request["search_value"]), array("trim", "striptags"))) {
+                            $PROCESSED["search_value"] = $tmp_input;
+                        } else {
+                            $PROCESSED["search_value"] = "";
+                        }
+                        $flags = Models_Assessments_Flag::fetchAllByOrganisation($ENTRADA_USER->getActiveOrganisation(), $PROCESSED["search_value"]);
+                        if ($flags) {
+                            $data = array(
+                                array("target_id" => 0, "target_label" => $translate->_("Not Flagged"))
+                            );
+                            foreach ($flags as $flag) {
+                                $data[] = array("target_id" => $flag->getID(),"target_label" => $flag->getTitle());
+                            }
+                            echo json_encode(array("status" => "success", "data" => $data, "level_selectable" => 1));
+                        } else {
+                            echo json_encode(array("status" => "error", "data" => $translate->_("No flags found")));
+                        }
+                        break;
                     case "get-objectives" :
                         if (isset($request["search_value"]) && $tmp_input = clean_input(strtolower($request["search_value"]), array("trim", "striptags"))) {
                             $PROCESSED["search_value"] = $tmp_input;
@@ -722,7 +764,6 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                             echo json_encode(array("status" => "success", "url" => $url));
                         }
                         break;
-
                     case "copy-attach-item":
                         $PROCESSED["fref"] = Entrada_Utilities_FormStorageSessionHelper::getFormRef();
                         $form_referrer_data = Entrada_Utilities_FormStorageSessionHelper::fetch($PROCESSED["fref"]);

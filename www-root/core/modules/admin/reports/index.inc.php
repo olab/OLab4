@@ -54,21 +54,29 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_REPORTS"))) {
 			font-weight:	bold;
 		}
 	</style>
-	<h1><?php echo $MODULES[strtolower($MODULE)]["title"]; ?></h1>
+	<h1><?php echo $translate->_("System Reports"); ?></h1>
 
-	<h2>Learning Event Reports</h2>
-	<ol class="system-reports">
+    <h2>Curriculum Reports</h2>
+    <ol class="system-reports">
+        <li>
+            <a href="<?php echo ENTRADA_URL; ?>/admin/reports?section=curriculum">Curriculum Tag Mapping Report</a><br />
+            A report showing the relationship between tags in the different tag sets in either up or down mapping direction.
+        </li>
+        <li>
+            <a href="<?php echo ENTRADA_URL; ?>/curriculum/reports/minutes">Curriculum Tag Minutes and Mapping Report</a><br />
+            A report showing the total Learning Event minutes and mappings grouped by Tags within selected Tag Sets.
+        </li>
+        <li>
+            <a href="<?php echo ENTRADA_URL; ?>/admin/reports?section=curriculum-review">Curriculum Review Report</a><br />
+            A report containing a summary of objectives, and presentations for each event.
+        </li>
+        <li>
+            <a href="<?php echo ENTRADA_URL; ?>/admin/reports?section=course-summary">Course Summary Report</a><br />
+            A report containing a summary of objectives, presentations, and hot topics for each learning event.
+        </li>
 		<li>
 			<a href="<?php echo ENTRADA_URL; ?>/admin/reports?section=event-types-by-course"><?php echo $translate->_("Learning Event Types"); ?> by Course</a><br />
 			A detailed report containing a <?php echo $translate->_("Learning Event Type"); ?> breakdown by Course.
-		</li>
-		<li>
-			<a href="<?php echo ENTRADA_URL; ?>/admin/reports?section=course-summary">Course Summary Report</a><br />
-			A report containing a summary of objectives, presentations, and hot topics for each learning event.
-		</li>
-		<li>
-			<a href="<?php echo ENTRADA_URL; ?>/admin/reports?section=curriculum-review">Curriculum Review Report</a><br />
-			A report containing a summary of objectives, and presentations for each event.
 		</li>
 	</ol>
 
@@ -139,6 +147,5 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_REPORTS"))) {
 			A report showing the Observerships taking place within a date range.
 		</li>
 	</ol>
-	<?php
+    <?php
 }
-?>

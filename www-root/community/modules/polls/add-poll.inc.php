@@ -585,14 +585,14 @@ switch($STEP) {
 							</thead>
 							<tbody>
 								<tr>
-									<td><strong>Community Administrators</strong></td>
+									<td><strong><?php echo $translate->_("Community Administrators"); ?></strong></td>
 									<td class="on"><input type="checkbox" id="allow_admin_read" name="allow_admin_read" value="1" checked="checked" onclick="this.checked = true" /></td>
 									<td><input type="checkbox" id="allow_admin_vote" name="allow_admin_vote" value="1" checked="checked" onclick="this.checked = true" /></td>
 									<td><input type="checkbox" id="allow_admin_results" name="allow_admin_results" value="1" checked="checked" onclick="this.checked = true" /></td>
 									<td><input type="checkbox" id="allow_admin_results_after" name="allow_admin_results_after" value="1" disabled="true" /></td>
 								</tr>
 								<tr>
-									<td><strong>Community Members</strong></td>
+									<td><strong><?php echo $translate->_("Community Members"); ?></strong></td>
 									<td class="on"><input type="checkbox" id="allow_member_read" name="allow_member_read" value="1"<?php echo (((!isset($PROCESSED["allow_member_read"])) || ((isset($PROCESSED["allow_member_read"])) && ($PROCESSED["allow_member_read"] == 1))) ? " checked=\"checked\"" : ""); ?>onclick="showHideMembers()" /></td>
 									<td><input type="checkbox" id="allow_member_vote" name="allow_member_vote" value="1"<?php echo (((!isset($PROCESSED["allow_member_vote"])) || ((isset($PROCESSED["allow_member_vote"])) && ($PROCESSED["allow_member_vote"] == 1))) ? " checked=\"checked\"" : ""); ?>onclick="showHideMembers(); setUnsetResults();" /></td>
 									<td><input type="checkbox" id="allow_member_results" name="allow_member_results" value="1"<?php echo ((((isset($PROCESSED["allow_member_results"])) && ($PROCESSED["allow_member_results"] == 1))) ? " checked=\"checked\"" : ""); ?>onclick="showHideMembers(); setUnsetResults();" /></td>
@@ -650,7 +650,7 @@ switch($STEP) {
 						<td colspan="2" width="100%">
 							<div id="members-list" <?php echo (!(isset($CLEANED_MEMBERS_ARRAY) && (is_array($CLEANED_MEMBERS_ARRAY)) && (count($CLEANED_MEMBERS_ARRAY))) ? "style=\"display: none;\"" : "") ?>>
 								<div id="members_note" class="content-small" style="padding-top: 15px;">
-									<strong>Please Note:</strong> If you would like to restrict voting to only certain community members please add these members to the &quot;Selected Members&quot; column below.
+                                    <?php echo $translate->_("<strong>Please Note:</strong> If you would like to restrict voting to only certain community members please add these members to the &quot;Selected Members&quot; column below."); ?>
 								</div>
 								<table summary="Add Member">
 									<colgroup>
@@ -770,7 +770,7 @@ switch($STEP) {
 											<input type="checkbox" name="notify_members" id="notify_members" />
 										</td>
 										<td>
-											<label for="notify_members" class="form-nrequired">Notify Community Members of <?php echo $terminology; ?></label>
+											<label for="notify_members" class="form-nrequired"><?php echo $translate->_("Notify Community Members of"); ?> <?php echo $terminology; ?></label>
 										</td>
 									</tr>
 								</table>

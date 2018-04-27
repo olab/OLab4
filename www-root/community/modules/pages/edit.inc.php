@@ -973,7 +973,7 @@ if (($LOGGED_IN) && (!$COMMUNITY_MEMBER)) {
 								});
 							}
 							</script>
-							<h1>Edit Community Page</h1>
+							<h1><?php echo $translate->_("Edit Community Page"); ?></h1>
 							<form id="edit_page_form" action="<?php echo ENTRADA_URL."/community".$community_details["community_url"].":pages?".replace_query(array("action" => "edit", "step" => 2)); ?>" method="post" enctype="multipart/form-data" onsubmit="selIt()">
 								<table summary="Editing Page">
 									<colgroup>
@@ -1151,7 +1151,7 @@ if (($LOGGED_IN) && (!$COMMUNITY_MEMBER)) {
 															<tbody>
 																<tr>
 																	<td>
-																		<strong>Community Administrators</strong>
+																		<strong><?php echo $translate->_("Community Administrators"); ?></strong>
 																	</td>
 																	<td class="on">
 																		<input type="checkbox" id="allow_admin_view" name="allow_admin_view" value="1" checked="checked" onclick="this.checked = true" />
@@ -1162,7 +1162,7 @@ if (($LOGGED_IN) && (!$COMMUNITY_MEMBER)) {
 																</tr>
 																<tr>
 																	<td>
-																		<strong>Community Members</strong>
+																		<strong><?php echo $translate->_("Community Members"); ?></strong>
 																	</td>
 																	<td class="on">
 																		<input type="checkbox" id="allow_member_view" name="allow_member_view" value="1"<?php echo (((!isset($PROCESSED["allow_member_view"])) || ((isset($PROCESSED["allow_member_view"])) && ($PROCESSED["allow_member_view"] == 1))) ? " checked=\"checked\"" : ""); ?> />
@@ -1258,13 +1258,13 @@ if (($LOGGED_IN) && (!$COMMUNITY_MEMBER)) {
 															<tbody>
 																<tr>
 																	<td>
-																		<strong>Community Administrators</strong>
+																		<strong><?php echo $translate->_("Community Administrators"); ?></strong>
 																	</td>
 																	<td class="on"><input type="checkbox" id="allow_admin_view" name="allow_admin_view" value="1" checked="checked" onclick="this.checked = true" /></td>
 																</tr>
 																<tr>
 																	<td>
-																		<strong>Community Members</strong>
+																		<strong><?php echo $translate->_("Community Members"); ?></strong>
 																	</td>
 																	<td class="on">
 																		<input type="checkbox" id="allow_member_view" name="allow_member_view" value="1"<?php echo (((!isset($PROCESSED["allow_member_view"])) || ((isset($PROCESSED["allow_member_view"])) && ($PROCESSED["allow_member_view"] == 1))) ? " checked=\"checked\"" : ""); ?> />
@@ -1456,7 +1456,7 @@ if (($LOGGED_IN) && (!$COMMUNITY_MEMBER)) {
 																	<td class="on"><input type="checkbox" id="show_events" name="show_events" value="1"<?php echo (((isset($page_options["show_events"]["option_value"])) && (((int)$page_options["show_events"]["option_value"]) == 1)) ? " checked=\"checked\"" : ""); ?> /></td>
 																</tr>												<tr>
 																	<td>
-																		<strong>Show Community History</strong>
+																		<strong><?php echo $translate->_("Show Community History"); ?></strong>
 																	</td>
 																	<td class="on">
 																		<input type="checkbox" id="show_history" name="show_history" value="1"<?php echo (((isset($page_options["show_history"]["option_value"])) && (((int)$page_options["show_history"]["option_value"]) == 1)) ? " checked=\"checked\"" : ""); ?> />

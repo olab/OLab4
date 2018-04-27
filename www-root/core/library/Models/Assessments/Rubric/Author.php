@@ -217,10 +217,21 @@ class Models_Assessments_Rubric_Author extends Models_Base {
         $results = $db->GetAll($query, array($rubric_id, $organisation_id));
         if ($results) {
             foreach ($results as $result) {
-                $authors[] = new self(array("arauthor_id" => $result["arauthor_id"], "rubric_id" => $result["rubric_id"], "author_type" => $result["author_type"], "author_id" => $result["author_id"], "deleted_date" => $result["deleted_date"], "updated_date" => $result["updated_date"], "updated_by" => $result["updated_by"]));
+                $authors[] = new self(
+                    array(
+                        "arauthor_id" => $result["arauthor_id"],
+                        "rubric_id" => $result["rubric_id"],
+                        "author_type" => $result["author_type"],
+                        "author_id" => $result["author_id"],
+                        "created_date" => $result["created_date"],
+                        "created_by" => $result["created_by"],
+                        "deleted_date" => $result["deleted_date"],
+                        "updated_date" => $result["updated_date"],
+                        "updated_by" => $result["updated_by"]
+                    )
+                );
             }
         }
-        
         return $authors;
     }
     
@@ -246,5 +257,13 @@ class Models_Assessments_Rubric_Author extends Models_Base {
         }
         
         return $authors;
+    }
+
+    public static function fetchAllByAuthorTypeAuthorID($author_type, $author_id) {
+        $self = new self();
+        return $self->fetchAll(array(
+            array("key" => "author_id", "value" => $author_id, "method" => "="),
+            array("key" => "author_type", "value" => $author_type, "method" => "=")
+        ));
     }
 }

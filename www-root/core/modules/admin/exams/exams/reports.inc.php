@@ -57,12 +57,14 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
             <?php
             echo $exam_view->examNavigationTabs($SECTION);
             ?>
-            <h2>Faculty Reports</h2>
+            <h2>Faculty Reports and Tools</h2>
             
             <ul>
                 <li><a href="<?php echo ENTRADA_URL; ?>/admin/exams/exams?section=category&id=<?php echo $exam->getID(); ?>">Curriculum Tags Report</a></li>
+                <li><a href="<?php echo ENTRADA_URL; ?>/admin/exams/exams?section=print-word&id=<?php echo $exam->getID(); ?>">Export Word</a></li>
                 <li><a href="<?php echo ENTRADA_URL; ?>/admin/exams/exams?section=analysis&id=<?php echo $exam->getID(); ?>">Item Analysis</a></li>
                 <li><a href="<?php echo ENTRADA_URL; ?>/admin/exams/exams?section=learner-comments&id=<?php echo $exam->getID(); ?>">Learner Comments</a></li>
+                <li><a href="<?php echo ENTRADA_URL; ?>/admin/exams/exams?section=report-faculty-feedback&id=<?php echo $exam->getID(); ?>">Learner Feedback Report</a></li>
                 <li><a href="<?php echo ENTRADA_URL; ?>/admin/exams/exams?section=learner-responses&id=<?php echo $exam->getID(); ?>">Learner Responses</a></li>
                 <li><a href="<?php echo ENTRADA_URL; ?>/admin/exams/exams?section=print&id=<?php echo $exam->getID(); ?>">Print View</a></li>
                 <li><a href="<?php echo ENTRADA_URL; ?>/admin/exams/exams?section=score&id=<?php echo $exam->getID(); ?>">Score Report</a></li>

@@ -27,6 +27,7 @@ class Models_Course_Objective {
 
     private $cobjective_id,
             $course_id,
+            $cperiod_id,
             $objective_id,
             $importance = 1,
             $objective_type,
@@ -53,6 +54,10 @@ class Models_Course_Objective {
 
     public function getCourseID() {
         return $this->course_id;
+    }
+
+    public function getCperiodID() {
+        return $this->cperiod_id;
     }
 
     public function getObjectiveID() {
@@ -239,6 +244,39 @@ class Models_Course_Objective {
         return $output;
     }
     
+    public static function fetchAllByCourseIDCperiodID($course_id, $cperiod_id, $objective_type) {
+
+        global $db;
+
+        if ($cperiod_id) {
+            $cperiod_sql = "`cperiod_id` = ".$db->qstr($cperiod_id);
+        } else {
+            $cperiod_sql = "`cperiod_id` IS NULL";
+        }
+
+        $query = "
+            SELECT * FROM `".static::$table_name."`
+            WHERE `course_id` = ".$db->qstr($course_id)."
+            AND ".$cperiod_sql."
+            AND `objective_type` = ".$db->qstr($objective_type)."
+            AND `active` = 1";
+        $results = $db->GetAll($query);
+
+        if ($results !== false) {
+            $output = array();
+
+            foreach ($results as $result) {
+                $output[] = new self($result);
+            }
+
+            return $output;
+        } else {
+            application_log("error", "Error fetching ".get_called_class().". DB said: ".$db->ErrorMsg());
+
+            throw new Exception("Error fetching ".get_called_class().". DB said: ".$db->ErrorMsg());
+        }
+    }
+
     public static function fetchAllByCourseID($course_id, $objective_type = NULL) {
         $self = new self();
         

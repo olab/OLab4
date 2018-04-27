@@ -1,14 +1,14 @@
 .timeline-ether-marker-bottom {
     width:          5em; 
     height:         1.5em; 
-    border-left:    1px solid #aaa; 
+    border-left:    1px solid #86a0ba; 
     padding-left:   2px; 
-    color:          #aaa;
+    color:          #003464;
 }
 
 .timeline-ether-marker-bottom-emphasized {
     width:          5em; 
-    height:         2em; 
+    height:         1.5em; 
     border-left:    1px solid #aaa; 
     padding-left:   2px; 
     color:          black;

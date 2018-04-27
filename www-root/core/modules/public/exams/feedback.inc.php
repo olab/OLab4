@@ -24,7 +24,7 @@
  *
  */
 
-if((!defined("PARENT_INCLUDED")) || (!defined("IN_PUBLIC_EXAMS"))) {
+if ((!defined("PARENT_INCLUDED")) || (!defined("IN_PUBLIC_EXAMS"))) {
     exit;
 } elseif((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
     header("Location: ".ENTRADA_URL);
@@ -36,7 +36,7 @@ if (isset($_GET["progress_id"])) {
 }
 
 $secure_mode = (isset($EXAM_MODE) && $EXAM_MODE === "secure") ? true : false;
-if ($secure_mode){
+if ($secure_mode) {
     $entrada_url = ENTRADA_RELATIVE . "/secure";
 } else {
     $entrada_url = ENTRADA_RELATIVE;
@@ -51,7 +51,6 @@ $BREADCRUMB[] = array("url" => $entrada_url."/exams/confirmation", "title" => $S
 $HEAD[] = "<link rel=\"stylesheet\" type=\"text/css\" href=\"" .  ENTRADA_URL . "/css/exams/exams.css?release=" . html_encode(APPLICATION_VERSION) . "\" />";
 $HEAD[] = "<link rel=\"stylesheet\" type=\"text/css\" href=\"" .  ENTRADA_URL . "/css/exams/questions.css?release=" . html_encode(APPLICATION_VERSION) . "\" />";
 $HEAD[] = "<link rel=\"stylesheet\" type=\"text/css\" href=\"" .  ENTRADA_URL . "/css/exams/exams-public-attempt.css?release=" . html_encode(APPLICATION_VERSION) . "\" />";
-
 
 switch ($STEP) {
     case 2 :
@@ -107,7 +106,7 @@ switch ($STEP) {
                                 ?>
                             </div>
                             <?php
-                            if ($score_start_valid && $score_end_valid || $feedback_start_valid && $feedback_end_valid) {
+                            if ($score_start_valid && $score_end_valid) {
                                 ?>
                                 <div id="feedback_scores">
                                     <?php

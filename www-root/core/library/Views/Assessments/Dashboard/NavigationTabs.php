@@ -31,12 +31,19 @@ class Views_Assessments_Dashboard_NavigationTabs extends Views_Assessments_Forms
      */
     protected function renderView($options = array()) {
         global $translate;
-        $active = @$options["active"]; ?>
-        <ul class="nav nav nav-tabs">
+        $active = array_key_exists("active", $options) ? $options["active"] : "";
+        $role = array_key_exists("role", $options) ? $options["role"] : null;
+        $group = array_key_exists("group", $options) ? $options["group"] : null;
+        ?>
+        <ul class="nav nav-tabs">
             <li <?php echo $active == "dashboard" ? 'class="active"' : ""; ?>><a href="<?php echo ENTRADA_URL . '/admin/assessments'; ?>"><?php echo $translate->_("Dashboard"); ?></a></li>
             <li <?php echo $active == "distributions" ? 'class="active"' : ""; ?>><a href="<?php echo ENTRADA_URL . '/admin/assessments/distributions'; ?>"><?php echo $translate->_("Distributions"); ?></a></li>
             <li <?php echo $active == "forms" ? 'class="active"' : ""; ?>><a href="<?php echo ENTRADA_URL .  '/admin/assessments/forms'; ?>"><?php echo $translate->_("Forms"); ?></a></li>
+            <li <?php echo $active == "blueprints" ? 'class="active"' : ""; ?>><a href="<?php echo ENTRADA_URL .  '/admin/assessments/blueprints'; ?>"><?php echo $translate->_("Form Templates"); ?></a></li>
             <li <?php echo $active == "items" ? 'class="active"' : ""; ?>><a href="<?php echo ENTRADA_URL .  '/admin/assessments/items'; ?>"><?php echo $translate->_("Items"); ?></a></li>
+            <?php if ($group == "medtech" && $role == "admin"): ?>
+                <li <?php echo $active == "scales" ? 'class="active"' : ""; ?>><a href="<?php echo ENTRADA_URL .  '/admin/assessments/scales'; ?>"><?php echo $translate->_("Scales"); ?></a></li>
+            <?php endif; ?>
         </ul>
         <?php
     }

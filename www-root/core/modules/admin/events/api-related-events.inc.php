@@ -63,11 +63,31 @@ if (!defined("IN_EVENTS")) {
 			$related_event_error = true;
 			$related_event_error_message = "There is currently no <strong>Course</strong> associated with this event. Please select one now to view a list of events which may be related to this one.";
 		}
+
+        if (isset($_POST["draft_id"]) && ($tmp_input = clean_input($_POST["draft_id"], ["trim", "int"]))) {
+            $PROCESSED["devent_id"] = $tmp_input;
+        }
+
+        if (isset($PROCESSED["devent_id"]) && is_int($PROCESSED["devent_id"])) {
+            $is_draft                = true;
+            $tables["events"]        = "draft_events";
+            $tables["primary_key"]   = "devent_id";
+            $tables["parent"]        = "draft_parent_id";
+
+            $event_model = new Models_Event_Draft_Event();
+        } else {
+            $is_draft                = false;
+            $tables["events"]        = "events";
+            $tables["primary_key"]   = "event_id";
+            $tables["parent"]        = "parent_id";
+
+            $event_model = new Models_Event();
+        }
+
 		if (isset($_POST["add_id"]) && ($tmp_input = $_POST["add_id"])) {
-            if ($tmp_input != $PROCESSED["event_id"]) {
+            if ($tmp_input != $PROCESSED[$tables["primary_key"]]) {
                 $PROCESSED["add_id"] = $tmp_input;
-                $query = "SELECT * FROM `events` WHERE `event_id` = ".$db->qstr($PROCESSED["add_id"])." AND `course_id` = ".$db->qstr($PROCESSED["course_id"]);
-                if (!$event_exists = $db->GetRow($query)) {
+                if (!$event_exists = $event_model->fetchRowByIDCourseId($PROCESSED["add_id"],$PROCESSED["course_id"])->toArray()) {
                     $related_event_error = true;
                     $related_event_error_message = "The event ID which you supplied was not related to the same course as this event. Please try again with an event ID which exists within the course.";
                 }
@@ -88,14 +108,11 @@ if (!defined("IN_EVENTS")) {
 				unset($PROCESSED["related_event_ids"][array_search($PROCESSED["remove_id"], $PROCESSED["related_event_ids"])]);
 			}
 		}
-	} else {
-		$PROCESSED["event_id"] = $EVENT_ID;
 	}
-	if (isset($PROCESSED["event_id"]) && $PROCESSED["event_id"]) {
-		$query = "SELECT * FROM `events` WHERE `event_id` = ".$db->qstr($PROCESSED["event_id"]);
-		if ($event = $db->GetRow($query)) {
-			$query = "SELECT * FROM `events` WHERE `parent_id` = ".$db->qstr($PROCESSED["event_id"]);
-			if (isset($event_exists) && $event_exists["parent_id"] == ($event["parent_id"] ? $event["parent_id"] : $PROCESSED["event_id"])) {
+
+	if (isset($PROCESSED[$tables["primary_key"]]) && $PROCESSED[$tables["primary_key"]]) {
+		if ($event = $event_model->fetchRowByID($PROCESSED[$tables["primary_key"]])->toArray()) {
+			if (isset($event_exists) && $event_exists[$tables["parent"]] == ($event[$tables["parent"]] ? $event[$tables["parent"]] : $PROCESSED[$tables["primary_key"]])) {
 				$related_event_error = true;
 				$related_event_error_message = "The event ID which you supplied is already associated with this event. Please try again with an event ID which is not already related to the current event.";
 			}
@@ -104,31 +121,32 @@ if (!defined("IN_EVENTS")) {
 			$related_events = array();
 			if (isset($PROCESSED["related_event_ids"]) && is_array($PROCESSED["related_event_ids"]) && !$related_event_error) {
 				foreach ($PROCESSED["related_event_ids"] as $event_id) {
-					$query = "SELECT * FROM `events` WHERE `event_id` = ".$db->qstr($event_id)." AND `course_id` = ".$db->qstr($PROCESSED["course_id"]);
-					if ($temp_event = $db->GetRow($query)) {
+                    if ($temp_event = $event_model->fetchRowByIDCourseId($event_id, $PROCESSED["course_id"])) {
 						$related_events[] = $temp_event;
 					}
 				}
 			} else {
-				$related_events = $db->GetAll($query);
+				$related_events = $event_model->fetchAllByParentID($PROCESSED[$tables["primary_key"]]);
 			}
 
 			if ($related_events) {
 				foreach ($related_events as $related_event) {
-					$related_event_ids .= ($related_event_ids ? ", ".$db->qstr($related_event["event_id"]) : $db->qstr($related_event["event_id"]));
-					$related_event_ids_clean .= ($related_event_ids_clean ? ", ".$related_event["event_id"] : $related_event["event_id"]);
+                    $related_event = $related_event->toArray();
+					$related_event_ids .= ($related_event_ids ? ", ".$db->qstr($related_event[$tables["primary_key"]]) : $db->qstr($related_event[$tables["primary_key"]]));
+					$related_event_ids_clean .= ($related_event_ids_clean ? ", ".$related_event[$tables["primary_key"]] : $related_event[$tables["primary_key"]]);
 				}
 			}
 			?>
             <div class="control-group">
-				<input type="hidden" id="parent_id" name="parent_id" value="<?php echo ($event["parent_id"] ? $event["parent_id"] : $PROCESSED["event_id"]); ?>" />
+				<input type="hidden" id="parent_id" name="parent_id" value="<?php echo ($event[$tables["parent"]] ? $event[$tables["parent"]] : $PROCESSED[$tables["primary_key"]]); ?>" />
 				<input id="related_event_ids_clean" name="related_event_ids_clean" type="hidden" value="<?php echo $related_event_ids_clean; ?>">
 				<?php
 
                 if ($related_events) {
                     foreach ($related_events as $related_event) {
+                        $related_event = $related_event->toArray();
                         ?>
-                        <input id="related_event_ids" name="related_event_ids[]" type="hidden" value="<?php echo $related_event["event_id"]; ?>">
+                        <input id="related_event_ids" name="related_event_ids[]" type="hidden" value="<?php echo $related_event[$tables["primary_key"]]; ?>">
                         <?php
                     }
                 }
@@ -157,13 +175,14 @@ if (!defined("IN_EVENTS")) {
                     <div id="related_events_list">
                         <ul class="unstyled" style="margin-top: 15px">
                             <?php
-                            if (is_array($related_events) && !empty($related_events)) {
+                            if ($related_events) {
                                 foreach ($related_events as $related_event) {
+                                    $related_event = $related_event->toArray();
                                     ?>
-                                    <li id="related_event_<?php echo $related_event["event_id"]; ?>">
-                                        <a href="<?php echo ENTRADA_URL; ?>/admin/events?id=<?php echo $related_event["event_id"] ?>&section=edit"><?php echo $related_event["event_title"]; ?></a>
-                                        <img src="<?php echo ENTRADA_URL; ?>/images/action-delete.gif" onclick="removeRelatedEvent('<?php echo $related_event["event_id"]; ?>');" class="pull-right" style="cursor:pointer;" />
-                                        <span class="content-small">Event on <?php echo date(DEFAULT_DATE_FORMAT, $related_event["event_start"]); ?></span>
+                                    <li id="related_event_<?php echo $related_event[$tables["primary_key"]]; ?>">
+                                        <a href="<?php echo ENTRADA_URL . "/admin/events?section=edit&" . ($is_draft ? "mode=draft&" : "") . "id=" . $related_event[$tables["primary_key"]] ; ?>"><?php echo $related_event["event_title"]; ?></a>
+                                        <img src="<?php echo ENTRADA_URL; ?>/images/action-delete.gif" onclick="removeRelatedEvent('<?php echo $related_event[$tables["primary_key"]]; ?>');" class="pull-right" style="cursor:pointer;" />
+                                        <span class="content-small">Event on <?php echo date(DEFAULT_DATETIME_FORMAT, $related_event["event_start"]); ?></span>
                                     </li>
                                     <?php
                                 }
@@ -176,18 +195,19 @@ if (!defined("IN_EVENTS")) {
 			<?php
 			if ((($related_events && $related_event_ids) || (isset($PROCESSED["remove_id"]) && $PROCESSED["remove_id"])) && !$related_event_error) {
 				$added_events = array();
-				$query = "SELECT * FROM `events` WHERE `parent_id` = ".$db->qstr((isset($event["parent_id"]) && $event["parent_id"] ? $event["parent_id"] : $event["event_id"])).($related_event_ids ? " AND `event_id` NOT IN (".$related_event_ids.")" : "");
+				$query = "SELECT * FROM `" .$tables["events"]. "` WHERE `" .$tables["parent"]. "` = ".$db->qstr((isset($event[$tables["parent"]]) && $event[$tables["parent"]] ? $event[$tables["parent"]] : $event[$tables["primary_key"]])).($related_event_ids ? " AND `" . $tables["primary_key"] . "` NOT IN (".$related_event_ids.")" : "");
 				$removed_events = $db->GetAll($query);
-				$query = "SELECT * FROM `events` WHERE `parent_id` = ".$db->qstr((isset($event["parent_id"]) && $event["parent_id"] ? $event["parent_id"] : $event["event_id"]))." AND `event_id` IN (".$related_event_ids.")";
+				$query = "SELECT * FROM `" .$tables["events"]. "` WHERE `" .$tables["parent"]. "` = ".$db->qstr((isset($event[$tables["parent"]]) && $event[$tables["parent"]] ? $event[$tables["parent"]] : $event[$tables["primary_key"]]))." AND `" .$tables["primary_key"]. "` IN (".$related_event_ids.")";
 				$existing_events = $db->GetAll($query);
 				foreach ($related_events as $related_event) {
+                    $related_event = $related_event->toArray();
 					if (array_search($related_event, $existing_events) === false) {
 						$added_events[] = $related_event;
 					}
 				}
 				if (isset($removed_events) && $removed_events) {
 					foreach ($removed_events as $removed_event) {
-						$query = "UPDATE `events` SET `parent_id` = NULL WHERE `event_id` = ".$db->qstr($removed_event["event_id"]);
+						$query = "UPDATE `" .$tables["events"]. "` SET `" .$tables["parent"]. "` = NULL WHERE `" .$tables["primary_key"]. "` = ".$db->qstr($removed_event[$tables["primary_key"]]);
 						if (!$db->Execute($query)) {
 							application_log("error", "Unable to set parent_id of an event [".$removed_event["event_id"]."] to null to remove the relationship between it and the parent event. Database said: ".$db->ErrorMsg());
 						}
@@ -195,7 +215,7 @@ if (!defined("IN_EVENTS")) {
 				}
 				if (isset($added_events) && $added_events) {
 					foreach ($added_events as $added_event) {
-						$query = "UPDATE `events` SET `parent_id` = ".$db->qstr((isset($event["parent_id"]) && $event["parent_id"] ? $event["parent_id"] : $event["event_id"]))." WHERE `event_id` = ".$db->qstr($added_event["event_id"]);
+						$query = "UPDATE `" .$tables["events"]. "` SET `" . $tables["parent"]. "` = ".$db->qstr((isset($event[$tables["parent"]]) && $event[$tables["parent"]] ? $event[$tables["parent"]] : $event[$tables["primary_key"]])). " WHERE  `" .$tables["primary_key"]. "` = ".$db->qstr($added_event[$tables["primary_key"]]);
 						if (!$db->Execute($query)) {
 							application_log("error", "Unable to set parent_id [".(isset($event["parent_id"]) && $event["parent_id"] ? $event["parent_id"] : $event["event_id"])."] of an event [".$added_event["event_id"]."] to add a relationship between it and the parent event. Database said: ".$db->ErrorMsg());
 						}

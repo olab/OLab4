@@ -159,9 +159,56 @@ if ($RECORD_ID) {
 
 				<div class="pull-left">
                     <a href="<?php echo COMMUNITY_URL."/feeds".$COMMUNITY_URL.":".$PAGE_URL."/rss:".$PRIVATE_HASH."?id=".$RECORD_ID; ?>" title="Subscribe to RSS"><i class="fa fa-rss-square fa-lg fa-fw"></i></a>
-					<?php
-					$ONLOAD[] = "new Ajax.Updater('notifications-toggle', '".ENTRADA_URL."/api/notifications.api.php?community_id=".$COMMUNITY_ID."&id=".$RECORD_ID."&type=post&action=view')";
-					?>
+                    <?php
+                    if (COMMUNITY_NOTIFICATIONS_ACTIVE && $LOGGED_IN && $_SESSION["details"]["notifications"]) {
+                        ?>
+                        <div id="notifications-toggle"></div>
+                        <script type="text/javascript">
+                            function promptNotifications(enabled) {
+                                Dialog.confirm('Do you really wish to '+ (enabled == 1 ? "disable" : "enable") +' notifications for this forum?',
+                                    {
+                                        id:				'requestDialog',
+                                        width:			350,
+                                        height:			100,
+                                        title:			'Notification Confirmation',
+                                        className:		'medtech',
+                                        okLabel:		'Yes',
+                                        cancelLabel:	'No',
+                                        closable:		'true',
+                                        buttonClass:	'btn',
+                                        destroyOnClose:	true,
+                                        ok:				function(win) {
+                                            new Window(	{
+                                                    id:				'resultDialog',
+                                                    width:			350,
+                                                    height:			100,
+                                                    title:			'Notification Result',
+                                                    className:		'medtech',
+                                                    okLabel:		'close',
+                                                    buttonClass:	'btn',
+                                                    resizable:		false,
+                                                    draggable:		false,
+                                                    minimizable:	false,
+                                                    maximizable:	false,
+                                                    recenterAuto:	true,
+                                                    destroyOnClose:	true,
+                                                    url:			'<?php echo ENTRADA_URL."/api/notifications.api.php?community_id=".$COMMUNITY_ID."&id=".$RECORD_ID; ?>&type=post&action=edit&active='+(enabled == 1 ? '0' : '1'),
+                                                    onClose:			function () {
+                                                        new Ajax.Updater('notifications-toggle', '<?php echo ENTRADA_URL."/api/notifications.api.php?community_id=".$COMMUNITY_ID."&id=".$RECORD_ID; ?>&type=post&action=view');
+                                                    }
+                                                }
+                                            ).showCenter();
+                                            return true;
+                                        }
+                                    }
+                                );
+                            }
+
+                        </script>
+                        <?php
+                        $ONLOAD[] = "new Ajax.Updater('notifications-toggle', '".ENTRADA_URL."/api/notifications.api.php?community_id=".$COMMUNITY_ID."&id=".$RECORD_ID."&type=post&action=view')";
+                    }
+                    ?>
 				</div>
 
 				<?php
@@ -269,7 +316,7 @@ if ($RECORD_ID) {
                         echo "	<td>".(int) $result["total_replies"]."</td>\n";
                         echo "	<td style=\"font-size: 10px; white-space: nowrap; overflow: hidden\">".$original_display."</a></td>\n";
                         echo "	<td style=\"font-size: 10px; white-space: nowrap; overflow: hidden\">\n";
-                        echo "		".date(DEFAULT_DATE_FORMAT, $latest_activity)."<br />\n";
+                        echo "		".date(DEFAULT_DATETIME_FORMAT, $latest_activity)."<br />\n";
                         echo "		<strong>By:</strong> ".$latest_poster_display."\n";
                         echo "	</td>\n";
                         echo "</tr>\n";

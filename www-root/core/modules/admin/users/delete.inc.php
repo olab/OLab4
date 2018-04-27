@@ -195,7 +195,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_USERS"))) {
 								echo "	<td class=\"title\">".(($url) ? "<a href=\"".$url."\" title=\"Edit Account: ".html_encode($result["fullname"])."\">" : "").html_encode($result["fullname"]).(($url) ? "</a>" : "")."</td>\n";
 								echo "	<td class=\"general\">".(($url) ? "<a href=\"".$url."\" title=\"Edit Account: ".html_encode($result["fullname"])."\">" : "").html_encode($result["username"]).(($url) ? "</a>" : "")."</td>\n";
 								echo "	<td class=\"general\">".(($url) ? "<a href=\"".$url."\" title=\"Edit Account: ".html_encode($result["fullname"])."\">" : "").ucwords($result["group"])." &rarr; ".ucwords($result["role"]).(($url) ? "</a>" : "")."</td>\n";
-								echo "	<td class=\"date\">".(($url) ? "<a href=\"".$url."\" title=\"Edit Account: ".html_encode($result["fullname"])."\">" : "").(((int) $result["last_login"]) ? date(DEFAULT_DATE_FORMAT, (int) $result["last_login"]) : "Never Logged In").(($url) ? "</a>" : "")."</td>\n";
+								echo "	<td class=\"date\">".(($url) ? "<a href=\"".$url."\" title=\"Edit Account: ".html_encode($result["fullname"])."\">" : "").(((int) $result["last_login"]) ? date(DEFAULT_DATETIME_FORMAT, (int) $result["last_login"]) : "Never Logged In").(($url) ? "</a>" : "")."</td>\n";
 								echo "</tr>\n";
 							}
 							?>

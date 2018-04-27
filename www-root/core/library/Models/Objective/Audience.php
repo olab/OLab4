@@ -34,26 +34,45 @@ class Models_Objective_Audience extends Models_Base {
     }
 
     public function getObjectiveID () {
-        return $this->oaudience_id;
+        return $this->objective_id;
     }
 
     public function getOrganisationID () {
-        return $this->oaudience_id;
+        return $this->organisation_id;
     }
 
     public function getAudienceType () {
-        return $this->oaudience_id;
+        return $this->audience_type;
     }
 
     public function getAudienceValue () {
-        return $this->oaudience_id;
+        return $this->audience_value;
     }
 
     public function getUpdatedDate () {
-        return $this->oaudience_id;
+        return $this->updated_date;
     }
 
     public function getUpdatedBy () {
-        return $this->oaudience_id;
+        return $this->updated_by;
+    }
+
+    public static function fetchAllByObjectiveIDAudienceType($objective_id, $audience_type) {
+        $self = new self();
+        return $self->fetchAll(array(
+            array("key" => "objective_id", "value" => $objective_id, "method" => "="),
+            array("key" => "audience_type", "value" => $audience_type, "method" => "=")
+            )
+        );
+    }
+
+    public function delete() {
+        global $db;
+        if ($db->Execute("DELETE FROM `".static::$table_name."` WHERE `".static::$primary_key."` = ".$this->getID())) {
+            return $this;
+        } else {
+            application_log("error", "Error deleting  ".get_called_class()." id[" . $this->{static::$primary_key} . "]. DB Said: " . $db->ErrorMsg());
+            return false;
+        }
     }
 }

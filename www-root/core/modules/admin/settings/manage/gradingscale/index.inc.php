@@ -67,7 +67,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CONFIGURATION"))) {
                         <input type="checkbox" name="remove-ids[]" value="<?php echo $grading_scale->getID(); ?>"/>
                     </td>
                     <td><a href="<?php echo ENTRADA_URL."/admin/settings/manage/gradingscale?org=".$ORGANISATION_ID."&scale=".$grading_scale->getID(); ?>&section=edit"><?php echo $grading_scale->getTitle(); ?></td>
-                    <td><?php date(DEFAULT_DATE_FORMAT, $grading_scale->getApplicableFrom()); ?></td>
+                    <td><?php date(DEFAULT_DATETIME_FORMAT, $grading_scale->getApplicableFrom()); ?></td>
                 </tr>
                 <?php
                 }

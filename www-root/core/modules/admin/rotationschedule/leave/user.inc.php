@@ -47,7 +47,30 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ROTATION_SCHEDULE"))) {
 
         $BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/" . $MODULE . "/" . $SUBMODULE . "?section=" . $SECTION . "&proxy_id=" . $PROCESSED["proxy_id"], "title" => $user->getFullname(false));
 
+        $assessments_base = new Entrada_Utilities_Assessments_Base();
+        $assessments_base->getAssessmentPreferences("rotationschedule");
+        $cperiod_id_preference = (isset($_SESSION[APPLICATION_IDENTIFIER]["rotationschedule"]["leave"]["cperiod_id"]) ? $_SESSION[APPLICATION_IDENTIFIER]["rotationschedule"]["leave"]["cperiod_id"] : false);
+        $cperiod_preference = null;
+
         $tracked_leave = array();
+        $leave_type_names = array();
+        $leave_type_totals = array();
+
+        $curriculum_types = Models_Curriculum_Type::fetchAllByOrg($ENTRADA_USER->getActiveOrganisation());
+        $curriculum_periods = array();
+        if ($curriculum_types) {
+            foreach ($curriculum_types as $curriculum_type) {
+                $periods = Models_Curriculum_Period::fetchAllByCurriculumType($curriculum_type->getID());
+                if ($periods) {
+                    foreach ($periods as $period) {
+                        $curriculum_periods[$period->getID()] = $period;
+                        if ($period->getID() == $cperiod_id_preference) {
+                            $cperiod_preference = $period->toArray();
+                        }
+                    }
+                }
+            }
+        }
 
         switch ($STEP) {
             case 3 :
@@ -71,7 +94,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ROTATION_SCHEDULE"))) {
                             }
                         }
 
-                        $total_leave_days = Models_Leave_Tracking::fetchLeaveDayTotalByProxyID($PROCESSED["proxy_id"]);
+                        $total_leave_days = Models_Leave_Tracking::fetchLeaveDayTotalByProxyID($PROCESSED["proxy_id"], $cperiod_preference ? $cperiod_preference["start_date"] : null, $cperiod_preference ? $cperiod_preference["finish_date"] : null);
 
                         if ($deleted > 0 && $total_leave_days > 0) {
                             add_success(sprintf($translate->_("Successfully deleted %s leave entries."), $deleted));
@@ -83,7 +106,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ROTATION_SCHEDULE"))) {
                         $STEP = 1;
                     } else {
                         add_error($translate->_("No leaves selected for deletion"));
-                        $tracked_leave = Models_Leave_Tracking::fetchAllByProxyID($PROCESSED["proxy_id"]);
+                        $tracked_leave = Models_Leave_Tracking::fetchAllByProxyID($PROCESSED["proxy_id"], $cperiod_preference ? $cperiod_preference["start_date"] : null, $cperiod_preference ? $cperiod_preference["finish_date"] : null);
                         $STEP = 1;
                     }
                 }
@@ -100,14 +123,14 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ROTATION_SCHEDULE"))) {
                         }
                         add_notice($translate->_("You have selected the following leave entries to delete. Please confirm using the button below."));
                     } else {
-                        $tracked_leave = Models_Leave_Tracking::fetchAllByProxyID($PROCESSED["proxy_id"]);
+                        $tracked_leave = Models_Leave_Tracking::fetchAllByProxyID($PROCESSED["proxy_id"], $cperiod_preference ? $cperiod_preference["start_date"] : null, $cperiod_preference ? $cperiod_preference["finish_date"] : null);
                         $STEP = 1;
                     }
                 }
             break;
             case 1 :
             default:
-                $tracked_leave = Models_Leave_Tracking::fetchAllByProxyID($PROCESSED["proxy_id"]);
+            $tracked_leave = Models_Leave_Tracking::fetchAllByProxyID($PROCESSED["proxy_id"], $cperiod_preference ? $cperiod_preference["start_date"] : null, $cperiod_preference ? $cperiod_preference["finish_date"] : null);
             break;
         }
 
@@ -126,23 +149,6 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ROTATION_SCHEDULE"))) {
                         var SUBMODULE = \"".$SUBMODULE."\";
                         var SECTION = \"".$SECTION."\";
                     </script>";
-
-        $curriculum_types = Models_Curriculum_Type::fetchAllByOrg($ENTRADA_USER->getActiveOrganisation());
-        $curriculum_periods = false;
-        if ($curriculum_types) {
-            foreach ($curriculum_types as $curriculum_type) {
-                $periods = Models_Curriculum_Period::fetchAllByCurriculumType($curriculum_type->getID());
-                if ($periods) {
-                    foreach ($periods as $period) {
-                        $curriculum_periods[] = $period;
-                    }
-                }
-            }
-        }
-
-        $assessments_base = new Entrada_Utilities_Assessments_Base();
-        $assessments_base->getAssessmentPreferences("rotationschedule");
-        $cperiod_id_preference = (isset($_SESSION[APPLICATION_IDENTIFIER]["rotationschedule"]["leave"]["cperiod_id"]) ? $_SESSION[APPLICATION_IDENTIFIER]["rotationschedule"]["leave"]["cperiod_id"] : false);
         ?>
         <h1><?php echo $translate->_("Leave Tracking for") . " " . $user->getFullname(false) ; ?></h1>
         <?php Views_Schedule_UserInterfaces::renderScheduleNavTabs($SECTION); ?>
@@ -165,8 +171,8 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ROTATION_SCHEDULE"))) {
                     <input type="text" id="current-leave-search" placeholder="<?php echo $translate->_("Search"); ?>" class="input-large search-icon">
                     <a href="#new-leave" data-toggle="modal" class="btn btn-success space-left new-leave-btn"><i class="icon-plus-sign icon-white"></i><?php echo $translate->_(" New Leave"); ?></a>
                     <div class="control-group pull-right">
-                        <label for="learner-curriculum-period-select"><?php echo $translate->_("Curriculum Period: "); ?></label>
-                        <select id="learner-curriculum-period-select">
+                        <label for="leave-curriculum-period-select"><?php echo $translate->_("Curriculum Period: "); ?></label>
+                        <select id="leave-curriculum-period-select">
                             <option value="0"><?php echo $translate->_("All"); ?></option>
                             <?php foreach ($curriculum_periods as $curriculum_period): ?>
                                 <option value="<?php echo $curriculum_period->getCperiodID(); ?>" <?php echo ($cperiod_id_preference == $curriculum_period->getCperiodID() ? "selected=\"selected\"" : ""); ?> data-start-date="<?php echo date("Y-m-d", $curriculum_period->getStartDate())?>" data-end-date="<?php echo date("Y-m-d", $curriculum_period->getFinishDate())?>">
@@ -193,23 +199,56 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ROTATION_SCHEDULE"))) {
                 if ($tracked_leave) {
                     foreach ($tracked_leave as $leave) {
                         $leave_type = Models_Leave_Type::fetchRowByID($leave->getTypeID());
-                    ?>
-                    <tr id="leave-id-<?php echo $leave->getID(); ?>" data-start-dates="<?php echo date("Y-m-d", $leave->getStartDate()); ?>" data-end-dates="<?php echo date("Y-m-d", $leave->getEndDate()); ?>">
-                        <td><a href="#new-leave" class="edit-leave leave-type" data-leave-id="<?php echo html_encode($leave->getID()); ?>"><?php echo ($leave_type->getTypeValue() ? html_encode(ucwords($leave_type->getTypeValue())) : ""); ?></a></td>
-                        <td><a href="#new-leave" class="edit-leave days-used" data-leave-id="<?php echo html_encode($leave->getID()); ?>"><?php echo $leave->getDaysUsed() ? $leave->getDaysUsed() : $translate->_("Please update."); ?></a></td>
-                        <td><a href="#new-leave" class="edit-leave start-date" data-leave-id="<?php echo html_encode($leave->getID()); ?>"><?php echo date("Y-m-d", $leave->getStartDate()); ?></a></td>
-                        <td><a href="#new-leave" class="edit-leave end-date" data-leave-id="<?php echo html_encode($leave->getID()); ?>"><?php echo date("Y-m-d", $leave->getEndDate()); ?></a></td>
-                        <td><a href="#new-leave" class="edit-leave comments" data-leave-id="<?php echo html_encode($leave->getID()); ?>"><?php echo (strlen($leave->getComments()) < 30) ? $leave->getComments() : substr($leave->getComments(), 0, 27) . "..." ?></a></td>
-                        <td><input type="checkbox" name="delete[<?php echo $leave->getID(); ?>]" value="<?php echo $leave->getID(); ?>" <?php echo $STEP == 2 ? "checked=\"checked\"" : ""; ?> /></td>
-                    </tr>
-                    <?php
+                        if ($leave_type) {
+
+                            $leave_type_names[$leave->getTypeID()] = $leave_type->getTypeValue();
+                            if (array_key_exists($leave->getTypeID(), $leave_type_totals)) {
+                                $leave_type_totals[$leave->getTypeID()] += $leave->getDaysUsed();
+                            } else {
+                                $leave_type_totals[$leave->getTypeID()] = $leave->getDaysUsed();
+                            }
+                            ?>
+                            <tr id="leave-id-<?php echo $leave->getID(); ?>" data-start-dates="<?php echo date("Y-m-d", $leave->getStartDate()); ?>" data-end-dates="<?php echo date("Y-m-d", $leave->getEndDate()); ?>">
+                                <td>
+                                    <a href="#new-leave" class="edit-leave leave-type" data-leave-id="<?php echo html_encode($leave->getID()); ?>"><?php echo($leave_type->getTypeValue() ? html_encode(ucwords($leave_type->getTypeValue())) : ""); ?></a>
+                                </td>
+                                <td>
+                                    <a href="#new-leave" class="edit-leave days-used" data-leave-id="<?php echo html_encode($leave->getID()); ?>"><?php echo $leave->getDaysUsed() ? $leave->getDaysUsed() : $translate->_("Please update."); ?></a>
+                                </td>
+                                <td>
+                                    <a href="#new-leave" class="edit-leave start-date" data-leave-id="<?php echo html_encode($leave->getID()); ?>"><?php echo date("Y-m-d", $leave->getStartDate()); ?></a>
+                                </td>
+                                <td>
+                                    <a href="#new-leave" class="edit-leave end-date" data-leave-id="<?php echo html_encode($leave->getID()); ?>"><?php echo date("Y-m-d", $leave->getEndDate()); ?></a>
+                                </td>
+                                <td>
+                                    <a href="#new-leave" class="edit-leave comments" data-leave-id="<?php echo html_encode($leave->getID()); ?>"><?php echo (strlen($leave->getComments()) < 30) ? $leave->getComments() : substr($leave->getComments(), 0, 27) . "..." ?></a>
+                                </td>
+                                <td>
+                                    <input type="checkbox" name="delete[<?php echo $leave->getID(); ?>]" value="<?php echo $leave->getID(); ?>" <?php echo $STEP == 2 ? "checked=\"checked\"" : ""; ?> />
+                                </td>
+                            </tr>
+                            <?php
+                        }
                     }
-                } else {
-                    ?>
-                    <tr class="empty">
-                        <td colspan="6"><?php echo $translate->_("You have not entered any leave for this user."); ?></td>
-                    </tr>
-                    <?php
+                    if (!empty($leave_type_names)) { ?>
+                        <table class="table table-bordered table-striped space-above space-below medium">
+                            <thead>
+                            <tr>
+                                <th><?php echo $translate->_("Leave Type"); ?></th>
+                                <th><?php echo $translate->_("Total Days"); ?></th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <?php foreach ($leave_type_names as $leave_type_id => $leave_type) { ?>
+                                <tr>
+                                    <td><?php echo $leave_type ?></td>
+                                    <td><?php echo $leave_type_totals[$leave_type_id] . $translate->_(" days"); ?></td>
+                                </tr>
+                            <?php } ?>
+                            </tbody>
+                        </table>
+                    <?php }
                 }
                 ?>
                 </tbody>

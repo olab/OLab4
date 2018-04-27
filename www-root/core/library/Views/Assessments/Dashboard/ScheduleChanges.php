@@ -37,42 +37,40 @@ class Views_Assessments_Dashboard_ScheduleChanges extends Views_Assessments_Base
         <div class="quadrant-wrapper">
             <h2 class="header-nospace"><?php echo $translate->_("Rotation Changes"); ?></h2>
             <?php if (!empty($options["schedule_data"])) : ?>
-                <div class="card-deck scrollable schedule-deck">
-                    <table>
-                        <thead>
-                            <th><?php echo $translate->_("Current Rotation"); ?></th>
-                            <th></th>
-                            <th><?php echo $translate->_("Next Rotation"); ?></th>
-                        </thead>
-                        <tbody class="schedule-info">
+                <div class="schedule-deck">
+                    <div class="schedule-header">
+                        <div><?php echo $translate->_("Current Rotation"); ?></div>
+                        <div></div>
+                        <div><?php echo $translate->_("Next Rotation"); ?></div>
+                    </div>
+                    <div class="schedule-info">
                         <?php foreach ($options["schedule_data"] as $schedule_data) : ?>
-                            <tr class="audience-name">
-                                <td colspan="3">
-                                    <strong><?php echo $schedule_data["audience_full_name"]; ?></strong><br>
-                                </td>
-                            </tr>
-                            <tr class="schedule-details">
-                                <td>
+                        <div class="audience">
+                            <div class="audience-name">
+                                <strong><?php echo $schedule_data["audience_full_name"]; ?></strong>
+                            </div>
+                            <div class="schedule-details">
+                                <div>
                                     <a href="<?php echo $schedule_data["schedule_old_url"] ?>">
                                         <span><strong><?php echo $schedule_data["schedule_title_before"]; ?></strong></span><br>
                                         <span><?php echo date("Y-m-d", $schedule_data["schedule_start_before"]); ?></span><br>
                                         <span><?php echo date("Y-m-d", $schedule_data["schedule_end_before"]); ?></span><br>
                                     </a>
-                                </td>
-                                <td>
+                                </div>
+                                <div>
                                     <i class="fa fa-arrow-right schedule-arrow" aria-hidden="true"></i>
-                                </td>
-                                <td>
+                                </div>
+                                <div>
                                     <a href="<?php echo $schedule_data["schedule_new_url"] ?>">
                                         <span id="rotation-next-title"><strong><?php echo $schedule_data["schedule_title_after"]; ?></strong></span><br>
                                         <span><?php echo date("Y-m-d", $schedule_data["schedule_start_after"]); ?></span><br>
                                         <span><?php echo date("Y-m-d", $schedule_data["schedule_end_after"]); ?></span><br>
                                     </a>
-                                </td>
-                            </tr>
+                                </div>
+                            </div>
+                        </div>
                         <?php endforeach; ?>
-                        </tbody>
-                    </table>
+                    </div>
                 </div>
             <?php else : ?>
                 <div class="alert no-margin-bottom"><?php echo $translate->_("No upcoming rotation changes."); ?></div>

@@ -50,6 +50,21 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
     
     if ($exam) {
         $exam_view = new Views_Exam_Exam($exam);
+
+        $parent_folder = $exam->getParentFolder();
+        if ($parent_folder && is_object($parent_folder)) {
+            $breads = array();
+            $breads = $parent_folder->getBreadcrumbsByFolderID($breads, "export_array");
+            if ($breads && is_array($breads) && !empty($breads)) {
+                krsort($breads);
+                foreach ($breads as $bread) {
+                    if ($bread["folder-id"] !== 0) {
+                        $BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/" . $MODULE . "/" . $SUBMODULE . "?folder_id=" . $bread["folder-id"] , "title" => $bread["folder-title"]);
+                    }
+                }
+            }
+        }
+
         $BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/exams/exams?section=edit-exam&id=".$exam->getID(), "title" => $exam->getTitle());
         if ($ENTRADA_ACL->amIAllowed(new ExamResource($PROCESSED["exam_id"], true), "update")) {
             $METHOD = "update";

@@ -149,6 +149,14 @@ class User {
     }
 
     /**
+     * Returns the salt.
+     * @return string
+     */
+    public function getSalt() {
+        return $this->salt;
+    }
+
+    /**
 	 * Returns the ID of the organisation to which the user belongs
 	 * @return int
 	 */
@@ -846,7 +854,8 @@ class User {
                             JOIN `group_members` AS b
                             ON a.`group_id` = b.`group_id`
                             WHERE a.`group_type` = 'cohort'
-                            AND b.`proxy_id` = ?";
+                            AND b.`proxy_id` = ?
+                            AND b.`member_active` = '1'";
                 $result = $db->GetOne($query, array($proxy_id));
                 if ($result) {
                     $user->setCohort($result);
@@ -1273,26 +1282,6 @@ class User {
         return $id;
     }
 
-    public static function searchByTermOrg($search_term, $organisation_id) {
-        global $db;
-
-        $query = "SELECT a.*
-                    FROM `" . AUTH_DATABASE . "`.`user_data` AS a
-                    JOIN `" . AUTH_DATABASE . "`.`user_access` AS b
-                    ON a.`id` = b.`user_id`
-                    AND b.`organisation_id` = ?
-                    WHERE LCASE(CONCAT(a.`firstname`, ' ', a.`lastname`)) LIKE (?)";
-        $results = $db->GetAll($query, array($organisation_id, "%" . $search_term . "%"));
-        if ($results) {
-            foreach ($results as $result) {
-                $output[] = self::fromArray($result, new self);
-            }
-            return $output;
-        } else {
-            return false;
-        }
-    }
-
     public static function fetchAllByOrgGroup($organisation_id, $group) {
         global $db;
 
@@ -1419,18 +1408,21 @@ class User {
 					(isset($app_id) && $app_id ? " AND b.`app_id` = " . $db->qstr($app_id) : "")."
                     GROUP BY a.`id`
                     ORDER BY a.`firstname` ASC, a.`lastname` ASC";
-        if (!empty($limit)) {
-            $query .= " LIMIT " . $limit;
-        }
 
-        if (!empty($offset)) {
-            $query .= " OFFSET " . $offset;
-        }
+
+		if (!empty($limit)) {
+			$query .= " LIMIT " . $limit;
+		}
+
+		if (!empty($offset)) {
+			$query .= " OFFSET " . $offset;
+		}
+
 		$results = $db->GetAll($query, ($groups_string ? array(time(), time()) : ($group ? array(time(), time(), $group) : array(time(), time()))));
 		return $results;
 	}
 
-	public static function fetchAllResidents($search_term = null, $excluded_ids = 0) {
+	public static function fetchAllResidents($search_term = null, $excluded_ids = 0, $limit = null, $offset = null) {
 		global $db;
 
 		$query = "	SELECT a.`id` AS `proxy_id`, a.`firstname`, a.`lastname`, b.`group`, b.`role`, a.`email`
@@ -1453,9 +1445,18 @@ class User {
                     GROUP BY a.`id`
                     ORDER BY a.`firstname` ASC, a.`lastname` ASC";
 
+        if (!empty($limit)) {
+            $query .= " LIMIT " . $limit;
+        }
+
+        if (!empty($offset)) {
+            $query .= " OFFSET " . $offset;
+        }
+
 		$results = $db->GetAll($query, array(time(), time()));
 		return $results;
 	}
+
 
     /**
      * Gets the first proxy_id of the user entry matched by comparing value against supplied column
@@ -1469,5 +1470,223 @@ class User {
                     WHERE `".$field_name."` = ?";
         $id = $db->GetOne($query, array($value));
         return $id;
+    }
+
+    /**
+     * Gets all the residents for all the courses associated with a faculty member.
+     *
+     * @param int $organisation_id
+     * @param array $cperiod_ids
+     * @param null $search_term
+     * @param int $excluded_ids
+     * @param int $limit
+     * @param int $offset
+     * @param array $limit_to_courses
+     * @return mixed
+     */
+    public static function fetchAllResidentsByCPeriodIDs($organisation_id, $cperiod_ids = array(), $search_term = null, $excluded_ids = 0, $limit = null, $offset = null, $limit_to_courses = array()) {
+        global $db;
+
+        if (!is_array($cperiod_ids)) {
+            return false;
+        } else {
+            $cperiod_ids = implode(",", array_filter($cperiod_ids, "intval"));
+        }
+        $LIMIT_clause = $OFFSET_clause = "";
+        if ($limit) {
+            $LIMIT_clause = "LIMIT ?";
+        }
+        if ($offset) {
+            $OFFSET_clause = "OFFSET ?";
+        }
+
+        $AND_in_course_audience = "";
+        if (!empty($limit_to_courses)) {
+            $course_to_limit_to = array_map(function($v){ return clean_input($v, array("trim", "int")); }, $limit_to_courses);
+            $course_to_limit_to_str = implode(",", $course_to_limit_to);
+            if ($course_to_limit_to) {
+                $AND_in_course_audience = "AND ca.`course_id` IN($course_to_limit_to_str)";
+            }
+        }
+        $auth_database = AUTH_DATABASE;
+        $entrada_database = DATABASE_NAME;
+        $query = "	SELECT a.`id` AS `proxy_id`, a.`firstname`, a.`lastname`, b.`group`, b.`role`, a.`email`
+                    FROM `{$auth_database}`.`user_data` AS a
+                    LEFT JOIN `{$auth_database}`.`user_access` AS b ON a.`id` = b.`user_id`
+                    JOIN `{$entrada_database}`.`course_audience` AS ca ON ca.`audience_type` = 'proxy_id' AND ca.`audience_value` = a.`id` $AND_in_course_audience
+                    WHERE a.`id` NOT IN (".$excluded_ids.")
+                    AND ca.`cperiod_id` IN (".$cperiod_ids.")
+                    AND b.`account_active` = 'true'
+                    AND (b.`access_starts` = '0' OR b.`access_starts` <= ?)
+                    AND (b.`access_expires` = '0' OR b.`access_expires` > ?)
+                    AND (
+                            CONCAT(a.`firstname`, ' ' , a.`lastname`) LIKE ".$db->qstr("%".$search_term."%")." OR
+                            CONCAT(a.`lastname`, ' ' , a.`firstname`) LIKE ".$db->qstr("%".$search_term."%")." OR
+                            a.email LIKE ".$db->qstr("%".$search_term."%")."
+                        )
+                    AND (
+                    		b.`group` = 'resident' OR
+                    		(b.`group` = 'student' AND b.`organisation_id` = ?)
+						)
+					
+					UNION
+					
+					SELECT a.`id` AS `proxy_id`, a.`firstname`, a.`lastname`, b.`group`, b.`role`, a.`email`
+                    FROM `{$auth_database}`.`user_data` AS a
+                    LEFT JOIN `{$auth_database}`.`user_access` AS b
+                    ON a.`id` = b.`user_id`
+                    JOIN `{$entrada_database}`.`course_audience` AS ca 
+                    ON ca.`audience_type` = 'group_id' AND ca.`audience_value` IN (SELECT `group_id` FROM `{$entrada_database}`.`group_members` WHERE `proxy_id` = a.`id`) $AND_in_course_audience
+                    WHERE a.`id` NOT IN (".$excluded_ids.")
+                    AND ca.`cperiod_id` IN (".$cperiod_ids.")
+                    AND b.`account_active` = 'true'
+                    AND (b.`access_starts` = '0' OR b.`access_starts` <= ?)
+                    AND (b.`access_expires` = '0' OR b.`access_expires` > ?)
+                    AND (
+                            CONCAT(a.`firstname`, ' ' , a.`lastname`) LIKE ".$db->qstr("%".$search_term."%")." OR
+                            CONCAT(a.`lastname`, ' ' , a.`firstname`) LIKE ".$db->qstr("%".$search_term."%")." OR
+                            a.email LIKE ".$db->qstr("%".$search_term."%")."
+                        )
+                    AND (
+                    		b.`group` = 'resident' OR
+                    		(b.`group` = 'student' AND b.`organisation_id` = ?)
+						)
+						
+                    GROUP BY a.`id`
+                    ORDER BY `firstname` ASC, `lastname` ASC
+                    $LIMIT_clause
+                    $OFFSET_clause";
+
+        $constraints = array(time(), time(), $organisation_id, time(), time(), $organisation_id);
+        if ($limit) {
+            $constraints[] = $limit;
+        }
+        if ($offset) {
+            $constraints[] = $offset;
+        }
+        global $db;
+        $results = $db->GetAll($query, $constraints);
+        return $results;
+    }
+
+
+    public static function fetchAllResidentsAndFacultyByCPeriodIDs($organisation_id, $cperiod_ids = array(), $search_term = null, $excluded_ids = 0, $limit = null, $offset = null, $limit_to_courses = array(), $group = null, $proxy_id = null) {
+        global $db;
+
+        if (!is_array($cperiod_ids)) {
+            return false;
+        } else {
+            $cperiod_ids = implode(",", array_filter($cperiod_ids, "intval"));
+        }
+
+        $LIMIT_clause = $OFFSET_clause = "";
+        if ($limit) {
+            $LIMIT_clause = "LIMIT ?";
+        }
+        if ($offset) {
+            $OFFSET_clause = "OFFSET ?";
+        }
+        if ($proxy_id) {
+            $PROXY_clause = " AND a.`id` = ".$proxy_id;
+        }
+
+        $AND_in_course_audience = "";
+        if (!empty($limit_to_courses)) {
+            $course_to_limit_to = array_map(function($v){ return clean_input($v, array("trim", "int")); }, $limit_to_courses);
+            $course_to_limit_to_str = implode(",", $course_to_limit_to);
+            if ($course_to_limit_to) {
+                $AND_in_course_audience = "AND ca.`course_id` IN($course_to_limit_to_str)";
+            }
+        }
+        $auth_database = AUTH_DATABASE;
+        $entrada_database = DATABASE_NAME;
+
+        $groups_string = "";
+        if (is_array($group)) {
+            foreach ($group as $group_name) {
+                $groups_string .= ($groups_string ? ", " : "").$db->qstr($group_name);
+            }
+        }
+
+        $query = "	SELECT a.`id` AS `proxy_id`, a.`firstname`, a.`lastname`, b.`group`, b.`role`, a.`email`
+                    FROM `".AUTH_DATABASE."`.`user_data` AS a
+                    LEFT JOIN `".AUTH_DATABASE."`.`user_access` AS b
+                    ON a.`id` = b.`user_id`
+                    WHERE a.`id` NOT IN (".$excluded_ids.")
+                    AND b.`account_active` = 'true'
+                    AND (b.`access_starts` = '0' OR b.`access_starts` <= ?)
+                    AND (b.`access_expires` = '0' OR b.`access_expires` > ?)
+                    AND (
+                            CONCAT(a.`firstname`, ' ' , a.`lastname`) LIKE ".$db->qstr("%".$search_term."%")." OR
+                            CONCAT(a.`lastname`, ' ' , a.`firstname`) LIKE ".$db->qstr("%".$search_term."%")." OR
+                            a.email LIKE ".$db->qstr("%".$search_term."%")."
+                        )".
+            (isset($groups_string) && $groups_string ? " AND b.`group` IN (".$groups_string.")" : (isset($group) && $group ? " AND b.`group` = ?" : "")).
+            (isset($organisation_id) && $organisation_id ? " AND b.`organisation_id` = " . $db->qstr($organisation_id) : "").
+            (isset($app_id) && $app_id ? " AND b.`app_id` = " . $db->qstr($app_id) : "").
+            (isset($PROXY_clause) ?  $PROXY_clause : "") ."
+                    GROUP BY a.`id`
+                    
+                    UNION
+	                
+	                SELECT a.`id` AS `proxy_id`, a.`firstname`, a.`lastname`, b.`group`, b.`role`, a.`email`
+                    FROM `{$auth_database}`.`user_data` AS a
+                    LEFT JOIN `{$auth_database}`.`user_access` AS b ON a.`id` = b.`user_id`
+                    JOIN `{$entrada_database}`.`course_audience` AS ca ON ca.`audience_type` = 'proxy_id' AND ca.`audience_value` = a.`id` $AND_in_course_audience
+                    WHERE a.`id` NOT IN (".$excluded_ids.")
+                    AND ca.`cperiod_id` IN (".$cperiod_ids.")
+                    AND b.`account_active` = 'true'
+                    AND (b.`access_starts` = '0' OR b.`access_starts` <= ?)
+                    AND (b.`access_expires` = '0' OR b.`access_expires` > ?)
+                    AND (
+                            CONCAT(a.`firstname`, ' ' , a.`lastname`) LIKE ".$db->qstr("%".$search_term."%")." OR
+                            CONCAT(a.`lastname`, ' ' , a.`firstname`) LIKE ".$db->qstr("%".$search_term."%")." OR
+                            a.email LIKE ".$db->qstr("%".$search_term."%")."
+                        )
+                    AND (
+                    		b.`group` = 'resident' OR
+                    		(b.`group` = 'student' AND b.`organisation_id` = ?)
+						)
+                    ".(isset($PROXY_clause) ?  $PROXY_clause : "") ."
+					
+					UNION
+					
+					SELECT a.`id` AS `proxy_id`, a.`firstname`, a.`lastname`, b.`group`, b.`role`, a.`email`
+                    FROM `{$auth_database}`.`user_data` AS a
+                    LEFT JOIN `{$auth_database}`.`user_access` AS b
+                    ON a.`id` = b.`user_id`
+                    JOIN `{$entrada_database}`.`course_audience` AS ca 
+                    ON ca.`audience_type` = 'group_id' AND ca.`audience_value` IN (SELECT `group_id` FROM `{$entrada_database}`.`group_members` WHERE `proxy_id` = a.`id`) $AND_in_course_audience
+                    WHERE a.`id` NOT IN (".$excluded_ids.")
+                    AND ca.`cperiod_id` IN (".$cperiod_ids.")
+                    AND b.`account_active` = 'true'
+                    AND (b.`access_starts` = '0' OR b.`access_starts` <= ?)
+                    AND (b.`access_expires` = '0' OR b.`access_expires` > ?)
+                    AND (
+                            CONCAT(a.`firstname`, ' ' , a.`lastname`) LIKE ".$db->qstr("%".$search_term."%")." OR
+                            CONCAT(a.`lastname`, ' ' , a.`firstname`) LIKE ".$db->qstr("%".$search_term."%")." OR
+                            a.email LIKE ".$db->qstr("%".$search_term."%")."
+                        )
+                    AND (
+                    		b.`group` = 'resident' OR
+                    		(b.`group` = 'student' AND b.`organisation_id` = ?)
+						)
+                    ".(isset($PROXY_clause) ?  $PROXY_clause : "") ."
+						
+                    GROUP BY a.`id`
+                    ORDER BY `firstname` ASC, `lastname` ASC
+                    $LIMIT_clause
+                    $OFFSET_clause";
+
+        $constraints = $groups_string ? array( time(), time(), time(), time(), $organisation_id, time(), time(), $organisation_id ) : ($group ? array(  time(), time(), $group, time(), time(), $organisation_id, time(), time(), $organisation_id) : array( time(), time(), time(), time(), $organisation_id, time(), time(), $organisation_id));
+        if ($limit) {
+            $constraints[] = $limit;
+        }
+        if ($offset) {
+            $constraints[] = $offset;
+        }
+        $results = $db->GetAll($query, $constraints);
+
+        return $results;
     }
 }

@@ -76,13 +76,13 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COMMUNITIES"))) {
 		$community_details	= $db->GetRow($query);
 		if ($community_details) {
 			$BREADCRUMB[]		= array("url" => ENTRADA_URL."/community".$community_details["community_url"], "title" => limit_chars($community_details["community_title"], 50));
-			$BREADCRUMB[]		= array("url" => ENTRADA_URL."/communities?".replace_query(array("section" => "modify")), "title" => "Manage Community");
+			$BREADCRUMB[]		= array("url" => ENTRADA_URL."/communities?".replace_query(array("section" => "modify")), "title" => $translate->_("Manage Community"));
 			$community_resource = new CommunityResource($COMMUNITY_ID);
 			if ($ENTRADA_ACL->amIAllowed($community_resource, 'update')) {
 				$CATEGORY_ID = $community_details["category_id"];
 			?>
 				<a class="btn space-below" href="<?php echo html_encode(ENTRADA_URL."/community".$community_details["community_url"]); ?>">
-						<i class="icon-chevron-left" style="margin: 0"></i> Back To Community
+						<i class="icon-chevron-left" style="margin: 0"></i> <?php echo $translate->_("Back To Community"); ?>
 				</a>
 			<?php
 				echo "<h1>".html_encode($community_details["community_title"])."</h1>\n";
@@ -429,7 +429,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COMMUNITIES"))) {
 					case 2 :
 						?>
 						<div class="display-notice" style="line-height: 175%">
-							<strong>Please review</strong> the following changes that will be made to your community once you press the &quot;Save Changes&quot; button at the bottom of the screen. If you have made a mistake, please press the &quot;Cancel&quot; button, <strong>not</strong> your browsers back button.
+                            <?php echo $translate->_("<strong>Please review</strong> the following changes that will be made to your community once you press the &quot;Save Changes&quot; button at the bottom of the screen. If you have made a mistake, please press the &quot;Cancel&quot; button, <strong>not</strong> your browsers back button."); ?>
 						</div>
 						<form action="<?php echo ENTRADA_URL."/".$MODULE."?".replace_query(array("action" => "modify", "step" => 3)); ?>" method="post">
 							<?php
@@ -486,7 +486,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COMMUNITIES"))) {
 									?>
 									<tr>
 										<td><?php echo help_create_button("Community Name", "communities-community_title"); ?></td>
-										<td><span class="form-required">Community Name</span></td>
+										<td><span class="form-required"><?php echo $translate->_("Community Name"); ?></span></td>
 										<td><?php echo html_encode($PROCESSED["community_title"]); ?></td>
 									</tr>
                                     <?php
@@ -495,7 +495,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COMMUNITIES"))) {
 									?>
 									<tr>
 										<td><?php echo help_create_button("Community Keywords", "communities-community_keywords"); ?></td>
-										<td><span class="form-nrequired">Community Keywords</span></td>
+										<td><span class="form-nrequired"><?php echo $translate->_("Community Keywords"); ?></span></td>
 										<td><?php echo html_encode($PROCESSED["community_keywords"]); ?></td>
 									</tr>
                                     <?php
@@ -525,7 +525,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COMMUNITIES"))) {
                                                 ?>
                                                 <tr>
                                                     <td style="vertical-align: top">&nbsp;</td>
-                                                    <td style="vertical-align: top"><span class="form-nrequired">Community Courses</span></td>
+                                                    <td style="vertical-align: top"><span class="form-nrequired"><?php echo $translate->_("Community Courses"); ?></span></td>
                                                     <td>
                                                     <?php
                                                         if (@count($added_course_ids)) {
@@ -568,7 +568,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COMMUNITIES"))) {
 									?>
 									<tr>
 										<td style="vertical-align: top"><?php echo help_create_button("Community Description", "communities-community_description"); ?></td>
-										<td style="vertical-align: top"><span class="form-nrequired">Community Description</span></td>
+										<td style="vertical-align: top"><span class="form-nrequired"><?php echo $translate->_("Community Description"); ?></span></td>
 										<td><?php echo nl2br(html_encode($PROCESSED["community_description"])); ?></td>
 									</tr>
 								<?php
@@ -598,7 +598,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COMMUNITIES"))) {
 									?>
 									<tr>
 										<td>&nbsp;</td>
-										<td><span class="form-nrequired">Community Twitter Handle</span></td>
+										<td><span class="form-nrequired"><?php echo $translate->_("Community Twitter Handle"); ?></span></td>
 										<td><?php echo html_encode($PROCESSED["community_twitter_handle"]); ?></td>
 									</tr>
 									<?php
@@ -608,7 +608,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COMMUNITIES"))) {
 									?>
 									<tr>
 										<td>&nbsp;</td>
-										<td><span class="form-nrequired">Community Twitter Hashtags</span></td>
+										<td><span class="form-nrequired"><?php echo $translate->_("Community Twitter Hashtags"); ?></span></td>
 										<td><?php echo html_encode($PROCESSED["community_twitter_hashtags"]); ?></td>
 									</tr>
 									<?php
@@ -666,7 +666,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COMMUNITIES"))) {
 									<tr>
 										<td><?php echo help_create_button("Access Permissions", "communities-community_protected"); ?></td>
 										<td><span class="form-nrequired">Access Permissions</span></td>
-										<td><?php echo (($PROCESSED["community_protected"] == 1) ? "Protected" : "Public"); ?> Community</td>
+										<td><?php echo (($PROCESSED["community_protected"] == 1) ? "Protected" : "Public"); ?> <?php echo $translate->_("Community"); ?></td>
 									</tr>
 									<?php
 								}
@@ -675,7 +675,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COMMUNITIES"))) {
 										?>
 									<tr>
 										<td><?php echo help_create_button("Community Template", "community_template"); ?></td>
-										<td><span class="form-nrequired">Community Template</span></td>
+										<td><span class="form-nrequired"><?php echo $translate->_("Community Template"); ?></span></td>
 										<td><?php echo ucfirst($PROCESSED["community_template"]); ?> Template</td>
 									</tr>
 									<?php
@@ -816,7 +816,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COMMUNITIES"))) {
 							<div class="tab-pane" id="community-modify-tabs">
 								<div class="tab-page">
 									<h3 class="tab">Statistics</h3>
-									<h2 style="margin-top: 0px">Community Statistics</h2>
+									<h2 style="margin-top: 0px"><?php echo $translate->_("Community Statistics"); ?></h2>
 									<table style="width: 100%" cellspacing="0" cellpadding="2" border="0" summary="Basic Community Statistics">
 										<colgroup>
 											<col style="width: 3%" />
@@ -840,7 +840,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COMMUNITIES"))) {
 											?>
 											<tr>
 												<td><?php echo help_create_button("Community Quota Usage", "community-quota_usage"); ?></td>
-												<td><span class="form-nrequired">Community Quota Usage</span></td>
+												<td><span class="form-nrequired"><?php echo $translate->_("Community Quota Usage"); ?></span></td>
 												<td>
 													<div id="community-usage" class="usage-container<?php echo $usage; ?>"></div>
 													<script type="text/javascript">
@@ -860,7 +860,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COMMUNITIES"))) {
 										?>
 										<tr>
 											<td><?php echo help_create_button("Community Administrators", "community-community_admistrators"); ?></td>
-											<td><span class="form-nrequired">Community Administrators</span></td>
+											<td><span class="form-nrequired"><?php echo $translate->_("Community Administrators"); ?></span></td>
 											<td><?php echo $community_stats["members_admins"]." member".(($community_stats["members_admins"] != 1) ? "s" : ""); ?></td>
 										</tr>
 										<tr>
@@ -1015,7 +1015,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COMMUNITIES"))) {
 										
 									</script>
 									<h3 class="tab">Details</h3>
-									<h2 style="margin-top: 0px">Community Details</h2>
+									<h2 style="margin-top: 0px"><?php echo $translate->_("Community Details"); ?></h2>
 									<table style="width: 100%" cellspacing="0" cellpadding="2" border="0" summary="Modifying Community Details">
 										<colgroup>
 											<col style="width: 3%" />
@@ -1025,12 +1025,12 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COMMUNITIES"))) {
 										<tbody>
 											<tr>
 												<td>&nbsp;</td>
-												<td><span class="form-nrequired">Community Shortname</span></td>
+												<td><span class="form-nrequired"><?php echo $translate->_("Community Shortname"); ?></span></td>
 												<td><?php echo html_encode($community_details["community_shortname"]); ?></td>
 											</tr>
 											<tr>
 												<td>&nbsp;</td>
-												<td><span class="form-nrequired">Community URL</span></td>
+												<td><span class="form-nrequired"><?php echo $translate->_("Community URL"); ?></span></td>
 												<td><a href="<?php echo html_encode(ENTRADA_URL."/community".$community_details["community_url"]); ?>" style="font-size: 10px" target="_blank"><?php echo html_encode(ENTRADA_URL."/community".$community_details["community_url"]); ?></a></td>
 											</tr>
 											<tr>
@@ -1041,7 +1041,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COMMUNITIES"))) {
 												?>
 												<tr>
 													<td></td>
-													<td><span class="form-nrequired">Community Path</span></td>
+													<td><span class="form-nrequired"><?php echo $translate->_("Community Path"); ?></span></td>
 													<td>
 													<?php
 													$i = 0;
@@ -1058,7 +1058,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COMMUNITIES"))) {
 												?>
 											<tr>
 												<td><?php echo help_create_button("Community Name", ""); ?></td>
-												<td><label for="community_title" class="form-required">Community Name</label></td>
+												<td><label for="community_title" class="form-required"><?php echo $translate->_("Community Name"); ?></label></td>
 												<td>
 													<input type="text" id="community_title" name="community_title" value="<?php echo html_encode($PROCESSED["community_title"]); ?>" maxlength="64" style="width: 250px" />
 													<span class="content-small">(<strong>Example:</strong> Medicine Club)</span>
@@ -1066,7 +1066,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COMMUNITIES"))) {
 											</tr>
 											<tr>
 												<td><?php echo help_create_button("Community Keywords", ""); ?></td>
-												<td><label for="community_keywords" class="form-nrequired">Community Keywords</label></td>
+												<td><label for="community_keywords" class="form-nrequired"><?php echo $translate->_("Community Keywords"); ?></label></td>
 												<td>
 													<input type="text" id="community_keywords" name="community_keywords" value="<?php echo html_encode($PROCESSED["community_keywords"]); ?>" maxlength="255" style="width: 500px" />
 												</td>
@@ -1110,12 +1110,12 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COMMUNITIES"))) {
                                             ?>
 											<tr>
 												<td style="vertical-align: top"><?php echo help_create_button("Community Description", ""); ?></td>
-												<td style="vertical-align: top"><label for="community_description" class="form-nrequired">Community Description</label></td>
+												<td style="vertical-align: top"><label for="community_description" class="form-nrequired"><?php echo $translate->_("Community Description"); ?></label></td>
 												<td><textarea id="community_description" name="community_description" style="width: 500px; height: 75px"><?php echo html_encode($PROCESSED["community_description"]); ?></textarea></td>
 											</tr>
 											<tr>
 												<td style="padding-top:6px; vertical-align: top"><?php echo help_create_button("Community Template", ""); ?></td>
-												<td style="padding-top:6px; vertical-align: top"><label for="community_template" class="form-nrequired">Community Template</label></td>
+												<td style="padding-top:6px; vertical-align: top"><label for="community_template" class="form-nrequired"><?php echo $translate->_("Community Template"); ?></label></td>
 												<td style="vertical-align: top">
 												<div>
 												<?php
@@ -1199,12 +1199,12 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COMMUNITIES"))) {
 											<tbody>
 												<tr>
 													<td>&nbsp;</td>
-													<td><span class="form-nrequired">Community Twitter Handle</span></td>
+													<td><span class="form-nrequired"><?php echo $translate->_("Community Twitter Handle"); ?></span></td>
 													<td><input type="text" id="community_twitter_handle" name="community_twitter_handle" value="<?php echo html_encode((isset($PROCESSED["community_twitter_handle"]) && $PROCESSED["community_twitter_handle"] ? $PROCESSED["community_twitter_handle"] : "")); ?>"  /></td>
 												</tr>
 												<tr>
 													<td>&nbsp;</td>
-													<td><span class="form-nrequired">Community Twitter Hashtags</span></td>
+													<td><span class="form-nrequired"><?php echo $translate->_("Community Twitter Hashtags"); ?></span></td>
 													<td>
 														<style type="text/css">
 															/**
@@ -1265,15 +1265,15 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COMMUNITIES"))) {
 														<tr>
 															<td style="vertical-align: top"><input type="radio" name="community_protected" id="community_protected_1" value="1" style="vertical-align: middle"<?php echo (((!isset($PROCESSED["community_protected"])) || ($PROCESSED["community_protected"] == 1)) ? " checked=\"checked\"" : ""); ?> /></td>
 															<td>
-																<label for="community_protected_1" class="normal-green">Protected Community</label>
-																<div class="content-small">Only authenticated users can access this community after they log in.</div>
+																<label for="community_protected_1" class="normal-green"><?php echo $translate->_("Protected Community"); ?></label>
+																<div class="content-small"><?php echo $translate->_("Only authenticated users can access this community after they log in."); ?></div>
 															</td>
 														</tr>
 														<tr>
 															<td style="vertical-align: top"><input type="radio" name="community_protected" id="community_protected_0" value="0" style="vertical-align: middle"<?php echo (((isset($PROCESSED["community_protected"])) && ($PROCESSED["community_protected"] == 0)) ? " checked=\"checked\"" : ""); ?> /></td>
 															<td>
-																<label for="community_protected_0" class="normal-green">Public Community</label>
-																<div class="content-small">Anyone in the world can have read-only access to this community without logging in.</div>
+																<label for="community_protected_0" class="normal-green"><?php echo $translate->_("Public Community"); ?></label>
+																<div class="content-small"><?php echo $translate->_("Anyone in the world can have read-only access to this community without logging in."); ?></div>
 															</td>
 														</tr>
 													</tbody>
@@ -1293,22 +1293,22 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COMMUNITIES"))) {
 														<tr>
 															<td style="vertical-align: top"><input type="radio" name="community_registration" id="community_registration_0" value="0" onclick="selectRegistrationOption('0')" style="vertical-align: middle"<?php echo (((!isset($PROCESSED["community_registration"])) || ((isset($PROCESSED["community_registration"])) && ($PROCESSED["community_registration"] == 0))) ? " checked=\"checked\"" : ""); ?> /></td>
 															<td>
-																<label for="community_registration_0" class="normal-green">Open Community</label>
-																<div class="content-small">Any authenticated user can access this community without registering in it.</div>
+																<label for="community_registration_0" class="normal-green"><?php echo $translate->_("Open Community"); ?></label>
+																<div class="content-small"><?php echo $translate->_("Any authenticated user can access this community without registering in it."); ?></div>
 															</td>
 														</tr>
 														<tr>
 															<td style="vertical-align: top"><input type="radio" name="community_registration" id="community_registration_1" value="1" onclick="selectRegistrationOption('1')" style="vertical-align: middle"<?php echo (((isset($PROCESSED["community_registration"])) && ($PROCESSED["community_registration"] == 1)) ? " checked=\"checked\"" : ""); ?> /></td>
 															<td>
 																<label for="community_registration_1" class="normal-green">Open Registration</label>
-																<div class="content-small">Any authenticated user can and must register to be part of this community.</div>
+																<div class="content-small"><?php echo $translate->_("Any authenticated user can and must register to be part of this community."); ?></div>
 															</td>
 														</tr>
 														<tr>
 															<td style="vertical-align: top"><input type="radio" name="community_registration" id="community_registration_2" value="2" onclick="selectRegistrationOption('2')" style="vertical-align: middle"<?php echo (((isset($PROCESSED["community_registration"])) && ($PROCESSED["community_registration"] == 2)) ? " checked=\"checked\"" : ""); ?> /></td>
 															<td>
 																<label for="community_registration_2" class="normal-green">Group Registration</label>
-																<div class="content-small">Only members of the selected Groups can register to be part of this community.</div>
+																<div class="content-small"><?php echo $translate->_("Only members of the selected Groups can register to be part of this community."); ?></div>
 																<div id="community_registration_show_groups" style="display: none; padding-left: 25px">
 																<?php
 																if ((is_array($GROUP_TARGETS)) && ($total_sresults = count($GROUP_TARGETS))) {
@@ -1355,8 +1355,8 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COMMUNITIES"))) {
 														<tr>
 															<td style="vertical-align: top"><input type="radio" name="community_registration" id="community_registration_3" value="3" onclick="selectRegistrationOption('3')" style="vertical-align: middle"<?php echo (((isset($PROCESSED["community_registration"])) && ($PROCESSED["community_registration"] == 3)) ? " checked=\"checked\"" : ""); ?> /></td>
 															<td>
-																<label for="community_registration_3" class="normal-green">Community Registration</label>
-																<div class="content-small">Only members of the selected Communities can register to be part of this community.</div>
+																<label for="community_registration_3" class="normal-green"><?php echo $translate->_("Community Registration"); ?></label>
+																<div class="content-small"><?php echo $translate->_("Only members of the selected Communities can register to be part of this community."); ?></div>
 																<div id="community_registration_show_communities" style="display: none; padding: 5px 5px 0px 5px">
 																	<select id="community_registration_communities" name="community_registration_communities[]" multiple="multiple" size="10" style="width: 85%; height: 150px">
 																	<?php
@@ -1370,8 +1370,8 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COMMUNITIES"))) {
 														<tr>
 															<td style="vertical-align: top"><input type="radio" name="community_registration" id="community_registration_4" value="4" onclick="selectRegistrationOption('4')" style="vertical-align: middle"<?php echo (((isset($PROCESSED["community_registration"])) && ($PROCESSED["community_registration"] == 4)) ? " checked=\"checked\"" : ""); ?> /></td>
 															<td>
-																<label for="community_registration_4" class="normal-green">Private Community</label>
-																<div class="content-small">People cannot register, members are invited only by community administrators.</div>
+																<label for="community_registration_4" class="normal-green"><?php echo $translate->_("Private Community"); ?></label>
+																<div class="content-small"><?php echo $translate->_("People cannot register, members are invited only by community administrators."); ?></div>
 															</td>
 														</tr>
 													</tbody>
@@ -1385,7 +1385,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COMMUNITIES"))) {
 									?>
 									<div class="tab-page">
 										<h3 class="tab">Mailing List</h3>
-										<h2 style="margin-top: 0px">Community Mailing List</h2>
+										<h2 style="margin-top: 0px"><?php echo $translate->_("Community Mailing List"); ?></h2>
 										<table style="width: 100%" cellspacing="0" cellpadding="2" border="0" summary="Modifying Community Mailing List">
 											<colgroup>
 												<col style="width: 3%" />
@@ -1406,20 +1406,20 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COMMUNITIES"))) {
 																<td style="padding-bottom: 5px; vertical-align: top"><input type="radio" name="community_list_mode" id="community_list_announcement"<?php echo ($list_mode == "announcements" ? "\" checked=\"checked\"" : "\""); ?> style="vertical-align: middle" value="announcements" /></td>
 																<td style="padding-bottom: 5px; vertical-align: top">
 																	<label for="community_list_announcement" class="normal-green">Announcement Mode</label>
-																	<div class="content-small">Allow administrators of this community to send out email announcements to all the members of the community through the mailing list at <a style="font-size: 11px;" href=<?php echo "\"mailto:" .$mailing_list->list_name . "@" . $GOOGLE_APPS["domain"]. "\">" . $mailing_list->list_name . "@" . $GOOGLE_APPS["domain"]; ?></a>.</div>
+																	<div class="content-small"><?php echo $translate->_("Allow administrators of this community to send out email announcements to all the members of the community through the mailing list at "); ?><a style="font-size: 11px;" href=<?php echo "\"mailto:" .$mailing_list->list_name . "@" . $GOOGLE_APPS["domain"]. "\">" . $mailing_list->list_name . "@" . $GOOGLE_APPS["domain"]; ?></a>.</div>
 																</td>
 															</tr>
 															<tr>
 																<td style="padding-bottom: 5px; vertical-align: top"><input type="radio" name="community_list_mode" id="community_list_discussion"<?php echo ($list_mode == "discussion" ? "\" checked=\"checked\"" : "\""); ?> style="vertical-align: middle" value="discussion" /></td>
 																<td style="padding-bottom: 5px; vertical-align: top">
 																	<label for="community_list_discussion" class="normal-green">Discussion Mode</label>
-																	<div class="content-small">Allow all members of this community to send out email to the community through the mailing list at <a style="font-size: 11px;" href=<?php echo "\"mailto:" .$mailing_list->list_name . "@" . $GOOGLE_APPS["domain"]. "\">" . $mailing_list->list_name . "@" . $GOOGLE_APPS["domain"]; ?></a>.</div></td>
+																	<div class="content-small"><?php echo $translate->_("Allow all members of this community to send out email to the community through the mailing list at "); ?><a style="font-size: 11px;" href=<?php echo "\"mailto:" .$mailing_list->list_name . "@" . $GOOGLE_APPS["domain"]. "\">" . $mailing_list->list_name . "@" . $GOOGLE_APPS["domain"]; ?></a>.</div></td>
 															</tr>
 															<tr>
 																<td style="padding-bottom: 5px; vertical-align: top"><input type="radio" name="community_list_mode" id="community_list_deactivate"<?php echo ($list_mode == "inactive" ? "\" checked=\"checked\"" : "\""); ?> style="vertical-align: middle" value="inactive" /></td>
 																<td>
 																	<label for="community_list_deactivates" class="normal-green">Deactivate List</label>
-																	<div class="content-small">Disable the mailing list for this community so members cannot be contacted through the list.</div>
+																	<div class="content-small"><?php echo $translate->_("Disable the mailing list for this community so members cannot be contacted through the list."); ?></div>
 																</td>
 															</tr>
 														</tbody>
@@ -1433,7 +1433,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COMMUNITIES"))) {
 									?>
 								<div class="tab-page">
 									<h3 class="tab">Deactivate</h3>
-									<h2 style="margin-top: 0px">Deactivate Community</h2>
+									<h2 style="margin-top: 0px"><?php echo $translate->_("Deactivate Community"); ?></h2>
 
 									<script type="text/javascript">
 										function validateDeactivate() {
@@ -1448,13 +1448,13 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COMMUNITIES"))) {
 										}
 									</script>
 
-									If you no longer wish to maintain this community or it is no longer being used, you can deactivate the community using the button below. If you have any questions before deactivating, please use the Page Feedback icon to the left of the page to ask us.
+                                    <?php echo $translate->_("If you no longer wish to maintain this community or it is no longer being used, you can deactivate the community using the button below. If you have any questions before deactivating, please use the Page Feedback icon to the left of the page to ask us."); ?>
 									<div class="display-notice" style="margin-top: 15px; line-height: 175%">
-										<strong>Please note</strong> that once you deactivate this community all of the content (photos, calendar, etc) within the community will no longer be accessible to you or any other members of the community. Deactivating this community will also deactivate any Sub-Communities / Groups that have been created under this community.
+                                        <?php echo $translate->_("<strong>Please note</strong> that once you deactivate this community all of the content (photos, calendar, etc) within the community will no longer be accessible to you or any other members of the community. Deactivating this community will also deactivate any Sub-Communities / Groups that have been created under this community."); ?>
 									</div>
 
 									<label class="checkbox form-required" for="confirmed-deactivation">
-										<input type="checkbox" id="confirmed-deactivation" value="" />I understand that deactivating this community will render everything inside it inaccessible.
+										<input type="checkbox" id="confirmed-deactivation" value="" /><?php echo $translate->_("I understand that deactivating this community will render everything inside it inaccessible."); ?>
 									</label>
 									 
 									<div style="margin-top: 15px; margin-bottom: 50px;">

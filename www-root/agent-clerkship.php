@@ -56,7 +56,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 	echo "</html>\n";
 	exit;
 } else {
-	$PAGE_META["title"]		= "Clerkship Schedule Corrections";
+	$PAGE_META["title"]		= $translate->_("Clerkship") . " Schedule Corrections";
 
 	if((isset($_GET["step"])) && ((int) trim($_GET["step"]))) {
 		$STEP = (int) trim($_GET["step"]);
@@ -155,7 +155,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 	<?php
 	switch($STEP) {
 		case "2" :
-			$message  = "Attention Clerkship Schedule Maintainer,\n";
+			$message  = "Attention " . $translate->_("Clerkship") ." Schedule Maintainer,\n";
 			$message .= "The following schedule modification request has been submitted:\n";
 			$message .= "=======================================================\n\n";
 			$message .= "Submitted At:\t\t".date("r", time())."\n";
@@ -178,7 +178,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 
 			$mail->addTo($AGENT_CONTACTS["agent-clerkship"]["email"], $AGENT_CONTACTS["agent-clerkship"]["name"]);
 			$mail->setFrom(($_SESSION["details"]["email"]) ? $_SESSION["details"]["email"] : "noreply@post.queensu.ca", $_SESSION["details"]["firstname"]." ".$_SESSION["details"]["lastname"]);
-			$mail->setSubject("Clerkship Schedule Correction - ".APPLICATION_NAME);
+			$mail->setSubject($translate->_("Clerkship") . " Schedule Correction - ".APPLICATION_NAME);
 			$mail->setReplyTo(($_SESSION["details"]["email"]) ? $_SESSION["details"]["email"] : "", $_SESSION["details"]["firstname"]." ".$_SESSION["details"]["lastname"]);
 			$mail->setBodyText($message);
 
@@ -188,7 +188,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 				$SUCCESSSTR[]	= "Thank-you for contacting us. If we have questions regarding your schedule correction we will contact you and let you know.";
 			} catch (Zend_Mail_Transport_Exception $e) {
 				$ERROR++;
-				$ERRORSTR[]	= "We apologize however, we are unable to submit your clerkship schedule update request at this time.<br /><br />The MEdTech Unit has been informed of this, please try again later.";
+				$ERRORSTR[]	= "We apologize however, we are unable to submit your " . $translate->_("clerkship") ." schedule update request at this time.<br /><br />The MEdTech Unit has been informed of this, please try again later.";
 				application_log("error", "Unable to send clerkship schedule update with the correction agent. Zend_mail said: ".$e->getMessage());
 			}
 			?>
@@ -227,7 +227,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 			<form id="correction-form" action="<?php echo ENTRADA_URL; ?>/agent-clerkship.php?step=2" method="post" style="display: inline">
 			<div id="form-processing" style="display: block; position: absolute; top: 0px; left: 0px; width: 485px; height: 555px">
 				<div id="wizard-body" style="position: absolute; top: 35px; left: 0px; width: 452px; height: 440px; padding-left: 15px; overflow: auto">
-					<h2>Your Clerkship Schedule is Important</h2>
+					<h2>Your <?php echo $translate->_("Clerkship"); ?> Schedule is Important</h2>
 					<table style="width: 452px;" cellspacing="1" cellpadding="1" border="0">
 					<colgroup>
 						<col style="width: 25%" />
@@ -238,9 +238,9 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 							<td colspan="2">
 								<div class="display-notice">
 									<?php if($_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"] == "student") : ?>
-									<strong>Notice:</strong> Keeping the Undergrad office informed of clerkship schedule changes or inconsistencies is very important as this information is used to ensure you can graduate. If you see a problem with your schedule, please let us know immediately using this form.
+									<strong>Notice:</strong> Keeping the Undergrad office informed of <?php echo $translate->_("clerkship"); ?> schedule changes or inconsistencies is very important as this information is used to ensure you can graduate. If you see a problem with your schedule, please let us know immediately using this form.
 									<?php else : ?>
-									<strong>Notice:</strong> If you see an issue with the Clerkship schedule that needs our attention, please use this form to contact the Undergraduate office. Please be as specific as possible when sending in this request.
+									<strong>Notice:</strong> If you see an issue with the <?php echo $translate->_("Clerkship"); ?> schedule that needs our attention, please use this form to contact the Undergraduate office. Please be as specific as possible when sending in this request.
 									<?php endif; ?>
 								</div>
 							</td>
@@ -255,7 +255,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 						</tr>
 						<tr>
 							<td colspan="2" style="padding-top: 15px">
-								<label for="correction" class="form-required">Please describe in detail the problem with your clerkship schedule.</label>
+								<label for="correction" class="form-required">Please describe in detail the problem with your <?php echo $translate->_("clerkship"); ?> schedule.</label>
 							</td>
 						</tr>
 						<tr>

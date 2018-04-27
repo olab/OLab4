@@ -39,12 +39,18 @@ abstract class BaseTestCase extends PHPUnit_Framework_TestCase {
     public static function setUpBeforeClass() {
         require_once("config/settings_test.inc.php");
         require_once("functions.inc.php");
+        require_once("Classes/users/User.class.php");
     }
 
     public function setUp() {
         parent::setUp();
         global $db;
         $db = Phake::mock('ADOConnection');
+        Phake::when($db)->qstr(Phake::anyParameters())->thenReturnCallback(function ($value) { return "'".$value."'"; });
+        global $ENTRADA_USER;
+        $ENTRADA_USER = Phake::mock("User");
+        Phake::when($ENTRADA_USER)->getID()->thenReturn(1);
+        Phake::when($ENTRADA_USER)->getActiveOrganisation()->thenReturn(1);
     }
 
     public function tearDown() {

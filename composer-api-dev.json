@@ -1,0 +1,12 @@
+{
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../entrada-1x-api"
+        }
+    ],
+    "require": {
+        "entradapackages/entrada-1x-api": "dev-develop"
+    }
+}
+

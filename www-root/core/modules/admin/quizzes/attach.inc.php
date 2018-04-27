@@ -397,7 +397,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUIZZES"))) {
 							if ($selected_learning_events) {
 								foreach ($selected_learning_events as $event_id => $result) {
 									echo "<li class=\"checkmark\">";
-									echo "	<a href=\"".ENTRADA_URL."/events?id=".$event_id."\" style=\"font-weight: bold; color: #666666\">".html_encode($result["event_title"])."</a> <span class=\"content-small\">Event on ".date(DEFAULT_DATE_FORMAT, $result["event_start"])."</span>";
+									echo "	<a href=\"".ENTRADA_URL."/events?id=".$event_id."\" style=\"font-weight: bold; color: #666666\">".html_encode($result["event_title"])."</a> <span class=\"content-small\">Event on ".date(DEFAULT_DATETIME_FORMAT, $result["event_start"])."</span>";
 									if (in_array($event_id, $existing_event_relationship)) {
 										echo "<span class=\"display-notice-inline\"><img src=\"".ENTRADA_URL."/images/list-notice.gif\" width=\"11\" height=\"11\" alt=\"Notice\" title=\"Notice\" style=\"margin-right: 10px\" />This specific quiz is already attached to this event.</span>";
 									}
@@ -808,7 +808,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUIZZES"))) {
 
 									echo "<tr id=\"event-".$result["event_id"]."\" class=\"event".((!$allow_attachment) ? " disabled" : "")."\">\n";
 									echo "	<td".((!$allow_attachment) ? " class=\"disabled\"" : "")."><input type=\"checkbox\" name=\"event_ids[]\" value=\"".$result["event_id"]."\"".((!$allow_attachment) ? " disabled=\"disabled\"" : "")." /></td>\n";
-									echo "	<td".((!$allow_attachment) ? " class=\"disabled\"" : "")."><a href=\"".$url."\">".date(DEFAULT_DATE_FORMAT, $result["event_start"])."</a></td>\n";
+									echo "	<td".((!$allow_attachment) ? " class=\"disabled\"" : "")."><a href=\"".$url."\">".date(DEFAULT_DATETIME_FORMAT, $result["event_start"])."</a></td>\n";
 									echo "	<td".((!$allow_attachment) ? " class=\"disabled\"" : "")."><a href=\"".$url."\" title=\"Event Title: ".html_encode($result["event_title"])."\">".html_encode($result["event_title"])."</a></td>\n";
 									echo "	<td".((!$allow_attachment) ? " class=\"disabled\"" : "").">".(($attachments) ? "<img src=\"".ENTRADA_URL."/images/attachment.gif\" width=\"16\" height=\"16\" alt=\"Contains ".$attachments." attachment".(($attachments != 1) ? "s" : "")."\" title=\"Contains ".$attachments." attachment".(($attachments != 1) ? "s" : "")."\" />" : "<img src=\"".ENTRADA_URL."/images/pixel.gif\" width=\"16\" height=\"16\" alt=\"\" title=\"\" style=\"vertical-align: middle\" />")."</td>\n";
 									echo "</tr>\n";
@@ -1190,7 +1190,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUIZZES"))) {
 						$total_page_ids = count($PROCESSED["page_ids"]);
 
 						?>
-						<h2 style="color: #CCCCCC">Step 1: Select Community Pages</h2>
+						<h2 style="color: #CCCCCC"><?php echo $translate->_("Step 1: Select Community Pages"); ?></h2>
 						<ul class="menu">
 							<?php
 							if ($selected_community_pages) {
@@ -1397,9 +1397,9 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUIZZES"))) {
 					case 1 :
 					default :
 						?>
-						<h2>Step 1: Select Community Pages</h2>
+						<h2><?php echo $translate->_("Step 1: Select Community Pages"); ?></h2>
 						<div class="display-generic">
-							Please select <strong>one or more</strong> of your <strong>existing community pages</strong> to attach this quiz to.
+                            <?php echo $translate->_("Please select <strong>one or more</strong> of your <strong>existing community pages</strong> to attach this quiz to."); ?>
 						</div>
 						<?php
 						if($ERROR) {
@@ -1493,7 +1493,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUIZZES"))) {
 							<thead>
 								<tr>
 									<td class="modified">&nbsp;</td>
-									<td class="title sortedASC">Community Page Title</td>
+									<td class="title sortedASC"><?php echo $translate->_("Community Page Title"); ?></td>
 								</tr>
 							</thead>
 							<tfoot>
@@ -1522,9 +1522,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUIZZES"))) {
 						} else {
 							?>
 							<div class="display-notice">
-								There is no record of any community pages in the system that you have administrative rights over.
-								<br /><br />
-								Please ensure that you a <strong>community administrator</strong> in the community that you want this quiz added to, and that there is a page in that community with a &quot;<strong>Page Type</strong>&quot; of &quot;<strong>Quizzes</strong>&quot;.
+                                <?php echo $translate->_("There is no record of any community pages in the system that you have administrative rights over.<br /><br />Please ensure that you a <strong>community administrator</strong> in the community that you want this quiz added to, and that there is a page in that community with a &quot;<strong>Page Type</strong>&quot; of &quot;<strong>Quizzes</strong>&quot;."); ?>
 							</div>
 							<?php
 						}

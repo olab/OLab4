@@ -26,9 +26,9 @@
 class Models_Exam_Question_Authors extends Models_Base {
     protected $eqauthor_id, $question_id, $version_id, $author_type, $author_id, $created_date, $created_by, $updated_date, $updated_by, $deleted_date;
 
-    protected static $table_name = "exam_question_authors";
-    protected static $primary_key = "eqauthor_id";
-    protected static $default_sort_column = "question_id";
+    protected static $table_name           = "exam_question_authors";
+    protected static $primary_key          = "eqauthor_id";
+    protected static $default_sort_column  = "question_id";
 
     public function __construct($arr = NULL) {
         parent::__construct($arr);
@@ -215,6 +215,93 @@ class Models_Exam_Question_Authors extends Models_Base {
         return $db->GetAll($query);
     }
 
+    public static function fetchAvailableAuthorsByType($filter_type, $search_value) {
+        global $db, $ENTRADA_USER;
+        $query = "";
+        switch ($filter_type) {
+            case "organisation_id" :
+                if (empty($search_value)) {
+                    $query = "SELECT b.`author_id` AS `id`,  d.`organisation_title` AS `fullname`
+                              FROM `exam_question_versions` AS a
+                              JOIN `exam_question_authors` AS b
+                              ON a.`version_id` = b.`version_id`
+                              JOIN `".AUTH_DATABASE."`.`user_data` AS c
+                              ON b.`author_id` = c.`id`
+                              JOIN `".AUTH_DATABASE."`.`organisations` AS d 
+                              ON d.`organisation_id` = b.`author_id`
+                              WHERE a.`organisation_id` = " . $db->qstr($ENTRADA_USER->getActiveOrganisation()) . "
+                              AND b.`author_type` = 'organisation_id'
+                              GROUP BY b.`author_id`";
+                } else {
+                    $query = "SELECT b.`author_id` AS `id`,  d.`organisation_title` AS `fullname`
+                              FROM `exam_question_versions` AS a
+                              JOIN `exam_question_authors` AS b
+                              ON a.`version_id` = b.`version_id`
+                              JOIN `".AUTH_DATABASE."`.`user_data` AS c
+                              ON b.`author_id` = c.`id`
+                              JOIN `".AUTH_DATABASE."`.`organisations` AS d 
+                              ON d.`organisation_id` = b.`author_id`
+                              WHERE a.`organisation_id` = " . $db->qstr($ENTRADA_USER->getActiveOrganisation()) . "
+                              AND b.`author_type` = 'organisation_id'
+                              AND d.`organisation_title` LIKE (" . $db->qstr("%".$search_value."%") . ")
+                              GROUP BY b.`author_id`";
+                }
+                break;
+            case "course_id" :
+                if (empty($search_value)) {
+                    $query = "SELECT b.`author_id` AS `id`, CONCAT(d.`course_code`, ' - ', d.`course_name`) AS `fullname`
+                              FROM `exam_question_versions` AS a
+                              JOIN `exam_question_authors` AS b
+                              ON a.`version_id` = b.`version_id`
+                              JOIN `".AUTH_DATABASE."`.`user_data` AS c
+                              ON b.`author_id` = c.`id`
+                              JOIN `courses` as d ON d.`course_id` = b.`author_id`
+                              WHERE a.`organisation_id` = " . $db->qstr($ENTRADA_USER->getActiveOrganisation()) . "
+                              AND b.`author_type` = 'course_id'
+                              GROUP BY b.`author_id`";
+                } else {
+                    $query = "SELECT b.`author_id` AS `id`, CONCAT(d.`course_code`, ' - ', d.`course_name`) AS `fullname`
+                              FROM `exam_question_versions` AS a
+                              JOIN `exam_question_authors` AS b
+                              ON a.`version_id` = b.`version_id`
+                              JOIN `".AUTH_DATABASE."`.`user_data` AS c
+                              ON b.`author_id` = c.`id`
+                              JOIN `courses` as d ON d.`course_id` = b.`author_id`
+                              WHERE a.`organisation_id` = " . $db->qstr($ENTRADA_USER->getActiveOrganisation()) . "
+                              AND b.`author_type` = 'course_id'
+                              AND (d.`course_name` LIKE (". $db->qstr("%". $search_value ."%") .") OR (d.`course_code` LIKE (". $db->qstr("%". $search_value ."%") .")
+                              GROUP BY b.`author_id`";
+                }
+                break;
+            case "proxy_id" :
+                if (empty($search_value)) {
+                    $query = "SELECT b.`author_id` AS `id`, CONCAT(c.`firstname`, ' ', c.`lastname`) AS `fullname`
+                            FROM `exam_question_versions` AS a
+                            JOIN `exam_question_authors` AS b
+                            ON a.`version_id` = b.`version_id`
+                            JOIN `". AUTH_DATABASE ."`".".`user_data` AS c
+                            ON b.`author_id` = c.`id`
+                            WHERE a.`organisation_id` = " . $db->qstr($ENTRADA_USER->getActiveOrganisation()) . "
+                            AND b.`author_type` = 'proxy_id'
+                            GROUP BY b.`author_id`";
+                } else {
+                    $query = "SELECT b.`author_id` AS `id`, CONCAT(c.`firstname`, ' ', c.`lastname`) AS `fullname`
+                            FROM `exam_question_versions` AS a
+                            JOIN `exam_question_authors` AS b
+                            ON a.`version_id` = b.`version_id`
+                            JOIN `". AUTH_DATABASE ."`".".`user_data` AS c
+                            ON b.`author_id` = c.`id`
+                            WHERE a.`organisation_id` = " . $db->qstr($ENTRADA_USER->getActiveOrganisation()) . "
+                            AND (c.`firstname` LIKE (". $db->qstr("%". $search_value ."%") .") OR c.`lastname` LIKE (". $db->qstr("%". $search_value ."%") ."))
+                            AND b.`author_type` = 'proxy_id'
+                            GROUP BY b.`author_id`";
+                }
+                break;
+        }
+
+        return $db->GetAll($query);
+    }
+
     /* @return ArrayObject|Models_Exam_Question_Authors[] */
     public static function fetchAllByQuestionID ($question_id = null, $organisation_id = null) {
         global $db;
@@ -289,7 +376,7 @@ class Models_Exam_Question_Authors extends Models_Base {
 
     private static function fetchAllByVersionIdFormatted($version_id, $type, $author_array, $deleted_date = NULL) {
         global $db;
-        $authors = Models_Exam_Question_Authors::fetchAllByVersionIDAuthorType($version_id, $type, $author_array, $deleted_date);
+        $authors = Models_Exam_Question_Authors::fetchAllByVersionIDAuthorType($version_id, $type, $deleted_date);
 
         //if authors are found add them to the array of the specific type, check if they already exist on an earlier folder before adding
         if (isset($authors) && is_array($authors) && !empty($authors)) {

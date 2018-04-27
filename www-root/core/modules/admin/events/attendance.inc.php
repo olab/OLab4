@@ -132,7 +132,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
 
 				events_subnavigation($event_info, "attendance");
 
-                echo "<div class=\"content-small\">" . fetch_course_path($event_info["course_id"]) . "</div>\n";
+                echo "<div class=\"content-small\">" . fetch_course_path($event_info["course_id"], $event_info["cunit_id"]) . "</div>\n";
 				echo "<h1 class=\"event-title\">" . html_encode($event_info["event_title"]) . "</h1>\n";
 
 				if ($SUCCESS) {
@@ -178,7 +178,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                                     foreach ($audience as $proxy_id => $learner) {
                                         ?>
                                         <tr>
-                                            <td><input type="checkbox" class="attendance-check" value="<?php echo $proxy_id; ?>" id="learner-<?php echo $learner["id"]; ?>"<?php echo ($learner["has_attendance"] ? " checked=\"checked\"" : "");?> /></td>
+                                            <td><input type="checkbox" class="attendance-check" value="<?php echo $proxy_id; ?>" id="learner-<?php echo $proxy_id; ?>"<?php echo ($learner["has_attendance"] ? " checked=\"checked\"" : "");?> /></td>
                                             <td><?php echo $learner["lastname"]; ?></td>
                                             <td><?php echo $learner["firstname"]; ?></td>
                                         </tr>

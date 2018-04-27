@@ -82,4 +82,34 @@ class MetaDataTypes extends Collection {
 		}
 		return new self($applicable_types);
 	}
+
+	/**
+	 * Returns all other types matching this $id in this organisation
+	 * @param $id
+	 * @return array
+	 */
+	public function getSelectionOption($id = 0) {
+		global $db, $ORGANISATION_ID;
+		$query = "	SELECT DISTINCT a.`meta_type_id`, a.`label`
+					FROM `meta_types` AS a
+	  				JOIN `meta_type_relations` AS b
+					ON a.`meta_type_id` = b.`meta_type_id`
+	  				AND b.`entity_value` LIKE ".$db->qstr($ORGANISATION_ID.":%")."
+					WHERE a.`parent_type_id` IS NULL
+	  				AND a.`meta_type_id` <> ".$db->qstr($id);
+		return $db->GetAll($query);
+	}
+
+	/**
+	 * Returns all types matching this parent $id in this organisation
+	 * @param $id
+	 * @return array
+	 */
+	public function getSelectionByParent($id = 0) {
+		global $db;
+		$query = "	SELECT `meta_type_id`, `label`
+					FROM `meta_types`
+					WHERE `parent_type_id` = ".$db->qstr($id);
+		return $db->GetAll($query);
+	}
 }

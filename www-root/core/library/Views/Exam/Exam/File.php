@@ -35,6 +35,10 @@ class Views_Exam_Exam_File extends Views_Deprecated_Base
         "deleted_date",
     );
 
+    protected $table_name           = "exam_attached_files";
+    protected $primary_key          = "file_id";
+    protected $default_sort_column  = "file_name";
+
     protected $joinable_tables = array();
     protected $author;
 
@@ -54,10 +58,12 @@ class Views_Exam_Exam_File extends Views_Deprecated_Base
                     break;
             }
 
+            $href = ENTRADA_URL . "/file-exam.php?id=" . $file->getID();
+
             $html = "<li>\n";
             $html .= "    <div>\n";
             $html .= "        <strong>";
-            $html .= "            <a class=\"resource-link edit-file\" href=\"#\">";
+            $html .= "            <a class=\"resource-link edit-file\" href=\"$href\">";
             $html .=                html_encode(($file->getFileTitle() ? $file->getFileTitle() : $file->getFileName()));
             $html .= "            </a>";
             $html .= "        </strong>";
@@ -70,7 +76,7 @@ class Views_Exam_Exam_File extends Views_Deprecated_Base
             $html .=                $type . " " . readable_size($file->getFileSize());
             $html .= "        </span>\n";
             $html .= "        <span class=\"label label-default event-resource-stat-label\">\n";
-            $html .= "          Updated By: " . ($user ? $user->getFullname() : "NA") . " on " . date (DEFAULT_DATE_FORMAT, $file->getUpdatedDate());
+            $html .= "          Updated By: " . ($user ? $user->getFullname() : "NA") . " on " . date (DEFAULT_DATETIME_FORMAT, $file->getUpdatedDate());
             $html .= "        </span>\n";
             $html .= "    </div>\n";
             $html .= "</li>\n";

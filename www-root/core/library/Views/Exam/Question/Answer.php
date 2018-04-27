@@ -114,6 +114,9 @@ class Views_Exam_Question_Answer extends Views_Deprecated_Base {
         switch ($short_name) {
             case "fnb":
             case "match":
+                $lock_icon = ($this->answer->getLocked() == 1 ? "fa-lock" : "fa-unlock-alt");
+                $locked = ($this->answer->getLocked() == 1 ? "locked" : "unlocked");
+                $lock_text = ($this->answer->getLocked() == 1 ? "Unlock from this position" : "Lock at this position");
                 $control_array = array(
                     array(
                         "<span class=\"btn select-answer\">
@@ -121,13 +124,17 @@ class Views_Exam_Question_Answer extends Views_Deprecated_Base {
                         </span>"
                     ),
                     array(
-                        "<a class=\"btn answer-details\" title=\"View Question Details\" href=\"#\"><i class=\"icon-eye-open\"></i></a>",
-                        "<a class=\"btn move\" title=\"Move\" href=\"#\"><i class=\"icon-move\"></i></a>"
+                        //"<a class=\"btn answer-details\" title=\"View Question Details\" href=\"#\"><i class=\"icon-eye-open\"></i></a>",
+                        "<a class=\"btn move\" title=\"Move\" href=\"#\"><i class=\"icon-move\"></i></a>",
+                        "<a class=\"btn lock\" title=\"" . $lock_text . "\" href=\"#\"><i class=\"fa fa-lg " . $lock_icon . " $locked\" data-order-id=\"" . $this->answer->getOrder() . "\"></i></a>"
                     )
                 );
                 break;
             default :
                 $correct = ($this->answer->getCorrect() == 1 ? "correct" : "incorrect");
+                $lock_icon = ($this->answer->getLocked() == 1 ? "fa-lock" : "fa-unlock-alt");
+                $locked = ($this->answer->getLocked() == 1 ? "locked" : "unlocked");
+                $lock_text = ($this->answer->getLocked() == 1 ? "Unlock from this position" : "Lock at this position");
                 $control_array = array(
                     array(
                         "<span class=\"btn select-answer\">
@@ -136,8 +143,9 @@ class Views_Exam_Question_Answer extends Views_Deprecated_Base {
                     ),
                     array(
                         "<span class=\"btn answer-correct\" title=\"Set as correct answer\" ><i class=\"icon-select-correct fa fa-lg fa-check-circle " . $correct . "\" data-correct=\"" . $this->answer->getCorrect() . "\" data-sortable-element-id=\"" . $this->answer->getOrder() . "\"></i></i></span>",
-                        "<a class=\"btn answer-details\" title=\"View Question Details\" href=\"#\"><i class=\"icon-eye-open\"></i></a>",
-                        "<a class=\"btn move\" title=\"Move\" href=\"#\"><i class=\"icon-move\"></i></a>"
+                        //"<a class=\"btn answer-details\" title=\"View Question Details\" href=\"#\"><i class=\"icon-eye-open\"></i></a>",
+                        "<a class=\"btn move\" title=\"Move\" href=\"#\"><i class=\"icon-move\"></i></a>",
+                        "<a class=\"btn lock\" title=\"" . $lock_text . "\" href=\"#\"><i class=\"icon-lock-answer fa fa-lg " . $lock_icon . " $locked\" data-order-id=\"" . $this->answer->getOrder() . "\"></i></a>"
                     )
                 );
                 break;

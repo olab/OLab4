@@ -131,7 +131,7 @@ if (!defined("IN_SCHEDULE")) {
 			<div class="display-notice">
 				<?php
 				echo html_encode($ASCHEDULE_INFO["firstname"])." is scheduled to reside in this apartment from ";
-				echo date(DEFAULT_DATE_FORMAT, $ASCHEDULE_INFO["inhabiting_start"])." until ".date(DEFAULT_DATE_FORMAT, $ASCHEDULE_INFO["inhabiting_finish"]);
+				echo date(DEFAULT_DATETIME_FORMAT, $ASCHEDULE_INFO["inhabiting_start"])." until ".date(DEFAULT_DATETIME_FORMAT, $ASCHEDULE_INFO["inhabiting_finish"]);
 				if ((int) $ASCHEDULE_INFO["event_id"]) {
 					echo " during their <strong>".html_encode($EVENT_INFO["rotation_title"])."</strong> rotation";
 				}
@@ -141,7 +141,7 @@ if (!defined("IN_SCHEDULE")) {
 
 			<div id="delete-confirmation-box" class="modal-confirmation">
 				<h1>Delete <strong>Accommodation</strong> Confirmation</h1>
-				<div class="display-notice">Do you really wish to remove <strong><?php echo html_encode($ASCHEDULE_INFO["firstname"]." ".$ASCHEDULE_INFO["lastname"]); ?></strong> from this apartment between <?php echo date(DEFAULT_DATE_FORMAT, $ASCHEDULE_INFO["inhabiting_start"]); ?> until <?php echo date(DEFAULT_DATE_FORMAT, $ASCHEDULE_INFO["inhabiting_finish"]); ?>?</div>
+				<div class="display-notice">Do you really wish to remove <strong><?php echo html_encode($ASCHEDULE_INFO["firstname"]." ".$ASCHEDULE_INFO["lastname"]); ?></strong> from this apartment between <?php echo date(DEFAULT_DATETIME_FORMAT, $ASCHEDULE_INFO["inhabiting_start"]); ?> until <?php echo date(DEFAULT_DATETIME_FORMAT, $ASCHEDULE_INFO["inhabiting_finish"]); ?>?</div>
 
 				<p><input type="checkbox" id="delete-confirmation-el-notify" name="notify_learner" value="1" /> <label for="delete-confirmation-el-notify" class="form-nrequired">Notify <strong><?php echo html_encode($ASCHEDULE_INFO["firstname"]); ?></strong> via e-mail they have been removed.</label></p>
 				<div class="footer">
@@ -156,7 +156,7 @@ if (!defined("IN_SCHEDULE")) {
 			?>
 			<h2>Other Occupant</h2>
 			<div class="display-generic">
-				This accommodation space is being reserved for &quot;<strong><?php echo html_encode($ASCHEDULE_INFO["occupant_title"]); ?></strong>&quot; from <?php echo date(DEFAULT_DATE_FORMAT, $ASCHEDULE_INFO["inhabiting_start"]); ?> until <?php echo date(DEFAULT_DATE_FORMAT, $ASCHEDULE_INFO["inhabiting_finish"]); ?>.
+				This accommodation space is being reserved for &quot;<strong><?php echo html_encode($ASCHEDULE_INFO["occupant_title"]); ?></strong>&quot; from <?php echo date(DEFAULT_DATETIME_FORMAT, $ASCHEDULE_INFO["inhabiting_start"]); ?> until <?php echo date(DEFAULT_DATETIME_FORMAT, $ASCHEDULE_INFO["inhabiting_finish"]); ?>.
 			</div>
 			<?php
 			if ((int) $ASCHEDULE_INFO["cost_recovery"]) {
@@ -167,7 +167,7 @@ if (!defined("IN_SCHEDULE")) {
 			?>
 			<div id="delete-confirmation-box" class="modal-confirmation">
 				<h1>Delete <strong>Accommodation</strong> Confirmation</h1>
-				<div class="display-notice">Do you really wish to remove <strong><?php echo html_encode($ASCHEDULE_INFO["occupant_title"]); ?></strong> from this apartment between <?php echo date(DEFAULT_DATE_FORMAT, $ASCHEDULE_INFO["inhabiting_start"]); ?> until <?php echo date(DEFAULT_DATE_FORMAT, $ASCHEDULE_INFO["inhabiting_finish"]); ?>?</div>
+				<div class="display-notice">Do you really wish to remove <strong><?php echo html_encode($ASCHEDULE_INFO["occupant_title"]); ?></strong> from this apartment between <?php echo date(DEFAULT_DATETIME_FORMAT, $ASCHEDULE_INFO["inhabiting_start"]); ?> until <?php echo date(DEFAULT_DATETIME_FORMAT, $ASCHEDULE_INFO["inhabiting_finish"]); ?>?</div>
 
 				<div class="footer">
 					<button class="btn" onclick="Control.Modal.close()">Close</button>

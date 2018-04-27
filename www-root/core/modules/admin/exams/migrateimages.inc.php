@@ -70,7 +70,7 @@ if (!defined("PARENT_INCLUDED")) {
                     $img_data = str_replace(" ", "+", $img_data[1]);
                     $img_data = base64_decode($img_data);
                     // Save image info to database
-                    $learning_object = new Models_LearningObject(array(
+                    $learning_object = new Models_LearningObject_Files(array(
                         "filename" => "migrated_from_examsoft".$ext,
                         "filesize" => strlen($img_data),
                         "mime_type" => $mime_type,

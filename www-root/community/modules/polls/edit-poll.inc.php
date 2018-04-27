@@ -587,14 +587,14 @@ if ($RECORD_ID) {
 							</thead>
 							<tbody>
 								<tr>
-									<td><strong>Community Administrators</strong></td>
+									<td><strong><?php echo $translate->_("Community Administrators"); ?></strong></td>
 									<td class="on"><input type="checkbox" id="allow_admin_read" name="allow_admin_read" value="1" checked="checked" onclick="this.checked = true" /></td>
 									<td><input type="checkbox" id="allow_admin_vote" name="allow_admin_vote" value="1" checked="checked" onclick="this.checked = true" /></td>
 									<td><input type="checkbox" id="allow_admin_results" name="allow_admin_results" value="1" checked="checked" onclick="this.checked = true" /></td>
 									<td><input type="checkbox" id="allow_admin_results_after" name="allow_admin_results_after" value="1" disabled="true" /></td>
 								</tr>
 								<tr>
-									<td><strong>Community Members</strong></td>
+									<td><strong><?php echo $translate->_("Community Members"); ?></strong></td>
 									<td class="on"><input type="checkbox" id="allow_member_read" name="allow_member_read" value="1"
 									<?php 
 									$membersDisplay = "none";
@@ -705,7 +705,7 @@ if ($RECORD_ID) {
 						<td colspan="2" width="100%">
 							<div id="members-list" <?php echo (!(isset($CLEANED_MEMBERS_ARRAY) && (is_array($CLEANED_MEMBERS_ARRAY)) && (count($CLEANED_MEMBERS_ARRAY))) ? "style=\"display: none;\"" : "") ?>>
 								<div id="members_note" class="content-small" style="padding-top: 15px;">
-									<strong>Please Note:</strong> If you would like to restrict voting to only certain community members please add these members to the &quot;Selected Members&quot; column below.
+                                    <?php echo $translate->_("<strong>Please Note:</strong> If you would like to restrict voting to only certain community members please add these members to the &quot;Selected Members&quot; column below."); ?>
 								</div>
 								<table summary="Add Member">
 									<colgroup>

@@ -301,7 +301,7 @@ if ($evaluations && $view != "review") {
 
 		echo "<tr>\n";
 		echo "	<td><a href=\"".$url."\">".(!empty($evaluation["target_title"]) ? $evaluation["target_title"] : "No Type Found")."</a></td>\n";
-		echo "	<td><a href=\"".$url."\" alt=\"".$evaluation["evaluation_finish"]."\">".date(DEFAULT_DATE_FORMAT, $evaluation["evaluation_finish"])."</a></td>\n";
+		echo "	<td><a href=\"".$url."\" alt=\"".$evaluation["evaluation_finish"]."\">".date(DEFAULT_DATETIME_FORMAT, $evaluation["evaluation_finish"])."</a></td>\n";
 		echo "	<td><a href=\"".$url."\">".html_encode($evaluation["evaluation_title"])."</a></td>\n";
 		echo "	<td><a href=\"".$url."\">".($evaluation["completed_attempts"] ? ((int)$evaluation["completed_attempts"]) : "0")."</a></td>\n";
 		echo "</tr>\n";

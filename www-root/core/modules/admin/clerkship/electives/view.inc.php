@@ -92,7 +92,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP"))) {
 			        </ul>
 			    </div>
 			</div>
-			<h1><?php echo $student_name.(substr($student_name, -1) != "s" ? "'s" : "'");?> Clerkship Schedule</h1>
+			<h1><?php echo $student_name.(substr($student_name, -1) != "s" ? "'s" : "'");?> <?php echo $translate->_("Clerkship"); ?> Schedule</h1>
 			<table class="tableList" cellspacing="0" summary="List of Clerkship Schedule">
 			<colgroup>
 				<col class="modified" />
@@ -202,7 +202,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP"))) {
 			<?php
 		} else {
 			$NOTICE++;
-			$NOTICESTR[] = $student_name . " has no scheduled clerkship rotations / electives in the system at this time.  Click <a href = ".ENTRADA_URL."/admin/clerkship/electives?section=add_elective&ids=".$PROXY_ID." class=\"strong-green\">here</a> to add an elective.";
+			$NOTICESTR[] = $student_name . " has no scheduled " . $translate->_("clerkship") . " rotations / electives in the system at this time.  Click <a href = ".ENTRADA_URL."/admin/clerkship/electives?section=add_elective&ids=".$PROXY_ID." class=\"strong-green\">here</a> to add an elective.";
 
 			echo display_notice();
 		}

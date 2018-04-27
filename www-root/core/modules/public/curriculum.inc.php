@@ -36,8 +36,49 @@ define("IN_CURRICULUM", true);
 $BREADCRUMB[] = array("url" => ENTRADA_URL."/".$MODULE, "title" => "Curriculum");
 
 if (($router) && ($router->initRoute())) {
+
+	$PREFERENCES = preferences_load($MODULE);
+
+	/**
+	 * Determine reporting start and end date.
+	 */
+	if ((isset($_POST["reporting_start"])) && ((int) trim($_POST["reporting_start"])) && (isset($_POST["reporting_finish"])) && ((int) trim($_POST["reporting_finish"]))) {
+		$report_date = validate_calendars("reporting", true, true, true);
+
+		if ((isset($report_date["start"])) && ((int) $report_date["start"])) {
+			$_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_start"] = (int) $report_date["start"];
+		}
+
+		if ((isset($report_date["finish"])) && ((int) $report_date["finish"])) {
+			$_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_finish"] = (int) $report_date["finish"];
+		}
+	} else {
+		if (!isset($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_start"])) {
+			$_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_start"] = strtotime("July 1st, ".(date("Y", time()) - ((date("m", time()) < 7) ?  1 : 2))." 0:00:00");
+		}
+
+		if (!isset($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_finish"])) {
+			$_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_finish"] = strtotime("+1 year", ($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_start"] - 1));
+		}
+	}
+
+	/**
+	 * Set the posted organisation.
+	 */
+	if ((isset($_POST["organisation_id"])) && ((int) trim($_POST["organisation_id"]))) {
+		$_SESSION[APPLICATION_IDENTIFIER][$MODULE]["organisation_id"] = (int) trim($_POST["organisation_id"]);
+	} else {
+		$_SESSION[APPLICATION_IDENTIFIER][$MODULE]["organisation_id"] = $_SESSION["details"]["organisation_id"];
+	}
+
 	$module_file = $router->getRoute();
 	if ($module_file) {
 		require_once($module_file);
 	}
+
+	/**
+	 * Check if preferences need to be updated on the server at this point.
+	 */
+	preferences_update($MODULE, $PREFERENCES);
 }
+/* vim: set noexpandtab: */

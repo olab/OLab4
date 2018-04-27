@@ -30,8 +30,7 @@ if (!defined("PARENT_INCLUDED")) {
 	header("Location: ".ENTRADA_URL);
 	exit;
 } elseif (!$ENTRADA_ACL->amIAllowed("group", "update", false)) {
-	$ERROR++;
-	$ERRORSTR[]	= "Your account does not have the permissions required to use this feature of this module.<br /><br />If you believe you are receiving this message in error please contact <a href=\"mailto:".html_encode($AGENT_CONTACTS["administrator"]["email"])."\">".html_encode($AGENT_CONTACTS["administrator"]["name"])."</a> for assistance.";
+    add_error(sprintf($translate->_("You do not have the permissions required to use this module.<br /><br />If you believe you are receiving this message in error please contact <a href=\"mailto:%s\"> %s </a> for assistance."), html_encode($AGENT_CONTACTS["administrator"]["email"]), html_encode($AGENT_CONTACTS["administrator"]["name"])));
 
 	echo display_error();
 
@@ -48,6 +47,14 @@ if (!defined("PARENT_INCLUDED")) {
 		$module_file = $router->getRoute();
 		if ($module_file) {
 			require_once($module_file);
+			
+			$sidebar_html  = "<div style=\"margin: 2px 0px 10px 3px; font-size: 10px\">\n";
+			$sidebar_html .= "	<div><img src=\"".ENTRADA_URL."/images/legend-not-accessible.gif\" width=\"14\" height=\"14\" alt=\"\" title=\"\" style=\"vertical-align: middle\" /> ". $translate->_("Inactive")."</div>\n";
+			$sidebar_html .= "	<div><img src=\"".ENTRADA_URL."/images/legend-undergrad.gif\" width=\"14\" height=\"14\" alt=\"\" title=\"\" style=\"vertical-align: middle\" /> ". $translate->_("Expired")."</div>\n";
+			$sidebar_html .= "	<div><img src=\"".ENTRADA_URL."/images/legend-updated.gif\" width=\"14\" height=\"14\" alt=\"\" title=\"\" style=\"vertical-align: middle\" /> ". $translate->_("Contains inactive members")."</div>\n";
+			$sidebar_html .= "</div>\n";
+
+			new_sidebar_item($translate->_("Cohorts Legend"), $sidebar_html, "group-legend", "open");
 		}
 
 		/**

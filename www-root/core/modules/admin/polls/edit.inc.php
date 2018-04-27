@@ -52,6 +52,11 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_POLLS"))) {
 					case 2 :
 						if((isset($_POST["poll_target"])) && ($poll_target = clean_input($_POST["poll_target"], "alphanumeric"))) {
 							$PROCESSED["poll_target"] = $poll_target;
+                            if (is_numeric($poll_target)) {
+                                $PROCESSED["poll_target_type"] = "cohort";
+                            } else {
+                                $PROCESSED["poll_target_type"] = "group";
+                            }
 						} else {
 							$ERROR++;
 							$ERRORSTR[] = "You must select a valid target audience from the select box.";

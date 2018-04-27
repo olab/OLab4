@@ -90,3 +90,8 @@ td select.item-control {
     background-color: white;
     color: black;
 }
+
+tr.report-statistics-row td {
+    font-size: 10px;
+    line-height: 8px !important;
+}

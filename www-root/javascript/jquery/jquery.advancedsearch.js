@@ -35,7 +35,7 @@
         var self = this;
         var interval;
         var settings = $.extend({
-            api_url : "?section=api-items",
+            api_url : "",
             api_params : {},
             build_selected_filters : true,
             child_field : "parent_id",
@@ -75,6 +75,7 @@
             selector_mode: false,
             select_all_enabled: false,
             search_target_form_action: "",
+            user_card: false,
             total_filters: 0,
             target_name: false,
             value: 0,
@@ -140,11 +141,26 @@
             }
         });
 
+        self.parent().on("keydown", ".search-input", function (e) {
+            if (e.keyCode == 13) {
+                e.preventDefault();
+                return false;
+            }
+        });
+
         self.parent().on("keyup", ".search-input", function () {
             clearInterval(interval);
             interval = window.setInterval(function () {
                 resetLazyloadOffset();
-                getFilterData(true, true, true, false);
+                if ($(".filter-preset-anchor.active").length > 0) {
+                    buildFilteredList();
+                } else {
+                    if (settings.parent_id === 0) {
+                        getFilterData(true, true, true, false);
+                    } else {
+                        getFilterChildren(settings.parent_id);
+                    }
+                }
             }, settings.interval);
         });
 
@@ -163,6 +179,21 @@
             var parent_id = $(this).attr("data-parent");
             settings.parent_id = parent_id;
             getFilterChildren(parent_id);
+        });
+
+        self.parent().on("click", ".filter-preset-anchor", function (e) {
+            var data_source = settings.filters[settings.current_filter].data_source;
+            $(this).toggleClass("active");
+            if (typeof data_source === "string") {
+                getFilterData(true, false, true, false);
+            } else if (typeof data_source === "object") {
+                if ($(".filter-preset-anchor.active").length == 0) {
+                    getFilterData(true, false, true, false);
+                } else {
+                    buildFilteredList();
+                }
+            }
+            e.preventDefault();
         });
 
         self.parent().on("change", ".search-target-input-control", function () {
@@ -336,7 +367,11 @@
 
             input_container.append(search_input);
 
-            container.append(input_container).append(filter_type_h4).append(selected_targets_container).append(filter_container).append(button_container);
+            container.append(input_container).append(filter_type_h4);
+
+            buildFilterPresets(container);
+
+            container.append(selected_targets_container).append(filter_container).append(button_container);
             self.after(container);
             container.offset({top: (self.offset().top + ($(".btn-search-filter").height() + 20)), left: self.offset().left});
 
@@ -433,7 +468,7 @@
 
             if (typeof settings.filters[settings.current_filter].api_params != "undefined") {
                 $.each(settings.filters[settings.current_filter].api_params, function(param_name, param_value) {
-                    if ($.isFunction(param_value)){
+                    if ($.isFunction(param_value)) {
                         param_value = param_value();
                     }
                     extra_params += "&" + param_name + "=" + param_value;
@@ -441,7 +476,19 @@
             }
 
             if (typeof settings.filters[settings.current_filter].api_params == "undefined") {
-                settings.filters[settings.current_filter].api_params = [];
+                settings.filters[settings.current_filter].api_params = {};
+            }
+
+            if ($(".filter-preset-anchor.active").length > 0) {
+                $.each($(".filter-preset-anchor.active"), function (i, active_filter) {
+                    var filter_type = $(active_filter).attr("data-filter");
+                    if (settings.filters[settings.current_filter].filter_presets[filter_type].hasOwnProperty("extra_params") && typeof settings.filters[settings.current_filter].filter_presets[filter_type].extra_params === "object") {
+                        var preset_filter_params = settings.filters[settings.current_filter].filter_presets[filter_type].extra_params;
+                        $.each(preset_filter_params, function (param_name, param_value) {
+                            extra_params += "&" + param_name + "=" + param_value;
+                        });
+                    }
+                });
             }
 
             if (typeof data_source !== "undefined") {
@@ -495,12 +542,28 @@
             resetFilterContainer();
             resetLazyloadOffset();
             var data_source = settings.filters[settings.current_filter].secondary_data_source;
+            var extra_params = "";
+
+            if (typeof settings.filters[settings.current_filter].api_params !== "undefined") {
+                $.each(settings.filters[settings.current_filter].api_params, function(param_name, param_value) {
+                    if ($.isFunction(param_value)){
+                        param_value = param_value();
+                    }
+                    extra_params += "&" + param_name + "=" + param_value;
+                });
+            }
+
+            if (typeof settings.filters[settings.current_filter].api_params === "undefined") {
+                settings.filters[settings.current_filter].api_params = [];
+            }
+
             if (typeof data_source !== "undefined") {
                 if (typeof data_source === "string") {
+                    var search_value = $(".search-input").val();
                     var data = $.ajax(
                         {
                             url: settings.api_url,
-                            data: "method=" + data_source + "&parent_id=" + parent_id + (settings.lazyload ? "&limit=" + settings.lazyload_limit + "&offset=" + settings.lazyload_offset : ""),
+                            data: "method=" + data_source + "&search_value=" + search_value + "&parent_id=" + parent_id + (settings.lazyload ? "&limit=" + settings.lazyload_limit + "&offset=" + settings.lazyload_offset : "") + extra_params,
                             type: 'GET',
                             error: function () {
                                 showDataErrorMessage("An error occurred while attempting to fetch the data for self filter. Please try again later.");
@@ -536,6 +599,7 @@
             } else {
                 showDataErrorMessage("No data source supplied.");
             }
+            clearInterval(interval);
         }
 
         function displayFilterData (data, level_selectable) {
@@ -579,7 +643,13 @@
             }
             $.each(data, function (key, filter_target) {
                 var hilited_search_value    = hiliteSearchValue(filter_target.target_label, $(".search-input").val());
-                var target_li               = $(document.createElement("li")).addClass("search-filter-item").attr({"data-id": filter_target.target_id, "data-parent" : filter_target.target_parent});
+                var hide_target_li = "";
+
+                if ($(".search-input").val().length > 0) {
+                    hide_target_li = hilited_search_value.indexOf("<span class=\"search-hilite\">") != -1 ? "" : "hide";
+                }
+
+                var target_li               = $(document.createElement("li")).addClass("search-filter-item " + hide_target_li).attr({"data-id": filter_target.target_id, "data-parent" : filter_target.target_parent});
                 var target_li_div           = $(document.createElement("div")).addClass("search-target-controls");
                 var target_label_span       = $(document.createElement("span")).addClass("search-target-label");
                 var target_label            = $(document.createElement("label")).html(hilited_search_value).addClass("search-target-label-text").attr({"for": settings.current_filter +"_target_" + filter_target.target_id});
@@ -625,7 +695,6 @@
                         }
                     }
                 }
-
                 if (filter_target.hasOwnProperty("target_children")) {
                     if (filter_target.target_children > 0) {
                         var target_children_span = $(document.createElement("a")).attr({href: "#"}).html("+").addClass("search-target-children-toggle").attr({"data-label": filter_target.target_label});
@@ -651,13 +720,20 @@
                 }
 
                 if ($("#" + settings.current_filter + "_" + filter_target.target_id).length > 0) {
-                    target_input.attr("checked", "checked");
+                    if (is_selectable) {
+                        target_input.attr("checked", "checked");
+                    }
                     target_li.addClass("search-target-selected");
                 }
             });
 
             if ($(".search-filter-list").length == 0) {
                 $(".filter-container").append(targets_ul);
+            }
+            if (settings.user_card) {
+                $.each($(".search-filter-item"), function (index, value) {
+                    $(this).attr("rel", "popover");
+                });
             }
 
             if (settings.lazyload) {
@@ -705,8 +781,8 @@
         }
 
         function hiliteSearchValue (string, needle) {
-            if ($(".search-input").val().length > 0) {
-                return string.replace(new RegExp('(^|)(' + needle + ')(|$)','ig'), '$1<span class=\"search-hilite\">$2</span>$3');
+            if ($(".search-input").length && $(".search-input").val().length > 0) {
+                return string.replace(new RegExp('(^|)(' + $.trim(needle) + ')(|$)','ig'), '$1<span class=\"search-hilite\">$2</span>$3');
             }
             return string;
         }
@@ -792,7 +868,7 @@
                                  */
                                 break;
                             case "checkbox" :
-                                $.each($("input[name=\"" + filter + "[]\"]"), function (key, input) {
+                                $.each($("." + filter + "_search_target_control"), function (key, input) {
                                     if (!$(input).hasClass("select-all-targets-input-control")) {
                                         var target_id = $(this).val();
                                         var target_label = $(this).attr("data-label");
@@ -859,8 +935,12 @@
                         search_target_control = $(document.createElement("input")).attr({type: "hidden", value: target_id, id: settings.current_filter + "_" + target_id, "data-label": target_title}).addClass("search-target-control").addClass(settings.current_filter + "_search_target_control");
                         if (target_id != 0 && target_title != "Select All") {
                             search_target_control.attr("name", (settings.target_name ? settings.target_name : settings.current_filter) + "[]");
+                            settings.parent_form.append(search_target_control);
+                        } else {
+                            if ($(".search-input").val() == "") {
+                                settings.parent_form.append(search_target_control);
+                            }
                         }
-                        settings.parent_form.append(search_target_control);
                     }
                     break;
             }
@@ -1010,6 +1090,203 @@
             if (settings.lazyload) {
                 settings.lazyload_offset = 0;
             }
+        }
+
+        function buildFilterPresets(container) {
+            if(settings.filters[settings.current_filter].hasOwnProperty("filter_presets") && !$.isEmptyObject(settings.filters[settings.current_filter]["filter_presets"])) {
+                var filter_presets = settings.filters[settings.current_filter].filter_presets;
+                if ($(".filter-preset-container").length == 0) {
+                    var filter_preset_container = $(document.createElement("div")).addClass("filter-preset-container");
+                    var filter_preset_heading = $(document.createElement("h4")).html("Filter Presets").addClass("search-label filter-presets-heading");
+                    var filter_preset_list = $(document.createElement("ul")).addClass("filter-preset-list");
+                    var clearfix = $(document.createElement("div")).css("clear", "both");
+                    var item_clearfix = $(document.createElement("li")).css("clear", "both");
+
+                    $.each(filter_presets, function (key, filter_preset) {
+                        var filter_preset_item = $(document.createElement("li")).addClass("filter-preset-item " + filter_preset.selector + "-item");
+                        var filter_preset_anchor = $(document.createElement("a")).attr({href: "#", "data-filter": key,  title: (filter_preset.hasOwnProperty("title") ? filter_preset.title : "")}).html(filter_preset.label).addClass("filter-preset-anchor " + filter_preset.selector + "-anchor");
+                        filter_preset_item.append(filter_preset_anchor);
+                        filter_preset_list.append(filter_preset_item);
+                    });
+
+                    filter_preset_list.append(item_clearfix);
+                    filter_preset_container.append(filter_preset_heading).append(filter_preset_list);
+                    filter_preset_container.append(clearfix);
+                    container.append(filter_preset_container);
+                }
+            }
+        }
+
+        /**
+         * Build the selected preset filter list
+         */
+        function buildFilteredList() {
+            $(".search-filter-item").remove();
+            $(".active-filter-preset-list-container").remove();
+            if (settings.filters[settings.current_filter].hasOwnProperty("filter_presets")) {
+                var active_preset_filters = $(".filter-preset-anchor.active");
+                $.each(active_preset_filters, function (i, active_filter) {
+                    var filter_type = $(active_filter).attr("data-filter");
+                    var filter = settings.filters[settings.current_filter].filter_presets[filter_type];
+                    buildFilterList(filter);
+                });
+            }
+        }
+
+        /**
+         * Determines if the supplied filter item (filter_label) matches the current filter's preset value
+         * @param filter
+         * @param filter_label
+         * @returns boolean
+         */
+        function determinePresetFilterMatch(filter, filter_label) {
+            var match = false;
+            if (filter.value.length > 1) {
+                $.each(filter.value, function(i, value) {
+                    var filter_position = filter_label.indexOf(value);
+                    switch (filter.search_rule) {
+                        case "starts_with" :
+                            if (filter_position == 0) {
+                                match = true;
+                            }
+                        break;
+                        case "contains" :
+                            if (filter_position >= 0) {
+                                match = true;
+                            }
+                        break;
+                    }
+                });
+            } else {
+                var filter_position = filter_label.indexOf(filter.value);
+                switch (filter.search_rule) {
+                    case "starts_with" :
+                        if (filter_position == 0) {
+                            match = true;
+                        }
+                    break;
+                    case "contains" :
+                        if (filter_position >= 0) {
+                            match = true;
+                        }
+                    break;
+                }
+            }
+            return match;
+        }
+
+        /**
+         * Create an unordered list for the supplied filter
+         * @param filter
+         */
+        function buildFilterList(filter) {
+            if (!filter.hasOwnProperty("search_rule")) {
+                filter.search_rule = "starts_with";
+            }
+
+            if ($("." + filter.selector + "-list-container").length == 0) {
+                var filter_list_container = $(document.createElement("div")).addClass(filter.selector + "-list-container active-filter-preset-list-container");
+                var filter_list = $(document.createElement("ul")).addClass("search-filter-list " + filter.selector + "-list active-filter-preset-list");
+                var filter_list_heading = $(document.createElement("h4")).html((filter.hasOwnProperty("filter_heading_label") ? filter.filter_heading_label : filter.label)).addClass("search-label " + filter.selector + "-heading active-filter-presets-heading");
+
+                filter_list_container.append(filter_list_heading);
+
+                var filter_list = buildFilterListItems(filter, filter_list);
+                filter_list_container.append(filter_list);
+
+                $(".filter-container").append(filter_list_container);
+
+                if ($("." + filter.selector + "-list li").length == 0) {
+                    var no_match_item = $(document.createElement("li")).html("No results found").addClass("filter-preset-empty");
+                    filter_list.append(no_match_item);
+                }
+            }
+        }
+
+        /**
+         * Build and append appropriate list items to the supplied filter list
+         * @param filter
+         * @param filter_list
+         * @returns an unordered list
+         */
+        function buildFilterListItems(filter, filter_list) {
+            var data_source = settings.filters[settings.current_filter].data_source;
+            $.each(data_source, function (i, filter_target) {
+                var match = determinePresetFilterMatch(filter, filter_target.target_label);
+                if (match) {
+                    var hilited_search_value = hiliteSearchValue(filter_target.target_label, $(".search-input").val());
+                    var hide_target_li = "";
+
+                    if ($(".search-input").val().length > 0) {
+                        hide_target_li = hilited_search_value.indexOf("<span class=\"search-hilite\">") != -1 ? "" : "hide";
+                    }
+
+                    var target_li = $(document.createElement("li")).addClass("search-filter-item " + hide_target_li).attr({
+                        "data-id": filter_target.target_id,
+                        "data-parent": filter_target.target_parent
+                    });
+                    var target_li_div = $(document.createElement("div")).addClass("search-target-controls");
+                    var target_label_span = $(document.createElement("span")).addClass("search-target-label");
+                    var target_label = $(document.createElement("label")).html(hilited_search_value).addClass("search-target-label-text").attr({"for": settings.current_filter + "_target_" + filter_target.target_id});
+                    var target_input_span = $(document.createElement("span")).addClass("search-target-input");
+                    var mode = (settings.filters[settings.current_filter].hasOwnProperty("mode") ? settings.filters[settings.current_filter].mode : "checkbox");
+                    var target_input;
+
+                    if (typeof filter_target.target_title !== "undefined") {
+                        target_label.attr("title", filter_target.target_title);
+                    }
+
+                    switch (mode) {
+                        case "radio" :
+                            target_input = $(document.createElement("input")).attr({
+                                type: "radio",
+                                id: settings.current_filter + "_target_" + filter_target.target_id,
+                                name: "selected-target",
+                                "data-label": filter_target.target_label,
+                                "data-filter": settings.current_filter
+                            }).val(filter_target.target_id).addClass("search-target-input-control");
+                            break;
+                        case "checkbox" :
+                            target_input = $(document.createElement("input")).attr({
+                                type: "checkbox",
+                                id: settings.current_filter + "_target_" + filter_target.target_id,
+                                "data-label": filter_target.target_label,
+                                "data-filter": settings.current_filter
+                            }).val(filter_target.target_id).addClass("search-target-input-control");
+                            break;
+                    }
+
+                    target_label_span.append(target_label);
+
+                    if (typeof target_input !== "undefined") {
+                        target_input_span.append(target_input);
+                    }
+
+                    target_li_div.append(target_label_span).append(target_input_span);
+                    target_li.append(target_li_div);
+
+                    if ($(".search-input").val() == "") {
+                        filter_list.append(target_li);
+                    } else {
+                        if ($(target_label).find(".search-hilite").length > 0) {
+                            filter_list.append(target_li);
+                        }
+                    }
+
+                    if ($("#" + settings.current_filter + "_" + filter_target.target_id).length > 0) {
+                        target_input.attr("checked", "checked");
+                        target_li.addClass("search-target-selected");
+                    }
+                }
+            });
+
+            if (settings.user_card) {
+                $.each($(".search-filter-item"), function (index, value) {
+                    $(this).attr("rel", "popover");
+                });
+            }
+
+            return filter_list;
         }
 
         self.parent().addClass("entrada-search-widget");

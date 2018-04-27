@@ -27,17 +27,13 @@ if (!defined("IN_EXAMS")) {
 	header("Location: ".ENTRADA_URL);
 	exit;
 } elseif (!$ENTRADA_ACL->amIAllowed("exam", "create", false)) {
-	add_error("Your " . APPLICATION_ACCOUNT_NAME . " does not have the permissions required to use this feature of this module.<br /><br />If you believe you are receiving this message in error please contact <a href=\"mailto:".html_encode($AGENT_CONTACTS["administrator"]["email"])."\">".html_encode($AGENT_CONTACTS["administrator"]["name"])."</a> for assistance.");
+	add_error("Your account does not have the permissions required to use this feature of this module.<br /><br />If you believe you are receiving this message in error please contact <a href=\"mailto:".html_encode($AGENT_CONTACTS["administrator"]["email"])."\">".html_encode($AGENT_CONTACTS["administrator"]["name"])."</a> for assistance.");
 
 	echo display_error();
 
 	application_log("error", "Group [".$GROUP."] and role [".$ROLE."] does not have access to this module [".$MODULE."]");
 } else {
-    $csv = json_decode($_POST['csv']);
-
-    if (isset($csv) && !is_array($csv)) {
-        $csv_array = json_decode($csv);
-    }
+    $csv_array = json_decode($_POST['csv']);
 
     ob_clear_open_buffers();
 

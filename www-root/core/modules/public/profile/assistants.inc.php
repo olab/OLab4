@@ -149,8 +149,8 @@ if (!defined("IN_PROFILE")) {
                         echo "<tr>\n";
                         echo "    <td class=\"modified\"><input type=\"checkbox\" name=\"remove[".$result["assigned_to"]."]\" value=\"".$result["permission_id"]."\" /></td>\n";
                         echo "    <td class=\"title\">".html_encode($result["fullname"])."</td>\n";
-                        echo "    <td class=\"date\">".date(DEFAULT_DATE_FORMAT, $result["valid_from"])."</td>\n";
-                        echo "    <td class=\"date\">".date(DEFAULT_DATE_FORMAT, $result["valid_until"])."</td>\n";
+                        echo "    <td class=\"date\">".date(DEFAULT_DATETIME_FORMAT, $result["valid_from"])."</td>\n";
+                        echo "    <td class=\"date\">".date(DEFAULT_DATETIME_FORMAT, $result["valid_until"])."</td>\n";
                         echo "</tr>\n";
                     }
                     ?>

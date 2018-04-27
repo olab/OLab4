@@ -333,99 +333,195 @@ function load_system_navigator() {
 	return false;
 }
 
+/**
+ *  Library function to help navigator_tabs() function on creating dropdown itens
+ *
+ * @param array $module_item main menu tab that has children items
+ * @param array $css_classes defined css classes to the menu items
+ * @return string
+ */
+function navigator_tabs_dropdown_item($module_item, $css_classes){
+    global $ENTRADA_USER, $ENTRADA_ACL, $MODULE;
+    $tab_children = "<ul class=\"dropdown-menu\">";
+
+    foreach ($module_item["children"] as $child_shortname => $child_item) {
+        $child_active = false;
+
+        if (isset($child_item["resource"]) && isset($child_item["permission"])) {
+            if (!$ENTRADA_ACL->amIAllowed($child_item["resource"], $child_item["permission"])) {
+                continue;
+            } else if (isset($child_item["limit-to-role"]) && $child_item["limit-to-role"]) {
+                // Check if the logged user role can access this meny item
+                // First we check if the limit to role in the child item is an array,
+                // if not, we convert it
+                if (!is_array($child_item["limit-to-role"])) {
+                    $child_item["limit-to-role"] = array($child_item["limit-to-role"]);
+                }
+                // Now we verify if the user role is allowed to access the item
+                if (!in_array($ENTRADA_USER->getRole(), $child_item["limit-to-role"])) {
+                    // We skip the item in the loop in case the user cann't access it
+                    continue;
+                }
+            } else if (isset($child_item["limit-to-groups"]) && $child_item["limit-to-groups"]) {
+                // Check if the logged user group can access this meny item
+                // First we check if the limit to groups in the child item is an array,
+                // if not, we convert it
+                if (!is_array($child_item["limit-to-groups"])) {
+                    $child_item["limit-to-groups"] = array($child_item["limit-to-groups"]);
+                }
+                // Now we verify if the user group is allowed to access the item
+                if (!in_array($ENTRADA_USER->getActiveGroup(), $child_item["limit-to-groups"])) {
+                    // We skip the item in the loop in case the user cann't access it
+                    continue;
+                }
+            }
+        }
+
+        if ($MODULE == $child_shortname) {
+            $child_active = true;
+
+            /**
+             * This will make the childs' parent active as well.
+             */
+            if (!in_array("current", $css_classes)) {
+                $css_classes[] = "current";
+            }
+        }
+
+        $tab_children .= "<li" . ($child_active ? " class=\"current\"" : "") . ">";
+        $tab_children .= "	<a href=\"" . ((isset($child_item["url"])) ? $child_item["url"] : ENTRADA_RELATIVE . "/" . $child_shortname) . "\"" . ((isset($child_item["target"])) ? " target=\"" . $child_item["target"] . "\"" : "") . "><span>" . $child_item["title"] . "</span></a>";
+        $tab_children .= "</li>";
+    }
+    $tab_children .= "</ul>";
+    return $tab_children;
+}
+
 function navigator_tabs() {
-	global $ENTRADA_USER, $ENTRADA_ACL, $MODULE, $MODULES, $translate;
 
-	if (!defined("MAX_NAV_TABS")) {
-		$max_public = 9;
-	} else {
-		$max_public = MAX_NAV_TABS;
-	}
+    global $ENTRADA_USER, $ENTRADA_ACL, $MODULE, $MODULES, $translate;
 
-	$tabs_admin = "";
-	$tabs_public = "";
+    if (!defined("MAX_NAV_TABS")) {
+        $max_public = 9;
+    } else {
+        $max_public = MAX_NAV_TABS;
+    }
 
-	$admin_tabs = array();
-	$public_tabs = array();
-	$more_tabs = array();
+    $tabs_admin = "";
+    $tabs_public = "";
 
-	$counter = 0;
-	$more_bold = "";
+    $admin_tabs = array();
+    $public_tabs = array();
+    $more_tabs = array();
 
-	$output_html = "";
+    $counter = 0;
+    $more_bold = "";
 
-	$navigation = $translate->_("navigation_tabs");
+    $output_html = "";
 
-	if (is_array($navigation) && !empty($navigation)) {
-		/**
-		 * Temporary fix until we figure out something better
-		 * for dynamic modules.
-		 */
-		$navigation["admin"] = $MODULES;
+    $navigation = $translate->_("navigation_tabs");
 
-		$navigator_admin = $navigation["admin"];
-		$navigator_public = $navigation["public"];
+    if (is_array($navigation) && !empty($navigation)) {
+        /**
+         * Temporary fix until we figure out something better
+         * for dynamic modules.
+         */
+        $navigation["admin"] = $MODULES;
 
-		/**
-		 * Administrative tab entries.
-		 */
-		$assertion_check = false;
-		if ($ENTRADA_USER->getActiveGroup() == "student") {
-			$assertion_check = true;
-		}
+        $navigator_admin = $navigation["admin"];
+        $navigator_public = $navigation["public"];
 
-		foreach ($navigation["admin"] as $shortname => $module_info) {
-			if ($ENTRADA_ACL->amIAllowed($module_info["resource"], $module_info["permission"], $assertion_check)) {
-				$admin_tabs[] = "<li class=\"%".$shortname."%\"><a href=\"".ENTRADA_URL."/admin/".$shortname."\"><span>".html_encode(((isset($module_info["title"])) ? $module_info["title"] : ucwords(strtolower($shortname))))."</span></a></li>\n";
-			}
-		}
+        /**
+         * Administrative tab entries.
+         */
+        $assertion_check = false;
+        if ($ENTRADA_USER->getActiveGroup() == "student") {
+            $assertion_check = true;
+        }
 
-		if (!empty($admin_tabs)) {
-			$max_public--;
+        foreach ($navigation["admin"] as $shortname => $module_info) {
+            $enabled = true;
 
-			if (defined("IN_ADMIN") && (IN_ADMIN == true)) {
-				$tab_bold = " current";
-				$admin_text = str_replace("%".$MODULE."%", "current", implode("\n", $admin_tabs));
-			} else {
-				$tab_bold = "";
-				$admin_text = implode("\n", $admin_tabs);
-			}
+            if (isset($module_info["enabled"])) {
+				$settings = new Entrada_Settings();
+                $enabled = $settings->read($module_info["enabled"]);
+            }
 
-			$tabs_admin .= "<li class=\"dropdown".$tab_bold."\" id=\"admin_tab\">";
-			$tabs_admin .= "	<a href=\"#\" class=\"dropdown-toggle\" data-toggle=\"dropdown\" id=\"admin_tab_link\"><span>Admin</span> <b class=\"caret\"></b></a>";
-			$tabs_admin .= "	<ul class=\"dropdown-menu\" id=\"admin_drop_options\">";
-			$tabs_admin .=			$admin_text;
-			$tabs_admin .= "	</ul>";
-			$tabs_admin .= "	<!--[if lte IE 6.5]><iframe src=\"".ENTRADA_RELATIVE."/blank.html\"></iframe><![endif]-->";
-			$tabs_admin .= "</li>\n";
-		}
+            if ($enabled && $ENTRADA_ACL->amIAllowed($module_info["resource"], $module_info["permission"], $assertion_check)) {
+                $admin_tabs[] = "<li class=\"%" . $shortname . "%\"><a href=\"" . ENTRADA_URL . "/admin/" . $shortname . "\"><span>" . html_encode(((isset($module_info["title"])) ? $module_info["title"] : ucwords(strtolower($shortname)))) . "</span></a></li>\n";
+            }
+        }
 
-		/**
-		 * Public tab entries.
-		 */
-		foreach ($navigation["public"] as $shortname => $module_item) {
-			$active = false;
-			$css_classes = array();
+        if (!empty($admin_tabs)) {
+            $max_public--;
 
-			$tab_children = "";
-			$has_children = false;
+            if (defined("IN_ADMIN") && (IN_ADMIN == true)) {
+                $tab_bold = " current";
+                $admin_text = str_replace("%" . $MODULE . "%", "current", implode("\n", $admin_tabs));
+            } else {
+                $tab_bold = "";
+                $admin_text = implode("\n", $admin_tabs);
+            }
 
-			$include_item = false;
+            $tabs_admin .= "<li class=\"dropdown" . $tab_bold . "\" id=\"admin_tab\">";
+            $tabs_admin .= "	<a href=\"#\" class=\"dropdown-toggle\" data-toggle=\"dropdown\" id=\"admin_tab_link\"><span>Admin</span> <b class=\"caret\"></b></a>";
+            $tabs_admin .= "	<ul class=\"dropdown-menu\" id=\"admin_drop_options\">";
+            $tabs_admin .= $admin_text;
+            $tabs_admin .= "	</ul>";
+            $tabs_admin .= "</li>\n";
+        }
 
-			/**
-			 * If this menu item has a resource attached check to see if the user
-			 * has permission before adding it to the stack. If there is no resource
-			 * associated with it, it is safe to add.
-			 */
-			if (isset($module_item["resource"]) && isset($module_item["permission"])) {
-				if ($ENTRADA_ACL->amIAllowed($module_item["resource"], $module_item["permission"])) {
+        /**
+         * Public tab entries.
+         */
+        foreach ($navigation["public"] as $shortname => $module_item) {
+            $active = false;
+            $css_classes = array();
 
-                    if (isset($module_item["limit-to-groups"]) && $module_item["limit-to-groups"]) {
+            $tab_children = "";
+            $has_children = false;
+
+            $include_item = false;
+
+            $enabled = true;
+			      if (isset($module_item["enabled"])) {
+				        $settings = new Entrada_Settings();
+                $enabled = $settings->read($module_item["enabled"]);
+            }
+            /**
+             * If this menu item has a resource attached check to see if the user
+             * has permission before adding it to the stack. If there is no resource
+             * associated with it, it is safe to add.
+             */
+            if (isset($module_item["resource"]) && isset($module_item["permission"])) {
+                if ($enabled && $ENTRADA_ACL->amIAllowed($module_item["resource"], $module_item["permission"])) {
+
+                    if (isset($module_item["limit-to-role"]) && $module_item["limit-to-role"]) {
+                        // Check if the logged user role can access this menu item
+                        // First we check if the limit to role in the child item is an array,
+                        // if not, we convert it
+                        if (!is_array($module_item["limit-to-role"])) {
+                            $module_item["limit-to-role"] = array($module_item["limit-to-role"]);
+                        }
+                        // Now we verify if the user role is allowed to access the item
+                        if (in_array($ENTRADA_USER->getRole(), $module_item["limit-to-role"])) {
+                            $counter++;
+                            $include_item = true;
+                        }
+                    } else if (isset($module_item["limit-to-groups"]) && $module_item["limit-to-groups"]) {
                         if (!is_array($module_item["limit-to-groups"])) {
                             $module_item["limit-to-groups"] = array($module_item["limit-to-groups"]);
                         }
 
                         if (in_array($ENTRADA_USER->getActiveGroup(), $module_item["limit-to-groups"])) {
+                            $counter++;
+                            $include_item = true;
+                        }
+                    } elseif (isset($module_item["limit-to-roles"]) && $module_item["limit-to-roles"]) {
+                        if (!is_array($module_item["limit-to-roles"])) {
+                            $module_item["limit-to-roles"] = array($module_item["limit-to-roles"]);
+                        }
+
+                        if (in_array($ENTRADA_USER->getActiveRole(), $module_item["limit-to-roles"])) {
                             $counter++;
 
                             $include_item = true;
@@ -435,14 +531,13 @@ function navigator_tabs() {
 
                         $include_item = true;
                     }
-				}
-			} else {
-				$counter++;
-
+                }
+            } else if ($enabled) {
+                $counter++;
                 $include_item = true;
-			}
+            }
 
-			if ($include_item) {
+            if ($include_item) {
                 if (isset($module_item["children"]) && is_array($module_item["children"]) && !empty($module_item["children"])) {
                     $has_children = true;
                     $css_classes[] = "dropdown";
@@ -453,43 +548,7 @@ function navigator_tabs() {
                 }
 
                 if ($has_children) {
-                    $tab_children .= "<ul class=\"dropdown-menu\">";
-
-                    foreach ($module_item["children"] as $child_shortname => $child_item) {
-                        $child_active = false;
-
-                        if (isset($child_item["resource"]) && isset($child_item["permission"])) {
-                            if (!$ENTRADA_ACL->amIAllowed($child_item["resource"], $child_item["permission"])) {
-                                continue;
-                            } elseif (isset($child_item["limit-to-groups"]) && $child_item["limit-to-groups"]) {
-                                if (!is_array($child_item["limit-to-groups"])) {
-                                    $child_item["limit-to-groups"] = array($child_item["limit-to-groups"]);
-                                }
-
-                                if (!in_array($ENTRADA_USER->getActiveGroup(), $child_item["limit-to-groups"])) {
-                                    continue;
-                                }
-                            }
-                        }
-
-                        if ($MODULE == $child_shortname) {
-                            $child_active = true;
-
-                            /**
-                             * This will make the childs' parent active as well.
-                             */
-                            if (!in_array("current", $css_classes)) {
-                                $css_classes[] = "current";
-                            }
-                        }
-
-                        $tab_children .= "<li" . ($child_active ? " class=\"current\"" : "") . ">";
-                        $tab_children .= "	<a href=\"" . ((isset($child_item["url"])) ? $child_item["url"] : ENTRADA_RELATIVE . "/" . $child_shortname) . "\"" . ((isset($child_item["target"])) ? " target=\"" . $child_item["target"] . "\"" : "") . "><span>" . $child_item["title"] . "</span></a>";
-                        $tab_children .= "</li>";
-                    }
-
-                    $tab_children .= "</ul>";
-                    $tab_children .= "<!--[if lte IE 6.5]><iframe src=\"" . ENTRADA_RELATIVE . "/blank.html\"></iframe><![endif]-->";
+                    $tab_children .= navigator_tabs_dropdown_item($module_item, $css_classes);
                 }
 
                 if ($MODULE == $shortname) {
@@ -501,15 +560,17 @@ function navigator_tabs() {
                 if ($tab_children) {
                     $tab .= "<a href=\"#\" class=\"dropdown-toggle\" data-toggle=\"dropdown\">" . $module_item["title"] . " <b class=\"caret\"></b></a>";
                     $tab .= $tab_children;
+
                 } else {
                     $tab .= "<a href=\"" . ENTRADA_RELATIVE . "/" . $shortname . "\">" . $module_item["title"] . "</a>";
                 }
                 $tab .= "</li>\n";
 
                 // Push excess public tabs into more
-                if ($counter > $max_public) {
-                    $more_tabs[] = $tab;
-
+                // In order to grab another tab to make space for the more tab within the max limit
+                // Lest remove one less from the max public
+                if ($counter > $max_public - 1) {
+                    $more_tabs[$shortname] = $module_item;
                     if ($active == true) {
                         $more_bold = " current";
                     }
@@ -519,34 +580,56 @@ function navigator_tabs() {
             }
         }
 
-		/**
-		 * Add "More" tabs.
-		 */
-		if (!empty($more_tabs)) {
-			// Grab another tab into more to make space for the more tab within the max limit
-			$more_tabs[] = array_pop($public_tabs);
+        /**
+         * Add "More" tabs.
+         */
+        if (!empty($more_tabs)) {
+            $sub_class = "dropdown-menu";
+            //If the more menu has only one item I will not create a submenu with the item and just add it to the main navbar
+            $tabs_more = "";
+            if (count($more_tabs) > 1) {
+                $sub_class = "dropdown-submenu";
+                $tabs_more .= "<li class=\"dropdown" . $more_bold . "\" id=\"more_tab\">";
+                $tabs_more .= "	<a href=\"#\" class=\"dropdown-toggle\" data-toggle=\"dropdown\">More <b class=\"caret\"></b></a>";
+                $tabs_more .= "	<ul class=\"dropdown-menu\" id=\"more_drop_options\">";
+            }
+            foreach ($more_tabs as $shortname => $extra_item) {
+                //For each item of the more tabs item I will verify if it has children item
+                $css_classes = array();
+                if ($MODULE == $shortname) {
+                    $css_classes[] = "current";
+                }
+                if (isset($extra_item["children"]) && is_array($extra_item["children"]) && !empty($extra_item["children"])) {
+                    //If the item has children itens lets create a submenu
+                    $css_classes[] = "dropdown";
+                    $tabs_more .= "<li class='$sub_class'>";
+                    $tabs_more .= "<a href=''#'>" . $extra_item["title"] . "</a>";
+                    $tabs_more .= navigator_tabs_dropdown_item($extra_item, $css_classes);
+                    $tabs_more .= "</li>";
+                } else {
+                    $tabs_more .= "<li " . (!empty($css_classes) ? " class=\"" . implode(" ", $css_classes) . "\"" : "") . ">";
+                    $tabs_more .= "<a href=\"" . ENTRADA_RELATIVE . "/" . $shortname . "\">" . $extra_item["title"] . "</a>";
+                    $tabs_more .= "</li>\n";
+                }
+            }
+            if (count($more_tabs) > 1) {
+                $tabs_more .= "	</ul>";
+                $tabs_more .= "</li>\n";
+            }
+        }
 
-			$tabs_more  = "<li class=\"dropdown".$more_bold."\" id=\"more_tab\">";
-			$tabs_more .= "	<a href=\"#\" class=\"dropdown-toggle\" data-toggle=\"dropdown\">More <b class=\"caret\"></b></a>";
-			$tabs_more .= "	<ul class=\"dropdown-menu\" id=\"more_drop_options\">";
-			$tabs_more .=		implode("\n", $more_tabs);
-			$tabs_more .= "	</ul>";
-			$tabs_more .= "	<!--[if lte IE 6.5]><iframe src=\"".ENTRADA_RELATIVE."/blank.html\"></iframe><![endif]-->";
-			$tabs_more .= "</li>\n";
-		}
+        $tabs_public = implode("\n", $public_tabs);
 
-		$tabs_public = implode("\n", $public_tabs);
+        $output_html .= $tabs_public;
 
-		$output_html .= $tabs_public;
+        if (!empty($tabs_more)) {
+            $output_html .= $tabs_more;
+        }
 
-		if (!empty($tabs_more)) {
-			$output_html .= $tabs_more;
-		}
-
-		if (!empty($navigator_admin)) {
-			$output_html .= $tabs_admin;
-		}
-	}
+        if (!empty($navigator_admin)) {
+            $output_html .= $tabs_admin;
+        }
+    }
 
 	/**
 	 * Add Logout tab.
@@ -681,7 +764,7 @@ function new_sidebar_item($title = "", $html = "", $id = "", $state = "open", $p
 	$state = (($state == "open") ? $state : "close");
 	$id = (($id == "") ? "sidebar-".$weight : $id);
 
-	$output  = "<div class=\"panel\" id=\"".html_encode($id)."\" summary=\"".html_encode($title)."\">\n";
+	$output  = "<div class=\"panel\" id=\"".html_encode($id)."\">\n";
 	$output .= "    <div class=\"panel-head\">\n";
 	$output .= "        <h3>".html_encode($title)."</h3>\n";
 	$output .= "    </div>\n";
@@ -1164,7 +1247,16 @@ function replace_query($modify = array(), $html_encode_output = false) {
 				$pieces = explode("=", $value);
 				// Gets rid of any unset variables for the URL.
 				if(isset($pieces[0]) && isset($pieces[1])) {
-					$process[$pieces[0]] = $pieces[1];
+					if (!isset($process[$pieces[0]])) {
+						$process[$pieces[0]] = $pieces[1];
+					} else {
+						// inputs with multiple values like checkboxes or any other array input
+						if (!is_array($process[$pieces[0]])) {
+							$process[$pieces[0]] = array($process[$pieces[0]]);
+						}
+
+						$process[$pieces[0]][] = $pieces[1];
+					}
 				}
 			}
 		}
@@ -1185,7 +1277,14 @@ function replace_query($modify = array(), $html_encode_output = false) {
 		}
 		if(count($process) > 0) {
 			foreach ($process as $var => $value) {
-				$tmp_string[] = $var."=".$value;
+				if (!is_array($value)) {
+					$tmp_string[] = $var."=".$value;
+				} else {
+					// inputs with multiple values like a radio or any other array input
+					foreach ($value as $multi_value) {
+						$tmp_string[] = $var."=".$multi_value;
+					}
+				}
 			}
 			$new_query = implode("&", $tmp_string);
 		} else {
@@ -1455,7 +1554,7 @@ function fetch_organisation_title($organisation_id = 0) {
  * @param int $course_id
  * @return string
  */
-function fetch_course_path($course_id = 0) {
+function fetch_course_path($course_id = 0, $cunit_id = null) {
 	$output = "";
 
 	$course_id = (int) $course_id;
@@ -1465,6 +1564,11 @@ function fetch_course_path($course_id = 0) {
 
 		if (is_array($curriculum_path) && !empty($curriculum_path)) {
 			$output = implode(" &gt; ", $curriculum_path);
+		}
+
+		if ($cunit_id) {
+			$course_unit = Models_Course_Unit::fetchRowByID($cunit_id);
+			$output .= " &gt; <a href=\"".ENTRADA_URL."/courses/units?id=".$course_id."&cunit_id=".$cunit_id."\">".$course_unit->getUnitText()."</a>";
 		}
 	}
 
@@ -1876,6 +1980,24 @@ function fetch_department_title($department_id = 0) {
 }
 
 /**
+ * Get week title
+ * @param int $week_id
+ */
+function fetch_week_title($week_id = 0) {
+    global $db;
+    if (($week_id = (int) $week_id)) {
+        $week = Models_Week::fetchRowByID($week_id);
+        if ($week) {
+            return $week->getWeekTitle();
+        } else {
+            return false;
+        }
+    } else {
+        return false;
+    }
+}
+
+/**
  * Function will return the parent_id based on the provided department_id.
  * @param int $department_id
  * @return parent_id or bool
@@ -2149,7 +2271,7 @@ function clerkship_display_available_evaluations() {
 				echo "<tr>\n";
 				echo "	<td style=\"vertical-align: top; white-space: nowrap; font-size: 12px\">\n";
 				echo "		<input type=\"checkbox\" name=\"mark_done[]\" id=\"notification_".(int) $result["notification_id"]."\" value=\"".(int) $result["notification_id"]."\" style=\"vertical-align: middle\" /> ";
-				echo "		<label for=\"notification_".(int) $result["notification_id"]."\">".date(DEFAULT_DATE_FORMAT, $result["event_finish"])."</label>\n";
+				echo "		<label for=\"notification_".(int) $result["notification_id"]."\">".date(DEFAULT_DATETIME_FORMAT, $result["event_finish"])."</label>\n";
 				echo "	</td>\n";
 				echo "	<td style=\"padding-top: 3px; vertical-align: top; white-space: normal; font-size: 12px\">\n";
 				echo "		<a href=\"".ENTRADA_URL."/clerkship?section=evaluate&amp;nid=".(int) $result["notification_id"]."\">".ucwords($result["form_type"])." Evaluation".(($result["item_maxinstances"] != 1) ? "s" : "")." Available</a> <span class=\"content-small\">(".$result["item_maxinstances"]." available)</span>\n";
@@ -2902,110 +3024,107 @@ function clean_input($string, $rules = array()) {
 	if (count($rules) > 0) {
 		foreach ($rules as $rule) {
 			switch ($rule) {
-				case "strtotime" :
-                    $string = strtotime($string);
-                break;
                 case "end_of_day" :
                     $string = strtotime(date("Y-m-d", $string)." 23:59:59");
-                break;
+                    break;
 				case "page_url" :		// Acceptable characters for community page urls.
 				case "module" :
 					$string = preg_replace("/[^a-z0-9_\-]/i", "", $string);
-				break;
+				    break;
 				case "url" :			// Allows only a minimal number of characters
 					$string = preg_replace(array("/[^a-z0-9_\-\.\/\~\?\&\:\#\=\+]/i", "/(\.)\.+/", "/(\/)\/+/"), "$1", $string);
-				break;
+				    break;
 				case "file" :
 				case "dir" :			// Allows only a minimal number of characters
 					$string = preg_replace(array("/[^a-z0-9_\:\-\.\/]/i", "/(\.)\.+/", "/(\/)\/+/"), "$1", $string);
-				break;
+				    break;
 				case "int" :			// Change string to an integer.
 					$string =  (int) $string;
-				break;
+				    break;
 				case "float" :			// Change string to a float.
 					$string = (float) $string;
-				break;
+				    break;
 				case "bool" :			// Change string to a boolean.
 					$string = (bool) $string;
-				break;
+				    break;
 				case "nows" :			// Trim all whitespace anywhere in the string.
 					$string = str_replace(array(" ", "\t", "\n", "\r", "\0", "\x0B", "&nbsp;"), "", $string);
-				break;
+				    break;
 				case "trim" :			// Trim whitespace from ends of string.
 					$string = trim($string);
-				break;
+				    break;
 				case "trimds" :			// Removes double spaces.
 					$string = str_replace(array(" ", "\t", "\n", "\r", "\0", "\x0B", "&nbsp;", "\x7f", "\xff", "\x0", "\x1f"), " ", $string);
 					$string = html_decode(str_replace("&nbsp;", "", html_encode($string)));
-				break;
+				    break;
 				case "nl2br" :
 					$string = nl2br($string);
-				break;
+				    break;
 				case "underscores" :	// Trim all whitespace anywhere in the string.
 					$string = str_replace(array(" ", "\t", "\n", "\r", "\0", "\x0B", "&nbsp;"), "_", $string);
-				break;
+				    break;
 				case "lower" :			// Change string to all lower case.
 				case "lowercase" :
 					$string = strtolower($string);
-				break;
+				    break;
 				case "upper" :			// Change string to all upper case.
 				case "uppercase" :
 					$string = strtoupper($string);
-				break;
+				    break;
 				case "ucwords" :		// Change string to correct word case.
 					$string = ucwords(strtolower($string));
-				break;
+				    break;
 				case "boolops" :		// Removed recognized boolean operators.
 					$string = str_replace(array("\"", "+", "-", "AND", "OR", "NOT", "(", ")", ",", "-"), "", $string);
-				break;
+				    break;
 				case "quotemeta" :		// Quote's meta characters
 					$string = quotemeta($string);
-				break;
+				    break;
 				case "credentials" :	// Acceptable characters for login credentials.
 					$string = preg_replace("/[^a-z0-9_\-\.@]/i", "", $string);
-				break;
+				    break;
 				case "alphanumeric" :	// Remove anything that is not alphanumeric.
 					$string = preg_replace("/[^a-z0-9]+/i", "", $string);
-				break;
+				    break;
 				case "alpha" :			// Remove anything that is not an alpha.
 					$string = preg_replace("/[^a-z]+/i", "", $string);
-				break;
+				    break;
 				case "numeric" :		// Remove everything but numbers 0 - 9 for when int won't do.
 					$string = preg_replace("/[^0-9]+/i", "", $string);
-				break;
+				    break;
 				case "name" :			// @todo jellis ?
 					$string = preg_replace("/^([a-z]+(\'|-|\.\s|\s)?[a-z]*){1,2}$/i", "", $string);
-				break;
+				    break;
 				case "emailcontent" :	// Check for evil tags that could be used to spam.
 					$string = str_ireplace(array("content-type:", "bcc:","to:", "cc:"), "", $string);
-				break;
+				    break;
 				case "postclean" :		// @todo jellis ?
 					$string = preg_replace('/\<br\s*\/?\>/i', "\n", $string);
 					$string = str_replace("&nbsp;", " ", $string);
-				break;
+				    break;
 				case "utf8_convert" :
 					$string = preg_replace_callback("/(&#[ox]?[a-f,A-F,0-9]+;)/", function($m) { return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES"); }, $string);
-				break;
+				    break;
 				case "html_decode" :
 				case "decode" :			// Returns the output of the html_decode() function.
 					$string = html_decode($string);
-				break;
+				    break;
 				case "html_encode" :
 				case "encode" :			// Returns the output of the html_encode() function.
 					$string = html_encode($string);
-				break;
+				    break;
 				case "htmlspecialchars" : // Returns the output of the htmlspecialchars() function.
 				case "specialchars" :
 					$string = htmlspecialchars($string, ENT_QUOTES, DEFAULT_CHARSET, false);
-				break;
+				    break;
 				case "htmlbrackets" :	// Converts only brackets into entities.
 					$string = str_replace(array("<", ">"), array("&lt;", "&gt;"), $string);
-				break;
+				    break;
 				case "notags" :			// Strips tags from the string.
 				case "nohtml" :
 				case "striptags" :
 					$string = strip_tags($string);
-				break;
+				    break;
 				case "mbconvert":
 					$string = mb_convert_encoding($string, DEFAULT_CHARSET, 'auto');
 					break;
@@ -3016,7 +3135,6 @@ function clean_input($string, $rules = array()) {
 						gc_enable();
 					}
 					gc_collect_cycles();
-					//require_once("Entrada/htmlpurifier/HTMLPurifier.standalone.php");
 
 					$html = new HTMLPurifier();
 
@@ -3054,22 +3172,32 @@ function clean_input($string, $rules = array()) {
                     $def->addAttribute("iframe", "allowfullscreen", "Text");
                     $def->addAttribute("iframe", "webkitallowfullscreen", "Text");
                     $def->addAttribute("iframe", "mozallowfullscreen", "Text");
+                    $def->addAttribute("a", "data-toggle", "Text");
 
 					$string = $html->purify($string, $config);
-				break;
+
+                    if ($string) {
+                        // Since all ids on the page are getting the _user prefix, the next block will
+                        // add that prefix to all existing anchors in the page.
+                        // If the anchor already has the prefix it will not match with the regular expression.
+                        $regex = "/href=\"#(?!user_)/";
+                        $replace = "href=\"#user_";
+                        $string = preg_replace($regex, $replace, $string);
+                    }
+				    break;
                 case "msword" :
                     $string = iconv("UTF-8", "ASCII//TRANSLIT", $string);
-                break;
+                    break;
                 case "strtotime" :
                     $string = strtotime($string);
-                break;
+                    break;
                 case "strtotimeonly" :
                     $time = strtotime($string);
                     if ($time) {
                         $midnight = strtotime("00:00:00", $time);
                         $string = $time - $midnight;
                     }
-                break;
+                    break;
 				case preg_match("/^min:[0-9]+$/", $rule) === 1:
 					$rule = explode(":", $rule);
 					$min = (int) $rule[1];
@@ -3078,7 +3206,7 @@ function clean_input($string, $rules = array()) {
 					if ($value < $min) {
 						return false;
 					}
-				break;
+				    break;
 				case preg_match("/^max:[0-9]+$/", $rule) === 1:
 					$rule = explode(":", $rule);
 					$max = (int) $rule[1];
@@ -3087,10 +3215,10 @@ function clean_input($string, $rules = array()) {
 					if ($value > $max) {
 						return false;
 					}
-				break;
+				    break;
 				default :				// Unknown rule, log notice.
 					application_log("notice", "Unknown clean_input function rule [".$rule."]");
-				break;
+				    break;
 			}
 		}
 
@@ -3539,9 +3667,14 @@ function dashboard_fetch_feeds($default = false) {
 		return $_SESSION[APPLICATION_IDENTIFIER]["dashboard"]["feeds"];
 	} else {
 		$feeds = $translate->_("public_dashboard_feeds");
+		$role = $_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"];
 		$group = $_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"];
 
-		if (is_array($feeds[$group])) {
+		if (is_array($feeds[$group]) && is_array($feeds[$role]) && $group != $role) {
+			$feeds = array_merge($feeds[$role], $feeds[$group], $feeds["global"]);
+		} elseif (is_array($feeds[$role])) {
+			$feeds = array_merge($feeds[$role], $feeds["global"]);
+		} elseif (is_array($feeds[$group])) {
 			$feeds = array_merge($feeds["global"], $feeds[$group]);
 		} else {
 			$feeds = $feeds["global"];
@@ -4338,8 +4471,12 @@ function help_create_button($help_title = "", $help_content = "") {
 function load_rte($toolbar_groups = array(), $plugins = array(), $other_options = array()) {
 	global $HEAD;
 
+	$extra_plugins = array("a11ychecker", "collapsibleItem");
+
     if (is_array($plugins) && !empty($plugins) && $plugins["autogrow"] === true) {
         $autogrow = true;
+
+        $extra_plugins[] = "autogrow";
     } else {
         $autogrow = false;
     }
@@ -4361,77 +4498,57 @@ function load_rte($toolbar_groups = array(), $plugins = array(), $other_options 
             case "communityadvanced" :
             case "communitybasic" :
             case "advanced" :
-                $toolbar_groups = array (
-                    array("name" => "clipboard", "groups" => array("mode", "clipboard", "spellchecker")),
+                $toolbar_groups = array(
+                    array("name" => "clipboard", "groups" => array("document", "mode", "spellchecker")),
                     array("name" => "links"),
                     array("name" => "insert", "groups" => array("mediaembed", "insert")),
                     array("name" => "list", "groups" => array("list", "indent", "blocks")),
                     array("name" => "styles"),
                     array("name" => "basicstyles", "groups" => array("basicstyles", "cleanup")),
                     array("name" => "paragraph", "groups" => array("colors", "align")),
+                    array("name" => "tools", "groups" => array("maximize")),
                 );
             break;
-	    case "courses":
-	    case "events":
-	    case "notices":
-            case "community" :
-                $toolbar_groups = array (
-                    array("name" => "clipboard", "groups" => array("mode", "clipboard", "spellchecker")),
-                    array("name" => "links"),
-					array("name" => "insert", "groups" => array("mediaembed", "insert")),
-                    array("name" => "paragraph", "groups" => array("list", "indent", "blocks", "align")),
-                );
-			break;
-	    case "examadvanced" :
-                $toolbar_groups = array (
-                    array("name" => "clipboard"),
-                    array("name" => "basicstyles"),
-                    array("name" => "paragraph", "groups" => array("colors", "list", "indent", "blocks", "align")),
-                    array("name" => "insert"),
-                    array("name" => "document", "groups" => array('mode', 'Maximize', 'doctools')),
-                    array("name" => "tools", "groups" => array('Maximize'))
-                );
-                break;
-            case "list" :
-                $custom_toolbar = true;
-            break;
-            case "mspr" : 
-            case "minimal" :
-            case "basic" :
             default :
-                $toolbar_groups = array (
-                    array("name" => "clipboard", "groups" => array("clipboard", "spellchecker")),
+                $toolbar_groups = array(
+                    array("name" => "clipboard", "groups" => array("document", "mode", "spellchecker")),
                     array("name" => "links"),
+                    array("name" => "insert", "groups" => array("mediaembed", "insert")),
                     array("name" => "paragraph", "groups" => array("list", "indent", "blocks", "align")),
-                    array("name" => "insert")
+                    array("name" => "tools", "groups" => array("maximize")),
+                    array("name" => "styles"),
+                    array("name" => "basicstyles", "groups" => array("basicstyles", "cleanup")),
                 );
             break;
         }
     }
     
-	$output  = "<script type=\"text/javascript\" src=\"".ENTRADA_RELATIVE."/javascript/ckeditor/ckeditor.js?release=".html_encode(APPLICATION_VERSION)."\"></script>\n";
-    ($autogrow ? $output .= "<script type=\"text/javascript\" src=\"".ENTRADA_URL."/javascript/ckeditor/plugins/autogrow/plugin.js\"></script>" : "");
-    
-	$output .= "<script type=\"text/javascript\" defer=\"defer\">\n";
-    $output .= "CKEDITOR.editorConfig = function( config ) {\n";
+	$output  = "<script src=\"" . ENTRADA_RELATIVE . "/javascript/ckeditor/ckeditor.js?release=" . html_encode(APPLICATION_VERSION) . "\"></script>\n";
+
+	$output .= "<script defer=\"defer\">\n";
+    $output .= "CKEDITOR.editorConfig = function(config) {\n";
     $output .= "    config.customConfig = '';\n";
     $output .= "    config.allowedContent = true;\n";
-    $output .= "    config.baseHref = '".ENTRADA_URL."';\n";
+    $output .= "    config.baseHref = '" . ENTRADA_URL . "';\n";
     $output .= "    config.forcePasteAsPlainText = true;\n";
     $output .= "    config.autoParagraph = false;\n";
-    $output .= "    config.toolbarGroups = ".json_encode($toolbar_groups).";\n";
+    $output .= "    config.toolbarGroups = " . json_encode($toolbar_groups) . ";\n";
     $output .= "    config.removeDialogTabs = 'link:upload;image:Upload';\n";
+    $output .= "    config.extraPlugins = '" . implode(",", $extra_plugins). "';\n";
+    $output .= "    config.removeButtons = 'Cut,Copy,Paste,JustifyBlock';\n";
     if ($allow_uploads) {
-        $output .= "    config.filebrowserBrowseUrl = '".ENTRADA_URL."/api/filebrowser.api.php?type=Files',\n";
-        $output .= "    config.filebrowserImageBrowseUrl = '".ENTRADA_URL."/api/filebrowser.api.php?type=Images',\n";
-        $output .= "    config.filebrowserUploadUrl = '".ENTRADA_URL."/api/filebrowser.api.php?type=Files&step=2&method=upload'\n";
-        $output .= "    config.filebrowserImageUploadUrl = '".ENTRADA_URL."/api/filebrowser.api.php?type=Files&step=2&method=upload'\n";
-        $output .= "    config.filebrowserWindowWidth = '800'\n";
-        $output .= "    config.filebrowserWindowHeight = '600'\n";
+        $output .= "config.filebrowserBrowseUrl = '" . ENTRADA_URL . "/api/filebrowser.api.php?type=Files';\n";
+        $output .= "config.filebrowserImageBrowseUrl = '" . ENTRADA_URL . "/api/filebrowser.api.php?type=Images';\n";
+        $output .= "config.filebrowserUploadUrl = '" . ENTRADA_URL . "/api/filebrowser.api.php?type=Files&step=2&method=upload';\n";
+        $output .= "config.filebrowserImageUploadUrl = '" . ENTRADA_URL . "/api/filebrowser.api.php?type=Files&step=2&method=upload';\n";
+        $output .= "config.filebrowserWindowWidth = '800';\n";
+        $output .= "config.filebrowserWindowHeight = '600';\n";
     }
-    ($autogrow ? $output .= "   config.extraPlugins = 'autogrow';\n": "");
-    ($autogrow ? $output .= "   config.autoGrow_onStartup = true;\n": "");
-    ($autogrow ? $output .= "   config.autoGrow_minHeight = 75;\n": "");
+    if ($autogrow) {
+        $output .= "config.autoGrow_onStartup = true;\n";
+        $output .= "config.autoGrow_minHeight = 75;\n";
+    }
+
     $output .= "}\n";
 
 	$output .= "window.onload = function() {\n";
@@ -4666,7 +4783,7 @@ function display_weather($city_code = "", $options = array(), $weather_source = 
 				$output_html .= "			<img src=\"".ENTRADA_URL."/images/weather/".((!(int) $weather["icon"]) ? "na" : (int) $weather["icon"]).".png\" width=\"64\" height=\"64\" border=\"0\" alt=\"".html_encode($weather["conditions"])."\" title=\"".html_encode($weather["conditions"])."\" />";
 				$output_html .= "		</td>\n";
 				$output_html .= "		<td style=\"text-align: center; vertical-align: middle\">\n";
-				$output_html .= "			<h1 style=\"font-size: 28px; margin: 0px\">".((int) $weather["tmp"])."&#176;C</h1>";
+				$output_html .= "			<h1 style=\"font-size: 28px; margin: 0px\">".((int) $weather["tmp"])."&#176;</h1>";
 				$output_html .= "			<div class=\"content-small\" style=\"font-weight: bold\">".$weather["conditions"]."</div>";
 				$output_html .= "		</td>\n";
 				$output_html .= "	</tr>\n";
@@ -4674,7 +4791,7 @@ function display_weather($city_code = "", $options = array(), $weather_source = 
 				if($weather["tmp"] != $weather["flik"]) {
 					$output_html .= "<tr>\n";
 					$output_html .= "	<td class=\"content-small\" style=\"text-align: right; padding-right: 10px\">Feels like:</td>\n";
-					$output_html .= "	<td class=\"content-small\">".((int) $weather["flik"])."&#176;C</td>";
+					$output_html .= "	<td class=\"content-small\">".((int) $weather["flik"])."&#176;</td>";
 					$output_html .= "</tr>\n";
 				}
 
@@ -6702,31 +6819,30 @@ function communities_pages_inlists($identifier = 0, $indent = 0, $options = arra
 	}
 
 	$identifier	= (int) $identifier;
-	$output		= "";
+	$output = "";
 
-	if(($identifier) && ($indent === 0)) {
-		$query	= "SELECT `cpage_id`, `page_url`, `menu_title`, `parent_id`, `page_visible`, `page_type` FROM `community_pages` WHERE `community_id` = ".$COMMUNITY_ID." AND `cpage_id` = ".$db->qstr((int) $identifier)." AND `page_url` != '0' AND `page_active` = '1' ORDER BY `page_order` ASC";
+	if ($identifier && ($indent === 0)) {
+		$query = "SELECT `cpage_id`, `page_url`, `menu_title`, `parent_id`, `page_visible`, `page_type` FROM `community_pages` WHERE `community_id` = ".$COMMUNITY_ID." AND `cpage_id` = ".$db->qstr((int) $identifier)." AND `page_url` != '0' AND `page_active` = '1' ORDER BY `page_order` ASC";
 	} else {
-		$query	= "SELECT `cpage_id`, `page_url`, `menu_title`, `parent_id`, `page_visible`, `page_type` FROM `community_pages` WHERE `community_id` = ".$COMMUNITY_ID." AND `parent_id` = ".$db->qstr((int) $identifier)." AND `page_url` != '' AND `page_active` = '1' ORDER BY `page_order` ASC";
+		$query = "SELECT `cpage_id`, `page_url`, `menu_title`, `parent_id`, `page_visible`, `page_type` FROM `community_pages` WHERE `community_id` = ".$COMMUNITY_ID." AND `parent_id` = ".$db->qstr((int) $identifier)." AND `page_url` != '' AND `page_active` = '1' ORDER BY `page_order` ASC";
 	}
 
-	$results	= $db->GetAll($query);
-	if($results) {
-		$output .= "<ul style=\"margin: 0 0 9px 0;\" class=\"community-page-list\" ".(isset($ul_id) ? "id = \"".$ul_id."\"" : "").">";
+	$results = $db->GetAll($query);
+	if ($results) {
+		$output .= "<ul class=\"community-page-list\" ".(isset($ul_id) ? "id = \"".$ul_id."\"" : "").">";
 		foreach ($results as $result) {
-			$output .= "<li id=\"content_".$result["cpage_id"]."\">\n";
-			$output .= "<div class=\"community-page-container\">";
-			if(($indent > 0) && (!$selectable_children)) {
-				$output .= "	<span class=\"delete\">&nbsp;</span>\n";
-				$output .= "	<span class=\"".(((int) $result["page_visible"]) == 0 ? "hidden-page " : "")."next off\">".
-								html_encode($result["menu_title"])."</span>\n";
+			$output .= "<li id=\"content_".$result["cpage_id"]."\">";
+			$output .= "    <div class=\"community-page-container\">";
+			if (($indent > 0) && (!$selectable_children)) {
+				$output .= "    <span class=\"delete\">&nbsp;</span>\n";
+				$output .= "    <span class=\"".(((int) $result["page_visible"]) == 0 ? "hidden-page " : "")."next off\">" . html_encode($result["menu_title"])."</span>";
 			} else {
-				$output .= "	<span class=\"delete\">".(!in_array($result["cpage_id"], $locked_ids) ? "<input type=\"checkbox\" id=\"delete_".$result["cpage_id"]."\" name=\"delete[]\" value=\"".$result["cpage_id"]."\"".(($selected == $result["cpage_id"]) ? " checked=\"checked\"" : "")." />" : "<div class=\"locked-spacer\">&nbsp;</div>")."</span>\n";
-				$output .= "	<span class=\"".(((int) $result["page_visible"]) == 0 ? "hidden-page " : "")."next\">
-								<a href=\"".COMMUNITY_URL.$COMMUNITY_URL.":pages?".replace_query(array("action" => "edit", "step" => 1, "page" => $result["cpage_id"]))."\">".
-								html_encode($result["menu_title"])."</a></span>\n";
+				$output .= "    <span class=\"delete\">".(!in_array($result["cpage_id"], $locked_ids) ? "<input type=\"checkbox\" id=\"delete_".$result["cpage_id"]."\" name=\"delete[]\" value=\"".$result["cpage_id"]."\"".(($selected == $result["cpage_id"]) ? " checked=\"checked\"" : "")." />" : "<div class=\"locked-spacer\">&nbsp;</div>")."</span>\n";
+				$output .= "    <span class=\"".(((int) $result["page_visible"]) == 0 ? "hidden-page " : "")."next\">";
+				$output .= "        <a href=\"".COMMUNITY_URL.$COMMUNITY_URL.":pages?".replace_query(array("action" => "edit", "step" => 1, "page" => $result["cpage_id"]))."\">" . html_encode($result["menu_title"])."</a>";
+				$output .= "    </span>";
 			}
-			$output .= "</div>";
+			$output .= "    </div>";
 			$output .= communities_pages_inlists($result["cpage_id"], $indent + 1, $options, $locked_ids);
 			$output .= "</li>\n";
 
@@ -7601,7 +7717,7 @@ function file_get_contents_curl($url) {
  * @param int $photo_id
  * @return bool
  */
-function process_user_photo($original_file, $photo_id = 0) {
+function process_user_photo($original_file, $photo_id = 0, $type = "upload") {
 	global $VALID_MAX_DIMENSIONS, $_SESSION, $ENTRADA_USER;
 
 	if(!@function_exists("gd_info")) {
@@ -7616,7 +7732,11 @@ function process_user_photo($original_file, $photo_id = 0) {
 		return false;
 	}
 
-	$new_file = STORAGE_USER_PHOTOS."/".$ENTRADA_USER->getID()."-upload";
+	if ($type !== "upload") {
+	    $type = "official";
+    }
+
+	$new_file = STORAGE_USER_PHOTOS . "/" . $ENTRADA_USER->getID() . "-" . $type;
 	$img_quality = 85;
 
 	if($original_file_details = @getimagesize($original_file)) {
@@ -8736,7 +8856,7 @@ function lp_multiple_select_popup($id, $checkboxes, $options) {
 
 	$class_string = implode($classes, ' ');
 
-	$return .= '<div id="'.$id.'_options" class="'.$class_string.'" style="'.($options['hidden'] ? 'display:none; ' : '').'width: '.$options['width'].';"><div class="panel-head"><h3>'.$options['title'].'</h3></div><div id="'.$id.'_scroll" class="select_multiple_scroll' . ($options['type'] ? " ". $options['type'] : "") . '"><table cellspacing="0" cellpadding="0" class="select_multiple_table" width="100%">';
+	$return = '<div id="'.$id.'_options" class="'.$class_string.'" style="'.($options['hidden'] ? 'display:none; ' : '').'width: '.$options['width'].';"><div class="panel-head"><h3>'.$options['title'].'</h3></div><div id="'.$id.'_scroll" class="select_multiple_scroll' . ($options['type'] ? " ". $options['type'] : "") . '"><table cellspacing="0" cellpadding="0" class="select_multiple_table" width="100%">';
 	$return .= lp_multiple_select_table($checkboxes, 0, 0).'</table><div style="clear: both;"></div></div><div class="select_multiple_submit">';
 	if($options['filter']) {
 		$return .= '<div class="select_multiple_filter"><input id="'.$id.'_select_filter" type="text" value="Search..."><span class="select_filter_clear" onclick="$(\''.$id.'_select_filter\').value = \'\'; $$(\'.filter-hidden\').invoke(\'show\');"></span></div>';
@@ -9422,22 +9542,22 @@ function numeric_suffix($number = 0) {
  * @return array
  */
 function clerkship_notify_clerk($rotation_period_index, $clerk, $rotation, $objective_progress) {
-	global $db, $AGENT_CONTACTS, $ENTRADA_TEMPLATE;
+	global $db, $AGENT_CONTACTS, $ENTRADA_TEMPLATE, $translate;
 	if (defined("CLERKSHIP_EMAIL_NOTIFICATIONS") && CLERKSHIP_EMAIL_NOTIFICATIONS) {
 		$mail = new Zend_Mail();
 		$mail->addHeader("X-Originating-IP", $_SERVER["REMOTE_ADDR"]);
-		$mail->addHeader("X-Section", "Clerkship Notification System",true);
+		$mail->addHeader("X-Section", $translate->_("Clerkship") . " Notification System",true);
 		$mail->clearFrom();
 		$mail->clearSubject();
 		$mail->setFrom($AGENT_CONTACTS["agent-notifications"]["email"], APPLICATION_NAME.' Clerkship System');
 		switch ($rotation_period_index) {
 			case CLERKSHIP_SIX_WEEKS_PAST :
-				$mail->setSubject("Clerkship Logbook Deficiency Notification");
+				$mail->setSubject($translate->_("Clerkship") . " Logbook Deficiency Notification");
 				break;
 			case CLERKSHIP_ROTATION_ENDED :
 			case CLERKSHIP_ONE_WEEK_PRIOR :
 			case CLERKSHIP_ROTATION_PERIOD :
-				$mail->setSubject("Clerkship Logbook Progress Notification");
+				$mail->setSubject($translate->_("Clerkship") ." Logbook Progress Notification");
 				break;
 		}
 		$NOTIFICATION_MESSAGE		 	 = array();
@@ -9627,11 +9747,11 @@ function clerkship_send_queued_notifications($rotation_id, $rotation_title, $pro
 			if (defined("CLERKSHIP_EMAIL_NOTIFICATIONS") && CLERKSHIP_EMAIL_NOTIFICATIONS) {
 				$mail = new Zend_Mail();
 				$mail->addHeader("X-Originating-IP", $_SERVER["REMOTE_ADDR"]);
-				$mail->addHeader("X-Section", "Clerkship Notification System",true);
+				$mail->addHeader("X-Section", $translate->_("Clerkship") . " Notification System",true);
 				$mail->clearFrom();
 				$mail->clearSubject();
 				$mail->setFrom($AGENT_CONTACTS["agent-notifications"]["email"], APPLICATION_NAME.' Clerkship System');
-				$mail->setSubject("Clerkship Logbook Progress Notification");
+				$mail->setSubject($translate->_("Clerkship") . " Logbook Progress Notification");
 
 				$NOTIFICATION_MESSAGE = array();
 				$NOTIFICATION_MESSAGE["textbody"] = file_get_contents(ENTRADA_ABSOLUTE."/templates/".$ENTRADA_TEMPLATE->activeTemplate()."/email/clerkship-coordinator-notification.txt");
@@ -9863,15 +9983,15 @@ function clerkship_rotation_tasks_progress($proxy_id, $rotation_id) {
 }
 
 function clerkship_deficiency_notifications($clerk_id, $rotation_id, $administrator = false, $completed = false, $comments = false) {
-	global $AGENT_CONTACTS, $db, $ENTRADA_TEMPLATE;
+	global $AGENT_CONTACTS, $db, $ENTRADA_TEMPLATE, $translate;
 	if (defined("CLERKSHIP_EMAIL_NOTIFICATIONS") && CLERKSHIP_EMAIL_NOTIFICATIONS) {
 		$mail = new Zend_Mail();
 		$mail->addHeader("X-Originating-IP", $_SERVER["REMOTE_ADDR"]);
-		$mail->addHeader("X-Section", "Clerkship Notify System", true);
+		$mail->addHeader("X-Section", $translate->_("Clerkship") . " Notify System", true);
 		$mail->clearFrom();
 		$mail->clearSubject();
 		$mail->setFrom($AGENT_CONTACTS["agent-notifications"]["email"], APPLICATION_NAME." Clerkship System");
-		$mail->setSubject("Clerkship Logbook Deficiency Notification");
+		$mail->setSubject($translate->_("Clerkship") . " Logbook Deficiency Notification");
 		$NOTIFICATION_MESSAGE	= array();
 
 		$query	 				= "SELECT CONCAT_WS(' ', `firstname`, `lastname`) as `fullname`, `email`, `id`
@@ -9987,14 +10107,42 @@ function clerkship_deficiency_notifications($clerk_id, $rotation_id, $administra
 	}
 }
 
+function subnavigation($tab, $module) {
+    global $translate, $ENTRADA_ACL;
+    $navigation = $translate->_("navigation_tabs");
+    if (isset($navigation["public"][$module]["children"])) {
+        $children = $navigation["public"][$module]["children"];
+        $allowed_children = array_filter($children, function ($child_item) use ($ENTRADA_ACL) {
+            if (isset($child_item["resource"]) && isset($child_item["permission"])) {
+                return $ENTRADA_ACL->amIAllowed($child_item["resource"], $child_item["permission"]);
+            } else {
+                return true;
+            }
+        });
+        $li_elements = array_map(function ($uri, $child_item) use ($tab) {
+            return array(
+                "title" => $child_item["title"],
+                "class" => ($tab == basename($uri)) ? "active" : "",
+                "url" => ENTRADA_RELATIVE."/".$uri,
+            );
+        }, array_keys($allowed_children), $allowed_children);
+
+        ?>
+        <div class="no-printing">
+            <ul class="nav nav-tabs">
+                <?php foreach ($li_elements as $li): ?>
+                    <li class="<?php echo $li["class"]; ?>">
+                        <a href="<?php echo $li["url"]; ?>"><?php echo $li["title"]; ?></a>
+                    </li>
+                <?php endforeach; ?>
+            </ul>
+        </div>
+        <?php
+    }
+}
+
 function search_subnavigation($tab = "details") {
-	echo "<div class=\"no-printing\">\n";
-    echo "  <ul class=\"nav nav-tabs\">\n";
-    echo "      <li".($tab == "search" ? " class=\"active\"" : "")."><a href=\"".ENTRADA_RELATIVE."/curriculum/search\">Curriculum Search</a></li>\n";
-    echo "      <li".($tab == "explorer" ? " class=\"active\"" : "")."><a href=\"".ENTRADA_RELATIVE."/curriculum/explorer\">Curriculum Explorer</a></li>\n";
-    echo "      <li".($tab == "matrix" ? " class=\"active\"" : "")."><a href=\"".ENTRADA_RELATIVE."/curriculum/matrix\">Curriculum Matrix</a></li>\n";
-    echo "  </ul>\n";
-	echo "</div>\n";
+    return subnavigation($tab, "curriculum/search");
 }
 
 function courses_subnavigation($course_details, $tab="details") {
@@ -10004,6 +10152,7 @@ function courses_subnavigation($course_details, $tab="details") {
 	// so course_id and course_organization get set dynamically
 	$course_id = !is_array($course_details) ? $course_details->getID() : $course_details["course_id"];
 	$course_organization = !is_array($course_details) ? $course_details->getOrganisationID() : $course_details["organisation_id"];
+    $settings = new Entrada_Settings();
 
 	echo "<div class=\"no-printing\">\n";
     echo "    <ul class=\"nav nav-tabs\">\n";
@@ -10012,6 +10161,9 @@ function courses_subnavigation($course_details, $tab="details") {
 	}
 	if($ENTRADA_ACL->amIAllowed(new CourseContentResource($course_id, $course_organization), "read") && $ENTRADA_ACL->amIAllowed(new CourseContentResource($course_id, $course_organization), "read", true)) {
         echo "<li".($tab=="content"?" class=\"active\"":"")." style=\"width:16%;\"><a href=\"".ENTRADA_RELATIVE."/admin/courses?".replace_query(array("section" => "content", "id" => $course_id, "step" => false))."\" >" . $translate->_("Content") . "</a></li>\n";
+	}
+	if($settings->read("curriculum_weeks_enabled") && $ENTRADA_ACL->amIAllowed(new CourseResource($course_id, $course_organization), "update")) {
+		echo "<li".($tab=="units"?" class=\"active\"":"")." style=\"width:16%;\"><a href=\"".ENTRADA_RELATIVE."/admin/courses/units?".replace_query(array("section" => false, "assessment_id" => false, "id" => $course_id, "step" => false))."\">".$translate->_("Units")."</a></li>\n";
 	}
 	if($ENTRADA_ACL->amIAllowed(new CourseResource($course_id, $course_organization), "update")) {
 		echo "<li".($tab=="enrolment"?" class=\"active\"":"")." style=\"width:16%;\"><a href=\"".ENTRADA_RELATIVE."/admin/courses/enrolment?".replace_query(array("section"=>false,"assessment_id" => false, "id" => $course_id, "step" => false))."\" >" . $translate->_("Enrolment") ."</a></li>\n";
@@ -10022,6 +10174,9 @@ function courses_subnavigation($course_details, $tab="details") {
 	if($ENTRADA_ACL->amIAllowed(new GradebookResource($course_id, $course_organization), "read")) {
         echo "<li".($tab=="gradebook"?" class=\"active\"":"")." style=\"width:16%;\"><a href=\"".ENTRADA_RELATIVE."/admin/gradebook?section=view&amp;id=".$course_id."\">" . $translate->_("Gradebook") ."</a></li>";
 	}
+    if($settings->read("cbme_enabled") && $ENTRADA_ACL->amIAllowed(new CourseContentResource($course_id, $course_organization, true), "update")) {
+        echo "<li".($tab=="cbme"?" class=\"active\"":"")." style=\"width:16%;\"><a href=\"".ENTRADA_RELATIVE."/admin/courses/cbme?".replace_query(array("section"=>false,"assessment_id" => false, "id" => $course_id, "step" => false))."\" >" . $translate->_("CBME") ."</a></li>\n";
+    }
 	if($ENTRADA_ACL->amIAllowed(new CourseContentResource($course_id, $course_organization, true), "update")) {
 		echo "<li".($tab=="reports"?" class=\"active\"":"")." style=\"width:16%;\"><a href=\"".ENTRADA_RELATIVE."/admin/courses/reports?".replace_query(array("section"=>false,"assessment_id" => false, "id" => $course_id, "step" => false))."\" >" . $translate->_("Reports") ."</a></li>\n";
 	}
@@ -10102,7 +10257,7 @@ function courses_count_associated_events($course_id = 0) {
 	return 0;
 }
 
-function courses_fetch_courses($only_active_courses = true, $order_by_course_code = true, $curriculum_type_id = 0) {
+function courses_fetch_courses($only_active_courses = true, $order_by_course_code = true, $curriculum_type_id = 0, $cperiod_ids = null) {
 	global $db, $ENTRADA_ACL, $ENTRADA_USER;
 
 	$only_active_courses = (bool) $only_active_courses;
@@ -10151,6 +10306,10 @@ function courses_fetch_courses($only_active_courses = true, $order_by_course_cod
 	if (!empty($curriculum_type_ids)) {
         $query .= "    AND a.`curriculum_type_id` IN (".implode(", ", $curriculum_type_ids).")";
 	}
+
+	if ($cperiod_ids && strtolower($ENTRADA_USER->getActiveRole()) != "admin") {
+        $query .= "    AND b.`cperiod_id` IN (".implode(", ", $cperiod_ids).")";
+    }
 
 	$query .= "	ORDER BY".($order_by_course_code ? " a.`course_code`," : "")." a.`course_name` ASC";
 
@@ -10418,6 +10577,7 @@ function courses_fetch_objectives($org_id, $course_ids, $top_level_id = -1, $par
 		}
 	}
 	if ($event_id) {
+		$event_objectives_string = "";
 		foreach ($objectives["objectives"] as $objective_id => $objective) {
 			if (isset($event_objectives_string) && $event_objectives_string) {
 				$event_objectives_string .= ", ".$db->qstr($objective_id);
@@ -11162,7 +11322,7 @@ function events_output_filter_controls($module_type = "") {
 			<td style="width: 47%; vertical-align: top">
 				<?php
 				if ((is_array($_SESSION[APPLICATION_IDENTIFIER]["events"]["filters"])) && (count($_SESSION[APPLICATION_IDENTIFIER]["events"]["filters"]))) {
-                    echo "<div summary=\"Selected Filter List\" id=\"filter-list\" class=\"inner-content-box\">\n";
+                    echo "<div id=\"filter-list\" class=\"inner-content-box\">\n";
                     echo "    <div class=\"inner-content-box-head\">\n";
                     echo "        Showing Events That Include:\n";
                     echo "    </div>\n";
@@ -11202,6 +11362,9 @@ function events_output_filter_controls($module_type = "") {
 									break;
 									case "department":
 										echo fetch_department_title($filter_value);
+									break;
+									case "week":
+										echo fetch_week_title($filter_value);
 									break;
 
 									default :
@@ -11658,6 +11821,9 @@ function events_process_recurring_eventtimes ($period = "daily", $start_date = 0
     $output_dates = array();
     $current_session_date = $start_date;
     switch ($period) {
+    	case "custom" :
+    		$output_dates = array_fill(0, $offset, $current_session_date);
+        break;
         case "daily" :
             while ($current_session_date <= $recurring_end) {
                 $current_session_date = strtotime("+".$offset." days", $current_session_date);
@@ -12224,11 +12390,13 @@ function events_fetch_filtered_events($proxy_id = 0, $user_group = "", $user_rol
         $where_curriculum_objective = array();
         $where_topic = array();
         $where_department = array();
+        $where_week = array();
         $join_event_contacts = array();
 
         $contact_sql = "";
         $objective_sql = "";
         $topic_sql = "";
+        $course_audience_sql = "";
 
         $query_events .= "	LEFT JOIN `event_contacts` AS `primary_teacher`
 							ON `primary_teacher`.`event_id` = `events`.`event_id`
@@ -12244,6 +12412,7 @@ function events_fetch_filtered_events($proxy_id = 0, $user_group = "", $user_rol
 							ON `courses`.`course_id` = `events`.`course_id`
 							LEFT JOIN `curriculum_lu_types`
 							ON `curriculum_lu_types`.`curriculum_type_id` = `courses`.`curriculum_type_id`
+							%COURSE_AUDIENCE_JOIN%
 							%OBJECTIVE_JOIN%
 							%TOPIC_JOIN%
 							WHERE `courses`.`organisation_id` = ".$db->qstr($organisation_id)."
@@ -12265,9 +12434,9 @@ function events_fetch_filtered_events($proxy_id = 0, $user_group = "", $user_rol
                             case "student" :
                                 if (($user_group != "student") || ($filter_value == $proxy_id)) {
                                     // Students' enrolled in courses only
-                                    $course_ids = groups_get_explicitly_enrolled_course_ids((int) $filter_value, false, $organisation_id);
-                                    if ($course_ids) {
-                                        $where_student_course_ids = $course_ids;
+                                    $courses = groups_get_explicitly_enrolled_course_ids_and_dates((int) $filter_value, false, $organisation_id);
+                                    if ($courses) {
+                                        $where_student_course_ids = $courses;
                                     }
 
                                     // Students' cohort events
@@ -12312,6 +12481,9 @@ function events_fetch_filtered_events($proxy_id = 0, $user_group = "", $user_rol
                             case "department" :
                                 $where_department[] = (int) $filter_value;
                                 break;
+                            case "week":
+                                $where_week[] = (int) $filter_value;
+                                break;
                             default :
                                 continue;
                                 break;
@@ -12329,8 +12501,11 @@ function events_fetch_filtered_events($proxy_id = 0, $user_group = "", $user_rol
             $where_student = array();
 
             if ($where_student_course_ids) {
-                $where_student_course_ids = array_unique($where_student_course_ids);
-                $where_student[] = "(`event_audience`.`audience_type` = 'course_id' AND `event_audience`.`audience_value` IN (".implode(", ", $where_student_course_ids)."))";
+                $tmp_query = [];
+                foreach ($where_student_course_ids as $record) {
+                    $tmp_query[] = "(`event_audience`.`audience_value` = " . $db->qstr($record["course_id"]) . " AND `events`.`event_start` BETWEEN " . $db->qstr($record["start_date"]) . " AND " . $db->qstr($record["finish_date"]) . ")";
+                }
+                $where_student[] = "(`event_audience`.`audience_type` = 'course_id' AND ( " . implode(" OR ", $tmp_query) . ")) ";
             }
 
             if ($where_student_cohorts) {
@@ -12352,7 +12527,13 @@ function events_fetch_filtered_events($proxy_id = 0, $user_group = "", $user_rol
         }
 
         if ($where_cohort) {
-            $build_query[] = "(`event_audience`.`audience_type` = 'cohort' AND `event_audience`.`audience_value` IN (".implode(", ", $where_cohort)."))";
+            $build_query[] = "((`event_audience`.`audience_type` = 'cohort' AND `event_audience`.`audience_value` IN (".implode(", ", $where_cohort)."))" .
+                             " OR (`event_audience`.`audience_type` = 'course_id' AND `course_audience`.`audience_type` = 'group_id' AND `course_audience`.`audience_value` IN (".implode(", ", $where_cohort).")" .
+                             "     AND `events`.`event_start` BETWEEN `curriculum_periods`.`start_date` AND `curriculum_periods`.`finish_date`))";
+            $course_audience_sql = "    LEFT JOIN `course_audience`
+                                        ON `course_audience`.`course_id` = `courses`.`course_id`
+                                        LEFT JOIN `curriculum_periods`
+                                        ON `curriculum_periods`.`cperiod_id` = `course_audience`.`cperiod_id`";
         }
 
         if ($where_course) {
@@ -12377,6 +12558,22 @@ function events_fetch_filtered_events($proxy_id = 0, $user_group = "", $user_rol
 
         if ($where_topic) {
             $build_query[] = "(`event_topics`.`topic_id` IN (".implode(", ", $where_topic)."))";
+        }
+
+        if ($where_week) {
+            $course_units = function() use ($db, $where_week) {
+                $query = "
+                    SELECT `cunit_id`
+                    FROM `course_units`
+                    WHERE `week_id` IN (".implode(", ", $where_week).")
+                    AND `deleted_date` IS NULL";
+                if (($results = $db->GetAll($query))) {
+                    return array_map(function ($result) { return $result["cunit_id"]; }, $results);
+                } else {
+                    return array();
+                }
+            };
+            $build_query[] = "(`events`.`cunit_id` IN (".implode(", ", $course_units())."))";
         }
 
         if ($build_query) {
@@ -12444,6 +12641,8 @@ function events_fetch_filtered_events($proxy_id = 0, $user_group = "", $user_rol
         $query_events = str_replace("%OBJECTIVE_JOIN%", $objective_sql, $query_events);
 
         $query_events = str_replace("%TOPIC_JOIN%", $topic_sql, $query_events);
+
+        $query_events = str_replace("%COURSE_AUDIENCE_JOIN%", $course_audience_sql, $query_events);
     } else {
         $query_events .= "	LEFT JOIN `event_contacts`
 							ON `event_contacts`.`event_id` = `events`.`event_id`
@@ -12945,9 +13144,9 @@ function draft_events_fetch_filtered_draft_events($proxy_id = 0, $user_group = "
                                 case "student" :
                                     if (($user_group != "student") || ($filter_value == $proxy_id)) {
                                         // Students' enrolled in courses only
-                                        $course_ids = groups_get_explicitly_enrolled_course_ids((int) $filter_value, false, $organisation_id);
-                                        if ($course_ids) {
-                                            $where_student_course_ids = $course_ids;
+                                        $courses = groups_get_explicitly_enrolled_course_ids_and_dates((int) $filter_value, false, $organisation_id);
+                                        if ($courses) {
+                                            $where_student_course_ids = $courses;
                                         }
 
                                         // Students' cohort events
@@ -13000,8 +13199,11 @@ function draft_events_fetch_filtered_draft_events($proxy_id = 0, $user_group = "
                 $where_student = array();
 
                 if ($where_student_course_ids) {
-                    $where_student_course_ids = array_unique($where_student_course_ids);
-                    $where_student[] = "(`draft_audience`.`audience_type` = 'course_id' AND `draft_audience`.`audience_value` IN (".implode(", ", $where_student_course_ids)."))";
+                    $tmp_query = [];
+                    foreach ($where_student_course_ids as $record) {
+                        $tmp_query[] = "(`draft_audience`.`audience_value` = " . $db->qstr($record["course_id"]) . " AND `draft_events`.`event_start` BETWEEN " . $db->qstr($record["start_date"]) . " AND " . $db->qstr($record["finish_date"]) . ")";
+                    }
+                    $where_student[] = "(`draft_audience`.`audience_type` = 'course_id' AND ( " . implode(" OR ", $tmp_query) . ")) ";
                 }
 
                 if ($where_student_cohorts) {
@@ -13888,6 +14090,7 @@ function events_fetch_event_resources($event_id = 0, $options = array(), $exclud
 						AND b.`action_field` = 'file_id'
 						AND b.`action_value` = a.`efile_id`
 						WHERE a.`event_id` = ".$db->qstr($event_id)."
+						AND a.`draft` = 0
 						GROUP BY a.`efile_id`
 						ORDER BY a.`file_category` ASC, a.`file_title` ASC";
 			$output["files"] = $db->GetAll($query);
@@ -13906,6 +14109,7 @@ function events_fetch_event_resources($event_id = 0, $options = array(), $exclud
 						AND b.`action_field` = 'link_id'
 						AND b.`action_value` = a.`elink_id`
 						WHERE a.`event_id` = ".$db->qstr($event_id)."
+						AND a.`draft` = 0
 						GROUP BY a.`elink_id`
 						ORDER BY a.`link_title` ASC";
 			$output["links"] = $db->GetAll($query);
@@ -13928,6 +14132,7 @@ function events_fetch_event_resources($event_id = 0, $options = array(), $exclud
 						AND c.`action_value` = a.`aquiz_id`
 						WHERE a.`content_type` = 'event'
 						AND a.`content_id` = ".$db->qstr($event_id)."
+						AND a.`draft` = 0
 						GROUP BY a.`aquiz_id`
 						ORDER BY a.`required` DESC, a.`quiz_title` ASC, a.`release_until` ASC";
 			$output["quizzes"] = $db->GetAll($query);
@@ -15016,7 +15221,7 @@ function get_region_name($region_id = 0) {
  * @return bool $success
  */
 function notify_regional_education($action, $event_id) {
-	global $db, $AGENT_CONTACTS, $event_info, $ENTRADA_USER;
+	global $db, $AGENT_CONTACTS, $event_info, $ENTRADA_USER, $translate;
 
 	$query	= "	SELECT * FROM `".CLERKSHIP_DATABASE."`.`events` AS a
 				LEFT JOIN `".CLERKSHIP_DATABASE."`.`regions` AS b
@@ -15043,20 +15248,20 @@ function notify_regional_education($action, $event_id) {
 						case "deleted" :
 							$message  = "Attention ".$AGENT_CONTACTS["agent-regionaled"]["name"].",\n\n";
 							$message .= $_SESSION["details"]["firstname"]." ".$_SESSION["details"]["lastname"]." has removed an event from ".$whole_name."'s ";
-							$message .= "clerkship schedule, to which you had previously assigned housing. Due to the removal of this event from the system, ";
+							$message .= $translate->_("clerkship") . " schedule, to which you had previously assigned housing. Due to the removal of this event from the system, ";
 							$message .= "the housing associated with it has also been removed.\n\n";
 							$message .= "Information For Reference:\n\n";
 							$message .= "Event Information:\n";
 							$message .= "Event Title:\t".html_decode($result["event_title"])."\n";
 							$message .= "Region:\t\t".$result["region_name"]."\n";
-							$message .= "Start Date:\t".date(DEFAULT_DATE_FORMAT, $result["event_start"])."\n";
-							$message .= "Finish Date:\t".date(DEFAULT_DATE_FORMAT, $result["event_finish"])."\n\n";
+							$message .= "Start Date:\t".date(DEFAULT_DATETIME_FORMAT, $result["event_start"])."\n";
+							$message .= "Finish Date:\t".date(DEFAULT_DATETIME_FORMAT, $result["event_finish"])."\n\n";
 							if(($apartments) && ($assigned_apartments = @count($apartments))) {
 								$message .= "Apartment".(($assigned_apartments != 1) ? "s" : "")." ".$whole_name." was removed from:\n";
 								foreach($apartments as $apartment) {
 									$message .= "Apartment Title:\t".$apartment["apartment_title"]."\n";
-									$message .= "Inhabiting Start:\t".date(DEFAULT_DATE_FORMAT, $apartment["inhabiting_start"])."\n";
-									$message .= "Inhabiting Finish:\t".date(DEFAULT_DATE_FORMAT, $apartment["inhabiting_finish"])."\n\n";
+									$message .= "Inhabiting Start:\t".date(DEFAULT_DATETIME_FORMAT, $apartment["inhabiting_start"])."\n";
+									$message .= "Inhabiting Finish:\t".date(DEFAULT_DATETIME_FORMAT, $apartment["inhabiting_finish"])."\n\n";
 								}
 							}
 							$message .= "=======================================================\n\n";
@@ -15066,11 +15271,11 @@ function notify_regional_education($action, $event_id) {
 						case "change-critical" :
 							$message  = "Attention ".$AGENT_CONTACTS["agent-regionaled"]["name"].",\n\n";
 							$message .= $_SESSION["details"]["firstname"]." ".$_SESSION["details"]["lastname"]." has updated an event in ".$whole_name."'s ";
-							$message .= "clerkship schedule, to which you had previously assigned housing. This update involves a change to the region or the ";
+							$message .= $translate->_("clerkship") . " schedule, to which you had previously assigned housing. This update involves a change to the region or the ";
 							$message .= "dates that the event took place in. Due to this critical change taking place, the housing for this event for this ";
 							$message .= "student has been removed.\n\n";
 							if($result["manage_apartments"]) {
-								$message .= "Please log into the clerkship system and re-assign housing to this student for this event.\n\n";
+								$message .= "Please log into the " . $translate->_("clerkship") . " system and re-assign housing to this student for this event.\n\n";
 							} else {
 								$message .= "Since this event no longer is taking place in a region which is managed by Regional Education, \n";
 								$message .= "no further action is required on your part in the system.\n\n";
@@ -15079,19 +15284,19 @@ function notify_regional_education($action, $event_id) {
 							$message .= "OLD Event Information:\n";
 							$message .= "Event Title:\t".$event_info["event_title"]."\n";
 							$message .= "Region:\t\t".get_region_name($event_info["region_id"])."\n";
-							$message .= "Start Date:\t".date(DEFAULT_DATE_FORMAT, $event_info["event_start"])."\n";
-							$message .= "Finish Date:\t".date(DEFAULT_DATE_FORMAT, $event_info["event_finish"])."\n\n";
+							$message .= "Start Date:\t".date(DEFAULT_DATETIME_FORMAT, $event_info["event_start"])."\n";
+							$message .= "Finish Date:\t".date(DEFAULT_DATETIME_FORMAT, $event_info["event_finish"])."\n\n";
 							$message .= "NEW Event Information:\n";
 							$message .= "Event Title:\t".html_decode($result["event_title"])."\n";
 							$message .= "Region:\t\t".$result["region_name"]."\n";
-							$message .= "Start Date:\t".date(DEFAULT_DATE_FORMAT, $result["event_start"])."\n";
-							$message .= "Finish Date:\t".date(DEFAULT_DATE_FORMAT, $result["event_finish"])."\n\n";
+							$message .= "Start Date:\t".date(DEFAULT_DATETIME_FORMAT, $result["event_start"])."\n";
+							$message .= "Finish Date:\t".date(DEFAULT_DATETIME_FORMAT, $result["event_finish"])."\n\n";
 							if(($apartments) && ($assigned_apartments = @count($apartments))) {
 								$message .= "Apartment".(($assigned_apartments != 1) ? "s" : "")." ".$whole_name." was removed from:\n";
 								foreach($apartments as $apartment) {
 									$message .= "Apartment Title:\t".$apartment["apartment_title"]."\n";
-									$message .= "Inhabiting Start:\t".date(DEFAULT_DATE_FORMAT, $apartment["inhabiting_start"])."\n";
-									$message .= "Inhabiting Finish:\t".date(DEFAULT_DATE_FORMAT, $apartment["inhabiting_finish"])."\n\n";
+									$message .= "Inhabiting Start:\t".date(DEFAULT_DATETIME_FORMAT, $apartment["inhabiting_start"])."\n";
+									$message .= "Inhabiting Finish:\t".date(DEFAULT_DATETIME_FORMAT, $apartment["inhabiting_finish"])."\n\n";
 								}
 							}
 							$message .= "=======================================================\n\n";
@@ -15103,7 +15308,7 @@ function notify_regional_education($action, $event_id) {
 						default :
 							$message  = "Attention ".$AGENT_CONTACTS["agent-regionaled"]["name"].",\n\n";
 							$message .= $_SESSION["details"]["firstname"]." ".$_SESSION["details"]["lastname"]." has updated an event in ".$whole_name."'s ";
-							$message .= "clerkship schedule, to which you had previously assigned housing.\n\n";
+							$message .= $translate->_("clerkship") . " schedule, to which you had previously assigned housing.\n\n";
 							$message .= "Important:\n";
 							$message .= "This update does not affect the date or region of this event, as such this change is considered non-critical ";
 							$message .= "and no action is required on your part.\n\n";
@@ -15111,19 +15316,19 @@ function notify_regional_education($action, $event_id) {
 							$message .= "OLD Event Information:\n";
 							$message .= "Event Title:\t".$event_info["event_title"]."\n";
 							$message .= "Region:\t\t".get_region_name($event_info["region_id"])."\n";
-							$message .= "Start Date:\t".date(DEFAULT_DATE_FORMAT, $event_info["event_start"])."\n";
-							$message .= "Finish Date:\t".date(DEFAULT_DATE_FORMAT, $event_info["event_finish"])."\n\n";
+							$message .= "Start Date:\t".date(DEFAULT_DATETIME_FORMAT, $event_info["event_start"])."\n";
+							$message .= "Finish Date:\t".date(DEFAULT_DATETIME_FORMAT, $event_info["event_finish"])."\n\n";
 							$message .= "NEW Event Information:\n";
 							$message .= "Event Title:\t".html_decode($result["event_title"])."\n";
 							$message .= "Region:\t\t".$result["region_name"]."\n";
-							$message .= "Start Date:\t".date(DEFAULT_DATE_FORMAT, $result["event_start"])."\n";
-							$message .= "Finish Date:\t".date(DEFAULT_DATE_FORMAT, $result["event_finish"])."\n\n";
+							$message .= "Start Date:\t".date(DEFAULT_DATETIME_FORMAT, $result["event_start"])."\n";
+							$message .= "Finish Date:\t".date(DEFAULT_DATETIME_FORMAT, $result["event_finish"])."\n\n";
 							if(($apartments) && ($assigned_apartments = @count($apartments))) {
 								$message .= "Apartment".(($assigned_apartments != 1) ? "s" : "")." ".$whole_name." is assigned to:\n";
 								foreach($apartments as $apartment) {
 									$message .= "Apartment Title:\t".$apartment["apartment_title"]."\n";
-									$message .= "Inhabiting Start:\t".date(DEFAULT_DATE_FORMAT, $apartment["inhabiting_start"])."\n";
-									$message .= "Inhabiting Finish:\t".date(DEFAULT_DATE_FORMAT, $apartment["inhabiting_finish"])."\n\n";
+									$message .= "Inhabiting Start:\t".date(DEFAULT_DATETIME_FORMAT, $apartment["inhabiting_start"])."\n";
+									$message .= "Inhabiting Finish:\t".date(DEFAULT_DATETIME_FORMAT, $apartment["inhabiting_finish"])."\n\n";
 								}
 							}
 							$message .= "=======================================================\n\n";
@@ -15133,11 +15338,11 @@ function notify_regional_education($action, $event_id) {
 					}
 					$mail = new Zend_Mail();
 					$mail->addHeader("X-Originating-IP", $_SERVER["REMOTE_ADDR"]);
-					$mail->addHeader("X-Section", "Clerkship Notify System",true);
+					$mail->addHeader("X-Section", $translate->_("Clerkship") . " Notify System",true);
 					$mail->clearFrom();
 					$mail->clearSubject();
 					$mail->setFrom($AGENT_CONTACTS["agent-notifications"]["email"], APPLICATION_NAME.' Clerkship System');
-					$mail->setSubject("MEdTech Clerkship System - ".ucwords($action)." Event");
+					$mail->setSubject("MEdTech " . $translate->_("Clerkship") . " System - ".ucwords($action)." Event");
 					$mail->setBodyText($message);
 					$mail->clearRecipients();
 					$mail->addTo($AGENT_CONTACTS["agent-regionaled"]["email"], $AGENT_CONTACTS["agent-regionaled"]["name"]);
@@ -16016,7 +16221,7 @@ function objectives_inlists_conf($identifier = 0, $indent = 0) {
 			if ($has_children) {
 				$output .= "	<a class=\"objective-expand\" onclick=\"showObjectiveChildren('".$result["objective_id"]."')\"><img id=\"objective-".$result["objective_id"]."-arrow\" src=\"".ENTRADA_URL."/images/arrow-right.gif\" style=\"border: none; text-decoration: none;\" /></a>";
 			}
-			$output .= "	&nbsp;<a href=\"".ENTRADA_RELATIVE."/admin/settings/manage/objectives?".replace_query(array("org"=>$ORGANISATION_ID,"section" => "edit", "step" => 1, "id" => $result["objective_id"]))."\">";
+			$output .= "	&nbsp;<a href=\"".ENTRADA_RELATIVE."/admin/curriculum/objectives?".replace_query(array("section" => "edit", "step" => 1, "id" => $result["objective_id"]))."\">";
 			$output .= html_encode($result["objective_name"])."</a></span>\n";
 			$output .= "</div>";
 			$output .= objectives_inlists_conf($result["objective_id"], $indent + 1);
@@ -17219,14 +17424,14 @@ function evaluation_generate_description($min_submittable = 0, $evaluation_quest
 	$output	= "This is %s evaluation which is to be completed %s. You will have no time limitation and %s to answer the %s in this evaluation.";
 
 	$string_1 = (((int) $min_submittable) ? "a required" : "an optional");
-	$string_2 = ((isset($evaluation_finish) && ($evaluation_finish)) ? "by ".date(DEFAULT_DATE_FORMAT, $evaluation_finish) : "when you see fit");
+	$string_2 = ((isset($evaluation_finish) && ($evaluation_finish)) ? "by ".date(DEFAULT_DATETIME_FORMAT, $evaluation_finish) : "when you see fit");
 	$string_3 = (((int) $evaluation_attempts) ? $evaluation_attempts." attempt".(($evaluation_attempts != 1) ? "s" : "") : "unlimited attempts");
 	$string_4 = $evaluation_questions." question".(($evaluation_questions != 1) ? "s" : "");
 
 	return sprintf($output, $string_1, $string_2, $string_3, $string_4);
 }
 
-function gradebook_get_weighted_grades($course_id, $cohort, $proxy_id, $assessment_id = false, $assessment_ids_string = false, $learner = true) {
+function gradebook_get_weighted_grades($course_id, $cperiod_id, $proxy_id, $assessment_id = false, $assessment_ids_string = false, $learner = true) {
 	global $db;
 	$weighted_grade = 0;
 	$weighted_total = 0;
@@ -17241,7 +17446,7 @@ function gradebook_get_weighted_grades($course_id, $cohort, $proxy_id, $assessme
                 AND (a.`release_until` = '0' OR a.`release_until` > ".$db->qstr(time()).")
                 AND a.`show_learner` = '1'" : "")."
                 AND a.`active` = '1'
-				AND a.`cohort` = ".$db->qstr($cohort).
+				AND a.`cperiod_id` = ".$db->qstr($cperiod_id).
                 ($assessment_id ? " AND a.`assessment_id` = ".$db->qstr($assessment_id) : ($assessment_ids_string ? " AND a.`assessment_id` IN (".$assessment_ids_string.")" : ""));
 	$assessments = $db->GetAll($query);
 	if($assessments) {
@@ -17841,7 +18046,7 @@ function groups_get_enrolled_course_ids($proxy_id = 0, $only_active_enrolment = 
 }
 
 /**
- * This function returns the courses that the proxy id is explicitely enrolled in
+ * This function returns the courses that the proxy id is explicitly enrolled in
  *
  * @param int $proxy_id
  * @return array $group
@@ -17900,6 +18105,68 @@ function groups_get_explicitly_enrolled_course_ids($proxy_id = 0, $only_active_g
 	}
 
 	return $course_ids;
+}
+
+/**
+ * This function returns the courses that the proxy id is explicitly enrolled in with the dates of enrollment
+ *
+ * @param int $proxy_id
+ * @param bool $only_active_groups
+ * @param int $organisation_id
+ * @return array $group
+ */
+function groups_get_explicitly_enrolled_course_ids_and_dates($proxy_id = 0, $only_active_groups = false, $organisation_id = 0) {
+    global $db, $ENTRADA_USER;
+
+    $proxy_id = (int) $proxy_id;
+    $only_active_groups = (bool) $only_active_groups;
+
+    $course_ids = array();
+
+    if (!$organisation_id) {
+        $organisation_id = $ENTRADA_USER->getActiveOrganisation();
+    }
+
+    if ($proxy_id) {
+        $query = "SELECT a.`course_id`, c.`start_date`, c.`finish_date`
+                    FROM `courses` AS a
+					LEFT JOIN `course_audience` AS b
+					ON a.`course_id` = b.`course_id`
+					LEFT JOIN `curriculum_periods` AS c
+					ON c.`cperiod_id` = b.`cperiod_id` 
+					WHERE a.`organisation_id` = ".$db->qstr($organisation_id)."
+					AND (
+						(
+							(
+								audience_type = 'group_id'
+								AND audience_value IN(
+									SELECT a.group_id FROM `groups` AS a
+									JOIN `group_members` AS b
+									ON b.`group_id` = a.`group_id`
+									JOIN `group_organisations` AS c
+									ON c.`group_id` = a.`group_id`
+									WHERE b.`proxy_id` = ".$db->qstr($proxy_id)."
+                                    AND (a.`expire_date` IS NULL OR a.`expire_date` = 0 OR a.`expire_date` >= UNIX_TIMESTAMP())
+									AND (b.`start_date` IS NULL OR b.`start_date` = 0 OR b.`start_date` <= UNIX_TIMESTAMP())
+									AND (b.`finish_date` IS NULL OR b.`finish_date` = 0 OR b.`finish_date` >= UNIX_TIMESTAMP())
+									AND b.`member_active` = 1
+									".($only_active_groups ? "AND a.`group_active` = 1" : "")."
+									AND c.`organisation_id` = ".$db->qstr($organisation_id)."
+								)
+							)
+							OR (
+								audience_type='proxy_id'
+								AND audience_value = ".$db->qstr($proxy_id)."
+							)
+						)
+						AND audience_active = '1'
+					)";
+
+
+        $course_ids = $db->CacheGetAll(CACHE_TIMEOUT, $query);
+    }
+
+    return $course_ids;
 }
 
 /**
@@ -18048,6 +18315,7 @@ function groups_get_active_cohorts($organisation_id = 0, $limit = 6) {
 					ON a.`group_id` = b.`group_id`
 					WHERE b.`organisation_id` = ?
 					AND a.`group_type` = 'cohort'
+					AND a.`group_active` = 1
 					ORDER BY a.`group_name` DESC
 					LIMIT 0, ?";
 		$cohorts = $db->GetAll($query, array($organisation_id, $limit));
@@ -19030,6 +19298,23 @@ function fetchUserPhoto($proxy_id) {
     return $image;
 }
 
+function get_objective_text($objective, $always_show_code = false) {
+    if ($objective["objective_code"]) {
+        return $objective["objective_code"] . ": " . $objective["objective_name"];
+    } else {
+        $is_code = preg_match("/^[A-Z]+\-[\d\.]+$/", $objective["objective_name"]);
+        if ($objective["objective_description"] && $is_code) {
+            if ($always_show_code) {
+                return $objective["objective_name"] . ": " . $objective["objective_description"];
+            } else {
+                return $objective["objective_description"];
+            }
+        } else {
+            return $objective["objective_name"];
+        }
+    }
+}
+
 /**
  * Validate the supplied date
  *
@@ -19073,6 +19358,20 @@ function removeElementsByTagName($tagName, $document) {
             $node->parentNode->removeChild($node);
         }
     }
+}
+
+function hidden_params(array $params, $key_template = "%s") {
+    ob_start();
+    ?>
+    <?php foreach ($params as $key => $value): ?>
+        <?php if (is_array($value)): ?>
+            <?php echo hidden_params($value, sprintf($key_template, $key) . "[%s]"); ?>
+        <?php elseif (!is_null($value)): ?>
+            <input type="hidden" name="<?php echo sprintf($key_template, $key); ?>" value="<?php echo $value; ?>"/>
+        <?php endif; ?>
+    <?php endforeach; ?>
+    <?php
+    return ob_get_clean();
 }
 
 function isUsingSecureBrowser(){

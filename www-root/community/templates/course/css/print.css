@@ -10,3 +10,15 @@ display:block;
 div.printing-disabled,.no-printing,div.bread-crumb-trail {
 display:none;
 }
+
+div.print-only {
+    display: block;
+}
+
+div.stale-warning {
+    font-weight: bold;
+}
+
+span.stale-warning-url {
+    text-decoration: underline;
+}

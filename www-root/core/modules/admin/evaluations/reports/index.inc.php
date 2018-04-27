@@ -48,11 +48,11 @@ if (!defined("IN_EVALUATIONS")) {
 	?>
 		<li>
 			<a href="<?php echo ENTRADA_URL; ?>/admin/evaluations/reports?section=student-course-evaluations">Course Evaluations</a><br />
-			Reports showing the students' evaluation of their pre-clerkship courses.
+			Reports showing the students' evaluation of their <?php echo $translate->_("pre-clerkship"); ?> courses.
 		</li>
 		<li>
 			<a href="<?php echo ENTRADA_URL; ?>/admin/evaluations/reports?section=student-teacher-evaluations">Teacher Evaluations</a><br />
-			Reports showing the students' evaluation of their pre-clerkship teachers.
+			Reports showing the students' evaluation of their <?php echo $translate->_("pre-clerkship"); ?> teachers.
 		</li>
 		<li>
 			<a href="<?php echo ENTRADA_URL; ?>/admin/evaluations/reports?section=learner-evaluations">Learner Evaluations</a><br />
@@ -62,12 +62,12 @@ if (!defined("IN_EVALUATIONS")) {
 	}
 	?>
         <li>
-            <a href="<?php echo ENTRADA_URL; ?>/admin/evaluations/reports?section=student-clerkship-evaluations">Clerkship Core Rotation Evaluations</a><br />
-            Reports showing the students' evaluation of their clerkship rotations.
+            <a href="<?php echo ENTRADA_URL; ?>/admin/evaluations/reports?section=student-clerkship-evaluations"><?php echo $translate->_("Clerkship Core Rotation Evaluations"); ?></a><br />
+            Reports showing the students' evaluation of their <?php echo $translate->_("clerkship"); ?> rotations.
         </li>
         <li>
-            <a href="<?php echo ENTRADA_URL; ?>/admin/evaluations/reports?section=student-clerkship-preceptor-evaluations">Clerkship Preceptor Evaluations</a><br />
-            Reports showing the students' evaluation of their clerkship preceptors.
+            <a href="<?php echo ENTRADA_URL; ?>/admin/evaluations/reports?section=student-clerkship-preceptor-evaluations"><?php echo $translate->_("Clerkship Preceptor Evaluations"); ?></a><br />
+            Reports showing the students' evaluation of their <?php echo $translate->_("clerkship"); ?> preceptors.
         </li>
         <li>
             <a href="<?php echo ENTRADA_URL; ?>/admin/evaluations/reports?section=evaluations-aggregated-by-objective">Learner (And Patient Encounter) Evaluations Aggregate Report</a><br />

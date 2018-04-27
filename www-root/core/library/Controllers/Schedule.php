@@ -20,6 +20,7 @@ class Controllers_Schedule extends Controllers_Base {
         "block_type_id"             => array("sanitization_params" => "int"),
         "start_date"                => array("sanitization_params" => array("strtotime", "int")),
         "end_date"                  => array("sanitization_params" => array("strtotime", "end_of_day", "int")),
+        "first_block_end_date"      => array(),
         "organisation_id"           => array("required" => true, "sanitization_params" => "int"),
         "cperiod_id"                => array("required" => false, "sanitization_params" => "int"),
         "schedule_order"            => array("required" => false, "sanitization_params" => "int")
@@ -42,6 +43,22 @@ class Controllers_Schedule extends Controllers_Base {
             }
         }
 
+        $first_block_end_date = null;
+
+        if (isset($this->validated_data["generate_blocks"]) && $this->validated_data["generate_blocks"]) {
+            if (isset($this->validated_data["first_block_end_date"]) && $this->validated_data["first_block_end_date"]) {
+
+                $first_block_end_date = false;
+                if ($tmp_input = clean_input($this->validated_data["first_block_end_date"], array("strtotime", "end_of_day", "int"))) {
+                    $first_block_end_date = $tmp_input;
+                }
+
+                if (!$first_block_end_date || $first_block_end_date < $this->validated_data["start_date"]) {
+                    $this->errors["conditions"]["first_block_end_date"] = array("First block end date is before the start date.");
+                }
+            }
+        }
+
         if (!$this->getErrors()) {
             $method = "insert";
             $schedule = new Models_Schedule();
@@ -55,17 +72,18 @@ class Controllers_Schedule extends Controllers_Base {
             
             if ($schedule->fromArray($this->validated_data)->$method()) {
                 if ($this->validated_data["schedule_type"] == "stream" && isset($this->validated_data["generate_blocks"]) && $this->validated_data["generate_blocks"]) {
-                    $this->generateBlocks();
+                    $this->generateBlocks($first_block_end_date);
                 }
                 return $schedule;
             }
 
             return false;
         }
+
         return $this->getErrors();
     }
 
-    public function generateBlocks() {
+    public function generateBlocks($first_block_end_date = null) {
         if (!empty($this->validated_data) && isset($this->validated_data["generate_blocks"])) {
 
             if (!isset($this->validated_data["block_end_day"]) && !empty($this->validated_data["block_end_day"])) {
@@ -81,8 +99,13 @@ class Controllers_Schedule extends Controllers_Base {
             $block_type = Models_BlockType::fetchRowByID($this->validated_data["block_type_id"]);
             $total_blocks = (int) ($block_type->getNumberOfBlocks());
             $start = $this->validated_data["start_date"];
-            $end = strtotime($this->validated_data["block_end_day"], $start + ((52 / $block_type->getNumberOfBlocks()) * 604800));
-            
+            // Users can override the first block's end date to deal with odd starting days.
+            if ($first_block_end_date) {
+                $end = $first_block_end_date;
+            } else {
+                $end = strtotime($this->validated_data["block_end_day"], $start + ((52 / $block_type->getNumberOfBlocks()) * 604800));
+            }
+
             $i = 1;
             while ($end <= $this->validated_data["end_date"]) {
                 if ($i > 99) {

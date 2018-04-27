@@ -40,6 +40,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_REPORTS"))) {
 	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] does not have access to this module [".$MODULE."]");
 } else {
 	$BREADCRUMB[]	= array("url" => "", "title" => "Teaching Report By Faculty Member" );
+	$distribute_event_duration = (isset($_POST['distribute_event_duration']) && $_POST['distribute_event_duration'] == 'on');
 	?>
 	<div class="no-printing">
 		<form action="<?php echo ENTRADA_URL; ?>/admin/reports?section=<?php echo $SECTION; ?>&step=2" method="post">
@@ -54,6 +55,14 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_REPORTS"))) {
 				<td colspan="3"><h2>Reporting Dates</h2></td>
 			</tr>
 			<?php echo generate_calendars("reporting", "Reporting Date", true, true, $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_start"], true, true, $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_finish"]); ?>
+			<tr>
+				<td>
+					<input type="checkbox" id="distribute_event_duration" name="distribute_event_duration" <?php echo ($distribute_event_duration ? "checked='checked'" : "") ?>>
+				</td>
+				<td colspan="2">
+					<?php echo $translate->_("Assign session time equally to instructors") ?>
+				</td>
+			</tr>
 			<tr>
 				<td colspan="3" style="text-align: right; padding-top: 10px"><input type="submit" class="btn btn-primary" value="Create Report" /></td>
 			</tr>
@@ -88,13 +97,36 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_REPORTS"))) {
 		$event_ids = array();
 		$report_results["courses"]["events"] = array("total_events" => 0, "total_minutes" => 0, "events_calculated" => 0, "events_minutes" => 0);
 		foreach ($results as $result) {
-			$query	= "	SELECT a.`event_id`, a.`event_title`, a.`course_id`, a.`event_duration`
+			if ($distribute_event_duration) {
+				$query = "
+					SELECT 
+						e.event_id, 
+						e.event_title, 
+						e.course_id, 
+						e.event_duration,
+						COUNT(ec.proxy_id) AS instructor_count
+					FROM events AS e
+					LEFT JOIN event_contacts AS ec
+					ON ec.event_id = e.event_id
+					WHERE e.event_id IN (
+						SELECT event_id
+						FROM event_contacts
+						WHERE proxy_id = ".$db->qstr($result["proxy_id"])."
+					)
+					AND ec.contact_role = 'teacher' 
+					AND (e.event_start BETWEEN ".$db->qstr($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_start"])." AND ".$db->qstr($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_finish"]).")
+					GROUP BY e.event_id
+				";
+			} else {
+				$query	= "	SELECT a.`event_id`, a.`event_title`, a.`course_id`, a.`event_duration`
 						FROM `events` AS a
 						LEFT JOIN `event_contacts` AS b
 						ON b.`event_id` = a.`event_id`
 						WHERE b.`proxy_id` = ".$db->qstr($result["proxy_id"])."
 						AND b.`contact_role` = 'teacher' 
 						AND (a.`event_start` BETWEEN ".$db->qstr($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_start"])." AND ".$db->qstr($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_finish"]).")";
+			}
+
 			if ($int_use_cache) {
 				$sresults	= $db->CacheGetAll(LONG_CACHE_TIMEOUT, $query);
 			} else {
@@ -106,7 +138,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_REPORTS"))) {
 				$report_results["people"][$i]["number"] = $result["staff_number"];
 				$report_results["people"][$i]["events"]	= array("total_events" => 0, "total_minutes" => 0);
 
-				foreach ($sresults as $sresult) {
+		        foreach ($sresults as $sresult) {
 					if (!in_array($sresult["event_id"], $event_ids)) {
 						$event_ids[] = $sresult["event_id"];
 						$increment_total = true;
@@ -114,16 +146,22 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_REPORTS"))) {
 						$increment_total = false;
 					}
 
-                    $report_results["people"][$i]["events"]["total_events"] += 1;
-                    $report_results["people"][$i]["events"]["total_minutes"] += (int) $sresult["event_duration"];
+					if ($distribute_event_duration) {
+						$event_duration = (int) $sresult["event_duration"] / $sresult["instructor_count"];
+					} else {
+						$event_duration = (int) $sresult["event_duration"];
+					}
+
+					$report_results["people"][$i]["events"]["total_events"] += 1;
+					$report_results["people"][$i]["events"]["total_minutes"] += $event_duration;
 
 					if ($increment_total) {
-                        $report_results["courses"]["events"]["total_events"] += 1;
-                        $report_results["courses"]["events"]["total_minutes"] += (int) $sresult["event_duration"];
-                    }
+						$report_results["courses"]["events"]["total_events"] += 1;
+						$report_results["courses"]["events"]["total_minutes"] += $event_duration;
+					}
 
-                    $report_results["courses"]["events"]["events_calculated"] += 1;
-                    $report_results["courses"]["events"]["events_minutes"] += (int) $sresult["event_duration"];
+					$report_results["courses"]["events"]["events_calculated"] += 1;
+					$report_results["courses"]["events"]["events_minutes"] += $event_duration;
 				}
 			}
 		}
@@ -131,7 +169,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_REPORTS"))) {
 
 	echo "<h1>Teaching Report By Faculty Member (hourly)</h1>";
 	echo "<div class=\"content-small\" style=\"margin-bottom: 10px\">\n";
-	echo "	<strong>Date Range:</strong> ".date(DEFAULT_DATE_FORMAT, $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_start"])." <strong>to</strong> ".date(DEFAULT_DATE_FORMAT, $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_finish"]);
+	echo "	<strong>Date Range:</strong> ".date(DEFAULT_DATETIME_FORMAT, $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_start"])." <strong>to</strong> ".date(DEFAULT_DATETIME_FORMAT, $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_finish"]);
 	echo "</div>";
 	?>
 	<table class="tableList" cellspacing="0" summary="System Report">

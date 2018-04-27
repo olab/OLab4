@@ -28,15 +28,16 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_CONFIGURATION")) {
 	header("Location: ".ENTRADA_URL);
 	exit;
 } elseif (!$ENTRADA_ACL->amIAllowed("configuration", "create", false)) {
-	add_error("Your account does not have the permissions required to use this feature of this module.<br /><br />If you believe you are receiving this message in error please contact <a href=\"mailto:".html_encode($AGENT_CONTACTS["administrator"]["email"])."\">".html_encode($AGENT_CONTACTS["administrator"]["name"])."</a> for assistance.");
+	add_error($translate->_("module_no_permission") . str_ireplace(array("%admin_email%","%admin_name%"), array(html_encode($AGENT_CONTACTS["administrator"]["email"]),html_encode($AGENT_CONTACTS["administrator"]["name"])), $translate->_("module_assistance")));
 
 	echo display_error();
 
 	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] do not have access to this module [".$MODULE."]");
 } else {
+	require_once("Entrada/metadata/functions.inc.php");
 
 
-	$BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/settings/manage/metadata?".replace_query(array("section" => "add"))."&amp;org=".$ORGANISATION_ID, "title" => "Add Meta Data");
+	$BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/settings/manage/metadata?".replace_query(array("section" => "add"))."&amp;org=".$ORGANISATION_ID, "title" => $translate->_("metadata_add"));
 
 	// Error Checking
 	switch ($STEP) {
@@ -47,8 +48,7 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_CONFIGURATION")) {
 			if (isset($_POST["metadata_title"]) && ($metadata_title = clean_input($_POST["metadata_title"], array("notags", "trim")))) {
 				$PROCESSED["label"] = $metadata_title;
 			} else {
-				$ERROR++;
-				$ERRORSTR[] = "The <strong>Meta Date Name</strong> is a required field.";
+				add_error($translate->_("metadata_error_missing_name"));
 			}
 			/**
 			 * Required field "objective_name" / Objective Name
@@ -63,12 +63,11 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_CONFIGURATION")) {
 			if(isset($_POST["associated_parent"]) && $parent = clean_input($_POST["associated_parent"],"int")){
 				if($parent>0){
 					$PROCESSED["parent_type_id"] = $parent;
-					$query = "	SELECT * FROM  `meta_type_relations` WHERE `meta_type_id` = ".$db->qstr($parent);
-					$results = $db->GetAll($query);
+					$results = MetaDataRelations::getRelationsByID($parent);
 					if($results){
 						$groups = array();
 						foreach($results as $result){
-							$entity_data = explode(":",$result["entity_value"]);
+							$entity_data = explode(":",$result->getEntityValue());
 							$PROCESSED["groups"][] = $entity_data[1];
 						}
 
@@ -85,51 +84,37 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_CONFIGURATION")) {
 								if ($group_id = clean_input($group_id, array("trim", "notags"))) {
 									$PROCESSED["groups"][] = $group_id;
 								} else {
-									$ERROR++;
-									$ERRORSTR[] = "One of the <strong>groups</strong> you specified is invalid.";
+									add_error($translate->_("metadata_error_groups"));
 								}
 							}
 						}
 
 				}
 				else{
-					$ERROR++;
-					$ERRORSTR[] = "You must select at least one group to associate with the Meta Data and subtypes.";
+					add_error($translate->_("metadata_error_nogroups"));
 				}
+			}
+			/**
+			 * Required field "restricted" / Objective Name
+			 */
+			if (isset($_POST["metadata_restrict"]) && ($restricted = clean_input($_POST["metadata_restrict"], "int"))) {
+				$PROCESSED["restricted"] = $restricted;
+			} else {
+				$PROCESSED["restricted"] = 0;
 			}
 
 
 			if (!$ERROR) {
 
+				if (MetaDataType::insert($PROCESSED)) {
 
-				if ($db->AutoExecute("meta_types", $PROCESSED, "INSERT")) {
-					if ($META_ID = $db->Insert_Id()) {
+					$url = ENTRADA_URL . "/admin/settings/manage/metadata?org=".$ORGANISATION_ID;
 
-						if(isset($PROCESSED["groups"]) && is_array($PROCESSED["groups"])){
-							foreach($PROCESSED["groups"] as $group){
-								$params = array("meta_type_id"=>$META_ID,"entity_type"=>"organisation:group","entity_value"=>$ORGANISATION_ID.":".$group);
+					add_success(str_ireplace("%type%", html_encode(ucwords($PROCESSED["label"])),$translate->_("metadata_notice_added")).str_ireplace(array("%time%","%url%"), array(5,$url), $translate->_("metadata_redirect")));
 
-								if($db->AutoExecute("meta_type_relations", $params, "INSERT")){
-
-								}
-							}
-								$url = ENTRADA_URL . "/admin/settings/manage/metadata?org=".$ORGANISATION_ID;
-								$SUCCESS++;
-								$SUCCESSSTR[] = "You have successfully added <strong>".html_encode(ucwords($PROCESSED["label"]))."</strong> to the system.<br /><br />You will now be redirected to the Meta Data index; this will happen <strong>automatically</strong> in 5 seconds or <a href=\"".$url."\" style=\"font-weight: bold\">click here</a> to continue.";
 								$ONLOAD[] = "setTimeout('window.location=\\'".$url."\\'', 5000)";
-								application_log("success", "New Meta Data Type [".META_ID."] added to the system.");
-						}
-					}
-					else {
-						$ERROR++;
-						$ERRORSTR[] = "There was a problem inserting this meta data type into the system. The system administrator was informed of this error; please try again later.";
-						application_log("error", "There was an error inserting a meta data type. Database said: ".$db->ErrorMsg());
-					}
 				} else {
-					$ERROR++;
-					$ERRORSTR[] = "There was a problem inserting this meta data type into the system. The system administrator was informed of this error; please try again later.";
-
-					application_log("error", "There was an error inserting an event type. Database said: ".$db->ErrorMsg());
+					add_error(metadata_error_edit);
 				}
 			}
 
@@ -214,12 +199,7 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_CONFIGURATION")) {
 					<td><select id="associated_parent" name="associated_parent">
 							<option value="-1">-- No Parent --</option>
 					<?php
-					$query = "	SELECT DISTINCT a.`meta_type_id`, a.`label`
-								FROM `meta_types` AS a
-								JOIN `meta_type_relations` AS b
-								ON a.`meta_type_id` = b.`meta_type_id`
-								AND b.`entity_value` LIKE '".$ORGANISATION_ID.":%' AND a.`parent_type_id` IS NULL";
-					$metadata_types = $db->GetAll($query);
+					$metadata_types = MetaDataTypes::getSelectionOption();
 					foreach ($metadata_types as $type) {
 						echo "<option value=\"".$type["meta_type_id"]."\">".$type["label"]."</option>";
 					}
@@ -228,10 +208,19 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_CONFIGURATION")) {
 					</td>
 				</tr>
 				<tr>
+					<td><label for="metadata_restrict" class="form-required"><?php echo $translate->translate("Restricted to Public"); ?></label></td>
+					<td><select id="metadata_restrict" name="metadata_restrict">
+							<option value="0">-- Public Viewable --</option>
+							<option value="1">-- Restricted --</option>
+							<option value="-1" disabled="disabled"><?php echo $translate->_("metadata_select_group_parent"); ?></option>
+					</select>
+					</td>
+				</tr>
+				<tr>
 					<td><label for="associated_group" class="form-required"><?php echo $translate->translate("Group"); ?></label></td>
 					<td><select id="associated_group" name="associated_group">
-							<option value="-1">-- Select a Group --</option>
-							<option value="0" disabled="disabled">-- Same as Parent --</option>
+							<option value="-1"><?php echo $translate->_("metadata_select_group"); ?></option>
+							<option value="0" disabled="disabled"><?php echo $translate->_("metadata_select_group_parent"); ?></option>
 					<?php
 					$ONLOAD[] = "grouplist = new SelectTypeList('group','associated_group');";
 					foreach (array_keys($SYSTEM_GROUPS) as $group) {
@@ -239,7 +228,7 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_CONFIGURATION")) {
 					}
 					?>
 					</select>
-					<div id="group_notice" class="content-small" >Use the list above to add groups associated with this meta data. You must select at minimum one group to save.</div>
+					<div id="group_notice" class="content-small" ><?php echo $translate->_("metadata_select_group_notice"); ?></div>
 					<ol id="group_container" class="sortableList" style="display: none;">
 						<?php
 						if (isset($PROCESSED["groups"]) && is_array($PROCESSED["groups"]) && !empty($PROCESSED["groups"])) {
@@ -265,11 +254,14 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_CONFIGURATION")) {
 							$('associated_group').disabled=true;
 							$('group_container').innerHTML = '';
 							$('group_order').innerHTML = '';
-
+							$('metadata_restrict').selectedIndex = 2;
+							$('metadata_restrict').disabled=true;
 						}
 						else{
 							$('associated_group').selectedIndex = 0;
 							$('associated_group').disabled=false;
+							$('metadata_restrict').selectedIndex = 0;
+							$('metadata_restrict').disabled=false;
 						}
 
 

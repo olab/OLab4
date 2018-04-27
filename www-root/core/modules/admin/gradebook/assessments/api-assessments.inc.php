@@ -36,6 +36,11 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
     application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] does not have access to this module [".$MODULE."]");
 } else {
     ob_clear_open_buffers();
+
+    $request_method = strtoupper(clean_input($_SERVER['REQUEST_METHOD'], "alpha"));
+
+    $request = ${"_" . $request_method};
+
     $method     = isset($_GET["method"]) ? clean_input($_GET["method"], array("notags", "trim")) : "";
     $course_id  = isset($_GET["course_id"]) ? clean_input($_GET["course_id"], "int") : 0;
     $cperiod_id  = isset($_GET["cperiod_id"]) ? clean_input($_GET["cperiod_id"], "int") : 0;
@@ -55,6 +60,65 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 
     $data = array();
     switch ($method) {
+        case "exam_title_search" :
+            if (isset($request["course_id"])) {
+                $tmp_input = clean_input(strtolower($request["course_id"]), array("trim", "int"));
+                $PROCESSED["course_id"] = $tmp_input;
+            } else {
+                add_error("No course ID provided.");
+            }
+
+            if (isset($request["assessment_id"])) {
+                $tmp_input = clean_input(strtolower($request["assessment_id"]), array("trim", "int"));
+                $PROCESSED["assessment_id"] = $tmp_input;
+            } else {
+                $PROCESSED["assessment_id"] = 0;
+            }
+
+            if (isset($request["title"]) && $tmp_input = clean_input(strtolower($request["title"]), array("trim", "striptags"))) {
+                $PROCESSED["search_term"] = "%".$tmp_input."%";
+            } else {
+                $PROCESSED["search_term"] = "";
+            }
+
+            if (isset($request["post_id"]) && $tmp_input = clean_input(strtolower($request["post_id"]), array("trim", "int"))) {
+                $PROCESSED["post_id"] = $tmp_input;
+                $post = Models_Exam_Post::fetchRowByID($PROCESSED["post_id"]);
+                if ($post) {
+                    $exam_id = $post->getExamID();
+                }
+            }
+
+            if (!has_error()) {
+                $exams = Models_Exam_Exam::fetchAllRecordsBySearchTermCourseLimit($PROCESSED["search_term"], $PROCESSED["course_id"], $PROCESSED["assessment_id"]);
+                $exams_array = array();
+                if ($exams) {
+                    foreach ($exams as $exam) {
+                        if ($exam["post_id"] && $exam["post_id"] > 0) {
+                            if ((isset($exam_id) && $exam_id && $exam_id == $exam["exam_id"]) || !isset($exam_id)) {
+                                $exam_post = Models_Exam_Post::fetchRowByID($exam["post_id"]);
+                                if (isset($exam_post) && is_object($exam_post)) {
+                                    $exams_array[] = array(
+                                        "exam_title" => $exam["title"],
+                                        "post_id" => $exam_post->getID(),
+                                        "post_title" => $exam_post->getTitle(),
+                                        "post_start" => date("D M d/y g:ia", $exam_post->getStartDate())
+                                    );
+                                }
+                            }
+                        }
+                    }
+                }
+                if (!empty($exams_array)) {
+                    echo json_encode(array("status" => "success", "data" => $exams_array));
+                } else {
+                    echo json_encode(array("status" => "error", "data" => array("No posts found with an exam title containing <strong>". $PROCESSED["search_term"] ."</strong>")));
+                }
+            } else {
+                echo json_encode(array("status" => "error", "data" => $ERRORSTR));
+            }
+
+            break;
         case "get-contacts-group":
             foreach ($contact_roles as $role_id => $role_name) {
                 $contacts = Models_Course_Contact::fetchAllByCourseIDContactType($course_id, $role_id);

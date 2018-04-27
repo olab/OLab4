@@ -162,7 +162,7 @@ function addDeleteListeners() {
  * removes all event listeners on the data table
  */
 function removeListeners() {
-	$$('.DataTable .add_btn, .DataTable .delete_btn, #save_btn, .DataTable input.date').invoke("stopObserving");
+	$$('.DataTable .add_btn, .DataTable .delete_btn, #save_btn, #save_btnx, .DataTable input.date').invoke("stopObserving");
 }
 
 /**
@@ -170,6 +170,7 @@ function removeListeners() {
  */
 function addSaveListener() {
 	$('save_btn').observe("click", updateValues);
+	$('save_btnx').observe("click", updateValues);
 }
 
 /**
@@ -210,6 +211,7 @@ function getTable(event) {
 		Event.stop(event);
 	}
 	params = $('table_selector').serialize(true);
+
 	if (params.associated_cat_id) {
 		params.request = 'get_table';
 		new Ajax.Request(api_url,
@@ -229,7 +231,7 @@ function getTable(event) {
 						}
 					}
 				});
-		//document.fire('MetaData:onBeforeUpdate');
+		document.fire('MetaData:onBeforeUpdate');
 	}
 }
 
@@ -237,6 +239,7 @@ function getTable(event) {
  * Gets the select box of categories by ajax. submits current options to get relevant category options
  */
 function getCategories() {
+	$('meta_data_form').update('');	
 	new Ajax.Request(api_url,
 			{
 				method:'post',
@@ -374,12 +377,20 @@ function ErrorHandler(modal) {
 function setRoleList() {
 	var group = $('associated_group').getValue();
 	var roles = user_groups[group];
-	
+
 	if (roles) {
 		var role_opts = "";
+		if (group == 'student') { //U of C
+			roles.reverse();
+		}
 		roles.each(function (role) {
+			if (!(group == 'student' && role == 'All')) {
 			role_opts += "<option value=\""+role.toLowerCase()+"\">"+role+"</option>";
+			}
 		}); 
+		if (group == 'student') { //U of C
+			roles.reverse();
+		}
 		
 		$('associated_role').update(role_opts);
 		

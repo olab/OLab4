@@ -17,7 +17,7 @@ jQuery(function($) {
         "src": ENTRADA_URL + "/images/loading.gif"
     });
 
-    $(".task-table").addClass("hide").after(spinner_div.append(loading_tasks, spinner));
+    $(".task-view").addClass("hide").after(spinner_div.append(loading_tasks, spinner));
     $(".task-btn").addClass("hide");
     $(".reminder-btn").addClass("hide");
     $(".hide-tasks").addClass("hide");
@@ -44,6 +44,7 @@ jQuery(function($) {
         if (ctr != table_list.length) {
             var task_type = table_list[ctr].substring(0, table_list[ctr].indexOf("-"));
             var method = table_list[ctr].substring(table_list[ctr].indexOf("-"), table_list[ctr].length);
+            var schedule_filter = $("input[name=\"" + task_type + "_filter_schedule_type\"]").val();
 
             if (all_tabs) {
                 var href = "#tab-" + task_type + method;
@@ -56,7 +57,8 @@ jQuery(function($) {
                     "method": "get" + method,
                     "task_type": task_type,
                     "offset": table_offset[ctr],
-                    "search_value": search_value ? search_value : ""
+                    "search_value": search_value ? search_value : "",
+                    "schedule_type": schedule_filter ? schedule_filter : "all"
                 },
                 type: "GET"
             });
@@ -64,19 +66,21 @@ jQuery(function($) {
             jQuery.when(get_tasks_request).done(function (data) {
                 var jsonResponse = JSON.parse(data);
                 var table = jQuery("." + task_type + method);
+
+                var grandparentId = table.parent().parent().attr("id");
                 
                 if (jsonResponse.status === "success") {
-                    jQuery.each(jsonResponse.data, function (key, task) {
-                        build_task_row(task, table, task_type, method);
+                    jQuery.each(jsonResponse.data[0], function (key, task) {
+                        build_task_row(task, jsonResponse.data[1] == null ? null : jsonResponse.data[1][key], table, task_type, method);
                     });
 
-                    jQuery("#" + table.parent().attr("id") + " .spinner-container").remove();
-                    jQuery("#" + table.parent().attr("id") + " .task-btn").removeClass("hide");
-                    jQuery("#" + table.parent().attr("id") + " .reminder-btn").removeClass("hide");
-                    jQuery("#" + table.parent().attr("id") + " .hide-tasks").removeClass("hide");
-                    jQuery("#" + table.parent().attr("id") + " .task-table-search").removeClass("hide");
+                    jQuery("#" + grandparentId + " .spinner-container").remove();
+                    jQuery("#" + grandparentId + " .task-btn").removeClass("hide");
+                    jQuery("#" + grandparentId + " .reminder-btn").removeClass("hide");
+                    jQuery("#" + grandparentId + " .hide-tasks").removeClass("hide");
+                    jQuery("#" + grandparentId + " .task-table-search").removeClass("hide");
                     jQuery("#tab-" + table_list[ctr]).find(".dashboard-no-results").remove();
-                    table.removeClass("hide");
+                    table.parent().removeClass("hide");
 
                     if (table_offset[ctr] + offset >= table_limit[ctr]) {
                         jQuery("." + table_list[ctr] + "-next").addClass("disabled");
@@ -93,8 +97,7 @@ jQuery(function($) {
                     }
                 } else {
                     var no_results = jQuery(document.createElement("p")).html(jsonResponse.data).addClass("dashboard-no-results");
-                    jQuery("#" + table.parent().attr("id") + " .spinner-container").remove();
-                    jQuery("#" + table.parent().attr("id")).append(no_results);
+                    jQuery("#" + grandparentId + " .spinner-container").replaceWith(no_results);
                     jQuery("." + table_list[ctr] + "-search-results-found").addClass("hide");
                     if (populate_tables) {
                         if (table_offset[ctr] < table_limit[ctr] - offset) {
@@ -117,7 +120,7 @@ jQuery(function($) {
         }
     }
 
-    function build_task_row(task, table, task_type, method) {
+    function build_task_row(task, serialized_task, table, task_type, method) {
         var tr = jQuery(document.createElement("tr"));
         var td_task_info = jQuery(document.createElement("td"));
 
@@ -133,33 +136,34 @@ jQuery(function($) {
 
                 td_task_type_span = jQuery(document.createElement("span")).addClass("dashboard-delegation-badge").html("Delegation");
             } else {
-                var reviewer_parameter = "";
-                var target_parameter = "target_record_id=" + task["0"]["target_record_id"];
-                var progress_parameter = "";
+                var target_parameter = progress_parameter = "";
 
                 if (task.task_type == "approver") {
-                    reviewer_parameter = "&approver_task=true";
+                    target_parameter = "&atarget_id=" + task.atarget_id;
                     td_task_type_span = jQuery(document.createElement("span")).addClass("dashboard-release-badge").html("Reviewer");
                 } else {
                     td_task_type_span = jQuery(document.createElement("span")).addClass("dashboard-assessment-evaluation-badge").html(capitalize_first_letter(task_type));
+                    target_parameter = "&atarget_id=" + task["0"]["atarget_id"];
+
+                    if ("1" in task) {
+                        target_parameter = "&section=targets";
+                    } else {
+                        if (task.aprogress_id) {
+                            progress_parameter = "&aprogress_id=" + task.aprogress_id;
+                        }
+                    }
                 }
 
-                if ("1" in task) {
-                    target_parameter = "section=targets";
-                }
-
-                if (task.aprogress_id) {
-                    progress_parameter = "&aprogress_id=" + task.aprogress_id;
-                }
-
-                td_task_info_a = jQuery(document.createElement("a")).attr({
-                    "href": ENTRADA_URL + "/assessments/assessment?" + target_parameter +
-                    "&adistribution_id=" + task.adistribution_id +
-                    "&dassessment_id=" + task.task_id +
-                    progress_parameter +
-                    reviewer_parameter
-                }).html(task.title);
+                td_task_info_a = jQuery(document.createElement("a")).attr({"href": ENTRADA_URL + "/assessments/assessment?dassessment_id=" + task.task_id + target_parameter + progress_parameter}).html(task.title);
             }
+            // Construct human readable date for display from the delivery timestamp.
+            var date = new Date(task.delivery_date * 1000);
+            if (date.getFullYear() > 1970) {
+                var formatted_date = date.getFullYear() + "-" + (("0" + (date.getMonth() + 1)).slice(-2)) + "-" + ("0" + date.getDate()).slice(-2);
+                var td_task_delivery_span = jQuery(document.createElement(("span"))).addClass("label dashboard-delivery-badge space-right").html(formatted_date);
+                td_task_info.append(td_task_delivery_span);
+            }
+
             td_task_info.append(td_task_info_a);
         }
 
@@ -206,15 +210,8 @@ jQuery(function($) {
                 var td_remove_task_span = jQuery(document.createElement("span")).addClass("remove").attr({
                     "data-toggle": "modal",
                     "data-target": "#remove_form_modal",
-                    "data-assessment": "{" +
-                        "\"assessor_type\":\"" + (task.assessor_type == 0 ? null : task.assessor_type) + "\"," +
-                        "\"assessor_value\":\"" + task.assessor_value + "\"," +
-                        "\"target_id\":\"" + (target_names.length == 1 && task[0]["target_record_id"] !== undefined ? task[0]["target_record_id"] : null) + "\"," +
-                        "\"distribution_id\":\"" + task.adistribution_id + "\"," +
-                        "\"assessment_id\":\"" + task.task_id + "\"," +
-                        "\"task_type\":\"" + task.task_type + "\"," +
-                        "\"delivery_date\":\"" + task.delivery_date + "\"" +
-                    "}"
+                    "data-atarget-id": task.task_type == "task" ? task.atarget_id : "",
+                    "data-addelegation-id": task.task_type == "delegation" ?  task.task_id : ""
                 });
 
                 var td_remove_task_a = jQuery(document.createElement("a")).addClass("dashboard-remove-task dashboard-circle").attr({"href": "#remove_form_modal"});
@@ -248,15 +245,16 @@ jQuery(function($) {
             }).html(task.title);
 
             // Construct human readable date for display from the delivery timestamp.
-            var date = new Date(task.delivery_date * 1000);
+            var date = new Date(task.deleted_date * 1000);
             if (date.getFullYear() > 1970) {
                 var formatted_date = date.getFullYear() + "-" + (("0" + (date.getMonth() + 1)).slice(-2)) + "-" + ("0" + date.getDate()).slice(-2);
-                var td_task_delivery_span = jQuery(document.createElement(("span"))).addClass("label dashboard-delivery-badge space-right").html(formatted_date);
+                var badge_info = task.task_type == "delegation" ? "-delegation" : "";
+                var td_task_delivery_span = jQuery(document.createElement(("span"))).addClass("label dashboard-delivery"+badge_info+"-badge space-right").html(formatted_date);
                 td_task_info.append(td_task_delivery_span);
             }
 
             var td_hide_task = jQuery(document.createElement("td")).addClass("dashboard-center-info");
-            var td_hide_task_input = jQuery(document.createElement("input")).addClass("hide-task hide-task-" + task_type).attr({"type": "checkbox", "value": task.deleted_task_id});
+            var td_hide_task_input = jQuery(document.createElement("input")).addClass("hide-task hide-task-" + task_type).attr({"type": "checkbox", "data-task-type": task.task_type, "value": task.deleted_task_id});
 
             td_additional_info_p.html(task.deleted_reason_notes == null || task.deleted_reason_notes == "" ? task.reason_details : task.deleted_reason_notes);
             table.append(tr.append(td_task_info.append(td_task_info_a), td_assessor_target_info, td_additional_info.append(td_additional_info_p), td_hide_task.append(td_hide_task_input)));
@@ -283,14 +281,7 @@ jQuery(function($) {
             var td_remove_task_span = jQuery(document.createElement("span")).addClass("remove").attr({
                 "data-toggle": "modal",
                 "data-target": "#remove_form_modal",
-                "data-assessment": "{" +
-                    "\"assessor_type\":\"" + task.assessor_type + "\"," +
-                    "\"assessor_value\":\"" + task.assessor_value + "\"," +
-                    "\"target_id\":\"" + task.target_value + "\"," +
-                    "\"distribution_id\":\"" + task.adistribution_id + "\"," +
-                    "\"assessment_id\":\"" + null + "\"," +
-                    "\"delivery_date\":\"" + task.delivery_date + "\"" +
-                "}"
+                "data-future-task": serialized_task
             });
 
             var td_remove_task_a = jQuery(document.createElement("a")).addClass("dashboard-remove-task dashboard-circle").attr({"href": "#remove_form_modal"});
@@ -307,7 +298,7 @@ jQuery(function($) {
             if (select_button.hasClass(v + "-next") && !select_button.hasClass("disabled")) {
                 if (table_offset[i] + offset < table_limit[i]) {
                     table_offset[i] += offset;
-                    $("." + v).addClass("hide").after(spinner_div.append(loading_tasks, spinner));
+                    $("." + v).parent().addClass("hide").after(spinner_div.append(loading_tasks, spinner));
                     $("." + v + " tbody").empty();
                     get_task_data(i, false, false, false);
                     $("." + v + "-previous").removeClass("disabled");
@@ -317,7 +308,7 @@ jQuery(function($) {
             if (select_button.hasClass(v + "-previous") && !select_button.hasClass("disabled")) {
                 if (table_offset[i] - offset >= table_buffer[i]) {
                     table_offset[i] -= offset;
-                    $("." + v).addClass("hide").after(spinner_div.append(loading_tasks, spinner));
+                    $("." + v).parent().addClass("hide").after(spinner_div.append(loading_tasks, spinner));
                     $("." + v + " tbody").empty();
                     get_task_data(i, false, false, false);
                     $("." + v + "-next").removeClass("disabled");
@@ -462,43 +453,72 @@ jQuery(function($) {
     });
 
     $(".container").on("click", ".remove", function() {
-        $("#current_record_data").val(JSON.stringify($(this).data("assessment")));
+        if ($(this).data("atarget-id") !== undefined && $(this).data("atarget-id")) {
+            $("#current_record_data").val("atarget-" + $(this).data("atarget-id"));
+        }
+
+        if ($(this).data("addelegation-id") !== undefined && $(this).data("addelegation-id")) {
+            $("#current_record_data").val("addelegation-" + $(this).data("addelegation-id"));
+        }
+
+        if ($(this).data("future-task") !== undefined && $(this).data("future-task")) {
+            $("#current_record_data").val($(this).data("future-task"));
+        }
+
         $("#remove_form_modal").removeClass("hide");
     });
 
     $(".container").on("click", "#save_remove", function() {
-        var task_data = JSON.parse($("#current_record_data").val());
+        if ($("#current_record_data").val() !== undefined && $("#current_record_data").val() != null && $("#current_record_data").val() != "") {
+            var task_data = $("#current_record_data").val();
 
-        if (task_data !== undefined) {
-            var removing_reason_id = $("input[name='reason']:checked").val();
-            var removing_reason = $("#other_reason").val();
-            var notification = task_data["target_id"] ? "yes" : "no";
-            if (removing_reason_id !== undefined) {
-                if (removing_reason_id > 1 || removing_reason.trim() != "") {
-                    $.ajax({
-                        url: ENTRADA_URL + "/assessments/assessment?section=api-assessment&adistribution_id=" + task_data["distribution_id"] + "&hide_deleted_task=true",
-                        data: {
-                            "method": "delete-task",
-                            "task_data_array": [task_data],
-                            "reason_id": removing_reason_id,
-                            "reason_notes": removing_reason,
-                            "notify": notification
-                        },
-                        type: "POST",
-                        success: function(data) {
-                            var jsonResponse = JSON.parse(data);
-                            if (jsonResponse.status == "success") {
-                                location.reload();
-                            } else {
-                                display_error(jsonResponse.data, "#remove-msgs");
-                            }
-                        }
-                    });
+            if (task_data !== undefined) {
+                var removing_reason_id = $("input[name='reason']:checked").val();
+                var removing_reason = $("#other_reason").val();
+
+                var method, data_array;
+                var task_data_info = task_data.split("-");
+                if (task_data_info[0] == "atarget") {
+                    method = "atarget";
+                    data_array = task_data_info[1];
+                } else if (task_data_info[0] == "addelegation") {
+                    method = "addelegation";
+                    data_array = task_data_info[1];
                 } else {
-                    display_error(["Please indicate why you are removing this assessment task from your task list."], "#remove-msgs");
+                    method = "future";
+                    data_array = task_data;
+                }
+
+                if (removing_reason_id !== undefined) {
+                    if (removing_reason_id > 1 || removing_reason.trim() != "") {
+                        $.ajax({
+                            url: ENTRADA_URL + "/assessments/assessment?section=api-assessment&hide_deleted_task=true",
+                            data: {
+                                "method": "delete-tasks-by-" + method,
+                                "task_data_array": [data_array],
+                                "reason_id": removing_reason_id,
+                                "reason_notes": removing_reason,
+                                "notify": "yes",
+                                "location": "dashboard"
+                            },
+                            type: "POST",
+                            success: function (data) {
+                                var jsonResponse = JSON.parse(data);
+                                if (jsonResponse.status == "success") {
+                                    location.reload();
+                                } else {
+                                    display_error(jsonResponse.data, "#remove-msgs");
+                                }
+                            }
+                        });
+                    } else {
+                        display_error(["Please indicate why you are removing this assessment task from your task list."], "#remove-msgs");
+                    }
+                } else {
+                    display_error(["Please select an option."], "#remove-msgs");
                 }
             } else {
-                display_error(["Please select an option."], "#remove-msgs");
+                display_error(["Task data missing, unable to remove task."], "#remove-msgs");
             }
         } else {
             display_error(["Task data missing, unable to remove task."], "#remove-msgs");
@@ -507,30 +527,44 @@ jQuery(function($) {
 
     $(".hide-tasks").on("click", function() {
         var deleted_task_ids = [];
+        var deleted_task_types = [];
         var task_type = $(".task-list-tabs .active").text().slice(0, -1).toLowerCase();
 
         $.each($("input.hide-task-" + task_type + ":checked"), function (i, v) {
             deleted_task_ids.push($(v).val());
+            deleted_task_types.push($(v).data("task-type"));
         });
 
-        if (deleted_task_ids.length > 0) {
-            var hide_selected_tasks = jQuery.ajax({
-                url: ENTRADA_URL + "/admin/assessments?section=api-dashboard",
-                data: {
-                    "method": "hide-deleted-tasks",
-                    "deleted_task_ids": deleted_task_ids
-                },
-                type: "POST"
-            });
-
-            jQuery.when(hide_selected_tasks).done(function (data) {
-                var jsonResponse = JSON.parse(data);
-                if (jsonResponse.status === "success") {
-                    location.reload();
-                }
-            });
+        if (deleted_task_ids.length > 0 && deleted_task_types.length > 0) {
+            hide_deleted_tasks(deleted_task_ids, deleted_task_types, 0, 100);
         }
     });
+
+    function hide_deleted_tasks(deleted_task_ids, deleted_task_types, offset, limit) {
+        var hide_selected_tasks = jQuery.ajax({
+            url: ENTRADA_URL + "/admin/assessments?section=api-dashboard",
+            data: {
+                "method": "hide-deleted-tasks",
+                "deleted_task_ids"  : deleted_task_ids.slice(offset, offset + limit),
+                "deleted_task_types": deleted_task_types.slice(offset, offset + limit)
+            },
+            type: "POST"
+        });
+
+        jQuery.when(hide_selected_tasks).done(function (data) {
+            var jsonResponse = JSON.parse(data);
+            if (jsonResponse.status === "success") {
+                if (Math.ceil(deleted_task_ids.length / 100) * 100 - (offset + 100) > 0) {
+                    offset += 100;
+                    hide_deleted_tasks(deleted_task_ids, deleted_task_types, offset, limit);
+                } else {
+                    location.reload();
+                }
+            } else {
+                location.reload();
+            }
+        });
+    }
 
     $(".task-table-search").keyup(function (e) {
         var keycode = e.keyCode;
@@ -553,7 +587,7 @@ jQuery(function($) {
                 timeout = setTimeout(function () {
                     $.each(table_list, function (i, v) {
                         if (table_search.hasClass(v + "-search")) {
-                            $("." + v).addClass("hide").after(spinner_div.append(loading_tasks, spinner));
+                            $("." + v).parent().addClass("hide").after(spinner_div.append(loading_tasks, spinner));
                             $("." + v + " tbody").empty();
                             $("#tab-" + v).find(".dashboard-no-results").remove();
                             table_offset[i] = table_buffer[i];
@@ -582,4 +616,22 @@ jQuery(function($) {
             $("#additional-dashboard-details").removeClass("hide");
         }
     });
+
+    $(".filter-tasks-btn").on("change", function () {
+        var table_search = $(this).closest("input.task-table-search");
+        clearTimeout(timeout);
+        timeout = setTimeout(function () {
+            $.each(table_list, function (i, v) {
+                $("." + v).parent().addClass("hide").after(spinner_div.append(loading_tasks, spinner));
+                $("." + v + " tbody").empty();
+                $("#tab-" + v).find(".dashboard-no-results").remove();
+                table_offset[i] = table_buffer[i];
+                get_task_data(i, false, false, table_search.val());
+                if (table_offset[i] + offset < table_limit[i]) {
+                    $("." + v + "-next").removeClass("disabled");
+                }
+            });
+        }, 1000);
+    });
+
 });

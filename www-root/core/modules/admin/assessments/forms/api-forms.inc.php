@@ -59,6 +59,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_FORMS"))) {
     switch ($request_method) {
         case "POST" :
             switch ($request["method"]) {
+                // DEPRECATED: This method now moved to core/library/modules/admin/gradebook/assessments/api-forms.inc.php
                 case "save-assessment-proxy-scores":
 
                     if (!$ENTRADA_ACL->amIAllowed("assessments", "update", false) && !(isset($request["assessment_id"]) && 
@@ -342,87 +343,17 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_FORMS"))) {
                     }
 
                     if (!$ERROR) {
-
-                        $old_form = Models_Assessments_Form::fetchRowByID($old_form_id);
-
-                        // Create a new form to copy to
-                        $PROCESSED["organisation_id"] = $ENTRADA_USER->getActiveOrganisation();
-                        $PROCESSED["created_date"] = time();
-                        $PROCESSED["updated_date"] = time();
-                        $PROCESSED["created_by"] = $ENTRADA_USER->getActiveID();
-                        $PROCESSED["updated_by"] = $ENTRADA_USER->getActiveID();
-                        $PROCESSED["description"] = $old_form->getDescription();
-                        $form = new Models_Assessments_Form($PROCESSED);
-
-                        if ($form->insert()) {
-
-                            // Retrieve all authors from the previous form
-                            $authors = Models_Assessments_Form_Author::fetchAllByFormID($old_form_id, $ENTRADA_USER->getActiveOrganisation());
-                            if ($authors) {
-                                // Insert copies of the authors with the newly created form's ID
-                                foreach ($authors as $author) {
-
-                                    $author_data = array(
-                                        "form_id"               => $form->getID(),
-                                        "author_type"           => $author->getAuthorType(),
-                                        "author_id"             => $author->getAuthorId(),
-                                        "created_date"          => time(),
-                                        "created_by"            => $ENTRADA_USER->getActiveId(),
-                                        "updated_date"          => $author->getUpdatedDate(),
-                                        "updated_by"            => $author->getUpdatedBy()
-                                    );
-
-                                    $author = new Models_Assessments_Form_Author($author_data);
-                                    if (!$author->insert()) {
-                                        add_error($translate->_("An error occured while adding an author to the form."));
-                                    }
-                                }
+                        if (!$forms_api->copyForm($old_form_id, $PROCESSED["title"])) {
+                            foreach ($forms_api->getErrorMessages() as $error_message) {
+                                add_error($error_message);
                             }
-
-                            // Retrieve the elements from the previous form
-                            $elements = Models_Assessments_Form_Element::fetchAllByFormID($old_form_id);
-                            if ($elements) {
-                                // Insert copies of elements with the newly created form's ID
-                                foreach ($elements as $element) {
-
-                                    if ($element->getElementId() && $element->getElementType() == "item") {
-                                        if (!$item_record = Models_Assessments_Item::fetchRowByID($element->getElementId())) {
-                                            continue; // it's been deleted, so skip it (don't copy it to the new form)
-                                        }
-                                    }
-
-                                    $element_data = array(
-                                        "form_id"           => $form->getID(),
-                                        "element_type"      => $element->getElementType(),
-                                        "element_id"        => $element->getElementId(),
-                                        "element_text"      => $element->getElementText(),
-                                        "rubric_id"         => $element->getRubricId(),
-                                        "order"             => $element->getOrder(),
-                                        "allow_comments"    => $element->getAllowComments(),
-                                        "enable_flagging"   => $element->getEnableFlagging(),
-                                        "updated_date"      => time(),
-                                        "updated_by"        => $ENTRADA_USER->getActiveId()
-                                    );
-
-                                    $element = new Models_Assessments_Form_Element($element_data);
-                                    if (!$element->insert()) {
-                                        add_error($translate->_("An error occurred while adding an element to a form."));
-                                    }
-                                }
-                            }
-                            
-                            if (!$ERROR) {
-                                Entrada_Utilities_Flashmessenger::addMessage("Successfully copied form", "success", $MODULE);
-                                $url = ENTRADA_URL."/admin/assessments/forms?section=edit-form&form_id=".$form->getID();
-                                echo json_encode(array("status" => "success", "url" => $url));
-                            } else {
-                                echo json_encode(array("status" => "error", "msg" => $ERRORSTR));
-                            }
-
-                        } else {
-                            echo json_encode(array("status" => "error", "msg" => $ERRORSTR));
                         }
-
+                    }
+                    if (!$ERROR) {
+                        $new_form_id = $forms_api->getFormID();
+                        Entrada_Utilities_Flashmessenger::addMessage("Successfully copied form", "success", $MODULE);
+                        $url = ENTRADA_URL."/admin/assessments/forms?section=edit-form&form_id=". $new_form_id;
+                        echo json_encode(array("status" => "success", "url" => $url));
                     } else {
                         echo json_encode(array("status" => "error", "msg" => $ERRORSTR));
                     }
@@ -487,6 +418,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_FORMS"))) {
                         }
                     }
 
+                    // ADRIAN-TODO: Move this to forms_api
                     if (!empty($PROCESSED["delete_ids"])) {
                         $deleted_elements = array();
                         foreach ($PROCESSED["delete_ids"] as $afelement_id) {
@@ -681,7 +613,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_FORMS"))) {
                     if (isset($request["form_id"]) && $tmp_input = clean_input($request["form_id"], "int")) {
                         $PROCESSED["form_id"] = $tmp_input;
                     }
-
+                    // ADRIAN-TODO: Move this to forms_api
                     if ($PROCESSED["form_id"]) {
                         $element_data = array(
                             "form_id" => $PROCESSED["form_id"],
@@ -713,6 +645,8 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_FORMS"))) {
                         $PROCESSED["element_text"] = $tmp_input;
                     }
 
+                    // ADRIAN-TODO: Move this to forms_api
+
                     if (isset($PROCESSED["element_text"]) && isset($PROCESSED["afelement_id"])) {
                         $element = Models_Assessments_Form_Element::fetchRowByID($PROCESSED["afelement_id"]);
                         if ($element->fromArray(array("element_text" => $PROCESSED["element_text"]))->update()) {
@@ -734,6 +668,8 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_FORMS"))) {
                             }
                         }
                     }
+
+                    // ADRIAN-TODO: Move this to forms_api
 
                     if (!empty($PROCESSED["delete_ids"])) {
                         $deleted_forms = array();
@@ -811,8 +747,6 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_FORMS"))) {
                         add_error($translate->_("Invalid filter target provided."));
                     }
 
-                    $assessments_base = new Entrada_Utilities_Assessments_Base();
-
                     if (isset($PROCESSED["filter_type"]) && isset($PROCESSED["filter_target"])) {
                         unset($_SESSION[APPLICATION_IDENTIFIER]["assessments"]["forms"]["selected_filters"][$PROCESSED["filter_type"]][$PROCESSED["filter_target"]]);
                         if (empty($_SESSION[APPLICATION_IDENTIFIER]["assessments"]["forms"]["selected_filters"][$PROCESSED["filter_type"]])) {
@@ -822,16 +756,15 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_FORMS"))) {
                             }
                         }
 
-                        $assessments_base->updateAssessmentPreferences("assessments");
+                        $forms_api->updateAssessmentPreferences("assessments");
                         echo json_encode(array("status" => "success", "msg" => $translate->_("Successfully removed the selected filter")));
                     } else {
                         echo json_encode(array("status" => "error", "msg" => $ERRORSTR));
                     }
                 break;
                 case "remove-all-filters" :
-                    $assessments_base = new Entrada_Utilities_Assessments_Base();
                     unset($_SESSION[APPLICATION_IDENTIFIER]["assessments"]["forms"]["selected_filters"]);
-                    $assessments_base->updateAssessmentPreferences("assessments");
+                    $forms_api->updateAssessmentPreferences("assessments");
                     echo json_encode(array("status" => "success", "msg" => $translate->_("Successfully removed all filters")));
                 break;
                 case "attach-form-to-assessment":
@@ -861,6 +794,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_FORMS"))) {
 
                     echo json_encode($response);
                 break;
+                // DEPRECATED: This method now moved to core/library/modules/admin/gradebook/assessments/api-forms.inc.php
                 case "remove-form-from-assessment":
                     if (isset($request["assessment_id"]) && $tmp_input = clean_input($request["assessment_id"], array("int"))) {
                         $PROCESSED["assessment_id"] = $tmp_input;
@@ -888,129 +822,27 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_FORMS"))) {
 
                     echo json_encode($response);
                 break;
-                /*
-                case "save-assessment-proxy-scores":
-
-                    // assessment id
+                // DEPRECATED: This method now moved to core/library/modules/admin/gradebook/assessments/api-forms.inc.php
+                case "remove-portfolio-from-assessment":
                     if (isset($request["assessment_id"]) && $tmp_input = clean_input($request["assessment_id"], array("int"))) {
                         $PROCESSED["assessment_id"] = $tmp_input;
                     } else {
                         add_error($translate->_("Invalid assessment_id provided."));
                     }
+                    $assessment = new Models_Gradebook_Assessment(array("assessment_id" => $PROCESSED["assessment_id"]));
+                    $assessment->setEportfolioID(null);
 
-                    // proxy id
-                    if (isset($request["proxy_id"]) && $tmp_input = clean_input($request["proxy_id"], array("int"))) {
-                        $PROCESSED["proxy_id"] = $tmp_input;
-                    } else {
-                        add_error($translate->_("Invalid proxy_id provided."));
-                    }
+                    $update = $assessment->update(array("portfolio_id"));
 
-                    // scores
-                    if (isset($request["scores"])) {
-                        if (is_array($request["scores"])) {
-                            foreach($request["scores"] as $gairesponse_id => $score) {
-                                $key_input = clean_input($gairesponse_id, array("int"));
-                                $score_input = clean_input($score, array("float"));
-
-                                if (is_int($key_input) && is_float($score_input)) {
-                                    $PROCESSED["scores"][$key_input] = $score_input;
-                                }
-                            }
-                        }
-                    } else {
-                        add_error($translate->_("Invalid scores provided."));
-                    }
-
-                    // comments
-                    if (isset($request["comments"])) {
-                        if (is_array($request["comments"])) {
-                            foreach($request["comments"] as $gafelement_id => $comment) {
-                                $key_input = clean_input($gafelement_id, array("int"));
-                                $comment_input = clean_input($comment, array("trim", "striptags"));
-
-                                if (is_int($key_input) && is_string($comment_input)) {
-                                    $PROCESSED["comments"][$key_input] = $comment_input;
-                                }
-                            }
-                        }
-                    }
-
-                    // custom grade
-                    if (isset($request["custom_grade"])) {
-                        $PROCESSED["custom_grade"] = clean_input($request["custom_grade"], array("trim"));
-                    }
-
-                    // calculated grade
-                    if (isset($request["calculated_grade"])) {
-                        $PROCESSED["calculated_grade"] = clean_input($request["calculated_grade"], array("float"));
-                    }
-
-                    // insert scores into the Assessment Grade Form Elements table for this assessment and learner
-                    if ($PROCESSED["assessment_id"] && $PROCESSED["proxy_id"] && $PROCESSED["scores"]) {
-                        
-                        $model = new Models_Assessment_Grade_Form_Element(array('proxy_id' => $PROCESSED["proxy_id"], 'assessment_id' => $PROCESSED["assessment_id"]));
-                    
-                        // Delete all by proxy and assessment id
-                        $delete = $model->deleteAllByProxyIDAssessmentID();
-
-                        // Insert new scores
-                        $model->insertNewScores($PROCESSED["scores"]);
-                    }
-
-                    // insert comments into the Assessment Grade Form Comments table for this assessment and learner
-                    if ($PROCESSED["assessment_id"] && $PROCESSED["proxy_id"] && $PROCESSED["comments"]) {
-
-                        $model = new Models_Assessment_Grade_Form_Comment(array('proxy_id' => $PROCESSED["proxy_id"], 'assessment_id' => $PROCESSED["assessment_id"]));
-
-                        // Delete all by proxy and assessment id
-                        $delete = $model->deleteAllByProxyIDAssessmentID();
-
-                        // Insert new scores
-                        $model->insertNewComments($PROCESSED["comments"]);
-                    }
-
-                    require(ENTRADA_ABSOLUTE."/core/library/Entrada/gradebook/handlers.inc.php");
-
-                    // assessment
-                    $assessment_model = new Models_Gradebook_Assessment(array("assessment_id" => $PROCESSED["assessment_id"]));
-                    $assessment = $assessment_model->fetchAssessmentByIDWithMarkingScheme();
-
-                    if (isset($PROCESSED["custom_grade"])) {
-                        $storage_grade = get_storage_grade($PROCESSED["custom_grade"], $assessment);
-                    }
-                    elseif (isset($PROCESSED["calculated_grade"])) {
-                        $storage_grade = $PROCESSED["calculated_grade"];
-                    }
-
-                    if (isset($storage_grade)) {
-
-                        $threshold_notified = $storage_grade < $assessment["grade_threshold"] ? 0 : 1;
-
-                        // assessment grade
-                        $assessment_grade_model = new Models_Assessment_Grade(array("assessment_id" => $PROCESSED["assessment_id"], "proxy_id" => $PROCESSED["proxy_id"], "threshold_notified" => $threshold_notified));
-                        $assessment_grade = $assessment_grade_model->fetchRowByAssessmentIDProxyID();
-                        
-                        if ($assessment_grade) {
-                            $assessment_grade->setValue($storage_grade);
-                            $dbresult = $assessment_grade->update();
-                        }
-                        else {
-                            $assessment_grade_model->setValue($storage_grade);
-                            $dbresult = $assessment_grade_model->insert();
-                        }
-                    }
-
-                    if ($dbresult) {
-                        $result = array("status" => "success", "result" => $result);
+                    if ($update) {
+                        $response = array("status" => "success", "msg" => $translate->_("Update successful."));
                     }
                     else {
-                        $result = array("status" => "error", "msg" => $ERRORSTR);
+                        $response = array("status" => "error", "msg" => $ERRORSTR);
                     }
-
-                    echo json_encode($result);
-
+                    echo json_encode($response);
                 break;
-                */
+                // DEPRECATED: This method now moved to core/library/modules/admin/gradebook/assessments/api-forms.inc.php
                 case "add_grade_exception":
 
                     // assessment id
@@ -1039,6 +871,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_FORMS"))) {
                     }
 
                 break;
+                // DEPRECATED: This method now moved to core/library/modules/admin/gradebook/assessments/api-forms.inc.php
                 case "remove_grade_exception":
 
                     // aexception id
@@ -1066,6 +899,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_FORMS"))) {
                     }
 
                 break;
+                // DEPRECATED: This method now moved to core/library/modules/admin/gradebook/assessments/api-forms.inc.php
                 case "save_grade_exception":
 
                     // aexception id
@@ -1106,6 +940,65 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_FORMS"))) {
                         echo json_encode(array("status" => "fail"));
                     }
 
+                break;
+                case "publish-form":
+                    // Validate posted form identifier
+                    if (isset($request["form_id"]) && $tmp_input = clean_input($request["form_id"], "int")) {
+                        $PROCESSED["form_id"] = $tmp_input;
+                    } else {
+                        add_error($translate->_("Invalid form identifier provided."));
+                    }
+
+                    $forms_api->setFormID($PROCESSED["form_id"]);
+                    if (!$forms_api->publishForm()) {
+                        echo json_encode(array("status" => "error", "data" => $forms_api->getErrorMessages()));
+                    } else {
+                        if (!$form_data = $forms_api->fetchFormData()) {
+                            echo json_encode(array("status" => "error","data" => $forms_api->getErrorMessages()));
+                        } else {
+                            echo json_encode(array(
+                                "status" => "success",
+                                "message" => $translate->_("The form has been published."),
+                                "data" => $form_data["objectives"]
+                            ));
+                        }
+                    }
+
+                    break;
+                case "update-form-item-order" :
+                    if (isset($request["order_array"]) && is_array($request["order_array"])) {
+                        foreach ($request["order_array"] as $element_id) {
+                            $tmp_input = clean_input($element_id, "int");
+                            if ($tmp_input) {
+                                $PROCESSED["element_ids"][] = $tmp_input;
+                            }
+                        }
+                    }
+                    if (isset($PROCESSED["element_ids"]) && !empty($PROCESSED["element_ids"])) {
+                        $i = 0;
+                        $form_element_model = new Models_Assessments_Form_Element();
+                        foreach ($PROCESSED["element_ids"] as $element_id) {
+                            $form_element = $form_element_model->fetchRowByID($element_id);
+                            if ($form_element->getRubricID()) {
+                                //If the element is part of a rubric then update all the items in the rubric to have the same order
+                                $rubric_elements = $form_element_model->fetchAllByFormIDRubricID($form_element->getFormID(), $form_element->getRubricID());
+                                foreach($rubric_elements as $element) {
+                                    if (!$element->fromArray(array("order" => $i))->update()) {
+                                        $ERROR++;
+                                    }
+                                }
+                            }
+                            if (!$form_element->fromArray(array("order" => $i))->update()) {
+                                $ERROR++;
+                            }
+                            $i++;
+                        }
+                        if ($ERROR) {
+                            echo json_encode(array("status" => "error", "data" => $translate->_("Failed to update order")));
+                        } else {
+                            echo json_encode(array("status" => "success", "data" => $translate->_("Changes Saved")));
+                        }
+                    }
                 break;
                 default:
                     echo json_encode(array("status" => "error", "data" => $translate->_("Invalid POST method.")));
@@ -1184,7 +1077,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_FORMS"))) {
                         $date_format = $PROCESSED["date_format"] == "list" ? "D M d/y h:ia" : "Y-m-d";
 
                         foreach ($forms as $form) {
-                            $data[] = array("form_id" => $form["form_id"], "title" => $form["title"], "created_date" => ($form["created_date"] && !is_null($form["created_date"]) ? date($date_format, $form["created_date"]) : $translate->_("N/A")), "item_count" => $form["item_count"]);
+                            $data[] = array("form_id" => $form["form_id"], "category" => $form["category"], "title" => $form["title"], "created_date" => ($form["created_date"] && !is_null($form["created_date"]) ? date($date_format, $form["created_date"]) : $translate->_("N/A")), "item_count" => $form["item_count"]);
                         }
                         echo json_encode(array("results" => count($data), "data" => array("total_forms" => Models_Assessments_Form::countAllRecordsBySearchTerm($PROCESSED["search_term"], $PROCESSED["filters"], $PROCESSED["rubric_id"], $PROCESSED["item_id"]), "forms" => $data)));
                     } else {
@@ -1193,11 +1086,11 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_FORMS"))) {
                     }
                 break;
                 case "get-form-data" : 
-
                     if (isset($request["form_id"]) && $tmp_input = clean_input($request["form_id"], "int")) {
                         $PROCESSED["form_id"] = $tmp_input;
                     }
 
+                    // TODO: In the future, move the getCompleteFormData logic to use the Forms API.
                     $form_model = new Models_Assessments_Form(array('form_id' => $PROCESSED["form_id"]));
                     $results = $form_model->getCompleteFormData($PROCESSED["form_id"]);
 
@@ -1208,7 +1101,12 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_FORMS"))) {
                     }
 
                 break;
-                case "get-rendered-form" : 
+                // DEPRECATED: This method now moved to core/library/modules/admin/gradebook/assessments/api-forms.inc.php
+                case "get-rendered-form" :
+
+                    if (isset($request["portfolio_id"]) && $tmp_input = clean_input($request["portfolio_id"], "int")) {
+                        $PROCESSED["portfolio_id"] = $tmp_input;
+                    }
 
                     if (isset($request["form_id"]) && $tmp_input = clean_input($request["form_id"], "int")) {
                         $PROCESSED["form_id"] = $tmp_input;
@@ -1240,7 +1138,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_FORMS"))) {
                     $form_model = new Models_Assessments_Form(array("form_id" => $PROCESSED["form_id"]));
                     $results = $form_model->getCompleteFormData($PROCESSED["assessment_id"], $PROCESSED["proxy_id"]);
 
-                     if ($results) {
+                    if ($results) {
                         // Outputs fully formed html of a form
                         $form_view = new Views_Gradebook_Assessments_Form(array("data" => $results, "edit_weights" => $PROCESSED["edit_weights"], "edit_scores" => $PROCESSED["edit_scores"], "edit_comments" => $PROCESSED["edit_comments"]));
                         $form_view->render(array(), true);
@@ -1249,6 +1147,28 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_FORMS"))) {
                     }
 
                 break;
+                // DEPRECATED: This method now moved to core/library/modules/admin/gradebook/assessments/api-forms.inc.php
+                case "get-rendered-assignment-portfolio-selector" :
+                    $PROCESSED = Entrada_Utilities::getCleanUrlParams(array(
+                        "portfolio_id" => "int",
+                        "proxy_id" => "int"
+                    ));
+                    $portfolio_selector_view = new Views_Gradebook_Assessments_Portfolio_Menu(array("portfolio_id" => $PROCESSED["portfolio_id"],
+                        "proxy_id" => $PROCESSED["proxy_id"]));
+                    $portfolio_selector_view->render(array(), true);
+
+                break;
+                // DEPRECATED: This method now moved to core/library/modules/admin/gradebook/assessments/api-forms.inc.php
+                case "get-rendered-assignment-portfolio" :
+                    $PROCESSED = Entrada_Utilities::getCleanUrlParams(array(
+                        "portfolio_id" => "int",
+                        "proxy_id" => "int"
+                    ));
+                    $portfolio_view = new Views_Gradebook_Assessments_Portfolio(array("portfolio_id" => $PROCESSED["portfolio_id"],
+                        "proxy_id" => $PROCESSED["proxy_id"]));
+                    $portfolio_view->render(array(), true);
+                break;
+                // DEPRECATED: This method now moved to core/library/modules/admin/gradebook/assessments/api-forms.inc.php
                 case "get-rendered-assignment-file" : 
 
                     $PROCESSED = Entrada_Utilities::getCleanUrlParams(array(
@@ -1287,6 +1207,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_FORMS"))) {
                     }                    
 
                 break;
+                // DEPRECATED: This method now moved to core/library/modules/admin/gradebook/assessments/api-forms.inc.php
                 case "get-rendered-file-selector" : 
 
                     if (isset($request["proxy_id"])) {
@@ -1330,6 +1251,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_FORMS"))) {
                     }
 
                 break;
+                // DEPRECATED: This method now moved to core/library/modules/admin/gradebook/assessments/api-forms.inc.php
                 case "get-student-grade" : 
 
                     $PROCESSED = Entrada_Utilities::getCleanUrlParams(array(
@@ -1350,6 +1272,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_FORMS"))) {
                     echo json_encode($result);
 
                 break;
+                // DEPRECATED: This method now moved to core/library/modules/admin/gradebook/assessments/api-forms.inc.php
                 case "get-storage-grade" : 
 
                     $PROCESSED = Entrada_Utilities::getCleanUrlParams(array(
@@ -1369,6 +1292,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_FORMS"))) {
                     echo json_encode($result);
 
                 break;
+                // DEPRECATED: This method now moved to core/library/modules/admin/gradebook/assessments/api-forms.inc.php
                 case "get-grade-exceptions" : 
 
                     $PROCESSED = Entrada_Utilities::getCleanUrlParams(array(
@@ -1441,26 +1365,6 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_FORMS"))) {
                     }
 
                 break;
-                case "get-child-objectives" :
-                    if (isset($request["parent_id"]) && $tmp_input = clean_input(strtolower($request["parent_id"]), array("trim", "int"))) {
-                        $PROCESSED["parent_id"] = $tmp_input;
-                    } else {
-                        $PROCESSED["parent_id"] = 0;
-                    }
-
-                    $parent_objective = Models_Objective::fetchRow($PROCESSED["parent_id"]);
-                    $child_objectives = Models_Objective::fetchAllByParentID($ENTRADA_USER->getActiveOrganisation(), $PROCESSED["parent_id"]);
-
-                    if ($child_objectives) {
-                        $data = array();
-                        foreach ($child_objectives as $objective) {
-                            $data[] = array("target_id" => $objective->getID(), "target_parent" => $objective->getParent(), "target_label" => $objective->getName(), "target_children" => Models_Objective::countObjectiveChildren($objective->getID()));
-                        }
-                        echo json_encode(array("status" => "success", "data" => $data, "parent_id" => ($parent_objective ? $parent_objective->getParent() : "0"), "parent_name" => ($parent_objective ? $parent_objective->getName() : "0"), "level_selectable" => 1));
-                    } else {
-                        echo json_encode(array("status" => "error", "data" => $translate->_("No objectives found to display.")));
-                    }
-                break;
                 case "get-form-authors" :
                     if (isset($request["search_value"]) && $tmp_input = clean_input(strtolower($request["search_value"]), array("trim", "striptags"))) {
                         $PROCESSED["search_value"] = $tmp_input;
@@ -1513,6 +1417,118 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_FORMS"))) {
                 default:
                     echo json_encode(array("status" => "error", "data" => $translate->_("Invalid GET method.")));
                 break;
+                case "get-child-objectives" :
+                    if (isset($request["parent_id"]) && $tmp_input = clean_input(strtolower($request["parent_id"]), array("trim", "int"))) {
+                        $PROCESSED["parent_id"] = $tmp_input;
+                    } else {
+                        $PROCESSED["parent_id"] = 0;
+                    }
+
+                    $parent_objective = Models_Objective::fetchRow($PROCESSED["parent_id"]);
+                    $child_objectives = Models_Objective::fetchAllByParentID($ENTRADA_USER->getActiveOrganisation(), $PROCESSED["parent_id"]);
+
+                    if ($child_objectives) {
+                        $data = array();
+                        foreach ($child_objectives as $objective) {
+                            $data[] = array("target_id" => $objective->getID(), "target_parent" => $objective->getParent(), "target_label" => $objective->getName(), "target_children" => Models_Objective::countObjectiveChildren($objective->getID()));
+                        }
+                        echo json_encode(array("status" => "success", "data" => $data, "parent_id" => ($parent_objective ? $parent_objective->getParent() : "0"), "parent_name" => ($parent_objective ? $parent_objective->getName() : "0"), "level_selectable" => 1));
+                    } else {
+                        echo json_encode(array("status" => "error", "data" => $translate->_("No objectives found to display.")));
+                    }
+                    break;
+                case "get-objectives-by-depth" :
+                    if (isset($request["node_id"]) && $tmp_input = clean_input(strtolower($request["node_id"]), array("trim", "int"))) {
+                        $PROCESSED["node_id"] = $tmp_input;
+                    } else {
+                        $PROCESSED["node_id"] = null;
+                    }
+
+                    if (isset($request["depth"]) && $tmp_input = clean_input(strtolower($request["depth"]), array("trim", "int"))) {
+                        $PROCESSED["depth"] = $tmp_input;
+                    } else {
+                        $PROCESSED["depth"] = null;
+                    }
+
+                    if (isset($request["objective_id"]) && $tmp_input = clean_input(strtolower($request["objective_id"]), array("trim", "int"))) {
+                        $PROCESSED["objective_id"] = $tmp_input;
+                    } else {
+                        $PROCESSED["objective_id"] = null;
+                    }
+
+                    if (isset($request["course_id"]) && $tmp_input = clean_input(strtolower($request["course_id"]), array("trim", "int"))) {
+                        $PROCESSED["course_id"] = $tmp_input;
+                    } else {
+                        $PROCESSED["course_id"] = null;
+                    }
+
+                    $child_objectives = false;
+                    if ($PROCESSED["node_id"]) {
+
+                        if ($PROCESSED["course_id"]) {
+                            $tree_object = new Entrada_CBME_ObjectiveTree(array("actor_proxy_id" => $ENTRADA_USER->getActiveId(), "actor_organisation_id" => $ENTRADA_USER->getActiveOrganisation(), "course_id" => $PROCESSED["course_id"]));
+                            $child_objectives = $tree_object->fetchBranch($PROCESSED["node_id"], $PROCESSED["depth"], "o.objective_code", true);
+                            foreach ($child_objectives as $objective) {
+                                $objective["node_id"] = $objective["cbme_objective_tree_id"];
+                                $children = $tree_object->fetchBranch($objective["node_id"], ($objective["depth"] + 1), "o.objective_code");
+                                $objective["has_children"] = $children && !empty($children) ? true : false;
+                                $data[] = $objective;
+                            }
+                        } else {
+                            add_error($translate->_("No course provided."));
+                        }
+                    } elseif ($PROCESSED["objective_id"]) {
+
+                        $child_objectives = Models_Objective::fetchAllByParentID($ENTRADA_USER->getActiveOrganisation(), $PROCESSED["objective_id"]);
+                        if ($child_objectives) {
+                            $data = array();
+                            foreach ($child_objectives as $objective) {
+                                $objective = $objective->toArray();
+                                $metadata = isset($objective["objective_metadata"]) ? json_decode($objective["objective_metadata"]) : null;
+                                $children = Models_Objective::fetchAllByParentID($ENTRADA_USER->getActiveOrganisation(), $objective["objective_id"]);
+                                $objective["has_children"] = $children && !empty($children) ? true : false;
+                                $objective["node_id"] = null;
+                                $objective["depth"] = null;
+                                $objective["course_id"] = null;
+                                $objective["tree_node_id"] = isset($metadata->tree_node_id) ? $metadata->tree_node_id : null;
+                                $data[] = $objective;
+                            }
+                        }
+                    } else {
+                        add_error($translate->_("No node or objective provided."));
+                    }
+
+                    if (!has_error()) {
+                        if ($child_objectives) {
+                            echo json_encode(array("status" => "success", "data" => $data));
+                        } else {
+                            echo json_encode(array("status" => "success", "data" => array()));
+                        }
+                    } else {
+                        echo json_encode(array("status" => "error", "msg" => $ERRORSTR));
+                    }
+                    break;
+
+                case "get-objective-sets-by-course" :
+                    if (isset($request["course_id"]) && $tmp_input = clean_input(strtolower($request["course_id"]), array("trim", "int"))) {
+                        $PROCESSED["course_id"] = $tmp_input;
+                    } else {
+                        $PROCESSED["course_id"] = null;
+                    }
+
+                    $objective_model = new Entrada_CBME_CourseObjective();
+                    $data = $objective_model->fetchObjectiveSetsByCourse($ENTRADA_USER->getActiveOrganisation(), $PROCESSED["course_id"], $ENTRADA_USER->getActiveId());
+
+                    if (!has_error()) {
+                        if (!empty($data)) {
+                            echo json_encode(array("status" => "success", "data" => $data));
+                        } else {
+                            echo json_encode(array("status" => "error", "msg" => array($translate->_("No objective sets found."))));
+                        }
+                    } else {
+                        echo json_encode(array("status" => "error", "msg" => $ERRORSTR));
+                    }
+                    break;
             }
         break;
         default :

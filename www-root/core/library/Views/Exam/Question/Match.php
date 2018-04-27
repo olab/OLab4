@@ -125,7 +125,7 @@ class Views_Exam_Question_Match extends Views_Deprecated_Base {
                 } else {
                     $selected = "";
                 }
-                $answer_options_array[] = "<option value=\"" . $answer->getOrder() . "\"" . $selected . ">" . $answer->getOrder() . "</option>";
+                $answer_options_array[] = "<option value=\"" . $answer->getOrder() . "\"" . $selected . " data-option-number=\"" . $answer->getOrder() . "\">" . $answer->getOrder() . "</option>";
             }
         }
 

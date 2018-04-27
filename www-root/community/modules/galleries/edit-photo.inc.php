@@ -73,13 +73,13 @@ if ($RECORD_ID) {
 						if (isset($_FILES["photo_file"])) {
 							switch($_FILES["photo_file"]["error"]) {
 								case 0 :
-									if (@in_array($photo_mimetype = strtolower(trim($_FILES["photo_file"]["type"])), array_keys($VALID_MIME_TYPES))) {
+									if (@in_array($photo_mimetype = mime_content_type($_FILES["photo_file"]["tmp_name"]), array_keys($VALID_MIME_TYPES))) {
 										if (($photo_filesize = (int) trim($_FILES["photo_file"]["size"])) <= $VALID_MAX_FILESIZE) {
 											$update_photo_file				= true;
 											$PROCESSED["photo_mimetype"]	= $photo_mimetype;
 											$PROCESSED["photo_filesize"]	= $photo_filesize;
 											$PROCESSED["photo_filename"]	= useable_filename(trim($_FILES["photo_file"]["name"]));
-											$photo_file_extension			= strtoupper($VALID_MIME_TYPES[strtolower(trim($_FILES["photo_file"]["type"]))]);
+											$photo_file_extension			= strtoupper($VALID_MIME_TYPES[$photo_mimetype]);
 
 											if ((!defined("COMMUNITY_STORAGE_GALLERIES")) || (!@is_dir(COMMUNITY_STORAGE_GALLERIES)) || (!@is_writable(COMMUNITY_STORAGE_GALLERIES))) {
 												$ERROR++;
@@ -397,7 +397,7 @@ if ($RECORD_ID) {
 			}
 		} else {
 			$NOTICE++;
-			$NOTICESTR[] = "The photo that you are trying to edit was deactivated <strong>".date(DEFAULT_DATE_FORMAT, $photo_record["updated_date"])."</strong> by <strong>".html_encode(get_account_data("firstlast", $photo_record["updated_by"]))."</strong>.<br /><br />If there has been a mistake or you have questions relating to this issue please contact the MEdTech Unit directly.";
+			$NOTICESTR[] = "The photo that you are trying to edit was deactivated <strong>".date(DEFAULT_DATETIME_FORMAT, $photo_record["updated_date"])."</strong> by <strong>".html_encode(get_account_data("firstlast", $photo_record["updated_by"]))."</strong>.<br /><br />If there has been a mistake or you have questions relating to this issue please contact the MEdTech Unit directly.";
 
 			echo display_notice();
 

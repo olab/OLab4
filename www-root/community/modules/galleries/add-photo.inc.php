@@ -65,13 +65,13 @@ if ($RECORD_ID) {
 									if (isset($_FILES["photo_files"]["error"][$tmp_photo_id])) {
 										switch($_FILES["photo_files"]["error"][$tmp_photo_id]) {
 											case 0 :
-												if (@in_array($photo_mimetype = strtolower(trim($_FILES["photo_files"]["type"][$tmp_photo_id])), array_keys($VALID_MIME_TYPES))) {
+												if (@in_array($photo_mimetype = mime_content_type($_FILES["photo_files"]["tmp_name"][$tmp_photo_id]), array_keys($VALID_MIME_TYPES))) {
 													$photo_filesize = (int) trim($_FILES["photo_files"]["size"][$tmp_photo_id]);
 													if (($photo_filesize) && ($photo_filesize <= $VALID_MAX_FILESIZE)) {
 														$PROCESSED["photo_mimetype"]	= $photo_mimetype;
 														$PROCESSED["photo_filesize"]	= $photo_filesize;
 														$PROCESSED["photo_filename"]	= $photo_name;
-														$photo_file_extension			= strtoupper($VALID_MIME_TYPES[strtolower(trim($_FILES["photo_files"]["type"][$tmp_photo_id]))]);
+														$photo_file_extension			= strtoupper($VALID_MIME_TYPES[$photo_mimetype]);
 
 													}
 												} else {

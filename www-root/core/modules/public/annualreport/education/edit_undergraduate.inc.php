@@ -273,7 +273,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 						</tr>
 						<tr>
 							<td></td>
-							<td><label for="clerkship_seminar_hours" class="form-required">Clerkship Seminar</label></td>							
+							<td><label for="clerkship_seminar_hours" class="form-required"><?php echo $translate->_("Clerkship Seminar"); ?></label></td>
 							<td><?php echo ((isset($undergraduateTeachingResult["clerkship_seminar_hours"])) ? html_encode($undergraduateTeachingResult["clerkship_seminar_hours"]) : html_encode($PROCESSED["clerkship_seminar_hours"])); ?></td>
 						</tr>
 						<tr>

@@ -86,7 +86,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_REPORTS"))) {
 	?>
 <h1>Podcast Usage Report</h1>
 	<div class="content-small" style="margin-bottom: 10px">
-		<strong>Date Range:</strong> <?php echo date(DEFAULT_DATE_FORMAT, $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_start"]); ?> <strong>to</strong> <?php echo date(DEFAULT_DATE_FORMAT, $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_finish"]); ?>
+		<strong>Date Range:</strong> <?php echo date(DEFAULT_DATETIME_FORMAT, $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_start"]); ?> <strong>to</strong> <?php echo date(DEFAULT_DATETIME_FORMAT, $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_finish"]); ?>
 	</div>
 
 	<?php
@@ -267,7 +267,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_REPORTS"))) {
 					echo "	<td>".($key + 1).".</td>\n";
 					echo "	<td>\n";
 					echo "		<a href=\"".ENTRADA_URL."/events?id=".$result["event_id"]."\" style=\"font-weight: bold\" target=\"_blank\">".html_encode(limit_chars($result["event_title"], 50))."</a> <span class=\"content-small\">(".(int) $result["accesses"]." time".(($result["accesses"] != 1) ? "s" : "").")</span>\n";
-					echo "		<div class=\"content-small\">Event on ".date(DEFAULT_DATE_FORMAT, $result["event_start"])."; Class of ".$result["event_cohort"]."</div>\n";
+					echo "		<div class=\"content-small\">Event on ".date(DEFAULT_DATETIME_FORMAT, $result["event_start"])."; Class of ".$result["event_cohort"]."</div>\n";
 					echo "	</td>\n";
 					echo "	<td style=\"vertical-align: top\"><a href=\"".ENTRADA_URL."/file-event.php?id=".$result["podcast_id"]."\" style=\"font-size: 11px\">".html_encode($result["file_name"])."</a></td>\n";
 					echo "</tr>\n";

@@ -91,9 +91,13 @@ class Models_Assessments_Progress_Response extends Models_Base {
         return $this->updated_by;
     }
 
-    public function getDeletedDate()
-    {
+    public function getDeletedDate() {
         return $this->deleted_date;
+    }
+
+    public function setDeletedDate($deleted_date = null) {
+        $this->deleted_date = $deleted_date;
+        return $this;
     }
 
     public static function fetchRowByID($epresponse_id, $deleted_date = NULL) {
@@ -139,6 +143,22 @@ class Models_Assessments_Progress_Response extends Models_Base {
         ));
     }
 
+    public static function fetchAllByAprogressIDIncludeDeleted($aprogress_id) {
+        $self = new self();
+        return $self->fetchAll(
+            array(
+                array(
+                    "key" => "aprogress_id",
+                    "value" => $aprogress_id,
+                    "method" => "="
+                ),
+            ),
+            "=",
+            "AND",
+            "afelement_id"
+        );
+    }
+
     public static function fetchAllRecords($deleted_date = NULL) {
         $self = new self();
         return $self->fetchAll( array(
@@ -155,6 +175,22 @@ class Models_Assessments_Progress_Response extends Models_Base {
         ));
     }
 
+    /**
+     * Fetch the progress response, but join in the item response's relevant related information (flagging, item id)
+     *
+     * @param $aprogress_id
+     * @return mixed
+     */
+    public static function fetchAllByAprogressIDJoinIresponse($aprogress_id) {
+        global $db;
+        $query = "SELECT a.*, b.`flag_response`, b.`ardescriptor_id`, b.`item_id`, b.`order`
+                  FROM `cbl_assessment_progress_responses` AS a
+                  LEFT JOIN `cbl_assessments_lu_item_responses` AS b
+                  ON b.`iresponse_id` = a.`iresponse_id`
+                  WHERE a.`aprogress_id` = ?";
+        return $db->GetAll($query, array($aprogress_id));
+    }
+
     public static function fetchAllByFormID($form_id) {
         $self = new self();
         return $self->fetchAll(array(
@@ -162,14 +198,23 @@ class Models_Assessments_Progress_Response extends Models_Base {
         ));
     }
 
-    public function delete() {
+    public function delete($soft = true) {
         global $db;
-
-        $query = "DELETE FROM `".Models_Assessments_Progress_Response::$table_name."` WHERE `aprogress_id` = ? AND `afelement_id` = ?";
-        if ($db->Execute($query, array($this->aprogress_id, $this->afelement_id))) {
-            return true;
+        if ($soft) {
+            $time = time();
+            $query = "UPDATE `" . Models_Assessments_Progress_Response::$table_name . "` SET `deleted_date` = {$time} WHERE `aprogress_id` = ? AND `afelement_id` = ?";
+            if ($db->Execute($query, array($this->aprogress_id, $this->afelement_id))) {
+                return true;
+            } else {
+                return false;
+            }
         } else {
-            return false;
+            $query = "DELETE FROM `" . Models_Assessments_Progress_Response::$table_name . "` WHERE `aprogress_id` = ? AND `afelement_id` = ?";
+            if ($db->Execute($query, array($this->aprogress_id, $this->afelement_id))) {
+                return true;
+            } else {
+                return false;
+            }
         }
     }
 
@@ -201,5 +246,38 @@ class Models_Assessments_Progress_Response extends Models_Base {
             }
         }
         return $progress_ids;
+    }
+
+    public static function fetchAllByFormIDDistributionIDAfelementID($form_id, $distribution_id, $afelement_id) {
+        global $db;
+        $responses = array();
+        $AND_AFELEMENT_ID = "";
+
+        if (is_array($afelement_id)) {
+            $AND_AFELEMENT_ID = " AND a.`afelement_id` IN (" . implode(",", $afelement_id) . ")";
+        } else {
+            $AND_AFELEMENT_ID = " AND a.`afelement_id` = " . $db->qstr($afelement_id);
+        }
+
+        $query =    " SELECT * FROM `cbl_assessment_progress_responses` AS a
+                      JOIN `cbl_assessment_form_elements` AS b
+                      ON a.`afelement_id` = b.`afelement_id`
+                      WHERE a.`form_id` = ?
+                      AND a.`adistribution_id` = ?
+                      $AND_AFELEMENT_ID
+                      AND b.`element_type` = 'item'
+                      AND a.`deleted_date` IS NULL
+                      AND b.`deleted_date` IS NULL
+                      ORDER BY b.`order`
+                    ";
+
+        $results = $db->GetAll($query, array($form_id, $distribution_id));
+        if ($results) {
+            foreach ($results as $result) {
+                $responses[] = new self($result);
+            }
+        }
+
+        return $responses;
     }
 }

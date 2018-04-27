@@ -25,10 +25,30 @@ $query	= "	SELECT *
 			AND `page_active` = '1'";
 $result	= $db->GetRow($query);
 if ($result) {
+    $allow_to_load = false;
 
+    if ($LOGGED_IN) {
+        if ($COMMUNITY_MEMBER) {
+            if ((int) $result["allow_member_view"]) {
+                $allow_to_load = true;
+            }
+        } elseif ((int) $result["allow_troll_view"]) {
+            $allow_to_load = true;
+        }
+    } elseif ((int) $result["allow_public_view"]) {
+        $allow_to_load = true;
+    }
+
+    if ($COMMUNITY_ADMIN) {
+        $allow_to_load = true;
+    }
+
+    if ($allow_to_load) {
 	Entrada_Utilities_Flashmessenger::displayMessages($MODULE);
 
+    if ($COMMUNITY_ADMIN) {
 	echo "<a id=\"community-edit-button\" href=\"". COMMUNITY_URL.$COMMUNITY_URL .":pages?action=edit&amp;page=". ($result["page_url"] != "" ? $result["cpage_id"] : "home") ."\" class=\"btn btn-primary pull-right\">Edit Page</a>";
+    }
 
 	if (isset($result["page_title"]) && trim($result["page_title"]) != "") {
 		echo "<h1>".html_encode($result["page_title"])."</h1>\n";
@@ -242,7 +262,7 @@ if ($result) {
 				?>
 				<div style="clear:both"></div>
 				<section>
-					<h2 class="history">Community History</h2>
+					<h2 class="history"><?php echo $translate->_("Community History"); ?></h2>
 					<?php echo $history_messages; ?>
 				</section>
 				<?php
@@ -272,7 +292,12 @@ if ($result) {
 				echo "</p>";
 			}
 		}
-	}
+    }
+    } else {
+        $url = COMMUNITY_URL . $COMMUNITY_URL;
+        header("Location: " . $url);
+        exit;
+    }
 } else {
 	$query	= "	SELECT *
 				FROM `community_pages`

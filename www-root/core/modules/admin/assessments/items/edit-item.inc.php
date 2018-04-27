@@ -62,6 +62,10 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ITEMS"))) {
         $PROCESSED["item_id"] = $tmp_input;
     }
 
+    if (isset($_POST["rating_scale_id"]) && $tmp_input = clean_input($_POST["rating_scale_id"], "int")) {
+        $PROCESSED["rating_scale_id"] = $tmp_input;
+    }
+
     if (!isset($PROCESSED["item_id"])) {
         // No posted ID to edit with
         echo display_error($translate->_("Please specify a item ID."));

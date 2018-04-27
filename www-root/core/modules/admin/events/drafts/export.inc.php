@@ -73,7 +73,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
 			$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["dstamp"],
 			0,
             $draft_id,
-			$_SESSION[APPLICATION_IDENTIFIER]["events"]["filters"],
+			false,
 			false);
 
 	if (!empty($learning_events["events"])) {
@@ -310,8 +310,8 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
 						
 						$row[$key] = implode("; ", $attached_links);
 						break;
-					case "parent_id":
-						if (is_null($event[$key]) || $event[$key] == 0) {
+					case "parent_event":
+						if (is_null($event["parent_id"]) || $event["parent_id"] == 0) {
 							$row[$key] = 1;
 						} else {
 							$row[$key] = 0;
@@ -325,6 +325,24 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
 						}
 						
 						break;
+                    case "free_text_objectives":
+                        $free_text_objectives = array();
+                        $query = "	SELECT *
+									FROM `event_objectives` eo
+									WHERE eo.`event_id` = " . $db->qstr($event["event_id"]) . "
+									AND eo.`objective_details` is NOT NULL
+									AND eo.`objective_details` != ''";
+                        $objs = $db->GetAll($query);
+                        if ($objs) {
+                            foreach ($objs as $o) {
+                                $free_text_objectives[] = $o["objective_details"];
+                            }
+                            $row[$key] = implode("; ", $free_text_objectives);
+                        } else {
+                            $row[$key] = html_encode(trim(strip_selected_tags($event["event_objectives"], array("font"))));
+                        }
+
+                        break;
 					default:
 						if (is_int($event[$key])) {
 							$row[$key] = (int) $event[$key];

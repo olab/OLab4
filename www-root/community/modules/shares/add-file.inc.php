@@ -93,28 +93,14 @@ if ($RECORD_ID) {
 											application_log("error", "User {$ENTRADA_USER->getID()} uploaded a file to shares without an extension.");
 										} else {
 											if (($file_filesize = (int) trim($_FILES["uploaded_file"]["size"][$tmp_file_id])) <= $VALID_MAX_FILESIZE) {
-												$finfo = new finfo(FILEINFO_MIME);
-												$type = $finfo->file($_FILES["uploaded_file"]["tmp_name"][$tmp_file_id]);
-												$type_array = explode(";", $type);
-												$mimetype = $type_array[0];
-												$PROCESSED["file_mimetype"]		= strtolower(trim($_FILES["uploaded_file"]["type"][$tmp_file_id]));
-												switch($PROCESSED["file_mimetype"]) {
-													case "application/x-forcedownload":
-													case "application/octet-stream":
-													case "\"application/octet-stream\"":
-													case "application/download":
-													case "application/force-download":
-														$PROCESSED["file_mimetype"] = $mimetype;
-													break;
-												}
-
-												$PROCESSED["file_version"]		= 1;
-												$PROCESSED["file_filesize"]		= $file_filesize;
-												$PROCESSED["file_filename"]		= useable_filename(trim($file_name));
+												$PROCESSED["file_mimetype"] = mime_content_type($_FILES["uploaded_file"]["tmp_name"][$tmp_file_id]);
+												$PROCESSED["file_version"] = 1;
+												$PROCESSED["file_filesize"] = $file_filesize;
+												$PROCESSED["file_filename"]	= useable_filename(trim($file_name));
 
 												if ((!defined("COMMUNITY_STORAGE_DOCUMENTS")) || (!@is_dir(COMMUNITY_STORAGE_DOCUMENTS)) || (!@is_writable(COMMUNITY_STORAGE_DOCUMENTS))) {
 													$ERROR++;
-													$ERRORSTR[] = "There is a problem with the document storage directory on the server; the " . SUPPORT_UNIT . " has been informed of this error, please try again later.";
+													$ERRORSTR[] = "There is a problem with the document storage directory on the server; the support unit has been informed of this error, please try again later.";
 
 													application_log("error", "The community document storage path [".COMMUNITY_STORAGE_DOCUMENTS."] does not exist or is not writable.");
 												}
@@ -142,7 +128,7 @@ if ($RECORD_ID) {
 									case 6 :
 									case 7 :
 										$ERROR++;
-										$ERRORSTR[]	= "Unable to store the new file on the server; the MEdTech Unit has been informed of this error, please try again later.";
+										$ERRORSTR[]	= "Unable to store the new file on the server; the support unit has been informed of this error, please try again later.";
 
 										application_log("error", "Community file upload error: ".(($_FILES["filename"]["error"] == 6) ? "Missing a temporary folder." : "Failed to write file to disk."));
 									break;
@@ -267,7 +253,6 @@ if ($RECORD_ID) {
 									$PROCESSED["updated_date"]	= time();
 									$PROCESSED["updated_by"]	= $ENTRADA_USER->getID();
 
-
 									unset($PROCESSED["csfile_id"]);
 									if ($db->AutoExecute("community_share_files", $PROCESSED, "INSERT")) {
 										if ($FILE_ID = $db->Insert_Id()) {
@@ -331,15 +316,15 @@ if ($RECORD_ID) {
 														if ($LOGGED_IN) {
 															if ($COMMUNITY_MEMBER) {
 																if (($COMMUNITY_ADMIN) || ($folder_record["allow_member_read"] == 1)) {
-																	$url = COMMUNITY_URL . $COMMUNITY_URL . ":" . $PAGE_URL . "?section=view-folder&id=" . $RECORD_ID;
+																	$url = COMMUNITY_URL.$COMMUNITY_URL.":".$PAGE_URL."?section=view-folder&id=".$RECORD_ID;
 																} elseif ($folder_record["allow_member_upload"] == 1){
-																	$url = COMMUNITY_URL . $COMMUNITY_URL . ":" . $PAGE_URL;
+																	$url = COMMUNITY_URL.$COMMUNITY_URL.":".$PAGE_URL;
 																}
 															} else {
 																if ($folder_record["allow_troll_read"] == 1) {
-																	$url = COMMUNITY_URL . $COMMUNITY_URL . ":" . $PAGE_URL . "?section=view-folder&id=" . $RECORD_ID;
+																	$url = COMMUNITY_URL.$COMMUNITY_URL.":".$PAGE_URL."?section=view-folder&id=".$RECORD_ID;
 																} elseif ($folder_record["allow_troll_upload"] == 1) {
-																	$url = COMMUNITY_URL . $COMMUNITY_URL . ":" . $PAGE_URL;
+																	$url = COMMUNITY_URL.$COMMUNITY_URL.":".$PAGE_URL;
 																}
 															}
 														}
@@ -349,16 +334,13 @@ if ($RECORD_ID) {
                                                         if (COMMUNITY_NOTIFICATIONS_ACTIVE) {
                                                             community_notify($COMMUNITY_ID, $FILE_ID, "file", COMMUNITY_URL.$COMMUNITY_URL.":".$PAGE_URL."?section=view-file&id=".$FILE_ID, $RECORD_ID, $PROCESSES["release_date"]);
                                                         }
-
-                                                        header("Location: " . $url);
-                                                        exit;
 													}
 												}
 											}
 										}
 									}
 
-									if (!$SUCCESS) {
+									if (!$SUCCESS && !Entrada_Utilities_Flashmessenger::getMessages($MODULE, "success", false)) {
 										/**
 										 * Because there was no success, check if the file_id was set... if it
 										 * was we need to delete the database record :( In the future this will
@@ -378,7 +360,7 @@ if ($RECORD_ID) {
 										}
 
 										$ERROR++;
-										$ERRORSTR[]	= "Unable to store the new file on the server; the MEdTech Unit has been informed of this error, please try again later.";
+										$ERRORSTR[]	= "Unable to store the new file on the server; the support unit has been informed of this error, please try again later.";
 
 										application_log("error", "Failed to move the uploaded Community file to the storage directory [".COMMUNITY_STORAGE_DOCUMENTS."/".$VERSION_ID."].");
 									}
@@ -387,8 +369,12 @@ if ($RECORD_ID) {
 								if ($ERROR) {
 									$STEP = 1;
 								}
-						
 							}
+
+							if ($SUCCESS || Entrada_Utilities_Flashmessenger::getMessages($MODULE, "success", false)) {
+                                header("Location: " . $url);
+                                exit;
+                            }
 						} else {
 							$ERROR++;
 							$ERRORSTR[]	 = "To upload a file to this folder you must select a local file from your computer.";
@@ -401,17 +387,17 @@ if ($RECORD_ID) {
 				}
 	
 				// Page Display
-				switch($STEP) {
+				switch ($STEP) {
 					case 1 :
-					default :					
-						if(count($file_uploads)<1){
+					default :
+						if (count($file_uploads) < 1) {
 							$file_uploads[] = array();
 						}
-						if ($ERROR) {
+						if (has_error()) {
 							echo display_error();
 							add_notice("There was an error while trying to upload your file(s). You will need to reselect the file(s) you wish to upload.");
 						}
-						if ($NOTICE) {
+						if (has_notice()) {
 							echo display_notice();
 						}
 						?>
@@ -732,7 +718,7 @@ if ($RECORD_ID) {
 												</colgroup>
 													<tr>
 														<td><input id="community-all-checkbox" class="permission-type-checkbox" type="radio" name="permission_acl_style" value="CourseCommunityEnrollment" checked="checked" /></td>
-														<td><label for="community-all-checkbox" class="content-small">All Community Members</label></td>
+														<td><label for="community-all-checkbox" class="content-small"><?php echo $translate->_("All Community Members"); ?></label></td>
 													</tr>
 													<tr>
 														<td><input id="course-group-checkbox" class="permission-type-checkbox" type="radio" name="permission_acl_style" value="CourseGroupMember" /></td>
@@ -871,12 +857,12 @@ if ($RECORD_ID) {
                                             </thead>
                                             <tbody>
                                                 <tr>
-                                                    <td class="left"><strong>Community Administrators</strong></td>
+                                                    <td class="left"><strong><?php echo $translate->_("Community Administrators"); ?></strong></td>
                                                     <td class="on"><input type="checkbox" id="allow_admin_read" name="allow_admin_read" value="1" checked="checked" onclick="this.checked = true" /></td>
                                                     <td><input type="checkbox" id="allow_admin_revision" name="allow_admin_revision" value="1" checked="checked" onclick="this.checked = true" /></td>
                                                 </tr>
                                                 <tr>
-                                                    <td class="left"><strong>Community Members</strong></td>
+                                                    <td class="left"><strong><?php echo $translate->_("Community Members"); ?></strong></td>
                                                     <td class="on"><input type="checkbox" id="allow_member_read" name="allow_member_read" value="1"<?php echo (((!isset($PROCESSED["allow_member_read"])) || ((isset($PROCESSED["allow_member_read"])) && ($PROCESSED["allow_member_read"] == 1))) ? " checked=\"checked\"" : ""); ?> /></td>
                                                     <td><input type="checkbox" id="allow_member_revision" name="allow_member_revision" value="1"<?php echo (((!isset($PROCESSED["allow_member_revision"])) || ((isset($PROCESSED["allow_member_revision"])) && ($PROCESSED["allow_member_revision"] == 1))) ? " checked=\"checked\"" : ""); ?> /></td>
                                                 </tr>
@@ -928,7 +914,6 @@ if ($RECORD_ID) {
 				}
 			}
 		} else {
-			
 			$ERROR++;
 			$ERRORSTR[] = "Your access level only allows you to upload one file and revisions of it. Any additional files can be uploaded as a new revision of that file without overwriting the current file.";
 			

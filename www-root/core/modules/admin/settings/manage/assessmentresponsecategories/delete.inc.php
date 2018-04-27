@@ -99,7 +99,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ASSESSMENT_RESPONSE_CATEGORIE
                         <?php foreach ($descriptors as $descriptor) { ?>
                             <tr class="descriptor" data-id="<?php echo html_encode($descriptor->getID()); ?>">
                                 <td><input type="checkbox" name="checked[<?php echo html_encode($descriptor->getID()); ?>]" value="<?php echo html_encode($descriptor->getID()); ?>" <?php echo html_encode((in_array($descriptor->getID(), $PROCESSED["delete"]) ? "checked=\"checked\"" : "")); ?> /></td>
-                                <td class="name"><a href="<?php echo ENTRADA_URL."/admin/settings/manage/assessmentresponsecategories?org=".$ORGANISATION_ID; ?>&section=edit&id=<?php echo html_encode($descriptor->getID()); ?>"><?php echo html_encode($descriptor->getDescriptor()); ?></a></td>
+                                <td><a href="<?php echo ENTRADA_URL."/admin/settings/manage/assessmentresponsecategories?org=".$ORGANISATION_ID; ?>&section=edit&id=<?php echo html_encode($descriptor->getID()); ?>"><?php echo html_encode($descriptor->getDescriptor()); ?></a></td>
                             </tr>
                         <?php } ?>
                         </tbody>

@@ -104,7 +104,7 @@ if ($PROCEED_TO && (stristr($PROCEED_TO, "file-course.php") || stristr($PROCEED_
             <?php
             foreach ($public_notices as $notice) {
                 echo "<li>";
-                echo "	<span class=\"content-small\">".date(DEFAULT_DATE_FORMAT, $notice["updated_date"])."</span>\n";
+                echo "	<span class=\"content-small\">".date(DEFAULT_DATETIME_FORMAT, $notice["updated_date"])."</span>\n";
                 echo "	<p>".trim(strip_selected_tags(clean_input($notice["notice_summary"], "html"), "p"))."</p>";
                 echo "</li>";
             }

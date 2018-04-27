@@ -118,7 +118,7 @@ if (communities_module_access($COMMUNITY_ID, $MODULE_ID, "delete-gallery")) {
 		<?php
 	} else {
 		$NOTICE++;
-		$NOTICESTR[] = "There are currently no galleries available in this community.<br /><br />".((communities_module_access($COMMUNITY_ID, $MODULE_ID, "add-gallery")) ? "As a community adminstrator you can add galleries by clicking <a href=\"".COMMUNITY_URL.$COMMUNITY_URL.":".$PAGE_URL."?section=add-gallery\">Add Photo Gallery</a>." : "Please check back later.");
+		$NOTICESTR[] = $translate->_("There are currently no galleries available in this community.<br /><br />").((communities_module_access($COMMUNITY_ID, $MODULE_ID, "add-gallery")) ? "As a community adminstrator you can add galleries by clicking <a href=\"".COMMUNITY_URL.$COMMUNITY_URL.":".$PAGE_URL."?section=add-gallery\">Add Photo Gallery</a>." : "Please check back later.");
 
 		echo display_notice();
 	}

@@ -73,6 +73,7 @@ class Models_Gradebook_Assessment_Collection extends Models_Base {
         $this->active = $active;
     }
 
+    /* @return bool|Models_Gradebook_Assessment_Collection */
     public function fetchRowByTitle($collection_title, $course_id, $active = 1) {
         $self = new self();
         return $self->fetchRow(array(
@@ -82,6 +83,7 @@ class Models_Gradebook_Assessment_Collection extends Models_Base {
         ));
     }
 
+    /* @return bool|Models_Gradebook_Assessment_Collection */
     public static function fetchRowByID($collection_id, $active = 1) {
         $self = new self();
         return $self->fetchRow(array(
@@ -110,7 +112,8 @@ class Models_Gradebook_Assessment_Collection extends Models_Base {
             return false;
         }
     }
-    
+
+    /* @return ArrayObject|Models_Gradebook_Assessment_Collection[] */
     public static function fetchAllRows() {
         $self = new self();
         return $self->fetchAll(array(
@@ -119,6 +122,7 @@ class Models_Gradebook_Assessment_Collection extends Models_Base {
         ));
     }
 
+    /* @return ArrayObject|Models_Gradebook_Assessment_Collection[] */
     public static function fetchAllRowsByCourseID($course_id) {
         $self = new self();
         return $self->fetchAll(array(

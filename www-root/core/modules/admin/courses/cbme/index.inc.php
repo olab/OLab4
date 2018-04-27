@@ -18,7 +18,7 @@
  * @author Organisation: Queen's University
  * @author Unit: School of Medicine
  * @author Developer: Josh Dillon <jdillon@queensu.ca>
- * @copyright Copyright 2014 Queen's University. All Rights Reserved.
+ * @copyright Copyright 2016 Queen's University. All Rights Reserved.
  *
  */
 
@@ -27,28 +27,41 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CBME"))) {
 } elseif ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
     header("Location: ".ENTRADA_URL);
     exit;
-} elseif (!$ENTRADA_ACL->amIAllowed('course', 'update', false)) {
+} elseif (!((new Entrada_Settings)->read("cbme_enabled") && $ENTRADA_ACL->amIAllowed(new CourseContentResource($COURSE_ID, $ENTRADA_USER->getActiveOrganisation()), "update"))) {
     $ONLOAD[]	= "setTimeout('window.location=\\'".ENTRADA_URL."/admin/".$MODULE."\\'', 15000)";
 
     $ERROR++;
-    $ERRORSTR[]	= "You do not have the permissions required to use this module.<br /><br />If you believe you are receiving this message in error please contact <a href=\"mailto:".html_encode($AGENT_CONTACTS["administrator"]["email"])."\">".html_encode($AGENT_CONTACTS["administrator"]["name"])."</a> for assistance.";
+    $ERRORSTR[]	= sprintf($translate->_("You do not have the permissions required to use this module.<br /><br />If you believe you are receiving this message in error please contact <a href=\"%s\">%s</a> for assistance."), "mailto:".html_encode($AGENT_CONTACTS["administrator"]["email"]), html_encode($AGENT_CONTACTS["administrator"]["name"]));
 
     echo display_error();
 
     application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] do not have access to this module [".$MODULE."]");
 } else {
     $course = Models_Course::get($COURSE_ID);
-
     if ($course) {
         courses_subnavigation($course->toArray(), "cbme");
-    }
 
-    echo "<h1>". $translate->_("Manage CBME") ."</h1>"; ?>
-    <div>
-        <div class="btn-group">
-            <a href="<?php echo ENTRADA_URL . "/admin/courses/cbme?id=" . html_encode($COURSE_ID) ?>" class="btn active"><?php echo $translate->_("CBME Dashboard") ?></a>
-            <a href="<?php echo ENTRADA_URL . "/admin/courses/cbme?section=curriculumtags&id=" . html_encode($COURSE_ID) ?>" class="btn"><?php echo $translate->_("Import Curriculum Tags") ?></a>
-        </div>
-    </div>
-    <?php
+        echo "<h1 class=\"muted\">" . $translate->_("Competency-Based Medical Education") . "</h1>";
+
+        include("cbme-setup.inc.php");
+
+        if ($cbme_checked) :
+            /**
+             * Render the Course CBME subnavigation
+             */
+            $navigation_view = new Views_Course_Cbme_Navigation();
+            $navigation_view->render(array(
+                "course_id" => $COURSE_ID,
+                "active_tab" => "getting_started"
+            )); ?>
+
+            <iframe src="https://docs.entrada.org/v/1.11/modules/admin-cbme/" style="width:100%; border:0; margin-top:15px; height:850px"></iframe>
+        <?php endif;
+    } else {
+        add_error($translate->_("You do not have the required permissions to edit this course resource."));
+
+        echo display_error();
+
+        application_log("notice", "Failed to provide a valid course identifer when attempting to edit a course resource.");
+    }
 }

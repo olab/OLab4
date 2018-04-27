@@ -798,7 +798,7 @@ if (!defined("IN_MANAGE_USER_STUDENTS")) {
 					<a id="add_clineval" href="<?php echo ENTRADA_URL; ?>/admin/users/manage/students?section=mspr&id=<?php echo $PROXY_ID; ?>" class="btn btn-small btn-success"><i class="icon-plus-sign icon-white"></i> Add Clinical Performance Evaluation Comment</a>
 				</div>
 				<div class="instructions">
-					<p>Comments should be copied in whole or in part from Clinical Performance Evaluations from the student's clerkship rotations and electives.</p>
+					<p>Comments should be copied in whole or in part from Clinical Performance Evaluations from the student's <?php echo $translate->_("clerkship rotations") ?> and electives.</p>
 					<p>There should be one comment for each core rotation and one per received elective.</p>
 				</div>
 				<div id="update-clineval-box" class="modal hide">
@@ -1462,17 +1462,17 @@ if (!defined("IN_MANAGE_USER_STUDENTS")) {
 	<div id="extracted-information-section">
 	
 		<div class="section">
-			<h3 title="Clerkship Core Rotations Completed Satisfactorily to Date Section"  class="collapsable collapsed">Clerkship Core Rotations Completed Satisfactorily to Date</h3>
+			<h3 title="Clerkship Core Rotations Completed Satisfactorily to Date Section"  class="collapsable collapsed"><?php echo $translate->_("Clerkship Core Rotations"); ?> Completed Satisfactorily to Date</h3>
 			<div id="clerkship-core-rotations-completed-satisfactorily-to-date-section"><?php echo display_clerkship_core_completed($clerkship_core_completed); ?></div>
 		</div>
 		
 		<div class="section">
-			<h3 title="Clerkship Core Rotations Pending Section"  class="collapsable collapsed">Clerkship Core Rotations Pending</h3>
+			<h3 title="Clerkship Core Rotations Pending Section"  class="collapsable collapsed"><?php echo $translate->_("Clerkship Core Rotations"); ?> Pending</h3>
 			<div id="clerkship-core-rotations-pending-section"><?php echo display_clerkship_core_pending($clerkship_core_pending); ?></div>
 		</div>
 		
 		<div class="section">
-			<h3 title="Clerkship Electives Completed Satisfactorily to Date Section"  class="collapsable collapsed">Clerkship Electives Completed Satisfactorily to Date</h3>
+			<h3 title="Clerkship Electives Completed Satisfactorily to Date Section"  class="collapsable collapsed"><?php echo $translate->_("Clerkship Electives"); ?> Completed Satisfactorily to Date</h3>
 			<div id="clerkship-electives-completed-satisfactorily-to-date-section"><?php echo display_clerkship_elective_completed($clerkship_elective_completed); ?></div>
 		</div>
 		<div class="section">

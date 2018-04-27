@@ -44,7 +44,7 @@ require_once("init.inc.php");
  */
 
 $NOTIFICATION_MESSAGE = array();
-$NOTIFICATION_MESSAGE["subject"] = "Clerkship Electives Awaiting Approval";
+$NOTIFICATION_MESSAGE["subject"] = $translate->_("Clerkship Electives") . " Awaiting Approval";
 
 $NOTIFICATION_MESSAGE["textbody"] = file_get_contents(ENTRADA_ABSOLUTE."/templates/default/email/electives-approval-notification.txt");
 

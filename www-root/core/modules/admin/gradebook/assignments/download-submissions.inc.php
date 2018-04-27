@@ -55,12 +55,12 @@ if ($ASSIGNMENT_ID) {
 			if (!file_exists($dir)) {
 			    mkdir ($dir, 0777);
 			}
-            $zip_prefix = str_replace(array("/", " ") , "_", $assignment["course_code"]."_".$assignment["assignment_title"]);
+            $zip_prefix = str_replace(array("/", " ") , "_", $assignment["course_code"]."_assignment-id-".$assignment["assignment_id"]);
 			$zip_file_name = $zip_prefix.'.zip';
 			$zipname = $dir."/".$zip_file_name;
 			if ($results) {
                 $zip = new ZipArchive();
-                $res = $zip->open($zipname,ZipArchive::OVERWRITE);
+                $res = $zip->open($zipname,ZIPARCHIVE::CREATE | ZIPARCHIVE::OVERWRITE);
                 if ($res !== true) {
                     $ERROR++;
                     $ERRORSTR[] = "<strong>Unable to create the file archive.</strong><br /><br />The archive of files was not created. Please try again later.";
@@ -115,7 +115,7 @@ if ($ASSIGNMENT_ID) {
 
 			}
 			if ((!$ERROR) && (!$NOTICE)) {
-				$url = ENTRADA_URL."/admin/gradebook/?".replace_query(array("step" => false, "section" => "view", "id" => $COURSE_ID));
+				$url = ENTRADA_URL."/admin/gradebook/?".replace_query(array("step" => false, "section" => "view", "id" => $assignment["course_id"]));
 				$NOTICE++;
 				$NOTICESTR[] = "<strong>No assignment files to download yet.</strong><br /><br />You will now be redirected to the <strong>Gradebook</strong> page; this will happen <strong>automatically</strong> in 5 seconds or <a href=\"".$url."\" style=\"font-weight: bold\">click here</a> to continue.";
 				$ONLOAD[] = "setTimeout('window.location=\\'".$url."\\'', 5000)";

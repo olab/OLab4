@@ -20,7 +20,7 @@
  * @author Organisation: Queen's University
  * @author Unit: School of Medicine
  * @author Developer: Travis Obregon <travismobregon@gmail.com>
- * @copyright Copyright 2015 Queen's University. All Rights Reserved.
+ * @copyright Copyright 2016 Queen's University. All Rights Reserved.
  *
  */
 if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GROUPS"))) {
@@ -29,7 +29,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GROUPS"))) {
     header("Location: ".ENTRADA_URL);
     exit;
 } elseif (!$ENTRADA_ACL->amIAllowed("group", "update", false)) {
-    add_error("Your account does not have the permissions required to use this feature of this module.<br /><br />If you believe you are receiving this message in error please contact <a href=\"mailto:".html_encode($AGENT_CONTACTS["administrator"]["email"])."\">".html_encode($AGENT_CONTACTS["administrator"]["name"])."</a> for assistance.");
+    add_error(sprintf($translate->_("You do not have the permissions required to use this module.<br /><br />If you believe you are receiving this message in error please contact <a href=\"mailto:%s\"> %s </a> for assistance."), html_encode($AGENT_CONTACTS["administrator"]["email"]), html_encode($AGENT_CONTACTS["administrator"]["name"])));
 
     echo display_error();
 
@@ -72,17 +72,17 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GROUPS"))) {
                     $roles = Models_System_Role::fetchAllByGroupID($PROCESSED["group_id"], $ENTRADA_USER->getActiveOrganisation(), 1, false);
                     if ($roles) {
                         foreach ($roles as $role) {
-                            $data[] = array("target_id" => $role["id"], "target_label" => $translate->_(ucfirst($role["role_name"])), "target_children" => 1, "level_selectable" => false);
+                            $data[] = array("target_id" => $role["id"], "target_label" => $translate->_(ucfirst($role["role_name"])), "target_children" => 1, "level_selectable" => true);
                         }
                     }
 
                     if ($data) {
-                        echo json_encode(array("status" => "success", "data" => $data, "parent_id" => $PROCESSED["group_id"], "parent_name" => "Groups", "level_selectable" => false, "no_back_btn" => true));
+                        echo json_encode(array("status" => "success", "data" => $data, "parent_id" => $PROCESSED["group_id"], "parent_name" => "Groups", "level_selectable" => true, "no_back_btn" => true));
                     } else {
                         echo json_encode(array("status" => "error", "data" => $translate->_("No Users found")));
                     }
                     break;
-
+    
                 case "get-role-members" :
                     $data = array();
 
@@ -120,7 +120,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GROUPS"))) {
                             }
                         }
                     }
-
+    
                     if ($data) {
                         echo json_encode(array("status" => "success", "data" => $data, "parent_id" => 0, "parent_name" => "0", "no_back_btn" => true));
                     } else {

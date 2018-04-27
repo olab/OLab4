@@ -61,6 +61,7 @@ class Models_Gradebook_Assessment_Item_Response extends Models_Base {
         return $this->score;
     }
 
+    /* bool|Models_Gradebook_Assessment_Item_Response */
     public static function fetchRowByID($gairesponse_id) {
         $self = new self();
         return $self->fetchRow(array(
@@ -68,6 +69,7 @@ class Models_Gradebook_Assessment_Item_Response extends Models_Base {
         ));
     }
 
+    /* @return ArrayObject|Models_Gradebook_Assessment_Item_Response[] */
     public static function fetchAllRecords() {
         $self = new self();
         return $self->fetchAll(array(array("key" => "gairesponse_id", "value" => 0, "method" => ">=")));
@@ -75,7 +77,7 @@ class Models_Gradebook_Assessment_Item_Response extends Models_Base {
 
     /**
      * Fetches all records by assessment ID
-     * @return array db results
+     * @return ArrayObject|Models_Gradebook_Assessment_Item_Response[]
      */
     public function fetchAllByAssessmentID() {
         return $this->fetchAll(array(array("key" => "assessment_id", "value" => $this->assessment_id, "method" => "=")));

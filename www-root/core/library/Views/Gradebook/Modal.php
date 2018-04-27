@@ -212,7 +212,7 @@ class Views_Gradebook_Modal extends Views_Gradebook_Base {
         $html[] = '    <div class="modal-content">';
         $html[] = '      <div class="modal-header clearfix">';
         $html[] = '        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>';
-        $html[] = '        <h3 class="pull-left">'.$this->getTitle().'</h3>';
+        $html[] = '        <h3>'.$this->getTitle().'</h3>';
         $html[] = '        '.$this->getHeaderContent();
         $html[] = '      </div>';
         $html[] = '      <div class="modal-body">';

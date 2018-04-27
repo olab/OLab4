@@ -41,6 +41,6 @@ class Views_Gradebook_Assessments_Form_Item_Text extends Views_Gradebook_Assessm
 		}
 
 		// Purposefully does not html_encode the data because it contains html that should be rendered
-		return '<div class="form-text-container"><p>'.$this->data['details']['title'].'</p></div>';
+		return '<div class="form-text-container space-above">'.$this->data['details']['title'].'</div>';
 	}
 }

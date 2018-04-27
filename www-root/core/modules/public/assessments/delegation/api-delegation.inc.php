@@ -26,7 +26,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ASSESSMENT"))) {
 } elseif ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
     header("Location: " . ENTRADA_URL);
     exit;
-} elseif (!$ENTRADA_ACL->amIAllowed('assessment', 'read', false)) {
+} elseif (!$ENTRADA_ACL->amIAllowed('assessments', 'read', false)) {
     add_error("Your account does not have the permissions required to use this feature of this module.<br /><br />If you believe you are receiving this message in error please contact <a href=\"mailto:" . html_encode($AGENT_CONTACTS["administrator"]["email"]) . "\">" . html_encode($AGENT_CONTACTS["administrator"]["name"]) . "</a> for assistance.");
 
     echo display_error();
@@ -169,6 +169,15 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ASSESSMENT"))) {
                         if (empty($assessors) || empty($targets)) {
                             add_error($translate->_("No assessors or targets selected."));
                         } else {
+
+                            // If the distribution is repeat based, duplicates are allowed.
+                            if ($distribution) {
+                                $schedule = Models_Assessments_Distribution_Schedule::fetchRowByDistributionID($distribution->getID());
+                                if ($schedule && $schedule->getScheduleType() == "repeat") {
+                                    $allow_duplicates = true;
+                                }
+                            }
+
                             if (!$allow_duplicates) {
                                 $distribution_delegation = new Entrada_Utilities_Assessments_DistributionDelegation(array("adistribution_id" => $distribution->getID(), "addelegation_id" => $delegation->getID()));
                                 $duplicates = $distribution_delegation->findDuplicateDelegatedAssessments($targets, $assessors);
@@ -219,6 +228,10 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ASSESSMENT"))) {
                         }
                     }
                     if ($status) {
+                        // Process distribution options and apply them as assessment options as necessary.
+                        $assessments_base = new Entrada_Assessments_Base();
+                        $assessments_base->processDistributionAssessmentOptions($distribution_id);
+
                         echo json_encode(array("status" => "success", "data" => array()));
                     } else {
                         add_error($translate->_("Unable to add delegated assessments."));
@@ -332,6 +345,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ASSESSMENT"))) {
                     }
                 break;
             }
+            break;
 
         case "GET" :
             switch ($request["method"]) {

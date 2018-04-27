@@ -177,19 +177,19 @@ function shares_module_access($cshare_id = 0, $section = "", $ignore_parent = fa
                         }
 					} else {
 						$NOTICE++;
-						$NOTICESTR[]	= "This shared folder was only accessible until ".date(DEFAULT_DATE_FORMAT, $release_until).".<br /><br />Please contact your community administrators for further assistance.";
+						$NOTICESTR[]	= "This shared folder was only accessible until ".date(DEFAULT_DATETIME_FORMAT, $release_until).".<br /><br />Please contact your community administrators for further assistance.";
 
 						$allow_to_load	= false;
 					}
 				} else {
 					$NOTICE++;
-					$NOTICESTR[]	= "This shared folder will not be accessible until ".date(DEFAULT_DATE_FORMAT, $release_date).".<br /><br />Please check back at this time, thank-you.";
+					$NOTICESTR[]	= "This shared folder will not be accessible until ".date(DEFAULT_DATETIME_FORMAT, $release_date).".<br /><br />Please check back at this time, thank-you.";
 
 					$allow_to_load	= false;
 				}
 			} else {
 				$NOTICE++;
-				$NOTICESTR[]	= "This shared folder was deactivated ".date(DEFAULT_DATE_FORMAT, $result["updated_date"])." by ".html_encode(get_account_data("firstlast", $result["updated_by"])).".<br /><br />If there has been a mistake or you have questions relating to this issue please contact the MEdTech Unit directly.";
+				$NOTICESTR[]	= "This shared folder was deactivated ".date(DEFAULT_DATETIME_FORMAT, $result["updated_date"])." by ".html_encode(get_account_data("firstlast", $result["updated_by"])).".<br /><br />If there has been a mistake or you have questions relating to this issue please contact the MEdTech Unit directly.";
 
 				$allow_to_load	= false;
 			}
@@ -305,20 +305,20 @@ function shares_file_module_access($csfile_id = 0, $section = "", $ignore_parent
                             }
 						} else {
 							$NOTICE++;
-							$NOTICESTR[]	= "This file was only accessible until ".date(DEFAULT_DATE_FORMAT, $release_until).".<br /><br />Please contact your community administrators for further assistance.";
+							$NOTICESTR[]	= "This file was only accessible until ".date(DEFAULT_DATETIME_FORMAT, $release_until).".<br /><br />Please contact your community administrators for further assistance.";
 
 							$allow_to_load	= false;
 						}
 					} else {
 						$NOTICE++;
-						$NOTICESTR[]	= "This file will not be accessible until ".date(DEFAULT_DATE_FORMAT, $release_date).".<br /><br />Please check back at this time, thank-you.";
+						$NOTICESTR[]	= "This file will not be accessible until ".date(DEFAULT_DATETIME_FORMAT, $release_date).".<br /><br />Please check back at this time, thank-you.";
 
 						$allow_to_load	= false;
 					}
 				}
 			} else {
 				$NOTICE++;
-				$NOTICESTR[]	= "This file was deactivated ".date(DEFAULT_DATE_FORMAT, $result["updated_date"])." by ".html_encode(get_account_data("firstlast", $result["updated_by"])).".<br /><br />If there has been a mistake or you have questions relating to this issue please contact the MEdTech Unit directly.";
+				$NOTICESTR[]	= "This file was deactivated ".date(DEFAULT_DATETIME_FORMAT, $result["updated_date"])." by ".html_encode(get_account_data("firstlast", $result["updated_by"])).".<br /><br />If there has been a mistake or you have questions relating to this issue please contact the MEdTech Unit directly.";
 
 				$allow_to_load	= false;
 			}
@@ -444,20 +444,20 @@ function shares_link_module_access($cslink_id = 0, $section = "", $ignore_parent
                             }
 						} else {
 							$NOTICE++;
-							$NOTICESTR[]	= "This link was only accessible until <strong>".date(DEFAULT_DATE_FORMAT, $release_until)."</strong>.<br /><br />Please contact your community administrators for further assistance.";
+							$NOTICESTR[]	= "This link was only accessible until <strong>".date(DEFAULT_DATETIME_FORMAT, $release_until)."</strong>.<br /><br />Please contact your community administrators for further assistance.";
 
 							$allow_to_load	= false;
 						}
 					} else {
 						$NOTICE++;
-						$NOTICESTR[]	= "This link will not be accessible until <strong>".date(DEFAULT_DATE_FORMAT, $release_date)."</strong>.<br /><br />Please check back at this time, thank-you.";
+						$NOTICESTR[]	= "This link will not be accessible until <strong>".date(DEFAULT_DATETIME_FORMAT, $release_date)."</strong>.<br /><br />Please check back at this time, thank-you.";
 
 						$allow_to_load	= false;
 					}
 				}
 			} else {
 				$NOTICE++;
-				$NOTICESTR[]	= "This link was deactivated <strong>".date(DEFAULT_DATE_FORMAT, $result["updated_date"])."</strong> by <strong>".html_encode(get_account_data("firstlast", $result["updated_by"]))."</strong>.<br /><br />If there has been a mistake or you have questions relating to this issue please contact the MEdTech Unit directly.";
+				$NOTICESTR[]	= "This link was deactivated <strong>".date(DEFAULT_DATETIME_FORMAT, $result["updated_date"])."</strong> by <strong>".html_encode(get_account_data("firstlast", $result["updated_by"]))."</strong>.<br /><br />If there has been a mistake or you have questions relating to this issue please contact the MEdTech Unit directly.";
 
 				$allow_to_load	= false;
 			}
@@ -558,20 +558,20 @@ function shares_html_module_access($cshtml_id = 0, $section = "", $ignore_parent
                             }
 						} else {
 							$NOTICE++;
-							$NOTICESTR[]	= "This HTML document was only accessible until <strong>".date(DEFAULT_DATE_FORMAT, $release_until)."</strong>.<br /><br />Please contact your community administrators for further assistance.";
+							$NOTICESTR[]	= "This HTML document was only accessible until <strong>".date(DEFAULT_DATETIME_FORMAT, $release_until)."</strong>.<br /><br />Please contact your community administrators for further assistance.";
 
 							$allow_to_load	= false;
 						}
 					} else {
 						$NOTICE++;
-						$NOTICESTR[]	= "This HTML document will not be accessible until <strong>".date(DEFAULT_DATE_FORMAT, $release_date)."</strong>.<br /><br />Please check back at this time, thank-you.";
+						$NOTICESTR[]	= "This HTML document will not be accessible until <strong>".date(DEFAULT_DATETIME_FORMAT, $release_date)."</strong>.<br /><br />Please check back at this time, thank-you.";
 
 						$allow_to_load	= false;
 					}
 				}
 			} else {
 				$NOTICE++;
-				$NOTICESTR[]	= "This HTML document was deactivated <strong>".date(DEFAULT_DATE_FORMAT, $result["updated_date"])."</strong> by <strong>".html_encode(get_account_data("firstlast", $result["updated_by"]))."</strong>.<br /><br />If there has been a mistake or you have questions relating to this issue please contact the " . SUPPORT_UNIT . " directly.";
+				$NOTICESTR[]	= "This HTML document was deactivated <strong>".date(DEFAULT_DATETIME_FORMAT, $result["updated_date"])."</strong> by <strong>".html_encode(get_account_data("firstlast", $result["updated_by"]))."</strong>.<br /><br />If there has been a mistake or you have questions relating to this issue please contact the support unit directly.";
 
 				$allow_to_load	= false;
 			}
@@ -636,7 +636,7 @@ function shares_comment_module_access($cscomment_id = 0, $section = "") {
 				 */
 			} else {
 				$NOTICE++;
-				$NOTICESTR[]	= "This comment was deactivated ".date(DEFAULT_DATE_FORMAT, $result["updated_date"])." by ".html_encode(get_account_data("firstlast", $result["updated_by"])).".<br /><br />If there has been a mistake or you have questions relating to this issue please contact the MEdTech Unit directly.";
+				$NOTICESTR[]	= "This comment was deactivated ".date(DEFAULT_DATETIME_FORMAT, $result["updated_date"])." by ".html_encode(get_account_data("firstlast", $result["updated_by"])).".<br /><br />If there has been a mistake or you have questions relating to this issue please contact the MEdTech Unit directly.";
 
 				$allow_to_load	= false;
 			}
@@ -694,7 +694,7 @@ function shares_file_version_module_access($csfversion_id = 0, $section = "") {
 				 */
 			} else {
 				$NOTICE++;
-				$NOTICESTR[]	= "This file revision was deactivated ".date(DEFAULT_DATE_FORMAT, $result["updated_date"])." by ".html_encode(get_account_data("firstlast", $result["updated_by"])).".<br /><br />If there has been a mistake or you have questions relating to this issue please contact the MEdTech Unit directly.";
+				$NOTICESTR[]	= "This file revision was deactivated ".date(DEFAULT_DATETIME_FORMAT, $result["updated_date"])." by ".html_encode(get_account_data("firstlast", $result["updated_by"])).".<br /><br />If there has been a mistake or you have questions relating to this issue please contact the MEdTech Unit directly.";
 
 				$allow_to_load	= false;
 			}

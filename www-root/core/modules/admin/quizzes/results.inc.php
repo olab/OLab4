@@ -411,7 +411,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUIZZES"))) {
 										$cols	= array();
 										$cols[]	= (($respondent["group"] == "student") ? $respondent["number"] : 0);
 										$cols[]	= $respondent["fullname"];
-										$cols[] = (((int) $attempt["updated_date"]) ? date(DEFAULT_DATE_FORMAT, $attempt["updated_date"]) : "Unknown");
+										$cols[] = (((int) $attempt["updated_date"]) ? date(DEFAULT_DATETIME_FORMAT, $attempt["updated_date"]) : "Unknown");
 										$cols[]	= $quiz_score;
 										$cols[]	= $quiz_value;
 										$cols[]	= number_format(((round(($quiz_score / $quiz_value), 3)) * 100), 1)."%";
@@ -620,7 +620,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUIZZES"))) {
 											echo "	<td><img src=\"".ENTRADA_URL."/images/question-".((($quiz_percent > 60)) ? "correct" : "incorrect").".gif\" width=\"16\" height=\"16\" /></td>";
 											echo "	<td><a href=\"".ENTRADA_URL."/quizzes?section=results&amp;id=".$attempt["qprogress_id"]."\">".html_encode((($respondent["group"] == "student") ? $respondent["number"] : 0))."</a></td>\n";
 											echo "	<td><a href=\"".ENTRADA_URL."/quizzes?section=results&amp;id=".$attempt["qprogress_id"]."\">".html_encode($respondent["fullname"])."</a></td>\n";
-											echo "	<td><a href=\"".ENTRADA_URL."/quizzes?section=results&amp;id=".$attempt["qprogress_id"]."\">".(((int) $attempt["updated_date"]) ? date(DEFAULT_DATE_FORMAT, $attempt["updated_date"]) : "Unknown")."</a></td>\n";
+											echo "	<td><a href=\"".ENTRADA_URL."/quizzes?section=results&amp;id=".$attempt["qprogress_id"]."\">".(((int) $attempt["updated_date"]) ? date(DEFAULT_DATETIME_FORMAT, $attempt["updated_date"]) : "Unknown")."</a></td>\n";
 											echo "	<td class=\"right\">".$quiz_score."</td>\n";
 											echo "	<td class=\"center\">/</td>\n";
 											echo "	<td class=\"left\">".$quiz_value."</td>\n";

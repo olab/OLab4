@@ -120,7 +120,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 											if(isset($_FILES["filename"])) {
 												switch($_FILES["filename"]["error"]) {
 													case 0 :
-														$PROCESSED["file_type"]		= trim($_FILES["filename"]["type"]);
+														$PROCESSED["file_type"]		= mime_content_type($_FILES["filename"]["tmp_name"]);
 														$PROCESSED["file_size"]		= (int) trim($_FILES["filename"]["size"]);
 														$PROCESSED["file_name"]		= useable_filename(trim($_FILES["filename"]["name"]));
 													break;
@@ -594,7 +594,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 								if(isset($_FILES["filename"])) {
 									switch($_FILES["filename"]["error"]) {
 										case 0 :
-											$PROCESSED["file_type"]		= trim($_FILES["filename"]["type"]);
+											$PROCESSED["file_type"]		= mime_content_type($_FILES["filename"]["tmp_name"]);
 											$PROCESSED["file_size"]		= (int) trim($_FILES["filename"]["size"]);
 											$PROCESSED["file_name"]		= useable_filename(trim($_FILES["filename"]["name"]));
 

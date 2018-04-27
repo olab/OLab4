@@ -99,14 +99,10 @@ class Models_Notice {
         $total_organisations = count($ENTRADA_USER->getOrganisationGroupRole());
 
         if ($ENTRADA_USER) {
-            $query = "SELECT a.*, b.`statistic_id`, MAX(b.`timestamp`) AS `last_read`, c.`firstname`, c.`lastname`
+            $query = "SELECT a.*, b.`notice_read_id` AS `statistic_id`, MAX(b.`created_date`) AS `last_read`, c.`firstname`, c.`lastname`
                         FROM `notices` AS a
-                        LEFT JOIN `statistics` AS b
-                        ON b.`module` = 'notices'
-                        AND b.`proxy_id` = ".$db->qstr($ENTRADA_USER->getId())."
-                        AND b.`action` = 'read'
-                        AND b.`action_field` = 'notice_id'
-                        AND b.`action_value` = a.`notice_id`
+                        LEFT JOIN `notices_read` AS b
+                        ON b.`proxy_id` = ".$db->qstr($ENTRADA_USER->getId())." AND b.`notice_id` = a.`notice_id`
                         JOIN `notice_audience` AS c
                         ON a.`notice_id` = c.`notice_id`
                         LEFT JOIN `".AUTH_DATABASE."`.`user_data` AS c
@@ -199,6 +195,13 @@ class Models_Notice {
 		$result = $db->GetRow($query, array($notice_id));
 		return $result;
 	}
+
+    public static function markNoticeAsRead($notice_id = 0) {
+        global $ENTRADA_USER;
+
+        Models_Notices_Read::create($notice_id, $ENTRADA_USER->getActiveId());
+        return add_statistic("notices", "read", "notice_id", $notice_id, $ENTRADA_USER->getActiveId());
+    }
 	
 	public static function fetchOrganisationNotices () {
 		global $db, $ENTRADA_USER;
@@ -248,12 +251,8 @@ class Models_Notice {
 		$total_organisations = count($user->getOrganisationGroupRole());
 		$query = "  SELECT COUNT(*) AS `notice_count`, MAX(a.`notice_id`) AS `max_notice_id`
 					FROM `notices` AS a
-					LEFT JOIN `statistics` AS b
-					ON b.`module` = 'notices'
-					AND b.`proxy_id` = ".$db->qstr($user->getId())."
-					AND b.`action` = 'read'
-					AND b.`action_field` = 'notice_id'
-					AND b.`action_value` = a.`notice_id`
+					LEFT JOIN `notices_read` AS b
+                    ON b.`proxy_id` =  ".$db->qstr($user->getId())." AND b.`notice_id` = a.`notice_id`
 					JOIN `notice_audience` AS c
 					ON a.`notice_id` = c.`notice_id`
 					LEFT JOIN `".AUTH_DATABASE."`.`user_data` AS c
@@ -326,4 +325,32 @@ class Models_Notice {
 			return $notices;
 		}
 	}
+
+	public static function addNotice($target, $organisation_id, $notice_summary, $notice_details, $display_from, $display_until, $proxy_id) {
+        global $db;
+        $has_error = false;
+        $notice_array = array(
+            "target"          => $target,
+            "organisation_id" => $organisation_id,
+            "notice_summary"  => $notice_summary,
+            "notice_details"  => $notice_details,
+            "display_from"    => $display_from,
+            "display_until"   => $display_until,
+            "updated_date"    => time()
+        );
+
+        if ($db->AutoExecute("notices", $notice_array, "INSERT")) {
+            $NOTICE_ID = $db->Insert_Id();
+            $audience_member = array("notice_id" => $NOTICE_ID, "audience_type" => "student", "audience_value" => $proxy_id);
+            if (!$db->AutoExecute("notice_audience", $audience_member, "INSERT")) {
+                $has_error = true;
+            }
+        } else {
+            $has_error = true;
+        }
+        if ($has_error) {
+            return false;
+        }
+        return true;
+    }
 }

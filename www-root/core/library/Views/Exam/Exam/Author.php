@@ -35,6 +35,10 @@ class Views_Exam_Exam_Author extends Views_Deprecated_Base
         "deleted_date"
     );
 
+    protected $table_name           = "exam_question_authors";
+    protected $primary_key          = "aeauthor_id";
+    protected $default_sort_column  = "question_id";
+
     protected $joinable_tables = array();
     protected $author;
 
@@ -72,13 +76,13 @@ class Views_Exam_Exam_Author extends Views_Deprecated_Base
      * This function generates the Title and UL with the current authors for the specified type
      *
      * @param string $type
-     * @param ArrayObject|Models_Exam_Question_Bank_Folder_Authors[] $authors
+     * @param ArrayObject|Models_Exam_Bank_Folder_Authors[] $authors
      * * @param ArrayObject|Models_Exam_Question_Authors[] $authors
      * @return string $html
      */
 
     public static function renderTypeUL($type, $folder_authors, $authors) {
-        global $translate;
+        global $translate, $ENTRADA_USER;
 
         $MODULE_TEXT = $translate->_("exams");
         $SUBMODULE_TEXT = $MODULE_TEXT["questions"]["add-permission"];
@@ -87,12 +91,25 @@ class Views_Exam_Exam_Author extends Views_Deprecated_Base
         $class = "hide";
 
         if ($folder_authors && is_array($folder_authors) && $authors && is_array($authors)) {
-            $author_array   = array_merge($folder_authors, $authors);
-            usort($author_array, 'Models_Exam_Exam_Author::sortByAuthorName');
+            $author_array = $authors;
+            // Folder author can be the same person as the author creator. The array should
+            // have only unique users, even if the array has different object types
+            // Lets save the authors ids
+            $authors_ids = [];
+            foreach ($authors as $author) {
+                array_push($authors_ids, $author["object"]->getAuthorID());
+            }
+            // Now only add the folder author to the author array if the author isn't in the question permission
+            foreach ($folder_authors as $folder_author) {
+                if (!in_array($folder_author["object"]->getAuthorID(), $authors_ids)) {
+                    array_push($author_array, $folder_author);
+                }
+            }
+            usort($author_array, "Models_Exam_Bank_Folder_Authors::sortByAuthorName");
         } else if ($folder_authors && is_array($folder_authors)) {
-            $author_array   = $folder_authors;
+            $author_array = $folder_authors;
         } else if ($authors && is_array($authors)) {
-            $author_array   = $authors;
+            $author_array = $authors;
         }
 
         if (isset($author_array) && is_array($author_array) && !empty($author_array)) {
@@ -104,12 +121,20 @@ class Views_Exam_Exam_Author extends Views_Deprecated_Base
                 if ($object_type == "exam") {
                     if (isset($author) && is_object($author)) {
                         $author_view = new Views_Exam_Exam_Author($author);
-                        $lis .= $author_view->render($level);
+                        if (($author->getAuthorType() == "proxy_id" && $author->getAuthorID() == $ENTRADA_USER->getActiveID())) {
+                            $lis .= $author_view->render(false);
+                        } else {
+                            $lis .= $author_view->render($level);
+                        }
                     }
                 } else if ($object_type == "folder") {
                     if (isset($author) && is_object($author)) {
-                        $author_view = new Views_Exam_Exam_Bank_Folder_Author($author);
-                        $lis .= $author_view->render($level);
+                        $author_view = new Views_Exam_Bank_Folder_Author($author);
+                        if (($author->getAuthorType() == "proxy_id" && $author->getAuthorID() == $ENTRADA_USER->getActiveID())) {
+                            $lis .= $author_view->render(false);
+                        } else {
+                            $lis .= $author_view->render($level);
+                        }
                     }
                 }
             }

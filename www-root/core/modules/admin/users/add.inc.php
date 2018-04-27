@@ -52,7 +52,7 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_USERS")) {
 	switch ($STEP) {
 		case 2 :
 			$permissions = json_decode($_POST["permissions"], true);
-            $organisation_order = json_decode(json_decode($_POST["organisation_order"]));
+            $organisation_order = json_decode($_POST["organisation_order"]);
             
             /**
              * Non-required (although highly recommended) field for staff / student number.
@@ -115,6 +115,15 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_USERS")) {
                 $PROCESSED_ACCESS["account_active"] = "false";
             }
 
+            /*
+			 * Required field "admin_access" / Admin Access
+			 */
+            if (isset($_POST["admin_access"]) && $_POST["admin_access"] == 1) {
+                $PROCESSED["admin_access"] = 1;
+            } else {
+                $PROCESSED["admin_access"] = 0;
+            }
+
             /**
              * Required field "access_starts" / Access Start (validated through validate_calendars function).
              *
@@ -156,6 +165,30 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_USERS")) {
                 $PROCESSED["lastname"] = $lastname;
             } else {
                 add_error("<strong>Last Name</strong> is a required field.");
+            }
+
+            /**
+             * Non-required field "suffix_gen" / suffix_gen.
+             */
+            if ((isset($_POST["suffix_gen"])) && (@in_array($suffix_gen = clean_input($_POST["suffix_gen"], "trim"), $PROFILE_NAME_SUFFIX_GEN))) {
+                $PROCESSED["suffix_gen"] = $suffix_gen;
+            } else {
+                $PROCESSED["suffix_gen"] = "";
+            }
+
+            /**
+             * Non-required field "suffix_post_nominal" / suffix_post_nominal.
+             */
+            $suffix_post_nominal_array = array();
+            if (isset($_POST["suffix_post_nominal"]) && is_array($_POST["suffix_post_nominal"])) {
+                foreach ($_POST["suffix_post_nominal"] as $post_nominal) {
+                    if (in_array($suffix_post_nominal = clean_input($post_nominal, "trim"), $PROFILE_NAME_SUFFIX_POST_NOMINAL)) {
+                        $suffix_post_nominal_array[] = $suffix_post_nominal;
+                    }
+                }
+                $PROCESSED["suffix_post_nominal"] = implode(",", $suffix_post_nominal_array);
+            } else {
+                $PROCESSED["suffix_post_nominal"] = "";
             }
 
             /**
@@ -305,7 +338,7 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_USERS")) {
                 if ($postcode) {
                     $PROCESSED["postcode"] = $postcode;
                 } else {
-                    add_error("<strong>Post / Zip Code</strong> must be 5 to 12 characters in length. Please make sure that you fix it or leave this field empty.");
+                    add_error("<strong>" . $translate->_("Postal Code")  . "</strong> must be 5 to 12 characters in length. Please make sure that you fix it or leave this field empty.");
                 }
             } else {
                 $PROCESSED["postcode"] = "";
@@ -345,7 +378,7 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_USERS")) {
 
             if ($organisation_order) {
                 foreach ($organisation_order as $organisation_id) {
-                    $organisation_permissions = json_decode($permissions[$organisation_id], true);
+                    $organisation_permissions = $permissions[$organisation_id];
 
                     foreach ($organisation_permissions as $permission) {
                         // As long as one permission has clinical checked, the user is clinical
@@ -365,7 +398,7 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_USERS")) {
 			 */
             if ($organisation_order) {
                 foreach ($organisation_order as $organisation_id) {
-                    $organisation_permissions = json_decode($permissions[$organisation_id], true);
+                    $organisation_permissions = $permissions[$organisation_id];
 
                     foreach ($organisation_permissions as $permission) {
                         if ($permission["group_text"] == "Student") {
@@ -389,7 +422,7 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_USERS")) {
             }
 
             if (isset($_POST["user_departments"]) && $_POST["user_departments"]) {
-                $user_departments = json_decode(json_decode($_POST["user_departments"]));
+                $user_departments = json_decode($_POST["user_departments"]);
                 $PROCESSED["department_ids"] = array_unique($user_departments);
             }
 			
@@ -514,7 +547,7 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_USERS")) {
                             continue;
                         }
 
-                        $organisation_permissions = json_decode($permissions[$organisation_id], true);
+                        $organisation_permissions = $permissions[$organisation_id];
 
                         foreach ($organisation_permissions as $permission) {
                             $PROCESSED_ACCESS["group"] = strtolower($permission["group_text"]);
@@ -781,6 +814,8 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_USERS")) {
             $HEAD[] = "<script type=\"text/javascript\" src=\"".  ENTRADA_URL ."/javascript/jquery/jquery.advancedsearch.js\"></script>\n";
             $HEAD[] = "<link rel=\"stylesheet\" type=\"text/css\" href=\"".  ENTRADA_URL ."/css/jquery/jquery.advancedsearch.css\" />\n";
             $HEAD[] = "<link rel=\"stylesheet\" type=\"text/css\" href=\"".  ENTRADA_URL ."/css/manage-users.css\" />\n";
+            $HEAD[] = "<script type=\"text/javascript\" src=\"".ENTRADA_URL."/javascript/jquery/chosen.jquery.min.js?release=".html_encode(APPLICATION_VERSION)."\"></script>\n";
+            $HEAD[] = "<link href=\"".ENTRADA_URL."/css/jquery/chosen.css?release=".html_encode(APPLICATION_VERSION)."\" rel=\"stylesheet\" type=\"text/css\" media=\"all\" />\n";
 
 			$ONLOAD[] = "setMaxLength()";
 			if (isset($_GET["id"]) && $_GET["id"] && ($proxy_id = clean_input($_GET["id"], array("int")))) {
@@ -796,7 +831,11 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_USERS")) {
 				echo display_notice();
 			}
 			?>
-
+            <script type="text/javascript">
+                jQuery(document).ready(function() {
+                    jQuery("#suffix_post_nominal").chosen({width: "43%"});
+                });
+            </script>
 			<form id="addUser" class="form-horizontal" action="<?php echo ENTRADA_URL; ?>/admin/users?section=add&amp;step=2" method="post" autocomplete="off">
                 <h2>Account Details</h2>
                 <div class="control-group">
@@ -843,6 +882,23 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_USERS")) {
 
                 <?php echo Entrada_Utilities::generate_calendars("access", "Access", true, true, ((isset($PROCESSED["access_starts"])) ? $PROCESSED["access_starts"] : time()), true, false, 0); ?>
 
+                <div class="control-group">
+                    <label class="control-label form-required" for="admin_access">Student Admin:
+                        <?php if (strtolower($ENTRADA_USER->getActiveGroup()) == "medtech") { ?>
+                        <br/><span class="dev-notes-link" id="admin_access-notes-link">(Show Developer Notes)</span>
+                        <?php } ?>
+                   </label>
+                    <div class="controls">
+                        <select id="admin_access" name="admin_access">
+                            <option value="0"<?php echo (((!isset($PROCESSED["admin_access"])) || ($PROCESSED_ACCESS["admin_access"] == 0)) ? " selected=\"selected\"" : ""); ?>>No</option>
+                            <option value="1"<?php echo (($PROCESSED["admin_access"] == 1) ? " selected=\"selected\"" : ""); ?>>Yes</option>
+                        </select>
+                    </div>
+                    <div class="alert alert-info dev-notes" id="admin_access-dev-notes">
+                        <h3>Student Admin Developer Instructions</h3>
+                        <p>This allows for a student to access Manage Exams, but they only have access to question folders where they have permission as a folder author.</p>
+                    </div>
+                </div>
 				<hr>
 
                 <h2>Personal Information</h2>
@@ -879,6 +935,51 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_USERS")) {
                     </div>
                 </div>
                 <!--- End control-group ---->
+
+                <?php
+                // Generational Suffix / Post-nominal letters fields
+                    $settings = new Entrada_Settings();
+                    if ($settings->read("profile_name_extensions")) {
+                ?>
+                    <div class="control-group">
+                        <label class="control-label form-nrequired" for="suffix_gen">Generational Suffix:</label>
+                        <div class="controls">
+                            <select id="suffix" name="suffix_gen" class="input-small">
+                                <option value=""<?php echo ((!isset($result["suffix_gen"])) ? " selected=\"selected\"" : ""); ?>></option>
+                                <?php
+                                if ((@is_array($PROFILE_NAME_SUFFIX_GEN)) && (@count($PROFILE_NAME_SUFFIX_GEN))) {
+                                    foreach($PROFILE_NAME_SUFFIX_GEN as $key => $suffix_gen) {
+                                        echo "<option value=\"".html_encode($suffix_gen)."\"".(((isset($PROCESSED["suffix_gen"])) && ($PROCESSED["suffix_gen"] == $suffix_gen)) ? " selected=\"selected\"" : "").">".html_encode($suffix_gen)."</option>\n";
+                                    }
+                                }
+                                ?>
+                            </select>
+                        </div>
+                    </div>
+                    <!--- End control-group ---->
+
+                    <div class="control-group">
+                        <label class="control-label form-nrequired" for="suffix_post_nominal">Post-nominal letters:</label>
+                        <div class="controls">
+                            <select id="suffix_post_nominal" name="suffix_post_nominal[]" multiple class="input-small">
+                                <?php
+                                if ((@is_array($PROFILE_NAME_SUFFIX_POST_NOMINAL)) && (@count($PROFILE_NAME_SUFFIX_POST_NOMINAL))) {
+                                    foreach($PROFILE_NAME_SUFFIX_POST_NOMINAL as $key => $suffix_post_nominal) {
+                                        //checks if the value is in the selected array
+                                        if (isset($suffixes_post_nominal_array) && is_array($suffixes_post_nominal_array)) {
+                                            $in = in_array($suffix_post_nominal, $suffixes_post_nominal_array);
+                                        }
+                                        echo "<option value='" . html_encode($suffix_post_nominal) . "'" . ($in ? " selected='selected' " : "") . ">" . html_encode($suffix_post_nominal) . "</option>\n";
+                                    }
+                                }
+                                ?>
+                            </select>
+                        </div>
+                    </div>
+                    <!--- End control-group ---->
+                <?php
+                    }
+                ?>
 
                 <div class="control-group">
                     <label class="control-label form-required" for="gender">Gender:</label>
@@ -973,10 +1074,10 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_USERS")) {
                 <!--- End control-group ---->
 
                 <div class="control-group">
-                    <label for="postcode" class="control-label form-nrequired">Post / Zip Code:</label>
+                    <label for="postcode" class="control-label form-nrequired"><?php echo $translate->_("Postal Code"); ?>:</label>
                     <div class="controls">
                         <input type="text" id="postcode" name="postcode" value="<?php echo ((isset($PROCESSED["postcode"])) ? html_encode($PROCESSED["postcode"]) : ""); ?>" maxlength="7" />
-                        <span class="content-small">(<strong>Example:</strong> K7L 3N6)</span>
+                        <span class="content-small">(<strong>Example:</strong> <?php echo DEFAULT_POSTALCODE; ?>)</span>
                     </div>
                 </div>
                 <!--- End control-group ---->
@@ -1095,13 +1196,27 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_USERS")) {
                     var organisation_order = [];
                     var departments = [];
 
+                    function noteVisible(note) {
+                        if (note.is(':visible')) {
+                            note.hide();
+                        } else {
+                            note.show();
+                        }
+                    }
+
+                    jQuery(".dev-notes-link").on("click", function() {
+                        var targetPath = $(this).data("target");
+                        var target = jQuery("#" + targetPath);
+                        noteVisible(target);
+                    });
+                    
                     provStateFunction();
 
                     if (sessionStorage.getItem("user_departments_list")) {
                         if (step > 1) {
                             var departments_list = JSON.parse(sessionStorage.getItem("user_departments_list"));
 
-                            rebuildSelectedDepartments(JSON.parse(departments_list));
+                            rebuildSelectedDepartments(departments_list);
                         } else {
                             sessionStorage.removeItem("user_departments_list");
                         }
@@ -1110,7 +1225,7 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_USERS")) {
                     if (sessionStorage.getItem("users_permissions")) {
                         if (step > 1) {
                             permissions = JSON.parse(sessionStorage.getItem("users_permissions"));
-                            organisation_order = JSON.parse(JSON.parse(sessionStorage.getItem("organisation_order")));
+                            organisation_order = JSON.parse(sessionStorage.getItem("organisation_order"));
 
                             rebuildSelectedPermissions();
 
@@ -1753,7 +1868,7 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_USERS")) {
 
                     function rebuildSelectedPermissions() {
                         for (var i = 0; i < organisation_order.length; i++) {
-                            buildOrganisationPermissions(organisation_order[i], JSON.parse(permissions[organisation_order[i]]));
+                            buildOrganisationPermissions(organisation_order[i], permissions[organisation_order[i]]);
                         }
                     }
 

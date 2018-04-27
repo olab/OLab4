@@ -56,9 +56,40 @@ h1 {
   margin-bottom:0;
 }
 
-h2 {
+h1, .content-heading {
+  font-family:'Century Gothic', Helvetica, Arial, sans-serif;
+  font-size:26px;
+  font-weight:400;
+  color:#17323b;
+}
+
+h1.community-title {
+  font-family: "Lucida Grande", Geneva, Verdana, Arial, Helvetica, sans-serif;
+  font-size: 38px;
+  font-weight: 400;
+  color: #17323b;
+  margin: 0 0 10px 0;
+  padding: 0;
+  display: block;
+}
+
+h2, .content-subheading {
+  font-family: "Lucida Grande", Geneva, Verdana, Arial, Helvetica, sans-serif;
   font-size: 20px;
-  margin-bottom: 5px;
+  color: #17323b;
+  border-bottom: 2px #d9dee2 solid;
+}
+
+h3 {
+  font-family: "Lucida Grande", Geneva, Verdana, Arial, Helvetica, sans-serif;
+  font-size: 13px;
+  color: #17323b;
+  margin-bottom: 3px;
+}
+
+h3.event-details {
+  border-bottom:0;
+  padding-left:3px;
 }
 
 #page {
@@ -1739,3 +1770,10 @@ table.event-details tbody tr td {
   color: #000000;
   background-color: #FFB921;
 }
+
+@media screen {
+  div.print-only {
+    display: none;
+  }
+}
+

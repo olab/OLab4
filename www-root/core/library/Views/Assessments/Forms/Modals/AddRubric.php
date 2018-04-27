@@ -26,23 +26,34 @@
 class Views_Assessments_Forms_Modals_AddRubric extends Views_Assessments_Forms_Base {
 
     protected function validateOptions($options = array()) {
-        return $this->validateIsSet($options, array("action_url"));
+        return $this->validateIsSet($options, array("action_url", "rating_scale_types"));
     }
 
     protected function renderView($options = array()) {
         global $translate;
-        $action_url = $options["action_url"]; ?>
+        $action_url = $options["action_url"];
+        $rating_scale_types = $options["rating_scale_types"];
+        ?>
+        <form id="add-rubric-form-modal" class="form-horizontal no-margin" action="<?php echo $action_url; ?>" method="POST">
         <div id="add-rubric-modal" class="modal hide fade">
-            <form id="add-rubric-form-modal" class="form-horizontal no-margin" action="<?php echo $action_url; ?>" method="POST">
                 <div class="modal-header"><h1><?php echo $translate->_("Add Grouped Item"); ?></h1></div>
-                <div class="modal-body">
+                <div class="modal-body overflow-inherit">
                     <div id="add-rubric-msgs"></div>
-                    <div class="control-group no-margin">
+                    <div class="control-group">
                         <label class="control-label form-required" for="rubric-title"><?php echo $translate->_("Grouped Item Name"); ?></label>
                         <div class="controls">
                             <input type="text" name="rubric_title" id="rubric-title" />
                         </div>
                     </div>
+                    <?php
+                    $scale_search = new Views_Assessments_Forms_Controls_ScaleSelectorSearch();
+                    $scale_search->render(array(
+                        "width" => 350,
+                        "parent_selector" => "add-rubric-form-modal",
+                        "search_selector" => "item-rating-scale-btn",
+                        "submodule" => "rubrics", // Doesn't necessarily have to be rubrics, but it just has to not be "scales"
+                        "scale_type_datasource" => $rating_scale_types
+                    )); ?>
                 </div>
                 <div class="modal-footer">
                     <div class="row-fluid">
@@ -50,8 +61,8 @@ class Views_Assessments_Forms_Modals_AddRubric extends Views_Assessments_Forms_B
                         <input type="submit" class="btn btn-primary" value="<?php echo $translate->_("Add Grouped Item"); ?>" />
                     </div>
                 </div>
-            </form>
         </div>
+        </form>
         <?php
     }
 }

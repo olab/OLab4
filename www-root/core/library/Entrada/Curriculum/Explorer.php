@@ -208,7 +208,7 @@ class Entrada_Curriculum_Explorer {
 
     }
 
-    public static function count_objective_child_courses($objective_id = 0, $level = 0) {
+    public static function count_objective_child_courses($objective_id = 0, $course_id = NULL, $group_id = NULL, $level = 0) {
         global $db, $ENTRADA_USER;
         if ($level >= 99) {
             application_log("error", "Recursion depth out of bounds in [count_objective_child_courses].");
@@ -224,10 +224,15 @@ class Entrada_Curriculum_Explorer {
                     ON a.`objective_id` = b.`objective_id`
                     JOIN `courses` AS c
                     ON a.`course_id` = c.`course_id`
+                    LEFT JOIN `course_audience` AS d
+                    ON a.`course_id` = d.`course_id`".
+                    ($group_id != NULL ? " AND d.`audience_type` = 'group_id' " : "")."
                     WHERE a.`objective_id` = ".$db->qstr($objective_id)."
                     AND a.`active` = '1'
                     AND c.`course_active` = '1'
-                    AND b.`organisation_id` = ".$db->qstr($ENTRADA_USER->getActiveOrganisation());
+                    AND b.`organisation_id` = ".$db->qstr($ENTRADA_USER->getActiveOrganisation()) .
+                    (!is_null($course_id) ? " AND a.`course_id` = " . $db->qstr($course_id) : "").
+                    ($group_id != NULL ? " AND d.`audience_value` = ".$db->qstr($group_id) : "");
         $output[$objective_id] = $db->GetOne($query);
 
         /* Fetch objective children */
@@ -241,7 +246,7 @@ class Entrada_Curriculum_Explorer {
         $children = $db->GetAll($query);
         if ($children) {
             foreach ($children as $child) {
-                $child_count = self::count_objective_child_courses($child["objective_id"], $level++);
+                $child_count = self::count_objective_child_courses($child["objective_id"], $course_id, $group_id, $level++);
                 if (is_array($child_count)) {
                         $return = array_sum($child_count);
                 } else {
@@ -293,7 +298,7 @@ class Entrada_Curriculum_Explorer {
         $children = $db->GetAll($query);
         if ($children) {
             foreach ($children as $child) {
-                $child_count = self::count_objective_child_assessments($child["objective_id"], NULL, NULL, NULL, $group_id, $level++);
+                $child_count = self::count_objective_child_assessments($child["objective_id"], $start, $end, $course_id, $group_id, $level++);
 
                 if (is_array($child_count)) {
                     $return = array_sum($child_count);

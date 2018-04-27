@@ -33,6 +33,10 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ASSESSMENTS"))) {
 
     application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] does not have access to this module [".$MODULE."]");
 } else {
+
+    $MODULE_TEXT = $translate->_($MODULE);
+    $SUBMODULE_TEXT = $MODULE_TEXT[$SUBMODULE];
+
     $BREADCRUMB[] = array("url" => "", "title" => $translate->_("Learner Reports"));
     $HEAD[] = "<script type=\"text/javascript\">var ENTRADA_URL = '" . ENTRADA_URL . "';</script>";
     $JQUERY[] = "<script type=\"text/javascript\" src=\"" . ENTRADA_URL . "/javascript/assessments/evaluation-reports.js?release=" . html_encode(APPLICATION_VERSION) . "\"></script>";
@@ -85,6 +89,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ASSESSMENTS"))) {
                 parent_form: $("#evaluation-form"),
                 control_class: "form-selector",
                 width: 350,
+                lazyload: true,
                 select_all_enabled : true
             });
 
@@ -134,10 +139,24 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ASSESSMENTS"))) {
                 <a href="#" id="choose-form-btn" class="btn" type="button"><?php echo $translate->_("Browse Forms "); ?><i class="icon-chevron-down"></i></a>
             </div>
         </div>
-        <div class="control-group hide" id="additional-comments">
-            <label class="control-label" for="include-comments"><?php echo $translate->_("Include Comments:"); ?></label>
-            <div class="controls">
-                <input type="checkbox" id="include-comments" checked>
+        <div class="hide" id="additional-comments">
+            <div class="control-group">
+                <label class="control-label" for="include-comments"><?php echo $translate->_("Include Comments:"); ?></label>
+                <div class="controls">
+                    <input type="checkbox" id="include-comments" checked>
+                </div>
+            </div>
+            <div class="control-group" id="commenter-id-controls">
+                <label class="control-label" for="include-commenter-id" data-toggle="tooltip" title="<?php echo $translate->_("This option will include a set of characters unique to each assessor alongside each comment."); ?>"><?php echo $translate->_("Unique Commenter ID:"); ?> <i class="icon-question-sign"></i></label>
+                <div class="controls">
+                    <input type="checkbox" id="include-commenter-id"/>
+                </div>
+            </div>
+            <div class="control-group" id="commenter-name-controls">
+                <label class="control-label" for="include-commenter-name" data-toggle="tooltip"><?php echo $translate->_("Include Commenter Name:"); ?></label>
+                <div class="controls">
+                    <input type="checkbox" id="include-commenter-name"/>
+                </div>
             </div>
         </div>
         <div class="control-group hide" id="additional-description">
@@ -147,6 +166,20 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ASSESSMENTS"))) {
             </div>
             <div class="controls space-above">
                 <textarea id="description-text" class="expandable hide"></textarea>
+            </div>
+        </div>
+        <div class=hide" id="additional-statistics">
+            <div class="control-group">
+                <label class="control-label" for="include-statistics" data-toggle="tooltip" title="<?php echo $translate->_("This will include an automatically calculated average, weighted in ascending order. Descriptors such as 'N/A' are excluded."); ?>"><?php echo $translate->_("Include Average:"); ?> <i class="icon-question-sign"></i></label>
+                <div class="controls">
+                    <input type="checkbox" id="include-statistics">
+                </div>
+            </div>
+            <div id="include-positivity-controls" class="control-group hide">
+                <label class="control-label" for="include-positivity" data-toggle="tooltip" title="<?php echo $SUBMODULE_TEXT["positive_negative_tooltip"]; ?>""><?php echo $translate->_("Include Aggregate Scoring:"); ?> <i class="icon-question-sign"></i></label>
+                <div class="controls">
+                    <input type="checkbox" id="include-positivity">
+                </div>
             </div>
         </div>
         <a class="btn btn-default space-above space-left hide" id="generate-pdf-btn" href="#generate-pdf-modal" title="<?php echo $translate->_("Download PDF(s)"); ?>" data-pdf-unavailable="0" data-toggle="modal"><?php echo $translate->_("Download PDF(s)") ?></a>

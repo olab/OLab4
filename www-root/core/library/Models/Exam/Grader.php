@@ -243,7 +243,7 @@ class Models_Exam_Grader extends Models_Base {
         $students = Models_Exam_Grader::fetchGradableStudentsForPost($grader_proxy_id, $post_id);
         $submissions = array();
         foreach ($students as $student) {
-            $submissions = array_merge($submissions, Models_Exam_Progress::fetchAllByPostIDProxyID($post_id, $student->getProxyId()));
+            $submissions = array_merge($submissions, Models_Exam_Progress::fetchAllByPostIDProxyIDProgressValue($post_id, $student->getProxyId(), "submitted"));
         }
         usort($submissions, function($a, $b) { return $a->getSubmissionDate() - $b->getSubmissionDate(); });
         return $submissions;
@@ -317,19 +317,41 @@ class Models_Exam_Grader extends Models_Base {
      * @return ArrayObject|Models_Exam_Post[]
      */
     public static function fetchGradableExamPosts($grader_proxy_id) {
-        global $db;
+        global $db, $ENTRADA_ACL;
+        
+        $grader_proxy_id = (int) $grader_proxy_id;
         $posts = array();
-        $post_ids_query = "
-            SELECT `post_id`
-            FROM `exam_graders`
-            WHERE `proxy_id` = ".$db->qstr($grader_proxy_id)."
-            GROUP BY `post_id`";
-        $post_ids = $db->GetAll($post_ids_query);
+
+        // Query only exam posts that have question types that can be graded
+        $question_types_arr = array("short", "essay");
+        if ($ENTRADA_ACL->amIAllowed("examgradefnb", "update", false)) {
+            $question_types_arr[] = "fnb";
+        }
+
+        $question_types = implode(", ", array_map(function($i) use ($db) { return $db->qstr($i); }, $question_types_arr));
+
+        $query = "SELECT `exam_graders`.`post_id`
+              FROM `exam_graders` 
+              JOIN `exam_posts`
+              ON `exam_posts`.`post_id` = `exam_graders`.`post_id`
+              JOIN `exam_elements`
+              ON `exam_elements`.`exam_id` = `exam_posts`.`exam_id`
+              AND `exam_elements`.`element_type` = 'question'
+              JOIN `exam_question_versions`
+              ON `exam_question_versions`.`version_id` = `exam_elements`.`element_id`
+              JOIN `exam_lu_questiontypes`
+              ON `exam_lu_questiontypes`.`questiontype_id` = `exam_question_versions`.`questiontype_id`
+              WHERE `exam_graders`.`proxy_id` = " . $grader_proxy_id ."
+              AND `exam_lu_questiontypes`.`shortname` IN (" . $question_types . ") 
+              AND `exam_elements`.`deleted_date` IS NULL
+              GROUP BY `exam_graders`.`post_id`";
+        $post_ids = $db->GetAll($query);
         if ($post_ids) {
             foreach ($post_ids as $post_id) {
                 $posts[] = Models_Exam_Post::fetchRowByID($post_id["post_id"]);
             }
         }
+
         return $posts;
     }
     
@@ -531,19 +553,21 @@ class Models_Exam_Grader extends Models_Base {
         global $db;
         
         $query = "
-            SELECT DISTINCT(a.`proxy_id`)
-            FROM `course_group_audience` AS a
-            JOIN `exam_graders` AS b
-            ON b.`cgroup_id` = a.`cgroup_id`
-            WHERE b.`proxy_id` = ".$db->qstr($grader_proxy_id)."
-            AND b.`post_id` = ".$db->qstr($post_id)."
-            AND a.`active` = 1";
+            SELECT DISTINCT(`cga`.`proxy_id`)
+            FROM `course_group_audience` AS `cga`
+            JOIN `course_group_contacts` AS `cgc`
+            ON `cgc`.`cgroup_id` = `cga`.`cgroup_id`
+            JOIN `exam_graders` AS `eg`
+            ON `eg`.`cgroup_id` = `cgc`.`cgroup_id`
+            WHERE `eg`.`proxy_id` = ".$db->qstr($grader_proxy_id)."
+            AND `eg`.`post_id` = ".$db->qstr($post_id)."
+            AND `cga`.`active` = 1";
         
         $results = $db->GetAll($query);
         $assigned_students = array();
         if ($results) {
             foreach ($results as $result) {
-                $student = User::fetchRowByID($result["proxy_id"]);
+                $student = Models_User::fetchRowByID($result["proxy_id"]);
                 if ($student) {
                     $assigned_students[] = $student;
                 }

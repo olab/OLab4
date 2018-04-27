@@ -1,0 +1,18 @@
+default:
+  suites:
+    default:
+      contexts:
+        - FeatureContext
+        - CourseContext
+        - CurriculumLayoutContext
+        - AssessmentContext
+        - ExamContext
+        - Behat\MinkExtension\Context\MinkContext
+  extensions:
+    Behat\MinkExtension:
+      browser_name : chrome
+      base_url: "http://entrada-1x-me.localhost/"
+      sessions:
+          default:
+            selenium2:
+              wd_host: "http://127.0.0.1:4444/wd/hub"

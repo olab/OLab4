@@ -188,7 +188,7 @@ if ($result) {
 
 if (!$community_announcements && !$community_events && ((isset($content["page_content"]) && trim($content["page_content"]) == "") || !isset($content["page_content"]))) {
 	if ((isset($content["page_title"]) && trim($content["page_title"]) == "") || !isset($content["page_title"])) {
-		echo "<h1>Your new community!</h1>";
+		echo "<h1>" . $translate->_("Your new community") . "!</h1>";
 	}
 	echo "	<p>	
 					Welcome to your new community! This is where users will first view your community when 

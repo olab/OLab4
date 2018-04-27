@@ -159,8 +159,8 @@ if ($COMMUNITY_ADMIN) {
 				echo ($result["secure"] == 1) ? " <i class=\"icon-lock\"></i>" : "";
 				echo "</a>\n";
 				echo "</td>\n";
-				echo "<td class=\"date-small\"><span class=\"content-date\">".(((int) $attached_exam->getStartDate()) ? date(DEFAULT_DATE_FORMAT, $attached_exam->getStartDate()) : "No Restrictions")."</span></td>\n";
-				echo "<td class=\"date-small\"><span class=\"content-date\">".(((int) $attached_exam->getEndDate()) ? date(DEFAULT_DATE_FORMAT, $attached_exam->getEndDate()) : "No Restrictions")."</span></td>\n";
+				echo "<td class=\"date-small\"><span class=\"content-date\">".(((int) $attached_exam->getStartDate()) ? date(DEFAULT_DATETIME_FORMAT, $attached_exam->getStartDate()) : "No Restrictions")."</span></td>\n";
+				echo "<td class=\"date-small\"><span class=\"content-date\">".(((int) $attached_exam->getEndDate()) ? date(DEFAULT_DATETIME_FORMAT, $attached_exam->getEndDate()) : "No Restrictions")."</span></td>\n";
 				echo "<td class=\"accesses\" style=\"text-align: center\">" . $completed_attempts . "</td>\n";
 				echo "</tr>\n";
 			}

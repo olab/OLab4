@@ -15,7 +15,7 @@ body {
 .file-browser-panel {
     background:#fff;
     padding:20px;
-    margin:60px 20px 20px 20px;
+    margin:0;
     border-radius:5px;
 }
 
@@ -123,4 +123,8 @@ body {
 
 #fileupload {
     margin-bottom:0px;
+}
+
+.event-resource-upload-text {
+    width:100%;
 }

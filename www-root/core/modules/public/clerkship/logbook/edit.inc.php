@@ -144,7 +144,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP"))) {
                     }
                 } else {
                     $ERROR++;
-                    $ERRORSTR[] = "The <strong>Objectives</strong> field is required. Please include at least one Clerkship Presentation / Objective in this encounter before continuing.";
+                    $ERRORSTR[] = "The <strong>Objectives</strong> field is required. Please include at least one " . $translate->_("Clerkship") . " Presentation / Objective in this encounter before continuing.";
                 }
 
                 /**
@@ -864,7 +864,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP"))) {
                                     <select name="post_action" id="post_action" style="width: 200px; margin-right: 20px;">
                                         <option value="entries"<?php echo (((!isset($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["post_action"])) || ($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["post_action"] == "entries")) ? " selected=\"selected\"" : ""); ?>>View your logbook entries</option>
                                         <option value="new"<?php echo (($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["post_action"] == "new") ? " selected=\"selected\"" : ""); ?>>Add another entry</option>
-                                        <option value="index"<?php echo (($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["post_action"] == "index") ? " selected=\"selected\"" : ""); ?>>Return to clerkship index</option>
+                                        <option value="index"<?php echo (($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["post_action"] == "index") ? " selected=\"selected\"" : ""); ?>>Return to <?php echo $translate->_("clerkship index"); ?></option>
                                     </select>
                                 </span>
                             </span>

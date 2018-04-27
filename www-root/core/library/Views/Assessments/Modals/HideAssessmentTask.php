@@ -23,8 +23,8 @@
  * @copyright Copyright 2016 Queen's University. All Rights Reserved.
  *
  */
-class Views_Assessments_Modals_HideAssessmentTask extends Views_Assessments_Base
-{
+class Views_Assessments_Modals_HideAssessmentTask extends Views_Assessments_Base {
+
     /**
      * Render the modal view.
      *
@@ -33,7 +33,7 @@ class Views_Assessments_Modals_HideAssessmentTask extends Views_Assessments_Base
     protected function renderView($options = array()) {
         global $translate;
         ?>
-        <div class="modal fade" id="hide-assessment-task-modal" style="display: none">
+        <div class="modal fade" id="hide-assessment-task-modal">
             <form name="hide-assessment-task-modal-form" id="hide-assessment-task-modal-form" method="POST" action="#">
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>

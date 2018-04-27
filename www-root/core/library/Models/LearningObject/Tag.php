@@ -99,5 +99,3 @@ class Models_LearningObject_Tag extends Models_Base {
     }
 
 }
-
-?>

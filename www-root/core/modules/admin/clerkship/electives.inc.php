@@ -61,7 +61,7 @@ if (!defined("PARENT_INCLUDED")) {
 		$EVENT_ID	= (int) trim($_GET["id"]);
 	}
 	
-	$BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/clerkship", "title" => "Manage Clerkship");
+	$BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/clerkship", "title" => $translate->_("Manage Clerkship"));
 
 	if (($router) && ($router->initRoute())) {
 		$module_file = $router->getRoute();

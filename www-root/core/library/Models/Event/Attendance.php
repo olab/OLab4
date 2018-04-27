@@ -31,7 +31,7 @@ class Models_Event_Attendance extends Models_Base {
         $updated_by;
 
     protected static $table_name           = "event_attendance";
-    protected static $primary_key          = "eaudience_id";
+    protected static $primary_key          = "eattendance_id";
     protected static $default_sort_column  = "eattendance_id";
 
     public function __construct($arr = NULL) {

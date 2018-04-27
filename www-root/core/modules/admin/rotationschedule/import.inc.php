@@ -48,7 +48,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ROTATION_SCHEDULE"))) {
     }
 
     if ($draft) {
-        if (Models_Schedule_Draft_Author::isAuthor($draft->getID(), $ENTRADA_USER->getActiveID())) {
+        if (Models_Schedule_Draft_Author::isAuthor($draft->getID(), $ENTRADA_USER->getActiveID()) || Models_Schedule_Draft_Author::isAuthor($draft->getID(), $draft->getCourseID(), "course_id")) {
             $BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/" . $MODULE . "?section=drafts", "title" => $translate->_("My Drafts"));
             $BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/" . $MODULE . "?section=edit-draft&draft_id=" . $PROCESSED["draft_id"], "title" => $draft->getTitle());
             $BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/" . $MODULE . "?section=import&draft_id=" . $PROCESSED["draft_id"], "title" => $translate->_("Add Rotation"));

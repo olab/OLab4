@@ -26,7 +26,7 @@ if (!defined("IN_ASSESSMENTS_REPORTS")) {
 } elseif ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
     header("Location: " . ENTRADA_URL);
     exit;
-} elseif (!$ENTRADA_ACL->amIAllowed("academicadvisor", "read", false)) {
+} elseif (!$ENTRADA_ACL->amIAllowed("assessments", "read", false)) {
     $ONLOAD[] = "setTimeout('window.location=\\'" . ENTRADA_URL . "/" . $MODULE . "\\'', 15000)";
     $ERROR++;
     $ERRORSTR[] = "Your account does not have the permissions required to use this module.<br /><br />If you believe you are receiving this message in error please contact <a href=\"mailto:" . html_encode($AGENT_CONTACTS["administrator"]["email"]) . "\">" . html_encode($AGENT_CONTACTS["administrator"]["name"]) . "</a> for assistance.";
@@ -41,6 +41,7 @@ if (!defined("IN_ASSESSMENTS_REPORTS")) {
     $specified_distribution_id = 0;
 
     $specified_strip_comments = false;
+    $include_commenter_name = false;
     $generate_pdf = false;
     $pdf_error = false;
     $prune_empty_rubrics = true;
@@ -97,11 +98,13 @@ if (!defined("IN_ASSESSMENTS_REPORTS")) {
     }
 
     // Perform simple validation on them.
-    if (($specified_role == "learner" ||
-        $specified_role == "faculty") &&
-        $specified_proxy_id &&
-        $specified_form_id &&
-        $specified_cperiod_id) {
+    if (($specified_role == "learner"
+            || $specified_role == "faculty"
+            || $specified_role == "target")
+        && $specified_proxy_id
+        && $specified_form_id
+        && $specified_cperiod_id
+    ) {
         $validated_inputs = true;
     }
 
@@ -129,7 +132,7 @@ if (!defined("IN_ASSESSMENTS_REPORTS")) {
 
         if ($assessment_user && $specified_form) {
             if ($specified_role == "faculty") {
-                $override_permission = Entrada_Utilities_Assessments_AssessmentTask::getFacultyAccessOverrideByCourseFacultyOrWhitelist($ENTRADA_USER, $specified_proxy_id);
+                $override_permission = Entrada_Utilities_Assessments_DeprecatedAssessmentTask::getFacultyAccessOverrideByCourseFacultyOrWhitelist($ENTRADA_USER, $specified_proxy_id);
             } else {
                 $override_permission = null;
             }
@@ -140,7 +143,7 @@ if (!defined("IN_ASSESSMENTS_REPORTS")) {
                 $HEAD[] = "<script type=\"text/javascript\">var proxy_id = '" . $specified_proxy_id . "';</script>";
                 $HEAD[] = "<script type=\"text/javascript\">sidebarBegone();</script>";
                 $JQUERY[] = "<script type=\"text/javascript\" src=\"" . ENTRADA_URL . "/javascript/assessments/assessment-index.js?release=" . html_encode(APPLICATION_VERSION) . "\"></script>";
-                $HEAD[] = "<link href=\"" . ENTRADA_URL . "/css/assessments/assessment-public-index.css\" rel=\"stylesheet\" type=\"text/css\" media=\"all\" />";
+                $HEAD[] = "<link href=\"" . ENTRADA_URL . "/css/assessments/assessment-public-index.css?release=" . html_encode(APPLICATION_VERSION)."\" rel=\"stylesheet\" type=\"text/css\" media=\"all\" />";
                 ?>
                 <script type="text/javascript">
                     var assessment_reports = {};
@@ -175,12 +178,22 @@ if (!defined("IN_ASSESSMENTS_REPORTS")) {
                 $distribution_name = false;
                 if ($specified_distribution_id) {
                     $construction["adistribution_id"] = $specified_distribution_id; // optionally limit to distribution id
-                    if ($distribution = Models_Assessments_Distribution::fetchRowByID($specified_distribution_id)) {
+                    if ($distribution = Models_Assessments_Distribution::fetchRowByIDIgnoreDeletedDate($specified_distribution_id)) {
                         $distribution_name = $distribution->getTitle();
+
+                        // Targets self-reporting can potentially see identifiable comments
+                        if ($specified_role == "target") {
+                            $distribution_report_object = new Models_Assessments_Distribution_Target_ReportReleases();
+                            $distribution_report_options = $distribution_report_object->fetchRowByADistributionID($distribution->getID());
+                            if ($distribution_report_options && $distribution_report_options->getCommentOptions() == "identifiable") {
+                                $include_commenter_name = true;
+                            }
+                        }
                     }
                 }
+
                 $reporting_utility = new Entrada_Utilities_Assessments_Reports($construction);
-                $report_data = $reporting_utility->generateReport(); // generate (or fetch from cache) the report
+                $report_data = $reporting_utility->generateReport(null, $specified_role); // generate (or fetch from cache) the report
 
                 // Generate header html
                 $header_view = new Views_Assessments_Reports_Header(array("class" => "space-below medium"));
@@ -197,13 +210,13 @@ if (!defined("IN_ASSESSMENTS_REPORTS")) {
                     ),
                     false
                 );
-
                 // Generate the report HTML
                 $report_view = new Views_Assessments_Reports_AssessmentReport(array("class" => "space-above space-below medium clearfix"));
                 $report_html = $report_view->render(
                     array(
                         "report_data" => $report_data,
                         "strip_comments" => $specified_strip_comments,
+                        "include_commenter_name" => $include_commenter_name
                     ),
                     false
                 );

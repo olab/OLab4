@@ -256,8 +256,8 @@ if (communities_module_access($COMMUNITY_ID, $MODULE_ID, "delete")) {
 				echo "<tr>\n";
 				echo "	<td style=\"font-family: monospace\">\n";
 					if (strtotime("00:00:00", $result["event_start"]) != strtotime("00:00:00", $result["event_finish"])) {
-						echo date(DEFAULT_DATE_FORMAT, $result["event_start"])."<br />";
-						echo date(DEFAULT_DATE_FORMAT, $result["event_finish"]);
+						echo date(DEFAULT_DATETIME_FORMAT, $result["event_start"])."<br />";
+						echo date(DEFAULT_DATETIME_FORMAT, $result["event_finish"]);
 					} else {
 						echo date("H:i", $result["event_start"])." - ".date("H:i", $result["event_finish"]);
 					}

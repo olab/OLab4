@@ -1,0 +1,160 @@
+.stage-container h2 {
+    cursor: pointer;
+}
+
+.epa-container {
+    margin-bottom: 25px;
+    padding-left: 5px;
+}
+
+.hide {
+    display: none !important;
+}
+
+.stage-toggle {
+    margin-top: 20px;
+    font-family: "Lucida Grande", Geneva, Verdana, Arial, Helvetica, sans-serif;
+    font-size: 13px;
+    color: #8b959d;
+}
+
+.stage-toggle span.fa {
+    position: relative;
+    top: 1px;
+    font-size: 16px;
+    margin-left: 5px;
+    transition: transform .2s, top .2s;
+}
+
+.stage-toggle.collapsed span.fa {
+    transform: rotate(180deg);
+    top: 3px;
+}
+
+.stage-toggle:focus {
+    text-decoration: underline;
+}
+
+.list-set-item-epa-description {
+    display:block;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 14px;
+    line-height: 18px;
+    color: #000;
+    white-space: normal;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    position: relative;
+    top: 2px;
+    width: 858px;
+}
+
+.epa-description-block, .epa-description-block-secondary {
+    padding: 15px;
+    display: none;
+}
+
+.list-set-item-epa-encyclopedia {
+    vertical-align: top !important;
+    display:block;
+    width:96%;
+    padding-left: 3% !important;
+    padding-top: 10px !important;
+}
+
+.list-set-item-epa-encyclopedia:hover {
+    background-color: #ecf0f3;
+    display:block;
+}
+
+.description-header:hover {
+    display:block;
+    background-color: #ecf0f3;
+}
+
+.spinner-container {
+    text-align: center;
+}
+
+.encyclopedia-desc {
+    width: 858px;
+    display: block;
+    white-space: normal !important;
+    vertical-align: top;
+}
+
+.epa-name {
+    width: 98%;
+}
+
+.epa-progress-toggle, .epa-progress-toggle-secondary {
+    padding-left: 15px !important;
+}
+
+.bottom-gap {
+    margin-bottom: 15px !important;
+}
+
+.top-border {
+    border-top: 1px solid #ecf0f3 !important;
+}
+
+.block-inline {
+    width: 100%;
+}
+
+.description-header {
+    width: inherit;
+    display: block;
+    padding: 10px 20px 10px 20px !important;
+    background-color: #f4f7fa;
+}
+
+.objective-name {
+    width: 100%;
+}
+
+.list-set-item-cell:last-child {
+    border-bottom: 0;
+}
+
+.dark-icon {
+    color: #8b959d;
+}
+
+.wider-search {
+    width: 300px;
+}
+
+.rotate {
+    transform: rotate(180deg);
+}
+
+.list-set-item-title {
+    vertical-align: top;
+    margin-bottom: 0px;
+}
+
+.show-more {
+    list-style: none;
+    margin: 0;
+}
+
+.curriculum-map {
+    width: 100%;
+    padding: 0px;
+    display: none;
+}
+
+.cbme-course-heading {
+    color: #17323b;
+    margin-top: 0;
+}
+
+.cbme-course-heading label {
+    font-size: 20px;
+}
+
+.epa-accordion-container svg {
+    width: 100%;
+}

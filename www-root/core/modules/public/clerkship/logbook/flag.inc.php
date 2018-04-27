@@ -48,14 +48,14 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP"))) {
 		if ($PROCESSED) {
 			$BREADCRUMB[]	= array("url" => ENTRADA_URL."/clerkship?section=clerk&ids=".$PROCESSED["proxy_id"], "title" => "Clerk Management");
 			$BREADCRUMB[]	= array("url" => ENTRADA_URL."/clerkship/logbook?".replace_query(array("section" => "flag")), "title" => "Flag Logbook Entry");
-			echo "<h1>Deactivating Clerkship Logbook Entry</h1>\n";
+			echo "<h1>Deactivating " . $translate->_("Clerkship Logbook") . " Entry</h1>\n";
 			switch($STEP) {
 				case 2 :
 					$query = "UPDATE `".CLERKSHIP_DATABASE."`.`logbook_entries` SET `entry_active` = 0 WHERE `lentry_id`=".$db->qstr($RECORD_ID);
 					if ($db->Execute($query)) {
 						$url = ENTRADA_URL."/clerkship?section=clerk&ids=".$PROCESSED["proxy_id"];
 						
-						$msg	= " You will now be redirected to the clerkship logbook index; this will happen <strong>automatically</strong> in 5 seconds or <a href=\"".$url."\" style=\"font-weight: bold\">click here</a> to continue.";
+						$msg	= " You will now be redirected to the " . $translate->_("clerkship") . " logbook index; this will happen <strong>automatically</strong> in 5 seconds or <a href=\"".$url."\" style=\"font-weight: bold\">click here</a> to continue.";
 						
 						$SUCCESS++;
 						$SUCCESSSTR[]  	= "You have successfully flagged this <strong>Patient Encounter</strong> in the system.<br /><br />".$msg;

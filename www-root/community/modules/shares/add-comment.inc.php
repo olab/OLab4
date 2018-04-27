@@ -180,7 +180,7 @@ if ($RECORD_ID) {
 			}
 		} else {
 			$NOTICE++;
-			$NOTICESTR[] = "The file that you are trying to comment on was deactivated <strong>".date(DEFAULT_DATE_FORMAT, $file_record["updated_date"])."</strong> by <strong>".html_encode(get_account_data("firstlast", $file_record["updated_by"]))."</strong>.<br /><br />If there has been a mistake or you have questions relating to this issue please contact the MEdTech Unit directly.";
+			$NOTICESTR[] = "The file that you are trying to comment on was deactivated <strong>".date(DEFAULT_DATETIME_FORMAT, $file_record["updated_date"])."</strong> by <strong>".html_encode(get_account_data("firstlast", $file_record["updated_by"]))."</strong>.<br /><br />If there has been a mistake or you have questions relating to this issue please contact the MEdTech Unit directly.";
 
 			echo display_notice();
 

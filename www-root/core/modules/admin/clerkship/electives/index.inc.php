@@ -122,7 +122,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP")) || (!defined("IN
 					echo "<tr".(($is_here) ? " class=\"current\"" : $cssclass).">\n";
 					echo "	<td class=\"modified\">&nbsp</td>\n";
 					echo "	<td class=\"date\"><a href=\"".$click_url."\" style=\"font-size: 11px\">".$name."</a></td>\n";
-					echo "	<td class=\"date\"><a href=\"".$click_url."\" style=\"font-size: 11px\">".date(DEFAULT_DATE_FORMAT, $result["event_start"])."</a></td>\n";
+					echo "	<td class=\"date\"><a href=\"".$click_url."\" style=\"font-size: 11px\">".date(DEFAULT_DATETIME_FORMAT, $result["event_start"])."</a></td>\n";
 					echo "	<td class=\"region\"><a href=\"".$click_url."\" style=\"font-size: 11px\">".($result["city"] == "" ? html_encode(limit_chars(($result["region_name"]), 30)) : $result["city"])."</a></td>\n";
 					echo "	<td class=\"title\"><a href=\"".$click_url."\" style=\"font-size: 11px\">".limit_chars(html_decode($result["event_title"]), 55, true, false)."</a></td>\n";
 					echo "</tr>\n";

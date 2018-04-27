@@ -196,7 +196,7 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_CATEGORIES")) {
                                 selectOrder('#m_selectOrderField_<?php echo $time; ?>', <?php echo $CATEGORY_ID; ?>, <?php echo (isset($PROCESSED["category_parent"]) && $PROCESSED["category_parent"] ? $PROCESSED["category_parent"] : "0"); ?>, <?php echo $ORGANISATION_ID; ?>);
                             });
                         </script>
-                        <h2>Clerkship<?php echo (isset($PROCESSED["ctype_name"]) && $PROCESSED["ctype_name"] ? " ".$PROCESSED["ctype_name"] : ""); ?> Category Details</h2>
+                        <h2><?php echo $translate->_("Clerkship"); ?><?php echo (isset($PROCESSED["ctype_name"]) && $PROCESSED["ctype_name"] ? " ".$PROCESSED["ctype_name"] : ""); ?> Category Details</h2>
                         <div class="row-fluid">
                             <form id="sub-category-form" action="<?php echo ENTRADA_URL."/admin/settings/manage/categories"."?".replace_query(array("action" => "edit", "step" => 2, "mode" => "ajax")); ?>" method="post" class="form-horizontal">
                                 <div class="display-error hide"></div>

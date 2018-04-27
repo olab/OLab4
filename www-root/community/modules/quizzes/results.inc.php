@@ -99,72 +99,76 @@ if ($RECORD_ID) {
 					echo "<h1>".html_encode($quiz_record["quiz_title"])."</h1>";
 					?>
 					<div class="display-<?php echo $display_class; ?>">
-							<h3><?php echo html_encode($respondent_name); ?> Quiz Results:</h3>
-						<div style="font-size: 200%; margin-bottom: 10px">
+                        <p class="lead"><strong><?php echo html_encode($respondent_name); ?></strong> Quiz Results:</p>
+						<h4 class="space-below">
 							You got <strong><?php echo $quiz_score; ?>/<?php echo $quiz_value; ?></strong> on this quiz, which is <strong><?php echo $quiz_percentage; ?>%</strong>.
-						</div>
+						</h4>
 					</div>
 
 					<div class="quiz-questions" id="quiz-content-questions-holder">
 						<ol class="questions" id="quiz-questions-list">
 						<?php
 						foreach ($questions as $question) {
-							$question_correct	= false;
-							$question_feedback	= "";
+						    if ($question["questiontype_id"] != 2) {
+                                $question_correct	= false;
+                                $question_feedback	= "";
 
-							echo "<li id=\"question_".$question["qquestion_id"]."\">";
-							echo "	<div class=\"question noneditable\">\n";
-							echo "		<span id=\"question_text_".$question["qquestion_id"]."\" class=\"question\">".clean_input($question["question_text"], "trim")."</span>";
-							echo "	</div>\n";
-							echo "	<ul class=\"responses\">\n";
-							$query		= "	SELECT a.*
-											FROM `quiz_question_responses` AS a
-											WHERE a.`qquestion_id` = ".$db->qstr($question["qquestion_id"])."
-											AND a.`response_active` = '1'
-											ORDER BY ".(($question["randomize_responses"] == 1) ? "RAND()" : "a.`response_order` ASC");
-							$responses	= $db->GetAll($query);
-							if ($responses) {
-								foreach ($responses as $response) {
-									$response_selected	= false;
-									$response_correct	= false;
+                                echo "<li class=\"" . ($question["questiontype_id"] == 3 ? "hide" : "") . "\" id=\"question_".$question["qquestion_id"]."\">";
+                                echo "	<div class=\"question noneditable\">\n";
+                                echo "		<span id=\"question_text_".$question["qquestion_id"]."\" class=\"question\">".clean_input($question["question_text"], "trim")."</span>";
+                                echo "	</div>\n";
+                                echo "	<ul class=\"responses\">\n";
+                                $query		= "	SELECT a.*
+                                                FROM `quiz_question_responses` AS a
+                                                WHERE a.`qquestion_id` = ".$db->qstr($question["qquestion_id"])."
+                                                AND a.`response_active` = '1'
+                                                ORDER BY ".(($question["randomize_responses"] == 1) ? "RAND()" : "a.`response_order` ASC");
+                                $responses	= $db->GetAll($query);
+                                if ($responses) {
+                                    foreach ($responses as $response) {
+                                        $response_selected	= false;
+                                        $response_correct	= false;
 
-									if ($PROCESSED[$question["qquestion_id"]] == $response["qqresponse_id"]) {
-										$response_selected = true;
+                                        if ($PROCESSED[$question["qquestion_id"]] == $response["qqresponse_id"]) {
+                                            $response_selected = true;
 
-										if ($response["response_correct"] == 1) {
-											$response_correct	= true;
-											$question_correct	= true;
-										} else {
-											$response_correct	= false;
-										}
+                                            if ($response["response_correct"] == 1) {
+                                                $response_correct	= true;
+                                                $question_correct	= true;
+                                            } else {
+                                                $response_correct	= false;
+                                            }
 
-										if ($tmp_input = clean_input($response["response_feedback"], array("notags", "trim"))) {
-											$question_feedback = $tmp_input;
-										}
-									}
+                                            if ($tmp_input = clean_input($response["response_feedback"], array("notags", "trim"))) {
+                                                $question_feedback = $tmp_input;
+                                            }
+                                        }
 
-									echo "<li".(($response_selected) ? " class=\"selected ".(($response_correct) ? "correct" : "incorrect")."\"" : (($response["response_correct"] == 1) ? " class=\"correct\"" : "")).">";
-									echo	clean_input($response["response_text"], (($response["response_is_html"] == 1) ? "trim" : "encode"));
+                                        echo "<li".(($response_selected) ? " class=\"selected ".(($response_correct) ? "correct" : "incorrect")."\"" : (($response["response_correct"] == 1) ? " class=\"correct\"" : "")).">";
+                                        echo	clean_input($response["response_text"], (($response["response_is_html"] == 1) ? "trim" : "encode"));
 
-									if ($response_selected) {
-										if ($response["response_correct"] == 1) {
-											echo "<img class=\"question-response-indicator\" src=\"".ENTRADA_URL."/images/question-response-correct.gif\" alt=\"Correct\" title=\"Correct\" />";
-										} else {
-											echo "<img class=\"question-response-indicator\" src=\"".ENTRADA_URL."/images/question-response-incorrect.gif\" alt=\"Incorrect\" title=\"Incorrect\" />";
-										}
-									}
-									echo "</li>\n";
-								}
-							}
-							echo "	</ul>\n";
-							if ($question_feedback != "") {
-								echo "	<div class=\"display-generic\" style=\"margin-left: 65px; padding: 10px\">\n";
-								echo "		<strong>Question Feedback:</strong><br />";
-								echo		$question_feedback;
-								echo "	</div>";
-							}
-							echo "</li>\n";
-						}
+                                        if ($response_selected) {
+                                            if ($response["response_correct"] == 1) {
+                                                echo "<img class=\"question-response-indicator\" src=\"".ENTRADA_URL."/images/question-response-correct.gif\" alt=\"Correct\" title=\"Correct\" />";
+                                            } else {
+                                                echo "<img class=\"question-response-indicator\" src=\"".ENTRADA_URL."/images/question-response-incorrect.gif\" alt=\"Incorrect\" title=\"Incorrect\" />";
+                                            }
+                                        }
+                                        echo "</li>\n";
+                                    }
+                                }
+                                echo "	</ul>\n";
+                                if ($question_feedback != "") {
+                                    echo "	<div class=\"display-generic\" style=\"margin-left: 65px; padding: 10px\">\n";
+                                    echo "		<strong>Question Feedback:</strong><br />";
+                                    echo		$question_feedback;
+                                    echo "	</div>";
+                                }
+                                echo "</li>\n";
+                            } else {
+						        echo "<p>" . clean_input($question["question_text"], "trim") . "</p>";
+                            }
+                        }
 						?>
 						</ol>
 					</div>
@@ -184,7 +188,7 @@ if ($RECORD_ID) {
 				}
 			} else {
 				$NOTICE++;
-				$NOTICESTR[] = "You will not be able to review your quiz results until after <strong>".date(DEFAULT_DATE_FORMAT, $quiz_record["release_until"])."</strong>.<br /><br />Please contact a teacher if you require further assistance.";
+				$NOTICESTR[] = "You will not be able to review your quiz results until after <strong>".date(DEFAULT_DATETIME_FORMAT, $quiz_record["release_until"])."</strong>.<br /><br />Please contact a teacher if you require further assistance.";
 
 				echo display_notice();
 

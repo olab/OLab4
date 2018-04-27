@@ -535,11 +535,20 @@ class Views_Assessments_Distribution_DelegationProgress extends Views_Assessment
 
                 <?php foreach ($target["assessors"] as $assignment):
                     $assignment = $this->distribution_delegation->addExpandedDelegationData($target, $assignment);
+                    $assessor = Models_Assessments_Assessor::fetchRowByID($assignment["dassessment_id"]);
+                    $progress = Models_Assessments_Progress::fetchRowByDassessmentID($assignment["dassessment_id"]);
                     ?>
                     <tr>
                         <td class="no-border-left">
                             <div>
-                                <strong><?php echo $assignment["assessor_fullname"]; ?></strong>
+                                <strong>
+                                    <?php if ($assignment["assessor_type"] == "external") {
+                                        $url = ENTRADA_URL . "/assessment?adistribution_id=" . $assignment["adistribution_id"] . "&target_record_id=" . $assignment["target_id"] . "&dassessment_id=" . $assignment["dassessment_id"] . "&assessor_value=" . $assignment["assessor_value"] . (isset($progress) && $progress ? "&aprogress_id=" . $progress->getID() : "") . "&external_hash=" . $assessor->getExternalHash() . "&from=progress"; ?>
+                                        <a href="<?php echo $url; ?>"><?php echo $assignment["assessor_fullname"]; ?></a> <?php
+                                    } else {
+                                       echo $assignment["assessor_fullname"];
+                                    } ?>
+                                </strong>
                                 <a target="_top" href="mailto:<?php echo $assignment["assessor_email"];?>"><?php echo $assignment["assessor_email"];?></a>
                                 <span><?php echo $assignment["assessor_number"] ? $assignment["assessor_number"] : "&nbsp;"; ?></span>
                             </div>
@@ -866,9 +875,9 @@ class Views_Assessments_Distribution_DelegationProgress extends Views_Assessment
             if (!isset($completed_delegations[$addelegation_id])) {
                 continue; // The given assignments are for an record that isn't in the completed list, so skip it.
             }
-            if (empty($target_assignments)) {
+            /*if (empty($target_assignments)) {
                 continue; // In the case where a delegation was made and there are no targets for it, yet it was marked complete, we don't show it. This edge case is no longer possible, but still exists in the data.
-            }
+            }*/
             if (!$completed_delegations[$addelegation_id]->getCompletedDate()) {
                 continue; // skip in progress delegations
             }

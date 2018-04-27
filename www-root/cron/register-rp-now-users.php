@@ -95,6 +95,8 @@ if ((@is_dir(CACHE_DIRECTORY)) && (@is_writable(CACHE_DIRECTORY))) {
 
                 foreach ($rp_now_users as $rp_now_user) {
 
+                    $current_user_error = false;
+
                     $rp_now = Models_Secure_RpNow::fetchRowByID($rp_now_user->getRpnowConfigId());
                     if ($rp_now) {
                         $post = $rp_now->getPost();
@@ -104,13 +106,18 @@ if ((@is_dir(CACHE_DIRECTORY)) && (@is_writable(CACHE_DIRECTORY))) {
                         } else {
                             add_error("Exam post not found");
                             application_log("error", "Exam post not found");
+                            $current_user_error = true;
                         }
                     } else {
                         add_error("RpNow model not found");
                         application_log("error", "RpNow model not found");
+                        $current_user_error = true;
                     }
 
-                    if (!has_error()) {
+                    /**
+                     * if the current record has some type of error, skip it. This allows for other records to possibly succeed
+                     */
+                    if (!$current_user_error) {
                         $exception = Models_Exam_Post_Exception::fetchRowByPostIdProxyId($post->getID(), $rp_now_user->getProxyId());
                         $PROCESSED_EXCEPTION = array();
                         if ($exception) {
@@ -123,7 +130,7 @@ if ((@is_dir(CACHE_DIRECTORY)) && (@is_writable(CACHE_DIRECTORY))) {
                                 $PROCESSED_EXCEPTION["end_date_exception"] = 0;
                             }
                             if ($exception->getUseExceptionTimeFactor() && !is_null($exception->getExceptionTimeFactor()) && $exception->getExceptionTimeFactor() > 0) {
-                                $PROCESSED_EXCEPTION["duration"] = $post->getTimeLimit() * (1 + ((int)$exception->getExceptionTimeFactor() / 100));
+                                $PROCESSED_EXCEPTION["duration"] = round($post->getTimeLimit() * (1 + ((int)$exception->getExceptionTimeFactor() / 100)));
                             }
                         }
 

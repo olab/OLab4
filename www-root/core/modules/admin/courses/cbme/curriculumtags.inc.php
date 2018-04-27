@@ -18,7 +18,7 @@
  * @author Organisation: Queen's University
  * @author Unit: School of Medicine
  * @author Developer: Josh Dillon <jdillon@queensu.ca>
- * @copyright Copyright 2014 Queen's University. All Rights Reserved.
+ * @copyright Copyright 2016 Queen's University. All Rights Reserved.
  *
  */
 if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CBME"))) {
@@ -26,11 +26,11 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CBME"))) {
 } elseif ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
     header("Location: ".ENTRADA_URL);
     exit;
-} elseif (!$ENTRADA_ACL->amIAllowed('course', 'update', false)) {
-    $ONLOAD[]	= "setTimeout('window.location=\\'".ENTRADA_URL."/admin/".$MODULE."\\'', 15000)";
+} elseif (!$ENTRADA_ACL->amIAllowed("coursecontent", "update", false)) {
+    $ONLOAD[] = "setTimeout('window.location=\\'".ENTRADA_URL."/admin/".$MODULE."\\'', 15000)";
 
     $ERROR++;
-    $ERRORSTR[]	= "You do not have the permissions required to use this module.<br /><br />If you believe you are receiving this message in error please contact <a href=\"mailto:".html_encode($AGENT_CONTACTS["administrator"]["email"])."\">".html_encode($AGENT_CONTACTS["administrator"]["name"])."</a> for assistance.";
+    $ERRORSTR[]	= sprintf($translate->_("You do not have the permissions required to use this module.<br /><br />If you believe you are receiving this message in error please contact <a href=\"%s\">%s</a> for assistance."), "mailto:".html_encode($AGENT_CONTACTS["administrator"]["email"]), html_encode($AGENT_CONTACTS["administrator"]["name"]));
 
     echo display_error();
 
@@ -43,9 +43,9 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CBME"))) {
     }
 
     $BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/".$MODULE."/cbme?".replace_query(array("section" => "curriculumtags", "id" => $COURSE_ID, "step" => false)), "title" => $translate->_("Import Curriculum Tags"));
-    $HEAD[] = "<link rel=\"stylesheet\" type=\"text/css\" href=\"" . ENTRADA_URL . "/css/courses/curriculum-tags.css\" />";
-    $HEAD[] = "<script type=\"text/javascript\" src=\"" . ENTRADA_URL . "/javascript/courses/curriculumtags/curriculumtags.js\"></script>";
-    $HEAD[] = "<script type=\"text/javascript\" src=\"" . ENTRADA_URL . "/javascript/jquery/jquery.advancedsearch.js\"></script>";
+    $HEAD[] = "<link rel=\"stylesheet\" type=\"text/css\" href=\"" . ENTRADA_URL . "/css/courses/curriculumtags.css?release=" . html_encode(APPLICATION_VERSION) . "\" />";
+    $HEAD[] = "<script type=\"text/javascript\" src=\"" . ENTRADA_URL . "/javascript/courses/curriculumtags/curriculumtags.js?release=" . html_encode(APPLICATION_VERSION) . "\"></script>";
+    $HEAD[] = "<script type=\"text/javascript\" src=\"" . ENTRADA_URL . "/javascript/jquery/jquery.advancedsearch.js?release=" . html_encode(APPLICATION_VERSION) . "\"></script>";
     $HEAD[] = "<link rel=\"stylesheet\" type=\"text/css\" href=\"" . ENTRADA_URL . "/css/jquery/jquery.advancedsearch.css\" />";
 
     $curriculum_tag_set_model = new Models_ObjectiveSet();
@@ -75,13 +75,13 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CBME"))) {
     </script>
     <div>
         <div class="btn-group">
-            <a href="<?php echo ENTRADA_URL . "/admin/courses/cbme?id=" . html_encode($COURSE_ID) ?>" class="btn"><?php echo $translate->_("CBME Dashboard") ?></a>
+            <a href="<?php echo ENTRADA_URL . "/admin/courses/cbme?id=" . html_encode($COURSE_ID) ?>" class="btn"><?php echo $translate->_("Getting Started") ?></a>
             <a href="<?php echo ENTRADA_URL . "/admin/courses/cbme?section=curriculumtags&id=" . html_encode($COURSE_ID) ?>" class="btn active"><?php echo $translate->_("Import Curriculum Tags") ?></a>
         </div>
         <div class="btn-group pull-right">
             <a href="#" class="btn btn-default dropdown-toggle pull-right" data-toggle="dropdown"><?php echo $translate->_("Download Example CSV Templates") ?> <span class="caret"></span></a>
             <ul class="dropdown-menu">
-                <li><a href="<?php echo ENTRADA_URL . "/admin/courses/cbme?section=api-curriculumtags&method=download-epa-csv" ?>"><?php echo $translate->_("Entrusbable Professional Activity Template") ?></a></li>
+                <li><a href="<?php echo ENTRADA_URL . "/admin/courses/cbme?section=api-curriculumtags&method=download-epa-csv" ?>"><?php echo $translate->_("Entrustable Professional Activity Template") ?></a></li>
                 <li><a href="<?php echo ENTRADA_URL . "/admin/courses/cbme?section=api-curriculumtags&method=download-milestone-csv" ?>"><?php echo $translate->_("Milestone Template") ?></a></li>
             </ul>
         </div>
@@ -110,7 +110,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CBME"))) {
                 if ($curriculum_tags) {
                     echo "<div id=\"" . html_encode($curriculum_tag_set->getShortname() . "-container") . "\" class=\"bucket-list hide\">";
                     echo "<div class=\"alert alert-success\">";
-                    echo sprintf($translate->_("You have successfully imported a list of <strong>%s</strong>. If you need to upload an updated version of this list, please contact <a href=\"mailto:healthsci.suport@queensu.ca\">Education Technology support</a>."), $curriculum_tag_set->getTitle());
+                    echo sprintf($translate->_("You have successfully imported a list of <strong>%s</strong>. If you need to upload an updated version of this list, please contact your system administrator."), $curriculum_tag_set->getTitle());
                     echo "</div>";
                     switch ($curriculum_tag_set->getShortname()) {
                         case "epa": ?>

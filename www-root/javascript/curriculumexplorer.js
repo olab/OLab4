@@ -12,7 +12,7 @@ function renderDOM(jsonResponse, link) {
 			var count;
 
 			if (jsonResponse.child_objectives[i].course_count || jsonResponse.child_objectives[i].event_count || jsonResponse.child_objectives[i].assessment_count) {
-				count = ((COURSE != "" ? 0 : parseInt(jsonResponse.child_objectives[i].course_count)) + parseInt(jsonResponse.child_objectives[i].event_count) + parseInt(jsonResponse.child_objectives[i].assessment_count));
+				count = (parseInt(jsonResponse.child_objectives[i].course_count)) + parseInt(jsonResponse.child_objectives[i].event_count) + parseInt(jsonResponse.child_objectives[i].assessment_count);
 			} else {
 				count = parseInt((jsonResponse.courses != null && jsonResponse.courses.length > 0 ? jsonResponse.courses.length : 0)) + parseInt((jsonResponse.events != null ? jsonResponse.events.length : 0));
 			}
@@ -69,7 +69,7 @@ function renderDOM(jsonResponse, link) {
     tab_content_container.addClass("tab-content");
     var tab_panes = new Array;
 	if (jsonResponse.courses != null && jsonResponse.courses.length > 0) {
-        if (jsonResponse.courses.length > 0 && COURSE == "") {
+        if (jsonResponse.courses.length > 0) {
             var course_pane = jQuery(document.createElement("div")).addClass("tab-pane").attr("id", "courses-tab");
             for (var i=0; i < jsonResponse.courses.length; i++) {
                 var new_course = jQuery(document.createElement("div"));
@@ -167,7 +167,7 @@ function renderDOM(jsonResponse, link) {
 	}
 }
 jQuery(function(){
-	jQuery(".objective-link").live("click", function(e){
+	jQuery(document).on("click", ".objective-link", function(e){
 		if (jQuery(this).hasClass("back")) {
 			jQuery("#objective-breadcrumb .objective-link").last().click();
 		} else {

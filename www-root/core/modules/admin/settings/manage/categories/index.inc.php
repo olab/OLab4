@@ -89,7 +89,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_CATEGORIES"))) {
 		</form>
 		<?php
 	} else {
-		add_notice("There are currently no Clerkship categories created in this organisation.");
+		add_notice("There are currently no " . $translate->_("Clerkship") . " categories created in this organisation.");
 		echo display_notice();
 	}
 }

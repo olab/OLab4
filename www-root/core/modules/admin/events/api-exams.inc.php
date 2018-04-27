@@ -49,13 +49,19 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                 case "exam-wizard" :
 
                     if (isset($request["step"]) && $tmp_input = clean_input($request["step"], array("trim", "int"))) {
-                        $PROCESSED["step"] = $tmp_input;
+                        if ($tmp_input >= 1 && $tmp_input <= 6) {
+                            $current_step = $tmp_input;
+                        } else {
+                            add_error($translate->_("Invalid step provided."));
+                        }
                     } else {
                         add_error($translate->_("No Step provided."));
                     }
 
                     if (isset($request["next_step"]) && $tmp_input = clean_input($request["next_step"], array("trim", "int"))) {
-                        $PROCESSED["next_step"] = $tmp_input;
+                        $next_step = $tmp_input;
+                    } elseif (isset($current_step)) {
+                        $next_step = $current_step + 1;
                     }
 
                     if (isset($request["post_id"]) && $tmp_input = clean_input($request["post_id"], array("trim", "int"))) {
@@ -64,73 +70,35 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                         $post_id = null;
                     }
 
-                    if (isset($PROCESSED["step"])) {
-                        switch ($PROCESSED["step"]) {
-                            case 1 :
-                                $exam_controller = new Controllers_Exam_Post($request, false, true, 1);
-                                $PROCESSED = $exam_controller->getValidatedData();
+                    if (isset($current_step)) {
 
-                                $next_step = 2;
-                                break;
-                            case 2 :
-                                $exam_controller = new Controllers_Exam_Post($request, false, true, array(1, 2));
-                                $PROCESSED = $exam_controller->getValidatedData();
+                        $steps_arr = array();
 
-                                if (isset($PROCESSED['secure']) && $PROCESSED['secure'] == 1) {
-                                    $next_step = 3;
-                                    $previous_step = 2;
-                                } else {
-                                    $next_step = 4;
-                                    $previous_step = 2;
-                                }
-                                break;
-                            case 3 :
-                                $exam_controller = new Controllers_Exam_Post($request, false, true, array(1, 2, 3));
-                                $PROCESSED = $exam_controller->getValidatedData();
+                        for ($i = 1; $i <= $current_step; $i++) {
+                            array_push($steps_arr, $i);
+                        }
 
-                                $next_step = 4;
+                        $exam_controller = new Controllers_Exam_Post($request, false, true, $steps_arr);
+                        $PROCESSED = $exam_controller->getValidatedData();
 
-                                if (isset($PROCESSED['secure']) && $PROCESSED['secure'] == 1) {
-                                    $previous_step = 3;
-                                } else {
-                                    $previous_step = 2;
-                                }
+                        if ($current_step == 5 || $current_step == 6) {
+                            if (isset($request["secure_mode"]) && $tmp_input = clean_input(strtolower($request["secure_mode"]), array("trim", "striptags"))) {
+                                $PROCESSED["secure_mode"] = $tmp_input;
+                            }
 
-                                break;
-                            case 4 :
-                                $exam_controller = new Controllers_Exam_Post($request, false, true, array(1, 2, 3, 4));
-                                $PROCESSED = $exam_controller->getValidatedData();
+                            if (isset($request["mode"]) && $tmp_input = clean_input(strtolower($request["mode"]), array("trim", "striptags"))) {
+                                $PROCESSED["mode"] = $tmp_input;
+                            }
 
-                                $next_step = 5;
+                            if (!has_error()) {
+                                if ($exam_controller->save()) {
+                                    $post_id = $exam_controller->getPost()->getID();
+                                    $post_model = Models_Exam_Post::fetchRowByID($post_id);
 
-                                break;
-                            case 5 :
-                                $exam_controller = new Controllers_Exam_Post($request, false, true, array(1, 2, 3, 4, 5));
-                                $PROCESSED = $exam_controller->getValidatedData();
-
-                                $next_step = 6;
-
-                                break;
-                            case 6:
-                                $exam_controller = new Controllers_Exam_Post($request, false, true, array(1, 2, 3, 4, 5, 6));
-                                $PROCESSED = $exam_controller->getValidatedData();
-
-                                if (isset($request["secure_mode"]) && $tmp_input = clean_input(strtolower($request["secure_mode"]), array("trim", "striptags"))) {
-                                    $PROCESSED["secure_mode"] = $tmp_input;
-                                }
-
-                                if (isset($request["mode"]) && $tmp_input = clean_input(strtolower($request["mode"]), array("trim", "striptags"))) {
-                                    $PROCESSED["mode"] = $tmp_input;
-                                }
-
-                                if (!has_error()) {
-                                    if ($exam_controller->save()) {
-                                        $post_id = $exam_controller->getPost()->getID();
-                                        $post_model = Models_Exam_Post::fetchRowByID($post_id);
-
+                                    // Step 6: Security.
+                                    if ($current_step == 6) {
                                         if (isset($PROCESSED["secure_mode"]) && $PROCESSED["secure_mode"] == "seb") {
-
-                                                /**
+                                            /**
                                              * Process the Secure Access files and keys
                                              */
                                             if (isset($request["secure_file"]) && is_array($request["secure_file"])) {
@@ -273,7 +241,6 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                                             }
                                         }
 
-
                                         //Remove the files that are no longer present
                                         if (isset($request["secure_file_delete"]) && is_array($request["secure_file_delete"])) {
                                             $PROCESSED["secure_file_delete"] = $request["secure_file_delete"];
@@ -333,23 +300,17 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                                                 }
                                             }
                                         }
-                                    } else {
-                                        add_error("Failed to save post");
                                     }
+                                } else {
+                                    add_error("Failed to save post");
                                 }
-                                $next_step = 7;
-                                break;
-                            default :
-                                add_error($translate->_("Invalid step provided"));
-                                break;
+                            }
                         }
 
                         if (!$ERROR) {
-                            if (isset($PROCESSED["next_step"])) {
-                                $step = $PROCESSED["next_step"];
-                            } else {
-                                $step = $next_step;
-                            }
+                            // Advance steps.
+                            $step = $next_step;
+                            $previous_step = $current_step;
 
                             $validation_rules = $exam_controller->getValidationRules();
                             $data_with_rules = array();
@@ -357,18 +318,79 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                             foreach ($PROCESSED as $key => $exam_detail) {
                                 $data_with_rules[$key]["value"] = $exam_detail;
                                 $data_with_rules[$key]["label"] = $validation_rules[$key]["label"];
-                                if ($step == 6) {
-                                    $data_with_rules[$key]["display"] = $exam_controller->displayData($validation_rules[$key], $exam_detail);
+
+                                // If the user skips to step 5 or 6, add data for review.
+                                if ($step == 5 || $step == 6) {
+                                    if (isset($request[$key])) {
+                                        if (in_array($key, array("re_attempt_threshold_attempts", "re_attempt_threshold", "use_re_attempt_threshold"))) {
+                                            if ($key == "use_re_attempt_threshold") {
+                                                $data_with_rules[$key] = array(
+                                                    "value" => ($request[$key] == "on" ? 1 : 0),
+                                                    "label" => $data_with_rules[$key]["label"],
+                                                    "display" => ($request[$key] == "on" ? "Yes" : "No")
+                                                );
+                                            } else {
+                                                $data_with_rules[$key] = array(
+                                                    "value" => $request[$key],
+                                                    "label" => $data_with_rules[$key]["label"],
+                                                    "display" => $request[$key]
+                                                );
+                                            }
+                                        } else if ($request[$key] == "0") {
+                                            $data_with_rules[$key] = array(
+                                                "value" => 0,
+                                                "label" => $data_with_rules[$key]["label"],
+                                                "display" => "No"
+                                            );
+                                        } else if ($request[$key] == "1") {
+                                            $data_with_rules[$key] = array(
+                                                "value" => 1,
+                                                "label" => $data_with_rules[$key]["label"],
+                                                "display" => "Yes"
+                                            );
+                                        } else if (preg_match("/[0-9]{4}\-[0-9]{2}\-[0-9]{2}/", $request[$key])) {
+                                            $raw_date = explode("-", $request[$key]);
+                                            $new_data = $raw_date[1] . "/" . $raw_date[2] . "/" . $raw_date[0];
+                                            $timestamp = strtotime($request[$key]);
+                                            $data_with_rules[$key] = array(
+                                                "value" => $timestamp,
+                                                "label" => $data_with_rules[$key]["label"],
+                                                "display" => $new_data
+                                            );
+                                        } else if (preg_match("/[0-9]{2}\:[0-9]{2}/", $request[$key])) {
+                                            $data_with_rules[$key] = array(
+                                                "value" => $request[$key],
+                                                "label" => $data_with_rules[$key]["label"],
+                                                "display" => $request[$key]
+                                            );
+                                        } else if ($key == "grade_book") {
+                                            $grade_book_id = $request[$key];
+                                            $grade_book = Models_Gradebook_Assessment::fetchRowByID($grade_book_id);
+                                            if ($grade_book) {
+                                                $data_with_rules[$key] = array(
+                                                    "value" => $request[$key],
+                                                    "label" => $data_with_rules[$key]["label"],
+                                                    "display" => $grade_book->getName()
+                                                );
+                                            }
+                                        } else {
+                                            $data_with_rules[$key]["display"] = $exam_controller->displayData($validation_rules[$key], $exam_detail);
+                                        }
+                                    } else {
+                                        $data_with_rules[$key]["display"] = $exam_controller->displayData($validation_rules[$key], $exam_detail);
+                                    }
                                 }
                             }
 
-                            $data = array("step" => $step, "post" => $data_with_rules, "rules" => $validation_rules, "post_id" => $post_id);
+                            $data = array(
+                                "step" => $step,
+                                "post" => $data_with_rules,
+                                "rules" => $validation_rules,
+                                "post_id" => $post_id,
+                                "previous_step" => $previous_step
+                            );
 
-                            if (isset($previous_step)) {
-                                $data["previous_step"] = $previous_step;
-                            }
-
-                            echo json_encode(array("status" => "success", "data" => $data));
+                            echo json_encode(array("status" => "success", "data" => $data, "steps_arr" => $steps_arr));
                         } else {
                             echo json_encode(array("status" => "error", "data" => $ERRORSTR));
                         }
@@ -560,7 +582,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                             }
 
                             application_log("success", "Successfully updated secure access file " . $resource_file->getID() . " for Exam Post ID " . $resource_file->getResourceID());
-                            echo json_encode(array("status" => "success", "data" => array("secure_access_file" => array("id" => $resource_file->getID(), "resource_type" => $resource_file->getResourceType(), "resource_id" => $resource_file->getResourceID(), "file_name" => $resource_file->getFileName(), "updated_date" => date(DEFAULT_DATE_FORMAT, $resource_file->getUpdatedDate())))));
+                            echo json_encode(array("status" => "success", "data" => array("secure_access_file" => array("id" => $resource_file->getID(), "resource_type" => $resource_file->getResourceType(), "resource_id" => $resource_file->getResourceID(), "file_name" => $resource_file->getFileName(), "updated_date" => date(DEFAULT_DATETIME_FORMAT, $resource_file->getUpdatedDate())))));
                         } else {
                             add_error("A problem occurred while attempting to update the secure access access file. Please try again later.");
                             application_log("error", "Failed to update Secure Access File entity " . $PROCESSED["id"] . " for Resource: " . $PROCESSED["post_id"] . " DB said:" . $db->ErrorMsg());
@@ -647,8 +669,8 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                             $grade_books = Models_Gradebook_Assessment::fetchAllByCourseIdMetaId($PROCESSED["course_id"], $meta->getID());
                             if ($grade_books) {
                                 $data = array();
-                                foreach ($grade_books as $grade_books) {
-                                    $data[] = array("target_id" => $grade_books->getAssessmentID(), "target_label" => $grade_books->getName());
+                                foreach ($grade_books as $grade_book) {
+                                    $data[] = array("target_id" => $grade_book->getAssessmentID(), "target_label" => $grade_book->getName());
                                 }
                                 echo json_encode(array("status" => "success", "data" => $data, "level_selectable" => 1));
                             } else {
@@ -787,7 +809,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                             if ($secure_file) {
                                 $data["secure_access_file"]['id'] = $secure_file->getID();
                                 $data["secure_access_file"]['file_name'] = $secure_file->getFileName();
-                                $data["secure_access_file"]['updated_date'] = date(DEFAULT_DATE_FORMAT, $secure_file->getUpdatedDate());
+                                $data["secure_access_file"]['updated_date'] = date(DEFAULT_DATETIME_FORMAT, $secure_file->getUpdatedDate());
                             }
 
                             $secure_keys = $post->getSecureAccessKeys();

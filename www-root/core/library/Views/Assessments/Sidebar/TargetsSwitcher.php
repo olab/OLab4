@@ -23,8 +23,8 @@
  * @copyright Copyright 2016 Queen's University. All Rights Reserved.
  *
  */
-class Views_Assessments_Sidebar_TargetsSwitcher extends Views_Assessments_Base
-{
+class Views_Assessments_Sidebar_TargetsSwitcher extends Views_HTML {
+
     /**
      * Validate our options array.
      *
@@ -32,16 +32,24 @@ class Views_Assessments_Sidebar_TargetsSwitcher extends Views_Assessments_Base
      * @return bool
      */
     protected function validateOptions($options = array()) {
-        if (!isset($options["distribution"]) || !is_a($options["distribution"], "Models_Assessments_Distribution")) {
+        if (!$this->validateArray($options, array("targets"))) {
             return false;
         }
-        if (!isset($options["assessment_record"]) || !is_a($options["assessment_record"], "Models_Assessments_Assessor")) {
-            return false;
-        }
-        if (!isset($options["targets"]) && !is_array($options["targets"])) {
-            return false;
-        }
-        if (!isset($options["target_name"]) || !isset($options["targets_pending"]) || !isset($options["targets_inprogress"]) || !isset($options["targets_complete"])) {
+        if (!$this->validateIsSet(
+                $options,
+                array(
+                    "dassessment_id",           // int
+                    "max_attempts",             // int
+                    "external_hash",            // string
+                    "target_name",              // string
+                    "targets_pending",          // int
+                    "targets_inprogress",       // int
+                    "targets_complete",         // int
+                    "distribution_deleted_date",// int|null
+                    "allow_progress_swap"       // bool
+                )
+            )
+        ) {
             return false;
         }
         return true;
@@ -55,19 +63,28 @@ class Views_Assessments_Sidebar_TargetsSwitcher extends Views_Assessments_Base
     protected function renderView($options = array()) {
         global $translate;
 
-        // Get our validated options variables
-        $distribution = $options["distribution"];
-        $assessment_record = $options["assessment_record"];
-        $current_target_name = $options["target_name"];
-        $targets = $options["targets"];
-        $targets_pending = $options["targets_pending"];
-        $targets_inprogress = $options["targets_inprogress"];
-        $targets_complete = $options["targets_complete"];
+        $dassessment_id           = $options["dassessment_id"];
+        $max_attempts             = $options["max_attempts"];
+        $min_attempts             = $options["min_attempts"];
+        $distribution_is_deleted  = $options["distribution_deleted_date"];
+        $external_hash            = $options["external_hash"];
+        $current_target_name      = $options["target_name"];
+        $targets_pending          = $options["targets_pending"];
+        $targets_inprogress       = $options["targets_inprogress"];
+        $targets_complete         = $options["targets_complete"];
+        $targets                  = $options["targets"];
+        $allow_progress_swap      = $options["allow_progress_swap"];
+
+        $path = ($external_hash) ?
+            ENTRADA_URL . "/assessment/?external_hash={$external_hash}&dassessment_id={$dassessment_id}" :
+            ENTRADA_URL . "/assessments/assessment?dassessment_id={$dassessment_id}";
         ?>
         <?php if (count($targets) > 1): ?>
-        <div class="btn-group target-list clearfix">
-            <a class="btn dropdown-toggle list-btn" href="#" data-toggle="dropdown"><?php echo $translate->_("Choose a Target") ?><span class="assessment-dropdown-arrow"></span></a>
-            <ul id="dropdown-menu" class="dropdown-menu targets-ul">
+        <div id="target-switcher" class="btn-group target-list clearfix">
+            <a class="btn dropdown-toggle list-btn" href="#" data-toggle="dropdown">
+                <?php echo $translate->_("Choose a Target") ?><span class="assessment-dropdown-arrow"></span>
+            </a>
+            <ul class="dropdown-menu targets-ul">
                 <li class="target-search-listitem">
                     <div id="target-search-bar">
                         <input class="search-icon" id="target-search-input" type="text" placeholder="<?php echo $translate->_("Search Targets...")?>"/>
@@ -78,28 +95,49 @@ class Views_Assessments_Sidebar_TargetsSwitcher extends Views_Assessments_Base
                 </li>
                 <?php if ($targets_pending): ?>
                     <?php foreach ($targets as $target): ?>
-                        <?php if (in_array("pending", $target["progress"])):
-                            $schedule_id = (isset($schedule) && $schedule ? $schedule->getID() : "");
-                            $dassessment_id = $assessment_record->getID();
-                            $assessor_value = $assessment_record->getAssessorValue();
-                            $external_hash = $assessment_record->getExternalHash();
-                            $path = ($external_hash) ? "/assessment/" : "/assessments/assessment";
-                            $url = ENTRADA_URL . "$path?adistribution_id={$distribution->getID()}&schedule_id=$schedule_id&target_record_id={$target["target_record_id"]}&dassessment_id=$dassessment_id&assessor_value=$assessor_value&external_hash=$external_hash"; ?>
+                        <?php if (in_array("pending", $target["progress"]) && $target["counts"]["inprogress"] == 0):
+                            $url = "$path&atarget_id={$target["atarget_id"]}"; ?>
                             <li class="target-listitem target-listitem-pending">
                                 <div class="clearfix">
-                                    <a class="target-name pull-left" href="<?php echo $url?>"><?php echo html_encode($target["name"]) ?></a>
-                                    <?php if (!$distribution->getDeletedDate()): ?>
-                                        <a class="change-target pull-right" href="<?php echo $url?>" data-toggle="tooltip" data-target-record-id="<?php echo $target["target_record_id"]?>" title="<?php sprintf($translate->_("Change your current target and responses from %s to %s"), $current_target_name, html_encode($target["name"]))?>">
-                                            <i class="icon-retweet"></i>
-                                        </a>
-                                    <?php endif; ?>
+                                    <a class="pull-left" href="<?php echo $url?>">
+                                        <span class="target-name"><?php echo html_encode($target["name"]) ?></span>
+                                        <?php if (!$distribution_is_deleted && $allow_progress_swap): ?>
+                                            <span class="change-target pull-right"
+                                               data-toggle="tooltip"
+                                               data-target-record-id="<?php echo $target["target_record_id"] ?>"
+                                               data-target-type="<?php echo $target["target_type"] ?>"
+                                               title="<?php echo sprintf($translate->_("Change your current target and responses from %s to %s"), $current_target_name, html_encode($target["name"]))?>">
+                                                <span class="fa fa-refresh"></span>
+                                            </span>
+                                        <?php endif; ?>
+                                        <?php if ($max_attempts > 1):
+                                            if ($target["counts"]["pending"] == 1) {
+                                                $pending_target_tooltip = sprintf(
+                                                    $translate->_("There is 1 form remaining to be completed out of a total of %s %s for this target."),
+                                                    $max_attempts,
+                                                    $max_attempts == 1 ? $translate->_("form") : $translate->_("forms")
+                                                );
+                                            } else {
+                                                $pending_target_tooltip = sprintf(
+                                                    $translate->_("There are %s forms remaining to be completed out of a total of %s %s for this target."),
+                                                    $target["counts"]["pending"],
+                                                    $max_attempts,
+                                                    $max_attempts == 1 ? $translate->_("form") : $translate->_("forms")
+                                                );
+                                            }
+                                            ?>
+                                            <span class="badge complete pull-right target-progress-tooltip pull-right space-left"
+                                                  data-toggle="tooltip"
+                                                  title="<?php echo $pending_target_tooltip ?>"><?php echo $target["counts"]["pending"] ?></span>
+                                        <?php endif; ?>
+                                    </a>
                                 </div>
                             </li>
                         <?php endif; ?>
                     <?php endforeach; ?>
                 <?php else :?>
                     <li id="no-target-pending-listitem-header" class="no-target-listitem">
-                        <?php echo $translate->_("No forms not yet started.") ?>
+                        <?php echo $translate->_("All forms have been started.") ?>
                     </li>
                 <?php endif; // End targets pending list ?>
 
@@ -110,17 +148,12 @@ class Views_Assessments_Sidebar_TargetsSwitcher extends Views_Assessments_Base
 
                 <?php if ($targets_inprogress): ?>
                     <?php foreach ($targets as $target): ?>
-                        <?php if (in_array("inprogress", $target["progress"])):
-                            $schedule_id = (isset($schedule) && $schedule ? $schedule->getID() : "");
-                            $dassessment_id = $assessment_record->getID();
-                            $assessor_value = $assessment_record->getAssessorValue();
-                            $external_hash = $assessment_record->getExternalHash();
-                            $progress_id_str = (array_key_exists("aprogress_id", $target)) ? "&aprogress_id={$target["aprogress_id"]}" : "";
-                            $path = ($external_hash) ? "/assessment/" : "/assessments/assessment";
-                            $url = ENTRADA_URL . "$path?adistribution_id={$distribution->getID()}&schedule_id=$schedule_id{$progress_id_str}&target_record_id={$target["target_record_id"]}&dassessment_id=$dassessment_id&assessor_value=$assessor_value&external_hash=$external_hash"; ?>
+                        <?php if (in_array("inprogress", $target["progress"]) && !$target["deleted_date"]):
+                            $progress_id_str = $target["inprogress_aprogress_id"] ? "&aprogress_id={$target["inprogress_aprogress_id"]}" : "";
+                            $url = "$path&atarget_id={$target["atarget_id"]}{$progress_id_str}"; ?>
                             <li class="target-listitem target-listitem-inprogress">
                               <div class="clearfix">
-                                  <a class="target-name inprogress pull-left" href="<?php echo $url?>"><?php echo html_encode($target["name"]) ?></a>
+                                  <a class="inprogress pull-left" href="<?php echo $url?>"><span class="target-name"><?php echo html_encode($target["name"]) ?></span></a>
                               </div>
                             </li>
                             <?php endif; ?>
@@ -137,15 +170,35 @@ class Views_Assessments_Sidebar_TargetsSwitcher extends Views_Assessments_Base
                 <?php if ($targets_complete): ?>
                     <?php foreach ($targets as $target): ?>
                         <?php if (in_array("complete", $target["progress"])):
-                            $schedule_id = (isset($schedule) && $schedule ? $schedule->getID() : "");
-                            $dassessment_id = $assessment_record->getID();
-                            $assessor_value = $assessment_record->getAssessorValue();
-                            $external_hash = $assessment_record->getExternalHash();
-                            $progress_id_str = (array_key_exists("aprogress_id", $target)) ? "&aprogress_id={$target["aprogress_id"]}" : "";
-                            $path = ($external_hash) ? "/assessment/" : "/assessments/assessment";
-                            $url = ENTRADA_URL . "$path?adistribution_id={$distribution->getID()}&schedule_id=$schedule_id&target_record_id={$target["target_record_id"]}$progress_id_str&dassessment_id=$dassessment_id&assessor_value=$assessor_value&external_hash=$external_hash"; ?>
+                            $progress_id_str = $target["complete_aprogress_id"] ? "&aprogress_id={$target["complete_aprogress_id"]}" : "";
+                            $url = "$path&atarget_id={$target["atarget_id"]}{$progress_id_str}"; ?>
                             <li class="target-listitem target-listitem-complete">
-                                <a href="<?php echo $url?>"><?php echo html_encode($target["name"]) ?></a>
+                                <div class="clearfix">
+                                    <a class="complete pull-left" href="<?php echo $url ?>"><span class="target-name">
+                                        <?php echo html_encode($target["name"]) ?></span>
+                                        <?php if ($max_attempts > 1):
+                                            if ($target["deleted_date"]) {
+                                                if ($target["counts"]["complete"] == 1) {
+                                                    $complete_progress_tooltip = sprintf($translate->_("There is 1 completed form for this target."));
+                                                } else {
+                                                    $complete_progress_tooltip = sprintf($translate->_("There are %s completed forms for this target."), $target["counts"]["complete"]);
+                                                }
+                                                ?>
+                                                <span class="badge complete pull-right target-progress-tooltip space-left" data-toggle="tooltip" title="<?php echo $complete_progress_tooltip ?>"><?php echo $target["counts"]["complete"] ?></span>
+                                                <?php
+                                            } else {
+                                                if ($target["counts"]["complete"] == 1) {
+                                                    $complete_progress_tooltip = sprintf($translate->_("There is 1 completed form out of %s total possible submissions for this target."), $max_attempts);
+                                                } else {
+                                                    $complete_progress_tooltip = sprintf($translate->_("There are %s completed forms out of %s total possible submissions for this target."), $target["counts"]["complete"], $max_attempts);
+                                                }
+                                                ?>
+                                                <span class="badge complete pull-right target-progress-tooltip space-left" data-toggle="tooltip" title="<?php echo $complete_progress_tooltip ?>"><?php echo $target["counts"]["complete"] ?>/<?php echo $max_attempts ?></span>
+                                                <?php
+                                            }
+                                        endif; ?>
+                                    </a>
+                                </div>
                             </li>
                         <?php endif; ?>
                     <?php endforeach; ?>

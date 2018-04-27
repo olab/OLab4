@@ -42,16 +42,18 @@ class Views_Assessments_Dashboard_DeletedTasks extends Views_Assessments_Base {
             <span class="badge assessment-badge hide <?php echo html_encode($options["task_type"]); ?>-deleted-tasks-search-results-found"></span>
             <button class="btn btn-primary pull-right space-right hide-tasks"><i class="icon-eye-close icon-white"></i> <?php echo $translate->_("Hide Selected Tasks"); ?></button>
         </div>
-        <table class="hide table table-striped table-bordered task-table <?php echo html_encode($options["task_type"]); ?>-deleted-tasks">
-            <thead>
-                <th style="width: 35%;"><?php echo $translate->_("Task"); ?></th>
-                <th style="width: 20%;"><?php echo $translate->_("Owner"); ?></th>
-                <th style="width: 35%;"><?php echo $translate->_("Reason"); ?></th>
-                <th class="dashboard-center-info select-all-deleted-tasks" style="width: 10%;"><?php echo $translate->_("Hide"); ?></th>
-            </thead>
-            <tbody>
-            </tbody>
-        </table>
+        <div class="fixed-tab-height task-table-wrap">
+            <table class="table table-striped table-bordered task-table <?php echo html_encode($options["task_type"]); ?>-deleted-tasks">
+                <thead>
+                    <th style="width: 35%;"><?php echo $translate->_("Task"); ?></th>
+                    <th style="width: 20%;"><?php echo $translate->_("Owner"); ?></th>
+                    <th style="width: 35%;"><?php echo $translate->_("Reason"); ?></th>
+                    <th class="dashboard-center-info select-all-deleted-tasks" style="width: 10%;"><?php echo $translate->_("Hide"); ?></th>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
         <?php
     }
 }

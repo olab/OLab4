@@ -135,7 +135,11 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
                             $event_audiences = $event->getEventAudience();
                             foreach ($event_audiences as $event_audience) {
                                 $a = $event_audience->getAudience($event_start);
-                                $audience_full = array_merge($audience_full, array_keys($a->getAudienceMembers()));
+                                if ($a && is_object($a)) {
+                                    if ($a->getAudienceMembers() && is_array($a->getAudienceMembers())) {
+                                        $audience_full = array_merge($audience_full, array_keys($a->getAudienceMembers()));
+                                    }
+                                }
                             }
                         } else if ($post->getTargetType() === "community") {
                             $community_members = Models_Community_Member::fetchAllByCommunityID($post->getTargetID());
@@ -143,10 +147,13 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
                                 return (int)$a->getProxyId();
                             }, $community_members);
                         }
-                        $audience_not_started = array_values(array_diff($audience_full, array_map(function ($a) {
+                        $temp = array_map(function ($a) {
                             return $a->getProxyId();
-                        }, $progress)));
+                        }, $progress);
 
+                        if ($temp && is_array($temp) && $audience_full && is_array($audience_full)) {
+                            $audience_not_started = array_values(array_diff($audience_full, $temp));
+                        }
                         ?>
                         <div id="show_columns">
                             <input type="button" class="btn pull-right" value="Download CSV" id="download-csv"/>
@@ -180,18 +187,20 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
                             }
 
                             $num_of_columns = 9;
-                            foreach ($audience_not_started as $proxy_id) {
-                                $student = Models_User::fetchRowByID($proxy_id, null, null, 1);
-                                if ($student) {
-                                    echo "<tr>\n";
-                                    echo "<td>" . $student->getFullname() . "</td>\n";
-                                    echo "<td>" . $student->getNumber() . "</td>\n";
-                                    echo "<td>Not Started</td>\n";
-                                    echo "<td>N/A</td>\n";
-                                    for ($i = 0; $i < $num_of_columns; $i++) {
-                                        echo "<td></td>\n";
+                            if ($audience_not_started && is_array($audience_not_started) && !empty($audience_not_started)) {
+                                foreach ($audience_not_started as $proxy_id) {
+                                    $student = Models_User::fetchRowByID($proxy_id);
+                                    if ($student && $student->getTestAccountStatus() != 1) {
+                                        echo "<tr>\n";
+                                        echo "<td>" . $student->getFullname() . "</td>\n";
+                                        echo "<td>" . $student->getNumber() . "</td>\n";
+                                        echo "<td>Not Started</td>\n";
+                                        echo "<td>N/A</td>\n";
+                                        for ($i = 0; $i < $num_of_columns; $i++) {
+                                            echo "<td></td>\n";
+                                        }
+                                        echo "</tr>\n";
                                     }
-                                    echo "</tr>\n";
                                 }
                             }
                             ?>

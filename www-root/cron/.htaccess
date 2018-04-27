@@ -1,0 +1,13 @@
+Allow from ::1
+
+# localhost
+Allow from 127.0.0.1
+
+# 
+# You will need to add any IP addresses to this file that need
+# to access this directory via the URL (i.e. your servers IP).
+# 
+
+# Allow from xxx.xxx.xxx.xxx	# Server IP Address
+
+Deny from All

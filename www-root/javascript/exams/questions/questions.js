@@ -18,6 +18,11 @@ var folders_to_delete_denied = [];
 var delete_url;
 var current_folder_id;
 var question_preview_id;
+var EDITABLE = false;
+var loaded = [];
+var mapped_curriculum_tags = [];
+var loading_objectives = false;
+var linked_objective_id = 0;
 
 jQuery(document).ready(function ($) {
     $(".panel .remove-target-toggle").on("click", function (e) {
@@ -69,7 +74,7 @@ jQuery(document).ready(function ($) {
         toggleView($(this));
     });
 
-    $("#toggle-question-bank").on("click", function (e) {
+    $("#toggle-exam-bank").on("click", function (e) {
         e.preventDefault();
         toggleQuestionBank($(this));
     });
@@ -131,11 +136,11 @@ jQuery(document).ready(function ($) {
         if (object.hasClass("selected")) {
             object.removeClass("selected");
             icon = $(object).find(".fa-check-square-o");
-            icon.addClass("fa-square-o").removeClass("fa-check-square-o");
+            icon.addClass("fa-square-o").removeClass("white-icon").removeClass("fa-check-square-o");
         } else {
             object.addClass("selected");
             icon = $(object).find(".fa-square-o");
-            icon.addClass("fa-check-square-o").removeClass("fa-square-o");
+            icon.addClass("fa-check-square-o").addClass("white-icon").removeClass("fa-square-o");
             activate = true;
         }
 
@@ -228,7 +233,6 @@ jQuery(document).ready(function ($) {
     }
 
     function toggleView(clicked) {
-
         var selected_view = $(clicked).attr("data-view");
         VIEW_PREFERENCE = selected_view;
 
@@ -274,7 +278,7 @@ jQuery(document).ready(function ($) {
         var question_row = $("tr.question-row[data-version-id=\"" + version_id + "\"]");
         var id = $("question_row").find(".q-list-id").text();
 
-        var question_preview_html = $("#question-detail-container .exam-question[data-version-id=\"" + version_id + "\"]").clone();;
+        var question_preview_html = $("#question-detail-container .exam-question[data-version-id=\"" + version_id + "\"]").clone();
         var question_table = $(question_preview_html).find("table.question-table");
         $(question_table).find("tr.type .pull-right").remove();
 
@@ -299,12 +303,12 @@ jQuery(document).ready(function ($) {
         setTimeout(function() {
             if (background === "transparent") {
                 $(question_row).find("td").removeClass("AnimationTransparentToYellow");
-                $(question_row).find("td").css("background-color", "#D9EDF7");
+                $(question_row).find("td").css("background-color", "#C8F253");
             } else {
                 $(question_row).find("td").removeClass("AnimationGrayToYellow");
-                $(question_row).find("td").css("background-color", "#D9EDF7");
+                $(question_row).find("td").css("background-color", "#C8F253");
             }
-        }, 1000);
+        }, 500);
 
         setTimeout(function() {
             if (background === "transparent") {
@@ -314,7 +318,7 @@ jQuery(document).ready(function ($) {
                 $(question_row).find("td").addClass("AnimationYellowToGray");
                 $(question_row).find("td").css("background-color", "#f9f9f9");
             }
-        }, 1000);
+        }, 3500);
 
         setTimeout(function() {
             if (background === "transparent") {
@@ -322,7 +326,7 @@ jQuery(document).ready(function ($) {
             } else {
                 $(question_row).find("td").removeClass("AnimationYellowToGray");
             }
-        }, 3000);
+        }, 4000);
     }
 
     function addQuestion(clicked) {
@@ -770,18 +774,18 @@ jQuery(document).ready(function ($) {
     }
 
     function selectQuestion(clicked) {
-        var icon            = jQuery(clicked).find(".icon-select-question");
+        var icon            = jQuery(clicked).find(".question-icon-select");
         var question_id     = icon.data("question-id");
         var version_id      = icon.data("version-id");
         var version_count   = icon.data("version-count");
 
         /* Details View */
-        var icon_details    = jQuery(".icon-select-question[data-version-id=" + version_id + "]");
+        var icon_details    = jQuery("#question-detail-container").find(".question-icon-select[data-version-id=" + version_id + "]");
         var span_details    = icon_details.closest("span");
         var object_details  = span_details.closest("table");
 
         /* List View */
-        var icon_list       = jQuery(".icon-select-question[data-version-id=" + version_id + "]");
+        var icon_list       = jQuery(".q-list-edit .question-icon-select[data-version-id=" + version_id + "]");
         var span_list       = icon_list.closest("span");
         var object_list     = span_list.closest("tr.question-row");
 
@@ -814,11 +818,11 @@ jQuery(document).ready(function ($) {
         if (object.hasClass("selected")) {
             object.removeClass("selected");
             span.removeClass("selected");
-            icon.addClass("fa-square-o").removeClass("fa-check-square-o");
+            icon.addClass("fa-square-o").removeClass("white-icon").removeClass("fa-check-square-o");
         } else {
             object.addClass("selected");
             span.addClass("selected");
-            icon.addClass("fa-check-square-o").removeClass("fa-square-o");
+            icon.addClass("fa-check-square-o").addClass("white-icon").removeClass("fa-square-o");
         }
     }
 
@@ -895,4 +899,262 @@ jQuery(document).ready(function ($) {
                 add_question_summary(group_title, questions, count, width);
         });
     }
+
+    jQuery(".btn-actions-group").on("click", "#objective-modal-toggle", function(){
+        jQuery("#tagging_question_ids").html("");
+        var count = 0;
+        for (var key in questions_checked){
+            if(questions_checked[key]){
+                count++;
+            }
+        }
+        jQuery("#tagging_question_ids").text(count + " Questions were selected. Please choose the editing mode:");
+    });
+
+    function get_objective_text(objective, always_show_code) {
+        if (objective['objective_code']) {
+            return objective['objective_code'] + ': ' + objective['objective_name'];
+        } else {
+            var is_code = /^[A-Z]+\-[\d\.]+$/.test(objective['objective_name']);
+            if (objective['objective_description'] && is_code) {
+                if (always_show_code) {
+                    return objective['objective_name'] + ': ' + objective['objective_description'];
+                } else {
+                    return objective['objective_description'];
+                }
+            } else {
+                return objective['objective_name'];
+            }
+        }
+    }
+
+    function buildDOM(children,id){
+        var container,title, title_text, controls, check, d_control, e_control, a_control, m_control, description, child_container;
+        jQuery('#children_' + id).hide();
+        jQuery('#objective_list_' + id).html("");
+        if(children.error !== undefined){
+            if(!EDITABLE){
+                jQuery('#check_objective_' + id).trigger('click');
+                jQuery('#check_objective_' + id).trigger('change');
+            }
+            return false;
+        }
+        for(i = 0; i < children.length; i++){
+            //Javascript to create DOM elements from JSON response
+            var data_title = get_objective_text(children[i]);
+
+            container = jQuery(document.createElement('li'))
+                .attr('class','objective-container draggable')
+                .attr('data-id',children[i].objective_id)
+                .attr('data-code',children[i].objective_code)
+                .attr('data-name',children[i].objective_name)
+                .attr("data-title", data_title)
+                .attr('data-description',children[i].objective_description)
+                .attr('id','objective_'+children[i].objective_id);
+
+            title = jQuery(document.createElement('div'))
+                .attr('class','objective-title')
+                .attr('id','objective_title_'+children[i].objective_id)
+                .attr('data-id',children[i].objective_id)
+                .attr('data-title',data_title)
+                .html(data_title);
+
+            controls = jQuery(document.createElement('div'))
+                .attr('class','objective-controls');
+
+            if (EDITABLE == true){
+                e_control = jQuery(document.createElement('i'))
+                    .attr('class','objective-edit-control icon-edit')
+                    .attr('data-id',children[i].objective_id);
+                a_control = jQuery(document.createElement('i'))
+                    .attr('class','objective-add-control icon-plus-sign')
+                    .attr('data-id',children[i].objective_id);
+                d_control = jQuery(document.createElement('i'))
+                    .attr('class','objective-delete-control icon-minus-sign')
+                    .attr('data-id',children[i].objective_id);
+                m_control = jQuery(document.createElement('i'))
+                    .attr('class','objective-link-control icon-link')
+                    .attr('data-id',children[i].objective_id);
+            } else {
+                check = 	jQuery(document.createElement('input'))
+                    .attr('type','checkbox')
+                    .attr('class','checked-objective')
+                    .attr('id','check_objective_'+children[i].objective_id)
+                    .val(children[i].objective_id);
+                if(children[i].mapped && children[i].mapped != 0){
+                    jQuery(check).prop('checked',true);
+                }else if(children[i].child_mapped && children[i].child_mapped != 0){
+                    jQuery(check).prop('checked',true);
+                    jQuery(check).prop('disabled',true);
+                }
+            }
+            description = 	jQuery(document.createElement('div'))
+                .attr('class','objective-description content-small')
+                .attr('id','description_'+children[i].objective_id)
+                .html(children[i].objective_description);
+            child_container = 	jQuery(document.createElement('div'))
+                .attr('class','objective-children')
+                .attr('id','children_'+children[i].objective_id);
+            child_list = 	jQuery(document.createElement('ul'))
+                .attr('class','objective-list')
+                .attr('id','objective_list_'+children[i].objective_id)
+                .attr('data-id',children[i].objective_id);
+            jQuery(child_container).append(child_list);
+            var type = jQuery('#mapped_objectives').attr('data-resource-type');
+            if((type != 'event' && type != 'assessment' ) || !children[i].has_child){
+                jQuery(controls).append(check);
+            }
+            if(EDITABLE == true){
+                jQuery(controls).append(e_control)
+                    .append(a_control)
+                    .append(d_control)
+                    .append(m_control);
+            }
+            jQuery(container).append(title)
+                .append(controls)
+                .append(description)
+                .append(child_container);
+            jQuery('#objective_list_'+id).append(container);
+        }
+
+        jQuery('#children_'+id).slideDown();
+    }
+
+    jQuery(document).on('click', '.objective-collapse-control', function(){
+        var id = jQuery(this).attr('data-id');
+        if(jQuery('#children_'+id).is(':visible')){
+            jQuery('#children_'+id).slideUp();
+        }else if(loaded[id] === undefined || !loaded[id]){
+            jQuery('#objective_title_'+id).trigger('click');
+        }else{
+            jQuery('#children_'+id).slideDown();
+        }
+    });
+
+    jQuery('#curriculum-tags-section, #assessment-objectives-section, #course-objectives-section, #event-objectives-section, #exam-objectives-section').on('click', '.objective-title', function() {
+        var id = jQuery(this).attr('data-id');
+        if (loaded[id] === undefined || !loaded[id]) {
+            var query = {'objective_id' : id, 'org_id' : (typeof org_id !== 'undefined' && org_id ? org_id : default_org_id)};
+
+            if (typeof by_course_id !== 'undefined' && by_course_id) {
+                query['course_id'] = by_course_id;
+            } else if (typeof by_assessment_id !== 'undefined' && by_assessment_id) {
+                query['assessment_id'] = by_assessment_id;
+            }
+
+            if (jQuery("#event-objectives-section").length > 0) {
+                if(jQuery('#mapped_objectives').length>0){
+                    var type = jQuery('#mapped_objectives').attr('data-resource-type');
+                    var value = jQuery('#mapped_objectives').attr('data-resource-id');
+                    if(type && value){
+                        if (type != 'evaluation_question') {
+                            query[type+'_id'] = value;
+                        } else if (jQuery('#objective_ids_string_'+value).val()) {
+                            query['objective_ids'] = jQuery('#objective_ids_string_'+value).val();
+                        }
+                    }
+                }
+            }
+
+            if(!loading_objectives){
+                var loading = jQuery(document.createElement('img'))
+                    .attr('src', ENTRADA_URL + '/images/loading.gif')
+                    .attr('width','15')
+                    .attr('title','Loading...')
+                    .attr('alt','Loading...')
+                    .attr('class','loading')
+                    .attr('id','loading_'+id);
+                jQuery('#objective_controls_'+id).append(loading);
+                loading_objectives = true;
+                jQuery.ajax({
+                    url: ENTRADA_URL + '/api/fetchobjectives.api.php',
+                    data:query,
+                    success:function(data,status,xhr){
+                        jQuery('#loading_'+id).remove();
+                        loaded[id] = jQuery.parseJSON(data);
+                        buildDOM(loaded[id],id);
+                        loading_objectives = false;
+                    }
+                });
+            }
+        } else if (jQuery('#children_'+id).is(':visible')) {
+            jQuery('#children_'+id).slideUp(600);
+        } else {
+            //console.log(id);
+            if (jQuery("#objective_list_"+id).children('li').length == 0) {
+                if(!EDITABLE){
+                    buildDOM(loaded[id],id);
+                }
+            }	else {
+                jQuery('#children_'+id).slideDown(600);
+            }
+        }
+        return false;
+    });
+
+    jQuery("#exam-objectives-section").on("click", ".checked-objective", function(){
+        var id = jQuery(this).attr('value');
+        if(mapped_curriculum_tags.includes(id)){
+            var i = mapped_curriculum_tags.indexOf(id);
+            mapped_curriculum_tags.splice(i, 1);
+        }else{
+            mapped_curriculum_tags.push(id);
+        }
+        //console.log(mapped_curriculum_tags);
+    });
+
+    jQuery("#exam-objectives-section").on("click", ".objective-remove", function(){
+        var id = jQuery(this).attr('data-id');
+        if(mapped_curriculum_tags.includes(id)){
+            var i = mapped_curriculum_tags.indexOf(id);
+            mapped_curriculum_tags.splice(i, 1);
+        }
+        //console.log(mapped_curriculum_tags);
+    });
+
+    jQuery("#objective-modal").on("click", "#apply_tags", function(){
+        var checked_questions_ids = [];
+        for (var key in questions_checked){
+            if(questions_checked[key]){
+                checked_questions_ids.push(questions_checked[key].question_id);
+            }
+        }
+        var editing_mode = jQuery("input[name=tag_editing_mode]:checked").val();
+        if(mapped_curriculum_tags.length){
+            jQuery.ajax({
+                url: ENTRADA_URL + "/admin/exams/questions?section=api-objectives",
+                data: {
+                    editing_mode: editing_mode,
+                    checked_questions_ids: checked_questions_ids,
+                    mapped_curriculum_tags: mapped_curriculum_tags
+                },
+                type: "POST",
+                success: function(data, status, xhr){
+                    var response = jQuery.parseJSON(data);
+                    if (response.status === "success"){
+                        var success_html = "<div class=\"alert alert-success\">\n" +
+                            "<strong>Success!</strong> The selected questions curriculum tags were updated.\n" +
+                            "<a href=\"#\" class=\"btn btn-success right\" style=\"margin-left: 100px\" data-dismiss=\"modal\">Close</a>\n" +
+                        "</div>"
+                        jQuery("#response-questions-objetive").html(success_html);
+                        jQuery("#response-questions-objetive").focus();
+                        setTimeout(function(){
+                            jQuery("#response-questions-objetive").html("");
+                        }, 10000);
+                    }else{
+                        var error_html = "<div class=\"alert alert-danger\">\n" +
+                            "<p><strong>Error!</strong> An unexpected error happened while trying to update curriculum tags.<br/> Please reload the page and try again.</p>\n" +
+                            "<a href=\"#\" class=\"btn btn-danger\" data-dismiss=\"modal\" onclick=\"window.location.reload(true)\">Reload Page</a>\n" +
+                            "</div>"
+                        jQuery("#response-questions-objetive").html(error_html);
+                        jQuery("#response-questions-objetive").focus();
+                    }
+                }
+            });
+        }else{
+            alert("You didn't choose any curriculum tag. Please select at least one.");
+        }
+
+    });
+
 });

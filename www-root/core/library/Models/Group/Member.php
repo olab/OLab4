@@ -87,9 +87,14 @@ class Models_Group_Member extends Models_Base {
         parent::__construct($arr);
     }
     
-    public static function getUsersByGroupID($group_id, $search_term = false, $active = 1) {
+    public static function getUsersByGroupID($group_id, $search_term = false, $active = 1, $include_inactive_accounts = false, $limit = null, $offset = null) {
         global $db;
         $members = false;
+
+        $AND_ACCOUNT_ACTIVE = "AND b.`account_active` = 'true'";
+        if ($include_inactive_accounts) {
+            $AND_ACCOUNT_ACTIVE = "AND (b.`account_active` = 'true' OR b.`account_active` = 'false')";
+        }
 
         $query	= "	SELECT a.`id`, a.`number`, a.`firstname`, a.`lastname`, c.`gmember_id`, c.`member_active`,
                     a.`username`, a.`email`, a.`organisation_id`, a.`username`, b.`group`, b.`role`
@@ -98,15 +103,22 @@ class Models_Group_Member extends Models_Base {
                     ON a.`id` = b.`user_id`
                     INNER JOIN `group_members` c ON a.`id` = c.`proxy_id`
                     WHERE b.`app_id` IN (".AUTH_APP_IDS_STRING.")
-                    AND b.`account_active` = 'true'
+                    $AND_ACCOUNT_ACTIVE
                     AND (b.`access_starts` = '0' OR b.`access_starts` <= ".$db->qstr(time()).")
                     AND (b.`access_expires` = '0' OR b.`access_expires` > ".$db->qstr(time()).")
                     AND c.`group_id` = ?
                     AND c.`member_active` = ?
-                    ". (trim($search_term) ? " AND ((CONCAT(a.`firstname`, ' ' , a.`lastname`) LIKE ".$db->qstr("%".$search_term."%")." OR CONCAT(a.`lastname`, ' ' , a.`firstname`) LIKE ".$db->qstr("%".$search_term."%"). ") OR (a.`number` LIKE " .$db->qstr("%".$search_term."%").") OR (a.`email` LIKE " .$db->qstr("%".$search_term."%")."))" : "") ."
+                    ". (trim($search_term) ? " AND ((CONCAT(a.`firstname`, ' ' , a.`lastname`) LIKE ".$db->qstr("%".$search_term."%")." OR CONCAT(a.`lastname`, ' ' , a.`firstname`) LIKE ".$db->qstr("%".$search_term."%"). ") OR (a.`number` LIKE " .$db->qstr("%".$search_term."%").") OR (a.`email` LIKE " .$db->qstr("%".$search_term."%")."))" : "") . "
                     GROUP BY a.`id`
                     ORDER BY a.`lastname` ASC, a.`firstname` ASC";
-        
+
+        if (!empty($limit)) {
+            $query .= " LIMIT " . $limit;
+        }
+        if (!empty($offset)) {
+            $query .= " OFFSET " . $offset;
+        }
+
         $results = $db->GetAll($query, array($group_id, $active));
         if ($results) {
             foreach ($results as $result) {
@@ -209,4 +221,75 @@ class Models_Group_Member extends Models_Base {
 
         return $group_members;
     }
+
+    public static function getListMembers($organisation_id, $groups) {
+		global $db;
+
+		$query = "	SELECT c.`gmember_id`, a.`username`, CONCAT_WS(' ', a.`firstname`, a.`lastname`) AS `fullname`,
+					CONCAT_WS(':', b.`group`, b.`role`) AS `grouprole`, c.`group_id`, d.`group_name`, c.`member_active`
+  					FROM `".AUTH_DATABASE."`.`user_data` AS a
+					LEFT JOIN `".AUTH_DATABASE."`.`user_access` AS b
+					ON a.`id` = b.`user_id`
+					INNER JOIN `group_members` c ON a.`id` = c.`proxy_id`
+					INNER JOIN `groups` d ON c.`group_id` = d.`group_id`
+					JOIN `group_organisations` AS e
+					ON d.`group_id` = e.`group_id`
+					WHERE e.`organisation_id` = ".$db->qstr($organisation_id) . "
+					AND c.`gmember_id`  IN (".implode(", ", $groups).")
+                    GROUP BY a.`id`
+					ORDER by `grouprole`, `lastname`, `firstname`";
+		return $db->GetAll($query);
+	}
+
+	public static function doAction($gmember_id, $action) {
+		global $db, $ENTRADA_USER;
+
+		$name = $db->GetOne("	SELECT CONCAT_WS(', ', b.`lastname`, b.`firstname`) AS `fullname`
+								FROM `" . static::$table_name . "` AS a
+								JOIN `".AUTH_DATABASE."`.`user_data` AS b
+								ON b.`id`=a.`proxy_id`
+								WHERE a.`gmember_id`=".$db->qstr($gmember_id));
+		switch ($action) {
+			case "deactivate":
+				$db->Execute("UPDATE `" . static::$table_name . "` SET `member_active`='0', `updated_date` = '". time() . "', `updated_by` = '".$ENTRADA_USER->getActiveID()."' WHERE `gmember_id` = ".$db->qstr($gmember_id));
+				break;
+			case "activate":
+				$db->Execute("UPDATE `" . static::$table_name . "` SET `member_active`='1', `updated_date` = '". time() . "', `updated_by` = '".$ENTRADA_USER->getActiveID()."' WHERE `gmember_id` = ".$db->qstr($gmember_id));
+				break;
+			case "delete":
+				$db->Execute("DELETE FROM `" . static::$table_name . "` WHERE `gmember_id` = ".$db->qstr($gmember_id));
+				break;
+		}
+		return $name;
+	}
+
+	public static function addMember($entry) {
+		global $db;
+
+		$result = $db->GetRow("SELECT * FROM `" . static::$table_name . "` WHERE `proxy_id` = " . $db->qstr($entry["proxy_id"]) . " AND `group_id` = " . $entry["group_id"]);
+
+		if ($result) {	// User already in group
+			return 0;
+		} elseif ($db->AutoExecute(static::$table_name, $entry, "INSERT")) {
+			return 1;
+		} else {
+			application_log("error", "Unable to insert a new group member " . $entry["proxy_id"] . " into " . $entry["group_name"] . ". Database said: " . $db->ErrorMsg());
+			return false;
+		}
+	}
+
+	public static function postedProxies() {
+		$proxy_ids = array();
+
+		foreach (array("faculty","medtech","resident","staff","student") as $group) {
+			if (isset($_POST[$group])) {
+				foreach ($_POST[$group] as $proxy_id) {
+					if ($tmp_input = clean_input($proxy_id, array("trim", "int"))) {
+						$proxy_ids[] = $tmp_input;
+					}
+				}
+			}
+		}
+		return count($proxy_ids) ? $proxy_ids : false;
+	}
 }

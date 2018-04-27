@@ -165,7 +165,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_NOTICES"))) {
 
 								echo "<tr id=\"notice-".$result["notice_id"]."\" class=\"notice".(($expired) ? " na" : "")."\">\n";
 								echo "	<td class=\"modified\"><input class=\"delete-control\" type=\"checkbox\" name=\"delete[]\" value=\"".$result["notice_id"]."\" checked=\"checked\" /></td>\n";
-								echo "	<td class=\"date\">".(($url) ? "<a href=\"".$url."\">" : "").date(DEFAULT_DATE_FORMAT, $result["display_until"]).(($url) ? "</a>" : "")."</td>\n";
+								echo "	<td class=\"date\">".(($url) ? "<a href=\"".$url."\">" : "").date(DEFAULT_DATETIME_FORMAT, $result["display_until"]).(($url) ? "</a>" : "")."</td>\n";
 								echo "	<td class=\"notice_author\">".(($url) ? "<a href=\"".$url."\">" : "").html_encode($result["notice_author"]).(($url) ? "</a>" : "")."</td>\n";
 								echo "	<td class=\"title\">".(($url) ? "<a href=\"".$url."\">" : "").html_encode($result["notice_summary"]).(($url) ? "</a>" : "")."</td>\n";
 								echo "</tr>\n";

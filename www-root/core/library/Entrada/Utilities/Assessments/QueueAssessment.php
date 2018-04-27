@@ -19,14 +19,14 @@
  * @author Developer (of refactor): Adrian Mellognio <adrian.mellognio@queensu.ca>
  * @copyright Copyright 2016 Queen's University. All Rights Reserved.
  */
-class Entrada_Utilities_Assessments_QueueAssessment extends Entrada_Utilities_Assessments_Base {
+class Entrada_Utilities_Assessments_QueueAssessment extends Entrada_Assessments_Base {
 
     public function run ($verbosity = false) {
         global $ENTRADA_TEMPLATE;
 
         $this->setVerbose($verbosity);
 
-        $distributions = Models_Assessments_Distribution::fetchAllRecordsByDateRange((time() - (86400 * 60)), time());
+        $distributions = Models_Assessments_Distribution::fetchAllRecords();
         if ($distributions) {
             foreach ($distributions as $distribution) {
                 $this->clearStorage();
@@ -42,11 +42,24 @@ class Entrada_Utilities_Assessments_QueueAssessment extends Entrada_Utilities_As
                     $this->queueNonDelegationTasks($distribution);
                 }
 
+                // Adjust expiry where needed.
+                $this->processDistributionAssessmentExpiry($distribution);
+
                 $queue_end_time = microtime(true);
                 $queue_runtime = sprintf("%.3f", ($queue_end_time - $queue_start_time));
-
                 $colour = ($queue_runtime > 1) ? "red" : "blue";
                 $this->verboseOut("Assessments queued for {$distribution->getID()}. Took {$this->cliString($queue_runtime, $colour)} seconds. \n");
+
+                // Process distribution options and apply them as assessment options as necessary. Delegation based
+                // distributions already have this done upon confirming delegation assignment and creating assessments.
+                if (!$delegator) {
+                    $options_start_time = microtime(true);
+                    $this->verboseOut("Processing distribution options for {$distribution->getID()}.");
+                    $this->processDistributionAssessmentOptions($distribution->getID());
+                    $options_end_time = microtime(true);
+                    $options_runtime = sprintf("%.3f", ($options_end_time - $options_start_time));
+                    $this->verboseOut("Distribution options processed for {$distribution->getID()}. Took {$options_runtime} seconds. \n");
+                }
             }
             $this->verboseOut("\n{$this->cliString("Queueing completed", "green")}.\n");
         }
@@ -64,6 +77,7 @@ class Entrada_Utilities_Assessments_QueueAssessment extends Entrada_Utilities_As
     /**
      * Create a Distribution Assessment record.
      *
+     * @param Models_Assessments_Distribution $distribution
      * @param null $assessor
      * @param null $distribution_id
      * @param null $min_submittable
@@ -76,9 +90,13 @@ class Entrada_Utilities_Assessments_QueueAssessment extends Entrada_Utilities_As
      * @param bool $additional
      * @param int $associated_record_id
      * @param string $associated_record_type
+     * @param int $course_id
+     * @param int|null $expiry_date
+     * @param int|null $expiry_notification_date
      * @return bool|Models_Assessments_Assessor
      */
     private function saveAssessment(
+        $distribution = null,
         $assessor = null,
         $distribution_id = null,
         $min_submittable = null,
@@ -90,66 +108,90 @@ class Entrada_Utilities_Assessments_QueueAssessment extends Entrada_Utilities_As
         $delivery_date = null,
         $additional = false,
         $associated_record_id = null,
-        $associated_record_type = null
+        $associated_record_type = null,
+        $course_id = null,
+        $expiry_date = null,
+        $expiry_notification_date = null
     ) {
         $external_hash = null;
         if ($assessor["assessor_type"] == "external") {
             $external_hash = generate_hash();
         }
-
-        $distribution_assessment = new Models_Assessments_Assessor(array(
+        // Insantiate assessment API to create the assessment.
+        $assessment_api = new Entrada_Assessments_Assessment(
+            array(
+                "actor_proxy_id" => 1,
+                "actor_organisation_id" => $distribution->getOrganisationID(),
+                "limit_dataset" => array("assessor")
+            )
+        );
+        $distribution_assessment = array(
             "adistribution_id" => $distribution_id,
             "assessor_type" => $assessor["assessor_type"],
             "assessor_value" => $assessor["assessor_value"],
+            "form_id" => $distribution->getFormID(),
+            "organisation_id" => $distribution->getOrganisationID(),
             "min_submittable" => $min_submittable,
             "max_submittable" => $max_submittable,
-            "published" => 1,
+            "feedback_required" => $distribution->getFeedbackRequired(),
             "start_date" => $start_date,
             "end_date" => $end_date,
             "rotation_start_date" => $rotation_start_date,
             "rotation_end_date" => $rotation_end_date,
             "delivery_date" => $delivery_date,
+            "expiry_date" => $expiry_date,
+            "expiry_notification_date" => $expiry_notification_date,
             "external_hash" => $external_hash,
             "additional_assessment" => ($additional ? 1 : 0),
             "created_date" => time(),
             "created_by" => 1,
             "associated_record_id" => $associated_record_id,
-            "associated_record_type" => $associated_record_type
-        ));
-
-        if ($distribution_assessment->insert()) {
-            return $distribution_assessment;
-        } else {
+            "associated_record_type" => $associated_record_type,
+            "course_id" => $course_id
+        );
+        $status = $assessment_api->createAssessment($distribution_assessment);
+        if (!$status) {
+            foreach ($assessment_api->getErrorMessages() as $error) {
+                $this->verboseOut("Failed to create assessment: {$this->cliString($error, "red", "black")} \n");
+            }
             return false;
         }
+        return $assessment_api->getAssessmentRecord();
     }
 
     /**
      * Create a Distribution Assessment Target record.
      *
+     * @param Models_Assessments_Distribution $distribution
      * @param int $distribution_id
      * @param int $dassessment_id
      * @param int $target_value
      * @param string $target_type
      * @return bool
      */
-    private function saveAssessmentTarget($distribution_id = null, $dassessment_id = null, $target_value = null, $target_type = "proxy_id") {
-        $target = new Models_Assessments_AssessmentTarget(array(
+    private function saveAssessmentTarget($distribution, $distribution_id = null, $dassessment_id = null, $target_value = null, $target_type = "proxy_id") {
+        $assessment_api = new Entrada_Assessments_Assessment(
+            array(
+                "actor_proxy_id" => 1,
+                "actor_organisation_id" => $distribution->getOrganisationID(),
+                "limit_dataset" => array("assessment"),
+                "dassessment_id" => $dassessment_id
+            )
+        );
+        $result = $assessment_api->createAssessmentTarget(array(
             "adistribution_id" => $distribution_id,
             "dassessment_id" => $dassessment_id,
             "target_type" => $target_type,
             "target_value" => $target_value,
-            "created_date" => time(),
-            "created_by" => 1,
-            "updated_date" => time(),
-            "updated_by" => 1
+            "task_type" => $distribution->getAssessmentType()
         ));
-
-        if ($target->insert()) {
-            return true;
-        } else {
+        if (!$result) {
+            foreach ($assessment_api->getErrorMessages() as $error) {
+                $this->verboseOut("Failed to create assessment target: {$this->cliString($error, "red", "black")} \n");
+            }
             return false;
         }
+        return true;
     }
 
     /**
@@ -283,178 +325,134 @@ class Entrada_Utilities_Assessments_QueueAssessment extends Entrada_Utilities_As
      * @return bool
      */
     private function queueNonDelegationTasks($distribution) {
-        $distribution_schedule = Models_Assessments_Distribution_Schedule::fetchRowByDistributionID($distribution->getID());
-        if ($distribution_schedule) {
-            $schedule = Models_Schedule::fetchRowByID($distribution_schedule->getScheduleID());
-            if ($schedule) {
-                $this->verboseOut("Rotation schedule based. ");
-                $this->queueAssessmentsRotationSchedule($distribution, $distribution_schedule, $schedule); // ADRIAN-TODO: Move this logic (and all child functions) to AssessmentTask
-            } else {
-                application_log("error", "Distribution has distribution_schedule record, but the schedule was not found. Unable to create assessments. distribution_id = {$distribution->getID()}, distribution_schedule_id = {$distribution_schedule->getID()}");
-            }
+
+        $distribution_eventtype = Models_Assessments_Distribution_Eventtype::fetchAllByAdistributionID($distribution->getID());
+        if (is_array($distribution_eventtype) && !empty($distribution_eventtype)) {
+            $this->verboseOut("Learning Event based. ");
+            $this->queueAssessmentsLearningEvent($distribution);
+
         } else {
-            $distribution_eventtype = Models_Assessments_Distribution_Eventtype::fetchAllByAdistributionID($distribution->getID());
-            if (is_array($distribution_eventtype) && !empty($distribution_eventtype)) {
-                $this->verboseOut("Learning Event based. ");
-                $this->queueAssessmentsLearningEvent($distribution);
+            $distribution_schedule = Models_Assessments_Distribution_Schedule::fetchRowByDistributionID($distribution->getID());
+            $schedule = false;
+            if ($distribution_schedule) {
+                $schedule = Models_Schedule::fetchRowByID($distribution_schedule->getScheduleID());
+                if ($schedule) {
+                    $this->verboseOut("Rotation schedule based. ");
+                } else {
+                    application_log("error", "Distribution has distribution_schedule record, but the schedule was not found. Unable to create assessments. distribution_id = {$distribution->getID()}, distribution_schedule_id = {$distribution_schedule->getID()}");
+                }
             } else {
                 $this->verboseOut("Date range based. ");
-                $this->queueAssessmentsDateRange($distribution); // ADRIAN-TODO: Move this logic (and all child functions) to AssessmentTask
             }
+
+            $this->queueRotationDateRangeAssessments($distribution, $schedule);
         }
-        $this->queueAssessmentsAdditional($distribution); // ADRIAN-TODO: Move this logic (and all child functions) to AssessmentTask
         return true;
     }
 
     /**
-     * Queue date range based assessments.
+     * Queue rotation schedule and date range based assessments.
      *
-     * @param $distribution
+     * @param Models_Assessments_Distribution $distribution
+     * @param Models_Schedule $schedule
      */
-    private function queueAssessmentsDateRange($distribution) {
-        global $db;
+    private function queueRotationDateRangeAssessments($distribution, $schedule) {
+        $db_errors = 0;
 
-        if (time() >= $distribution->getDeliveryDate()) {
-            $assessors = $distribution->getAssessors(null);
-            if ($assessors) {
-                foreach ($assessors as $assessor) {
-                    $distribution_assessment_records = Models_Assessments_Assessor::fetchRowByADistributionIDAssessorTypeAssessorValueDeliveryDate($distribution->getID(), $assessor["assessor_type"], $assessor["assessor_value"], $distribution->getDeliveryDate());
-                    if (!$distribution_assessment_records) {
-                        $distribution_assessment = $this->saveAssessment($assessor, $distribution->getID(), $distribution->getMinSubmittable(), $distribution->getMaxSubmittable(), $distribution->getStartDate(), $distribution->getEndDate(), 0, 0, $distribution->getDeliveryDate());
-                        if ($distribution_assessment) {
-                            $this->queueAssessorNotifications($distribution_assessment, $distribution_assessment->getAssessorValue(), null, $distribution->getNotifications());
-                        } else {
-                            application_log("error", "An error occurred while attempting to save a cbl_distribution_assessments record DB said: " . $db->ErrorMsg());
+        $this->verboseOut("Queuing assessments. ");
+        // Fetch the list of assessment tasks to create.
+        $distribution_assessment_utility = new Entrada_Utilities_Assessments_DistributionAssessment(array("adistribution_id" => $distribution->getID()));
+
+        $this->verboseOut("START building assessment task list for {$distribution->getID()}. ");
+        $distribution_assessment_utility->buildAssessmentTaskList(null, time());
+        $task_list = $distribution_assessment_utility->getTaskList();
+        $this->verboseOut("FINISHED building assessment task list for {$distribution->getID()}. ");
+
+        // Count the tasks and targets to be created.
+        $possible_task_count = 0;
+        $possible_task_target_count = 0;
+        if ($task_list && !empty($task_list)) {
+            foreach ($task_list[$distribution->getID()] as $task) {
+                if ($task["meta"]["should_exist"]) {
+                    $possible_task_count++;
+                    $possible_task_target_count += @count($task["targets"]);
+                }
+            }
+        }
+        $this->verboseOut("Will create approximately $possible_task_count assessments with $possible_task_target_count targets. **NOTE: This is approximate. If targets are deleted, there will be fewer targets created than this approximation.** ");
+
+        $assessments_created_count = 0;
+        $assessment_targets_created_count = 0;
+
+        if ($task_list && !empty($task_list)) {
+            foreach ($task_list[$distribution->getID()] as $task) {
+                // Ensure the task should exist, meaning we are past the delivery date, release date, and it is not deleted.
+                if ($task["meta"]["should_exist"]) {
+
+                    $assessment = false;
+                    // If there is no current record, the task does not exist yet.
+                    if (!$task["current_record"] || empty($task["current_record"])) {
+                        // Create an assessment task for each assessor (for these "normal" assessments, there will only be one assessor).
+                        foreach ($task["assessors"] as $assessor) {
+                            $assessment = $this->saveAssessment(
+                                $distribution,
+                                $assessor,
+                                $distribution->getID(),
+                                $task["meta"]["min_submittable"],
+                                $task["meta"]["max_submittable"],
+                                $task["meta"]["start_date"],
+                                $task["meta"]["end_date"],
+                                $task["meta"]["rotation_start_date"],
+                                $task["meta"]["rotation_end_date"],
+                                $task["meta"]["delivery_date"],
+                                $task["meta"]["additional_assessment"],
+                                $task["meta"]["associated_record_id"],
+                                $task["meta"]["associated_record_type"],
+                                $task["meta"]["course_id"],
+                                $task["meta"]["expiry_date"],
+                                $task["meta"]["expiry_notification_date"]
+                            );
+                            if ($assessment) {
+                                $assessments_created_count++;
+                                $this->queueAssessorNotifications($assessment, $assessment->getAssessorValue(), ($schedule ? $schedule->getID() : null), $distribution->getNotifications());
+                            } else {
+                                $db_errors++;
+                                application_log("error", "Error adding to cbl_distribution_assessments for distribution ID: '{$distribution->getID()}'.");
+                            }
+                        }
+                    } else {
+                        $assessment = $task["current_record"];
+                    }
+
+                    // We could not reliably determine or create the assessment and cannot continue.
+                    if (!$assessment) {
+                        continue;
+                    }
+
+                    // Process the targets for each assessment that was found/created.
+                    foreach ($task["targets"] as $target) {
+                        // Ensure the target should exist, meaning it is not deleted.
+                        if ($target["should_exist"]) {
+                            // If there is no current record, the target does not exist yet.
+                            if (!$target["current_record"]) {
+                                if ($this->saveAssessmentTarget($distribution, $distribution->getID(), $assessment->getID(), $target["target_value"], $target["target_type"])) {
+                                    $assessment_targets_created_count++;
+                                } else {
+                                    $db_errors++;
+                                    application_log("error", "Error adding to cbl_distribution_assessment_targets for distribution ID: '{$distribution->getID()}' / assessment id: {$assessment->getID()}");
+                                }
+                            }
                         }
                     }
                 }
             }
         }
-    }
 
-    /**
-     * Queue additional tasks added to a distribution.
-     *
-     * @param $distribution
-     */
-    private function queueAssessmentsAdditional($distribution) {
-        global $db;
-
-        // Check for any additional tasks that need an assessment created.
-        $additional_tasks = Models_Assessments_AdditionalTask::fetchAllByADistributionID($distribution->getID());
-        if ($additional_tasks) {
-            $this->verboseOut("Adding additional assessments. ");
-            foreach ($additional_tasks as $additional_task) {
-                $distribution_assessment_records = Models_Assessments_Assessor::fetchRowByADistributionIDAssessorTypeAssessorValueDeliveryDate($distribution->getID(), $additional_task->getAssessorType(), $additional_task->getAssessorValue(), $additional_task->getDeliveryDate());
-                if (!$distribution_assessment_records) {
-                    $distribution_assessment = $this->saveAssessment(array("assessor_type" => $additional_task->getAssessorType(), "assessor_value" => $additional_task->getAssessorValue()), $distribution->getID(), $distribution->getMinSubmittable(), $distribution->getMaxSubmittable(), $distribution->getStartDate(), $additional_task->getDeliveryDate(), 0, 0, $additional_task->getDeliveryDate(), true);
-                    if ($distribution_assessment) {
-                        $this->queueAssessorNotifications($distribution_assessment, $distribution_assessment->getAssessorValue(), null, $distribution->getNotifications());
-                    } else {
-                        application_log("error", "An error occurred while attempting to save a cbl_distribution_assessments record for an additional task DB said: " . $db->ErrorMsg());
-                    }
-                }
-            }
+        if ($db_errors) {
+            application_log("error", "Errors (total: $db_errors) when attempting to add cbl_distribution_assessments records and/or cbl_distribution_assessment_targets for distribution ID: '{$distribution->getID()}'");
         }
-    }
 
-    /**
-     * Queue assessment tasks based on a rotation schedule.
-     *
-     * @param $distribution
-     * @param $distribution_schedule
-     * @param $schedule
-     */
-    private function queueAssessmentsRotationSchedule($distribution, $distribution_schedule, $schedule) {
-        $release_date = (is_null($distribution->getReleaseDate()) ? 0 : (int)$distribution->getReleaseDate());
-
-        // This returns whatever was indicated in the distribution and must be expanded, e.g. if on-service learners were
-        // specified, this returns the schedule_id, and must be turned into a list of proxy_ids.
-        $distribution_targets = Models_Assessments_Distribution_Target::fetchAllByDistributionID($distribution->getID());
-
-        // This always returns a flat, well-defined list of users.
-        $assessors = $distribution->getAssessors(null);
-
-        if ($distribution_targets && $assessors) {
-
-            foreach ($distribution_targets as $distribution_target) {
-
-                //echo "Assessor Option: {$distribution->getAssessorOption()} / Dist Target Type & Scope: {$distribution_target->getTargetType()}/{$distribution_target->getTargetScope()}\n";
-
-                // Assessors are a rotation schedule's learners (on/off service)
-                if ($distribution->getAssessorOption() == "learner") {
-
-                    if ($distribution_target->getTargetType() == "schedule_id" && $distribution_target->getTargetScope() != "self") {
-
-                        // Create assessment tasks for all the assessors, based on the learners in a rotation schedule. This method expands the rotation into the required list of learner proxy_ids.
-                        $this->createAssessmentsForRotationLearnersByTarget($distribution, $distribution_schedule, $schedule, $release_date, $assessors, $distribution_target);
-
-                    } else if ($distribution_target->getTargetType() == "schedule_id" && $distribution_target->getTargetScope() == "self") {
-
-                        // On/off service learners assessing the rotation entity
-                        // The rotation itself is the target (the rotation entity, not the users)
-                        $this->createAssessmentsForRotationLearnersByAssessor($distribution, $distribution_schedule, $schedule, $release_date, $assessors, $distribution_target, true);
-
-                    } else if ($distribution_target->getTargetType() == "self" && $distribution_target->getTargetScope() == "self") {
-
-                        // Self assessment, use the assessors as targets
-                        // fetch the users for a rotation, and use that as the assessors array.
-                        $this->createAssessmentsForRotationLearnersBySelf($distribution, $distribution_schedule, $schedule, $release_date, $assessors, $distribution_target);
-
-                    } else if ($distribution_target->getTargetType() == "proxy_id" && $distribution_target->getTargetScope() == "self") {
-
-                        // Create assessment tasks for proxy ids. This is called when an additional user is added to the distribution.
-                        $this->createAssessmentsForRotationLearnersByAssessor($distribution, $distribution_schedule, $schedule, $release_date, $assessors, $distribution_target, true);
-                    } else {
-                        // Default create for proxy id
-                        $this->createAssessmentsForRotationLearnersByAssessor($distribution, $distribution_schedule, $schedule, $release_date, $assessors, $distribution_target, true);
-                    }
-
-                // Assessors are faculty or individuals
-                } else if ($distribution->getAssessorOption() == "faculty" || $distribution->getAssessorOption() == "individual_users") {
-
-                    if ($distribution_target->getTargetType() == "schedule_id" && $distribution_target->getTargetScope() != "self") {
-
-                        // Target is on/off service learners. Faculty or individual (maybe external) assessing on/off service learners
-                        $this->createAssessmentsForRotationLearnersByTarget($distribution, $distribution_schedule, $schedule, $release_date, $assessors, $distribution_target);
-
-                    } else if ($distribution_target->getTargetType() == "schedule_id" && $distribution_target->getTargetScope() == "self") {
-
-                        /** INVALID USE CASE */
-
-                        // Faculty/External assessing the rotation itself (rotation is the target -- the rotation entity, not the users)
-                        // While semantically correct, since the assessor isn't within the rotation, this functionality returns no results.
-                        $this->createAssessmentsForRotationLearnersByAssessor($distribution, $distribution_schedule, $schedule, $release_date, $assessors, $distribution_target);
-
-                    } else if ($distribution_target->getTargetType() == "self" && $distribution_target->getTargetScope() == "self") {
-
-                        /** INVALID USE CASE **/
-                        // Self assessment, the assessors are also the targets (e.g. faculty or individual users) -- this is an invalid state. A self assessment isn't possible from this context.
-
-                    } else if ($distribution_target->getTargetType() == "proxy_id" && $distribution_target->getTargetScope() == "self") {
-
-                        // Target is single proxy_id. A single proxy ID from this context can be added as an "additional learner", or a single specified learner.
-                        // Check schedule for the target, and then fetch rotations and add assessment if he is within the rotation.
-                        // If the specified target is not in the rotiation, this function correctly produces no assessment tasks.
-                        //echo "Create assessments for specific proxy ID / type: {$distribution_target->getTargetType()} / scope: {$distribution_target->getTargetScope()} / role: {$distribution_target->getTargetRole()} \n";
-
-                        if ($distribution_target->getTargetRole() == "faculty") {
-                            //echo "Role is faculty. Use the assessor's proxy ID to find rotations\n";
-                            $this->createAssessmentsForRotationLearnersByAssessor($distribution, $distribution_schedule, $schedule, $release_date, $assessors, $distribution_target, true);
-                        } else {
-                            // Role is "learner" OR "any", but "any" isn't possible through the editor.
-                            //echo "Role is {$distribution_target->getTargetRole()}, use the target's proxy\n";
-                            $this->createAssessmentsForRotationLearnersByTarget($distribution, $distribution_schedule, $schedule, $release_date, $assessors, $distribution_target, true); // use the target's proxy ID
-                        }
-
-                    } else {
-
-                        /** INVALID USE CASE **/
-                        // Anything else is invalid, and should not even be possible from within the editor.
-                    }
-                }
-            }
-        }
+        $this->verboseOut("Assessments created: $assessments_created_count (target records: $assessment_targets_created_count). ");
     }
 
     /**
@@ -503,11 +501,12 @@ class Entrada_Utilities_Assessments_QueueAssessment extends Entrada_Utilities_As
                             $assessor_value = $assessor_key_a[0]; // A proxy id or external assessor id
                             $assessor_type = $assessor_key_a[1];  // "internal" or "external"
 
-                            $existing_found = Models_Assessments_Assessor::fetchRowByADistributionIDAssessorTypeAssessorValueDeliveryDateAssociatedRecordIDAssociatedRecordType($distribution->getID(), $assessor_type, $assessor_value, $event_data["meta"]["delivery_date"], $event_id, "event_id");
-                            if ($existing_found) {
-                                continue; // already exists.
-                            } else {
-                                $saved_assessment = $this->saveAssessment(
+                            // Check to see if the task already exists.
+                            $assessment = Models_Assessments_Assessor::fetchRowByADistributionIDAssessorTypeAssessorValueAssociatedRecordIDAssociatedRecordType($distribution->getID(), $assessor_type, $assessor_value, $event_id, "event_id");
+                            if (!$assessment) {
+                                // Create a new task.
+                                $assessment = $this->saveAssessment(
+                                    $distribution,
                                     array(
                                         "assessor_value" => $assessor_value,
                                         "assessor_type" => $assessor_type
@@ -522,43 +521,54 @@ class Entrada_Utilities_Assessments_QueueAssessment extends Entrada_Utilities_As
                                     $event_data["meta"]["delivery_date"],
                                     false,
                                     $event_id,
-                                    "event_id"
+                                    "event_id",
+                                    $distribution->getCourseID(),
+                                    $event_data["meta"]["expiry_date"],
+                                    $event_data["meta"]["expiry_notification_date"]
                                 );
-                                if ($saved_assessment) {
+                                if ($assessment) {
                                     $assessments_created_count++;
-                                    $target_errors = 0;
-                                    // Assessment was saved successfully, so create the targets for it.
-                                    foreach ($event_data["targets"] as $target_key => $target_data) {
-                                        $target_key_a = explode("-", $target_key);
-                                        $target_value = $target_key_a[0];   // proxy ID or event ID
-                                        $target_type = $target_type_postfix = $target_key_a[1]; // Default is proxy_id. External targets are not implemented (but supported here).
-                                        switch ($target_type_postfix) {
-                                            case "internal":
-                                                $target_type = "proxy_id";
-                                                break;
-                                            case "external":
-                                                $target_type = "external_hash";
-                                                break;
-                                            case "eventtype":
-                                                $target_type = "event_id";
-                                                break;
-                                        }
-                                        if (!$this->saveAssessmentTarget($distribution->getID(), $saved_assessment->getID(), $target_value, $target_type)) {
-                                            $db_errors++;
-                                            $target_errors++;
-                                            application_log("error", "Error adding to cbl_distribution_assessment_targets for distribution ID: '{$distribution->getID()}' / assessment id: {$saved_assessment->getID()}");
-                                        } else {
-                                            $assessment_targets_created_count++;
-                                        }
-                                    }
-
                                     // Send notification for this newly created assessment
-                                    if (!$target_errors) {
-                                        $this->queueAssessorNotifications($saved_assessment, $saved_assessment->getAssessorValue(), null, $distribution->getNotifications(), false, true, $create_notification_as_sent);
-                                    }
+                                    $this->queueAssessorNotifications($assessment, $assessment->getAssessorValue(), null, $distribution->getNotifications(), false, true, $create_notification_as_sent);
                                 } else {
                                     $db_errors++;
                                     application_log("error", "Error adding to cbl_distribution_assessments for distribution ID: '{$distribution->getID()}' (for eventtype based distribution)");
+                                }
+                            }
+
+                            // We could not reliably determine or create the assessment and cannot continue.
+                            if (!$assessment) {
+                                continue;
+                            }
+
+                            // Assessment was created or fetched successfully, so create missing targets for it.
+                            foreach ($event_data["targets"] as $target_key => $target_data) {
+                                $target_key_a = explode("-", $target_key);
+                                $target_value = $target_key_a[0];   // proxy ID or event ID
+                                $target_type = $target_type_postfix = $target_key_a[1]; // Default is proxy_id. External targets are not implemented (but supported here).
+                                switch ($target_type_postfix) {
+                                    case "internal":
+                                        $target_type = "proxy_id";
+                                        break;
+                                    case "external":
+                                        $target_type = "external_hash";
+                                        break;
+                                    case "eventtype":
+                                        $target_type = "event_id";
+                                        break;
+                                }
+
+                                // Check if the target already exists.
+                                $target_exists = Models_Assessments_AssessmentTarget::fetchRowByDAssessmentIDTargetTypeTargetValueIncludeDeleted($assessment->getID(), $target_type, $target_value);
+                                if ($target_exists) {
+                                    continue;
+                                }
+
+                                if (!$this->saveAssessmentTarget($distribution, $distribution->getID(), $assessment->getID(), $target_value, $target_type)) {
+                                    $db_errors++;
+                                    application_log("error", "Error adding to cbl_distribution_assessment_targets for distribution ID: '{$distribution->getID()}' / assessment id: {$assessment->getID()}");
+                                } else {
+                                    $assessment_targets_created_count++;
                                 }
                             }
                         }
@@ -571,145 +581,6 @@ class Entrada_Utilities_Assessments_QueueAssessment extends Entrada_Utilities_As
         }
 
         $this->verboseOut("$events_count learning events processed. Assessments created: $assessments_created_count (target records: $assessment_targets_created_count) ");
-    }
-
-    //-- Rotation Schedule Assessment Creation Logic --//
-
-    /**
-     * Assign assessment tasks based on the assessors' schedules (assessors are the learners). This would typically be done for faculty being assessed by their respective block-learners.
-     *
-     * @param $distribution
-     * @param $distribution_schedule
-     * @param $schedule
-     * @param $release_date
-     * @param $assessors
-     * @param $distribution_target
-     * @param $limit_to_assessor
-     */
-    private function createAssessmentsForRotationLearnersByAssessor($distribution, $distribution_schedule, $schedule, $release_date, $assessors, $distribution_target, $limit_to_assessor = false) {
-        foreach ($assessors as $assessor) {
-            if ($distribution_schedule->getScheduleType() == "rotation") {
-
-                // Get the rotations of the assessor and create assessments for those dates.
-                $rotations = $this->fetchRotations($schedule->getID(), null, $assessor["assessor_value"]);
-                if ($rotations) {
-                    $this->createAssessmentsByRotationDates($distribution, $distribution_schedule, $schedule, $rotations, $release_date, $assessor, $distribution_target);
-                }
-
-            } else if ($distribution_schedule->getScheduleType() == "block") {
-
-                // Fetch blocks and create assessments for the relevant dates.
-                if ($schedule->getScheduleType() == "rotation_stream") {
-                    $blocks = Models_Schedule::fetchAllByParentID($schedule->getID());
-                } else if ($schedule->getScheduleType() == "rotation_block") {
-                    $blocks[] = $schedule;
-                }
-                if ($blocks) {
-                    $this->createAssessmentsByLearnerBlocks($distribution, $distribution_schedule, $schedule, $blocks, $release_date, $assessor, $limit_to_assessor);
-                }
-
-            } else if ($distribution_schedule->getScheduleType() == "repeat") {
-
-                // For each relevant rotation, create assessment tasks for the specified frequency.
-                $rotations = $this->fetchRotations($schedule->getID(), null, $assessor["assessor_value"]);
-                if ($rotations) {
-                    $this->createAssessmentsByRepeatDates($distribution, $distribution_schedule, $schedule, $rotations, $release_date, $assessor, $distribution_target);
-                }
-            }
-        }
-    }
-
-    /**
-     * Assign assessment tasks based on the targets' rotation schedules. This would typically be faculty assessing the learners in the rotation.
-     * This function can only be executed on assessors that have proxy_ids (not externals or non-person entities).
-     *
-     * @param $distribution
-     * @param $distribution_schedule
-     * @param $schedule
-     * @param $release_date
-     * @param $assessors
-     * @param $distribution_target
-     * @param bool $use_single_proxy_id
-     */
-    private function createAssessmentsForRotationLearnersByTarget($distribution, $distribution_schedule, $schedule, $release_date, $assessors, $distribution_target, $use_single_proxy_id = false) {
-        foreach ($assessors as $assessor) {
-
-            $proxy_id = null;
-            if ($use_single_proxy_id && $distribution_target->getTargetID()) {
-                $proxy_id = $distribution_target->getTargetID();
-            }
-
-            if ($distribution_schedule->getScheduleType() == "rotation") {
-                $rotations = $this->fetchRotations($schedule->getID(), $distribution_target->getTargetScope(), $proxy_id);
-                if ($rotations) {
-                    $this->createAssessmentsByRotationDates($distribution, $distribution_schedule, $schedule, $rotations, $release_date, $assessor, $distribution_target);
-                }
-
-            } else if ($distribution_schedule->getScheduleType() == "block") {
-
-                if ($schedule->getScheduleType() == "rotation_stream") {
-                    $blocks = Models_Schedule::fetchAllByParentID($schedule->getID());
-                } else if ($schedule->getScheduleType() == "rotation_block") {
-                    $blocks[] = $schedule;
-                }
-                if ($blocks) {
-                    $this->createAssessmentsByLearnerBlocks($distribution, $distribution_schedule, $schedule, $blocks, $release_date, $assessor);
-                }
-
-            } else if ($distribution_schedule->getScheduleType() == "repeat") {
-
-                $rotations = $this->fetchRotations($schedule->getID(), $distribution_target->getTargetScope(), $proxy_id);
-                if ($rotations) {
-                    $this->createAssessmentsByRepeatDates($distribution, $distribution_schedule, $schedule, $rotations, $release_date, $assessor, $distribution_target);
-                }
-            }
-        }
-    }
-
-    /**
-     * Assign assessment tasks based on the targets' rotation schedules, for self assessments.
-     *
-     * @param $distribution
-     * @param $distribution_schedule
-     * @param $schedule
-     * @param $release_date
-     * @param $assessors
-     * @param $distribution_target
-     * @param bool $use_single_proxy_id
-     */
-    private function createAssessmentsForRotationLearnersBySelf($distribution, $distribution_schedule, $schedule, $release_date, $assessors, $distribution_target, $use_single_proxy_id = false) {
-        foreach ($assessors as $assessor) {
-
-            $proxy_id = null;
-            if ($use_single_proxy_id && $distribution_target->getTargetID()) {
-                $proxy_id = $distribution_target->getTargetID();
-            }
-
-            if ($distribution_schedule->getScheduleType() == "rotation") {
-                $rotations = $this->fetchRotations($schedule->getID(), $distribution_target->getTargetScope(), $proxy_id);
-                if ($rotations) {
-                    $this->createAssessmentsByRotationDatesSelf($distribution, $distribution_schedule, $schedule, $rotations, $release_date, $assessor, $distribution_target);
-                }
-
-            } else if ($distribution_schedule->getScheduleType() == "block") {
-
-                if ($schedule->getScheduleType() == "rotation_stream") {
-                    $blocks = Models_Schedule::fetchAllByParentID($schedule->getID());
-                } else if ($schedule->getScheduleType() == "rotation_block") {
-                    $blocks[] = $schedule;
-                }
-                if ($blocks) {
-                    $this->createAssessmentsByLearnerBlocks($distribution, $distribution_schedule, $schedule, $blocks, $release_date, $assessor, true);
-                }
-
-            } else if ($distribution_schedule->getScheduleType() == "repeat") {
-
-                $rotations = $this->fetchRotations($schedule->getID(), $distribution_target->getTargetScope(), $proxy_id);
-                if ($rotations) {
-                    $this->createAssessmentsByRepeatDatesSelf($distribution, $distribution_schedule, $schedule, $rotations, $release_date, $assessor, $distribution_target);
-                }
-            }
-        }
     }
 
     //-- Assessment task creation logic --//
@@ -738,233 +609,4 @@ class Entrada_Utilities_Assessments_QueueAssessment extends Entrada_Utilities_As
         }
     }
 
-    /**
-     * Create assessment target records for a corresponding distribution assessment task. This is required when an assessment is created for a rotation schedule.
-     *
-     * @param $distribution_id
-     * @param $distribution_assessment_id
-     * @param $target_type
-     * @param $target_scope
-     * @param $rotation_dates
-     * @param $unique_start_date
-     * @param $unqiue_end_date
-     */
-    private function createAssessmentTargetsByRotationDates($distribution_id, $distribution_assessment_id, $target_type, $target_scope, $rotation_dates, $unique_start_date, $unqiue_end_date) {
-        // if the dassessment is for a schedule_id target, check the scope and create target records
-        if ($target_type == "schedule_id" && ($target_scope == "internal_learners" || $target_scope == "external_learners" || $target_scope == "all_learners")) {
-            foreach ($rotation_dates["all_rotation_dates"] as $proxy_id => $user_rotation_dates) {
-                foreach ($user_rotation_dates as $user_end_date => $user_rotation_date) {
-                    if ($unique_start_date == $user_rotation_date[0] && $unqiue_end_date == $user_rotation_date[1]) {
-                        $this->saveAssessmentTarget($distribution_id, $distribution_assessment_id, $proxy_id);
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * Create assessment target records for an assessment that is block based.
-     *
-     * @param $distribution_id
-     * @param $dassessment_id
-     * @param $block_id
-     */
-    private function createAssessmentTargetsByBlock($distribution_id, $dassessment_id, $block_id) {
-        $distribution_target_records = Models_Assessments_Distribution_Target::fetchAllByDistributionID($distribution_id);
-        if ($distribution_target_records) {
-            foreach ($distribution_target_records as $distribution_target_record) {
-                if ($distribution_target_record->getTargetType() == "schedule_id") {
-                    $block_rotations = $this->fetchBlockRotations($block_id, $distribution_target_record->getTargetScope());
-                    if ($block_rotations) {
-                        foreach ($block_rotations as $block_rotation) {
-                            $this->saveAssessmentTarget($distribution_id, $dassessment_id, $block_rotation["audience_value"]);
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * Creates distribution assessment records based on entire rotations (e.g. if someone is scheduled in Block 1 and Block 2, the assessment will encompass and apply to both blocks).
-     *
-     * @param $distribution
-     * @param $distribution_schedule
-     * @param $schedule
-     * @param $rotations
-     * @param $release_date
-     * @param $assessor
-     * @param $distribution_target
-     */
-    private function createAssessmentsByRotationDates($distribution, $distribution_schedule, $schedule, $rotations, $release_date, $assessor, $distribution_target) {
-        $rotation_dates = $this->getRotationDates($rotations, $distribution->getOrganisationID());
-        if ($rotation_dates) {
-            foreach ($rotation_dates["unique_rotation_dates"] as $unique_rotation_date) {
-                $delivery_date = $this->calculateDateByOffset($distribution_schedule->getDeliveryPeriod(), $distribution_schedule->getPeriodOffset(), $unique_rotation_date[0], $unique_rotation_date[1]);
-                if (($release_date <= $delivery_date) && ($delivery_date <= time())) {
-                    // check if dassessment records already exist
-                    $distribution_assessment_records = Models_Assessments_Assessor::fetchRowByAssessorTypeAssessorValueStartDateEndDate($assessor["assessor_type"], $assessor["assessor_value"], $distribution->getID(), $unique_rotation_date[0], $unique_rotation_date[1]);
-                    if (!$distribution_assessment_records) {
-                        $distribution_assessment = $this->saveAssessment($assessor, $distribution->getID(), $distribution->getMinSubmittable(), $distribution->getMaxSubmittable(), $unique_rotation_date[0], $unique_rotation_date[1], $unique_rotation_date[0], $unique_rotation_date[1], $delivery_date);
-                        if ($distribution_assessment) {
-                            $this->createAssessmentTargetsByRotationDates($distribution->getID(), $distribution_assessment->getID(), $distribution_target->getTargetType(), $distribution_target->getTargetScope(), $rotation_dates, $unique_rotation_date[0], $unique_rotation_date[1]);
-                            $this->queueAssessorNotifications($distribution_assessment, $distribution_assessment->getAssessorValue(), $schedule->getID(), $distribution->getNotifications());
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * Create assessments for self assessment rotation dates.
-     *
-     * @param $distribution
-     * @param $distribution_schedule
-     * @param $schedule
-     * @param $rotations
-     * @param $release_date
-     * @param $assessor
-     * @param $distribution_target
-     */
-    private function createAssessmentsByRotationDatesSelf($distribution, $distribution_schedule, $schedule, $rotations, $release_date, $assessor, $distribution_target) {
-        $rotation_dates = $this->getRotationDates($rotations, $distribution->getOrganisationID());
-        if ($rotation_dates) {
-            // The rotation is assessing itself (the learners are assessing the rotation entity)
-            foreach ($rotation_dates["unique_rotation_dates"] as $unique_rotation_date) {
-                foreach ($rotation_dates["all_rotation_dates"] as $proxy_id => $block_dates) {
-                    foreach ($block_dates as $block_date) {
-                        if ($block_date[0] == $unique_rotation_date[0] && $block_date[1] == $unique_rotation_date[1] && $proxy_id == $assessor["assessor_value"]) {
-                            $delivery_date = $this->calculateDateByOffset($distribution_schedule->getDeliveryPeriod(), $distribution_schedule->getPeriodOffset(), $unique_rotation_date[0], $unique_rotation_date[1]);
-                            if (($release_date <= $delivery_date) && ($delivery_date <= time())) {
-                                // check if dassessment records already exist
-                                $distribution_assessment_records = Models_Assessments_Assessor::fetchRowByAssessorTypeAssessorValueStartDateEndDate($assessor["assessor_type"], $assessor["assessor_value"], $distribution->getID(), $unique_rotation_date[0], $unique_rotation_date[1]);
-                                if (!$distribution_assessment_records) {
-                                    $distribution_assessment = $this->saveAssessment($assessor, $distribution->getID(), $distribution->getMinSubmittable(), $distribution->getMaxSubmittable(), $unique_rotation_date[0], $unique_rotation_date[1], $unique_rotation_date[0], $unique_rotation_date[1], $delivery_date);
-                                    if ($distribution_assessment) {
-                                        $this->createAssessmentTargetsByRotationDates($distribution->getID(), $distribution_assessment->getID(), $distribution_target->getTargetType(), $distribution_target->getTargetScope(), $rotation_dates, $unique_rotation_date[0], $unique_rotation_date[1]);
-                                        $this->queueAssessorNotifications($distribution_assessment, $distribution_assessment->getAssessorValue(), $schedule->getID(), $distribution->getNotifications());
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * Create assessments for self assessment repeat dates.
-     *
-     * @param $distribution
-     * @param $distribution_schedule
-     * @param $schedule
-     * @param $rotations
-     * @param $release_date
-     * @param $assessor
-     * @param $distribution_target
-     */
-    private function createAssessmentsByRepeatDatesSelf($distribution, $distribution_schedule, $schedule, $rotations, $release_date, $assessor, $distribution_target) {
-        global $db;
-        $rotation_dates = $this->getRotationDates($rotations, $distribution->getOrganisationID());
-        if ($rotation_dates) {
-            // The rotation is assessing itself (the learners are assessing the rotation entity)
-            foreach ($rotation_dates["unique_rotation_dates"] as $unique_rotation_date) {
-                foreach ($rotation_dates["all_rotation_dates"] as $proxy_id => $block_dates) {
-                    foreach ($block_dates as $block_date) {
-                        if ($block_date[0] == $unique_rotation_date[0] && $block_date[1] == $unique_rotation_date[1] && $proxy_id == $assessor["assessor_value"]) {
-                            $delivery_date = $this->calculateDateByOffset($distribution_schedule->getDeliveryPeriod(), $distribution_schedule->getPeriodOffset(), $unique_rotation_date[0], $unique_rotation_date[1]);
-                            if ($release_date <= $delivery_date) {
-                                while ($delivery_date <= time() && $delivery_date <= $unique_rotation_date[1]) {
-                                    $distribution_assessment_records = Models_Assessments_Assessor::fetchRowByAssessorTypeAssessorValueStartDateEndDate($assessor["assessor_type"], $assessor["assessor_value"], $distribution->getID(), $delivery_date, $unique_rotation_date[1]);
-                                    if (!$distribution_assessment_records) {
-                                        $distribution_assessment = $this->saveAssessment($assessor, $distribution->getID(), $distribution->getMinSubmittable(), $distribution->getMaxSubmittable(), $delivery_date, $unique_rotation_date[1], $unique_rotation_date[0], $unique_rotation_date[1], $delivery_date);
-                                        if ($distribution_assessment) {
-                                            $this->createAssessmentTargetsByRotationDates($distribution->getID(), $distribution_assessment->getID(), $distribution_target->getTargetType(), $distribution_target->getTargetScope(), $rotation_dates, $unique_rotation_date[0], $unique_rotation_date[1]);
-                                            $this->queueAssessorNotifications($distribution_assessment, $distribution_assessment->getAssessorValue(), $schedule->getID(), $distribution->getNotifications());
-                                        } else {
-                                            application_log("error", "An error occurred while attempting to save a cbl_distribution_assessments record DB said: " . $db->ErrorMsg());
-                                        }
-                                    }
-                                    $delivery_date += ($distribution_schedule->getFrequency() * 86400);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * Create distribution assessment records based on single rotation blocks.
-     *
-     * @param $distribution
-     * @param $distribution_schedule
-     * @param $schedule
-     * @param $blocks
-     * @param $release_date
-     * @param $assessor
-     * @param $limit_to_assessor
-     */
-    private function createAssessmentsByLearnerBlocks($distribution, $distribution_schedule, $schedule, $blocks, $release_date, $assessor, $limit_to_assessor = false) {
-
-        $proxy_id = null;
-        if ($limit_to_assessor) {
-            $proxy_id = $assessor["assessor_value"];
-        }
-        foreach ($blocks as $block) {
-            $delivery_date = $this->calculateDateByOffset($distribution_schedule->getDeliveryPeriod(), $distribution_schedule->getPeriodOffset(), $block->getStartDate(), $block->getEndDate());
-            if (($release_date <= $delivery_date) && ($delivery_date <= time())) {
-                $learner_blocks = $this->fetchLearnerBlocks($block->getID(), $proxy_id);
-                if ($learner_blocks) {
-                    $distribution_assessment_records = Models_Assessments_Assessor::fetchRowByAssessorTypeAssessorValueEndDate($assessor["assessor_type"], $assessor["assessor_value"], $distribution->getID(), $delivery_date);
-                    if (!$distribution_assessment_records) {
-                        $distribution_assessment = $this->saveAssessment($assessor, $distribution->getID(), $distribution->getMinSubmittable(), $distribution->getMaxSubmittable(), $delivery_date, $delivery_date, $block->getStartDate(), $block->getEndDate(), $delivery_date);
-                        if ($distribution_assessment) {
-                            $this->createAssessmentTargetsByBlock($distribution->getID(), $distribution_assessment->getID(), $block->getID());
-                            $this->queueAssessorNotifications($distribution_assessment, $assessor["assessor_value"], $schedule->getID(), $distribution->getNotifications());
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * Create distribution assessment records based on repeat frequency within a rotation.
-     *
-     * @param $distribution
-     * @param $distribution_schedule
-     * @param $schedule
-     * @param $rotations
-     * @param $release_date
-     * @param $assessor
-     * @param $distribution_target
-     */
-    private function createAssessmentsByRepeatDates($distribution, $distribution_schedule, $schedule, $rotations, $release_date, $assessor, $distribution_target) {
-        global $db;
-        $rotation_dates = $this->getRotationDates($rotations, $distribution->getOrganisationID());
-        if ($rotation_dates["unique_rotation_dates"]) {
-            foreach ($rotation_dates["unique_rotation_dates"] as $unique_rotation_date) {
-                $delivery_date = $this->calculateDateByFrequency($distribution_schedule->getFrequency(), $unique_rotation_date[0]);
-                if ($release_date <= $delivery_date) {
-                    while ($delivery_date <= time() && $delivery_date <= $unique_rotation_date[1]) {
-                        $distribution_assessment_records = Models_Assessments_Assessor::fetchRowByAssessorTypeAssessorValueStartDateEndDate($assessor["assessor_type"], $assessor["assessor_value"], $distribution->getID(), $delivery_date, $unique_rotation_date[1]);
-                        if (!$distribution_assessment_records) {
-                            $distribution_assessment = $this->saveAssessment($assessor, $distribution->getID(), $distribution->getMinSubmittable(), $distribution->getMaxSubmittable(), $delivery_date, $unique_rotation_date[1], $unique_rotation_date[0], $unique_rotation_date[1], $delivery_date);
-                            if ($distribution_assessment) {
-                                $this->createAssessmentTargetsByRotationDates($distribution->getID(), $distribution_assessment->getID(), $distribution_target->getTargetType(), $distribution_target->getTargetScope(), $rotation_dates, $unique_rotation_date[0], $unique_rotation_date[1]);
-                                $this->queueAssessorNotifications($distribution_assessment, $distribution_assessment->getAssessorValue(), $schedule->getID(), $distribution->getNotifications());
-                            } else {
-                                application_log("error", "An error occurred while attempting to save a cbl_distribution_assessments record DB said: " . $db->ErrorMsg());
-                            }
-                        }
-                        $delivery_date += ($distribution_schedule->getFrequency() * 86400);
-                    }
-                }
-            }
-        }
-    }
 }

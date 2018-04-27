@@ -34,6 +34,9 @@ class Models_Eportfolio_Entry {
 			$flag,
 			$flagged_by,
 			$flagged_date,
+			$is_assessable,
+			$is_assessable_set_by,
+			$is_assessable_set_date,
 			$_edata,
 			$order,
 			$active = 1,
@@ -190,6 +193,18 @@ class Models_Eportfolio_Entry {
 	
 	public function getFlaggedDate() {
 		return $this->flagged_date;
+	}
+
+	public function getIsAssessable() {
+		return $this->is_assessable;
+	}
+
+	public function getIsAssessableSetBy() {
+		return $this->is_assessable_set_by;
+	}
+
+	public function getIsAssessableSetDate() {
+		return $this->is_assessable_set_date;
 	}
 	
 	public function getOrder() {

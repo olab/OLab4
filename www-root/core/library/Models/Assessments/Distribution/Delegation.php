@@ -21,7 +21,7 @@
  */
 
 class Models_Assessments_Distribution_Delegation extends Models_Base {
-    protected $addelegation_id, $adistribution_id, $delegator_id, $delegator_type, $completed_by, $completed_date, $completed_reason, $created_by, $created_date, $updated_date, $updated_by, $start_date, $end_date, $delivery_date, $deleted_date, $deleted_by;
+    protected $addelegation_id, $adistribution_id, $delegator_id, $delegator_type, $completed_by, $completed_date, $completed_reason, $created_by, $created_date, $updated_date, $updated_by, $start_date, $end_date, $delivery_date, $visible, $deleted_reason_id, $deleted_reason_notes, $deleted_date, $deleted_by;
 
     protected static $table_name = "cbl_assessment_distribution_delegations";
     protected static $primary_key = "addelegation_id";
@@ -99,6 +99,18 @@ class Models_Assessments_Distribution_Delegation extends Models_Base {
         return $this->updated_by;
     }
 
+    public function getDeletedReasonID() {
+        return $this->deleted_reason_id;
+    }
+
+    public function getDeletedReasonNotes() {
+        return $this->deleted_reason_notes;
+    }
+
+    public function getVisible() {
+        return $this->visible;
+    }
+
     public function setCompletedReason ($reason_text = NULL) {
         $this->completed_reason = $reason_text;
     }
@@ -156,6 +168,18 @@ class Models_Assessments_Distribution_Delegation extends Models_Base {
 
     public function setDeletedDate($deleted_date = null) {
         $this->deleted_date = ($deleted_date === null) ? time() : $deleted_date;
+    }
+
+    public function setDeletedReasonID ($deleted_reason_id) {
+        $this->deleted_reason_id = $deleted_reason_id;
+    }
+
+    public function setDeletedReasonNotes ($deleted_reason_notes) {
+        $this->deleted_reason_notes = $deleted_reason_notes;
+    }
+
+    public function setVisible ($visible) {
+        $this->visible = $visible;
     }
 
     public static function fetchRowByID($addelegation_id) {

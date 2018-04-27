@@ -66,6 +66,11 @@ class Models_Community_Course extends Models_Base {
         return $self->fetchRow(array("community_id" => $community_id));
     }
 
+    public static function fetchAllByCommunityID($community_id = 0) {
+        $self = new self();
+        return $self->fetchAll(array("community_id" => $community_id));
+    }
+
     public function fetchRowByCommunityIDProxyID($community_id = 0, $proxy_id) {
         $self = new self();
         return $self->fetchRow(array("community_id" => $community_id, "proxy_id" => $proxy_id));

@@ -50,7 +50,11 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_RUBRICS"))) {
     }
 
     $assessment_evaluation_tabs = new Views_Assessments_Dashboard_NavigationTabs();
-    $assessment_evaluation_tabs->render(array("active" => "items"));
+    $assessment_evaluation_tabs->render(array(
+        "active" => "items",
+        "group" => $ENTRADA_USER->getActiveGroup(),
+        "role" => $ENTRADA_USER->getActiveRole()
+    ));
 
     // Draw navigation tabs, context sensitive
     $exclude_tabs = array();
@@ -222,7 +226,12 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_RUBRICS"))) {
                 echo display_success();
             }
             if (isset($PROCESSED["item_id"]) && $PROCESSED["item_id"]) {
-                add_notice($translate->_("<strong>Please Note</strong>: You are viewing all rubrics associated with a single item. If you would like to edit the item for a specific rubric, click on the rubric from the list and you will be directed to editing the item (shown directly below) for the selected rubric."));
+                if (isset($_SESSION[APPLICATION_IDENTIFIER][$MODULE][$SUBMODULE]["selected_filters"]) &&
+                    !empty($_SESSION[APPLICATION_IDENTIFIER][$MODULE][$SUBMODULE]["selected_filters"])
+                ) {
+                    echo display_notice($translate->_("<strong>Please Note:</strong> You have filters set that may affect the search results."));
+                }
+                add_notice($translate->_("<strong>Please Note</strong>: You are viewing all rubrics associated with a single item. If you would like to edit the item for a specific rubric, click on the rubric from the list and you will be directed to editing the item (shown directly below) for the selected rubric. Any rubrics that you do not have permission to modify will not be listed below."));
             }
             if ($NOTICE) {
                 echo display_notice();
@@ -230,7 +239,8 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_RUBRICS"))) {
             if (isset($PROCESSED["item_id"]) && $PROCESSED["item_id"]): ?>
                 <h2><?php echo $translate->_("Item to Edit in Grouped Items"); ?></h2>
                 <div id="item-detail-container"></div>
-            <?php endif; ?>
+            <?php endif;
+            $modal_id = !empty($form_referrer_data) ? "create-attach-rubric-modal" : "add-rubric-modal"; ?>
             <script type="text/javascript">
                 jQuery(function($) {
                     <?php if (isset($PROCESSED["item_id"]) && $PROCESSED["item_id"]):  ?>
@@ -248,32 +258,31 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_RUBRICS"))) {
                             }
                         });
                     <?php endif; ?>
-                    $("#advanced-search").advancedSearch(
-                        {
-                            api_url: "<?php echo ENTRADA_URL . "/admin/" . $MODULE . "/" . $SUBMODULE . "?section=api-rubric".(isset($PROCESSED["item_id"]) && ((int)$PROCESSED["item_id"]) ? "&item_id=".((int)$PROCESSED["item_id"]) : "") ; ?>",
-                            resource_url: ENTRADA_URL,
-                            filters: {
-                                curriculum_tag: {
-                                    label: "<?php echo $translate->_("Curriculum Tag"); ?>",
-                                    data_source: "get-objectives",
-                                    secondary_data_source: "get-child-objectives"
-                                },
-                                author: {
-                                    label: "<?php echo $translate->_("Grouped Item Authors"); ?>",
-                                    data_source: "get-rubric-authors"
-                                },
-                                course: {
-                                    label: "<?php echo $translate->_("Courses"); ?>",
-                                    data_source: "get-user-courses"
-                                }
+
+                    $("#advanced-search").advancedSearch({
+                        api_url: "<?php echo ENTRADA_URL . "/admin/" . $MODULE . "/" . $SUBMODULE . "?section=api-rubric".(isset($PROCESSED["item_id"]) && ((int)$PROCESSED["item_id"]) ? "&item_id=".((int)$PROCESSED["item_id"]) : "") ; ?>",
+                        resource_url: ENTRADA_URL,
+                        filters: {
+                            curriculum_tag: {
+                                label: "<?php echo $translate->_("Curriculum Tag"); ?>",
+                                data_source: "get-objectives",
+                                secondary_data_source: "get-child-objectives"
                             },
-                            no_results_text: "<?php echo $translate->_("No Items found matching the search criteria"); ?>",
-                            reload_page_flag: true,
-                            list_selections: false,
-                            results_parent: $("#assessment-rubrics-container"),
-                            width: 400
-                        }
-                    );
+                            author: {
+                                label: "<?php echo $translate->_("Grouped Item Authors"); ?>",
+                                data_source: "get-rubric-authors"
+                            },
+                            course: {
+                                label: "<?php echo $translate->_("Courses"); ?>",
+                                data_source: "get-user-courses"
+                            }
+                        },
+                        no_results_text: "<?php echo $translate->_("No Items found matching the search criteria"); ?>",
+                        reload_page_flag: true,
+                        list_selections: false,
+                        results_parent: $("#assessment-rubrics-container"),
+                        width: 400
+                    });
                 });
             </script>
             <div id="assessment-rubrics-container">
@@ -346,15 +355,31 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_RUBRICS"))) {
             $rubric_form_modal_action_url = ENTRADA_URL."/admin/assessments/rubrics?section=api-rubric";
             $rubric_form_modal_action_url .= (isset($PROCESSED["item_id"]) && ((int)$PROCESSED["item_id"]) ? "&item_id=".((int)$PROCESSED["item_id"]) : "");
             $create_attach_rubric_action_url = Entrada_Utilities_FormStorageSessionHelper::buildRefURL(ENTRADA_URL."/admin/assessments/rubrics?", $PROCESSED["fref"]);
+            $scale_type_datasource = Entrada_Utilities_AdvancedSearchHelper::buildSearchSource(
+                $forms_api->getScaleTypesInUse($ENTRADA_USER->getActiveOrganisation(), true),
+                "rating_scale_type_id",
+                "title",
+                array("shortname") // List of additional properties to include in the data source (from the source records)
+            );
 
-            $add_rubric_modal = new Views_Assessments_Forms_Modals_AddRubric();
-            $add_rubric_modal->render(array("action_url" => $rubric_form_modal_action_url));
+            if (!empty($form_referrer_data)) {
+                $create_attach_modal = new Views_Assessments_Forms_Modals_CreateAttachRubric();
+                $create_attach_modal->render(array(
+                    "action_url" => $create_attach_rubric_action_url,
+                    "form_id" => $referrer_form_id,
+                    "fref" => $PROCESSED["fref"],
+                    "rating_scale_types" => $scale_type_datasource
+                ));
+            } else {
+                $add_rubric_modal = new Views_Assessments_Forms_Modals_AddRubric();
+                $add_rubric_modal->render(array(
+                    "action_url" => $rubric_form_modal_action_url,
+                    "rating_scale_types" => $scale_type_datasource
+                ));
+            }
 
             $delete_rubric_modal = new Views_Assessments_Forms_Modals_DeleteRubric();
             $delete_rubric_modal->render(array("action_url" => $rubric_form_modal_action_url));
-
-            $create_attach_modal = new Views_Assessments_Forms_Modals_CreateAttachRubric();
-            $create_attach_modal->render(array("action_url" => $create_attach_rubric_action_url, "form_id" => $referrer_form_id, "fref" => $PROCESSED["fref"]));
 
             if (isset($_SESSION[APPLICATION_IDENTIFIER]["assessments"]["rubrics"]["selected_filters"]) && !empty($_SESSION[APPLICATION_IDENTIFIER]["assessments"]["rubrics"]["selected_filters"])) {
             echo "<form id=\"search-targets-form\">";

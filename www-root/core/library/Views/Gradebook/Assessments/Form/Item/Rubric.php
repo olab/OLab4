@@ -56,22 +56,22 @@ class Views_Gradebook_Assessments_Form_Item_Rubric extends Views_Gradebook_Asses
 
             $html = array();
 
-            $html[] = "<tr>";
+            $html[] = "<tr class=\"rubric-descriptors\">";
 
             if ($this->getItemResponseCount() > 0) {
                 // create empty field for column of items
-                $html[] = '<th width="'.$this->first_column_width.'%"></th>'; 
+                $html[] = '<th></th>';
             }
 
             foreach($this->data['item_responses'] as $item_response) {
-                $html[] = '<th class="label-cell" width="'.$this->getColumnWidth().'">';
-                $html[] = ' <h3>'.html_encode($item_response['descriptor']).'</h3>';
+                $html[] = '<th class="label-cell">';
+                $html[] = '    <h3>'.html_encode($item_response['descriptor']).'</h3>';
                 $html[] = '</th>';
             }
 
             if ($this->display_scores_and_weights) {
                 // Adds empty field as column header for weights
-                $html[] = '<th width="10%"></th>';
+                $html[] = '<th></th>';
             }
 
             $html[] = "</tr>";
@@ -92,13 +92,16 @@ class Views_Gradebook_Assessments_Form_Item_Rubric extends Views_Gradebook_Asses
             foreach($this->data['items'] as $item) {
 
                 $rowspan = ($item['comment_type'] != 'disabled') ? 2: 1;
+                $html[] = '<tbody>';
                 $html[] = '<tr class="rubric-response-input item-response-view" id="item-response-view-'.html_encode($item['element_id']).'" data-afelement-id="'.html_encode($item['afelement_id']).'" data-item-id="'.html_encode($item['element_id']).'">';
                 $html[] = ' <td rowspan="'.$rowspan.'">';
                 $html[] = '     <div class="rubric-item-text">'.html_encode($item['item_text']).'</div>';
                 $html[] = $this->renderCurriculumTags($item["curriculum-tags"]);
                 $html[] = '</td>';
                 $html[] = $this->renderItemResponses($item);
+                $html[] = '<td rowspan="'.$rowspan.'">';
                 $html[] = $this->renderWeightCell($item);
+                $html[] = '</td>';
                 $html[] = '</tr>';
 
                 if ($item['comment_type'] != 'disabled') {
@@ -106,6 +109,7 @@ class Views_Gradebook_Assessments_Form_Item_Rubric extends Views_Gradebook_Asses
                     $html[] = ' '.$this->renderItemComment($item);
                     $html[] = '</tr>';
                 }
+                $html[] = '</tbody>';
             }
 
             return implode("\n", $html);
@@ -129,9 +133,9 @@ class Views_Gradebook_Assessments_Form_Item_Rubric extends Views_Gradebook_Asses
                 $score = $item_response["proxy_score"] ? $item_response["proxy_score"] : $item_response["item_response_score"];
 
                 $html[] = '<td class="rubric-response text-center">';
-                $html[] = '     <input '.$this->getDisabledAttr().' type="radio" class="item-control proxy-scores" name="proxy-scores['.html_encode($item['element_id']).']" id="response-'.html_encode($item_response['iresponse_id']).'" data-gairesponse-id="'.html_encode($item_response['gairesponse_id']).'" data-item-id="'.html_encode($item['element_id']).'" data-iresponse-id="'.html_encode($item_response['iresponse_id']).'" value="'.html_encode($item_response['gairesponse_id']).'" '.$selected.'>';
-                $html[] = '     '.$this->renderScore($item_response);
-                $html[] = $item_response['text'] ? '<label for="response-'.html_encode($item_response['iresponse_id']).'">'.nl2br(html_encode($item_response['text'])).'</label>' : '';
+                $html[] = '    <input '.$this->getDisabledAttr().' type="radio" class="item-control proxy-scores" name="proxy-scores['.html_encode($item['element_id']).']" id="response-'.html_encode($item_response['iresponse_id']).'" data-gairesponse-id="'.html_encode($item_response['gairesponse_id']).'" data-item-id="'.html_encode($item['element_id']).'" data-iresponse-id="'.html_encode($item_response['iresponse_id']).'" value="'.html_encode($item_response['gairesponse_id']).'" '.$selected.'>';
+                $html[] =      $item_response['text'] ? '<label for="response-'.html_encode($item_response['iresponse_id']).'"><div class="rubric-response-text"><div class="match-height">'.nl2br(html_encode($item_response['text'])).'</div></div></label>' : '';
+                $html[] = '    '.$this->renderScore($item_response);
                 $html[] = '</td>';
             }
 
@@ -151,7 +155,7 @@ class Views_Gradebook_Assessments_Form_Item_Rubric extends Views_Gradebook_Asses
             $comment_label_class = $item['comment_type'] == 'mandatory' ? ' form-required' : ($item['comment_type'] == 'flagged' ? ' form-flagged' : ''); //for $item['comment_type'] == 'optional'
 
             $html = array();
-            $html[] = '  <td colspan="' . count($item['item_responses']) .'">';
+            $html[] = '  <td colspan="' . count($item['item_responses']).'">';
             $html[] = '    <label class="control-label'. $comment_label_class .'" for="'.'item-'.$item['item_id'].'-comments">Comment</label>';
             $html[] = '    <textarea '.$this->getDisabledComments().' name="item-'.$item['item_id'].'-comments" id="item-'.$item['item_id'].'-comments" data-item-id="'.$item['item_id'].'" data-gafelement-id = "'.$item['gafelement_id'].'" class="span12 expandable">'.html_encode($item['comment']).'</textarea>';
             $html[] = '  </td>';
@@ -181,9 +185,7 @@ class Views_Gradebook_Assessments_Form_Item_Rubric extends Views_Gradebook_Asses
         $html[] = '           </tr>';
         $html[] = '           '.$this->renderRubricItemResponses();
         $html[] = '       </thead>';
-        $html[] = '       <tbody>';
-        $html[] = '         '.$this->renderRubricItems();
-        $html[] = '       </tbody>';
+        $html[] = '       '.$this->renderRubricItems();
         $html[] = '   </table>';
         $html[] = '  </div>';
         $html[] = '  </div>';

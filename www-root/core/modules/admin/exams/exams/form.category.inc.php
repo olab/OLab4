@@ -175,13 +175,28 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_CATEGORY") && !defined("EDIT
                             }
                         }
 
+                        $history = new Models_Exam_Creation_History(array(
+                            "exam_id" => $PROCESSED["exam_id"],
+                            "proxy_id" => $ENTRADA_USER->getID(),
+                            "action" => "report_add",
+                            "action_resource_id" => $exam_category->getID(),
+                            "secondary_action" => NULL,
+                            "secondary_action_resource_id" => NULL,
+                            "history_message" => NULL,
+                            "timestamp" => time(),
+                        ));
+
+                        if (!$history->insert()) {
+                            add_error($translate->_("Failed to insert history log for Release Curriculum Tag Report."));
+                        }
+
                         if (!has_error()) {
                             $url = "/admin/exams/exams?section=reports&id=" . $exam->getID();
-                            add_success("Successfully Added a Category Report. In 5 seconds your browser will auto forwarded or you can click <a href=\"" . $url . "\">here</a> ");
+                            add_success("Successfully Added a Curriculum Tag Report. In 5 seconds your browser will auto forwarded or you can click <a href=\"" . $url . "\">here</a> ");
                         }
 
                     } else {
-                        add_error("Error Creating the Exam Category Report.");
+                        add_error("Error Creating the Curriculum Tag Report.");
                         echo display_error();
                     }
                 } else {
@@ -331,9 +346,24 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_CATEGORY") && !defined("EDIT
                                 }
                             }
 
+                            $history = new Models_Exam_Creation_History(array(
+                                "exam_id" => $PROCESSED["exam_id"],
+                                "proxy_id" => $ENTRADA_USER->getID(),
+                                "action" => "report_edit",
+                                "action_resource_id" => $exam_category->getID(),
+                                "secondary_action" => NULL,
+                                "secondary_action_resource_id" => NULL,
+                                "history_message" => NULL,
+                                "timestamp" => time(),
+                            ));
+
+                            if (!$history->insert()) {
+                                add_error($translate->_("Failed to insert history log for Release Curriculum Tag Report."));
+                            }
+
                             if (!has_error()) {
                                 $url = ENTRADA_URL . "/admin/exams/exams?section=reports&id=" . $exam->getID();
-                                add_success("Successfully Updated a Category Report. In 5 seconds your browser will auto forwarded or you can click <a href=\"" . $url . "\">here</a> ");
+                                add_success("Successfully Updated a Curriculum Tag Report. In 5 seconds your browser will auto forwarded or you can click <a href=\"" . $url . "\">here</a> ");
                             }
                         }
                     }
@@ -461,17 +491,17 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_CATEGORY") && !defined("EDIT
                             <input id="release_end_date" type="text" class="input-small datepicker"
                                    value="<?php echo ($category && ($category->getReleaseEndDate() != "" && $category->getReleaseEndDate() != 0) != "" && $category->getUseReleaseEndDate() != "") ? date("Y-m-d", $category->getReleaseEndDate()) : ""; ?>"
                                    name="release_end_date"<?php echo (!$category || $category->getUseReleaseEndDate() != "1") ? " disabled=\"disabled\"" : ""; ?> />
-                                <span class="add-on pointer">
-                                    <i class="icon-calendar"></i>
-                                </span>
+                            <span class="add-on pointer">
+                                <i class="icon-calendar"></i>
+                            </span>
                         </div>
                         <div class="input-append">
                             <input id="release_end_time" type="text" class="input-mini timepicker"
                                    value="<?php echo ($category && ($category->getReleaseEndDate() != "" && $category->getReleaseEndDate() != 0) && $category->getUseReleaseEndDate() != "") ? date("H:i", $category->getReleaseEndDate()) : ""; ?>"
                                    name="release_end_time"<?php echo (!$category || $category->getUseReleaseEndDate() != "1") ? " disabled=\"disabled\"" : ""; ?> />
-                                <span class="add-on pointer">
-                                    <i class="icon-time"></i>
-                                </span>
+                            <span class="add-on pointer">
+                                <i class="icon-time"></i>
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -501,9 +531,9 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_CATEGORY") && !defined("EDIT
                                     <li id="tags-list-<?php echo $tag->getID();?>" class="selected-list-item" data-id="<?php echo $tag->getID();?>" data-parent="" data-filter="tags">
                                         <?php echo $tag->getName();?>
                                         <span class="pull-right selected-item-container">
-                                        <span class="selected-item-label">Curriculum Tag Set</span>
-                                        <span class="remove-list-item">×</span>
-                                    </span>
+                                            <span class="selected-item-label">Curriculum Tag Set</span>
+                                            <span class="remove-list-item">×</span>
+                                        </span>
                                     </li>
                                 </ul>
                             </div>
@@ -606,12 +636,12 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_CATEGORY") && !defined("EDIT
                     api_url: API_URL,
                     resource_url: ENTRADA_URL,
                     filter_component_label: "Learners",
+                    select_all_enabled: true,
                     filters: {
                         learners: {
                             label: "<?php echo $SECTION_TEXT["audience"];?>",
                             data_source: "get-category-report-audience",
                             mode: "checkbox",
-                            select_all_enabled: true,
                             api_params: {
                                 post_ids: function () {
                                     var post_id = $("input[name=\"post_id\"]");
@@ -635,12 +665,12 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_CATEGORY") && !defined("EDIT
                     api_url: API_URL,
                     resource_url: ENTRADA_URL,
                     filter_component_label: "Curriculum Tags",
+                    select_all_enabled: true,
                     filters: {
                         tags: {
                             label: "<?php echo $SECTION_TEXT["tag"];?>",
                             data_source: "get-category-report-sets",
                             mode: "checkbox",
-                            select_all_enabled: true,
                             api_params: {
                                 exam_id: function () {
                                     var exam_id = $("input[name=\"exam_id\"]");

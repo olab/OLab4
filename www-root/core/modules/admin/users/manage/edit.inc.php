@@ -62,6 +62,8 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_USERS")) {
 
         $custom_fields = fetch_department_fields($PROXY_ID);
     }
+
+
     ?>
 
     <script>var step = "<?php echo $STEP; ?>";</script>
@@ -71,7 +73,7 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_USERS")) {
 	switch ($STEP) {
 		case 2 :
 			$permissions = json_decode($_POST["permissions"], true);
-			$organisation_order = json_decode(json_decode($_POST["organisation_order"]));
+			$organisation_order = json_decode($_POST["organisation_order"]);
 
             /**
              * Non-required (although highly recommended) field for staff / student number.
@@ -130,7 +132,7 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_USERS")) {
                 }
             }
 
-            /*
+            /**
 			 * Required field "account_active" / Account Status.
 			 */
             if (isset($_POST["account_active"]) && $_POST["account_active"] == "true") {
@@ -138,6 +140,17 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_USERS")) {
             } else {
                 $PROCESSED_ACCESS["account_active"] = "false";
             }
+
+            /*
+			 * Required field "admin_access" / Admin Access
+			 */
+            if (isset($_POST["admin_access"]) && $_POST["admin_access"] == 1) {
+                $PROCESSED["admin_access"] = 1;
+            } else {
+                $PROCESSED["admin_access"] = 0;
+            }                    
+            
+            Zend_Debug::dump($PROCESSED["admin_access"], "admin access");
 
             /**
              * Required field "access_starts" / Access Start (validated through validate_calendars function).
@@ -180,6 +193,30 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_USERS")) {
                 $PROCESSED["lastname"] = $lastname;
             } else {
                 add_error("<strong>Last Name</strong> is a required field.");
+            }
+
+            /**
+             * Non-required field "suffix_gen" / suffix_gen.
+             */
+            if ((isset($_POST["suffix_gen"])) && (@in_array($suffix_gen = clean_input($_POST["suffix_gen"], "trim"), $PROFILE_NAME_SUFFIX_GEN))) {
+                $PROCESSED["suffix_gen"] = $suffix_gen;
+            } else {
+                $PROCESSED["suffix_gen"] = "";
+            }
+
+            /**
+             * Non-required field "suffix_post_nominal" / suffix_post_nominal.
+             */
+            $suffix_post_nominal_array = array();
+            if (isset($_POST["suffix_post_nominal"]) && is_array($_POST["suffix_post_nominal"])) {
+                foreach ($_POST["suffix_post_nominal"] as $post_nominal) {
+                    if (in_array($suffix_post_nominal = clean_input($post_nominal, "trim"), $PROFILE_NAME_SUFFIX_POST_NOMINAL)) {
+                        $suffix_post_nominal_array[] = $suffix_post_nominal;
+                    }
+                }
+                $PROCESSED["suffix_post_nominal"] = implode(",", $suffix_post_nominal_array);
+            } else {
+                $PROCESSED["suffix_post_nominal"] = "";
             }
 
             /**
@@ -329,7 +366,7 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_USERS")) {
                 if ($postcode) {
                     $PROCESSED["postcode"] = $postcode;
                 } else {
-                    add_error("<strong>Post / Zip Code</strong> must be 5 to 12 characters in length. Please make sure that you fix it or leave this field empty.");
+                    add_error("<strong>" . $translate->_("Postal Code") . "</strong> must be 5 to 12 characters in length. Please make sure that you fix it or leave this field empty.");
                 }
             } else {
                 $PROCESSED["postcode"] = "";
@@ -369,7 +406,7 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_USERS")) {
 
             if ($organisation_order) {
                 foreach ($organisation_order as $organisation_id) {
-                    $organisation_permissions = json_decode($permissions[$organisation_id], true);
+                    $organisation_permissions = $permissions[$organisation_id];
 
                     foreach ($organisation_permissions as $permission) {
                         // As long as one permission has clinical checked, the user is clinical
@@ -389,7 +426,7 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_USERS")) {
 			 */
             if ($organisation_order) {
                 foreach ($organisation_order as $organisation_id) {
-                    $organisation_permissions = json_decode($permissions[$organisation_id], true);
+                    $organisation_permissions = $permissions[$organisation_id];
 
                     foreach ($organisation_permissions as $permission) {
                         if ($permission["group_text"] == "Student") {
@@ -457,12 +494,12 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_USERS")) {
 			}
 
             if (isset($_POST["user_departments"]) && $_POST["user_departments"]) {
-                $user_departments = json_decode(json_decode($_POST["user_departments"]));
+                $user_departments = json_decode($_POST["user_departments"]);
                 $PROCESSED["department_ids"] = array_unique($user_departments);
             }
 
 			if (!$ERROR) {
-                if ($PROCESSED["password"]) {
+                if (!empty($PROCESSED["password"])) {
                     $PROCESSED["password"] = sha1($PROCESSED["password"].$PROCESSED["salt"]);
                 }
 
@@ -470,174 +507,130 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_USERS")) {
                 $PROCESSED["updated_by"] = (int) $ENTRADA_USER->getID();
                 $PROCESSED["updated_date"] = time();
 
+                $groups_added_array = array();
+                $current_group_role_array = array();
+                $edited_group_role_array = array();
+                $last_login = 0;
+                $last_ip = "";
+                
+                
+                /**
+                * Bookmarks
+                * Check to see if default bookmarks need to be added for the user according to their permissions
+                */
+                $default_bookmarks = Models_Bookmarks::fetchAllDefault();
+
 				if ($db->AutoExecute("`".AUTH_DATABASE."`.`user_data`", $PROCESSED, "UPDATE", "id = ".$db->qstr($PROXY_ID))) {
                     $current_user_permissions = Models_User_Access::fetchAllByUserIDAppID($PROXY_ID);
 
-					if ($current_user_permissions) {
-						foreach ($current_user_permissions as $user_permission) {
-							$private_hashes[$user_permission->getAppID()][$user_permission->getOrganisationID()][$user_permission->getGroup()][$user_permission->getRole()] = $user_permission->getPrivateHash();
-						}
-					}
+                    if ($current_user_permissions) {
+                        foreach ($current_user_permissions as $user_permission) {
+                            $private_hashes[$user_permission->getAppID()][$user_permission->getOrganisationID()][$user_permission->getGroup()][$user_permission->getRole()] = $user_permission->getPrivateHash();
+                        }
+                    }
 
-					// Loads current user preferences to check if the roles being changed is currently selected.
-					// If it's selected we'll change it to the first role listed for the user
-					$current_user_preferences = preferences_load_user("organisation_switcher", $PROXY_ID);
+                    // Loads current user preferences to check if the roles being changed is currently selected.
+                    // If it's selected we'll change it to the first role listed for the user
+                    $current_user_preferences = preferences_load_user("organisation_switcher", $PROXY_ID);
 
                     if ($current_user_preferences["access_id"]) {
-						$current_access_id = $current_user_preferences["access_id"];
-					}
+                        $current_access_id = $current_user_preferences["access_id"];
+                    }
 
-					// Gets current role/groups
-					$current_group_role = load_org_group_role($PROXY_ID, $current_access_id);
-					$current_role = $current_group_role[$current_access_id]["role"];
-					$current_group = $current_group_role[$current_access_id]["group"];
+                    // Gets current role/groups
+                    $current_group_role = load_org_group_role($PROXY_ID, $current_access_id);
+                    $current_role       = $current_group_role[$current_access_id]["role"];
+                    $current_group      = $current_group_role[$current_access_id]["group"];
 
-					if (strtolower($ENTRADA_USER->getActiveGroup()) == "medtech" && strtolower($ENTRADA_USER->getActiveRole()) == "admin") {
-						$query = " SELECT DISTINCT o.`organisation_id`, o.`organisation_title`
+                    if (strtolower($ENTRADA_USER->getActiveGroup()) == "medtech" && strtolower($ENTRADA_USER->getActiveRole()) == "admin") {
+                        $query = " SELECT DISTINCT o.`organisation_id`, o.`organisation_title`
 								   FROM `" . AUTH_DATABASE . "`.`organisations` o";
-					} else {
-						$query = " SELECT DISTINCT o.`organisation_id`, o.`organisation_title`
-								   FROM `".AUTH_DATABASE."`.`user_access` ua
+                    } else {
+                        $query = " SELECT DISTINCT o.`organisation_id`, o.`organisation_title`
+								   FROM `" . AUTH_DATABASE . "`.`user_access` ua
 								   JOIN `" . AUTH_DATABASE . "`.`organisations` o
 								   ON ua.`organisation_id` = o.`organisation_id`
-								   WHERE ua.`user_id` = " . $db->qstr($ENTRADA_USER->getId()). "
+								   WHERE ua.`user_id` = " . $db->qstr($ENTRADA_USER->getId()) . "
 								   AND ua.`app_id` = " . $db->qstr(AUTH_APP_ID);
-					}
+                    }
 
-					$temp_all_orgs = $db->GetAll($query);
-					$org_ids = "";
+                    $temp_all_orgs = $db->GetAll($query);
+                    $org_ids = [];
 
-					foreach ($temp_all_orgs as $temp_org) {
-						if ($ENTRADA_ACL->amIAllowed(new UserResource(null, $temp_org["organisation_id"]), "update")) {
-							$org_ids .= ($org_ids ? ", " : "").$db->qstr($temp_org["organisation_id"]);
-						}
-					}
+                    foreach ($temp_all_orgs as $temp_org) {
+                        if ($ENTRADA_ACL->amIAllowed(new UserResource(null, $temp_org["organisation_id"]), "update")) {
+                            $org_ids[] = $temp_org["organisation_id"];
+                        }
+                    }
 
-					$query = "DELETE FROM `".AUTH_DATABASE."`.`user_access`
-							  WHERE `user_id` = ".$db->qstr($PROXY_ID) . "
-							  AND `app_id` = " . $db->qstr(AUTH_APP_ID)."
-							  AND `organisation_id` IN (".$org_ids.")";
-
-					if ($db->Execute($query)) {
-						$ENTRADA_CACHE->remove("user_".AUTH_APP_ID."_".$PROXY_ID);
-						$ENTRADA_CACHE->remove("acl_"  . AUTH_APP_ID . "_" . $PROXY_ID);
-
-                        $PROCESSED_ACCESS["user_id"] = $PROXY_ID;
-
-                        /**
-                        * Bookmarks
-                        * Check to see if default bookmarks need to be added for the user according to their permissions
-                        */
-                        // Get all the default bookmarks from the database
-                        $query = "SELECT * FROM `bookmarks_default`";
-                        $default_bookmarks = $db->GetAll($query);
-
-                        // Build each bookmarks permissions
-                        if ($default_bookmarks) {
-
-                            foreach ($default_bookmarks as $key => $new_bookmark) {
-                                if (isset($new_bookmark["entity_type"]) && $new_bookmark["entity_type"] == "organisation") {
-                                    // Organisation
-                                    if (!isset($new_bookmark["entity_value"])) {
-                                        application_log("error", "Default Bookmark [".$new_bookmark["permission_id"]."] cannot have a null entity value. Please fix this in the database.");
-                                        continue;
-                                    }
-                                    $default_bookmarks[$key]["organisation"] = $new_bookmark["entity_value"];
-                                    $default_bookmarks[$key]["group"] = NULL;
-                                    $default_bookmarks[$key]["role"] = NULL;
-
-
-                                } else if (isset($new_bookmark["entity_type"]) && $new_bookmark["entity_type"] == "group") {
-                                    //Group
-                                    if (!isset($new_bookmark["entity_value"])) {
-                                        application_log("error", "Default Bookmark [".$new_bookmark["permission_id"]."] cannot have a null entity value. Please fix this in the database.");
-                                        continue;
-                                    }
-                                    $default_bookmarks[$key]["group"] = $new_bookmark["entity_value"];
-                                    $default_bookmarks[$key]["organisation"] = NULL;
-                                    $default_bookmarks[$key]["role"] = NULL;
-                                } else if (isset($new_bookmark["entity_type"]) && $new_bookmark["entity_type"] == "role") {
-                                    if (!isset($new_bookmark["entity_value"])) {
-                                        application_log("error", "Default Bookmark [".$new_bookmark["permission_id"]."] cannot have a null entity value. Please fix this in the database.");
-                                        continue;
-                                    }
-                                    $default_bookmarks[$key]["role"] = $new_bookmark["entity_value"];
-                                    $default_bookmarks[$key]["group"] = NULL;
-                                    $default_bookmarks[$key]["organisation"] = NULL;
-
-                                } else if (isset($new_bookmark["entity_type"]) && $new_bookmark["entity_type"] == "group:role") {
-                                    // Group:Role
-                                    if (!isset($new_bookmark["entity_value"])) {
-                                        application_log("error", "Default Bookmark [".$new_bookmark["permission_id"]."] cannot have a null entity value. Please fix this in the database.");
-                                        continue;
-                                    }
-
-                                    $entity_vals = explode(":", $new_bookmark["entity_value"]);
-
-                                    if (!isset($entity_vals[1])) {
-                                        application_log("error", "Default Bookmark [".$new_bookmark["permission_id"]."] needs to have both a group AND a role seperated by a colon. Please fix this in the database.");
-                                        continue;
-                                    }
-                                    $default_bookmarks[$key]["group"] = $entity_vals[0];
-                                    $default_bookmarks[$key]["role"] = $entity_vals[1];
-                                    $default_bookmarks[$key]["organisation"] = NULL;
-
-                                } else if (isset($new_bookmark["entity_type"]) && $new_bookmark["entity_type"] == "organisation:group") {
-
-                                    // Organisation:group
-                                    if (!isset($new_bookmark["entity_value"])) {
-                                        application_log("error", "Default Bookmark [".$new_bookmark["permission_id"]."] cannot have a null entity value. Please fix this in the database.");
-                                        continue;
-                                    }
-
-                                    $entity_vals = explode(":", $new_bookmark["entity_value"]);
-
-                                    if (!isset($entity_vals[1])) {
-                                        application_log("error", "Default Bookmark [".$new_bookmark["permission_id"]."] needs to have both an organisation AND a group seperated by a colon. Please fix this in the database.");
-                                        continue;
-                                    }
-                                    $default_bookmarks[$key]["organisation"] = $entity_vals[0];
-                                    $default_bookmarks[$key]["group"] = $entity_vals[1];
-                                    $default_bookmarks[$key]["role"] = NULL;
-
-                                } else if (isset($new_bookmark["entity_type"]) && $new_bookmark["entity_type"] == "organisation:group:role") {
-
-                                    // Organisation:group:role
-                                    if (!isset($new_bookmark["entity_value"])) {
-                                        application_log("error", "Default Bookmark [".$new_bookmark["permission_id"]."] cannot have a null entity value. Please fix this in the database.");
-                                        continue;
-                                    }
-
-                                    $entity_vals = explode(":", $new_bookmark["entity_value"]);
-
-                                    if (!isset($entity_vals[1]) || !isset($entity_vals[2])) {
-                                        application_log("error", "Default Bookmark [".$new_bookmark["permission_id"]."] needs to have both a group, role AND organisation seperated by a colon. Please fix this in the database.");
-                                        continue;
-                                    }
-                                    $default_bookmarks[$key]["organisation"] = $entity_vals[0];
-                                    $default_bookmarks[$key]["group"] = $entity_vals[1];
-                                    $default_bookmarks[$key]["role"] = $entity_vals[2];
-
-                                }
+                    $current_group_roles = Models_User_Access::fetchAllByUserIdAppIdOrganisationIdIn($PROXY_ID, AUTH_APP_ID, $org_ids);
+                    if ($current_group_roles && is_array($current_group_roles) && !empty($current_group_roles)) {
+                        foreach ($current_group_roles as $current_group_role) {
+                            $current_group_role_array[] = $current_group_role["organisation_id"] . ":" . strtolower($current_group_role["role"]) . ":" . strtolower($current_group_role["group"]);
+                            if ($current_group_role["last_login"] != 0 || $current_group_role["last_login"] != NULL) {
+                                $last_login = $current_group_role["last_login"];
+                                $last_ip    = $current_group_role["last_ip"];
                             }
                         }
+                    }
 
-                        foreach ($organisation_order as $organisation_id) {
-                            if (!$ENTRADA_ACL->amIAllowed(new UserResource(null, $organisation_id), "update")) {
-                                add_error("You do not have permission to give the user permissions within the selected organisation. Please try again with a different organisation.");
+                    foreach ($organisation_order as $organisation_id) {
+                        if (!$ENTRADA_ACL->amIAllowed(new UserResource(null, $organisation_id), "update")) {
+                            add_error("You do not have permission to give the user permissions within the selected organisation. Please try again with a different organisation.");
 
-                                application_log("error", "Unable to update new user account because this user didn't have permissions to update with the selected organisation ID. This should only happen if the request is tampered with.");
+                            application_log("error", "Unable to update new user account because this user didn't have permissions to update with the selected organisation ID. This should only happen if the request is tampered with.");
 
-                                continue;
+                            continue;
+                        }
+                        $organisation_permissions = $permissions[$organisation_id];
+                        foreach ($organisation_permissions as $permission) {
+                            $edited_group_role_array[] = $organisation_id . ":" . strtolower($permission["role_text"]) . ":" . strtolower($permission["group_text"]);
+                        }
+                    }
+
+                    $permissions_add    = array();
+                    $permissions_remove = array();
+                    $deleted_group_roles = 0;
+                    $added_group_roles  = 0;
+
+                    if (($current_group_role_array && is_array($current_group_role_array)) || ($edited_group_role_array && is_array($edited_group_role_array))) {
+                        $permissions_add    = array_diff($edited_group_role_array, $current_group_role_array);
+                        $permissions_remove = array_diff($current_group_role_array, $edited_group_role_array);
+                    }
+                    
+                    if ($permissions_remove && is_array($permissions_remove) && !empty($permissions_remove)) {
+                        foreach ($permissions_remove as $permission_string) {
+                            $permission_array = explode(":", $permission_string);
+                            if ($permission_array && is_array($permission_array)) {
+                                $permission_array = array(
+                                    "organisation_id"   => $permission_array[0],
+                                    "role"              => $permission_array[1],
+                                    "group"             => $permission_array[2]
+                                );
+                                $deleted = Models_User_Access::deleteByUserIdOrganisationIdGroupRole($PROXY_ID, $permission_array["organisation_id"], $permission_array["role"], $permission_array["group"]);
+
+                                $deleted_group_roles++;
                             }
+                        }
+                    }
 
-                            $organisation_permissions = json_decode($permissions[$organisation_id], true);
+                    if ($permissions_add && is_array($permissions_add) && !empty($permissions_add)) {
+                        foreach ($permissions_add as $permission_string) {
+                            $permission_array = explode(":", $permission_string);
+                            if ($permission_array && is_array($permission_array)) {
+                                $permission_array = array(
+                                    "organisation_id" => $permission_array[0],
+                                    "role" => $permission_array[1],
+                                    "group" => $permission_array[2]
+                                );
 
-                            foreach ($organisation_permissions as $permission) {
-                                $PROCESSED_ACCESS["group"] = strtolower($permission["group_text"]);
-                                $PROCESSED_ACCESS["role"] = strtolower($permission["role_text"]);
-                                $PROCESSED_ACCESS["organisation_id"] = $organisation_id;
+                                $PROCESSED_ACCESS["group"] = $permission_array["group"];
+                                $PROCESSED_ACCESS["role"] = $permission_array["role"];
+                                $PROCESSED_ACCESS["organisation_id"] = $permission_array["organisation_id"];
                                 $PROCESSED_ACCESS["app_id"] = AUTH_APP_ID;
+                                $PROCESSED_ACCESS["user_id"] = $PROXY_ID;
+                                $PROCESSED_ACCESS["last_login"] = $last_login;
+                                $PROCESSED_ACCESS["last_ip"] = $last_ip;
 
                                 $result = $private_hashes[AUTH_APP_ID][$organisation_id][$PROCESSED_ACCESS["group"]][$PROCESSED_ACCESS["role"]];
 
@@ -652,91 +645,97 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_USERS")) {
                                 if ($user_group_role != "medtech:admin" && $PROCESSED_ACCESS["group"] == "medtech" && $PROCESSED_ACCESS["role"] == "admin") {
                                     add_error("You don't have permission to give " . $PROCESSED_ACCESS["group"] . "/" . $PROCESSED_ACCESS["role"] . " privileges to this user.");
 
-                                    application_log("error", "The user id [".$ENTRADA_USER->getID()."] tried to give " . $PROCESSED_ACCESS["group"]."/".$PROCESSED_ACCESS["role"] . " privileges to user id [".$PROCESSED_ACCESS["user_id"]."]");
-                                } else if ($db->AutoExecute(AUTH_DATABASE.".user_access", $PROCESSED_ACCESS, "INSERT")) {
+                                    application_log("error", "The user id [" . $ENTRADA_USER->getID() . "] tried to give " . $PROCESSED_ACCESS["group"] . "/" . $PROCESSED_ACCESS["role"] . " privileges to user id [" . $PROCESSED_ACCESS["user_id"] . "]");
+                                } elseif (Models_User_Access::easyInsert($PROCESSED_ACCESS)) {
+                                    $added_group_roles++;
+
                                     // See if there is a match for each of the user's entries in user_access
-                                    foreach ($default_bookmarks as $new_bookmark) {
-                                        $add_bookmark = false;
-
-                                        switch ($new_bookmark["entity_type"]) {
-                                            case NULL:
-                                                $add_bookmark = true;
-
-                                                break;
-                                            case "organisation":
-                                                $check_perm = $PROCESSED_ACCESS["organisation_id"];
-                                                if ($PROCESSED_ACCESS["organisation_id"] == $new_bookmark["entity_value"]) {
-                                                    $add_bookmark = true;
-                                                }
-
-                                                break;
-                                            case "group":
-                                                $check_perm = $PROCESSED_ACCESS["group"];
-                                                if ($PROCESSED_ACCESS["group"] == $new_bookmark["entity_value"]) {
-                                                    $add_bookmark = true;
-                                                }
-
-                                                break;
-                                            case "role":
-                                                $check_perm = $PROCESSED_ACCESS["role"];
-                                                if ($PROCESSED_ACCESS["role"] == $new_bookmark["entity_value"]) {
-                                                    $add_bookmark = true;
-                                                }
-
-                                                break;
-                                            case "organisation:group":
-                                                $check_perm = $PROCESSED_ACCESS["organisation_id"].":".$PROCESSED_ACCESS["group"];
-
-                                                if ($check_perm == $new_bookmark["entity_value"]) {
-                                                    $add_bookmark = true;
-                                                }
-                                                break;
-                                            case "organisation:role":
-                                                $check_perm = $PROCESSED_ACCESS["organisation_id"].":".$PROCESSED_ACCESS["role"];
-
-
-                                                break;
-                                            case "group:role";
-                                                $check_perm = $PROCESSED_ACCESS["group"].":".$PROCESSED_ACCESS["role"];
-
-                                                if ($check_perm == $new_bookmark["entity_value"]) {
-                                                    $add_bookmark = true;
-                                                }
-                                                break;
-                                            case "organisation:group:role":
-                                                $check_perm = $PROCESSED_ACCESS["organisation_id"].":".$PROCESSED_ACCESS["group"].":".$PROCESSED_ACCESS["role"];
-
-                                                if ($check_perm == $new_bookmark["entity_value"]) {
-                                                    $add_bookmark = true;
-                                                }
-                                                break;
-                                        }
-
-                                        if ($add_bookmark === true) {
-
-                                            //check if the user already has the bookmark in their bookmarks
-                                            $query = "  SELECT
-                                                            EXISTS(SELECT 1 FROM `bookmarks` WHERE `uri` = " . $db->qstr($new_bookmark['uri']) . " AND `proxy_id` = " . $db->qstr($PROCESSED_ACCESS["user_id"]) . ")";
-                                            $results = $db->GetOne($query);
-
-                                            //If the bookmark doesn't exist, add it
-                                            if (!$results) {
-
-                                                $Bookmark = new Models_Bookmarks($new_bookmark);
-                                                $Bookmark->setId(NULL); //Set the ID to null since one will be assigned after insert
-                                                $Bookmark->setProxyId($PROCESSED_ACCESS["user_id"]);
-                                                $Bookmark->setOrder(0);
-                                                $Bookmark->setUpdatedDate(time());
-
-                                                if (!$Bookmark->insert()) {
-                                                    application_log("error", "Unable to add default bookmark for proxy id[\"".$PROCESSED_ACCESS["user_id"]."\"]. Database said: ".$db->ErrorMsg());
-                                                }
-
-                                            }
+                                    if ($default_bookmarks && is_array($default_bookmarks)) {
+                                        foreach ($default_bookmarks as $new_bookmark) {
                                             $add_bookmark = false;
+
+                                            switch ($new_bookmark["entity_type"]) {
+                                                case NULL:
+                                                    $add_bookmark = true;
+
+                                                    break;
+                                                case "organisation":
+                                                    $check_perm = $PROCESSED_ACCESS["organisation_id"];
+                                                    if ($PROCESSED_ACCESS["organisation_id"] == $new_bookmark["entity_value"]) {
+                                                        $add_bookmark = true;
+                                                    }
+
+                                                    break;
+                                                case "group":
+                                                    $check_perm = $PROCESSED_ACCESS["group"];
+                                                    if ($PROCESSED_ACCESS["group"] == $new_bookmark["entity_value"]) {
+                                                        $add_bookmark = true;
+                                                    }
+
+                                                    break;
+                                                case "role":
+                                                    $check_perm = $PROCESSED_ACCESS["role"];
+                                                    if ($PROCESSED_ACCESS["role"] == $new_bookmark["entity_value"]) {
+                                                        $add_bookmark = true;
+                                                    }
+
+                                                    break;
+                                                case "organisation:group":
+                                                    $check_perm = $PROCESSED_ACCESS["organisation_id"] . ":" . $PROCESSED_ACCESS["group"];
+
+                                                    if ($check_perm == $new_bookmark["entity_value"]) {
+                                                        $add_bookmark = true;
+                                                    }
+                                                    break;
+                                                case "organisation:role":
+                                                    $check_perm = $PROCESSED_ACCESS["organisation_id"] . ":" . $PROCESSED_ACCESS["role"];
+
+
+                                                    break;
+                                                case "group:role";
+                                                    $check_perm = $PROCESSED_ACCESS["group"] . ":" . $PROCESSED_ACCESS["role"];
+
+                                                    if ($check_perm == $new_bookmark["entity_value"]) {
+                                                        $add_bookmark = true;
+                                                    }
+                                                    break;
+                                                case "organisation:group:role":
+                                                    $check_perm = $PROCESSED_ACCESS["organisation_id"] . ":" . $PROCESSED_ACCESS["group"] . ":" . $PROCESSED_ACCESS["role"];
+
+                                                    if ($check_perm == $new_bookmark["entity_value"]) {
+                                                        $add_bookmark = true;
+                                                    }
+                                                    break;
+                                            }
+
+                                            if ($add_bookmark === true) {
+                                                // check if the user already has the bookmark in their bookmarks
+                                                $query = "  SELECT
+                                                                EXISTS(
+                                                                SELECT 1 
+                                                                FROM `bookmarks` 
+                                                                WHERE `uri` = " . $db->qstr($new_bookmark['uri']) . " 
+                                                                AND `proxy_id` = " . $db->qstr($PROCESSED_ACCESS["user_id"]) . ")";
+                                                $results = $db->GetOne($query);
+
+                                                // If the bookmark doesn't exist, add it
+                                                if (!$results) {
+                                                    $Bookmark = new Models_Bookmarks($new_bookmark);
+                                                    $Bookmark->setId(NULL); //Set the ID to null since one will be assigned after insert
+                                                    $Bookmark->setProxyId($PROCESSED_ACCESS["user_id"]);
+                                                    $Bookmark->setOrder(0);
+                                                    $Bookmark->setUpdatedDate(time());
+
+                                                    if (!$Bookmark->insert()) {
+                                                        application_log("error", "Unable to add default bookmark for proxy id[\"" . $PROCESSED_ACCESS["user_id"] . "\"]. Database said: " . $db->ErrorMsg());
+                                                    }
+                                                }
+                                                $add_bookmark = false;
+                                            }
                                         }
                                     }
-                                    //END Bookmarks
+
+                                    // END Bookmarks
                                     if ($PROCESSED_ACCESS["group"] == $current_group && ($PROCESSED_ACCESS["role"] == $current_role)) {
                                         $new_access_id = $db->Insert_Id();
 
@@ -747,14 +746,17 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_USERS")) {
                                     }
 
                                     if ($PROCESSED_ACCESS["group"] == "medtech" || $PROCESSED_ACCESS["role"] == "admin") {
-                                        application_log("error", "USER NOTICE: (".$PROCESSED["firstname"]." ".$PROCESSED["lastname"].") was updated in ".APPLICATION_NAME." as ".$PROCESSED_ACCESS["group"]." > ".$PROCESSED_ACCESS["role"].".");
+                                        application_log("error", "USER NOTICE: (" . $PROCESSED["firstname"] . " " . $PROCESSED["lastname"] . ") was updated in " . APPLICATION_NAME . " as " . $PROCESSED_ACCESS["group"] . " > " . $PROCESSED_ACCESS["role"] . ".");
                                     }
-                                } else {
-                                    application_log("error", "Unable to insert proxy_id [".$PROCESSED_ACCESS["user_id"]."] into the user_access table. Database said: ".$db->ErrorMsg());
                                 }
                             }
                         }
-					}
+                    }
+
+                    if ($added_group_roles > 0 || $deleted_group_roles > 0) {
+                        $ENTRADA_CACHE->remove("user_" . AUTH_APP_ID . "_" . $PROXY_ID);
+                        $ENTRADA_CACHE->remove("acl_" . AUTH_APP_ID . "_" . $PROXY_ID);
+                    }
 
 					// Updates user preferences for organisation_switcher if needed
 					$old_user_preferences = preferences_load_user("organisation_switcher", $PROXY_ID);
@@ -811,9 +813,15 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_USERS")) {
 				} else {
 					add_error("Unable to update this user account at this time. The system administrator has been informed of this error, please try again later.");
 
-					application_log("error", "Unable to update user account [".$PROXY_ID."]. Database said: ".$db->ErrorMsg());
+                    application_log("error", "Unable to update user account [".$PROXY_ID."]. Database said: ".$db->ErrorMsg());
 				}
-			}
+
+                if (!Models_User_Access::updateAccountOptionsByUserId($PROXY_ID, $PROCESSED_ACCESS["account_active"], $PROCESSED_ACCESS["access_starts"], $PROCESSED_ACCESS["access_expires"])) {
+                    add_error("Unable to update this user account options at this time. The system administrator has been informed of this error, please try again later.");
+
+                    application_log("error", "Unable to update user account options [".$PROXY_ID."]. Database said: ".$db->ErrorMsg());
+                }
+            }
 
 			if ($ERROR) {
 				$STEP = 1;
@@ -826,7 +834,9 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_USERS")) {
                 application_log("success", "Proxy ID [".$ENTRADA_USER->getID()."] successfully updated the proxy id [".$PROXY_ID."] user profile.");
 
                 if (isset($_POST["send_notification"]) && (int) $_POST["send_notification"] == 1) {
-                    $PROXY_ID = $PROCESSED_ACCESS["user_id"];
+                    if (!empty($PROCESSED_ACCESS["user_id"])) {
+                        $PROXY_ID = $PROCESSED_ACCESS["user_id"];
+                    }
 
                     do {
                         $HASH = generate_hash();
@@ -856,6 +866,12 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_USERS")) {
 		default :
 			$PROCESSED = $user_record;
 
+            //converts the comma seperated list
+            if (isset($PROCESSED["suffix_post_nominal"]) && !empty($PROCESSED["suffix_post_nominal"])) {
+                //convert to array from comma seperated
+                $suffixes_post_nominal_array = explode(',', $PROCESSED["suffix_post_nominal"]);
+            }
+
 			$query = "SELECT * FROM `".AUTH_DATABASE."`.`user_access` WHERE `user_id` = ".$db->qstr($PROXY_ID)." AND `app_id` = ".$db->qstr(AUTH_APP_ID);
 			$PROCESSED_ACCESS = $db->GetRow($query);
 		break;
@@ -884,6 +900,8 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_USERS")) {
             $HEAD[] = "<script type=\"text/javascript\" src=\"".  ENTRADA_URL ."/javascript/jquery/jquery.advancedsearch.js\"></script>\n";
             $HEAD[] = "<link rel=\"stylesheet\" type=\"text/css\" href=\"".  ENTRADA_URL ."/css/jquery/jquery.advancedsearch.css\" />\n";
             $HEAD[] = "<link rel=\"stylesheet\" type=\"text/css\" href=\"".  ENTRADA_URL ."/css/manage-users.css\" />\n";
+            $HEAD[] = "<script type=\"text/javascript\" src=\"".ENTRADA_URL."/javascript/jquery/chosen.jquery.min.js?release=".html_encode(APPLICATION_VERSION)."\"></script>\n";
+            $HEAD[] = "<link href=\"".ENTRADA_URL."/css/jquery/chosen.css?release=".html_encode(APPLICATION_VERSION)."\" rel=\"stylesheet\" type=\"text/css\" media=\"all\" />\n";
 
 			$i = count($HEAD);
 			$HEAD[$i]  = "<script type=\"text/javascript\">\n";
@@ -922,7 +940,11 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_USERS")) {
 			display_status_messages();
 
 			?>
-
+            <script type="text/javascript">
+                jQuery(document).ready(function() {
+                    jQuery("#suffix_post_nominal").chosen({width: "43%"});
+                });
+            </script>
 			<h1>Edit Profile for <strong><?php echo html_encode($user_record["firstname"]." ".$user_record["lastname"]); ?></strong></h1>
 			<form id="user-edit" class="form-horizontal" action="<?php echo ENTRADA_URL; ?>/admin/users/manage?section=edit&id=<?php echo $PROXY_ID; ?>&amp;step=2" method="post">
 				<h2>Account Details</h2>
@@ -969,6 +991,23 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_USERS")) {
 
 				<?php echo Entrada_Utilities::generate_calendars("access", "Access", true, true, ((isset($PROCESSED_ACCESS["access_starts"])) ? $PROCESSED_ACCESS["access_starts"] : time()), true, false, ((isset($PROCESSED_ACCESS["access_expires"])) ? $PROCESSED_ACCESS["access_expires"] : 0)); ?>
 
+                <div class="control-group">
+                    <label class="control-label form-required" for="admin_access">Student Admin:
+                        <?php if (strtolower($ENTRADA_USER->getActiveGroup()) == "medtech") { ?>
+                        <br/><span class="dev-notes-link" data-target="admin_access-dev-notes">(Show Developer Notes)</span>
+                        <?php } ?>
+                   </label>
+                    <div class="controls">
+                        <select id="admin_access" name="admin_access">
+                            <option value="0"<?php echo (((!isset($PROCESSED["admin_access"])) || ($PROCESSED_ACCESS["admin_access"] == 0)) ? " selected=\"selected\"" : ""); ?>>No</option>
+                            <option value="1"<?php echo (($PROCESSED["admin_access"] == 1) ? " selected=\"selected\"" : ""); ?>>Yes</option>
+                        </select>
+                    </div>
+                    <div class="alert alert-info dev-notes" id="admin_access-dev-notes">
+                        <h3>Student Admin Developer Instructions</h3>
+                        <p>This allows for a student to access Manage Exams, but they only have access to question folders where they have permission as a folder author.</p>
+                    </div>
+                </div>
 				<hr>
 
 				<h2>Personal Information</h2>
@@ -1006,7 +1045,52 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_USERS")) {
 				</div>
 				<!--- End control-group ---->
 
-				<div class="control-group">
+                <?php
+                    // Generational Suffix / Post-nominal letters fields
+                    $settings = new Entrada_Settings();
+                    if ($settings->read("profile_name_extensions")) {
+                ?>
+                    <div class="control-group">
+                        <label class="control-label form-nrequired" for="suffix_gen">Generational Suffix:</label>
+                        <div class="controls">
+                            <select id="suffix_gen" name="suffix_gen" class="input-small">
+                                <option value=""<?php echo ((!isset($result["suffix_gen"])) ? " selected=\"selected\"" : ""); ?>></option>
+                                <?php
+                                if ((@is_array($PROFILE_NAME_SUFFIX_GEN)) && (@count($PROFILE_NAME_SUFFIX_GEN))) {
+                                    foreach($PROFILE_NAME_SUFFIX_GEN as $key => $suffix_gen) {
+                                        echo "<option value=\"".html_encode($suffix_gen)."\"".(((isset($PROCESSED["suffix_gen"])) && ($PROCESSED["suffix_gen"] == $suffix_gen)) ? " selected=\"selected\"" : "").">".html_encode($suffix_gen)."</option>\n";
+                                    }
+                                }
+                                ?>
+                            </select>
+                        </div>
+                    </div>
+                    <!--- End control-group ---->
+
+                    <div class="control-group">
+                        <label class="control-label form-nrequired" for="suffix_post_nominal">Post-nominal letters:</label>
+                        <div class="controls">
+                            <select id="suffix_post_nominal" name="suffix_post_nominal[]" multiple class="input-small">
+                                <?php
+                                if ((@is_array($PROFILE_NAME_SUFFIX_POST_NOMINAL)) && (@count($PROFILE_NAME_SUFFIX_POST_NOMINAL))) {
+                                    foreach($PROFILE_NAME_SUFFIX_POST_NOMINAL as $key => $suffix_post_nominal) {
+                                        //checks if the value is in the selected array
+                                        if (isset($suffixes_post_nominal_array) && is_array($suffixes_post_nominal_array)) {
+                                            $in = in_array($suffix_post_nominal, $suffixes_post_nominal_array);
+                                        }
+                                        echo "<option value='" . html_encode($suffix_post_nominal) . "'" . ($in ? " selected='selected' " : "") . ">" . html_encode($suffix_post_nominal) . "</option>\n";
+                                    }
+                                }
+                                ?>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!--- End control-group ---->
+                <?php
+                    }
+                ?>
+                <div class="control-group">
 					<label class="control-label form-required" for="gender">Gender:</label>
 					<div class="controls">
 						<select name="gender" id="gender">
@@ -1099,10 +1183,10 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_USERS")) {
 				<!--- End control-group ---->
 
 				<div class="control-group">
-					<label for="postcode" class="control-label form-nrequired">Post / Zip Code:</label>
+					<label for="postcode" class="control-label form-nrequired"><?php echo $translate->_("Postal Code"); ?>:</label>
 					<div class="controls">
 						<input type="text" id="postcode" name="postcode" value="<?php echo ((isset($PROCESSED["postcode"])) ? html_encode($PROCESSED["postcode"]) : ""); ?>" maxlength="7" />
-						<span class="content-small">(<strong>Example:</strong> K7L 3N6)</span>
+						<span class="content-small">(<strong>Example:</strong> <?php echo DEFAULT_POSTALCODE; ?>)</span>
 					</div>
 				</div>
 				<!--- End control-group ---->
@@ -1539,6 +1623,20 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_USERS")) {
                     }
                     ?>
 
+                    function noteVisible(note) {
+                        if (note.is(':visible')) {
+                            note.hide();
+                        } else {
+                            note.show();
+                        }
+                    }
+
+                    jQuery(".dev-notes-link").on("click", function() {
+                        var targetPath = $(this).data("target");
+                        var target = jQuery("#" + targetPath);
+                        noteVisible(target);
+                    });
+
                     if (!$.isEmptyObject(permissions)) {
                         refreshAdvancedSearch();
                     }
@@ -1547,7 +1645,7 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_USERS")) {
                         if (step > 1) {
                             var departments_list = JSON.parse(sessionStorage.getItem("user_departments_list"));
 
-                            rebuildSelectedDepartments(JSON.parse(departments_list));
+                            rebuildSelectedDepartments(departments_list);
                         } else {
                             sessionStorage.removeItem("user_departments_list");
                         }
@@ -1556,7 +1654,7 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_USERS")) {
                     if (sessionStorage.getItem("users_permissions")) {
                         if (step > 1) {
                             permissions = JSON.parse(sessionStorage.getItem("users_permissions"));
-                            organisation_order = JSON.parse(JSON.parse(sessionStorage.getItem("organisation_order")));
+                            organisation_order = JSON.parse(sessionStorage.getItem("organisation_order"));
 
                             rebuildSelectedPermissions();
 
@@ -2164,7 +2262,7 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_USERS")) {
 
                     function rebuildSelectedPermissions() {
                         for (var i = 0; i < organisation_order.length; i++) {
-                            buildOrganisationPermissions(organisation_order[i], JSON.parse(permissions[organisation_order[i]]));
+                            buildOrganisationPermissions(organisation_order[i], permissions[organisation_order[i]]);
                         }
                     }
 

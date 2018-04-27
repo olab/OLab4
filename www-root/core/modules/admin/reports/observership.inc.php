@@ -168,7 +168,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_REPORTS"))) {
 		$results = $db->GetAll($query);
 		echo "<h2 style=\"page-break-before: avoid\">Observerships within date range:</h2>";
 		echo "<div class=\"content-small\" style=\"margin-bottom: 10px\">\n";
-		echo "	<strong>Date Range:</strong> ".date(DEFAULT_DATE_FORMAT, $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_start"])." <strong>to</strong> ".date(DEFAULT_DATE_FORMAT, $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_finish"]).".";
+		echo "	<strong>Date Range:</strong> ".date(DEFAULT_DATETIME_FORMAT, $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_start"])." <strong>to</strong> ".date(DEFAULT_DATETIME_FORMAT, $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_finish"]).".";
 		echo "</div>\n";
 		
 		if ($results) {

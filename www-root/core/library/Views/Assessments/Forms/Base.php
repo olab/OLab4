@@ -37,7 +37,7 @@ class Views_Assessments_Forms_Base extends Views_Assessments_Base {
      *   "pdf-blank"            PDF output for blank form
      */
     protected $mode = "assessment-blank";
-    protected $valid_modes = array("editor", "editor-readonly", "assessment", "assessment-blank", "pdf", "pdf-blank");
+    protected $valid_modes = array("editor", "editor-readonly", "assessment", "assessment-blank", "pdf", "pdf-blank", "assessment-complete");
 
     public function getMode() {
         return $this->mode;

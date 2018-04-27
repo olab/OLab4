@@ -43,6 +43,7 @@ if (!defined("PARENT_INCLUDED")) {
 	 * and open the template in the editor.
 	 */
 	$BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/" . $MODULE, "title" => $translate->_("Rotation Schedule"));
+	Entrada_Utilities::addJavascriptTranslation("Unknown Server Error", "default_error");
 
 	if (($router) && ($router->initRoute())) {
 		$PREFERENCES = preferences_load($MODULE);

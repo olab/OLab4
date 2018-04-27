@@ -42,13 +42,15 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
         $HEAD[] = "<link href=\"" . ENTRADA_RELATIVE . "/javascript/dhtmlxscheduler/dhtmlxscheduler.css?release=" . html_encode(APPLICATION_VERSION) . "\" rel=\"stylesheet\" />";
         $HEAD[] = "<link href=\"" . $ENTRADA_TEMPLATE->relative() . "/css/dhtmlxscheduler.css?release=" . html_encode(APPLICATION_VERSION) . "\" rel=\"stylesheet\" />";
 
-        $initial_display_date = time();
-
+        /**
+         * Get a list of the draft events to display in the preview, and find the earliest date so the calendar will display the week containing the first event
+         */
+        $initial_display_date = 0;
         $json = [];
         $events = Models_Event_Draft_Event::fetchAllByDraftID($draft_id);
         if ($events) {
             foreach ($events as $event) {
-                if ($event->getEventStart() < $initial_display_date) {
+                if ($initial_display_date == 0 || $event->getEventStart() < $initial_display_date) {
                     $initial_display_date = $event->getEventStart();
                 }
 
@@ -59,6 +61,10 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                     "end_date" => date("Y-m-d H:i", $event->getEventFinish()),
                 ];
             }
+        }
+
+        if ($initial_display_date == 0) {
+            $initial_display_date = time();
         }
         ?>
         <script>

@@ -37,6 +37,8 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ASSESSMENTS"))) {
     $specified_target_id = array();
     $specified_form_id = 0;
     $specified_strip_comments = false;
+    $include_commenter_id = false;
+    $include_commenter_name = false;
     $generate_pdf = false;
     $pdf_error = false;
 
@@ -63,6 +65,15 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ASSESSMENTS"))) {
 
     if (isset($_GET["strip"]) && ($tmp_input = clean_input($_GET["strip"], array("trim", "int")))) {
         $specified_strip_comments = $tmp_input;
+    }
+
+    if (!$specified_strip_comments) {
+        if (isset($_GET["commenter-id"]) && ($tmp_input = clean_input($_GET["commenter-id"], array("trim", "int")))) {
+            $include_commenter_id = $tmp_input;
+        }
+        if (isset($_GET["commenter-name"]) && ($tmp_input = clean_input($_GET["commenter-name"], array("trim", "int")))) {
+            $include_commenter_name = $tmp_input;
+        }
     }
 
     if (isset($_GET["generate-pdf"]) && ($tmp_input = clean_input($_GET["generate-pdf"], array("trim","lower")))) {
@@ -122,10 +133,47 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ASSESSMENTS"))) {
         $PROCESSED["description"] = $tmp_input;
     }
 
+    $PROCESSED["associated_record_type"] = null;
+    if (isset($_GET["associated_record_type"]) && $tmp_input = clean_input(strtolower($_GET["associated_record_type"]), array("trim", "striptags"))) {
+        $PROCESSED["associated_record_type"] = $tmp_input;
+    }
+
+    $associated_record_ids = null;
+    if (isset($_GET["associated_record_ids"])) {
+        if (is_array($_GET["associated_record_ids"])) {
+            $associated_record_ids = array();
+            $associated_record_ids = array_map(
+                function($val) {
+                    return clean_input($val, array("trim", "int"));
+                },
+                $_GET["associated_record_ids"]
+            );
+        }
+    }
+
+    $PROCESSED["include_statistics"] = false;
+    if (isset($_GET["include_statistics"]) && ($tmp_input = clean_input($_GET["include_statistics"], array("trim"))) && ($tmp_input == "true")) {
+        $PROCESSED["include_statistics"] = true;
+    }
+
+    $PROCESSED["include_positivity"] = false;
+    if ($PROCESSED["include_statistics"]) {
+        if (isset($_GET["include_positivity"]) && ($tmp_input = clean_input($_GET["include_positivity"], array("trim"))) && ($tmp_input == "true")) {
+            $PROCESSED["include_positivity"] = true;
+        }
+    }
+
+    $PROCESSED["include_associated_records_subheaders"] = false;
+    if (isset($_GET["include_associated_records_subheaders"]) && ($tmp_input = clean_input($_GET["include_associated_records_subheaders"], array("trim"))) && ($tmp_input == "true")) {
+        $PROCESSED["include_associated_records_subheaders"] = true;
+    }
+
     // Attempt to render.
     if ($validated_inputs) {
         $distinct_titles = array();
         $specified_distribution_ids = array();
+        $specified_associated_record_type = $PROCESSED["associated_record_type"];
+        $specified_associated_record_ids = $associated_record_ids;
         $specified_schedule_target_ids = array();
         $specified_eventtype_target_ids = array();
         $full_target_list_details = "";
@@ -155,7 +203,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ASSESSMENTS"))) {
                         $type = "schedule_id";
                     }
 
-                    $distribution = Models_Assessments_Distribution::fetchRowByID($schedule->getAdistributionID());
+                    $distribution = Models_Assessments_Distribution::fetchRowByIDIgnoreDeletedDate($schedule->getAdistributionID());
                     if ($distribution) {
                         $cperiod = $distribution->getCperiodID();
                         $title = $distribution->getTitle();
@@ -167,7 +215,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ASSESSMENTS"))) {
                 if ($target) {
                     $specified_eventtype_target_ids[] = $target->getEventtypeID();
                     $specified_distribution_ids[] = $target->getAdistributionID();
-                    $distribution = Models_Assessments_Distribution::fetchRowByID($target->getAdistributionID());
+                    $distribution = Models_Assessments_Distribution::fetchRowByIDIgnoreDeletedDate($target->getAdistributionID());
                     $event_model = Models_EventType::get($target->getEventtypeID());
 
                     if ($distribution && $event_model) {
@@ -175,6 +223,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ASSESSMENTS"))) {
                         $title = $distribution->getTitle() . " " . $event_model->getEventTypeTitle();
                     }
                 }
+
             } else {
                 $type = "proxy_id";
                 $specified_proxy_id = $target_id;
@@ -264,6 +313,8 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ASSESSMENTS"))) {
                     "target_scope" => $scope,
                     "form_id" => $specified_form_id,
                     "adistribution_id" => $specified_distribution_ids,
+                    "associated_record_type" => $specified_associated_record_type,
+                    "associated_record_ids" => $specified_associated_record_ids,
                     "start_date" => $PROCESSED["start-date"],
                     "end_date" => $PROCESSED["end-date"],
                     "course_id" => Models_Course::getActiveUserCoursesIDList()
@@ -284,6 +335,51 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ASSESSMENTS"))) {
             $reporting_utility = new Entrada_Utilities_Assessments_Reports($construction);
             $report_data = $reporting_utility->generateReport(); // generate (or fetch from cache) the report
 
+            $associated_record_subheaders = array();
+            // Extra headers based on specific associated records passed in.
+            if ($PROCESSED["include_associated_records_subheaders"] && $specified_associated_record_type && $associated_record_ids) {
+                switch ($specified_associated_record_type) {
+                    case "event_id" :
+
+                        $events = array();
+                        foreach ($associated_record_ids as $associated_record_id) {
+                            $event = Models_Event::fetchRowByID($associated_record_id);
+                            if (!$event) {
+                                continue;
+                            }
+
+                            $teachers = array();
+                            $event_contacts = Models_Event_Contacts::fetchAllByEventID($event->getID());
+                            if ($event_contacts) {
+                                foreach ($event_contacts as $event_contact) {
+                                    if ($event_contact->getContactRole() != "auditor") {
+                                        $teacher_user = Models_User::fetchRowByID($event_contact->getProxyID());
+                                        if ($teacher_user) {
+                                            $teachers[] = $teacher_user->getFullname(false);
+                                        }
+                                    }
+                                }
+                            }
+
+                            $events[$event->getID()] = array(
+                                "title"     => $event->getEventTitle(),
+                                "date"      => date("Y-m-d", $event->getEventStart()),
+                                "teachers"  => $teachers
+                            );
+                        }
+
+                        $subheader_view = new Views_Assessments_Reports_Subheaders_LearningEvents(array());
+                        $subheader_html = $subheader_view->render(array("events" => $events), false);
+
+                        if ($subheader_html) {
+                            $associated_record_subheaders[] = $subheader_html;
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            }
+
             // Generate header html
             $header_view = new Views_Assessments_Reports_Header(array("class" => "space-below medium"));
             $header_html = $header_view->render(
@@ -291,6 +387,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ASSESSMENTS"))) {
                     "target_name" => $target_header,
                     "form_name" => $specified_form->getTitle(),
                     "enable_pdf_button" => true,
+                    "subheader_html" => $associated_record_subheaders,
                     "pdf_configured" => $pdf_configured,
                     "generate_pdf" => $generate_pdf,
                     "pdf_generation_url" => $pdf_generator->buildURI("/admin/assessments/reports", $_SERVER["REQUEST_URI"] . "&generate-pdf=1"),
@@ -306,7 +403,11 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ASSESSMENTS"))) {
                 array(
                     "report_data" => $report_data,
                     "strip_comments" => $specified_strip_comments,
-                    "is_evaluation" => true
+                    "include_commenter_id" => $include_commenter_id,
+                    "include_commenter_name" => $include_commenter_name,
+                    "is_evaluation" => true,
+                    "additional_statistics" => $PROCESSED["include_statistics"],
+                    "include_positivity" => $PROCESSED["include_positivity"]
                 ),
                 false
             );

@@ -62,25 +62,25 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COMMUNITIES"))) {
 		$type = $tmp;
 	}
 
-	if ($type) {				
-
+	if ($type) {
 		$BREADCRUMB[] = array("url" => ENTRADA_URL."/".$MODULE, "title" => "Report for ".ucwords($type)." Modules");
 
-
-		echo "<h1>Community Usage Report for Community ".ucwords($type)."</h1>";
+		echo "<h1>" . $translate->_("Community Usage Report for Community ")  .ucwords($type)."</h1>";
 
 		$query = "	SELECT DISTINCT `proxy_id` 
-					FROM `statistics` WHERE `module` = 'community:".$COMMUNITY_ID.":".$type."'";
+					FROM `statistics` WHERE `module` = 'community:" . $db->qstr($COMMUNITY_ID) . ":" . $db->qstr($type) . "'";
 		$active_users = $db->GetAll($query);
+
 		if($active_users){
 			foreach($active_users as $user){
-				$userlist[] = $user["proxy_id"];
+				$userlist[] = $db->qstr($user["proxy_id"]);
 			}
 		}
+
 		$query = "	SELECT `proxy_id` 
 					FROM `community_members` 
-					WHERE `community_id` = ".$db->qstr($COMMUNITY_ID)." 
-					AND `proxy_id` NOT IN(".implode(",",$userlist).")";
+					WHERE `community_id` = " . $db->qstr($COMMUNITY_ID) . " 
+					AND `proxy_id` NOT IN(" . implode(",", $userlist) . ")";
 		$inactive_users = $db->GetAll($query);				
 
 		$STATISTICS["labels"][1] = "Active Users";
@@ -108,7 +108,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COMMUNITIES"))) {
 		<thead>
 			<tr>
 				<td class="modified">&nbsp;</td>
-				<td class="user">Community Member</td>
+				<td class="user"><?php echo $translate->_("Community Member"); ?></td>
 				<td class="views">Views</td>
 				<td class="views">Submissions</td>
 			</tr>
@@ -152,7 +152,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COMMUNITIES"))) {
 		<thead>
 			<tr>
 				<td class="modified">&nbsp;</td>
-				<td class="user">Community Member</td>
+				<td class="user"><?php echo $translate->_("Community Member"); ?></td>
 			</tr>
 		</thead>
 		<tbody>

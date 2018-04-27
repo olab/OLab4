@@ -141,6 +141,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
                 </table>
                 <form enctype="multipart/form-data" method="post" action="<?php echo ENTRADA_URL."/admin/exams/exams?".replace_query(array("section" => "progress-csv"));?>" id="csv-form">
                     <input type="hidden" name="csv" id="csv-hidden-field" />
+                    <input type="hidden" name="exam-id" id="exam-id" value="<?php echo $exam_id; ?>" />
                 </form>
 
             <?php

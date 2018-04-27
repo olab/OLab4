@@ -52,38 +52,19 @@ class Views_Gradebook_Assessments_Form_Item_HorizontalMultipleChoiceSingleRespon
 
             $html = array();
 
-            // First, create row of inputs
-            $html[] = '<tr class="horizontal-response-input">';
-
             foreach($this->data['item']['item_responses'] as $item_response) {
-                $html[] = '<td width="'.$this->getColumnWidth().'">';
-                $html[] = $this->renderItemResponseInput($item_response);
+                $html[] = '<td class="text-center">';
+                $html[] = '    <div class="match-height">';
+                $html[] =          $this->renderItemResponseInput($item_response);
+                $html[] = '        <div class="response-text">';
+                $html[] =              $this->renderItemResponseLabel($item_response);
+                $html[] = '        </div>';
+                $html[] = '    </div>';
+                $html[] = '    <div class="score">';
+                $html[] =         $this->renderScore($item_response);
+                $html[] = '    </div>';
                 $html[] = '</td>';
             }
-
-            $html[] = '</tr>';
-
-            // Next, create row of input labels. These are put in separate rows so that
-            // the appearance is of uniform inputs and labels
-            $html[] = '<tr class="horizontal-response-label">';
-
-            foreach($this->data['item']['item_responses'] as $item_response) {
-                $html[] = '<td>';
-                $html[] = $this->renderItemResponseLabel($item_response);
-                $html[] = '</td>';
-            }
-
-            $html[] = '</tr>';
-
-            $html[] = '<tr class="horizontal-response-label">';
-
-            foreach($this->data['item']['item_responses'] as $item_response) {
-                $html[] = '<td>';
-                $html[] = $this->renderScore($item_response);
-                $html[] = '</td>';
-            }
-
-            $html[] = '</tr>';
 
             // Render a comment row if comments are enabled for this item
             if ($this->data['item']['comment_type'] != 'disabled') {
@@ -148,16 +129,20 @@ class Views_Gradebook_Assessments_Form_Item_HorizontalMultipleChoiceSingleRespon
         $html[] = '     <thead>';
         $html[] = '         '.$this->renderEditBar();
         $html[] = '         <tr class="heading">';
-        $html[] = '             <th colspan="100%" class="text-left">';
-        $html[] = '                 <h3>'.html_encode($this->data['details']['title']).'</h3>';
-        $html[] = '                 '.$this->renderCurriculumTags($this->data['item']['curriculum-tags']);
+        $html[] = '             <th class="text-left" colspan="100%">';
+        $html[] = '                 <div class="heading-table">';
+        $html[] = '                     <div class="heading-cell">';
+        $html[] = '                         <h3>'.html_encode($this->data['details']['title']).'</h3>';
+        $html[] = '                         '.$this->renderCurriculumTags($this->data['item']['curriculum-tags']);
+        $html[] = '                     </div>';
+        $html[] = '                     '.$this->renderWeightCell($this->data['item']);
+        $html[] = '                 </div>';
         $html[] = '             </th>';
         $html[] = '         </tr>';
         $html[] = '     </thead>';
         $html[] = '     <tbody>';
         $html[] = '         <tr class="item-response-view" id="item-response-view-'.html_encode($this->data['item']['element_id']).'">';
-        $html[] = '             <td><table class="table-internal">'.$this->renderItemResponses().'</table></td>';
-        $html[] = '             '.$this->renderWeightCell($this->data['item']);
+        $html[] = '             '.$this->renderItemResponses();
         $html[] = '         </tr>';
         $html[] = '     </tbody>';
         $html[] = ' </table>';

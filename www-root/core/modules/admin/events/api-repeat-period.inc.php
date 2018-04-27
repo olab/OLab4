@@ -44,9 +44,9 @@ if (!defined("IN_EVENTS")) {
      */
     ob_clear_open_buffers();
     
-    if (isset($_GET["frequency"]) && in_array($_GET["frequency"], array("daily", "weekly", "monthly"))) {
+    if (isset($_GET["frequency"]) && in_array($_GET["frequency"], array("custom", "daily", "weekly", "monthly"))) {
         $period = $_GET["frequency"];
-    } elseif (isset($_POST["frequency"]) && in_array($_POST["frequency"], array("daily", "weekly", "monthly"))) {
+    } elseif (isset($_POST["frequency"]) && in_array($_POST["frequency"], array("custom", "daily", "weekly", "monthly"))) {
         $period = $_POST["frequency"];
     }
         
@@ -64,16 +64,22 @@ if (!defined("IN_EVENTS")) {
                 echo "<div id=\"error-messages\">&nbsp;</div>";
                 echo "<div class=\"row-fluid\">\n";
                 switch ($period) {
+                    case "custom" :
+                        echo "<span class=\"span1\">&nbsp;</span>\n";
+                        echo "<span class=\"span11\">Create \n";
+                        echo "<input type=\"textbox\" class=\"input-mini space-left space-right\" name=\"offset\" />\n";
+                        echo " events in this series.</span>";
+                        break;
                     case "daily" :
                     default :
                         echo "<span class=\"span1\">&nbsp;</span>\n";
-                        echo "<span class=\"span11\">Repeat every \n";
-                        echo "<input type=\"textbox\" class=\"input-small space-left space-right\" name=\"offset\" />\n";
+                        echo "<span class=\"span11\">Repeating event every \n";
+                        echo "<input type=\"textbox\" class=\"input-mini space-left space-right\" name=\"offset\" />\n";
                         echo " days.</span>";
                     break;
                     case "weekly" :
                         echo "<span class=\"span1\">&nbsp;</span>\n";
-                        echo "<span class=\"span11\">Repeat on the following days: \n";
+                        echo "<span class=\"span11\">Repeating event on the following days: \n";
                         echo "<div class=\"btn-group\" id=\"days-container\" data-toggle=\"buttons-checkbox\">\n";
                         echo "  <a class=\"btn toggle-days\" data-value=\"1\">Mon</a>";
                         echo "  <a class=\"btn toggle-days\" data-value=\"2\">Tues</a>";
@@ -87,7 +93,7 @@ if (!defined("IN_EVENTS")) {
                     break;
                     case "monthly" :
                         echo "<span class=\"span1\">&nbsp;</span>\n";
-                        echo "<span class=\"span11\">Repeat every \n";
+                        echo "<span class=\"span11\">Repeating event every \n";
                         echo "<select class=\"input-small\" id=\"week_offset\" name=\"week_offset\">\n";
                             echo "<option value=\"first\">First</option>\n";
                             echo "<option value=\"second\">Second</option>\n";
@@ -111,21 +117,23 @@ if (!defined("IN_EVENTS")) {
                 add_error("Please select a valid frequency from the <strong>Repeat Frequency</strong> selectbox.");
                 echo display_error();
             }
-                    
-            ?>
-            </div>
-            <div class="row-fluid space-above">
-                <span class="span1">&nbsp;</span>
-                <label class="control-label span2" for="recurring_end">Until: </label>
-                <span class="span9">
-                    <div class="input-append">
-                        <input type="text" class="input-small datepicker" value="<?php echo (isset($recurring_end) && $recurring_end ? date("Y-m-d", $recurring_end) : ""); ?>" name="recurring_end" id="recurring_end" />
-                        <span class="add-on pointer"><i class="icon-calendar"></i></span>
-                    </div>
-                </span>
-            </div>
-            </form>
-            <?php
+            echo "</div>";       
+            if (isset($period) && $period != "custom") { ?>
+                <div class="row-fluid space-above">
+                    <span class="span1">&nbsp;</span>
+                    <label class="control-label span2" for="recurring_end">Until: </label>
+                    <span class="span9">
+                        <div class="input-append">
+                            <input type="text" class="input-small datepicker"
+                                   value="<?php echo(isset($recurring_end) && $recurring_end ? date("Y-m-d", $recurring_end) : ""); ?>"
+                                   name="recurring_end" id="recurring_end"/>
+                            <span class="add-on pointer"><i class="icon-calendar"></i></span>
+                        </div>
+                    </span>
+                </div><?php
+            }
+            echo "</form>";
+            
         break;
         case "results" :
             $output = array();
@@ -137,9 +145,13 @@ if (!defined("IN_EVENTS")) {
             if (isset($_POST["recurring_end"]) && $_POST["recurring_end"]) {
                 $recurring_end = strtotime($_POST["recurring_end"]." 23:59:59");
             } else {
-                $output["status"] = "error";
-                add_error("Please ensure you select a valid date when the recurring events will be created until.");
-                $output["message"] = display_error();
+                if ($period != "custom") {
+                    $output["status"] = "error";
+                    add_error($translate->_("Please ensure you select a valid date prior to creating an Event Series."));
+                    $output["message"] = display_error();
+                } else {
+                    $recurring_end = false;
+                }
             }
             
             if (isset($_POST["offset"]) && $_POST["offset"]) {
@@ -160,7 +172,7 @@ if (!defined("IN_EVENTS")) {
             } elseif (isset($_POST["monthly_weekday"]) && in_array($_POST["monthly_weekday"], array("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"))) {
                 $weekdays[] = $_POST["monthly_weekday"];
             }
-            if ($period == "daily" && !isset($offset)) {
+            if (($period == "daily" || $period == "custom") && !isset($offset)) {
                 $output["status"] = "error";
                 add_error("Please ensure you enter a number of days which this event should repeat after.");
                 $output["message"] = display_error();

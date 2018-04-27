@@ -29,7 +29,7 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_CONFIGURATION")) {
 	header("Location: ".ENTRADA_URL);
 	exit;
 } elseif (!$ENTRADA_ACL->amIAllowed("configuration", "delete",false)) {
-	add_error("Your account does not have the permissions required to use this feature of this module.<br /><br />If you believe you are receiving this message in error please contact <a href=\"mailto:".html_encode($AGENT_CONTACTS["administrator"]["email"])."\">".html_encode($AGENT_CONTACTS["administrator"]["name"])."</a> for assistance.");
+	add_error($translate->_("module_no_permission") . str_ireplace(array("%admin_email%","%admin_name%"), array(html_encode($AGENT_CONTACTS["administrator"]["email"]),html_encode($AGENT_CONTACTS["administrator"]["name"])), $translate->_("module_assistance")));
 
 	echo display_error();
 
@@ -38,7 +38,9 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_CONFIGURATION")) {
 ?>
 <h1>Delete Event Types</h1>
 <?php
-	$BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/settings/manage/metadata?section=delete&amp;org=".$ORGANISATION['organisation_id'], "title" => "Delete MetaData");
+	require_once("Entrada/metadata/functions.inc.php");
+
+	$BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/settings/manage/metadata?section=delete&amp;org=".$ORGANISATION['organisation_id'], "title" => $translate->_("metadata_delete"));
 
 	if (isset($_POST["remove_ids"]) && is_array($_POST["remove_ids"]) && !empty($_POST["remove_ids"])) {
 		foreach ($_POST["remove_ids"] as $id){
@@ -51,14 +53,11 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_CONFIGURATION")) {
 			case 2:
 			if(isset($_POST["remove_ids"]) && is_array($_POST["remove_ids"]) && !empty($_POST["remove_ids"])){
 				foreach($_POST["remove_ids"] as $id){
-					$query = "DELETE FROM `meta_types` WHERE `meta_type_id` = ".$db->qstr($id);
 
-					if($db->Execute($query)){
-						$query = "DELETE FROM `meta_type_relations` WHERE `meta_type_id` = ".$db->qstr($id);
-						if($db->Execute($query)){
-							$SUCCESS++;
-							$SUCCESSSTR[] = "Successfully removed Meta Data Type [".$id."] from your organisation.<br />";
-						}
+					if (MetaDataType::delete($id)) {
+						add_success(str_ireplace("%id%",$id, $translate->_("metadata_notice_deleted")));
+					} else {
+						add_error(str_ireplace("%id%",$id, $translate->_("metadata_error_delete_type")));
 					}
 				}
 
@@ -67,10 +66,11 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_CONFIGURATION")) {
 					echo display_success();
 				if($NOTICE)
 					echo display_notice();
+				if($ERROR)
+					echo display_error();
 			}
 			else{
-				$ERROR++;
-				$ERRORSTR[] = "No Meta Data Types were selected to be deleted. You will now be redirected to the Meta Data index; this will happen <strong>automatically</strong> in 5 seconds or <a href=\"".ENTRADA_URL."/admin/settings/manage/metadata/?org=".$ORGANISATION_ID."\" style=\"font-weight: bold\">click here</a> to continue.";
+				add_error($translate->_("metadata_error_notypes").str_ireplace(array("%time%","%url%"), array(5,html_encode(ENTRADA_URL."/admin/settings/manage/metadata/?org=".$ORGANISATION_ID)), $translate->_("metadata_redirect")));
 
 				echo display_error();
 			}
@@ -78,7 +78,7 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_CONFIGURATION")) {
 			break;
 		case 1:
 		default:
-			add_notice("Please review the following meta data types to ensure that you wish to <strong>permanently delete</strong> them.");
+			add_notice($translate->_("metadata_notice_review"));
 			echo display_notice();
 			?>
 			<form action ="<?php echo ENTRADA_URL;?>/admin/settings/manage/metadata?section=delete&amp;org=<?php echo $ORGANISATION_ID;?>&step=2" method="post" id="delete_form">
@@ -90,22 +90,23 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_CONFIGURATION")) {
 					<thead>
 						<tr>
 							<td class="modified">&nbsp;</td>
-							<td class="title">Topic</td>
+							<td class="title"><?php echo $translate->_("metadata_topic");?></td>
 						</tr>
 					</thead>
 					<tbody>
 					<?php
 					foreach ($PROCESSED["remove_ids"] as $id) {
-						$query = "SELECT * FROM `meta_types` WHERE `meta_type_id` = ".$db->qstr($id);
-						$type = $db->GetRow($query);
+//						$query = "SELECT * FROM `meta_types` WHERE `meta_type_id` = ".$db->qstr($id);
+//						$type = $db->GetRow($query);
+						$type = MetaDataType::get($id);
 						?>
 						<tr>
 							<td><input type="checkbox" value="<?php echo $id;?>" name ="remove_ids[]" class="checkboxes" checked="checked" disabled="disabled"/></td>
-							<td><?php echo $type["label"];?></td>
+							<td><?php echo $type->getLabel();?></td>
 						</tr>
 						<?php
 						$query = "SELECT * FROM `meta_types` WHERE `parent_type_id` = ".$db->qstr($id);
-						$types = $db->GetAll($query);
+						$types = MetaDataTypes::getSelectionByParent($id);
 						foreach ($types as $type){
 							?>
 							<tr>
@@ -119,7 +120,7 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_CONFIGURATION")) {
 					</tbody>
 				</table>
 				<br />
-				<input type="button" value="Confirm Delete" class="btn btn-danger" id="delete_button"/>
+				<input type="button" value="<?php echo $translate->_("metadata_confirm");?>" class="btn btn-danger" id="delete_button"/>
 				<script type="text/javascript">
 					jQuery('#delete_button').click(function(){
 						jQuery('.checkboxes').each(function(){

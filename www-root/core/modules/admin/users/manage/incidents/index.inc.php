@@ -79,8 +79,8 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_USERS"))) {
 												echo "<tr ".( !$result["incident_status"] ? " class=\"closed\"" : "").">\n";
 												echo "	<td class=\"modified\"><input type=\"checkbox\" name=\"delete_id[]\" id=\"delete_id[]\" value=\"".$result["incident_id"]."\" ".( !$result["incident_status"] ? " disabled=\"true\"" : "")." /></td>\n";
 												echo "	<td class=\"title\"><a href=\"".$url."\" title=\"Incident Title: ".html_encode($result["incident_title"])."\">[".html_encode($result["incident_severity"])."] ".html_encode(limit_chars($result["incident_title"], 75))."</a></td>\n";
-												echo "	<td class=\"date\"><a href=\"".$url."\" title=\"Incident Date\">".date(DEFAULT_DATE_FORMAT, $result["incident_date"])."</a></td>\n";
-												echo "	<td class=\"date\"><a href=\"".$url."\" title=\"Incident Follow-Up Date\">".(isset($result["follow_up_date"]) && ((int)$result["follow_up_date"]) ? date(DEFAULT_DATE_FORMAT, $result["follow_up_date"]) : "")."</a></td>\n";
+												echo "	<td class=\"date\"><a href=\"".$url."\" title=\"Incident Date\">".date(DEFAULT_DATETIME_FORMAT, $result["incident_date"])."</a></td>\n";
+												echo "	<td class=\"date\"><a href=\"".$url."\" title=\"Incident Follow-Up Date\">".(isset($result["follow_up_date"]) && ((int)$result["follow_up_date"]) ? date(DEFAULT_DATETIME_FORMAT, $result["follow_up_date"]) : "")."</a></td>\n";
 												echo "	<td class=\"general\"><a href=\"".$url."\" title=\"Reported By: ".html_encode(limit_chars($result["reported_by"], 14))."\">".html_encode($result["reported_by"])."</a></td>\n";
 												echo "</tr>\n";
 											}

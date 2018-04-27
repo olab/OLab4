@@ -120,26 +120,30 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                         if ($courses) {
                             $data = array();
                             foreach ($courses as $course) {
-
                                 $course_data = array(
                                     "course_id"           => $course["course_id"],
                                     "course_code"         => ($course["course_code"] && !empty($course["course_code"]) ? $course["course_code"] : "N/A"),
                                     "course_name"         => $course["course_name"],
-                                    "curriculum_type"     => $course["curriculum_type_name"]
+                                    "curriculum_type"     => $course["curriculum_type_name"],
                                 );
-
                                 $course_data["course_permission"] = false;
                                 $course_data["course_content_permission"] = false;
                                 $course_data["course_gradebook"] = false;
 
-                                if($ENTRADA_ACL->amIAllowed(new CourseResource($course["course_id"], $ENTRADA_USER->getActiveOrganisation()), "update")) {
+                                if ($ENTRADA_ACL->amIAllowed(new CourseResource($course["course_id"], $ENTRADA_USER->getActiveOrganisation()), "update")) {
                                     $course_data["course_permission"] = true;
                                 }
-                                if($ENTRADA_ACL->amIAllowed(new CourseContentResource($course["course_id"], $ENTRADA_USER->getActiveOrganisation()), "read")) {
+                                if ($ENTRADA_ACL->amIAllowed(new CourseContentResource($course["course_id"], $ENTRADA_USER->getActiveOrganisation()), "update")) {
                                     $course_data["course_content_permission"] = true;
                                 }
-                                if($ENTRADA_ACL->amIAllowed(new GradebookResource($course["course_id"], $ENTRADA_USER->getActiveOrganisation()), "read")) {
+                                if ($ENTRADA_ACL->amIAllowed(new GradebookResource($course["course_id"], $ENTRADA_USER->getActiveOrganisation()), "read")) {
                                     $course_data["course_gradebook"] = true;
+                                }
+                                if ((new Entrada_Settings)->read("cbme_enabled") && $ENTRADA_ACL->amIAllowed(new CourseContentResource($course["course_id"], $ENTRADA_USER->getActiveOrganisation()), "update")) {
+                                    $course_data["course_cbme"] = true;
+                                }
+                                if ((new Entrada_Settings)->read("curriculum_weeks_enabled")) {
+                                    $course_data["course_week"] = true;
                                 }
 
                                 $data[] = $course_data;

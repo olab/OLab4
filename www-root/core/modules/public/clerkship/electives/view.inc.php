@@ -311,7 +311,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP"))) {
 	} else {		
 		$BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/clerkship/electives?section=view", "title" => "Viewing Electives");
 		
-		echo "<h1>My Clerkship Electives</h1>\n";
+		echo "<h1>My " . $translate->_("Clerkship Electives") . "</h1>\n";
 	
 		if (isset($_GET["type"])) {
 			switch ($_GET["type"]) {

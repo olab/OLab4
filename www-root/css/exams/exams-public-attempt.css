@@ -1,6 +1,6 @@
 body {
     background: none;
-    background-color: #E8EDF1;
+    background-color: #E8E8E8;
 }
 
 #control-bar .submit-exam, #control-bar .save-exam  {
@@ -12,13 +12,14 @@ body {
     position: fixed;
     bottom: 0;
     left: 0;
-    padding: 5px;
-    width: 100%;
-    -webkit-box-sizing: border-box;
-    -moz-box-sizing: border-box;
-    box-sizing: border-box;
-    height: 48px;
-    background: #17323B;
+    border-top: 3px solid white;
+    padding: 0.5% 1%;
+    width: 98%;
+    height: 25px;
+    background: #264078;
+    -webkit-box-shadow: 0px -6px 21px -1px rgba(0,0,0,0.32);
+    -moz-box-shadow: 0px -6px 21px -1px rgba(0,0,0,0.32);
+    box-shadow: 0px -6px 21px -1px rgba(0,0,0,0.32);
     z-index: 1000;
     text-align: center;
 }
@@ -47,10 +48,30 @@ table.question-table tr.question-answer-view.strike, table.question-table tr.row
     background-color: #f5f5f5;
 }
 
+#exam_previous_page,
+#exam_next_page {
+    width: 70px;
+    display: inline-block;
+}
+
+#exam_previous_page a,
+#exam_next_page a {
+    /*width: 45px;*/
+    display: block;
+    font-weight: bold;
+    padding-left: 15px;
+    padding-right: 15px;
+    margin-right: 8px;
+}
+
+#exam_previous_page a i,
+#exam_next_page a i {
+    font-size: 1.25em;
+}
 
 #control-bar-progress .progress {
     position: relative;
-    margin: 8px auto;
+    margin: 3px auto;
 }
 
 #control-bar-progress .progress .progress-bar-not-saved {
@@ -104,7 +125,6 @@ table.question-table tr.question-answer-view.strike, table.question-table tr.row
 
 #clock-container {
     margin-left: 30px;
-    padding-top: 7px;
 }
 
 #control-bar .row-fluid .span2 {
@@ -115,14 +135,25 @@ table.question-table tr.question-answer-view.strike, table.question-table tr.row
     width: 26.4039%;
 }
 
+.exam-control-group .btn,
+#exam_next_page .btn,
+#exam_previous_page .btn {
+    border: 3px solid #d9dee2;
+}
+
 /* Exam Sidebar */
 #exam-menu {
     position: fixed;
-    bottom: 36px;
-    right: 0px;
+    bottom: 30px;
+    right: 10px;
+    /*border-left: 4px solid #ffffff;*/
+    /*border-top: 4px solid #ffffff;*/
+    border: 3px solid #ffffff;
+    border-radius: 5px;
+    box-shadow: 0 0 3px rgba(0, 0, 0, 0.1);
     padding: 5px 5px;
     width: 140px;
-    background: #17323B;
+    background: #264078;
     z-index: 999;
     color: #eee;
     margin-left: 5px;
@@ -248,12 +279,12 @@ table.question-table tr.question-answer-view.strike, table.question-table tr.row
 
 /* ScratchPad CSS */
 #exam-progress-menu i.icon-flag-question, #exam-progress-menu i.scratchPad-icon {
-    margin: 2px 0px 0px 3px;
+    margin: 2px 0 0 3px;
 }
 
 .learner_comments h3.title {
     margin: 5px;
-    color: #000000;
+    color: #EEE;
     font-size: 14px;
     line-height: 10px;
 }
@@ -268,8 +299,17 @@ textarea.learner_comments_text_area {
     border: none;
 }
 
+.learner_comments_checkbox span {
+    display: inline-block;
+}
+
+span.learner_comments_mark_faculty_review i {
+    margin: 0;
+}
+
 span.comment-question.active {
     background: #9FCED5;
+    border: 3px solid #448790;
 }
 
 li.progress_menu_item i.scratchPad-icon {
@@ -367,4 +407,8 @@ div.popover-content button.note-btn, div.popover-content button.note-color-btn {
 
 #control-bar-buttons ul.exam_file_menu {
     margin-bottom: 3px;
+}
+#honor-code-instructions {
+    margin-top: 10px;
+    max-height: 200px;
 }

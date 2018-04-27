@@ -381,7 +381,7 @@ if ($RECORD_ID) {
                                                 <input id="community-all-checkbox" class="permission-type-checkbox" type="radio" name="permission_acl_style" value="CourseCommunityEnrollment" checked="checked"  />
                                             </td>
                                             <td>
-                                                <label for="community-all-checkbox" class="content-small">All Community Members</label>
+                                                <label for="community-all-checkbox" class="content-small"><?php echo $translate->_("All Community Members"); ?></label>
                                             </td>
                                         </tr>
                                         <tr>
@@ -522,13 +522,13 @@ if ($RECORD_ID) {
                                     </thead>
                                     <tbody>
                                         <tr>
-                                            <td class="left"><strong>Community Administrators</strong></td>
+                                            <td class="left"><strong><?php echo $translate->_("Community Administrators"); ?></strong></td>
                                             <td class="on"><input type="checkbox" id="allow_admin_read" name="allow_admin_read" value="1" checked="checked" onclick="this.checked = true" /></td>
                                             <td>&nbsp;</td>
                                             <td>&nbsp;</td>
                                         </tr>
                                         <tr>
-                                            <td class="left"><strong>Community Members</strong></td>
+                                            <td class="left"><strong><?php echo $translate->_("Community Members"); ?></strong></td>
                                             <td class="on"><input type="checkbox" id="allow_member_read" name="allow_member_read" value="1"<?php echo (((!isset($PROCESSED["allow_member_read"])) || ((isset($PROCESSED["allow_member_read"])) && ($PROCESSED["allow_member_read"] == 1))) ? " checked=\"checked\"" : ""); ?> /></td>
                                             <td>&nbsp;</td>
                                             <td>&nbsp;</td>

@@ -1,0 +1,215 @@
+table.blueprint-component-table {
+    border-collapse: separate;
+    border-color: #d9dee2;
+    border-image: none;
+    border-radius: 4px;
+    border-style: solid solid solid solid;
+    border-width: 2px 2px 2px 2px;
+    width: 100%;
+}
+
+table.blueprint-component-table tr.heading td,
+table.blueprint-component-table tr.heading th {
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+table.blueprint-component-table tr.heading td {
+    border-bottom: 1px solid #d9dee2;
+}
+
+table.blueprint-component-table td,
+table.blueprint-component-table th {
+    padding-left: 15px;
+    padding-right: 15px;
+}
+
+table.blueprint-component-table h3 {
+    color: #000;
+    font-weight: normal;
+    line-height: 24px;
+    margin: 0;
+}
+
+table.blueprint-component-table tr.type {
+    background: #ecf0f3;
+}
+
+table.blueprint-component-table tr.type td span.component-type {
+    display: inline-block;
+    margin: 8px 0 8px 0;
+}
+
+table.blueprint-component-table span.component-type {
+    font-family: "Lucida Grande", Geneva, Verdana, Arial, Helvetica, sans-serif;
+    font-size: 13px;
+    color: #8b959d;
+    font-weight: normal;
+}
+
+table.blueprint-component-table tr.heading {
+    border-style: solid solid solid none;
+    border-width: 2px 2px 2px 0px;
+}
+
+table.blueprint-component-table .btn:hover {
+    background: #f9f9f9;
+}
+
+table.blueprint-component-table td.blueprint-component-epa-checks {
+    padding-top: 10px;
+    padding-bottom: 10px;
+    font-size: 12px;
+}
+
+table.blueprint-component-table .btn {
+    background: #fff;
+    background-image: none;
+    border: 1px solid #efefef;
+    box-shadow: none;
+    padding: 4px 9px 5px 9px;
+    text-shadow: none;
+}
+
+table.blueprint-component-table .btn-group {
+    margin: 2px 2px 2px 0;
+}
+
+table.blueprint-component-table td.contextual-vars-list-td,
+table.blueprint-component-table td.epa-list-td {
+    padding-bottom: 15px;
+    vertical-align: top;
+}
+
+.blueprint-component-section {
+    position: relative;
+}
+
+#epa-select-container {
+    margin-top: 20px;
+}
+
+#epa-select-container .selected_epa_target_item {
+    line-height: 24px;
+    margin-bottom: 14px;
+}
+
+.blueprint-component-table th {
+    font-size: 14px;
+    text-align: left;
+}
+
+.blueprint-component-table .contextual-variable-epa {
+    display: block;
+    max-width: 400px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.scale-selectior-td {
+    padding-top: 15px;
+}
+
+.response-category-label {
+    color: #848484;
+    display: block;
+    font-size: 15px;
+}
+
+.no-contextual-variables {
+    padding-top: 15px;
+    padding-bottom: 15px;
+}
+
+.no-response-flags {
+    display: block;
+    padding-top: 5px;
+}
+
+table.blueprint-component-table td.save-control {
+    padding-right: 2px;
+}
+
+.selected-responses-badge,
+.selected-milestones-badge {
+    background-color: #8b959d;
+    text-shadow: none;
+}
+
+.selected-responses-badge::after {
+    content: "\f040";
+    font: normal normal normal 14px/1 FontAwesome;
+    font-size: 10px;
+    margin-left: 5px;
+}
+
+.selected-milestones-badge::after {
+    content: "\f040";
+    font: normal normal normal 14px/1 FontAwesome;
+    font-size: 10px;
+    margin-left: 5px;
+}
+
+.blueprint-badge-missing {
+    background-color: red;
+}
+
+#blueprint-page-loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #000;
+    filter:alpha(opacity=50);
+    -moz-opacity:0.5;
+    -khtml-opacity: 0.5;
+    opacity: 0.5;
+    z-index: 10000;
+    background-image: url(../../images/loading_med.gif);
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-position: center;
+}
+
+.blueprint-component-loading-overlay {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    opacity: 0.5;
+    background-color: #000;
+    filter:alpha(opacity=50);
+    -moz-opacity:0.5;
+    -khtml-opacity: 0.5;
+    opacity: 0.5;
+    z-index: 10000;
+    background-image: url(../../images/loading_med.gif);
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.epa-tooltip {
+    display: block !important;
+}
+
+.checkbox-div-label {
+    display: inline-block;
+    margin-bottom: 5px;
+}
+
+.rubric-container {
+    position: relative;
+}
+
+.item-container {
+    border: 2px solid #EFF1F3;
+}
+
+.rubric-container {
+    border: 2px solid #EFF1F3;
+}
+
+#table-contextual-vars-0 {
+    border: 0px;
+}

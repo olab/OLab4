@@ -301,10 +301,14 @@ class Models_Event_Audience extends Models_Base {
                             AND b.`active` = '1'";
                 $course_audiences = $db->GetAll($query, array($this->audience_value, $event_start));
                 if ($course_audiences) {
-                    $query = "SELECT `course_name` FROM `courses` WHERE `course_id` = ?";
+                    $query = "SELECT `course_name`, `course_code` FROM `courses` WHERE `course_id` = ?";
                     $result = $db->GetRow($query, array($this->audience_value));
                     if ($result) {
-                        $audience_data["audience_name"] = $result["course_name"];
+                        if ( !empty($result["course_code"]) ) {
+                            $audience_data["audience_name"] = $result["course_code"] . ' : ' . $result["course_name"];
+                        } else {
+                            $audience_data["audience_name"] = $result["course_name"];
+                        }
                         $audience_data["audience_type"] = $this->audience_type;
                     }
 

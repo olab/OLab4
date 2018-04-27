@@ -276,7 +276,7 @@ if (!defined("IN_REGIONS")) {
 								</tr>
 								<tr>
 									<td><input type="checkbox" id="is_core" name="is_core" value="1"<?php echo ((isset($PROCESSED["is_core"]) && ($PROCESSED["is_core"] == 1)) ? " checked=\"checked\"" : ""); ?> /></td>
-									<td colspan="2"><label for="is_core" class="form-nrequired">Clerkship core rotations can take place in this region.</label></td>
+									<td colspan="2"><label for="is_core" class="form-nrequired"><?php echo $translate->_("Clerkship core rotations") ; ?> can take place in this region.</label></td>
 								</tr>
 								<tr>
 									<td><input type="checkbox" id="manage_apartments" name="manage_apartments" value="1"<?php echo ((isset($PROCESSED["manage_apartments"]) && ($PROCESSED["manage_apartments"] == 1)) ? " checked=\"checked\"" : ""); ?> /></td>

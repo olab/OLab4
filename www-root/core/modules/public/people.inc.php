@@ -732,7 +732,6 @@ if (!defined("PARENT_INCLUDED")) {
 								AND (b.`access_expires` = '0' OR b.`access_expires` >= ".$db->qstr(time()).")
 								AND ".((is_numeric($load_profile)) ? "a.`id` = ".$db->qstr((int) $load_profile) : "a.`username` = ".$db->qstr($load_profile))."
 								GROUP BY a.`id`";
-				echo $query_profile;
 				$results		= $db->GetAll($query_profile);
 			}
 			$search_query		= $load_profile;

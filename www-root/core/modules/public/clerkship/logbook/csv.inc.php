@@ -188,7 +188,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP"))) {
 					}
 					$result["procedures"] .= $procedure["procedure"];
 				}
-				$result["encounter_date"] = date(DEFAULT_DATE_FORMAT, $result["encounter_date"]);
+				$result["encounter_date"] = date(DEFAULT_DATETIME_FORMAT, $result["encounter_date"]);
 				$result["encounter_date"] = "\"".$result["encounter_date"]."\"";
 				$result["patient_info"] = "\"".$result["patient_info"]."\"";
 				$result["lentry_id"] = "\"".$result["lentry_id"]."\"";

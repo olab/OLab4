@@ -150,6 +150,17 @@ class Models_Assessments_Item_Response extends Models_Base {
         return $self->fetchAll($params, "=", "AND", "order", "ASC");
     }
 
+    public static function fetchRecordByItemIDOrderID($item_id = null, $order_id = null, $deleted_date = null) {
+        $self = new self();
+        $params = array(
+            array("key" => "item_id", "value" => $item_id, "method" => "="),
+            array("key" => "order", "value" => $order_id, "method" => "="),
+            array("key" => "deleted_date", "value" => ($deleted_date ? $deleted_date : NULL), "method" => ($deleted_date ? "<=" : "IS"))
+        );
+
+        return $self->fetchAll($params, "=", "AND", "order", "ASC");
+ 	}
+
     public static function fetchAllRecordsByARDescriptorID($ardescriptor_id = null, $deleted_date = NULL) {
         $self = new self();
         return $self->fetchAll(array(

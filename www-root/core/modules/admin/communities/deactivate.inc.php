@@ -83,14 +83,14 @@ if (!defined("IN_COMMUNITIES")) {
 		case 1 :
 		default :
 			if (is_array($selected_communities)) { ?>
-				<h1>Deactivate Communities</h1>
+				<h1><?php echo $translate->_("Deactivate Communities"); ?></h1>
 				<?php
 				if ($ERROR) {
 					echo display_error();
 				}
 				?>
 				<div class="display-notice" style="margin-top: 15px; line-height: 175%">
-					<strong>Please note</strong> that once you deactivate these communities all of the content (photos, calendar, etc) within the communities will no longer be accessible to you or any other members of the communities. Deactivating these communities will also deactivate any Sub-Communities / Groups that have been created under these communities.
+                    <?php echo $translate->_("<strong>Please note</strong> that once you deactivate these communities all of the content (photos, calendar, etc) within the communities will no longer be accessible to you or any other members of the communities. Deactivating these communities will also deactivate any Sub-Communities / Groups that have been created under these communities."); ?>
 				</div>
 				<form action="<?php echo ENTRADA_URL; ?>/admin/communities?<?php echo replace_query(array("section" => "deactivate", "step" => 2)); ?>" method="post">
 					<table class="table" summary="List of communities">
@@ -125,7 +125,7 @@ if (!defined("IN_COMMUNITIES")) {
 									echo "	<td class=\"modified\"><input type=\"checkbox\" name=\"checked[]\" value=\"".$result["community_id"]."\"". ((in_array($result["community_id"], $selected_communities)) ? " checked=\"checked\"" : "") . "/></td>\n";
 									echo "	<td class=\"title\"><a href=\"".$url."\">".html_encode($result["community_title"])."</a></td>\n";
 									echo "	<td class=\"title\"><a href=\"".$url."\">".html_encode($result["category_title"])."</a></td>\n";
-									echo "	<td class=\"date\"><a href=\"".$url."\">".date(DEFAULT_DATE_FORMAT, $result["community_opened"])."</a></td>\n";
+									echo "	<td class=\"date\"><a href=\"".$url."\">".date(DEFAULT_DATETIME_FORMAT, $result["community_opened"])."</a></td>\n";
 									echo "</tr>\n";
 								}
 							}

@@ -981,7 +981,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP"))) {
 						$poster_name = get_account_data("firstlast", $result["proxy_id"]);
 	
 						echo "<div class=\"discussion\"".(($i % 2) ? " style=\"background-color: #F3F3F3\"" : "").">\n";
-						echo "	<div class=\"content-small\"><strong>".get_account_data("firstlast", $result["proxy_id"])."</strong>, ".date(DEFAULT_DATE_FORMAT, $result["updated_date"])."</div>\n";
+						echo "	<div class=\"content-small\"><strong>".get_account_data("firstlast", $result["proxy_id"])."</strong>, ".date(DEFAULT_DATETIME_FORMAT, $result["updated_date"])."</div>\n";
 						echo "	<div class=\"discussion-comment\" id=\"discussion_comment_".$result["lrcomment_id"]."\">".html_encode($result["comments"])."</div>\n";
 						echo "</div>\n";
 	

@@ -199,8 +199,51 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_CONFIGURATION")) {
                         if (!$default_scale) {
                             application_log("error", "Unable to create default grading scale for new organisation_id [".$organisation_id."]. Database said: ".$db->ErrorMsg());
                         }
-                        
-						add_success("You have successfully added <strong>" . html_encode($PROCESSED["organisation_title"]) . "</strong> to the system.<br /><br />You will now be redirected to the organisations index; this will happen <strong>automatically</strong> in 5 seconds or <a href=\"" . ENTRADA_URL . "/admin/settings\" style=\"font-weight: bold\">click here</a> to continue.");
+
+                        /**
+                         * Add a default form for the newly created organisation
+                         */
+                        $PROCESSED_FORM = [];
+                        $PROCESSED_FORM["organisation_id"] = $organisation_id;
+                        $PROCESSED_FORM["created_date"] = time();
+                        $PROCESSED_FORM["created_by"] = $ENTRADA_USER->getID();
+                        $PROCESSED_FORM["updated_date"] = time();
+                        $PROCESSED_FORM["updated_by"] = $ENTRADA_USER->getID();
+
+                        $rubric_form = Models_Assessments_Form_Type::fetchRowByShortname("rubric_form");
+                        if ($rubric_form) {
+                            $PROCESSED_FORM["form_type_id"] = $rubric_form->getID();
+                            $form_type_organisation = new Models_Assessments_Form_TypeOrganisation($PROCESSED_FORM);
+                            if (!$form_type_organisation->insert()) {
+                                application_log("error", "Unable to add form type organisation, DB said: " . $db->ErrorMsg());
+                            }
+                        }
+
+                        $assessments_type = Models_Assessments_Type::fetchAllRecords();
+                        if ($assessments_type) {
+                            foreach ($assessments_type as $assessment_type) {
+                                if ($assessment_type->getShortname() != "cbme") {
+                                    $PROCESSED_FORM["assessment_type_id"] = $assessment_type->getID();
+                                    $assessment_type_organisation = new Models_Assessments_Type_Organisation($PROCESSED_FORM);
+
+                                    if (!$assessment_type_organisation->insert()) {
+                                        application_log("error", "Unable to add assessment type organisation, DB said: " . $db->ErrorMsg());
+                                    }
+                                }
+                            }
+                        }
+
+                        $assessment_method = Models_Assessments_Method::fetchMethodIDByShortname("default");
+                        if ($assessment_method) {
+                            $PROCESSED_FORM["assessment_method_id"] = $assessment_method;
+                            $assessment_method_organisation = new Models_Assessments_Method_Organisation($PROCESSED_FORM);
+                            if (!$assessment_method_organisation->insert()) {
+                                application_log("error", "Unable to add assessment method organisation, DB said: " . $db->ErrorMsg());
+                            }
+                        }
+
+
+                        add_success("You have successfully added <strong>" . html_encode($PROCESSED["organisation_title"]) . "</strong> to the system.<br /><br />You will now be redirected to the organisations index; this will happen <strong>automatically</strong> in 5 seconds or <a href=\"" . ENTRADA_URL . "/admin/settings\" style=\"font-weight: bold\">click here</a> to continue.");
 
 						$ONLOAD[] = "setTimeout('window.location=\\'" . ENTRADA_URL . "/admin/settings/\\'', 5000)";
 

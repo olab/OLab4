@@ -224,6 +224,7 @@ switch ($STEP) {
                 !@is_writable($entrada_storage."/app")  ||
                 !@is_writable($entrada_storage."/app/public")  ||
 				!@is_writable($entrada_storage."/cache") ||
+                !@is_writable($entrada_storage."/cbme-uploads") ||
 				!@is_writable($entrada_storage."/community-discussions") ||
 				!@is_writable($entrada_storage."/community-galleries") ||
 				!@is_writable($entrada_storage."/community-shares") ||
@@ -252,6 +253,7 @@ switch ($STEP) {
                 $ERRORSTR[$i] .= "chmod 777 ".$entrada_storage."/app<br />\n";
                 $ERRORSTR[$i] .= "chmod 777 ".$entrada_storage."/app/public<br />\n";
 				$ERRORSTR[$i] .= "chmod 777 ".$entrada_storage."/cache<br />\n";
+                $ERRORSTR[$i] .= "chmod 777 ".$entrada_storage."/cbme-uploads<br />\n";
 				$ERRORSTR[$i] .= "chmod 777 ".$entrada_storage."/community-discussions<br />\n";
 				$ERRORSTR[$i] .= "chmod 777 ".$entrada_storage."/community-galleries<br />\n";
 				$ERRORSTR[$i] .= "chmod 777 ".$entrada_storage."/community-shares<br />\n";
@@ -270,7 +272,6 @@ switch ($STEP) {
 				$ERRORSTR[$i] .= "chmod 777 ".$entrada_storage."/secure-access<br />\n";
 				$ERRORSTR[$i] .= "chmod 777 ".$entrada_storage."/syllabi<br />\n";
 				$ERRORSTR[$i] .= "chmod 777 ".$entrada_storage."/user-photos<br />\n";
-
 				$ERRORSTR[$i] .= "</div>\n";
 			}
 		} elseif (!@is_dir($entrada_storage)) {
@@ -561,7 +562,7 @@ $storage_path = implode(DIRECTORY_SEPARATOR, array_slice(explode(DIRECTORY_SEPAR
                                         ?>
                                         <div class="alert alert-success">
                                             <ul>
-                                                <li>We have successfully saved your configuration information and created a new .htaccess file in your Entrada directory. We are now ready to create the MySQL database tables that Entrada needs to operate.</li>
+                                                <li>We have successfully saved your configuration information and created a new .htaccess file in your Entrada directory. We are now ready to create the database tables that Entrada needs to operate.</li>
                                             </ul>
                                         </div>
                                         <?php
@@ -733,7 +734,7 @@ $storage_path = implode(DIRECTORY_SEPARATOR, array_slice(explode(DIRECTORY_SEPAR
                                 ?>
                                 <div id="step_3" class="row-fluid">
                                     <div class="alert alert-info">
-                                        <strong>Before completing this step</strong> please log into your MySQL server and create <strong>three</strong> new databases (i.e. entrada, entrada_auth, and entrada_clerkship) that Entrada will use to store its data. Also you will need to create a new MySQL user account that has full privileges to each of these databases.
+                                        <strong>Before completing this step</strong> please log into your database server and create <strong>three</strong> new databases (i.e. entrada, entrada_auth, and entrada_clerkship) that Entrada will use to store its data. Also you will need to create a new database user account that has full privileges to each of these databases.
                                     </div>
                                     <h2>Step 3: Database Connection Information</h2>
                                     <table class="setup-list" summary="Step 3: Database Connection Information">
@@ -763,7 +764,7 @@ $storage_path = implode(DIRECTORY_SEPARATOR, array_slice(explode(DIRECTORY_SEPAR
                                             <tr>
                                                 <td>
                                                     <div class="valign">
-                                                        <label for="database_host">MySQL Hostname</label>
+                                                        <label for="database_host">Database Hostname</label>
                                                     </div>
                                                 </td>
                                                 <td>
@@ -775,13 +776,13 @@ $storage_path = implode(DIRECTORY_SEPARATOR, array_slice(explode(DIRECTORY_SEPAR
                                             <tr>
                                                 <td>&nbsp;</td>
                                                 <td class="content-small" style="padding-bottom: 15px">
-                                                    The hostname of your MySQL server.
+                                                    The hostname of your database server.
                                                 </td>
                                             </tr>
                                             <tr>
                                                 <td>
                                                     <div class="valign">
-                                                        <label for="database_username">MySQL Username</label>
+                                                        <label for="database_username">Database Username</label>
                                                     </div>
                                                 </td>
                                                 <td>
@@ -793,14 +794,14 @@ $storage_path = implode(DIRECTORY_SEPARATOR, array_slice(explode(DIRECTORY_SEPAR
                                             <tr>
                                                 <td>&nbsp;</td>
                                                 <td class="content-small" style="padding-bottom: 15px">
-                                                    The MySQL user with full privileges to each of the databases below.
+                                                    The database user with full privileges to each of the databases below.
                                                 </td>
                                             </tr>
 
                                             <tr>
                                                 <td>
                                                     <div class="valign">
-                                                        <label for="database_password">MySQL Password</label>
+                                                        <label for="database_password">Database Password</label>
                                                     </div>
                                                 </td>
                                                 <td>
@@ -812,7 +813,7 @@ $storage_path = implode(DIRECTORY_SEPARATOR, array_slice(explode(DIRECTORY_SEPAR
                                             <tr>
                                                 <td>&nbsp;</td>
                                                 <td class="content-small" style="padding-bottom: 15px">
-                                                    The password of the MySQL user listed above.
+                                                    The password of the database user listed above.
                                                 </td>
                                             </tr>
                                             <tr>

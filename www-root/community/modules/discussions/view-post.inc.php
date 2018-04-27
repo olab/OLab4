@@ -198,17 +198,17 @@ if ($RECORD_ID) {
 			 */
 			if (($release_date = (int) $topic_record["release_date"]) && ($release_date > time())) {
 				$NOTICE++;
-				$NOTICESTR[] = "This discussion post will not be accessible to others until ".date(DEFAULT_DATE_FORMAT, $release_date)."</strong>.";
+				$NOTICESTR[] = "This discussion post will not be accessible to others until ".date(DEFAULT_DATETIME_FORMAT, $release_date)."</strong>.";
 			} elseif ($release_until = (int) $topic_record["release_until"]) {
 				if ($release_until > time()) {
 					$NOTICE++;
-					$NOTICESTR[] = "This discussion post will be accessible until ".date(DEFAULT_DATE_FORMAT, $release_until)."</strong>.";
+					$NOTICESTR[] = "This discussion post will be accessible until ".date(DEFAULT_DATETIME_FORMAT, $release_until)."</strong>.";
 				} else {
 					/**
 					 * Only administrators or people who wrote the post will get this.
 					 */
 					$NOTICE++;
-					$NOTICESTR[] = "This discussion post was only accessible until ".date(DEFAULT_DATE_FORMAT, $release_until)."</strong> by others.";
+					$NOTICESTR[] = "This discussion post was only accessible until ".date(DEFAULT_DATETIME_FORMAT, $release_until)."</strong> by others.";
 				}
 			}
 
@@ -248,7 +248,7 @@ if ($RECORD_ID) {
                         </td>
 						<td style="border-bottom: none">
 							<div style="float: left">
-								<span class="content-small">Posted: <?php echo date(DEFAULT_DATE_FORMAT, $topic_record["updated_date"]); ?></span>
+								<span class="content-small">Posted: <?php echo date(DEFAULT_DATETIME_FORMAT, $topic_record["updated_date"]); ?></span>
 							</div>
 							<div style="float: right">
 							<?php
@@ -376,7 +376,7 @@ if ($RECORD_ID) {
                             </td>
 							<td style="border-bottom: none">
 								<div style="float: left">
-									<span class="content-small">Replied:<?php echo date(DEFAULT_DATE_FORMAT, $result["updated_date"]); ?></span>
+									<span class="content-small">Replied:<?php echo date(DEFAULT_DATETIME_FORMAT, $result["updated_date"]); ?></span>
 								</div>
 								<div style="float: right">
 								<?php
@@ -393,7 +393,7 @@ if ($RECORD_ID) {
 								echo $result["topic_description"];
 								if ($result["release_date"] != $result["updated_date"]) {
 									echo "<div class=\"content-small\" style=\"margin-top: 15px\">\n";
-									echo "	Last updated:</strong> ".date(DEFAULT_DATE_FORMAT, $result["updated_date"])." by ".(($result["proxy_id"] == $result["updated_by"]) ? html_encode($result["poster_fullname"]) : html_encode(get_account_data("firstlast", $result["updated_by"]))).".";
+									echo "	Last updated:</strong> ".date(DEFAULT_DATETIME_FORMAT, $result["updated_date"])." by ".(($result["proxy_id"] == $result["updated_by"]) ? html_encode($result["poster_fullname"]) : html_encode(get_account_data("firstlast", $result["updated_by"]))).".";
 									echo "</div>\n";
 								}
 							?>

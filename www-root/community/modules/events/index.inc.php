@@ -257,13 +257,13 @@ function setDateValue(field, date) {
 						 */
 					} else {
 						$NOTICE++;
-						$NOTICESTR[]	= "This event was only accessible until <strong>".date(DEFAULT_DATE_FORMAT, $release_until)."</strong>.<br /><br />Please contact your community administrators for further assistance.";
+						$NOTICESTR[]	= "This event was only accessible until <strong>".date(DEFAULT_DATETIME_FORMAT, $release_until)."</strong>.<br /><br />Please contact your community administrators for further assistance.";
 	
 						$allow_to_load	= false;
 					}
 				} else {
 					$NOTICE++;
-					$NOTICESTR[]	= "This event will not be accessible until <strong>".date(DEFAULT_DATE_FORMAT, $release_date)."</strong>.<br /><br />Please check back at this time, thank-you.";
+					$NOTICESTR[]	= "This event will not be accessible until <strong>".date(DEFAULT_DATETIME_FORMAT, $release_date)."</strong>.<br /><br />Please check back at this time, thank-you.";
 	
 					$allow_to_load	= false;
 				}
@@ -278,15 +278,15 @@ function setDateValue(field, date) {
 				 * If there is time release properties, display them to the browsing users.
 				 */
 				if (($release_date = (int) $result["release_date"]) && ($release_date > time())) {
-					add_notice("This event post will not be accessible to others until <strong>".date(DEFAULT_DATE_FORMAT, $release_date)."</strong>.");
+					add_notice("This event post will not be accessible to others until <strong>".date(DEFAULT_DATETIME_FORMAT, $release_date)."</strong>.");
 				} elseif ($release_until = (int) $result["release_until"]) {
 					if ($release_until > time()) {
-						add_notice("This event will be accessible until <strong>".date(DEFAULT_DATE_FORMAT, $release_until)."</strong>.");
+						add_notice("This event will be accessible until <strong>".date(DEFAULT_DATETIME_FORMAT, $release_until)."</strong>.");
 					} else {
 						/**
 						 * Only administrators or people who wrote the post will get this.
 						 */
-						add_notice("This event was only accessible until <strong>".date(DEFAULT_DATE_FORMAT, $release_until)."</strong> by others.");
+						add_notice("This event was only accessible until <strong>".date(DEFAULT_DATETIME_FORMAT, $release_until)."</strong> by others.");
 					}
 				}
 	
@@ -297,14 +297,14 @@ function setDateValue(field, date) {
 				echo "<div id=\"event-".(int) $result["cevent_id"]."\" class=\"event calendar\">\n";
 				echo "	<a name=\"event-".(int) $result["cevent_id"]."\"></a>\n";
 				echo "	<h2 id=\"event-".(int) $result["cevent_id"]."-title\">".html_encode($result["event_title"])."</h2>\n";
-				echo "	<div class=\"tagline\">\n";
+				echo "	<div class=\"tagline muted\">\n";
 				echo "		Released ".date("F dS, Y", $result["release_date"])." by <strong>".html_encode($result["fullname"])."</strong>";
 				echo 		((communities_module_access($COMMUNITY_ID, $MODULE_ID, "edit")) ? " (<a class=\"action\" href=\"".COMMUNITY_URL.$COMMUNITY_URL.":".$PAGE_URL."?section=edit&amp;id=".$result["cevent_id"]."\">edit</a>)" : "");
 				echo 		((communities_module_access($COMMUNITY_ID, $MODULE_ID, "delete")) ? " (<a class=\"action\" href=\"javascript:eventDelete('".$result["cevent_id"]."')\">delete</a>)" : "");
 				echo "	</div>\n";
 				echo 	(isset($result["event_location"]) && trim($result["event_location"]) != "" ? "<strong>Location:</strong> ".html_encode($result["event_location"])."<br />" : "");
-				echo "	<strong>From:</strong> ".date(DEFAULT_DATE_FORMAT, $result["event_start"]) . "<br />";
-				echo "	<strong>Until:</strong> ".date(DEFAULT_DATE_FORMAT, $result["event_finish"]);
+				echo "	<strong>" . $translate->_("Starting") . "</strong>: " . date(DEFAULT_DATETIME_FORMAT, $result["event_start"]) . "<br />";
+				echo "	<strong>" . $translate->_("Ending") . "</strong>: ".date(DEFAULT_DATETIME_FORMAT, $result["event_finish"]);
 				echo "	<p class=\"space-above\">" . strip_tags($result["event_description"], $ALLOWED_HTML_TAGS) . "</p>";
 				echo "</div>";
 
@@ -383,15 +383,10 @@ function setDateValue(field, date) {
 			echo "	<col style=\"width: 80%\" />\n";
 			echo "</colgroup>\n";
 			echo "<tbody>\n";
-			echo "<tr>\n";
-			echo "	<td style=\"vertical-align: top\">";
-			
+
 			foreach ($results as $key => $result) {
 				if (($last_date < strtotime("00:00:00", $result["event_start"])) || ($last_date > strtotime("23:59:59", $result["event_start"]))) {
 					$last_date = $result["event_start"];
-
-					echo "	</td>\n";
-					echo "</tr>\n";
 
 					echo "<tr>\n";
 					echo "	<td style=\"vertical-align: top\">";
@@ -406,21 +401,23 @@ function setDateValue(field, date) {
 					echo "	<td style=\"vertical-align: top\">";
 				}
 
+				echo "<div class=\"pull-right\">";
+                echo 		((communities_module_access($COMMUNITY_ID, $MODULE_ID, "edit")) ? "<a class=\"btn btn-mini space-right\" href=\"".COMMUNITY_URL.$COMMUNITY_URL.":".$PAGE_URL."?section=edit&amp;id=".$result["cevent_id"]."\">Edit</a>" : "");
+                echo 		((communities_module_access($COMMUNITY_ID, $MODULE_ID, "delete")) ? "<a class=\"btn btn-mini\" href=\"javascript:eventDelete('".$result["cevent_id"]."')\">Delete</a>" : "");
+                echo "</div>";
 				echo "		<a href=\"".COMMUNITY_RELATIVE.$COMMUNITY_URL.":".$PAGE_URL."?id=".$result["cevent_id"]."\" id=\"event-".$result["cevent_id"]."-title\" class=\"event-title\">".html_encode($result["event_title"])."</a>\n";
 
 				echo "		<div class=\"tagline\">";
 				if (strtotime("00:00:00", $result["event_start"]) != strtotime("00:00:00", $result["event_finish"])) {
-					echo date(DEFAULT_DATE_FORMAT, $result["event_start"]) . " to " . date(DEFAULT_DATE_FORMAT, $result["event_finish"]);
+					echo date(DEFAULT_DATETIME_FORMAT, $result["event_start"]) . " to " . date(DEFAULT_DATETIME_FORMAT, $result["event_finish"]);
 				} else {
-					echo date("H:i", $result["event_start"])." - ".date("H:i", $result["event_finish"]);
+					echo date(DEFAULT_TIME_FORMAT, $result["event_start"])." - ".date(DEFAULT_TIME_FORMAT, $result["event_finish"]);
 				}
 				echo "<br />";
 
 				if (isset($result["event_location"]) && trim($result["event_location"]) != "") {
-					echo "Location: " . $result["event_location"];
+					echo "Location: " . html_encode($result["event_location"]) . "<br />";
 				}
-				echo 		((communities_module_access($COMMUNITY_ID, $MODULE_ID, "edit")) ? " (<a class=\"action\" href=\"".COMMUNITY_URL.$COMMUNITY_URL.":".$PAGE_URL."?section=edit&amp;id=".$result["cevent_id"]."\">edit</a>)" : "");
-				echo 		((communities_module_access($COMMUNITY_ID, $MODULE_ID, "delete")) ? " (<a class=\"action\" href=\"javascript:eventDelete('".$result["cevent_id"]."')\">delete</a>)" : "");
 				echo "		</div>";
 
 				echo "		<div>".limit_chars(strip_tags(str_replace("<br />", " ", $result["event_description"])), 150)."</div>";
@@ -435,7 +432,7 @@ function setDateValue(field, date) {
 			}
 		} else {
 			$NOTICE++;
-			$NOTICESTR[] = "<strong>No Events Available</strong><br />There are no calendar events on this page that take place from <strong>".date(DEFAULT_DATE_FORMAT, $display_duration["start"])."</strong> until <strong>".date(DEFAULT_DATE_FORMAT, $display_duration["end"])."</strong>.<br /><br />You may want to view a different ".$_SESSION[APPLICATION_IDENTIFIER][$MODULE]["dtype"]." or check back later.";
+			$NOTICESTR[] = "<strong>No Events Available</strong><br />There are no calendar events on this page that take place from <strong>".date(DEFAULT_DATETIME_FORMAT, $display_duration["start"])."</strong> until <strong>".date(DEFAULT_DATETIME_FORMAT, $display_duration["end"])."</strong>.<br /><br />You may want to view a different ".$_SESSION[APPLICATION_IDENTIFIER][$MODULE]["dtype"]." or check back later.";
 
 			echo display_notice();
 		}

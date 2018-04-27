@@ -47,6 +47,14 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ITEMS"))) {
         $PROCESSED["rubric_id"] = $tmp_input;
     }
 
+    if (isset($_GET["course_id"]) && $tmp_input = clean_input($_GET["course_id"], "int")) {
+        $PROCESSED["course_id"] = $tmp_input;
+    } elseif (isset($_POST["course_id"]) && $tmp_input = clean_input($_POST["course_id"], "int")) {
+        $PROCESSED["course_id"] = $tmp_input;
+    } else {
+        $PROCESSED["course_id"] = null;
+    }
+
     if (!empty($rubric_referrer_data)) {
         // A referrer link was given, it describes the width and item types allowed for this item listing
         $PROCESSED["rubric_width"] = $rubric_referrer_data["width"];
@@ -55,7 +63,11 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ITEMS"))) {
     }
 
     $assessment_evaluation_tabs = new Views_Assessments_Dashboard_NavigationTabs();
-    $assessment_evaluation_tabs->render(array("active" => "items"));
+    $assessment_evaluation_tabs->render(array(
+        "active" => "items",
+        "group" => $ENTRADA_USER->getActiveGroup(),
+        "role" => $ENTRADA_USER->getActiveRole()
+    ));
 
     $exclude_tabs = array();
     if (!empty($form_referrer_data)) {
@@ -69,6 +81,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ITEMS"))) {
 
     $HEAD[] = "<script>var ENTRADA_URL = \"". ENTRADA_URL ."\";</script>";
     $HEAD[] = "<script>var VIEW_PREFERENCE = \"". (isset($PREFERENCES["items"]["selected_view"]) ? $PREFERENCES["items"]["selected_view"] : "detail") ."\";</script>";
+
     $HEAD[] = "<script src=\"".  ENTRADA_URL ."/javascript/assessments/items/items.js?release=" . html_encode(APPLICATION_VERSION) . "\"></script>";
     $HEAD[] = "<script src=\"".  ENTRADA_URL ."/javascript/jquery/jquery.dataTables.min.js?release=". html_encode(APPLICATION_VERSION) ."\"></script>";
     $HEAD[] = "<script src=\"".  ENTRADA_URL ."/javascript/jquery/jquery.advancedsearch.js\"></script>";
@@ -102,6 +115,8 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ITEMS"))) {
     }
     ?>
     <script type="text/javascript">
+        var items_localization = {};
+        items_localization.load_more_template = "<?php echo $translate->_("Showing %%current_total_items%% of %%total_items%% total items") ?>";
         jQuery(function($) {
             $("#advanced-search").advancedSearch(
                 {
@@ -133,6 +148,15 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ITEMS"))) {
     </script>
     <h1><?php echo $translate->_("Items"); ?></h1>
     <?php
+    if ($PROCESSED["rref"]
+        && isset($_SESSION[APPLICATION_IDENTIFIER][$MODULE][$SUBMODULE]["selected_filters"])
+        && !empty($_SESSION[APPLICATION_IDENTIFIER][$MODULE][$SUBMODULE]["selected_filters"])
+    ) {
+        add_notice($translate->_("<strong>Please Note:</strong> You have filters set that may affect the search results."));
+    }
+    if ($NOTICE) {
+        echo display_notice();
+    }
 
     // Some ids were posted, so let's attach them to the given context.
     switch ($STEP) {
@@ -146,14 +170,20 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ITEMS"))) {
                 $STEP = 1;
             }
 
+            $successes = 0;
             $form_referrer_url = $rubric_referrer_url = null;
 
-            if ($PROCESSED["rref"] && !empty($rubric_referrer_data) && $PROCESSED["fref"] && !empty($form_referrer_data)) {
-                // Both rubric and form must be updated; use the rubric ID to save the form element
-
+            if ($PROCESSED["rref"]
+                && !empty($rubric_referrer_data)
+                && $PROCESSED["fref"]
+                && !empty($form_referrer_data)
+            ) {
+                /**
+                 * Both rubric and form must be updated; use the rubric ID to save the form element
+                 */
                 $rubric_referrer_url = $rubric_referrer_data["referrer_url"];
-                $success = $forms_api->attachItemsToRubric($rubric_referrer_data["rubric_id"], $PROCESSED["items"]);
-                if ($success != count($PROCESSED["items"])) { // Some weren't added, notify the user.
+                $successes = $forms_api->attachItemsToRubric($rubric_referrer_data["rubric_id"], $PROCESSED["items"]);
+                if ($successes != count($PROCESSED["items"])) { // Some weren't added, notify the user.
                     foreach ($forms_api->getErrorMessages() as $error_msg){
                         if (!in_array($error_msg, $ERRORSTR)) {
                             add_error($error_msg);
@@ -161,10 +191,9 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ITEMS"))) {
                     }
                     $ERROR++;
                 }
-
                 $form_referrer_url = $form_referrer_data["referrer_url"];
-                $success = $forms_api->attachItemsToForm($form_referrer_data["form_id"], $PROCESSED["items"], $rubric_referrer_data["rubric_id"]);
-                if ($success != count($PROCESSED["items"])) { // Some weren't added, notify the user.
+                $successes = $forms_api->attachItemsToForm($form_referrer_data["form_id"], $PROCESSED["items"], $rubric_referrer_data["rubric_id"]);
+                if ($successes != count($PROCESSED["items"])) { // Some weren't added, notify the user.
                     foreach ($forms_api->getErrorMessages() as $error_msg){
                         if (!in_array($error_msg, $ERRORSTR)) {
                             add_error($error_msg);
@@ -174,12 +203,16 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ITEMS"))) {
                 }
 
             } else {
-                // Add or or the other individually.
 
-                if ($PROCESSED["rref"] && !empty($rubric_referrer_data)) {
+                /**
+                 * Update the form or rubric individually.
+                 */
+                if ($PROCESSED["rref"]
+                    && !empty($rubric_referrer_data)
+                ) {
                     $rubric_referrer_url = $rubric_referrer_data["referrer_url"];
-                    $success = $forms_api->attachItemsToRubric($rubric_referrer_data["rubric_id"], $PROCESSED["items"]);
-                    if ($success != count($PROCESSED["items"])) { // Some weren't added, notify the user.
+                    $successes = $forms_api->attachItemsToRubric($rubric_referrer_data["rubric_id"], $PROCESSED["items"]);
+                    if ($successes != count($PROCESSED["items"])) { // Some weren't added, notify the user.
                         foreach ($forms_api->getErrorMessages() as $error_msg){
                             if (!in_array($error_msg, $ERRORSTR)) {
                                 add_error($error_msg);
@@ -187,12 +220,13 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ITEMS"))) {
                         }
                         $ERROR++;
                     }
-
                 }
-                if ($PROCESSED["fref"] && !empty($form_referrer_data)) {
+                if ($PROCESSED["fref"]
+                    && !empty($form_referrer_data)
+                ) {
                     $form_referrer_url = $form_referrer_data["referrer_url"];
-                    $success = $forms_api->attachItemsToForm($form_referrer_data["form_id"], $PROCESSED["items"]);
-                    if ($success != count($PROCESSED["items"])) { // Some weren't added, notify the user.
+                    $successes = $forms_api->attachItemsToForm($form_referrer_data["form_id"], $PROCESSED["items"]);
+                    if ($successes != count($PROCESSED["items"])) { // Some weren't added, notify the user.
                         foreach ($forms_api->getErrorMessages() as $error_msg){
                             if (!in_array($error_msg, $ERRORSTR)) {
                                 add_error($error_msg);
@@ -200,6 +234,16 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ITEMS"))) {
                         }
                         $ERROR++;
                     }
+                }
+            }
+
+            if ($successes === 0) {
+                add_error($translate->_("No items were attached."));
+            } else {
+                if ($PROCESSED["rref"]) {
+                    add_success(sprintf($translate->_("Successfully added <strong>%d</strong> items to the rubric."), $successes));
+                } else if ($PROCESSED["fref"]) {
+                    add_success(sprintf($translate->_("Successfully added <strong>%d</strong> items to the form."), $successes));
                 }
             }
 
@@ -212,18 +256,16 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ITEMS"))) {
                 }
                 $referrer_url = Entrada_Utilities_FormStorageSessionHelper::buildRefURL($referrer_url, $PROCESSED["fref"], $PROCESSED["rref"]);
                 if ($PROCESSED["rref"]) {
-                    Entrada_Utilities_Flashmessenger::addMessage(sprintf($translate->_("Successfully added <strong>%d</strong> items to the rubric."), $success), "success", $MODULE);
+                    Entrada_Utilities_Flashmessenger::addMessage(sprintf($translate->_("Successfully added <strong>%d</strong> items to the rubric."), $successes), "success", $MODULE);
                 } else if ($PROCESSED["fref"]) {
-                    Entrada_Utilities_Flashmessenger::addMessage(sprintf($translate->_("Successfully added <strong>%d</strong> items to the form."), $success), "success", $MODULE);
+                    Entrada_Utilities_Flashmessenger::addMessage(sprintf($translate->_("Successfully added <strong>%d</strong> items to the form."), $successes), "success", $MODULE);
                 }
-
                 header("Location: ". $referrer_url);
             } else {
                 $STEP = 1;
             }
 
-            
-        break;
+            break;
     }
 
     if ($ERROR) {
@@ -244,7 +286,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ITEMS"))) {
             break;
         case 1 :
         default :
-        ?>
+            ?>
             <div id="msgs"></div>
             <div id="assessment-items-container">
                 <?php $forms_search_form_action_url = Entrada_Utilities_FormStorageSessionHelper::buildRefURL(ENTRADA_URL."/admin/assessments/items?step=2", $PROCESSED["fref"], $PROCESSED["rref"]); ?>
@@ -266,14 +308,14 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ITEMS"))) {
                                     <a href="#" data-view="detail" id="detail-view" class="btn view-toggle" title="<?php echo $translate->_("Toggle Item Detail View"); ?>"><i class="icon-th-large"></i></a>
                                 </div>
                                 <?php
-                                    $back_button = new Views_Assessments_Forms_Controls_BackToReferrerButton();
-                                    $back_button->render(
-                                        array(
-                                            "referrer_url" => Entrada_Utilities_FormStorageSessionHelper::determineReferrerURI($PROCESSED["fref"], $PROCESSED["rref"]),
-                                            "referrer_type" => Entrada_Utilities_FormStorageSessionHelper::determineReferrerType($PROCESSED["fref"], $PROCESSED["rref"]),
-                                            "css_classes" => "pull-right"
-                                        )
-                                    );
+                                $back_button = new Views_Assessments_Forms_Controls_BackToReferrerButton();
+                                $back_button->render(
+                                    array(
+                                        "referrer_url" => Entrada_Utilities_FormStorageSessionHelper::determineReferrerURI($PROCESSED["fref"], $PROCESSED["rref"]),
+                                        "referrer_type" => Entrada_Utilities_FormStorageSessionHelper::determineReferrerType($PROCESSED["fref"], $PROCESSED["rref"]),
+                                        "css_classes" => "pull-right"
+                                    )
+                                );
                                 ?>
                             </div>
 
@@ -281,7 +323,12 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ITEMS"))) {
                                 <a href="#delete-item-modal" data-toggle="modal" class="btn btn-danger space-right pull-left"><i class="icon-minus-sign icon-white"></i> <?php echo $translate->_("Delete Items"); ?></a>
                                 <?php if (!empty($form_referrer_data) || !empty($rubric_referrer_data)): ?>
                                     <input id="attach-selected-item-btn" type="submit" class="btn btn-success space-left pull-right" value="<?php echo $translate->_("Attach Selected"); ?>" />
-                                    <?php $attach_items_link = Entrada_Utilities_FormStorageSessionHelper::buildRefURL(ENTRADA_URL."/admin/assessments/items?section=add-item", $PROCESSED["fref"], $PROCESSED["rref"]); ?>
+                                    <?php
+                                    $attach_items_link = Entrada_Utilities_FormStorageSessionHelper::buildRefURL(ENTRADA_URL."/admin/assessments/items?section=add-item", $PROCESSED["fref"], $PROCESSED["rref"]);
+                                    if ($PROCESSED["course_id"]) {
+                                        $attach_items_link .= "&course_id=" . $PROCESSED["course_id"];
+                                    }
+                                    ?>
                                     <a class="btn btn-success space-left pull-right" href="<?php echo $attach_items_link; ?>"><i class="icon-plus-sign icon-white"></i> <?php echo $translate->_("Create & Attach a New Item"); ?></a>
                                 <?php else: ?>
                                     <a href="<?php echo ENTRADA_URL; ?>/admin/assessments/items?section=add-item" class="btn btn-success space-left pull-right"><i class="icon-plus-sign icon-white"></i> <?php echo $translate->_("Add A New Item"); ?></a>

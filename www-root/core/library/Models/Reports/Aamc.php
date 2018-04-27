@@ -10,13 +10,8 @@
  *
  */
 
-//function tmp_display_utsw_name($string) {
-//    if (strstr($string, " ")) {
-//        return trim(substr($string, 0, strpos($string, " ")));
-//    } else {
-//        return trim($string);
-//    }
-//}
+use Carbon\Carbon;
+use Carbon\CarbonInterval;
 
 class Models_Reports_Aamc {
 
@@ -131,7 +126,6 @@ class Models_Reports_Aamc {
     /**
      * @var array
      */
-    protected $rotations = array();
 
     public function __construct($org_id = 0) {
         global $ACTIVE_ORG;
@@ -169,6 +163,15 @@ class Models_Reports_Aamc {
 
     public function setLearners($learners = array()) {
         $this->learners = $learners;
+    }
+
+    //Duration for sequences. Must be number of weekdays between the start and end dates.
+    public function sequenceDuration($startDate, $endDate)
+    {
+        $start = Carbon::instance($startDate);
+        $end = Carbon::instance($endDate);
+        $days = $start->diffInWeekDays($end);
+        return CarbonInterval::create(NULL, NULL, NULL, $days)->spec();
     }
 
     private function getEvents($proxy_id = 0) {
@@ -214,22 +217,20 @@ class Models_Reports_Aamc {
                                     $this->courses[$event["course_id"]] = array(
                                         "curriculum_type_id" => $event["curriculum_type_id"],
                                         "is_clerkship" => false,
-                                        "rotation_ids" => array()
+                                        "rotation_ids" => array(),
+                                        "rotation_duration" => 0
                                     );
                                 }
 
                                 $query = "SELECT *
                                             FROM `" . CLERKSHIP_DATABASE . "`.`global_lu_rotations`
                                             WHERE `course_id` = ?";
+
                                 $rotations = $db->GetAll($query, array($event["course_id"]));
                                 if ($rotations) {
                                     foreach ($rotations as $rotation) {
                                         $this->courses[$event["course_id"]]["is_clerkship"] = true;
                                         $this->courses[$event["course_id"]]["rotation_ids"][] = $rotation["rotation_id"];
-
-                                        if (!array_key_exists($rotation["rotation_id"], $this->rotations)) {
-                                            $this->rotations[$rotation["rotation_id"]] = $rotation;
-                                        }
                                     }
                                 }
                             }
@@ -241,52 +242,6 @@ class Models_Reports_Aamc {
                             $this->events[$event["curriculum_type_id"]][$event["course_id"]][$event["event_id"]] = $event;
                         } else {
                             $this->courses_excluded[] = $event["course_id"];
-                        }
-                    }
-
-                    if (is_array($this->courses) && !empty($this->courses)) {
-                        foreach ($this->courses as $course_id => $course) {
-                            if (isset($course["is_clerkship"]) && (bool)$course["is_clerkship"] && isset($course["rotation_ids"]) && is_array($course["rotation_ids"]) && !empty($course["rotation_ids"])) {
-                                // @todo This is being disabled for now as Clerkship clinical events may not need to be included in this report.
-                                //                            $query = "SELECT a.*
-                                //                                        FROM `".CLERKSHIP_DATABASE."`.`events` AS a
-                                //                                        JOIN `".CLERKSHIP_DATABASE."`.`event_contacts` AS b
-                                //                                        ON b.`event_id` = a.`event_id`
-                                //                                        AND b.`econtact_type` = 'student'
-                                //                                        AND b.`etype_id` = ".$db->qstr($proxy_id)."
-                                //                                        WHERE a.`rotation_id` IN (".implode(", ", $course["rotation_ids"]).")";
-                                //                            $events = $db->GetAll($query);
-                                //                            if ($events) {
-                                //                                foreach ($events as $event) {
-                                //                                    $this->events[$course["curriculum_type_id"]][$course_id]["C".$event["event_id"]] = array(
-                                //                                        "respect_time_release" => 0,
-                                //                                        "event_id" => "C".$event["event_id"],
-                                //                                        "course_id" => $course_id,
-                                //                                        "parent_id" => 0,
-                                //                                        "event_title" => $this->rotations[$event["rotation_id"]]["rotation_title"],
-                                //                                        "event_description" => "",
-                                //                                        "event_duration" => (($event["event_finish"] - $event["event_start"]) / 60), // Minutes
-                                //                                        "event_message" => "",
-                                //                                        "event_location" => "",
-                                //                                        "event_start" => $event["event_start"],
-                                //                                        "event_finish" => $event["event_finish"],
-                                //                                        "release_date" => $event["accessible_start"],
-                                //                                        "release_until" => $event["accessible_finish"],
-                                //                                        "updated_date" => $event["modified_last"],
-                                //                                        "objectives_release_date" => 0,
-                                //                                        "audience_type" => "proxy_id",
-                                //                                        "organisation_id" => $this->org_id,
-                                //                                        "course_code" => "",
-                                //                                        "course_name" => "",
-                                //                                        "permission" => "closed",
-                                //                                        "curriculum_type_id" => $course["curriculum_type_id"],
-                                //                                        "event_phase" => "",
-                                //                                        "event_term" => "",
-                                //                                        "fullname" => ""
-                                //                                    );
-                                //                                }
-                                //                            }
-                            }
                         }
                     }
                 }
@@ -370,7 +325,7 @@ class Models_Reports_Aamc {
                             if ($eventtypes) {
                                 foreach ($eventtypes as $eventtype) {
                                     if (!isset($eventtype["code"]) || !$eventtype["code"]) {
-                                        $eventtype["code"] = $this->fallback_instructional_method;
+                                        $eventtype["code"] = NULL;
                                     }
 
                                     $event_segments[] = $eventtype;
@@ -497,12 +452,15 @@ class Models_Reports_Aamc {
                                 /*
                                  * InstructionalMethod
                                  */
+                                if (!is_null($event_segment["code"]))
+                                {
                                 $output["Event"][$event_id]["InstructionalMethod"][] = array(
                                     "@attributes" => array(
                                         "primary" => "true",
                                     ),
                                     "@value" => $event_segment["code"],
                                 );
+                                }
 
                                 // If this is classified as an "Assessment" Learning Event Type, mark it as such.
                                 if (isset($event_segment["eventtype_id"]) && $event_segment["eventtype_id"] && in_array($event_segment["eventtype_id"], $this->assessment_method_eventtype_ids)) {
@@ -567,7 +525,7 @@ class Models_Reports_Aamc {
                                     unset($output["Event"][$event_id]["CompetencyObjectReference"]);
                                 }
 
-                                if ($is_assessment || empty($output["Event"][$event_id]["InstructionalMethod"])) {
+                                if (empty($output["Event"][$event_id]["InstructionalMethod"])) {
                                     unset($output["Event"][$event_id]["InstructionalMethod"]);
                                 }
 
@@ -860,6 +818,7 @@ class Models_Reports_Aamc {
                             JOIN `global_lu_objectives` AS b
                             ON b.`objective_id` = a.`objective_id`
                             WHERE a.`course_id` = ".$db->qstr($course_id)."
+                            AND b.`objective_active` = 1
                             ORDER BY b.`objective_name` ASC;";
                 $objectives = $db->GetAll($query);
                 if ($objectives) {
@@ -922,6 +881,10 @@ class Models_Reports_Aamc {
                     );
 
                     foreach ($objectives as $objective) {
+                        if (empty($objective["objective_description"]))
+                        {
+                            continue;
+                        }
                         $objective["mapped_to"] = array();
                         $objective["mapped_from"] = array();
                         
@@ -1025,7 +988,6 @@ class Models_Reports_Aamc {
                                 ),
                             ),
                         );
-                    //}
                 }
             }
 
@@ -1140,13 +1102,14 @@ class Models_Reports_Aamc {
         global $db;
 
         if (!isset($this->academic_levels) || !is_array($this->academic_levels) || empty($this->academic_levels)) {
+            //Query requires limiting to 10 because AAMC schema specifies a max of 10 levels.
             $query = "SELECT a.`curriculum_type_id`, a.`curriculum_type_name`, a.`curriculum_type_description`
                         FROM `curriculum_lu_types` AS a
                         JOIN `curriculum_type_organisation` AS b
                         ON b.`curriculum_type_id` = a.`curriculum_type_id`
                         AND b.`organisation_id` = ".$db->qstr($this->org_id)."
                         WHERE a.`curriculum_type_id` IN (".implode(", ", $this->curriculum_type_ids).")
-                        ORDER BY a.`curriculum_type_order` ASC";
+                        ORDER BY a.`curriculum_type_order` ASC LIMIT 10";
             $results = $db->GetAll($query);
             if ($results) {
                 foreach ($results as $order => $result) {
@@ -1171,6 +1134,8 @@ class Models_Reports_Aamc {
                     "@attributes" => array(
                         "number" => $number
                     ),
+                    //According to the Schema, there's no limit on number of
+                    //characters.  However, the AAMC validator does limit this.
                     "Label" => trim(substr($level["curriculum_type_name"], 0, 10)),
                     "Description" => ($level["curriculum_type_description"] ? clean_input($level["curriculum_type_description"], array("striptags", "decode", "trim")) : "Not Available")
                 );
@@ -1183,22 +1148,29 @@ class Models_Reports_Aamc {
     public function fetchSequence() {
         global $db;
 
+        if (!isset($this->report) || empty($this->report)) {
+            throw new Exception("The report information needs to be set prior to requesting events for the report.");
+        }
+
         $output = array();
 
         $academic_levels = $this->getAcademicLevels();
         if ($academic_levels) {
 
             $output["SequenceBlock"] = array();
-
             foreach ($academic_levels as $number => $level) {
-                $query = "SELECT a.*, b.`rotation_id`
+                $query = "SELECT a.*, b.`rotation_id`, DATE(FROM_UNIXTIME(cp.`start_date`)) as `clerkship_period_start`, 
+                            DATE(FROM_UNIXTIME(cp.`finish_date`)) as `clerkship_period_finish`
                             FROM `courses` AS a
                             LEFT JOIN `".CLERKSHIP_DATABASE."`.`global_lu_rotations` AS b
                             ON b.`course_id` = a.`course_id`
+                            LEFT JOIN `curriculum_periods` as cp
+                            ON a.`curriculum_type_id` = cp.`curriculum_type_id` AND
+                               (cp.start_date >= ? AND cp.finish_date <= ?)
                             WHERE a.`organisation_id` = ?
                             AND a.`curriculum_type_id` = ?
                             AND a.`course_id` IN (".implode(", ", $this->course_ids).")";
-                $courses = $db->GetAll($query, array($this->org_id, $level["curriculum_type_id"]));
+                $courses = $db->GetAll($query, array($this->report["collection_start"], $this->report["collection_finish"],  $this->org_id, $level["curriculum_type_id"]));
                 if ($courses) {
                     foreach ($courses as $course) {
                         $course_id = $course["course_id"];
@@ -1208,9 +1180,19 @@ class Models_Reports_Aamc {
                         $course_duration = 0;
                         $course_start_date = 0;
                         $course_end_date = 0;
+                        $clerkship_period_start = "";
+                        $clerkship_period_finish = "";
 
                         if (isset($course["rotation_id"]) && (int) $course["rotation_id"]) {
                             $is_clerkship = true;
+                            if (!empty($course["clerkship_period_start"]))
+                            {
+                                $clerkship_period_start = $course["clerkship_period_start"];
+                            }
+                            if (!empty($course["clerkship_period_finish"]))
+                            {
+                                $clerkship_period_finish = $course["clerkship_period_finish"];
+                            }
                         } else {
                             $is_clerkship = false;
                         }
@@ -1237,12 +1219,21 @@ class Models_Reports_Aamc {
                                     $course_end_date = $event["event_finish"];
                                 }
                             }
-
-                            /**
-                             * Calculate the course duration in days.
-                             */
-                            $course_duration = ceil(($course_end_date - $course_start_date) / 60 / 60 / 24);
                         }
+                        if ($is_clerkship) {
+                            if (!empty($this->courses[$course_id]["rotation_ids"])) {
+                               $date_query = "SELECT min(event_start) as start, max(event_finish) as finish FROM `".CLERKSHIP_DATABASE."`.`events` where rotation_id in (".implode(", ", $this->courses[$course_id]["rotation_ids"]).")"; 
+                               $dates = $db->GetAll($date_query);
+                               // There should just be one row. But I don't know how to get just a row.
+                               if ($dates) {
+                                  foreach ($dates as $date) {
+                                      $course_start_date = $date["start"];
+                                      $course_end_date = $date["finish"];
+                                  }
+                               }
+                            }
+                        }
+                        $course_duration = $this->sequenceDuration(Carbon::createFromTimestamp($course_start_date), Carbon::createFromTimestamp($course_end_date));
 
                         $output["SequenceBlock"][$course_id] = array(
                             "@attributes" => array(
@@ -1254,10 +1245,10 @@ class Models_Reports_Aamc {
                             "Title" => $course["course_code"] . ": " . $course["course_name"],
                             "Description" => ($description ? $description : "No description provided."),
                             "Timing" => array(
-                                "Duration" => "P".$course_duration."D",
+                                "Duration" => $course_duration,
                                 "Dates" => array(
-                                    "StartDate" => date("Y-m-d", $course_start_date),
-                                    "EndDate" => date("Y-m-d", $course_end_date)
+                                    "StartDate" => Carbon::createFromTimestamp($course_start_date)->toDateString(),
+                                    "EndDate" => Carbon::createFromTimestamp($course_end_date)->toDateString()
                                 ),
                             ),
                             "Level" => "/CurriculumInventory/AcademicLevels/Level[@number='".$number."']",
@@ -1268,6 +1259,10 @@ class Models_Reports_Aamc {
                          */
                         if ($is_clerkship) {
                             $output["SequenceBlock"][$course_id]["ClerkshipModel"] = "rotation";
+                            $output["SequenceBlock"][$course_id]["Timing"]["Dates"] = array (
+                                   "StartDate" => $clerkship_period_start,
+                                   "EndDate" => $clerkship_period_finish
+                            );
                         }
 
                         /*

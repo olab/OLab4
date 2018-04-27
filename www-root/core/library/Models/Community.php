@@ -32,6 +32,7 @@ class Models_Community extends Models_Base {
         $updated_date, $updated_by, $community_twitter_handle, $community_twitter_hashtags;
 
     protected static $table_name = "communities";
+    protected static $primary_key = "community_id";
     protected static $default_sort_column = "community_title";
 
     public function __construct($arr = NULL) {
@@ -110,6 +111,32 @@ class Models_Community extends Models_Base {
         ));
     }
 
+    public static function fetchAllByProxyID() {
+        global $ENTRADA_USER, $db;
+
+        $communities = false;
+
+        $query = "SELECT b.*
+					FROM `community_members` AS a
+					LEFT JOIN `communities` AS b
+					ON b.`community_id` = a.`community_id`
+					WHERE a.`proxy_id` = ?
+					AND a.`member_active` = '1'
+					AND b.`community_active` = '1'
+					AND b.`community_template` <> 'course'
+					ORDER BY b.`community_title` ASC";
+
+        $results = $db->GetAll($query, $ENTRADA_USER->getActiveId());
+        if ($results) {
+            foreach ($results as $result) {
+                $community = new self($result);
+                $communities[] = $community;
+            }
+        }
+
+        return $communities;
+    }
+
     public function getCurrentUserCommunitiesTwitterDetails()
     {
         global $ENTRADA_USER, $db;
@@ -127,5 +154,37 @@ class Models_Community extends Models_Base {
         $results = $db->getAll($query);
 
         return $results;
+    }
+
+    /*
+     * Communities Sidebar
+     *
+     */
+
+    public static function showSidebar($returnHtml = NULL) {
+        global $translate, $ENTRADA_USER;
+
+        $communities = self::fetchAllByProxyID();
+        $visible_communities = 10;
+        if ($communities) {
+            $sidebar_html = "<input type=\"text\" class=\"space-above span12 search-icon\" id=\"communities_search_value\" name=\"communities_search_value\" placeholder=\"Search Communities\">";
+            $sidebar_html .= "<ul class=\"menu\">\n";
+            $size = count($communities);
+            foreach ($communities as $key => $community) {
+                    $sidebar_html .= "<li class=\"community " . ($key >= $visible_communities ? "hidden" : "") . "\"><a href=\"".ENTRADA_RELATIVE."/community".$community->getURL() ."\">".html_encode($community->getTitle())."</a></li>\n";
+            }
+            $sidebar_html .= "</ul>\n";
+            if ($size > $visible_communities) {
+                $sidebar_html .= "<a class=\"btn btn-link btn-block show-more\" id=\"btn-show-more-collapsible\">Show more</a>";
+            }
+
+            if ($returnHtml == true) {
+                return $sidebar_html;
+            } else {
+                new_sidebar_item("My Communities", $sidebar_html, "my-communities", "open");
+            }
+        } else {
+            return false;
+        }
     }
 }

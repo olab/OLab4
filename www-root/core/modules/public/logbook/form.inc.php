@@ -39,7 +39,13 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ENCOUNTER_TRACKING"))) {
 
 	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] does not have access to this module [".$MODULE."]");
 } else {
-	if ((defined("IN_ENCOUNTER_TRACKING") && IN_ENCOUNTER_TRACKING) && ((defined("EDIT_ENTRY") && EDIT_ENTRY) || (defined("ADD_ENTRY") && ADD_ENTRY))) {
+    $HEAD[] 		= "<link href=\"".ENTRADA_URL."/javascript/calendar/css/xc2_default.css\" rel=\"stylesheet\" type=\"text/css\" media=\"all\" />";
+    $HEAD[] 		= "<script type=\"text/javascript\" src=\"".ENTRADA_URL."/javascript/calendar/config/xc2_default.js\"></script>\n";
+    $HEAD[] 		= "<script type=\"text/javascript\" src=\"".ENTRADA_URL."/javascript/calendar/script/xc2_inpage.js\"></script>\n";
+    $HEAD[]			= "<script type=\"text/javascript\" src=\"".ENTRADA_URL."/javascript/picklist.js\"></script>\n";
+    $HEAD[]         = "<script type=\"text/javascript\" src=\"" . ENTRADA_URL . "/javascript/jquery/jquery.timepicker.js?release=" . html_encode(APPLICATION_VERSION) . "\"></script>";
+
+    if ((defined("IN_ENCOUNTER_TRACKING") && IN_ENCOUNTER_TRACKING) && ((defined("EDIT_ENTRY") && EDIT_ENTRY) || (defined("ADD_ENTRY") && ADD_ENTRY))) {
 		
         $logbook = new Models_Logbook();
         
@@ -63,11 +69,23 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ENCOUNTER_TRACKING"))) {
 					$PROCESSED["lentry_id"] = $entry_id;
 				}
 		
-                $encounter_date = validate_calendar("", "encounter", true);	
-                if ((isset($encounter_date)) && ((int) $encounter_date)) {
-                    $PROCESSED["encounter_date"]	= (int) $encounter_date;
+                if ((isset($_POST["encounter_date"])) && ($encounter_date = clean_input($_POST["encounter_date"], Array("notags","trim")))) {
+                    $date = $encounter_date;
                 } else {
                     add_error("The <strong>Encounter Date</strong> field is required.");
+                }
+
+                if ((isset($_POST["encounter_time"])) && ($encounter_time = clean_input($_POST["encounter_time"], Array("notags","trim")))) {
+                    $time = $encounter_time;
+                } else {
+                    add_error("The <strong>Encounter Time</strong> field is required.");
+                }
+
+
+                if ($date && $time) {
+                    $PROCESSED["encounter_date"] = strtotime($date. "".$time);
+                } else {
+                    add_error("The <strong>Encounter Date and/or Time was not set correctly</strong> field is required.");
                 }
 				
                 /**
@@ -286,17 +304,58 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ENCOUNTER_TRACKING"))) {
                             });
                         }
                     }
+
+                    jQuery(function($) {
+
+                        $('.add-on.date').on('click', function () {
+                            $('#encounter_date').focus();
+                        });
+
+                        $('.datepicker').datepicker({
+                            dateFormat: 'yy-mm-dd'
+                        });
+
+                        $('.add-on.time').on('click', function () {
+                            $('#encounter_time').focus();
+                        });
+
+                        jQuery(".timepicker").timepicker({
+                            showPeriodLabels: false
+                        });
+
+                    });
+
                 </script>
 				<form action="<?php echo html_encode(ENTRADA_URL); ?>/logbook?section=<?php echo isset($entry_id) ? "edit&entry_id=".html_encode($entry_id) : "add" ; ?>&step=2" method="POST" id="entry-form">
 					<div class="row-fluid">
                         <h2>Encounter Details</h2>
                     </div>
-                    <table>
                     <?php
-                        echo generate_calendar("encounter", "Encounter Date", true, ($entry->getEncounterDate() ? $entry->getEncounterDate() : time()), true);
+                        //echo generate_calendar("encounter", "Encounter Date", true, ($entry->getEncounterDate() ? $entry->getEncounterDate() : time()), true);
                     ?>
-                    </table>
-                    <br />
+                    <div class="control-group row-fluid">
+                        <label for="encounter_date" class="form-required span3">Encounter Date: </label>
+                        <span class="controls span8">
+                            <div class="input-append">
+                                <input id="encounter_date" type="text" class="input-small datepicker" value="<?php echo ($entry->getEncounterDate() ? date("Y-m-d", $entry->getEncounterDate()) : date("Y-m-d", time()));?>" name="encounter_date"/>
+                                <span class="add-on date pointer">
+                                    <i class="icon-calendar"></i>
+                                </span>
+                            </div>
+                        </span>
+                    </div>
+                    <div class="control-group row-fluid">
+                        <label for="encounter_time" class="form-required span3">Encounter Time: </label>
+                        <span class="controls span8">
+                            <div class="input-append">
+                                <input type="text" class="input-mini timepicker" value="<?php echo ($entry->getEncounterDate() ? date("H:m",$entry->getEncounterDate()) : date("H:m", time())); ?>" name="encounter_time" id="encounter_time" />
+                                <span class="add-on time pointer">
+                                    <i class="icon-time"></i>
+                                 </span>
+                            </div>
+                        </span>
+                    </div>
+
                     <div class="control-group row-fluid">
                         <label for="course_id" class="form-required span3">Rotation</label>
                         <span class="controls span8">

@@ -47,10 +47,21 @@ class Views_Assessments_Reports_AssessmentReport extends Views_Assessments_Base
      */
     protected function renderView($options = array()) {
         // Optional
-        $strip_comments = @$options["strip_comments"];
-        $is_evaluation = @$options["is_evaluation"];
+        $strip_comments         = array_key_exists("strip_comments", $options) ? $options["strip_comments"] : null;
+        $include_commenter_id   = array_key_exists("include_commenter_id", $options) ? $options["include_commenter_id"] : null;
+        $include_commenter_name = array_key_exists("include_commenter_name", $options) ? $options["include_commenter_name"] : null;
+        $is_evaluation          = array_key_exists("is_evaluation", $options) ? $options["is_evaluation"] : null;
+        $additional_statistics  = array_key_exists("additional_statistics", $options) ? $options["additional_statistics"] : null;
+        $include_positivity     = array_key_exists("include_positivity", $options) ? $options["include_positivity"] : false;
+        $include_assessor_names = array_key_exists("include_assessor_names", $options) ? $options["include_assessor_names"] : false;
 
         // Render the full report
+
+        if ($include_assessor_names && isset($options["report_data"]["assessors"])):
+            $this->renderAssessorInfo($options["report_data"]["assessors"]);
+        endif;
+        unset($options["report_data"]["assessors"]);
+
         $form_order = 0;
         if ($options["report_data"] && !empty($options["report_data"])) {
             foreach ($options["report_data"] as $report_index => $report_node) {
@@ -59,7 +70,7 @@ class Views_Assessments_Reports_AssessmentReport extends Views_Assessments_Base
                 $element_id = $report_index_a[1];
                 switch ($element_type) {
                     case "rubric":
-                        $this->renderRubric(++$form_order, $report_node, $strip_comments);
+                        $this->renderRubric(++$form_order, $report_node, $strip_comments, $additional_statistics, $include_positivity, $include_commenter_id, $include_commenter_name);
                         break;
 
                     case "freetext":
@@ -67,7 +78,7 @@ class Views_Assessments_Reports_AssessmentReport extends Views_Assessments_Base
                         break;
 
                     case "objective":
-                        $this->renderObjective($element_id, ++$form_order, $report_node, $strip_comments);
+                        $this->renderObjective($element_id, ++$form_order, $report_node, $strip_comments, $include_commenter_id, $include_commenter_name);
                         break;
 
                     default:
@@ -75,7 +86,7 @@ class Views_Assessments_Reports_AssessmentReport extends Views_Assessments_Base
                         switch ($report_node["item_type"]) {
                             case "free_text":
                                 if (!$strip_comments) {
-                                    $this->renderFreetextComment(++$form_order, $report_node);
+                                    $this->renderFreetextComment(++$form_order, $report_node, $include_commenter_id, $include_commenter_name);
                                 }
                                 break;
 
@@ -88,7 +99,7 @@ class Views_Assessments_Reports_AssessmentReport extends Views_Assessments_Base
 
                             default:
                                 // draw single line summary item
-                                $this->renderChoiceSelection(++$form_order, $report_node, $strip_comments);
+                                $this->renderChoiceSelection(++$form_order, $report_node, $strip_comments, $additional_statistics, $include_positivity, $include_commenter_id, $include_commenter_name);
                                 break;
                         }
                         break;
@@ -127,8 +138,10 @@ class Views_Assessments_Reports_AssessmentReport extends Views_Assessments_Base
      * @param $display_order
      * @param $report_node
      * @param $strip_comments
+     * @param $include_commenter_id
+     * @param $include_commenter_name
      */
-    private function renderObjective($element_id, $display_order, $report_node, $strip_comments) {
+    private function renderObjective($element_id, $display_order, $report_node, $strip_comments, $include_commenter_id = false, $include_commenter_name = false) {
         // NOT SUPPORTED YET
         // TODO: Fill this in to support objective display
     }
@@ -139,13 +152,17 @@ class Views_Assessments_Reports_AssessmentReport extends Views_Assessments_Base
      * @param int $display_order
      * @param array $report_node
      * @param bool $strip_comments
+     * @param $additional_statistics
+     * @param $include_positivity
+     * @param bool $include_commenter_id
+     * @param bool $include_commenter_name
      */
-    private function renderChoiceSelection($display_order, $report_node, $strip_comments) {
+    private function renderChoiceSelection($display_order, $report_node, $strip_comments, $additional_statistics, $include_positivity, $include_commenter_id = false, $include_commenter_name = false) {
         global $translate;
         $column_count = count($report_node["responses"]);
         ?>
         <div class="assessment-report-node">
-            <h3><?php echo "$display_order.&nbsp;". html_encode($report_node["element_text"]) ?></h3>
+            <h3><?php echo "$display_order.&nbsp;". html_encode($report_node["element_text"]); ?></h3>
             <table class="table table-bordered table-striped">
                 <?php if (empty($report_node["responses"])): ?>
                     <tbody>
@@ -153,24 +170,123 @@ class Views_Assessments_Reports_AssessmentReport extends Views_Assessments_Base
                             <td><strong><?php echo $translate->_("There are no responses for this form element."); ?></strong></td>
                         </tr>
                     </tbody>
-                <?php else: ?>
+                <?php elseif (@count($report_node["responses"]) <= 6): ?>
                     <tr>
                         <?php foreach ($report_node["responses"] as $response): ?>
-                            <td class="text-center"><?php echo html_encode($response["display_text"]) ?></td>
-                        <?php endforeach; ?>
+                            <td class="text-center"><?php echo html_encode($response["display_text"]); ?></td>
+                        <?php endforeach;
+                        if ($additional_statistics && $include_positivity): ?>
+                            <td class="text-center"><?php echo $translate->_("Aggregate Positive Score / Aggregate Negative Score"); ?></td>
+                        <?php endif; ?>
                     </tr>
                     <tr>
-                        <?php foreach ($report_node["responses"] as $response): ?>
+                        <?php
+                        $overall_count = 0;
+                        $included_col_count = count($report_node["responses"]);
+                        $positivity_count_list = array("negative" => 0, "positive" => 0);
+                        $excluded_cols = array();
+
+                        foreach ($report_node["responses"] as $order => $response): ?>
                             <td class="text-center"><?php echo $response["count"] ?></td>
-                        <?php endforeach; ?>
+                            <?php
+                            // N/A, Not Applicable and Not Observed are excluded from responses when determining average. A modifier will be set if needed, which will adjust later calculations appropriately.
+                            if (strtolower($response["display_text"]) == $translate->_("n/a") ||
+                                strtolower($response["display_text"]) == $translate->_("not applicable") ||
+                                strtolower($response["display_text"]) == $translate->_("not observed") ||
+                                strtolower($response["display_text"]) == $translate->_("did not attend") ||
+                                strtolower($response["display_text"]) == $translate->_("please select")
+                            ) {
+                                $excluded_cols[] = $response["display_text"];
+                                $included_col_count--;
+                            }
+                        endforeach;
+
+                        // Positive/negative is determined by splitting the descriptors down the middle, rounding down.
+                        $positivity_cutoff = round($included_col_count / 2, 0, PHP_ROUND_HALF_DOWN);
+
+                        foreach ($report_node["responses"] as $order => $response) {
+                            if (!in_array($response["display_text"], $excluded_cols)) {
+                                // Positive/negative is determined by splitting the descriptors down the middle, rounding down.
+                                $positivity = $order + 1 <= $positivity_cutoff ? "negative" : "positive";
+                                $positivity_count_list[$positivity] += $response["count"];
+                            }
+                        }
+
+                        // ADDITIONAL STATISTICS
+                        if ($additional_statistics && $include_positivity):
+                            $overall_count = $positivity_count_list["positive"] + $positivity_count_list["negative"]; ?>
+                            <td class="text-center">
+                                <?php // POSITIVE/NEGATIVE COUNTS
+                                echo $positivity_count_list["positive"] . " / " . $positivity_count_list["negative"]; ?>
+                            </td>
+                        <?php endif; ?>
                     </tr>
-                    <?php if (!$strip_comments && !empty($report_node["comments"])): ?>
+
+                    <?php if ($additional_statistics): ?>
+                        <tr class="report-statistics-row">
+                            <?php
+                            // PERCENTAGE OF OVERALL TOTAL FOR EACH RESPONSE
+                            foreach ($report_node["responses"] as $order => $response):
+                                $avg = 0;
+                                if ($overall_count > 0):
+                                    $avg = ($response["count"] / $overall_count) * 100;
+                                endif;
+                                ?>
+                                <td class="text-center">
+                                    <?php echo round($avg, 2, PHP_ROUND_HALF_UP) . "%"; ?>
+                                </td>
+                            <?php endforeach;
+
+                            if ($include_positivity):
+                                // PERCENTAGE OF OVERALL NEGATIVE/POSITIVE
+                                $positive_result = $negative_result = 0;
+                                if ($overall_count > 0):
+                                    $positive_result = ($positivity_count_list["positive"] / $overall_count) * 100;
+                                    $negative_result = ($positivity_count_list["negative"] / $overall_count) * 100;
+                                endif; ?>
+                                <td class="text-center">
+                                    <?php echo round($positive_result, 2, PHP_ROUND_HALF_UP); ?>% / <?php echo round($negative_result, 2, PHP_ROUND_HALF_UP); ?>%
+                                </td>
+                            <?php endif; ?>
+                        </tr>
+                    <?php endif;
+
+                    if (!$strip_comments && !empty($report_node["comments"])): ?>
                         <tr>
                             <td colspan="<?php echo $column_count ?>">
                                 <p><strong><?php echo $translate->_("Response Comments") ?></strong></p>
                                 <ul>
-                                    <?php foreach ($report_node["comments"] as $comment): ?>
-                                        <li><?php echo html_encode($comment) ?></li>
+                                    <?php foreach ($report_node["comments"] as $comment):
+                                        $commenter_prepend = "";
+                                        $commenter_prepend .= $include_commenter_id ? "[".Entrada_Assessments_Base::generateAssessorHash($comment["assessor_type"], $comment["assessor_value"])."] " : "";
+                                        $commenter_prepend .= $include_commenter_name && $comment["comment_anonymity"] == "identifiable" ? $comment["assessor_name"] . " - " : "";
+                                        ?>
+                                        <li><?php echo html_encode($commenter_prepend) . html_encode($comment["comment_text"]) ?></li>
+                                    <?php endforeach; ?>
+                                </ul>
+                            </td>
+                        </tr>
+                    <?php endif; ?>
+                <?php else: ?>
+                    <?php foreach ($report_node["responses"] as $response):
+                        if ($response["count"] > 0): ?>
+                        <tr>
+                            <td class="text-center"><?php echo html_encode($response["display_text"]); ?></td>
+                            <td class="text-center"><?php echo html_encode($response["count"]); ?></td>
+                        </tr>
+                    <?php endif; 
+                    endforeach; ?>
+                    <?php if (!$strip_comments && !empty($report_node["comments"])): ?>
+                        <tr>
+                            <td colspan="2">
+                                <p><strong><?php echo $translate->_("Response Comments") ?></strong></p>
+                                <ul>
+                                    <?php foreach ($report_node["comments"] as $comment):
+                                        $commenter_prepend = "";
+                                        $commenter_prepend .= $include_commenter_id ? "[".Entrada_Assessments_Base::generateAssessorHash($comment["assessor_type"], $comment["assessor_value"])."] " : "";
+                                        $commenter_prepend .= $include_commenter_name && $comment["comment_anonymity"] == "identifiable" ? $comment["assessor_name"] . " - " : "";
+                                        ?>
+                                        <li><?php echo html_encode($commenter_prepend) . html_encode($comment["comment_text"]) ?></li>
                                     <?php endforeach; ?>
                                 </ul>
                             </td>
@@ -201,8 +317,10 @@ class Views_Assessments_Reports_AssessmentReport extends Views_Assessments_Base
      *
      * @param $display_order
      * @param $report_node
+     * @param $include_commenter_id
+     * @param $include_commenter_name
      */
-    private function renderFreetextComment($display_order, $report_node) {
+    private function renderFreetextComment($display_order, $report_node, $include_commenter_id = false, $include_commenter_name = false) {
         global $translate;
         $ordinal = 0;
         ?>
@@ -215,10 +333,17 @@ class Views_Assessments_Reports_AssessmentReport extends Views_Assessments_Base
                             <td><strong><?php echo $translate->_("There are no responses for this form element."); ?></strong></td>
                         </tr>
                     <?php else: ?>
-                        <?php foreach ($report_node["responses"] as $comment): ?>
+                        <?php foreach ($report_node["responses"] as $comment):
+                            $commenter_prepend = "";
+                            $commenter_prepend .= $include_commenter_id ? "[".Entrada_Assessments_Base::generateAssessorHash($comment["assessor_type"], $comment["assessor_value"])."] " : "";
+                            $commenter_prepend .= $include_commenter_name && $comment["comment_anonymity"] == "identifiable" ? $comment["assessor_name"]: "";
+                            ?>
                             <tr>
                                 <td width="5%"><?php echo ++$ordinal ?>.</td>
-                                <td><?php echo html_encode($comment) ?></td>
+                                <?php if ($commenter_prepend) : ?>
+                                    <td width="15%"><?php echo html_encode($commenter_prepend) ?></td>
+                                <?php endif; ?>
+                                <td><?php echo html_encode($comment["comment_text"]) ?></td>
                             </tr>
                         <?php endforeach; ?>
                     <?php endif; ?>
@@ -235,8 +360,12 @@ class Views_Assessments_Reports_AssessmentReport extends Views_Assessments_Base
      * @param $display_order
      * @param $report_node
      * @param $strip_comments
+     * @param $additional_statistics
+     * @param $include_positivity
+     * @param bool $include_commenter_id
+     * @param bool $include_commenter_name
      */
-    private function renderRubric($display_order, $report_node, $strip_comments) {
+    private function renderRubric($display_order, $report_node, $strip_comments, $additional_statistics, $include_positivity, $include_commenter_id = false, $include_commenter_name = false) {
         global $translate;
         $rubric_order = 0;
         ?>
@@ -264,6 +393,12 @@ class Views_Assessments_Reports_AssessmentReport extends Views_Assessments_Base
                                 }
                             }
                         }
+                        if ($additional_statistics) {
+                            if ($include_positivity) {
+                                $descriptors[] = $translate->_("Aggregate Positive Score / Aggregate Negative Score");
+                            }
+                            $descriptors[] = $translate->_("Average");
+                        }
                         $column_count = count($descriptors) +1;
                     ?>
                     <?php if (!empty($descriptors)): ?>
@@ -280,22 +415,119 @@ class Views_Assessments_Reports_AssessmentReport extends Views_Assessments_Base
                         <?php foreach ($report_node["responses"] as $response): $rubric_order++ ?>
                             <tr>
                                 <td><?php echo "$rubric_order.&nbsp;" . html_encode($response["text"]) ?></td>
-                                <?php foreach ($response["rubric_response_detail"] as $element_id => $response_detail): ?>
-                                    <?php if ($element_id == $response["item_id"]): ?>
-                                        <?php foreach ($response_detail as $order => $response_summary): ?>
-                                            <td>
-                                                <?php echo $response_summary["count"] ?>
-                                                <?php if (isset($response_summary["text"]) && $response_summary["text"]): ?>
+
+                                <?php
+                                $count_list = array();
+                                $positivity_count_list = array("negative" => 0, "positive" => 0);
+                                $exclude_ardescriptor_ids = array();
+                                $overall_count = 0;
+                                $count = 0;
+                                $modifier = 0;
+                                foreach ($response["rubric_response_detail"] as $element_id => $response_detail):
+                                    $included_col_count = count($response_detail);
+                                    $last_item = end($response_detail);
+                                    $offset = count($response_detail) - $last_item["order"];
+
+                                    if ($element_id == $response["item_id"]):
+                                        foreach ($response_detail as $order => $response_summary):
+                                            // N/A, Not Applicable and Not Observed are excluded from responses when determining average. A modifier will be set if needed, which will adjust later calculations appropriately.
+                                            if (strtolower($response_summary["descriptor"]) == $translate->_("n/a") ||
+                                                strtolower($response_summary["descriptor"]) == $translate->_("not applicable") ||
+                                                strtolower($response_summary["descriptor"]) == $translate->_("did not attend") ||
+                                                strtolower($response_summary["descriptor"]) == $translate->_("not observed")
+                                            ):
+                                                $modifier = ((int)$order <= 1) ? -1 : 0;
+                                                $exclude_ardescriptor_ids[] = $response_summary["ardescriptor_id"];
+                                                $included_col_count--;
+                                                break;
+                                            endif;
+                                        endforeach;
+
+                                        // Positive/negative is determined by splitting the descriptors down the middle, rounding down.
+                                        $positivity_cutoff = round($included_col_count / 2, 0, PHP_ROUND_HALF_DOWN);
+
+                                        foreach ($response_detail as $order => $response_summary): ?>
+                                            <td class="text-center">
+                                                <?php if (!in_array($response_summary["ardescriptor_id"], $exclude_ardescriptor_ids)):
+                                                    $count += (int)$response_summary["count"];
+
+                                                    // Count list is the number of responses in the category multiplied by the "scale", or order in this case. This takes the offset and modifiers into account.
+                                                    $count_list[] = (int)$response_summary["count"] * ($order + $offset + $modifier);
+
+                                                    // Positive/negative is determined by splitting the descriptors down the middle, rounding down.
+                                                    $positivity = $order <= $positivity_cutoff ? "negative" : "positive";
+                                                    $positivity_count_list[$positivity] += (int)$response_summary["count"];
+                                                endif;
+
+                                                echo $response_summary["count"];
+                                                if (isset($response_summary["text"]) && $response_summary["text"]): ?>
                                                     <hr />
-                                                    <?php echo $response_summary["text"] ?>
-                                                <?php endif; ?>
+                                                    <?php echo $response_summary["text"];
+                                                endif; ?>
                                             </td>
-                                        <?php endforeach; ?>
-                                    <?php endif;?>
-                                <?php endforeach; ?>
-                            </tr>
-                            <?php if (!$strip_comments): ?>
-                            <?php
+                                        <?php endforeach;
+                                    endif;
+                                endforeach;
+
+                                // ADDITIONAL STATISTICS
+                                if ($additional_statistics):
+                                    if ($include_positivity): ?>
+                                    <td class="text-center">
+                                        <?php
+                                            // POSITIVE/NEGATIVE COUNTS
+                                            echo $positivity_count_list["positive"] . " / " . $positivity_count_list["negative"];
+                                        ?>
+                                    </td>
+                                    <?php endif;
+
+                                    $overall_count = $positivity_count_list["positive"] + $positivity_count_list["negative"];
+
+                                    // OVERALL AVERAGE "SCORE"
+                                    // The average is the sum of all of the count lists (see explanation above) divided by the number of "scales".
+                                    $count_result = array_sum($count_list) / ($count == 0 ? 1 : $count);
+                                    ?>
+                                    <td class="text-center">
+                                        <?php echo round($count_result, 1, PHP_ROUND_HALF_UP); ?>
+                                    </td>
+                                <?php endif; ?>
+
+                                </tr>
+
+                                <?php if ($additional_statistics): ?>
+                                    <tr class="report-statistics-row">
+                                        <td>&nbsp;</td>
+                                        <?php
+                                        // PERCENTAGE OF OVERALL TOTAL FOR EACH RESPONSE
+                                        foreach ($response["rubric_response_detail"] as $element_id => $response_detail):
+                                            foreach ($response_detail as $order => $response_summary):
+                                                $avg = 0;
+                                                if ($overall_count > 0):
+                                                    $avg = ((int)$response_summary["count"] / $overall_count) * 100;
+                                                endif;
+                                                ?>
+                                                <td class="text-center">
+                                                    <?php echo round($avg, 2, PHP_ROUND_HALF_UP) . "%"; ?>
+                                                </td>
+                                                <?php
+                                            endforeach;
+                                        endforeach;
+
+                                        if ($include_positivity):
+                                        // PERCENTAGE OF OVERALL NEGATIVE/POSITIVE
+                                        $positive_result = $negative_result = 0;
+                                        if ($overall_count > 0):
+                                            $positive_result = ($positivity_count_list["positive"] / $overall_count) * 100;
+                                            $negative_result = ($positivity_count_list["negative"] / $overall_count) * 100;
+                                        endif; ?>
+                                        <td class="text-center">
+                                            <?php echo round($positive_result, 2, PHP_ROUND_HALF_UP); ?>% / <?php echo round($negative_result, 2, PHP_ROUND_HALF_UP); ?>%
+                                        </td>
+                                        <?php endif; ?>
+                                        <td>&nbsp;</td>
+                                    </tr>
+                                <?php endif;
+
+                                if (!$strip_comments):
                                 $response_comments = array();
                                 // Comments are attached on a per-item-response basis. Group the comments to display in one row.
                                 foreach ($response["rubric_response_detail"] as $element_id => $response_detail) {
@@ -312,8 +544,12 @@ class Views_Assessments_Reports_AssessmentReport extends Views_Assessments_Base
                                     <td colspan="<?php echo $column_count ?>">
                                         <p><strong><?php echo $translate->_("Response Comments") ?></strong></p>
                                         <ul>
-                                        <?php foreach ($response_comments as $comment): ?>
-                                            <li><?php echo html_encode($comment) ?></li>
+                                        <?php foreach ($response_comments as $comment):
+                                            $commenter_prepend = "";
+                                            $commenter_prepend .= $include_commenter_id ? "[".Entrada_Assessments_Base::generateAssessorHash($comment["assessor_type"], $comment["assessor_value"])."] " : "";
+                                            $commenter_prepend .= $include_commenter_name && $comment["comment_anonymity"] == "identifiable" ? $comment["assessor_name"] . " - " : "";
+                                            ?>
+                                            <li><?php echo html_encode($commenter_prepend) . html_encode($comment["comment_text"]) ?></li>
                                         <?php endforeach; ?>
                                         </ul>
                                     </td>
@@ -328,4 +564,35 @@ class Views_Assessments_Reports_AssessmentReport extends Views_Assessments_Base
         </div>
         <?php
     }
+
+    /**
+     * Render a header of assessor information.
+     *
+     * @param $assessors
+     */
+    private function renderAssessorInfo($assessors) {
+        if (empty($assessors)):
+            return;
+        endif;
+        global $translate;
+        ?>
+        <table class="table table-striped table-bordered">
+            <thead>
+                <tr>
+                    <th><?php echo $translate->_("Assessor Name") ?></th>
+                    <th><?php echo $translate->_("Assessor Email") ?></th>
+                </tr>
+            </thead>
+            <tbody>
+            <?php foreach ($assessors as $assessor): ?>
+                <tr>
+                    <td><?php echo $assessor["assessor_name"]; ?></td>
+                    <td><a href="mailto:<?php echo html_encode($assessor["assessor_email"]); ?>"><?php echo $assessor["assessor_email"]; ?></a></td>
+                </tr>
+            <?php endforeach; ?>
+            </tbody>
+        </table>
+        <?php
+    }
+
 }

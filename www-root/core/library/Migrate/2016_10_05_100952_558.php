@@ -9,6 +9,7 @@ class Migrate_2016_10_05_100952_558 extends Entrada_Cli_Migrate {
         ?>
         ALTER TABLE `global_lu_objectives` ADD COLUMN `objective_set_id` int(12) NOT NULL AFTER `objective_parent`;
         ALTER TABLE `global_lu_objectives` ADD COLUMN `objective_secondary_description` text AFTER `objective_description`;
+        ALTER TABLE `global_lu_objectives` MODIFY `objective_name` varchar(255) NOT NULL;
 
         CREATE TABLE IF NOT EXISTS `global_lu_objective_sets` (
         `objective_set_id` int(12) NOT NULL AUTO_INCREMENT,
@@ -25,13 +26,6 @@ class Migrate_2016_10_05_100952_558 extends Entrada_Cli_Migrate {
         `deleted_date` bigint(64) DEFAULT NULL,
         PRIMARY KEY (`objective_set_id`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
-        INSERT INTO `global_lu_objective_sets` (`title`, `description`, `shortname`, `start_date`, `end_date`, `standard`, `created_date`, `created_by`, `updated_date`, `updated_by`, `deleted_date`)
-        VALUES
-        ('Entrusbable Professional Activities', 'Entrusbable Professional Activities', 'epa', NULL, NULL, 0,  UNIX_TIMESTAMP(NOW()), 1, NULL, NULL, NULL),
-        ('Key Competencies', 'Key Competencies', 'kc', NULL, NULL, 1,  UNIX_TIMESTAMP(NOW()), 1, NULL, NULL, NULL),
-        ('Enabling Competencies', 'Enabling Competencies', 'ec', NULL, NULL, 1,  UNIX_TIMESTAMP(NOW()), 1, NULL, NULL, NULL),
-        ('Milestones', 'Milestones', 'milestone', NULL, NULL, 0,  UNIX_TIMESTAMP(NOW()), 1, NULL, NULL, NULL);
 
         CREATE TABLE IF NOT EXISTS `cbme_course_objectives` (
         `cbme_course_objective_id` int(12) NOT NULL AUTO_INCREMENT,
@@ -59,6 +53,7 @@ class Migrate_2016_10_05_100952_558 extends Entrada_Cli_Migrate {
         ?>
         ALTER TABLE `global_lu_objectives` DROP COLUMN `objective_set_id`;
         ALTER TABLE `global_lu_objectives` DROP COLUMN `objective_secondary_description`;
+        ALTER TABLE `global_lu_objectives` MODIFY `objective_name` varchar(75) NOT NULL;
         DROP TABLE IF EXISTS `global_lu_objective_sets`;
         DROP TABLE IF EXISTS `cbme_course_objectives`;
         <?php

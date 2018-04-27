@@ -22,6 +22,10 @@
  * @author Developer: Eugene Bivol <ebivol@gmail.com>
  * @copyright Copyright 2016 Queen's University. All Rights Reserved.
  *
+ * #1615 Feb 2017 Bob Walker UBC
+ *  - Removed restriction on showing community notification preferences. Previously available only to course update users. Bob Walker UBC
+ *  - Added entrada.community_notify_members record if it doesn't exist. Bob Walker UBC
+ *  - Changed processing of checkbox return value. Returns 'true' or null, not 1 or null.
  */
 
 @set_include_path(implode(PATH_SEPARATOR, array(
@@ -111,10 +115,14 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                             $PROCESSED["sort_direction"] = "asc";
                         }
 
-                        if ($ENTRADA_ACL->amIAllowed('course', 'update', false) && $PROCESSED["proxy_id"]) {
-                            $active_notifications = NotificationUser::getAllActiveNotifications($PROCESSED["proxy_id"], 1, $PROCESSED["search_term"],$PROCESSED["offset"], $PROCESSED["limit"], $PROCESSED["sort_column"], $PROCESSED["sort_direction"]);
-                            $total = NotificationUser::getTotalAllActiveNotifications($PROCESSED["proxy_id"], 1, $PROCESSED["search_term"]);
-                        }
+                        // TODO: Should personal notification configuration be restricted to only those users with course update capabilities?
+//                        if ($ENTRADA_ACL->amIAllowed('course', 'update', false) && $PROCESSED["proxy_id"]) {
+//                            $active_notifications = NotificationUser::getAllActiveNotifications($PROCESSED["proxy_id"], 1, $PROCESSED["search_term"],$PROCESSED["offset"], $PROCESSED["limit"], $PROCESSED["sort_column"], $PROCESSED["sort_direction"]);
+//                            $total = NotificationUser::getTotalAllActiveNotifications($PROCESSED["proxy_id"], 1, $PROCESSED["search_term"]);
+//                        }
+
+                        $active_notifications = NotificationUser::getAllActiveNotifications($PROCESSED["proxy_id"], 1, $PROCESSED["search_term"],$PROCESSED["offset"], $PROCESSED["limit"], $PROCESSED["sort_column"], $PROCESSED["sort_direction"]);
+                        $total = NotificationUser::getTotalAllActiveNotifications($PROCESSED["proxy_id"], 1, $PROCESSED["search_term"]);
 
                         if ($active_notifications) {
                             $data = array();
@@ -135,7 +143,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                         } else {
                             echo json_encode(array("results" => "0", "data" => array($translate->_("No Notifications Found."))));
                         }
-                    break;
+                        break;
                     case "get-community-notifications" :
 
                         $column_check_array = array ("title");
@@ -185,10 +193,8 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                             $PROCESSED["sort_direction"] = "asc";
                         }
 
-                        if ($ENTRADA_ACL->amIAllowed('course', 'update', false) && $PROCESSED["proxy_id"]) {
-                            $community_notifications = Models_Community_Notify_Member::getAllCommunityNotificationsByProxyID($PROCESSED["proxy_id"], $PROCESSED["search_term"],$PROCESSED["offset"], $PROCESSED["limit"], $PROCESSED["sort_column"], $PROCESSED["sort_direction"]);
-                            $total = Models_Community_Notify_Member::getTotalCommunityNotificationsByProxyID($PROCESSED["proxy_id"], $PROCESSED["search_term"]);
-                        }
+                        $community_notifications = Models_Community_Notify_Member::getAllCommunityNotificationsByProxyID($PROCESSED["proxy_id"], $PROCESSED["search_term"],$PROCESSED["offset"], $PROCESSED["limit"], $PROCESSED["sort_column"], $PROCESSED["sort_direction"]);
+                        $total = Models_Community_Notify_Member::getTotalCommunityNotificationsByProxyID($PROCESSED["proxy_id"], $PROCESSED["search_term"]);
 
                         if ($community_notifications) {
                             $data = array();
@@ -201,7 +207,8 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                                     "announcement"         => $community_notification["announcement"],
                                     "event"         => $community_notification["event"],
                                     "poll"         => $community_notification["poll"],
-                                    "members"         => $community_notification["member"],
+                                    "members"         => $community_notification["members"],
+                                    "community_url" => $community_notification["community_url"]
                                 );
 
                                 $data[] = $notification_data;
@@ -210,10 +217,10 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                         } else {
                             echo json_encode(array("results" => "0", "data" => array($translate->_("No Notifications Found."))));
                         }
-                    break;
+                        break;
                     default:
                         echo json_encode(array("status" => "error", "data" => $translate->_("Invalid GET method.")));
-                    break;
+                        break;
                 }
                 break;
             case "POST" :
@@ -250,7 +257,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                         } else {
                             echo json_encode(array("status" => "error", "msg" => $translate->_("No notifications were selected for deletion.")));
                         }
-                    break;
+                        break;
 
                     case "change-digest" :
 
@@ -284,7 +291,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                         } else {
                             echo json_encode(array("status" => "error", "msg" => $translate->_("No notifications were selected for update.")));
                         }
-                    break;
+                        break;
                     case "change-community-notification" :
 
                         if (isset($request["community_id"]) && $tmp_input = clean_input(strtolower($request["community_id"]), array("trim", "int"))) {
@@ -298,19 +305,18 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                         } else {
                             $PROCESSED["proxy_id"] = 0;
                         }
-
-                        if (isset($request["value"]) && $tmp_input = clean_input(strtolower($request["value"]), array("trim", "int"))) {
-                            $PROCESSED["value"] = $tmp_input;
-                        } else {
-                            $PROCESSED["value"] = 0;
+                        if (isset($request["value"]) && $tmp_input = clean_input(strtolower($request["value"]), array("trim"))) {
+                            if ($tmp_input == "true") {
+                                $PROCESSED["value"] = 1;
+                            } else {
+                                $PROCESSED["value"] = 0;
+                            }
                         }
-
                         if (isset($request["notify_type"]) && $tmp_input = clean_input(strtolower($request["notify_type"]), array("trim"))) {
                             $PROCESSED["notify_type"] = $tmp_input;
                         } else {
                             $PROCESSED["notify_type"] = null;
                         }
-
 
                         if ($PROCESSED["community_id"] && $PROCESSED["notify_type"] && $PROCESSED["proxy_id"]) {
                             $community_notification = Models_Community_Notify_Member::fetchRowByProxyIDCommunityIDNotifyType($PROCESSED["proxy_id"], $PROCESSED["community_id"], $PROCESSED["notify_type"]);
@@ -321,10 +327,35 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                                 } else {
                                     $ENTRADA_LOGGER->log("", "update", "community_id", $community_id, 4, __FILE__, $ENTRADA_USER->getID());
                                 }
+                            } else {
+                                // The record for this user, community, and noticification should exist, but sometimes doesn't.
+                                $insert_array = array(
+                                    "community_id" => $PROCESSED["community_id"],
+                                    "notify_type" => $PROCESSED["notify_type"],
+                                    "proxy_id" => $PROCESSED["proxy_id"],
+                                    "notify_active" => $PROCESSED["value"],
+                                    "record_id" => $PROCESSED["community_id"]
+                                );
+                                $community_notification_insert = new Models_Community_Notify_Member();
+                                if (!$community_notification_insert->fromArray($insert_array)->insert()) {
+                                    add_error($translate->_("Unable to Insert Community Notification"));
+                                } else {
+                                    $ENTRADA_LOGGER->log(
+                                        "",
+                                        "insert",
+                                        "community_id",
+                                        $community_id,
+                                        4,
+                                        __FILE__,
+                                        $ENTRADA_USER->getID()
+                                    );
+                                }
                             }
 
+                            $community = Models_Community::fetchRowByID($PROCESSED["community_id"]);
+
                             if (!$ERROR) {
-                                echo json_encode(array("status" => "success", "msg" => sprintf($translate->_("Successfully updated %s mode for [%d] Notification(s)."), $PROCESSED["notify_type"], $PROCESSED["community_id"])));
+                                echo json_encode(array("status" => "success", "msg" => sprintf($translate->_("Successfully updated %s mode for %s."), $PROCESSED["notify_type"], $community->getTitle())));
                             } else {
                                 echo json_encode(array("status" => "error", "msg" => $translate->_("There was an error when attempting to update Community Notification.")));
                             }

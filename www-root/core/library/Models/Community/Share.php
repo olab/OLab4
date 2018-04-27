@@ -340,6 +340,9 @@ class Models_Community_Share extends Models_Base {
                 }
                 break;
             case "file" :
+                if (static::isAllowed($community_id, $resource, "view_all_versions", $is_community_course)) {
+                    $actions[] = array("title" => "Download File", "href" => "?section=view-file&id={$resource["id"]}&download=latest");
+                }
             case "link" :
             case "html" :
                 if (static::isAllowed($community_id, $resource, "update", $is_community_course)) {
@@ -506,7 +509,7 @@ class Models_Community_Share extends Models_Base {
                 }
                 if (!empty($child["actions"])) {
                     $output .= "<div class=\"btn-group share-edit-btn\">\n";
-                    $output .= "<button class=\"btn btn-mini dropdown-toggle\" data-toggle=\"dropdown\"><i class=\"icon-pencil\"></i></button>\n";
+                    $output .= "<button class=\"btn btn-mini dropdown-toggle\" data-toggle=\"dropdown\"><i class=\"fa fa-cog\"></i></button>\n";
                     $output .= "<ul class=\"dropdown-menu toggle-left\">\n";
                     foreach ($child["actions"] as $action) {
                         $output .= "<li><a class=\"action\" href=\"{$action['href']}\">{$action['title']}</a></li>\n";

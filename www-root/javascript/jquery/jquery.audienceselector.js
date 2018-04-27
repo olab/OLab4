@@ -188,16 +188,21 @@ jQuery(function($) {
         }
 
         function appendMemberToList(author_id, fullname, view_html) {
+            var member_list_line = "";
             if (settings.content_style == "default") {
-                var member_trash = $(document.createElement("a")).attr({"href" : "#"}).addClass("remove-permission").attr(settings.delete_attr, author_id).html("<i class=\"" + settings.delete_icon + "\"></i> ");
+                var member_trash = $(document.createElement("a")).attr(
+                    {"href" : "#"}
+                ).addClass("remove-permission").attr(settings.delete_attr, author_id).html(
+                    "<i class=\"" + settings.delete_icon + "\"></i> "
+                );
 
-            if ($(settings.target).length <= 0) {
-                var member_list = $(document.createElement("ul")).addClass("unstyled").attr({"id" : "added-member-list"});
-            } else {
-                var member_list = $(settings.target);
-            }
+                if ($(settings.target).length <= 0) {
+                    var member_list = $(document.createElement("ul")).addClass("unstyled").attr({"id" : "added-member-list"});
+                } else {
+                    var member_list = $(settings.target);
+                }
 
-                var member_list_line = $(document.createElement("li")).append(member_trash, fullname);
+                member_list_line = $(document.createElement("li")).append(member_trash, fullname);
             } else if (settings.content_style == "exam") {
 
                 var target_div = $("#author-list-" + settings.filter_type + "-container");
@@ -207,8 +212,16 @@ jQuery(function($) {
                 }
 
                 var member_list = $("#author-list-" + settings.filter_type);
-
-                var member_list_line = view_html;
+                if (view_html) {
+                    member_list_line = view_html;
+                } else {
+                    var member_trash = $(document.createElement("a")).attr(
+                        {"href" : "#"}
+                    ).addClass("remove-permission").attr(settings.delete_attr, author_id).html(
+                        "<i class=\"" + settings.delete_icon + "\"></i> "
+                    );
+                    member_list_line = $(document.createElement("li")).append(member_trash, fullname);
+                }
             }
 
             member_list.append(member_list_line);

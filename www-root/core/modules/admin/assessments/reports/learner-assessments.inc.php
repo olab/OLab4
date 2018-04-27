@@ -35,23 +35,25 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ASSESSMENTS"))) {
 } else {
     $BREADCRUMB[] = array("url" => "", "title" => $translate->_("Learner Assessments"));
     $HEAD[] = "<script type=\"text/javascript\">var ENTRADA_URL = '" . ENTRADA_URL . "';</script>";
-    $JQUERY[] = "<script type=\"text/javascript\" src=\"" . ENTRADA_URL . "/javascript/assessments/evaluation-reports.js?release=" . html_encode(APPLICATION_VERSION) . "\"></script>";
+    $JQUERY[] = "<script type=\"text/javascript\" src=\"" . ENTRADA_URL . "/javascript/assessments/reports/learner-assessments.es6.js?release=" . html_encode(APPLICATION_VERSION) . "\"></script>";
     $HEAD[] = "<script type=\"text/javascript\" src=\"".  ENTRADA_URL ."/javascript/jquery/jquery.advancedsearch.js?release=" . html_encode(APPLICATION_VERSION) . "\"></script>";
     $HEAD[] = "<script type=\"text/javascript\" src=\"" . ENTRADA_URL . "/javascript/jquery/jquery.timepicker.js?release=" . html_encode(APPLICATION_VERSION) . "\"></script>";
     $HEAD[] = "<link href=\"" . ENTRADA_URL . "/css/assessments/evaluation-reports.css\" rel=\"stylesheet\" type=\"text/css\" media=\"all\" />";
     $HEAD[] = "<link rel=\"stylesheet\" type=\"text/css\" href=\"".  ENTRADA_URL ."/css/jquery/jquery.advancedsearch.css\" />";
 
     $assessments_base = new Entrada_Utilities_Assessments_Base();
-    $assessments_base->getAssessmentPreferences("learner");
+    $assessments_base->getAssessmentPreferences("learner-assessments");
 
-    if (isset($_SESSION[APPLICATION_IDENTIFIER]["learner"]["evaluation"]["start_date"])) {
-        $start_date = $_SESSION[APPLICATION_IDENTIFIER]["learner"]["evaluation"]["start_date"];
+    Entrada_Utilities::addJavascriptTranslation("Unable to save curriculum period preference.", "cperiod_error");
+
+    if (isset($_SESSION[APPLICATION_IDENTIFIER]["learner-assessments"]["evaluation"]["start_date"])) {
+        $start_date = $_SESSION[APPLICATION_IDENTIFIER]["learner-assessments"]["evaluation"]["start_date"];
     } else {
         $start_date = null;
     }
 
-    if (isset($_SESSION[APPLICATION_IDENTIFIER]["learner"]["evaluation"]["end_date"])) {
-        $end_date = $_SESSION[APPLICATION_IDENTIFIER]["learner"]["evaluation"]["end_date"];
+    if (isset($_SESSION[APPLICATION_IDENTIFIER]["learner-assessments"]["evaluation"]["end_date"])) {
+        $end_date = $_SESSION[APPLICATION_IDENTIFIER]["learner-assessments"]["evaluation"]["end_date"];
     } else {
         $end_date = null;
     }
@@ -70,17 +72,70 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ASSESSMENTS"))) {
                 }
             });
 
-            $("#choose-evaluation-btn").advancedSearch({
-                api_url : "<?php echo ENTRADA_URL . "/admin/assessments?section=api-evaluation-reports"; ?>",
+            $("#select_course_btn").advancedSearch({
+                api_url : "<?php echo ENTRADA_URL . "/admin/assessments?section=api-assessment-reports"; ?>",
                 resource_url: ENTRADA_URL,
                 filters : {
-                    target : {
+                    course : {
+                        label : "<?php echo $translate->_("Course"); ?>",
+                        data_source : "get-user-courses",
+                        mode: "checkbox"
+                    }
+                },
+                no_results_text: "<?php echo $translate->_("No course found matching the search criteria."); ?>",
+                parent_form: $("#report-form"),
+                control_class: "course-selector",
+                width: 350,
+                select_all_enabled: true
+            });
+
+            $("#select_course_group_btn").advancedSearch({
+                api_url : "<?php echo ENTRADA_URL . "/admin/assessments?section=api-assessment-reports"; ?>",
+                resource_url: ENTRADA_URL,
+                filters : {
+                    course_group : {
+                        label : "<?php echo $translate->_("Group"); ?>",
+                        data_source : "get-course-groups",
+                        mode: "checkbox"
+                    }
+                },
+                no_results_text: "<?php echo $translate->_("No group found matching the search criteria."); ?>",
+                parent_form: $("#report-form"),
+                control_class: "course-group-selector",
+                width: 350,
+                select_all_enabled: true
+            });
+
+            $("#select_learner_btn").advancedSearch({
+                api_url : "<?php echo ENTRADA_URL . "/admin/assessments?section=api-assessment-reports"; ?>",
+                resource_url: ENTRADA_URL,
+                filters : {
+                    learner : {
                         label : "<?php echo $translate->_("Learner(s)"); ?>",
-                        data_source : "get-user-learners"
+                        data_source : "get-user-learners",
+                        mode: "checkbox"
                     }
                 },
                 no_results_text: "<?php echo $translate->_("No learner(s) found matching the search criteria."); ?>",
-                parent_form: $("#evaluation-form"),
+                parent_form: $("#report-form"),
+                control_class: "learner-selector",
+                width: 350,
+                lazyload: true,
+                select_all_enabled : true
+            });
+
+            $("#select_form_btn").advancedSearch({
+                api_url : "<?php echo ENTRADA_URL . "/admin/assessments?section=api-assessment-reports"; ?>",
+                resource_url: ENTRADA_URL,
+                filters: {
+                    form: {
+                        label: "<?php echo $translate->_("Forms"); ?>",
+                        data_source: "get-forms-for-reporting",
+                        mode: "checkbox"
+                    }
+                },
+                no_results_text: "<?php echo $translate->_("No forms found matching the search criteria."); ?>",
+                parent_form: $("#report-form"),
                 control_class: "form-selector",
                 width: 350,
                 select_all_enabled : true
@@ -95,41 +150,52 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ASSESSMENTS"))) {
         </div>
     <?php } ?>
     <div id="msgs"></div>
-    <form class="form-horizontal" id="evaluation-form">
-        <div class="control-group">
-            <label class="control-label" for="report-start-date"><?php echo $translate->_("Report Date Range:"); ?></label>
+    <form class="form-horizontal" id="report-form">
+        <div class="control-group space-above" id="select_course_div">
+            <label class="control-label form-required" for="select_course_btn"><?php echo $translate->_("select_course"); ?></label>
+            <div class="controls">
+                <button id="select_course_btn" data-control="course" class="report-control btn" type="button"><?php echo $translate->_("browse_course"); ?> <i class="icon-chevron-down"></i></button>
+            </div>
+        </div>
+        <div id="report-date-range-div" class="control-group">
+            <label class="control-label form-required" for="report_start_date"><?php echo $translate->_("Report Date Range:"); ?></label>
             <div class="controls">
                 <div class="input-append space-right">
-                    <input id="report-start-date" placeholder="<?php echo $translate->_("Report Start..."); ?>" type="text" class="input-small datepicker" <?php echo ($start_date) ? "value=\"" . date("Y-m-d", $start_date) . "\"" : ""; ?>  name="report-start-date"/>
+                    <input id="report_start_date" data-control="start_date" placeholder="<?php echo $translate->_("Report Start..."); ?>" type="text" class="report-control input-small datepicker" <?php echo ($start_date) ? "value=\"" . date("Y-m-d", $start_date) . "\"" : ""; ?>  name="report-start-date"/>
                     <span class="add-on pointer"><i class="icon-calendar"></i></span>
                 </div>
                 <div class="input-append">
-                    <input id="report-end-date" placeholder="<?php echo $translate->_("Report End..."); ?>" type="text" class="input-small datepicker" <?php echo ($end_date) ? "value=\"" . date("Y-m-d", $end_date) . "\"" : ""; ?> name="report-end-date"/>
+                    <input id="report_end_date" data-control="end_date" placeholder="<?php echo $translate->_("Report End..."); ?>" type="text" class="report-control input-small datepicker" <?php echo ($end_date) ? "value=\"" . date("Y-m-d", $end_date) . "\"" : ""; ?> name="report-end-date"/>
                     <span class="add-on pointer"><i class="icon-calendar"></i></span>
                 </div>
             </div>
         </div>
-        <div class="control-group <?php is_null($start_date) && is_null($end_date) ? "hide" : "" ?> " id="evaluation-search">
-            <label class="control-label" for="choose-evaluation-btn"><?php echo $translate->_("Select Learner(s):"); ?></label>
+        <div class="control-group hide" id="select_course_group_div">
+            <label class="control-label" for="select_course_group_btn"><?php echo $translate->_("(Optional) Select Course Groups:"); ?></label>
             <div class="controls">
-                <a href="#" id="choose-evaluation-btn" class="btn" type="button"><?php echo $translate->_("Browse Learner(s) "); ?><i class="icon-chevron-down"></i></a>
+                <button id="select_course_group_btn" data-control="course_group" class="report-control btn" type="button"><?php echo $translate->_("Browse Group(s) "); ?><i class="icon-chevron-down"></i></button>
             </div>
         </div>
-        <div class="control-group hide" id="additional-description">
-            <label class="control-label" for="include-description"><?php echo $translate->_("Include Description:"); ?></label>
+        <div class="control-group hide" id="select_learner_div">
+            <label class="control-label form-required" for="select_learner_btn"><?php echo $translate->_("Select Learner(s):"); ?></label>
             <div class="controls">
-                <input type="checkbox" id="include-description" for="description-text">
-            </div>
-            <div class="controls space-above">
-                <textarea id="description-text" class="expandable hide"></textarea>
+                <button id="select_learner_btn" data-control="learner" class="report-control btn" type="button"><?php echo $translate->_("Browse Learner(s) "); ?><i class="icon-chevron-down"></i></button>
             </div>
         </div>
+        <div class="control-group hide space-above" id="select_form_div">
+            <label class="control-label" for="select_form_btn"><?php echo $translate->_("(Optional) Select Form:"); ?></label>
+            <div class="controls">
+                <button id="select_form_btn" data-control="form" class="report-control btn" type="button"><?php echo $translate->_("Browse Forms "); ?><i class="icon-chevron-down"></i></button>
+            </div>
+        </div>
+
         <a class="btn btn-default space-above space-left hide" id="generate-pdf-btn" href="#generate-pdf-modal" title="<?php echo $translate->_("Download PDF(s)"); ?>" data-pdf-unavailable="0" data-toggle="modal"><?php echo $translate->_("Download PDF(s)") ?></a>
-        <input type="hidden" name="current-page" id="current-page" value="learner"/>
+        <input type="hidden" name="current-page" id="current-page" value="learner-assessments"/>
     </form>
     <?php
     $pdf_modal = new Views_Assessments_Modals_GeneratePDF();
     $pdf_modal->render(array(
-        "action_url" => ENTRADA_URL . "/admin/assessments?section=api-evaluation-reports"
+        "hide_task_table" => true,
+        "action_url" => ENTRADA_URL . "/admin/assessments?section=api-assessment-reports"
     ));
 }

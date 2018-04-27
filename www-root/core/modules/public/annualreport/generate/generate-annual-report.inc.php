@@ -448,7 +448,7 @@ if(!$undergraduateTeachingResults = $db->GetAll($undergraduateTeachingQuery))
 					<td class="small_numbers" id="coldir">Directed Learning</td>
 					<td class="small_numbers" id="colfb">Feedback</td>
 					<td class="small_numbers" id="colexam">Exam</td>
-					<td class="small_numbers" id="colsem">Clerkship Seminar</td>
+					<td class="small_numbers" id="colsem"><?php echo $translate->_("Clerkship Seminar"); ?></td>
 					<td class="small_numbers" id="coloth">Other</td>
 					<?php if($clinical_value == true) { ?>
 						<td class="small_numbers" id="colcoord_enrollment">Co-Ord Enrol</td>

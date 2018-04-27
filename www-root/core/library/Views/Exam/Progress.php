@@ -115,6 +115,7 @@ class Views_Exam_Progress extends Views_Deprecated_Base {
         $this->current_page = (isset($page)) ? (int) $page : 1;
 
         $display_questions = $this->progress->getExamPost()->getExam()->getDisplayQuestions();
+        $randomize_answers = $this->progress->getExamPost()->getExam()->getRandomAnswers();
         if ($display_questions) {
             switch ($display_questions) {
                 case "one":
@@ -147,7 +148,20 @@ class Views_Exam_Progress extends Views_Deprecated_Base {
                             $last_question_type = "question";
                             $question = Models_Exam_Question_Versions::fetchRowByVersionID($element->getElementID());
                             $question_view = new Views_Exam_Question($question);
-                            $render = $question_view->render(true, NULL, array("element-id" => $response->getExamElementID()), "details", false, $this->progress, $response, NULL, $allow_view);
+                            $render = $question_view->render(
+                                true,
+                                NULL,
+                                array("element-id" => $response->getExamElementID()),
+                                "details",
+                                false,
+                                $this->progress,
+                                $response,
+                                NULL,
+                                $allow_view,
+                                0,
+                                array(),
+                                $randomize_answers
+                            );
                             $html .= $render;
                             break;
                         case "text" :
@@ -247,16 +261,21 @@ class Views_Exam_Progress extends Views_Deprecated_Base {
             $this->current_page = isset($current_page) ? (int) $current_page : 1;
             $next_page = $this->current_page+1;
             $previous_page = $this->current_page-1;
-
-            $html = "<ul>";
+            $html = "";
             if (1 !== $this->current_page && (int)$backtrack === 1) {
-                $html .= "<div class=\"span1\"><a class=\"btn btn-link\" href=\"" . $entrada_url . "/exams?section=attempt&action=resume&continue=true&id=" . $this->progress->getPostID() . "&progress_id=" . $this->progress->getID() . "&page=" . $previous_page . "\"><i class=\"fa fa-chevron-left\"></i></a></div>";
+                $html .= "<div id=\"exam_previous_page\">";
+                $html .= "<a class=\"btn btn-link\" href=\"" . $entrada_url . "/exams?section=attempt&action=resume&continue=true&id=" . $this->progress->getPostID() . "&progress_id=" . $this->progress->getID() . "&page=" . $previous_page . "\">";
+                $html .= "<i class=\"fa fa-chevron-left\"></i>";
+                $html .= "</a>";
+                $html .= "</div>";
             }
-            $html .= "<div class=\"span10\" id=\"control-bar-progress\">" . $this->renderExamProgressBar() . "</div>";
             if ($this->current_page < $this->total_pages) {
-                $html .= "<div class=\"span1\"><a class=\"btn btn-link\" href=\"" . $entrada_url . "/exams?section=attempt&action=resume&continue=true&id=" . $this->progress->getPostID() . "&progress_id=" . $this->progress->getID() . "&page=" . $next_page . "\"><i class=\"fa fa-chevron-right\"></i></a></div>";
+                $html .= "<div id=\"exam_next_page\">";
+                $html .= "<a class=\"btn btn-link\" href=\"" . $entrada_url . "/exams?section=attempt&action=resume&continue=true&id=" . $this->progress->getPostID() . "&progress_id=" . $this->progress->getID() . "&page=" . $next_page . "\">";
+                $html .= "<i class=\"fa fa-chevron-right\"></i>";
+                $html .= "</a>";
+                $html .= "</div>";
             }
-            $html .= "</ul>";
         }
 
         return $html;
@@ -425,6 +444,9 @@ class Views_Exam_Progress extends Views_Deprecated_Base {
         }
         if ($can_delete) {
             $html .= "<li><a class=\"progress_menu\" href=\"#\" data-toggle=\"modal\" data-target=\"#delete-modal\" data-id=\"" . $this->progress->getID() . "\">" . $MENU_TEXT["delete"] . "</a></li>\n";
+        }
+        if ($can_view) {
+            $html .= "<li><a href=\"" . ENTRADA_URL ."/admin/exams/exams?section=report-faculty-feedback&id=" . $this->progress->getExamID() . "&progress_id=" . $this->progress->getID() . "\">" . $MENU_TEXT["feedback"] . "</a></li>\n";
         }
 
         $html .= "</ul>\n";
@@ -1069,13 +1091,13 @@ class Views_Exam_Progress extends Views_Deprecated_Base {
         $post           = $this->post;
         $assessment     = $post->getGradeBookAssessment();
         $user_id        = $progress->getCreatedBy();
+        $score          = 0;
 
         if (isset($assessment) && is_object($assessment)) {
             // Get the grading method for the assessment
-            $meta_options       = $assessment->getGradeBookMetaOptions();
-            $grade_threshold    = $assessment->getGradeThreshold();
+            $scoring_method     = Models_Gradebook_Assessment_LuMeta_Scoring::fetchRowByID($assessment->getScoringMethod());
 
-            // This gets the proxy ids as an array using the Models_Gradebook_Assessment_Audience for the Models_Gradebook_Assessment
+            // This gets the proxy ids as an array using Models_Gradebook_Assessment
             $proxy_ids = Models_Gradebook_Assessment::fetchProxyIDsByAssessmentID($assessment);
 
             if ($proxy_ids && is_array($proxy_ids)) {
@@ -1085,67 +1107,32 @@ class Views_Exam_Progress extends Views_Deprecated_Base {
                     /*
                      * Get the scoring method
                      */
-                    if (isset($meta_options) && is_array($meta_options) && count($meta_options) === 1)  {
-                        $meta_option = $meta_options[0];
-                    } else if (isset($meta_options) && is_object($meta_options)) {
-                        $meta_option = $meta_options;
-                    }
-
-                    if (isset($meta_option) && is_object($meta_option)) {
-                        $lu = $meta_option->getGradeBookMetaOptionLu();
-                        if (isset($lu) && is_object($lu)) {
-                            // Get the name of the option ID,
-                            // This is used to determine which scoring method to use for the grade book.
-                            $meta_option_name = $lu->getShortName();
-                        }
-                    }
-
-                    if (isset($meta_option_name) && $meta_option_name != "") {
+                    if (isset($scoring_method) && is_object($scoring_method)) {
                         $submitted_attempts = Models_Exam_Progress::fetchAllByPostIDProxyIDProgressValue($post->getID(), $user_id, "submitted");
                         $submission_count   = count($submitted_attempts);
                         $scores             = array();
                         $update_score       = 0;
 
-                        $marking_scheme = Models_Gradebook_Assessment_MarkingScheme::fetchRowByID($assessment->getAssessmentMarkingSchemesID());
+                        $marking_scheme = Models_Gradebook_Assessment_Marking_Scheme::fetchRowByID($assessment->getAssessmentMarkingSchemesID());
                         $marking_scheme_handler = $marking_scheme->getHandler();
 
-                        switch ($meta_option_name) {
+                        switch ($scoring_method->getShortName()) {
                             case "highest":
                                 // Get all the progress scores for this user that are completed
                                 if (isset($submitted_attempts) && is_array($submitted_attempts)) {
-                                    switch ($marking_scheme_handler) {
-                                        case "Percentage":
-                                            foreach ($submitted_attempts as $key => $attempt) {
-                                                if (isset($attempt) && is_object($attempt)) {
-                                                    $scores[$key] = $attempt->getExamScore();
-                                                }
-                                            }
-                                            arsort($scores);
-                                            $current_key        = key($scores);
-                                            $current_progress   = $submitted_attempts[$current_key];
+                                    foreach ($submitted_attempts as $key => $attempt) {
+                                        if (isset($attempt) && is_object($attempt)) {
+                                            $scores[$key] = $attempt->getExamScore();
+                                        }
+                                    }
+                                    arsort($scores);
+                                    $current_key = key($scores);
+                                    $current_progress = $submitted_attempts[$current_key];
 
 
-                                            $score              = $current_progress->getExamScore();
-                                            if ($score >= $progress->getExamScore()) {
-                                                $update_score = 1;
-                                            }
-                                            break;
-                                        case "Numeric":
-                                            foreach ($submitted_attempts as $key => $attempt) {
-                                                if (isset($attempt) && is_object($attempt)) {
-                                                    $scores[$key] = $attempt->getExamPoints();
-                                                }
-                                            }
-                                            arsort($scores);
-                                            $current_key        = key($scores);
-                                            $current_progress   = $submitted_attempts[$current_key];
-
-
-                                            $score              = $current_progress->getExamPoints();
-                                            if ($score >= $progress->getExamPoints()) {
-                                                $update_score = 1;
-                                            }
-                                            break;
+                                    $score = $current_progress->getExamScore();
+                                    if ($score >= $progress->getExamScore()) {
+                                        $update_score = 1;
                                     }
                                 }
                                 break;
@@ -1160,15 +1147,7 @@ class Views_Exam_Progress extends Views_Deprecated_Base {
                                 }
 
                                 $update_score       = 1;
-
-                                switch ($marking_scheme_handler) {
-                                    case "Percentage":
-                                        $score              = $current_progress->getExamScore();
-                                        break;
-                                    case "Numeric":
-                                        $score              = $current_progress->getExamPoints();
-                                        break;
-                                }
+                                $score              = $current_progress->getExamScore();
 
                                 break;
                             case "average":
@@ -1177,14 +1156,7 @@ class Views_Exam_Progress extends Views_Deprecated_Base {
                                     if (isset($submitted_attempts) && is_array($submitted_attempts)) {
                                         foreach ($submitted_attempts as $attempt) {
                                             if (isset($attempt) && is_object($attempt)) {
-                                                switch ($marking_scheme_handler) {
-                                                    case "Percentage":
-                                                        $scores[] = $attempt->getExamScore();
-                                                        break;
-                                                    case "Numeric":
-                                                        $scores[] = $attempt->getExamPoints();
-                                                        break;
-                                                }
+                                                $scores[] = $attempt->getExamScore();
                                             }
                                         }
 
@@ -1201,21 +1173,19 @@ class Views_Exam_Progress extends Views_Deprecated_Base {
                                     $current_progress   = $submitted_attempts[$current_key];
                                     $update_score       = 1;
 
-                                    switch ($marking_scheme_handler) {
-                                        case "Percentage":
-                                            $score              = $current_progress->getExamScore();
-                                            break;
-                                        case "Numeric":
-                                            $score              = $current_progress->getExamPoints();
-                                            break;
-                                    }
+                                    $score              = $current_progress->getExamScore();
                                 }
 
                                 break;
                         }
 
                         if ($update_score === 1) {
-                            $grade = Models_Gradebook_Assessment_Grade::fetchRowByAssessmentIDProxyID($assessment->getID(), $user_id);
+                            $grade_obj = new Models_Assessment_Grade(array(
+                                "assessment_id" => $assessment->getID(),
+                                "proxy_id" => $user_id
+                            ));
+
+                            $grade = $grade_obj->fetchRowByAssessmentIDProxyID();
                             if ($grade) {
                                 $grade->setValue($score);
                                 if (!$grade->update()) {
@@ -1223,7 +1193,7 @@ class Views_Exam_Progress extends Views_Deprecated_Base {
                                     application_log("error", "Error updating Grade Book DB said: " . $db->ErrorMsg());
                                 }
                             } else {
-                                $grade = new Models_Gradebook_Assessment_Grade(array(
+                                $grade = new Models_Assessment_Grade(array(
                                     "assessment_id"         => $assessment->getID(),
                                     "proxy_id"              => $user_id,
                                     "value"                 => $score,
@@ -1284,7 +1254,7 @@ class Views_Exam_Progress extends Views_Deprecated_Base {
         if ($this->progress !== null) {
             return $this->renderAdminRow("html", 1, $show_edit);
         } else {
-            echo display_notice($MODULE_TEXT["progress"]["text_no_available_posts"]);
+            echo display_notice($translate->_("No Exams to Display"));
         }
     }
 }

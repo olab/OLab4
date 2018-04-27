@@ -276,7 +276,7 @@ if ($RECORD_ID) {
 				application_log("error", "Someone attempted to review results of qprogress_id [".$RECORD_ID."] (quiz_id [".$quiz_record["quiz_id"]."] / event_id [".$quiz_record["event_id"]."]) after the release date.");
 			} else {
 				$NOTICE++;
-				$NOTICESTR[] = "You will not be able to review your quiz results until after <strong>".date(DEFAULT_DATE_FORMAT, $quiz_record["release_until"])."</strong>.<br /><br />Please contact a teacher if you require further assistance.";
+				$NOTICESTR[] = "You will not be able to review your quiz results until after <strong>".date(DEFAULT_DATETIME_FORMAT, $quiz_record["release_until"])."</strong>.<br /><br />Please contact a teacher if you require further assistance.";
 
 				echo display_notice();
 

@@ -13,7 +13,7 @@ class Views_Exam_Group extends Views_Deprecated_Base {
 
     protected $display_style;
     protected $exam_id;
-
+    protected $exam_in_progress;
 
     /**
      * @param Models_Exam_Group $group
@@ -27,12 +27,16 @@ class Views_Exam_Group extends Views_Deprecated_Base {
      * @return array
      */
     protected function getQuestionControlArray(Models_Exam_Question_Versions $question) {
-        $display_style = $this->display_style;
-        $related_versions = $question->fetchAllRelatedVersions();
-        $highest_version  = $question->checkHighestVersion(0);
+        $display_style      = $this->display_style;
+        $related_versions   = $question->fetchAllRelatedVersions();
+        $highest_version    = $question->checkHighestVersion(0);
+        $exam_in_progress   = $this->exam_in_progress;
 
-        $control_group["edit"] = "<a href=\"" . ENTRADA_URL . "/admin/exams/questions?section=edit-question&id=" . $question->getQuestionID() . "&version_id=" . $question->getVersionID() . "\" title=\"Edit Question\" class=\"btn flat-btn edit-question\"><i class=\"fa fa-pencil\"></i></a>";
-        if ($display_style !== "questions"){
+        if ($exam_in_progress === false) {
+            $control_group["edit"] = "<a href=\"" . ENTRADA_URL . "/admin/exams/questions?section=edit-question&id=" . $question->getQuestionID() . "&version_id=" . $question->getVersionID() . "\" title=\"Edit Question\" class=\"btn flat-btn edit-question\"><i class=\"fa fa-pencil\"></i></a>";
+        }
+
+        if ($display_style !== "questions" && $exam_in_progress === false) {
             $control_group["delete"] = "<a href=\"#\" title=\"Remove Question from Group\" class=\"btn flat-btn delete-group-question\"><i class=\"fa fa-trash-o\"></i></a>";
         }
         if ($display_style === "list") {
@@ -41,14 +45,16 @@ class Views_Exam_Group extends Views_Deprecated_Base {
             $control_group["view"] = "<a href=\"#\" title=\"View Question Details\" class=\"btn flat-btn item-details\"><i class=\"fa fa-eye\"></i></a>";
         }
 
-        $control_group["move"] = "<a href=\"#\" title=\"Move Question\" class=\"btn flat-btn move\"><i class=\"fa fa-arrows\"></i></a>";
+        if ($exam_in_progress === false) {
+            $control_group["move"] = "<a href=\"#\" title=\"Move Question\" class=\"btn flat-btn move\"><i class=\"fa fa-arrows\"></i></a>";
 
-        if (isset($related_versions) && is_array($related_versions) && !empty($related_versions)) {
-            $control_group["versions"] = "<a href=\"#\" title=\"Select Related Version\" class=\"flat-btn btn dropdown-toggle related-group-questions" . ($highest_version ? "" : " updated-question-available") . "\" data-toggle=\"dropdown\"><i class=\"related-question-icon fa fa-exchange\" data-question-id=\"" . $question->getQuestionID() . "\" data-version-id=\"" . $question->getVersionID() . "\" data-version-count=\"" . $question->getVersionCount() . "\"></i></a>";
-        }
+            if (isset($related_versions) && is_array($related_versions) && !empty($related_versions)) {
+                $control_group["versions"] = "<a href=\"#\" title=\"Select Related Version\" class=\"flat-btn btn dropdown-toggle related-group-questions" . ($highest_version ? "" : " updated-question-available") . "\" data-toggle=\"dropdown\"><i class=\"related-question-icon fa fa-exchange\" data-question-id=\"" . $question->getQuestionID() . "\" data-version-id=\"" . $question->getVersionID() . "\" data-version-count=\"" . $question->getVersionCount() . "\"></i></a>";
+            }
 
-        if (isset($related_versions) && is_array($related_versions) && !empty($related_versions)) {
-            $control_group["related"] = Views_Exam_Question::renderRelatedBrowser($related_versions, "group");
+            if (isset($related_versions) && is_array($related_versions) && !empty($related_versions)) {
+                $control_group["related"] = Views_Exam_Question::renderRelatedBrowser($related_versions, "group");
+            }
         }
 
         return array(
@@ -105,15 +111,16 @@ class Views_Exam_Group extends Views_Deprecated_Base {
      * @param array|NULL $data_attr_element_array
      * @return string
      */
-    public function renderGroup (Models_Exam_Group $group, $display_mode = false, array $control_array = NULL, array $data_attr_array = NULL, array $data_attr_element_array = NULL) {
-        $group_id = $group->getGroupID();
-        $group_questions = $group->getGroupQuestions();
+    public function renderGroup(Models_Exam_Group $group, $display_mode = false, array $control_array = NULL, array $data_attr_array = NULL, array $data_attr_element_array = NULL) {
+        $group_id               = $group->getGroupID();
+        $group_questions        = $group->getGroupQuestions();
         $question_display_style = "details";
-        $display_style = $this->display_style;
-        $exam_id = $this->exam_id;
+        $display_style          = $this->display_style;
+        $exam_id                = $this->exam_id;
+        $html                   = "";
         switch ($display_style) {
             case "group":
-                $html = "<div class=\"exam-element exam-question exam-question-group\"";
+                $html .= "<div class=\"exam-element exam-question exam-question-group\"";
                 if (!empty($data_attr_array)) {
                     foreach ($data_attr_array as $key => $data_attr) {
                         $html .= " data-" . $key . "=\"" . $data_attr . "\"" ;
@@ -127,7 +134,7 @@ class Views_Exam_Group extends Views_Deprecated_Base {
                     $html .= "        <div class=\"group-info pull-left\"><span class=\"group-type\">Group ID: " . $group_id . "</span> " . $group->getGroupTitle() . "</div>";
                     $html .= "        <div class=\"group-edit-buttons pull-right\">";
                     $html .= "            <div class=\"btn-group\">";
-                    $html .= "                <span class=\"btn flat-btn select-item select-group\"><i class=\"icon-select-item icon-select-question fa fa-2x fa-square-o\"></i></span>";
+                    $html .= "                <span class=\"btn flat-btn select-item select-group\"><i class=\"select-item-icon question-icon-select fa fa-4x fa-square-o\"></i></span>";
                     $html .= "            </div>";
                     $html .= "            <div class=\"btn-group\">";
                     $html .= "                <a href=\"" . ENTRADA_URL . "/admin/exams/groups?section=edit-group&group_id=" . $group_id . "&exam_id=" . $exam_id . "\" class=\"btn flat-btn edit-group\"><i class=\"fa fa-pencil\"></i></a>";
@@ -168,9 +175,11 @@ class Views_Exam_Group extends Views_Deprecated_Base {
                 break;
         }
 
-        foreach ($group_questions as $group_question) {
-            $question       = Models_Exam_Question_Versions::fetchRowByVersionID($group_question->getVersionID());
-            $html           .= $this->renderSingleGroupQuestion($question, $display_mode, $control_array, $data_attr_element_array, $group_question, $question_display_style);
+        if ($group_questions && is_array($group_questions) && !empty($group_questions)) {
+            foreach ($group_questions as $group_question) {
+                $question       = Models_Exam_Question_Versions::fetchRowByVersionID($group_question->getVersionID());
+                $html          .= $this->renderSingleGroupQuestion($question, $display_mode, $control_array, $data_attr_element_array, $group_question, $question_display_style);
+            }
         }
 
         switch ($display_style)  {
@@ -200,7 +209,8 @@ class Views_Exam_Group extends Views_Deprecated_Base {
     public function renderSingleGroupQuestion(Models_Exam_Question_Versions $question, $display_mode = false, array $control_array = NULL, array $data_attr_element_array = NULL, Models_Exam_Group_Question $group_question, $question_display_style) {
         $question_view  = new Views_Exam_Question($question);
         $question_control_array = (null == $control_array) ? $this->getQuestionControlArray($question) : $control_array;
-
+//        $select_control_html = array("<span class=\"flat-btn btn select-item select-question\"><i class=\"select-item-icon question-icon-select fa fa-2x fa-square-o\" data-question-id=\"" . $question->getQuestionID() . "\" data-version-id=\"" . $question->getVersionID() . "\" data-version-count=\"" . $question->getVersionCount() . "\"></i></span>");
+//        array_unshift($question_control_array, $select_control_html);
         $question_data["element-id"]            = $data_attr_element_array[$group_question->getVersionID()];
         $question_data["sortable-element-id"]   = "element_" . $data_attr_element_array[$group_question->getVersionID()];
         $question_data["egquestion-id"]         = "question_" . $group_question->getID();
@@ -221,11 +231,27 @@ class Views_Exam_Group extends Views_Deprecated_Base {
      */
     public function render($display_mode = false, array $control_array = NULL, array $data_attr_array = NULL, array $data_attr_element_array = NULL, $display_style = "group", $exam_id = false) {
         global $translate;
-        $MODULE_TEXT = $translate->_("exams");
-        $this->display_style = $display_style;
-        $this->exam_id = $exam_id;
+        $MODULE_TEXT            = $translate->_("exams");
+        $this->display_style    = $display_style;
+        $this->exam_id          = $exam_id;
+        $this->exam_in_progress = false;
+        $exam                   = Models_Exam_Exam::fetchRowByID($this->exam_id);
+        if ($exam && is_object($exam)) {
+            $posts = Models_Exam_Post::fetchAllByExamID($exam_id);
+            if ($posts && is_array($posts) && !empty($posts)) {
+                foreach ($posts as $post) {
+                    $progress = Models_Exam_Progress::fetchAllStudentsByPostID($post->getID());
+
+                    if ($progress && is_array($progress) && !empty($progress)) {
+                        $this->exam_in_progress = true;
+                        break;
+                    }
+                }
+            }
+        }
+
         if ($this->group !== null) {
-            return $this->renderGroup($this->group, $display_mode, $control_array, $data_attr_array, $data_attr_element_array, $display_style);
+            return $this->renderGroup($this->group, $display_mode, $control_array, $data_attr_array, $data_attr_element_array);
         } else {
             echo display_notice($MODULE_TEXT["groups"]["group"]["no_available_questions"]);
         }

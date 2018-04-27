@@ -15,15 +15,24 @@
  * You should have received a copy of the GNU General Public License
  * along with Entrada.  If not, see <http://www.gnu.org/licenses/>.
  *
- * 
+ * A model for loading exam pdf used in the student interface
  *
- * @author Organisation: 
- * @author Developer:  <>
- * @copyright Copyright 2016 . All Rights Reserved.
+ * @author Organization: David Geffen School of Medicine at UCLA
+ * @author Unit: Instructional Design and Technology Unit
+ * @author Developer: Sam Payne <spayne@mednet.ucla.edu>
+ * @copyright Copyright 2017 Regents of The University of California. All Rights Reserved.
  */
 
 class Models_Exam_Exam_File extends Models_Base {
-    protected $file_id, $exam_id, $file_name, $file_type, $file_title, $file_size, $updated_date, $updated_by, $deleted_date;
+    protected $file_id,
+        $exam_id,
+        $file_name,
+        $file_type,
+        $file_title,
+        $file_size,
+        $updated_date,
+        $updated_by,
+        $deleted_date;
 
     protected static $table_name           = "exam_attached_files";
     protected static $primary_key          = "file_id";
@@ -83,6 +92,10 @@ class Models_Exam_Exam_File extends Models_Base {
 
     public function setDeletedDate($deleted_date) {
         $this->deleted_date = $deleted_date;
+    }
+
+    public function setExamID($exam_id) {
+        $this->exam_id = $exam_id;
     }
 
     /* @return bool|Models_Exam_Exam_File */

@@ -200,8 +200,10 @@ if (isset($PROCESSED["progress_id"])) {
                         ?>
                         <h2 class="summary_header">Curriculum Tag Performance</h2>
                         <?php
+                        $set_ids = array();
                         foreach ($categories as $set_id => $sets) {
                             $global_objective = Models_Objective::fetchRow($set_id);
+                            $set_ids[] = $set_id;
                             if ($global_objective) {
                                 echo "<h2>" . $global_objective->getName() . "</h2>";
                             }
@@ -240,8 +242,12 @@ if (isset($PROCESSED["progress_id"])) {
                                                 $min            = number_format($post_category->getMin());
                                                 $max            = number_format($post_category->getMax());
 
-                                                $set_names[]    = limit_chars($objective->getName(), 60);
-
+                                                $name_lgn = strlen($objective->getName());
+                                                if ($name_lgn > 59) {
+                                                    $set_names[]    = substr($objective->getName(), 0, 60) . "...";
+                                                } else {
+                                                    $set_names[]    = $objective->getName();
+                                                }
                                                 $user_values[]  = $score;
                                                 $class_values[] = $average;
                                                 $min_values[]   = $min;
@@ -264,21 +270,21 @@ if (isset($PROCESSED["progress_id"])) {
                                                     <td>
                                                         <div class="slider-container">
                                                             <div class="slider-my-score" style="left: <?php echo $score - 1;?>%;">
-                                                            <span class="fa-stack">
-                                                                <i class="fa fa-minus fa-rotate-90"></i>
-                                                                <i class="fa fa-user"></i>
-                                                            </span>
+                                                                <span class="fa-stack">
+                                                                    <i class="fa fa-minus fa-rotate-90"></i>
+                                                                    <i class="fa fa-user"></i>
+                                                                </span>
                                                             </div>
                                                             <div class="slider-min-score<?php echo ($min >= 85 ? " min-dark" : ""); ?>" style="left: <?php echo ($min < 85 ? $min - 1 : 85); ?>%;">
-                                                            <span>
-                                                                Min: <?php echo $min;?>
-                                                            </span>
+                                                                <span>
+                                                                    Min: <?php echo $min;?>
+                                                                </span>
                                                             </div>
                                                             <div class="slider-average-score" style="left: <?php echo $average - 1;?>%;">
-                                                            <span class="fa-stack">
-                                                                <i class="fa fa-minus fa-rotate-90"></i>
-                                                                <i class="fa fa-stack-1x fa-users"></i>
-                                                            </span>
+                                                                <span class="fa-stack">
+                                                                    <i class="fa fa-minus fa-rotate-90"></i>
+                                                                    <i class="fa fa-stack-1x fa-users"></i>
+                                                                </span>
                                                             </div>
                                                             <div class="exam-slider">
                                                                 <canvas id="slider-<?php echo $objective->getID();?>" class="slider-canvas" data-min="<?php echo $min;?>" data-max="<?php echo $max;?>" data-id="<?php echo $objective->getID();?>" width="450" height="25"></canvas>
@@ -351,7 +357,7 @@ if (isset($PROCESSED["progress_id"])) {
                                         <span>Average/Mean</span>
                                     </div>
                                     <div class="span2">
-                                        <canvas id="slider-legend" width="40" height="15"></canvas>
+                                        <canvas id="slider-legend-<?php echo $set_id;?>" width="40" height="15"></canvas>
                                         <span>Score Range</span>
                                     </div>
                                     <div class="span2 star-level">
@@ -516,21 +522,30 @@ if (isset($PROCESSED["progress_id"])) {
                                                 }
                                             }
                                         });
-
-                                        var canvas_obj = document.getElementById("slider-legend").getContext("2d");
-                                        canvas_obj.beginPath();
-                                        canvas_obj.moveTo(10, 2);
-                                        canvas_obj.lineTo(10, 20);
-                                        canvas_obj.lineTo(40, 20);
-                                        canvas_obj.lineTo(40, 2);
-                                        canvas_obj.lineTo(10, 2);
-
-                                        var my_gradient = canvas_obj.createLinearGradient(0, 0, 0, 20);
-                                        my_gradient.addColorStop(0, "rgba(5, 117, 147, 0.4)");
-                                        my_gradient.addColorStop(1, "rgba(5, 117, 147, 1)");
-                                        canvas_obj.fillStyle = my_gradient;
-                                        canvas_obj.fill();
                                     });
+                                </script>
+                                <?php
+                            }
+                        }
+
+                        if ($set_ids && is_array($set_ids)) {
+                            foreach ($set_ids as $set_id) {
+                                ?>
+                                <script>
+                                    var set_id = <?php echo $set_id;?>;
+                                    var canvas_obj = document.getElementById("slider-legend-" + set_id).getContext("2d");
+                                    canvas_obj.beginPath();
+                                    canvas_obj.moveTo(10, 2);
+                                    canvas_obj.lineTo(10, 20);
+                                    canvas_obj.lineTo(40, 20);
+                                    canvas_obj.lineTo(40, 2);
+                                    canvas_obj.lineTo(10, 2);
+
+                                    var my_gradient = canvas_obj.createLinearGradient(0, 0, 0, 20);
+                                    my_gradient.addColorStop(0, "rgba(5, 117, 147, 0.4)");
+                                    my_gradient.addColorStop(1, "rgba(5, 117, 147, 1)");
+                                    canvas_obj.fillStyle = my_gradient;
+                                    canvas_obj.fill();
                                 </script>
                                 <?php
                             }

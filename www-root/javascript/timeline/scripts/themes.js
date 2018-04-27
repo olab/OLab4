@@ -105,8 +105,12 @@ Timeline.ClassicTheme._Impl = function() {
             "#0000FF"
         ],
         bubble: {
+            /*
             width:          250, // px
             height:         125, // px
+            */
+            width:          950, // px
+            height:         925, // px
             titleStyler: function(elmt) {
                 elmt.className = "timeline-event-bubble-title";
             },

@@ -262,7 +262,7 @@ jQuery("document").ready(function($) {
 	});
 
 	$("#modal-preview-assessment-form").on("show", function() {
-		$(".modal-body", $(this)).load(ENTRADA_URL + "/admin/assessments/forms?section=api-forms&method=get-rendered-form&form_id=" + FORM_ID + "&assessment_id=" + ASSESSMENT_ID + "&edit_comments=false")
+		$(".modal-body", $(this)).load(ENTRADA_URL + "/admin/gradebook/assessments?section=api-forms&method=get-rendered-form&form_id=" + FORM_ID + "&assessment_id=" + ASSESSMENT_ID + "&edit_comments=false")
 	})
 	.on("hide", function() {
 		$(".modal-body", $(this)).empty();
@@ -277,10 +277,10 @@ jQuery("document").ready(function($) {
 	// Export CSV
 	$("#export-csv-button").on("click", function(e) {
 		e.preventDefault();
-		window.location = ENTRADA_URL + "/admin/gradebook?section=io&id=" + COURSE_ID + "&assessment_id=" + ASSESSMENT_ID + "&download=csv&assessment_ids=" + ASSESSMENT_ID;
+		window.location = ENTRADA_URL + "/admin/gradebook?section=csv-download&id=" + COURSE_ID + "&cperiod_id=" + CPERIOD_ID + "&assessment_id=" + ASSESSMENT_ID + "&title=" + TITLE;
 	})
 
-	$.get(ENTRADA_URL + '/admin/assessments/forms?section=api-forms&method=get-grade-exceptions&assessment_id=' + ASSESSMENT_ID, function(data) {
+	$.get(ENTRADA_URL + '/admin/gradebook/assessments?section=api-forms&method=get-grade-exceptions&assessment_id=' + ASSESSMENT_ID, function(data) {
 		var json = $.parseJSON(data);
 
 		if (json.status == "success") {
@@ -305,7 +305,7 @@ jQuery("document").ready(function($) {
 			var proxy_id = $this.val();
 			var fullname = $("#exception_student_"+proxy_id).text();
 
-			$.post(ENTRADA_URL + "/admin/assessments/forms", {
+			$.post(ENTRADA_URL + "/admin/gradebook/assessments", {
 				section: "api-forms",
 				method: "add_grade_exception",
 				assessment_id: ASSESSMENT_ID,
@@ -333,7 +333,7 @@ jQuery("document").ready(function($) {
 		e.preventDefault();
 		var proxy_id = $(this).attr("data-proxy-id");
 
-		$.post(ENTRADA_URL + "/admin/assessments/forms", {
+		$.post(ENTRADA_URL + "/admin/gradebook/assessments", {
 			section: "api-forms",
 			method: "remove_grade_exception",
 			aexception_id: $(this).attr("data-aexception-id"),
@@ -358,7 +358,7 @@ jQuery("document").ready(function($) {
 	})
 	.on("input", ".grade-weighting", debounce(function(e) {
 
-		$.post(ENTRADA_URL + "/admin/assessments/forms", {
+		$.post(ENTRADA_URL + "/admin/gradebook/assessments", {
 			section: "api-forms",
 			method: "save_grade_exception",
 			aexception_id: $(this).attr("data-aexception-id"),
@@ -431,4 +431,8 @@ jQuery("document").ready(function($) {
 			if (callNow) func.apply(context, args);
 		};
 	};
+
+	$(".modal").on("show", function() {
+		$(this).removeClass("hide");
+	});
 });

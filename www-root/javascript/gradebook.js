@@ -34,15 +34,15 @@ jQuery(document).ready(function($) {
 		e.preventDefault();
 	});
 
-	$('.gradebook_modal_close').live('click', function(e) {
+	jQuery(document).on('click', '.gradebook_modal_close', function(e) {
 		e.preventDefault();
 		$('.gradebook_edit').jqmHide();
 	});
 
-	$('.gradebook_edit_add').live('click', function(e) {
+	jQuery(document).on('click', '.gradebook_edit_add', function(e) {
 		window.location = $("#gradebook_assessment_add").attr('href');
 	});
-	$('.gradebook_export').live('click', function(e) {
+	jQuery(document).on('click', '.gradebook_export', function(e) {
 		var ids = [];
 		$$('#assessment_ids').each(function(input) {
 			ids.push($F(input));
@@ -272,7 +272,7 @@ jQuery(document).ready(function($) {
 	});
 
 	$("#modal-preview-assessment-form").on("show", function() {
-			$(".modal-body", $(this)).load(ENTRADA_URL + "/admin/assessments/forms?section=api-forms&method=get-rendered-form&form_id=" + FORM_ID + "&assessment_id=" + ASSESSMENT_ID + "&edit_comments=false")
+			$(".modal-body", $(this)).load(ENTRADA_URL + "/admin/gradebook/assessments?section=api-forms&method=get-rendered-form&form_id=" + FORM_ID + "&assessment_id=" + ASSESSMENT_ID + "&edit_comments=false")
 		})
 		.on("hide", function() {
 			$(".modal-body", $(this)).empty();

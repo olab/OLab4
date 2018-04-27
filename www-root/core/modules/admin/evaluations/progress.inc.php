@@ -262,7 +262,7 @@ if($EVALUATION_ID) {
                         echo "	<td>".$evaluation_evaluator["fullname"]."</td>\n";
                         echo "	<td>".($inprogress ? "In Progress" : ($last_completed ? "Completed" : "Not Started"))."</td>\n";
                         echo "	<td>".$count." / ".$max_submittable."</td>\n";
-                        echo "	<td>".(isset($last_completed) && $last_completed ? date(DEFAULT_DATE_FORMAT, $last_completed) : "Not Started")."</td>\n";
+                        echo "	<td>".(isset($last_completed) && $last_completed ? date(DEFAULT_DATETIME_FORMAT, $last_completed) : "Not Started")."</td>\n";
                         echo "</tr>\n";
 	                }
 	                ?>
@@ -398,7 +398,7 @@ if($EVALUATION_ID) {
                         echo "	<td>".$evaluation_evaluator["fullname"]."</td>\n";
                         echo "	<td>".$target_name."</td>\n";
                         echo "	<td>".($evaluation_evaluator["progress_value"] == "inprogress" ? "In Progress" : "Completed")."</td>\n";
-                        echo "	<td>".date(DEFAULT_DATE_FORMAT, $evaluation_evaluator["updated_date"])."</td>\n";
+                        echo "	<td>".date(DEFAULT_DATETIME_FORMAT, $evaluation_evaluator["updated_date"])."</td>\n";
                         echo "</tr>\n";
 	                }
 	                ?>
@@ -532,7 +532,7 @@ if($EVALUATION_ID) {
                         echo "	<td>".$evaluation_evaluator["fullname"]."</td>\n";
                         echo "	<td>".$target_name."</td>\n";
                         echo "	<td>".($evaluation_evaluator["progress_value"] == "inprogress" ? "In Progress" : "Completed")."</td>\n";
-                        echo "	<td>".date(DEFAULT_DATE_FORMAT, $evaluation_evaluator["updated_date"])."</td>\n";
+                        echo "	<td>".date(DEFAULT_DATETIME_FORMAT, $evaluation_evaluator["updated_date"])."</td>\n";
                         echo "</tr>\n";
 	                }
 	                ?>
@@ -630,7 +630,7 @@ if($EVALUATION_ID) {
 	                        echo "	<td>".$evaluation_evaluator["fullname"]."</td>\n";
 	                        echo "	<td>".$target_name."</td>\n";
 	                        echo "	<td>Not yet begun</td>\n";
-	                        echo "	<td>".date(DEFAULT_DATE_FORMAT, $evaluation_evaluator["updated_date"])."</td>\n";
+	                        echo "	<td>".date(DEFAULT_DATETIME_FORMAT, $evaluation_evaluator["updated_date"])."</td>\n";
 	                        echo "</tr>\n";
 	                	}
 	                }

@@ -1116,3 +1116,7 @@ div img.user-image-size {
     border-top: 0px;
     padding-top: 0px;
 }
+
+#selected-assessors-list-ul {
+    margin-bottom: 5px;
+}

@@ -4,6 +4,7 @@
     <testsuites>
         <testsuite name="Entrada">
             <directory>./models</directory>
+            <directory>./views</directory>
             <directory>./functions</directory>
         </testsuite>
     </testsuites>

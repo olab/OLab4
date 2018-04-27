@@ -60,7 +60,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP"))) {
 		$results = $db->GetAll($query);
 		if ($results) {
 			?>
-			<h1><?php echo $student_name.(substr($student_name, -1) != "s" ? "'s" : "'");?> Clerkship Schedule</h1>
+			<h1><?php echo $student_name.(substr($student_name, -1) != "s" ? "'s" : "'");?> <?php echo $translate->_("Clerkship Schedule"); ?></h1>
 			<table class="tableList" cellspacing="0" summary="List of Clerkship Rotations">
 				<colgroup>
 					<col class="modified" />
@@ -157,7 +157,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP"))) {
 			<?php
 		} else {
 			$NOTICE++;
-			$NOTICESTR[] = $student_name . " has no scheduled clerkship rotations / electives in the system at this time.";
+			$NOTICESTR[] = $student_name . " has no scheduled " . $translate->_("clerkship rotations") . " / electives in the system at this time.";
 
 			echo display_notice();
 		}

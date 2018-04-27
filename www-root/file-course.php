@@ -70,7 +70,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 
 				if ((!$is_administrator) && ((int) $result["valid_from"]) && ($result["valid_from"] > time())) {
 					$TITLE	= "Not Available: ".html_encode($result["file_name"]);
-					$BODY	= display_notice(array("The file that you are trying to download (<strong>".html_encode($result["file_name"])."</strong>) is not available for downloading until <strong>".date(DEFAULT_DATE_FORMAT, $result["valid_from"])."</strong>.<br /><br />For further information or to contact a teacher, please see the <a href=\"".ENTRADA_URL."/courses?id=".$result["course_id"]."\" style=\"font-weight: bold\">course website</a>."));
+					$BODY	= display_notice(array("The file that you are trying to download (<strong>".html_encode($result["file_name"])."</strong>) is not available for downloading until <strong>".date(DEFAULT_DATETIME_FORMAT, $result["valid_from"])."</strong>.<br /><br />For further information or to contact a teacher, please see the <a href=\"".ENTRADA_URL."/courses?id=".$result["course_id"]."\" style=\"font-weight: bold\">course website</a>."));
 
 					$template_html = fetch_template("global/external");
 					if ($template_html) {
@@ -80,7 +80,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 				} else {
 					if((!$is_administrator) && ((int) $result["valid_until"]) && ($result["valid_until"] < time())) {
 						$TITLE	= "Not Available: ".html_encode($result["file_name"]);
-						$BODY	= display_notice(array("The file that you are trying to download (<strong>".html_encode($result["file_name"])."</strong>) was only available for download until <strong>".date(DEFAULT_DATE_FORMAT, $result["valid_until"])."</strong>.<br /><br />For further information or to contact a teacher, please see the <a href=\"".ENTRADA_URL."/courses?id=".$result["course_id"]."\" style=\"font-weight: bold\">course website</a>."));
+						$BODY	= display_notice(array("The file that you are trying to download (<strong>".html_encode($result["file_name"])."</strong>) was only available for download until <strong>".date(DEFAULT_DATETIME_FORMAT, $result["valid_until"])."</strong>.<br /><br />For further information or to contact a teacher, please see the <a href=\"".ENTRADA_URL."/courses?id=".$result["course_id"]."\" style=\"font-weight: bold\">course website</a>."));
 
 						$template_html = fetch_template("global/external");
 						if ($template_html) {

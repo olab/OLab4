@@ -109,12 +109,65 @@ class Models_Assessments_Distribution_CourseContact extends Models_Base {
         return $self->fetchRow($constraints);
     }
 
-    public function fetchRowByAssessorValue($assessor_value) {
+    public function fetchRowByAssessorValueAssessorType($assessor_value, $assessor_type) {
         $self = new self();
         $constraints = array(
-            array("key" => "assessor_value", "value" => $assessor_value, "method" => "=")
+            array("key" => "assessor_value", "value" => $assessor_value, "method" => "="),
+            array("key" => "assessor_type", "value" => $assessor_type, "method" => "=")
         );
         return $self->fetchRow($constraints);
+    }
+
+    /**
+     * @param array $course_ids
+     * @param null $assessor_type
+     * @param null $search_term
+     * @param null $limit
+     * @param null $offset
+     * @return mixed
+     */
+    public function fetchAllByCourseIDs($course_ids = array(), $assessor_type = null, $search_term = null, $limit = null, $offset = null) {
+        global $db;
+
+        $assessor_type_user_data = 'internal';
+        $assessor_type_external_assessors = 'external';
+
+
+        if (!is_null($assessor_type) && $assessor_type) {
+            if ($assessor_type == "external") {
+                $assessor_type_user_data = "";
+            } else {
+                $assessor_type_external_assessors = "";
+            }
+        }
+
+        $query = "  SELECT a.`id`, a.`assessor_value`, a.`assessor_type`, b.*
+                    FROM `cbl_course_contacts` as a
+                    LEFT JOIN `".AUTH_DATABASE."`.`user_data` as b
+                    ON a.`assessor_value` = b.`id`
+                    AND a.`assessor_type` = '$assessor_type_user_data'
+                    LEFT JOIN `cbl_external_assessors` as c
+                    ON a.`assessor_value` = c.`eassessor_id`
+                    AND a.`assessor_type` = '$assessor_type_external_assessors'
+                    WHERE (b.`id` IS NOT NULL OR c.`eassessor_id` IS NOT NULL)
+                    AND a.`course_id` IN (" . implode(",", $course_ids) . ")";
+
+        if ($search_term) {
+            $query .= " AND (b.`firstname` LIKE (". $db->qstr("%". $search_term ."%") .") 
+                             OR b.`lastname` LIKE (". $db->qstr("%". $search_term ."%") .")
+                             OR b.`email` LIKE (". $db->qstr("%". $search_term ."%") ."))";
+        }
+
+        $query .= " ORDER BY b.`firstname` ASC, b.`lastname` ASC";
+
+        if ($limit) {
+            $query .= " LIMIT {$limit}";
+        }
+        if ($offset) {
+            $query .= " OFFSET {$offset}";
+        }
+
+        return $db->GetAll($query);
     }
 
     public function fetchAllByCourseID($course_id, $assessor_type = null, $search_term = null) {
@@ -136,7 +189,7 @@ class Models_Assessments_Distribution_CourseContact extends Models_Base {
             $AND_name_like = " AND CONCAT(COALESCE(CONCAT(b.`firstname`, ' ', b.`lastname`), ''), COALESCE(CONCAT(c.`firstname`, ' ', c.`lastname`), '')) LIKE (". $db->qstr("%". $search_term ."%") .") ";
         }
 
-        $query = "  SELECT a.`assessor_value`, a.`assessor_type`, CONCAT(COALESCE(CONCAT(b.`firstname`, ' ', b.`lastname`), ''), COALESCE(CONCAT(c.`firstname`, ' ', c.`lastname`), '')) as 'fullname'
+        $query = "  SELECT a.`assessor_value`, a.`assessor_type`, CONCAT(COALESCE(CONCAT(b.`firstname`, ' ', b.`lastname`), ''), COALESCE(CONCAT(c.`firstname`, ' ', c.`lastname`), '')) as 'fullname', a.`id`
                     FROM `cbl_course_contacts` as a
                     LEFT JOIN `".AUTH_DATABASE."`.`user_data` as b
                     ON a.`assessor_value` = b.`id`

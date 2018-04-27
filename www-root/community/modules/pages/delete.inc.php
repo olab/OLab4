@@ -106,7 +106,7 @@ if (($LOGGED_IN) && (!$COMMUNITY_MEMBER)) {
 						</tfoot>
 						<thead>
 							<tr>
-								<td colspan="2">Community Pages</td>
+								<td colspan="2"><?php echo $translate->_("Community Pages"); ?></td>
 							</tr>
 						</thead>
 						<tbody class="page-delete-list">

@@ -258,7 +258,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_AAMC_CI"))) {
                     <div class="control-group">
                         <label class="control-label form-nrequired" for="report_description">Program Level Objectives:</label>
                         <div class="controls">
-                            If you have defined <em>Program Level Objectives</em> that you would like to articulate in the Curriculum Inventory Report, select which of your <a href="<?php echo ENTRADA_RELATIVE; ?>/admin/settings/manage/objectives?org=<?php echo $ACTIVE_ORG->getID(); ?>" target="_blank">Curriculum Tag Sets</a> represents these.
+                            If you have defined <em>Program Level Objectives</em> that you would like to articulate in the Curriculum Inventory Report, select which of your <a href="<?php echo ENTRADA_RELATIVE; ?>/admin/curriculum/objectives" target="_blank">Curriculum Tag Sets</a> represents these.
 
                             <select class="span10 space-above" id="program_level_objective_id" name="program_level_objective_id">
                                 <option value="0">-- Select Program Objectives Curriculum Tag Set --</option>

@@ -1,118 +1,194 @@
-thead h3 {
+/* General */
+#rubric-form,
+#rubric-form .rubric-container {
+    margin: 0;
+}
+
+.rubric-container {
+    background: #fff;
+    margin: 0 0 20px 0;
+    position: relative;
+    border: 2px solid #d9dee2;
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px;
+}
+
+.form-item:last-child .rubric-container {
+    margin: 0;
+}
+
+.rubric-table {
+    border: none;
+    margin-bottom: 0;
+}
+
+.rubric-table tbody:nth-child(odd) tr > td {
+    background-color: #fff;
+}
+
+.rubric-table tbody:nth-child(even) tr > td {
+    background-color: #f9fcfe;
+}
+
+.form-item .alert {
+    margin-bottom: 20px;
+}
+
+/* Controls */
+.rubric-table .rubric-controls th,
+.rubric-table .rubric-controls td {
+    background-color: #f4f7fa !important;
+}
+
+.rubric-table .rubric-controls th:first-child,
+.rubric-table .rubric-controls td:first-child {
+    border-left: none;
+}
+
+.rubric-table .rubric-controls .btn input[type="checkbox"] {
+    margin-top: 0;
+}
+
+/* Title */
+.rubric-table .rubric-title th {
+    padding: 15px;
+    border-top: 1px solid #ecf0f3;
+}
+
+.rubric-table .rubric-title th:first-child {
+    border-left: none;
+}
+
+.rubric-table .rubric-title:first-child th {
+    border-top: none;
+}
+
+.rubric-table .rubric-title h2,
+.rubric-table .rubric-title h3 {
+    margin: 0;
+    padding: 0;
+    font-size: 16px;
+    font-weight: normal;
     line-height: 24px;
-}
-.odd-row {
-    background-color: #ffffff;
+    color: #17323b;
 }
 
-.even-row {
-    background-color: #f9f9f9;
+/* Description */
+.rubric-table .rubric-description th {
+    padding: 0 15px 15px 15px;
+    border-top: none;
 }
 
-.rubric-item {
-    background:#fff;
-    padding:10px 20px;
-    margin:10px 0px;
-    border:1px solid rgba(0, 0, 0, 0.075);
-    border-radius:5px;
+.rubric-table .rubric-description th:first-child {
+    border-left: none;
 }
 
-.rubric-response {
-    vertical-align: top;
+.rubric-table .rubric-description th p {
+    font-size: 15px;
+    font-weight: normal;
 }
 
-.rubric-actions {
-    vertical-align: top;
-    text-align: right;
+/* Descriptors */
+.rubric-table .rubric-descriptors th:first-child {
+    border-left: none;
 }
 
-.rubric-response input {
-    margin-bottom: 10px;
+.rubric-table .rubric-descriptors .label-cell {
+    padding: 15px;
+    text-align: center;
 }
 
-.sortable-placeholder {
-    border: 1px solid red;
+.rubric-table .rubric-descriptors .label-cell h3 {
+    margin: 0;
+    padding: 0;
+    font-size: 14px;
+    font-weight: bold;
+    line-height: 20px;
+    color: #17323b;
+}
+
+/* Response Input */
+.rubric-table .item-response-view td {
+    background-color: #fff;
+}
+
+.rubric-table .sortable-placeholder .item-response-view td {
     background-color: lightgoldenrodyellow;
 }
 
-tr.rubric-controls td {
-    background-color: #EFEFEF;
-    border-top: 1px solid #DDDDDD;
+.rubric-table .ui-sortable-helper {
+    opacity: .85;
+    border-bottom: 1px solid #d9dee2;
 }
 
-.sortable-rubric-item {
-    background-color: #FFFFFF;
+.rubric-table tbody + tbody {
+    border: none;
 }
 
-.ind-drag.sortable-rubric-item {
-    padding-left: 20px !important;
-    background-color: white;
+.rubric-response-input td:first-child {
+    border-left: none;
 }
 
-.drag {
-    border-radius:2px;
-    padding:5px;
-    column-rule: #777777;
-    font-size: 10px
-}
-
-table tr.rubric-response-input td label {
-    display: block;
-    min-height: 100%; /* for the latest browsers which support min-height */
-    height: auto !important; /* for newer IE versions */
-    height: 100%; /* the only height-related attribute that IE6 does not ignore  */
-    margin-bottom:0;
+.rubric-response-input td label {
+    font-size: 13px;
+    line-height: 18px;
+    margin: 0;
     text-align: center;
-    padding:10px 10px 10px 10px;
+    width: 100%;
 }
 
-table tr.rubric-response-input td {
-    text-align: center;
+.rubric-response-input td label .fa {
+    font-size: 18px;
 }
 
-.rubric-table tbody.ui-state-default {
-
-}
-.rubric-table tbody.ui-state-default:first-child {
-    border-top: 0;
-}
-.rubric-table tbody.ui-state-default:last-child {
-    border-bottom: 0;
+.rubric-response-input td label .rubric-response-text {
+    margin-top: 10px;
+    text-align: left;
 }
 
-table.rubric-table .btn-group {
-    margin: 2px 2px 2px 0;
+.rubric-response-input td input[type="radio"] {
+    margin: 0;
 }
 
-table.rubric-table .btn {
-    background: #fff;
-    background-image: none;
-    border: 1px solid #efefef;
-    box-shadow: none;
-    padding: 4px 9px 5px 9px;
-    text-shadow: none;
+/* Item Text */
+.rubric-table .rubric-item-text {
+    font-family: "Lucida Grande", Geneva, Verdana, Arial, Helvetica, sans-serif;
+    font-size: 14px;
+    line-height: 20px;
+    color: #17323b;
 }
 
-table.rubric-table .btn.active, table.rubric-table .btn.active:hover {
-    background: #00a8bc;
+/* Comment */
+.rubric-table .rubric-comment .comment-label {
+    margin: 0 0 10px 0;
+    padding: 0;
+    font-family: "Lucida Grande", Geneva, Verdana, Arial, Helvetica, sans-serif;
+    font-size: 14px;
+    font-weight: bold;
+    line-height: 20px;
+    color: #17323b;
 }
 
-table.rubric-table .btn:hover {
-    background: #f9f9f9;
+.rubric-comment td {
+    border-left: 1px solid #d9dee2 !important;
 }
 
-.btn-search-filter {
-    border-radius: 0 4px 4px 0 !important;
+.rubric-table .rubric-comment textarea {
+    width: 100%;
 }
 
+/* Category */
 .category-editable {
+    box-sizing: border-box;
     position: relative;
-    height: 85px;
+    height: 66px;
+    min-width: 265px !important;
+    vertical-align: middle !important;
 }
 
 .category-editable select {
-    width: 110px;
-    margin-bottom: 8px;
+    width: 170px;
     display: none;
 }
 
@@ -124,27 +200,21 @@ table.rubric-table .btn:hover {
     top: 0;
     bottom: 0;
 }
+
 .icon-category-pencil {
     position: absolute;
     top: 3px;
     right: 5px;
     cursor: pointer;
 }
-.btn-category-remove{
-    padding: 4px 6px !important;
-    min-width:40px;
-    margin: 1px 2px;
-}
-.btn-category-ok{
-    padding: 4px 6px !important;
-    background-color: #5bb75b !important;
-    color: #fff;
-    min-width:40px;
-    margin: 1px 2px;
-    border-color: #51A151 !important;
-}
 
-.btn-category-ok:hover{
-    color: #fff !important;
-    background-color: #51A151 !important;
+.btn-category-remove,
+.btn-category-ok {
+    box-sizing: border-box;
+    padding: 4px 6px !important;
+    height: 26px;
+    width: 26px;
+    line-height: 1.4;
+    margin-top: 5px;
+    margin-left: 5px;
 }

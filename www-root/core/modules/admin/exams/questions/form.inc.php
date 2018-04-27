@@ -63,6 +63,9 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_QUESTION") && !defined("EDIT
 
     $SECTION_TEXT = $SUBMODULE_TEXT[$SECTION];
 
+    //This form can load two steps
+    // - Step 2 Saves a new form version
+    //
     switch ($STEP) {
         case 2 :
             if (isset($_POST["element_type"]) && $tmp_input = clean_input($_POST["element_type"], array("trim", "striptags"))) {
@@ -144,17 +147,22 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_QUESTION") && !defined("EDIT
                 }
             }
 
-            if (isset($_POST["correct_answers_fnb"]) && is_string($_POST["correct_answers_fnb"])) {
+            if (isset($_POST["locked_answers_orders"]) && is_string($_POST["locked_answers_orders"])) {
+                $PROCESSED["locked_answers_orders"] = json_decode($_POST["locked_answers_orders"]);
+                if (is_string($PROCESSED["locked_answers_orders"])) {
+                    $PROCESSED["locked_answers_orders"] = json_decode($PROCESSED["locked_answers_orders"]);
+                }
+            }
+
+            if (isset($_POST["correct_answers_fnb"]) && is_string($_POST["correct_answers_fnb"]) && !empty($_POST["correct_answers_fnb"])) {
                 $temp_correct_answer = json_decode($_POST["correct_answers_fnb"], true);
                 if (isset($temp_correct_answer) && is_array($temp_correct_answer)) {
-                    $PROCESSED["correct_answers_fnb"] = array();
-                    $count_answer = 1;
-                    foreach ($temp_correct_answer as $correct_answers) {
-                        if (isset($correct_answers) && is_string($correct_answers)) {
-                            $PROCESSED["correct_answers_fnb"][$count_answer] = json_decode($correct_answers);
+                    foreach ($temp_correct_answer as $key => $correct_answers) {
+                        foreach ($correct_answers as $i => $item) {
+                            $temp_correct_answer[$key][$i] = trim($item);
                         }
-                        $count_answer++;
                     }
+                    $PROCESSED["correct_answers_fnb"] = $temp_correct_answer;
                 }
             }
 
@@ -167,7 +175,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_QUESTION") && !defined("EDIT
                 if (isset($temp_correct_answer) && is_array($temp_correct_answer)) {
                     $PROCESSED["match_stem_correct"] = array();
                     foreach ($temp_correct_answer as $correct_answer) {
-                        $PROCESSED["match_stem_correct"][$correct_answer->stem_order] = $correct_answer->stem_correct;
+                        $PROCESSED["match_stem_correct"][$correct_answer["stem_order"]] = $correct_answer["stem_correct"];
                     }
                 }
             }
@@ -226,7 +234,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_QUESTION") && !defined("EDIT
                 }
             }
 
-            // Generates the match item stems
+            // Generates the match item stems.
             if ($PROCESSED["questiontype_id"] == $match_type_id) {
                 if (isset($_POST["question_item_stems"]) && is_array($_POST["question_item_stems"])) {
                     $answer_count = 1;
@@ -348,6 +356,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_QUESTION") && !defined("EDIT
                                 foreach ($old_answers as $key => $answer) {
                                     $answer_count = $ind + 1;
 
+
                                     if ((string)$answer->getAnswerText() != (string)$PROCESSED["answers"][$answer_count]) {
                                         $answer_changed = true;
                                         break;
@@ -357,6 +366,13 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_QUESTION") && !defined("EDIT
                                     } else if (isset($PROCESSED["weight"][$ind]) && $answer->getWeight() != $PROCESSED["weight"][$ind]) {
                                         $answer_changed = true;
                                         break;
+                                    }else if (isset($PROCESSED["locked_answers_orders"])){
+                                        $this_locked = in_array($ind, $PROCESSED["locked_answers_orders"]) ? 1 : 0;
+                                        $locked = $answer->getLocked() ? 1 : 0;
+                                        if($this_locked != $locked){
+                                            $answer_changed = true;
+                                            break;
+                                        }
                                     }
 
                                     if ((int)$answer->getOrder() != (int)$key + 1) {
@@ -491,6 +507,12 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_QUESTION") && !defined("EDIT
                                         $PROCESSED_RESPONSE["answer_rationale"] = NULL;
                                     }
 
+                                    if (isset($PROCESSED["locked_answers_orders"]) && in_array($key, $PROCESSED["locked_answers_orders"])){
+                                        $PROCESSED_RESPONSE["locked"] = 1;
+                                    }else{
+                                        $PROCESSED_RESPONSE["locked"] = 0;
+                                    }
+
                                     $answer = new Models_Exam_Question_Answers(
                                         array(
                                             "question_id"       => $question_version->getQuestionID(),
@@ -501,7 +523,8 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_QUESTION") && !defined("EDIT
                                             "weight"            => $PROCESSED_RESPONSE["weight"],
                                             "order"             => $order,
                                             "updated_date"      => $PROCESSED["created_date"],
-                                            "updated_by"        => $ENTRADA_USER->getID()
+                                            "updated_by"        => $ENTRADA_USER->getID(),
+                                            "locked"            => $PROCESSED_RESPONSE["locked"],
                                         )
                                     );
 
@@ -712,6 +735,12 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_QUESTION") && !defined("EDIT
                                             $PROCESSED_RESPONSE["answer_rationale"] = NULL;
                                         }
 
+                                        if (isset($PROCESSED["locked_answers_orders"]) && in_array($key, $PROCESSED["locked_answers_orders"])){
+                                            $PROCESSED_RESPONSE["locked"] = 1;
+                                        }else{
+                                            $PROCESSED_RESPONSE["locked"] = 0;
+                                        }
+
                                         $answer = new Models_Exam_Question_Answers(
                                             array(
                                                 "question_id"       => $question_version->getQuestionID(),
@@ -722,7 +751,8 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_QUESTION") && !defined("EDIT
                                                 "weight"            => $PROCESSED_RESPONSE["weight"],
                                                 "order"             => $order,
                                                 "updated_date"      => $PROCESSED["created_date"],
-                                                "updated_by"        => $ENTRADA_USER->getID()
+                                                "updated_by"        => $ENTRADA_USER->getID(),
+                                                "locked"            => $PROCESSED_RESPONSE["locked"],
                                             )
                                         );
                                         if (!$answer->insert()) {
@@ -812,20 +842,22 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_QUESTION") && !defined("EDIT
                                             } else {
                                                 $match_correct_value = $PROCESSED["match_stem_correct"][$order];
                                                 $qanwser    = Models_Exam_Question_Answers::fetchRowByVersionIDOrder($question_version->getVersionID(), $match_correct_value);
+                                                if ($qanwser && is_object($qanwser)) {
+                                                    $match_correct = new Models_Exam_Question_Match_Correct(
+                                                        array(
+                                                            "match_id"      => $match->getID(),
+                                                            "qanswer_id"    => $qanwser->getID(),
+                                                            "correct"       => $match_correct_value,
+                                                            "updated_date"  => $PROCESSED["created_date"],
+                                                            "updated_by"    => $ENTRADA_USER->getID()
+                                                        )
+                                                    );
 
-                                                $match_correct = new Models_Exam_Question_Match_Correct(
-                                                    array(
-                                                        "match_id"      => $match->getID(),
-                                                        "qanswer_id"    => $qanwser->getID(),
-                                                        "correct"       => $match_correct_value,
-                                                        "updated_date"  => $PROCESSED["created_date"],
-                                                        "updated_by"    => $ENTRADA_USER->getID()
-                                                    )
-                                                );
-
-                                                if (!$match_correct->insert()) {
-                                                    add_error($translate->_("An error occurred while attempting to insert one of the question match correct answers, database said: " . $db->ErrorMsg()));
+                                                    if (!$match_correct->insert()) {
+                                                        add_error($translate->_("An error occurred while attempting to insert one of the question match correct answers, database said: " . $db->ErrorMsg()));
+                                                    }
                                                 }
+
                                             }
                                         }
                                     }
@@ -835,6 +867,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_QUESTION") && !defined("EDIT
                     }
 
                     $existing_question_objectives = Models_Exam_Question_Objectives::fetchAllRecordsByQuestionID($question_version->getQuestionID());
+
                     $existing_question_objective_ids = array();
                     foreach ($existing_question_objectives as $existing_question_objective) {
                         $existing_question_objective_ids[] = $existing_question_objective->getObjectiveID();
@@ -870,22 +903,25 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_QUESTION") && !defined("EDIT
                     }
 
                     if (!has_error()) {
-                        if ((isset($PROCESSED["id"]) || isset($PROCESSED["group_id"])) && isset($PROCESSED["element_type"])) {
+
+                        if ((isset($PROCESSED["exam_id"]) || isset($PROCESSED["group_id"])) && isset($PROCESSED["element_type"])) {
                             $SUCCESS = 0;
 
                             switch ($PROCESSED["element_type"]) {
                                 case "exam" :
-                                    $url = ENTRADA_URL."/admin/".$MODULE."/exams?section=edit-exam&id=".$PROCESSED["id"];
+                                    $url = ENTRADA_URL."/admin/".$MODULE."/exams?section=edit-exam&id=".$PROCESSED["exam_id"];
+
                                     $exam_element_data = array(
-                                        "exam_id"           => $PROCESSED["id"],
+                                        "exam_id"           => $PROCESSED["exam_id"],
                                         "element_type"      => "question",
                                         "element_id"        => $question_version->getVersionID(),
-                                        "order"             => Models_Exam_Exam_Element::fetchNextOrder($PROCESSED["id"]),
+                                        "order"             => Models_Exam_Exam_Element::fetchNextOrder($PROCESSED["exam_id"]),
                                         "allow_comments"    => 1,
                                         "enable_flagging"   => 0,
                                         "updated_date"      => time(),
                                         "updated_by"        => $ENTRADA_USER->GetID()
                                     );
+
                                     $exam_element = new Models_Exam_Exam_Element($exam_element_data);
 
                                     if ($exam_element->insert()) {
@@ -902,28 +938,29 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_QUESTION") && !defined("EDIT
 
                                     if (!$already_attached) {
 
-                                        $posted         = Models_Exam_Exam_Element::isGroupIdPosted($PROCESSED["group_id"]);
+                                        $posted = Models_Exam_Exam_Element::isGroupIdPosted($PROCESSED["group_id"]);
                                         if ($posted === false) {
-                                            $order = Models_Exam_Group_Question::fetchNextOrder($group_id);
-                                            if (!$order) {
-                                                $order = 1;
+                                        $order = Models_Exam_Group_Question::fetchNextOrder($group_id);
+                                        if (!$order) {
+                                            $order = 1;
+                                        }
+                                        if (isset($clone_question) && $clone_question) {
+                                            $old_question_group = Models_Exam_Group_Question::fetchRowByQuestionIDGroupID($old_question["question_id"], $group_id);
+                                            if ($old_group_question) {
+                                                $order = $old_group_question["order"];
                                             }
-                                            if (isset($clone_question) && $clone_question) {
-                                                $old_question_group = Models_Exam_Group_Question::fetchRowByQuestionIDGroupID($old_question["question_id"], $group_id);
-                                                if ($old_group_question) {
-                                                    $order = $old_group_question["order"];
-                                                }
-                                            }
-                                            $group_question_data = array(
-                                                "group_id"          => $group_id,
-                                                "question_id"       => $question_version->getQuestionID(),
-                                                "version_id"        => $question_version->getVersionID(),
-                                                "order"             => $order,
-                                            );
-                                            $group_question = new Models_Exam_Group_Question($group_question_data);
-                                            if ($group_question->insert()) {
-                                                $ENTRADA_LOGGER->log("Group Questions", "add-new-group-question", "arquestion_id", $group_question->getID(), 4, __FILE__, $ENTRADA_USER->getID());
-                                                $SUCCESS++;
+                                        }
+                                        $group_question_data = array(
+                                            "group_id"          => $group_id,
+                                            "question_id"       => $question_version->getQuestionID(),
+                                            "version_id"        => $question_version->getVersionID(),
+                                            "order"             => $order,
+                                        );
+                                        $group_question = new Models_Exam_Group_Question($group_question_data);
+
+                                        if ($group_question->insert()) {
+                                            $ENTRADA_LOGGER->log("Group Questions", "add-new-group-question", "arquestion_id", $group_question->getID(), 4, __FILE__, $ENTRADA_USER->getID());
+                                            $SUCCESS++;
 
                                                 $exam_elements = Models_Exam_Exam_Element::fetchAllByGroupID($PROCESSED["group_id"]);
                                                 if ($exam_elements && is_array($exam_elements) && !empty($exam_elements)) {
@@ -957,9 +994,9 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_QUESTION") && !defined("EDIT
                                                         }
                                                     }
                                                 }
-                                            } else {
-                                                add_error($SECTION_TEXT["failed_to_create"]);
-                                            }
+                                        } else {
+                                            add_error($SECTION_TEXT["failed_to_create"]);
+                                        }
                                         } else {
                                             add_error($SECTION_TEXT["group_already_posted"]);
                                         }
@@ -989,17 +1026,19 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_QUESTION") && !defined("EDIT
                             }
                             $success_msg = sprintf($msg, $url);
                         } else {
-                            $url = ENTRADA_URL."/admin/".$MODULE."/".$SUBMODULE . "?folder_id=" . $question_version->getFolderID();
-                            $success_msg = sprintf($translate->_("The question has successfully been added. You will be redirected to the question bank index, please <a href=\"%s\">click here</a> if you do not wish to wait."), $url);
+                            if ($PROCESSED["element_type"] == "exam" && $PROCESSED["exam_id"]) {
+                                // User comes from the exam page (Add & Attach). Redirect to exam page.
+                                $url = ENTRADA_URL."/admin/exams/exams?section=edit-exam&id=".$PROCESSED["exam_id"];
+                                $success_msg = sprintf($translate->_("The question has successfully been added. You will be redirected to the exam questions page, please <a href=\"%s\">click here</a> if you do not wish to wait."), $url);
+                            } else {
+                                // Redirect to question folder.
+                                $url = ENTRADA_URL."/admin/".$MODULE."/".$SUBMODULE . "?folder_id=" . $question_version->getFolderID();
+                                $success_msg = sprintf($translate->_("The question has successfully been added. You will be redirected to the question bank index, please <a href=\"%s\">click here</a> if you do not wish to wait."), $url);
+                            }
                         }
 
-                        if ($METHOD == "insert") {
-                            add_success($success_msg);
-                            $ONLOAD[] = "setTimeout('window.location=\\'".$url."\\'', 5000)";
-                        } else {
-                            add_success($success_msg);
-                            $ONLOAD[] = "setTimeout('window.location=\\'".$url."\\'', 5000)";
-                        }
+                        add_success($success_msg);
+                        $ONLOAD[] = "setTimeout('window.location=\\'".$url."\\'', 5000)";
                     }
                 } else {
                     add_error($translate->_("An error occurred while attempting to update the question."));
@@ -1035,32 +1074,40 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_QUESTION") && !defined("EDIT
             }
             break;
         case 1 :
-            if ($question_version) {
+            if ($question_version && is_object($question_version)) {
                 $question_view          = new Views_Exam_Question($question_version);
                 $update_current_version = $question_view->createNewVersionCheck();
                 $answers                = $question_version->getQuestionAnswers();
-                $short_name             = $question_version->getQuestionType()->getShortname();
-                if (isset($answers) && is_array($answers)) {
-                    $count = 1;
-                    $PROCESSED["answers"]       = array();
-                    $PROCESSED["answers_fnb"]   = array();
-                    foreach ($answers as $answer) {
-                        switch($short_name) {
-                            case "fnb":
-                                $answer_view    = new Views_Exam_Question_Answer($answer);
-                                $answer_array   = $answer_view->compileFnbArray();
-                                $fnb_answers    = true;
-                                $PROCESSED["answers_fnb"][$count] = $answer_array;
-                                break;
-                            default:
-                                $PROCESSED["answers"][$count] = $answer->getAnswerText();
-                                $PROCESSED["correct"][$count] = $answer->getCorrect();
-                                $PROCESSED["weight"][$count]  = $answer->getWeight();
-                                $PROCESSED["answer_rationale"][$count] = $answer->getRationale();
-                                break;
-                        }
+                $question_type          = $question_version->getQuestionType();
+                $PROCESSED['locked_answers_orders'] = array();
+                if ($question_type && is_object($question_type)) {
+                    $short_name             = $question_type->getShortname();
+                    if (isset($answers) && is_array($answers)) {
+                        $count = 1;
+                        $PROCESSED["answers"]       = array();
+                        $PROCESSED["answers_fnb"]   = array();
+                        foreach ($answers as $answer) {
+                            switch($short_name) {
+                                case "fnb":
+                                    $answer_view    = new Views_Exam_Question_Answer($answer);
+                                    $answer_array   = $answer_view->compileFnbArray();
+                                    $fnb_answers    = true;
+                                    $PROCESSED["answers_fnb"][$count] = $answer_array;
+                                    break;
+                                default:
+                                    $PROCESSED["answers"][$count] = $answer->getAnswerText();
+                                    $PROCESSED["correct"][$count] = $answer->getCorrect();
+                                    $PROCESSED["locked"][$count] = $answer->getLocked();
+                                    $PROCESSED["weight"][$count]  = $answer->getWeight();
+                                    $PROCESSED["answer_rationale"][$count] = $answer->getRationale();
+                                    break;
+                            }
+                            if($answer->getLocked()) {
+                                array_push($PROCESSED['locked_answers_orders'], $count);
+                            }
 
-                        $count++;
+                            $count++;
+                        }
                     }
                 }
                 if ($fnb_answers) {
@@ -1161,25 +1208,54 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_QUESTION") && !defined("EDIT
             $HEAD[] = "<script type=\"text/javascript\" src=\"".  ENTRADA_URL ."/javascript/jquery/jquery.audienceselector.js?release=". html_encode(APPLICATION_VERSION) ."\"></script>";
             $HEAD[] = "<link rel=\"stylesheet\" type=\"text/css\" href=\"".  ENTRADA_URL ."/css/jquery/jquery.audienceselector.css?release=". html_encode(APPLICATION_VERSION) ."\" />";
 
-            $initial_folders = Models_Exam_Question_Bank_Folders::fetchAllByParentID($PROCESSED["folder_id"]);
+
+            $restrict_to_folder = false;
+            $restrict_folder_ids = array();
+            $restrict_folder_array_children = array();
+            $access_folder_allowed_array = array();
+
+            $group = $ENTRADA_USER->getActiveGroup();
+
+            if ($group === "student") {
+                $allowed_folders = Models_Exam_Bank_Folders::fetchAllByTypeAuthor("question", $ENTRADA_USER->getID());
+
+                if ($allowed_folders && is_array($allowed_folders) && !empty($allowed_folders)) {
+                    foreach ($allowed_folders as $folder) {
+                        $restrict_folder_ids[] = (int)$folder->getID();
+                    }
+                }
+
+                if ($restrict_folder_ids && is_array($restrict_folder_ids) && !empty($restrict_folder_ids)) {
+                    foreach ($restrict_folder_ids as $folder_restricted) {
+                        if (!in_array($folder_restricted, $restrict_folder_array_children)) {
+                            $restrict_folder_array_children[(int)$folder_restricted] = (int)$folder_restricted;
+                        }
+                        $restrict_folder_array_children = Models_Exam_Bank_Folders::getChildrenFolders($folder_restricted, $restrict_folder_array_children, "question");
+                    }
+                }
+            }
+
+            $initial_folders = Models_Exam_Bank_Folders::fetchAllByParentID($PROCESSED["folder_id"], "question");
+
             if ($PROCESSED["folder_id"] === 0) {
-                $root_folder = new Models_Exam_Question_Bank_Folders(
+                $root_folder = new Models_Exam_Bank_Folders(
                     array(
                         "folder_id" => 0,
                         "folder_title" => "Index",
-                        "image_id" => 3
+                        "image_id" => 3,
+                        "folder_type" => "question"
                     )
                 );
 
-                $initial_folder_view = new Views_Exam_Question_Bank_Folder($root_folder);
+                $initial_folder_view = new Views_Exam_Bank_Folder($root_folder);
                 if (isset($initial_folder_view) && is_object($initial_folder_view)) {
                     $title = $initial_folder_view->renderFolderSelectorTitle();
                     $folder_view = $initial_folder_view->renderSimpleView();
                 }
             } else {
-                $parent_folder = Models_Exam_Question_Bank_Folders::fetchRowByID($PROCESSED["folder_id"]);
+                $parent_folder = Models_Exam_Bank_Folders::fetchRowByID($PROCESSED["folder_id"]);
                 if (isset($parent_folder) && is_object($parent_folder)) {
-                    $parent_folder_view = new Views_Exam_Question_Bank_Folder($parent_folder);
+                    $parent_folder_view = new Views_Exam_Bank_Folder($parent_folder);
                     $title = $parent_folder_view->renderFolderSelectorTitle();
                     $folder_view = $parent_folder_view->renderSimpleView();
                 }
@@ -1215,11 +1291,69 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_QUESTION") && !defined("EDIT
                 var ajax_in_progress    = false;
                 var existing_question   = false;
                 var fnb_answers         = {};
+
+                function in_array(needle, list){
+                    return list.indexOf(needle) > -1;
+                }
+
+                function validate_question() {
+                    var selected_question_type = jQuery("#question-type").val();
+                    var validated = false;
+                    jQuery.ajax({
+                        url: API_URL,
+                        async: false,
+                        data: "method=get-question-type-shortname&question_type_id=" + selected_question_type,
+                        type: "POST",
+                        success: function(data) {
+                            var response = JSON.parse(data);
+                            if (response.status == "success") {
+                                var shortname = response.data.shortname;
+                                var can_have_correct_answer_set = ["mc_v", "mc_h", "mc_v_m", "mc_h_m", "drop_m", "drop_s"];
+                                if(in_array(shortname, can_have_correct_answer_set) && correct_answer.length < 1){
+                                    var response = confirm("This question has no correct answer. Are you sure you want to save it anyway?");
+                                    if(response){
+                                        // User wants to save question without answers anyway
+                                        validated = true;
+                                    }else{
+                                        // User doesn't want to save question without answers
+                                        validated = false;
+                                    }
+                                } else if (shortname == "fnb") {
+                                    // For fill in the blank question we need to verify if there's the same number of answers to the same
+                                    // amount of blank spaces
+                                    var question_text = jQuery("#question-text").val();
+                                    var answers_obj = JSON.parse(jQuery("#correct_answers_fnb").val());
+                                    var blank_spaces = (question_text.match(/_\?_/g) || []).length;
+                                    var answer_count = 0;
+                                    for (var answer in answers_obj) {
+                                        if (answers_obj[answer].length ) {
+                                            answer_count += 1;
+                                        }
+                                    }
+                                    if (answer_count == blank_spaces) {
+                                        validated = true;
+                                    } else {
+                                        alert(
+                                            "The number of answers should be the same as the number of blank spaces.\n" +
+                                            "Number answers: " + answer_count + "\n" +
+                                            "Number of blank spaces: " + blank_spaces
+                                        );
+                                        validated = false;
+                                    }
+                                } else {
+                                    // Question isn't MC or it's MC but have answers defined
+                                    validated = true;
+                                }
+                            }
+                        }
+                    });
+                    return validated;
+                }
             </script>
             <?php
             if (isset($PROCESSED["answers_fnb"])) { ?>
-                <script type="text/javascript">
-                    fnb_answers             = JSON.parse('<?php echo json_encode($PROCESSED["answers_fnb"]); ?>');
+                <script>
+                    fnb_answers = JSON.parse('<?php echo json_encode($PROCESSED["answers_fnb"]); ?>');
                     if (!jQuery.isEmptyObject(fnb_answers)) {
                         existing_question = true;
                         var temp_values = JSON.stringify(fnb_answers);
@@ -1230,9 +1364,9 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_QUESTION") && !defined("EDIT
                 </script>
             <?php } ?>
 
-            <script type="text/javascript" src="<?php echo ENTRADA_URL; ?>/javascript/<?php echo $MODULE; ?>/<?php echo $SUBMODULE; ?>/<?php echo $MODULE; ?>-<?php echo $SUBMODULE; ?>-admin.js"></script>
+            <script src="<?php echo ENTRADA_URL; ?>/javascript/<?php echo $MODULE; ?>/<?php echo $SUBMODULE; ?>/<?php echo $MODULE; ?>-<?php echo $SUBMODULE; ?>-admin.js"></script>
 
-            <form id="question-exam" action="<?php echo ENTRADA_URL."/admin/" . $MODULE . "/" . $SUBMODULE . "?step=2&section=" . $SECTION . ($METHOD == "update" ? "&id=" . $PROCESSED["question_id"] : ""); ?><?php echo isset($group_question_string) ? $group_question_string : ""; ?>" class="form-horizontal" method="POST">
+            <form id="question-exam" action="<?php echo ENTRADA_URL."/admin/" . $MODULE . "/" . $SUBMODULE . "?step=2&section=" . $SECTION . ($METHOD == "update" ? "&id=" . $PROCESSED["question_id"] : ""); ?><?php echo isset($group_question_string) ? $group_question_string : ""; ?>" class="form-horizontal" method="POST" onsubmit="return validate_question()">
                 <input type="hidden" name="answers" id="answers" value="2" />
                 <input type="hidden" name="element_type" value="<?php echo (isset($PROCESSED["element_type"]) ? $PROCESSED["element_type"] : ""); ?>" />
                 <input type="hidden" name="id" value="<?php echo (isset($PROCESSED["id"]) ? $PROCESSED["id"] : ""); ?>" />
@@ -1240,10 +1374,12 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_QUESTION") && !defined("EDIT
                 <input type="hidden" name="version_id" value="<?php echo (isset($PROCESSED["version_id"]) ? $PROCESSED["version_id"] : ""); ?>" />
                 <input type="hidden" name="group_id" value="<?php echo (isset($PROCESSED["group_id"]) ? $PROCESSED["group_id"] : ""); ?>" />
                 <input type="hidden" name="folder_id" id="folder_id" value="<?php echo (isset($PROCESSED["folder_id"]) ? $PROCESSED["folder_id"] : ""); ?>" />
+                <input type="hidden" name="exam_id" id="exam_id" value="<?php echo (isset($PROCESSED["exam_id"]) ? $PROCESSED["exam_id"] : ""); ?>">
                 <input type="hidden" name="correct-answer" id="correct-answer-input" />
                 <input type="hidden" name="correct_answers_fnb" id="correct_answers_fnb" />
                 <input type="hidden" name="answers_fnb_order" id="answers_fnb_order" />
                 <input type="hidden" name="match_stem_correct" id="match_stem_correct" />
+                <input type="hidden" name="locked_answers_orders" id="locked-answers-input"/>
                 <h2 class="collapsable" title="Question Stem">Question Stem</h2>
                 <div id="question-stem">
                     <div class="row-fluid">
@@ -1280,7 +1416,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_QUESTION") && !defined("EDIT
                     <?php
                     if ($question_types) {
                         ?>
-                        <div class="control-group">
+                        <div class="control-group" id="question_type_group">
                             <label class="control-label form-required" for="question-type"><?php echo $SUBMODULE_TEXT["exam"]["label_question_type"]; ?></label>
                             <div class="controls">
                                 <?php
@@ -1305,8 +1441,8 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_QUESTION") && !defined("EDIT
                                 } elseif (defined("EDIT_QUESTION") && EDIT_QUESTION) {
                                     $question_type = Models_Exam_Lu_Questiontypes::fetchRowByID($PROCESSED["questiontype_id"]);
                                     if ($question_type) {
-                                        echo "<input type=\"text\" value=\"" . $question_type->getName() . "\" readonly=\"readonly\" />";
-                                        echo "<input id=\"question-type\" name=\"questiontype_id\" type=\"hidden\" value=" . $PROCESSED["questiontype_id"] . " />";
+                                        echo "<input type=\"text\" value=\"".$question_type->getName()."\" readonly=\"readonly\" />";
+                                        echo "<input id=\"question-type\" name=\"questiontype_id\" type=\"hidden\" value=".$PROCESSED["questiontype_id"]." />";
                                     }
                                 }
                                 ?>
@@ -1315,25 +1451,25 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_QUESTION") && !defined("EDIT
                     <?php
                     }
                     ?>
-                    <div class="control-group">
+                    <div class="control-group" id="question_description_group">
                         <label class="control-label form-nrequired" for="question_description"><?php echo $SUBMODULE_TEXT["exam"]["label_question_description"]; ?></label>
                         <div class="controls">
                             <textarea id="question_description" name="question_description" class="expandable span11"><?php echo (isset($PROCESSED["question_description"]) ? $PROCESSED["question_description"] : ""); ?></textarea>
                         </div>
                     </div>
-                    <div class="control-group">
+                    <div class="control-group" id="question_rationale_group">
                         <label class="control-label form-nrequired" for="question_rationale"><?php echo $SUBMODULE_TEXT["exam"]["label_rationale"]; ?></label>
                         <div class="controls">
                             <textarea id="question_rationale" name="question_rationale" class="span11"><?php echo (isset($PROCESSED["question_rationale"]) ? $PROCESSED["question_rationale"] : ""); ?></textarea>
                         </div>
                     </div>
-                    <div class="control-group">
-                        <label class="control-label form-nrequired" for="question_correct_text"><?php echo $SUBMODULE_TEXT["exam"]["label_question_correct_text"]; ?></label>
+                    <div class="control-group" id="question_correct_text_group">
+                        <label class="control-label form-nrequired" for="question_correct_text" title="" data-toggle="tooltip" data-original-title="<?=$SUBMODULE_TEXT["edit-question"]["correct_text_tooltip_text"]?>"><?php echo $SUBMODULE_TEXT["exam"]["label_question_correct_text"]; ?> <i class="icon-question-sign"></i></label>
                         <div class="controls">
                             <textarea id="question_correct_text" name="question_correct_text" class="expandable span11"><?php echo (isset($PROCESSED["question_correct_text"]) ? $PROCESSED["question_correct_text"] : ""); ?></textarea>
                         </div>
                     </div>
-                    <div class="control-group">
+                    <div class="control-group" id="question_code_group">
                         <label class="control-label" for="question-code"><?php echo $SUBMODULE_TEXT["exam"]["label_question_code"]; ?></label>
                         <div class="controls">
                             <input class="span11" type="text" name="question_code" id="question-code" value="<?php echo (isset($PROCESSED["question_code"]) ? $PROCESSED["question_code"] : ""); ?>"/>
@@ -1350,12 +1486,12 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_QUESTION") && !defined("EDIT
                         </div>
                     </div>
 
-                    <div class="control-group">
+                    <div class="control-group" id="folder_id_group">
                         <label class="control-label form-required" for="folder_id"><?php echo $SUBMODULE_TEXT["folder"]["label_folder_parent_id"]; ?></label>
                         <div class="controls">
                             <div id="selected-parent-folder">
                                 <?php echo $folder_view;?>
-                                <a href="#parent-folder-modal" data-toggle="modal" class="btn btn-success" id="select_parent_folder_button">Select Parent Folder</a>
+                                <a href="#parent-folder-modal" data-toggle="modal" class="btn btn-success" id="select_parent_folder_button"><?php echo $translate->_("Select Parent Folder"); ?></a>
                             </div>
                         </div>
                     </div>
@@ -1385,7 +1521,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_QUESTION") && !defined("EDIT
                                 </select>
                                 <?php
                                 $type_array     = array("organisation_id", "course_id", "proxy_id");
-                                $folder_authors = Models_Exam_Question_Bank_Folder_Authors::fetchAllInheritedByFolderID($PROCESSED["folder_id"]);
+                                $folder_authors = Models_Exam_Bank_Folder_Authors::fetchAllInheritedByFolderID($PROCESSED["folder_id"]);
                                 $authors        = Models_Exam_Question_Authors::fetchAllByVersionIdGroupedByType($PROCESSED["version_id"]);
 
                                 foreach ($type_array as $type) {
@@ -1438,6 +1574,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_QUESTION") && !defined("EDIT
                     ?>
                     <div id="answer-table">
                         <?php
+
                         if (isset($PROCESSED["answers"]) && is_array($PROCESSED["answers"])) {
                             foreach ($PROCESSED["answers"] as $key => $answer) {
                                 if (isset($answers) && is_array($answers)) {
@@ -1500,14 +1637,14 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_QUESTION") && !defined("EDIT
                     }
                     ?>
                     <a href="<?php echo $url; ?>" class="btn btn-default"><?php echo $DEFAULT_TEXT_LABELS["btn_back"]; ?></a>
-                    <input type="submit" class="btn btn-primary pull-right" value="<?php echo $DEFAULT_TEXT_LABELS["btn_save"]; ?>" />
+                    <input type="submit" class="btn btn-primary pull-right" id="btn-save" value="<?php echo $DEFAULT_TEXT_LABELS["btn_save"]; ?>" />
                 </div>
                 <div id="parent-folder-modal" class="modal hide fade">
                     <div class="modal-header">
                         <h3>Select a parent folder</h3>
                     </div>
                     <div class="modal-body">
-                        <div id="qbf-selector">
+                        <div class="qbf-selector">
                             <div id="qbf-title">
                                 <span class="qbf-title">
                                     <?php echo $title;?>
@@ -1516,23 +1653,38 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_QUESTION") && !defined("EDIT
                             <div id="qbf-nav">
                                 <?php echo $nav;?>
                             </div>
-                            <span id="qbf-folder-<?php echo $PROCESSED["folder_id"];?>" class="qbf-folder active">
+                            <div id="qbf-folder-<?php echo $PROCESSED["folder_id"];?>" class="qbf-folder active">
                                 <table>
                                     <?php
                                     if (isset($initial_folders) && is_array($initial_folders) && !empty($initial_folders)) {
+                                        // Provides restrictions for limiting folders students can access
+                                        if ($restrict_folder_array_children && is_array($restrict_folder_array_children) && !empty($restrict_folder_array_children)) {
+                                            foreach ($initial_folders as $folder) {
+                                                if ($folder && is_object($folder)) {
+                                                    if (in_array($folder->getID(), $restrict_folder_array_children)) {
+                                                        $access_folder_allowed_array[] = $folder;
+                                                    }
+                                                }
+                                            }
+                                        } else {
+                                            $access_folder_allowed_array = $initial_folders;
+                                        }
+
                                         if ($PROCESSED["folder_id"] == 0) {
                                             echo $initial_folder_view->renderFolderSelectorRow();
                                         }
 
-                                        foreach ($initial_folders as $folder) {
-                                            if (is_object($folder)) {
-                                                if ($folder->getID() == $PROCESSED["folder_id"]) {
-                                                    $selected = true;
-                                                } else {
-                                                    $selected = false;
+                                        if ($access_folder_allowed_array && is_array($access_folder_allowed_array)) {
+                                            foreach ($access_folder_allowed_array as $folder) {
+                                                if (is_object($folder)) {
+                                                    if ($folder->getID() == $PROCESSED["folder_id"]) {
+                                                        $selected = true;
+                                                    } else {
+                                                        $selected = false;
+                                                    }
+                                                    $folder_view = new Views_Exam_Bank_Folder($folder);
+                                                    echo $folder_view->renderFolderSelectorRow($selected, true);
                                                 }
-                                                $folder_view = new Views_Exam_Question_Bank_Folder($folder);
-                                                echo $folder_view->renderFolderSelectorRow($selected);
                                             }
                                         }
                                     } else {
@@ -1543,7 +1695,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_QUESTION") && !defined("EDIT
                                     }
                                     ?>
                                 </table>
-                            </span>
+                            </div>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -1620,6 +1772,22 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_QUESTION") && !defined("EDIT
                 </div>
 
             </form>
+
+            <script>
+                jQuery(document).ready(function () {
+                    jQuery('#question-exam').submit(function() {
+                        // Gets the folder ID.
+                        var folder_id = jQuery('#folder_id').val();
+
+                        // Check to see if the user is trying to save the question to the index folder.
+                        if (folder_id == 0) {
+                            alert('No questions are allowed in the Index Folder, please provide another Folder.');
+                            jQuery('#parent-folder-modal').modal('show');
+                            return false;
+                        }
+                    });
+                });
+            </script>
             <?php
             break;
     }

@@ -51,7 +51,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP"))) {
 		echo display_error();
 	    }
 	    ?>
-	    <div class="content-heading">Select a Clerkship Rotation</div>
+	    <div class="content-heading">Select a <?php echo $translate->_("Clerkship Rotation"); ?></div>
 	    <div style="float: right; margin-bottom: 5px">
 		<div id="module-content">
 		    <ul class="page-action">

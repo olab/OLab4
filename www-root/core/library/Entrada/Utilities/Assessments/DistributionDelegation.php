@@ -26,7 +26,7 @@
  * @copyright Copyright 2016 Queen's University. All Rights Reserved.
  */
 
-class Entrada_Utilities_Assessments_DistributionDelegation extends Entrada_Utilities_Assessments_Base {
+class Entrada_Utilities_Assessments_DistributionDelegation extends Entrada_Assessments_Base {
 
     protected $adistribution_id, $addelegation_id;
     private $notifications = array(); // Notifications queue
@@ -90,7 +90,7 @@ class Entrada_Utilities_Assessments_DistributionDelegation extends Entrada_Utili
      * @param int $end_date
      * @return bool
      */
-    public function createDistributionDelegationRecord ($delegator_id, $delegator_type = "proxy_id", $delivery_date, $start_date = null, $end_date = null) {
+    public function createDistributionDelegationRecord($delegator_id, $delegator_type = "proxy_id", $delivery_date, $start_date = null, $end_date = null) {
 
         // Before creating a distribution task, we must first check if there are targets to assess.
         $has_targets = false;
@@ -108,6 +108,7 @@ class Entrada_Utilities_Assessments_DistributionDelegation extends Entrada_Utili
                 "adistribution_id" => $this->getDistributionID(),
                 "delegator_id" => $delegator_id,
                 "delegator_type" => $delegator_type,
+                "visible" => 1,
                 "created_by" => $delegator_id,
                 "created_date" => time(),
                 "delivery_date" => $delivery_date
@@ -124,62 +125,6 @@ class Entrada_Utilities_Assessments_DistributionDelegation extends Entrada_Utili
         return true;
     }
 
-
-    /**
-     * For rotation schedule based distributions, we must be aware of the schedule type. This method is used by expandTargetData() to
-     * limit the fetched targets to a specific set of learners. This function, based on schedule type, will fetch those audience IDs.
-     * In block-based distributions, we fetch audience IDs for learners that are in the block, regardless of whether their rotation
-     * includes multiple blocks (contiguous blocks). Default behaviour for non-block based distributions is to simply check the learner's
-     * entire rotation (the contigious blocks).
-     *
-     * @param $filter_start_date
-     * @param $filter_end_date
-     * @return null
-     */
-    private function fetchAudienceIDsForDistributionByScheduleTypeAndFilterDate($filter_start_date, $filter_end_date) {
-        $audience_ids = array();
-
-        if ($filter_start_date && $filter_end_date) {
-            if ($distribution = Models_Assessments_Distribution::fetchRowByIDIgnoreDeletedDate($this->getDistributionID())) {
-                if ($distribution_schedule = Models_Assessments_Distribution_Schedule::fetchRowByDistributionID($this->getDistributionID())) {
-                    if ($schedule = Models_Schedule::fetchRowByID($distribution_schedule->getScheduleID())) {
-                        if ($distribution_schedule->getScheduleType() == "block") {
-                            // Block based, used one block only
-                            $blocks = array();
-                            if ($schedule->getScheduleType() == "rotation_stream") {
-                                $blocks = Models_Schedule::fetchAllByParentID($schedule->getID());
-                            } else if ($schedule->getScheduleType() == "rotation_block") {
-                                $blocks[] = $schedule;
-                            }
-                            foreach ($blocks as $block) {
-                                $learner_blocks = $this->fetchLearnerBlocks($block->getID());
-                                foreach ($learner_blocks as $learner_block) {
-                                    if ($learner_block["start_date"] == $filter_start_date && $learner_block["end_date"] == $filter_end_date) {
-                                        $audience_ids[] = $learner_block["audience_value"];
-                                    }
-                                }
-                            }
-                        } else {
-                            // Rotation, use contiguous blocks
-                            $rotations = $this->fetchRotations($schedule->getID());
-                            if ($rotations) {
-                                $rotation_dates = $this->getRotationDates($rotations, $distribution->getOrganisationID());
-                                foreach ($rotation_dates["all_rotation_dates"] as $proxy_id => $rotation_info) {
-                                    foreach ($rotation_info as $end_date => $start_and_end_date) {
-                                        if ($start_and_end_date[0] == $filter_start_date && $start_and_end_date[1] == $filter_end_date) {
-                                            $audience_ids[] = $proxy_id;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        return $audience_ids;
-    }
-
     /**
      * Fetch all possible targets and their currently assigned assessors for this delegation. Filter by date.
      *
@@ -188,7 +133,7 @@ class Entrada_Utilities_Assessments_DistributionDelegation extends Entrada_Utili
      * @param bool $fetch_assessors
      * @return array
      */
-    public function getDelegationTargetsAndAssessors ($filter_start_date = null, $filter_end_date = null, $fetch_assessors = true) {
+    public function getDelegationTargetsAndAssessors($filter_start_date = null, $filter_end_date = null, $fetch_assessors = true) {
         global $db;
         $all_expanded = array();
 
@@ -206,9 +151,16 @@ class Entrada_Utilities_Assessments_DistributionDelegation extends Entrada_Utili
                 $to_merge = array();
 
                 // Clear off results that returned with no targets due to the date filter.
-                foreach ($expanded as $item) {
+                foreach ($expanded as $key => $item) {
                     if (!$item["no_targets"]) {
-                        $to_merge[] = $item;
+
+                        // Ensure this target meets the distribution target option criteria.
+                        $distribution = Models_Assessments_Distribution::fetchRowByID($this->adistribution_id);
+                        if ($item["use_members"] && $distribution && !$this->isEligibleTarget($distribution, "proxy_id", $item["member_id"], $filter_start_date)) {
+                            unset($expanded[$key]);
+                        } else {
+                            $to_merge[] = $item;
+                        }
                     }
                 }
 
@@ -252,7 +204,7 @@ class Entrada_Utilities_Assessments_DistributionDelegation extends Entrada_Utili
      * @param array $target_ids
      * @return array
      */
-    public function getDelegationTargetsByIDs ($target_ids) {
+    public function getDelegationTargetsByIDs($target_ids) {
         $delegation_targets = array();
 
         /* The target ids array is structured as such:
@@ -293,7 +245,7 @@ class Entrada_Utilities_Assessments_DistributionDelegation extends Entrada_Utili
      * @param array $assessors
      * @return array
      */
-    public function findDuplicateDelegatedAssessments ($targets, $assessors) {
+    public function findDuplicateDelegatedAssessments($targets, $assessors) {
         $possible_assessments = $this->buildTargetsAndAssessorsArray($targets, $assessors);
         $assignments = Models_Assessments_Distribution_DelegationAssignment::fetchAllByDelegationID($this->getDelegationID());
         $duplicates = array();
@@ -332,7 +284,7 @@ class Entrada_Utilities_Assessments_DistributionDelegation extends Entrada_Utili
      *
      * @return array
      */
-    public function getPossibleAssessors () {
+    public function getPossibleAssessors() {
         $assessors = Models_Assessments_Distribution_Assessor::getAssessmentAssessors($this->getDistributionID());
         return $assessors;
     }
@@ -348,7 +300,7 @@ class Entrada_Utilities_Assessments_DistributionDelegation extends Entrada_Utili
      * @param bool $include_schedule_name
      * @return bool|string
      */
-    public function getConcatenatedBlockOrDateString ($start_date, $end_date, $schedule_record = null, $include_schedule_name = true) {
+    public function getConcatenatedBlockOrDateString($start_date, $end_date, $schedule_record = null, $include_schedule_name = true) {
         global $translate;
         $schedule_string = "";
         $child_schedules = null;
@@ -382,7 +334,7 @@ class Entrada_Utilities_Assessments_DistributionDelegation extends Entrada_Utili
      * @param array $assessors
      * @return bool
      */
-    public function createDelegatedAssessments ($delegator_id, $targets, $assessors) {
+    public function createDelegatedAssessments($delegator_id, $targets, $assessors) {
 
         if (empty($targets) || empty($assessors)) {
             application_log("error", "createDelegatedAssessments: No targets and/or assessors specified (distribution:'{$this->adistribution_id}' delegator:'$delegator_id')");
@@ -423,7 +375,7 @@ class Entrada_Utilities_Assessments_DistributionDelegation extends Entrada_Utili
                 $assessor_details = explode("-", $i);
                 $assessor_type = $assessor_details[0];
                 $assessor_value = $assessor_details[1];
-                $creation_status = $this->createDelegatedAssessmentTaskForRotationSchedule($distribution, $delegator_id, $assessor_type, $assessor_value, $rstargets, $repeat);
+                $creation_status = $this->createDelegatedAssessmentTaskForRotationSchedule($distribution, $distribution_schedule, $delegator_id, $assessor_type, $assessor_value, $rstargets, $repeat);
                 if (!$creation_status) {
                     $db_errors++;
                 }
@@ -454,6 +406,52 @@ class Entrada_Utilities_Assessments_DistributionDelegation extends Entrada_Utili
     }
 
     /**
+     * Delete the current delegation record; marks it deleted and sets a deletion reason.
+     *
+     * @param int $deleted_by
+     * @param int $reason_id
+     * @param string $reason_notes
+     * @param bool $notify
+     * @return bool
+     */
+    public function deleteDelegation($deleted_by, $reason_id, $reason_notes, $notify = true) {
+        global $translate;
+        if (!$this->addelegation_id || !$this->adistribution_id) {
+            $this->addErrorMessage($translate->_("Invalid delegation specified."));
+            return false;
+        }
+        if (!$delegation_record = Models_Assessments_Distribution_Delegation::fetchRowByID($this->addelegation_id)) {
+            $this->addErrorMessage($translate->_("Invalid delegation: delegation not found."));
+            return false;
+        }
+        $delegation_data = $delegation_record->toArray();
+        if ($delegation_data["deleted_date"]) {
+            // Already deleted
+            return true;
+        }
+        if ($delegation_data["delegator_id"] == $deleted_by
+            && $delegation_data["delegator_type"] == "proxy_id"
+        ) {
+            $notify = false; // Don't notify self.
+        }
+        $delegation_data["deleted_date"] = time();
+        $delegation_data["deleted_by"] = $deleted_by;
+        $delegation_data["updated_date"] = time();
+        $delegation_data["updated_by"] = $deleted_by;
+        $delegation_data["deleted_reason_id"] = $reason_id;
+        $delegation_data["deleted_reason_notes"] = $reason_notes;
+        $delegation_record->fromArray($delegation_data);
+        if (!$delegation_record->update()) {
+            $this->addErrorMessage($translate->_("Unable to delete delegation record."));
+            return false;
+        }
+        if ($notify) {
+            // Send out: "notification-assessment-task-deleted.xml"
+        }
+        return true;
+    }
+
+    /**
      * Removes a delegated assessor, along with the targets and distribution assessment task if necessary.
      *
      * @param $deleted_by
@@ -466,7 +464,7 @@ class Entrada_Utilities_Assessments_DistributionDelegation extends Entrada_Utili
      * @param $notify
      * @return bool
      */
-    public function removeDelegatedAssessor ($deleted_by, $addassignment_id, $assessment_id, $target_type, $target_id, $reason_id, $reason_text, $notify = true) {
+    public function removeDelegatedAssessor($deleted_by, $addassignment_id, $assessment_id, $target_type, $target_id, $reason_id, $reason_text, $notify = true) {
         $success = false;
         $db_errors = 0;
 
@@ -655,7 +653,7 @@ class Entrada_Utilities_Assessments_DistributionDelegation extends Entrada_Utili
      *
      * @param int $completed_by
      * @param string $completed_text
-     * @return bool
+     * @return mixed
      */
     public function completeDelegation ($completed_by, $completed_text = null ) {
         $completed_text = clean_input($completed_text, array("notags", "trim"));
@@ -684,6 +682,7 @@ class Entrada_Utilities_Assessments_DistributionDelegation extends Entrada_Utili
         $summary["delegator_role"] = "";
         $summary["blocks_string"] = "";
 
+        $schedule_class = new Entrada_CBME_RotationSchedule();
         $start_date = $end_date = 0;
         $schedule = false;
         $distribution = Models_Assessments_Distribution::fetchRowByID($this->getDistributionID());
@@ -692,7 +691,7 @@ class Entrada_Utilities_Assessments_DistributionDelegation extends Entrada_Utili
                 $schedule = Models_Schedule::fetchRowByID($distribution_schedule->getScheduleID());
             }
             if ($schedule) {
-                $rotations = $this->fetchRotations($schedule->getScheduleID());
+                $rotations = $schedule_class->fetchRotations($schedule->getScheduleID());
                 if (empty($rotations)) { // This will be empty if the scheduled learners were removed from the schedule
                 } else {
                     $date_range = $this->findStartAndEndDateRange($rotations);
@@ -899,6 +898,7 @@ class Entrada_Utilities_Assessments_DistributionDelegation extends Entrada_Utili
      */
     public function buildDelegationTaskList() {
 
+        $schedule_class = new Entrada_CBME_RotationSchedule();
         $distribution = Models_Assessments_Distribution::fetchRowByID($this->getDistributionID());
         if (!$distribution) {
             // Invalid distribution ID.
@@ -936,18 +936,24 @@ class Entrada_Utilities_Assessments_DistributionDelegation extends Entrada_Utili
                     $distribution_targets = Models_Assessments_Distribution_Target::fetchAllByDistributionID($distribution->getID());
                     if ($distribution_targets) {
                         foreach ($distribution_targets as $distribution_target) {
-                            $rotations = $this->fetchRotations($schedule->getID(), $distribution_target->getTargetScope());
+                            $rotations = $schedule_class->fetchRotations($schedule->getID(), $distribution_target->getTargetScope());
                             if ($rotations) {
-                                $rotation_dates = $this->getRotationDates($rotations, $distribution->getOrganisationID());
+                                $rotation_dates = $schedule_class->getRotationDates($rotations, $distribution->getOrganisationID());
                                 if ($rotation_dates["unique_rotation_dates"] && !empty($rotation_dates["unique_rotation_dates"])) {
                                     foreach ($rotation_dates["unique_rotation_dates"] as $unique_rotation_date) {
-                                        $delivery_date = $this->calculateDateByOffset($distribution_schedule->getDeliveryPeriod(), $distribution_schedule->getPeriodOffset(), $unique_rotation_date[0], $unique_rotation_date[1]);
+                                        $delivery_date = $schedule_class->calculateDateByOffset($distribution_schedule->getDeliveryPeriod(), $distribution_schedule->getPeriodOffset(), $unique_rotation_date[0], $unique_rotation_date[1]);
                                         $targets = $this->getDelegationTargetsAndAssessors($unique_rotation_date[0], $unique_rotation_date[1], false);
                                         if (!empty($targets)) {
+
+                                            $expiry_date = ($distribution->getExpiryOffset() ? ($delivery_date + $distribution->getExpiryOffset()) : null);
+                                            $expiry_notification_date = ($expiry_date && $distribution->getExpiryNotificationOffset() ? ($expiry_date - $distribution->getExpiryNotificationOffset()) : null);
+
                                             $this->addToTaskList(
                                                 $this->getDistributionID(),
                                                 $delivery_date,
                                                 $release_date,
+                                                $expiry_date,
+                                                $expiry_notification_date,
                                                 $unique_rotation_date[0],
                                                 $unique_rotation_date[1],
                                                 $targets,
@@ -977,15 +983,19 @@ class Entrada_Utilities_Assessments_DistributionDelegation extends Entrada_Utili
                         $blocks[] = $schedule;
                     }
                     foreach ($blocks as $block) {
-                        $delivery_date = $this->calculateDateByOffset($distribution_schedule->getDeliveryPeriod(), $distribution_schedule->getPeriodOffset(), $block->getStartDate(), $block->getEndDate());
-                        $learner_blocks = $this->fetchLearnerBlocks($block->getID());
+                        $delivery_date = $schedule_class->calculateDateByOffset($distribution_schedule->getDeliveryPeriod(), $distribution_schedule->getPeriodOffset(), $block->getStartDate(), $block->getEndDate());
+                        $learner_blocks = $schedule_class->fetchLearnerBlocks($block->getID());
                         if (!empty($learner_blocks)) {
                             $targets = $this->getDelegationTargetsAndAssessors($block->getStartDate(), $block->getEndDate(), false);
                             if (!empty($targets)) {
+                                $expiry_date = ($distribution->getExpiryOffset() ? ($delivery_date + $distribution->getExpiryOffset()) : null);
+                                $expiry_notification_date = ($expiry_date && $distribution->getExpiryNotificationOffset() ? ($expiry_date - $distribution->getExpiryNotificationOffset()) : null);
                                 $this->addToTaskList(
                                     $this->getDistributionID(),
                                     $delivery_date,
                                     $release_date,
+                                    $expiry_date,
+                                    $expiry_notification_date,
                                     $block->getStartDate(),
                                     $block->getEndDate(),
                                     $targets,
@@ -1010,7 +1020,83 @@ class Entrada_Utilities_Assessments_DistributionDelegation extends Entrada_Utili
                         foreach ($distribution_targets as $distribution_target) {
                             // If type = "schedule_id" and scope = "self" then the target is the rotation entity, not learners, so we can't fetch rotation dates.
                             if ($distribution_target->getTargetType() == "schedule_id" && $distribution_target->getTargetScope() != "self") {
-                                $rotations = $this->fetchRotations($schedule->getID(), $distribution_target->getTargetScope());
+                                $rotations = $schedule_class->fetchRotations($schedule->getID(), $distribution_target->getTargetScope());
+                                if ($rotations) {
+                                    $rotation_dates = $schedule_class->getRotationDates($rotations, $distribution->getOrganisationID());
+                                    if ($rotation_dates["unique_rotation_dates"]) {
+                                        $full_date_range = $this->findStartAndEndDateRange($rotation_dates["unique_rotation_dates"], false);
+                                        foreach ($rotation_dates["unique_rotation_dates"] as $unique_rotation_date) {
+                                            $delivery_date = $schedule_class->calculateDateByFrequency($distribution_schedule->getFrequency(), $unique_rotation_date[0]);
+                                            while ($delivery_date <= $full_date_range["latest_date"] && $delivery_date <= $unique_rotation_date[1]) {
+                                                $targets = $this->getDelegationTargetsAndAssessors($unique_rotation_date[0], $unique_rotation_date[1], false);
+                                                if (!empty($targets)) {
+                                                    $expiry_date = ($distribution->getExpiryOffset() ? ($delivery_date + $distribution->getExpiryOffset()) : null);
+                                                    $expiry_notification_date = ($expiry_date && $distribution->getExpiryNotificationOffset() ? ($expiry_date - $distribution->getExpiryNotificationOffset()) : null);
+                                                    $this->addToTaskList(
+                                                        $this->getDistributionID(),
+                                                        $delivery_date,
+                                                        $release_date,
+                                                        $expiry_date,
+                                                        $expiry_notification_date,
+                                                        $unique_rotation_date[0],
+                                                        $unique_rotation_date[1],
+                                                        $targets,
+                                                        $all_possible_assessors,
+                                                        "delegation",
+                                                        "dates",
+                                                        null,
+                                                        $delegator->getDelegatorID(),
+                                                        true,
+                                                        $distribution_schedule->getScheduleType(),
+                                                        $distribution_schedule->getDeliveryPeriod(),
+                                                        $distribution_schedule->getPeriodOffset()
+                                                    );
+                                                }
+                                                $delivery_date += ($distribution_schedule->getFrequency() * 86400);
+                                            }
+                                        }
+                                    }
+                                }
+                            } elseif ($distribution_target->getTargetType() == "proxy_id" && $distribution_target->getTargetScope() == "self" && $distribution_target->getTargetRole() == "learner") {
+                                $rotations = $schedule_class->fetchRotations($schedule->getID(), $distribution_target->getTargetScope(), $distribution_target->getTargetID());
+                                if ($rotations) {
+                                    $rotation_dates = $schedule_class->getRotationDates($rotations, $distribution->getOrganisationID());
+                                    if ($rotation_dates["unique_rotation_dates"]) {
+                                        $full_date_range = $this->findStartAndEndDateRange($rotation_dates["unique_rotation_dates"], false);
+                                        foreach ($rotation_dates["unique_rotation_dates"] as $unique_rotation_date) {
+                                            $delivery_date = $schedule_class->calculateDateByFrequency($distribution_schedule->getFrequency(), $unique_rotation_date[0]);
+                                            while ($delivery_date <= $full_date_range["latest_date"] && $delivery_date <= $unique_rotation_date[1]) {
+                                                $targets = $this->getDelegationTargetsAndAssessors($unique_rotation_date[0], $unique_rotation_date[1], false);
+                                                if (!empty($targets)) {
+                                                    $expiry_date = ($distribution->getExpiryOffset() ? ($delivery_date + $distribution->getExpiryOffset()) : null);
+                                                    $expiry_notification_date = ($expiry_date && $distribution->getExpiryNotificationOffset() ? ($expiry_date - $distribution->getExpiryNotificationOffset()) : null);
+                                                    $this->addToTaskList(
+                                                        $this->getDistributionID(),
+                                                        $delivery_date,
+                                                        $release_date,
+                                                        $expiry_date,
+                                                        $expiry_notification_date,
+                                                        $unique_rotation_date[0],
+                                                        $unique_rotation_date[1],
+                                                        $targets,
+                                                        $all_possible_assessors,
+                                                        "delegation",
+                                                        "dates",
+                                                        null,
+                                                        $delegator->getDelegatorID(),
+                                                        true,
+                                                        $distribution_schedule->getScheduleType(),
+                                                        $distribution_schedule->getDeliveryPeriod(),
+                                                        $distribution_schedule->getPeriodOffset()
+                                                    );
+                                                }
+                                                $delivery_date += ($distribution_schedule->getFrequency() * 86400);
+                                            }
+                                        }
+                                    }
+                                }
+                            } elseif ($distribution_target->getTargetType() == "proxy_id" && $distribution_target->getTargetScope() == "self" && $distribution_target->getTargetRole() == "learner") {
+                                $rotations = $this->fetchRotations($schedule->getID(), $distribution_target->getTargetScope(), $distribution_target->getTargetID());
                                 if ($rotations) {
                                     $rotation_dates = $this->getRotationDates($rotations, $distribution->getOrganisationID());
                                     if ($rotation_dates["unique_rotation_dates"]) {
@@ -1020,10 +1106,52 @@ class Entrada_Utilities_Assessments_DistributionDelegation extends Entrada_Utili
                                             while ($delivery_date <= $full_date_range["latest_date"] && $delivery_date <= $unique_rotation_date[1]) {
                                                 $targets = $this->getDelegationTargetsAndAssessors($unique_rotation_date[0], $unique_rotation_date[1], false);
                                                 if (!empty($targets)) {
+                                                    $expiry_date = ($distribution->getExpiryOffset() ? ($delivery_date + $distribution->getExpiryOffset()) : null);
+                                                    $expiry_notification_date = ($expiry_date && $distribution->getExpiryNotificationOffset() ? ($expiry_date - $distribution->getExpiryNotificationOffset()) : null);
                                                     $this->addToTaskList(
                                                         $this->getDistributionID(),
                                                         $delivery_date,
                                                         $release_date,
+                                                        $expiry_date,
+                                                        $expiry_notification_date,
+                                                        $unique_rotation_date[0],
+                                                        $unique_rotation_date[1],
+                                                        $targets,
+                                                        $all_possible_assessors,
+                                                        "delegation",
+                                                        "dates",
+                                                        null,
+                                                        $delegator->getDelegatorID(),
+                                                        true,
+                                                        $distribution_schedule->getScheduleType(),
+                                                        $distribution_schedule->getDeliveryPeriod(),
+                                                        $distribution_schedule->getPeriodOffset()
+                                                    );
+                                                }
+                                                $delivery_date += ($distribution_schedule->getFrequency() * 86400);
+                                            }
+                                        }
+                                    }
+                                }
+                            } elseif ($distribution_target->getTargetType() == "proxy_id" && $distribution_target->getTargetScope() == "self" && $distribution_target->getTargetRole() == "learner") {
+                                $rotations = $this->fetchRotations($schedule->getID(), $distribution_target->getTargetScope(), $distribution_target->getTargetID());
+                                if ($rotations) {
+                                    $rotation_dates = $this->getRotationDates($rotations, $distribution->getOrganisationID());
+                                    if ($rotation_dates["unique_rotation_dates"]) {
+                                        $full_date_range = $this->findStartAndEndDateRange($rotation_dates["unique_rotation_dates"], false);
+                                        foreach ($rotation_dates["unique_rotation_dates"] as $unique_rotation_date) {
+                                            $delivery_date = $this->calculateDateByFrequency($distribution_schedule->getFrequency(), $unique_rotation_date[0]);
+                                            while ($delivery_date <= $full_date_range["latest_date"] && $delivery_date <= $unique_rotation_date[1]) {
+                                                $targets = $this->getDelegationTargetsAndAssessors($unique_rotation_date[0], $unique_rotation_date[1], false);
+                                                if (!empty($targets)) {
+                                                    $expiry_date = ($distribution->getExpiryOffset() ? ($delivery_date + $distribution->getExpiryOffset()) : null);
+                                                    $expiry_notification_date = ($expiry_date && $distribution->getExpiryNotificationOffset() ? ($expiry_date - $distribution->getExpiryNotificationOffset()) : null);
+                                                    $this->addToTaskList(
+                                                        $this->getDistributionID(),
+                                                        $delivery_date,
+                                                        $release_date,
+                                                        $expiry_date,
+                                                        $expiry_notification_date,
                                                         $unique_rotation_date[0],
                                                         $unique_rotation_date[1],
                                                         $targets,
@@ -1054,10 +1182,14 @@ class Entrada_Utilities_Assessments_DistributionDelegation extends Entrada_Utili
             // Date range distribution
             $targets = $this->getDelegationTargetsAndAssessors($distribution->getStartDate(), $distribution->getEndDate(), false);
             if ($targets) {
+                $expiry_date = ($distribution->getExpiryOffset() ? ($distribution->getDeliveryDate() + $distribution->getExpiryOffset()) : null);
+                $expiry_notification_date = ($expiry_date && $distribution->getExpiryNotificationOffset() ? ($expiry_date - $distribution->getExpiryNotificationOffset()) : null);
                 $this->addToTaskList(
                     $this->getDistributionID(),
                     $distribution->getDeliveryDate(),
                     $release_date,
+                    $expiry_date,
+                    $expiry_notification_date,
                     $distribution->getStartDate(),
                     $distribution->getEndDate(),
                     $targets,
@@ -1122,29 +1254,457 @@ class Entrada_Utilities_Assessments_DistributionDelegation extends Entrada_Utili
         return $upcoming;
     }
 
+    /**
+     * For a given distribution ID, fetch all of the related data in one (large) array.
+     *
+     * @param $distribution_id
+     * @param bool $include_rotation_blocks
+     * @param bool $include_delegations
+     * @param bool $include_assessments
+     * @param bool $include_deleted_tasks
+     * @param bool $include_events
+     * @param bool $include_assessment_progress
+     * @param bool $include_assessment_targets
+     * @param bool $include_assessment_approvals
+     * @return array
+     */
+    public function getAllDistributionData($distribution_id = null, $include_rotation_blocks = false, $include_assessments = false, $include_delegations = false, $include_deleted_tasks = false, $include_events = false, $include_assessment_progress = false, $include_assessment_targets = false, $include_assessment_approvals = false) {
+        $distribution_data = array();
+        $distribution_data["adistribution_id"] = false;
+        $distribution_data["distribution_id"] = false;
+        $distribution_data["distribution"] = false;
+        $distribution_data["curriculum_period"] = false;
+        $distribution_data["course"] = false;
+        $distribution_data["distribution_form"] = false;
+        $distribution_data["distribution_authors"] = false;
+        $distribution_data["distribution_reviewers"] = false;
+
+        $distribution_data["distribution_schedule"] = false;
+        $distribution_data["rotation_schedule"] = array(
+            "selected_schedule" => false,
+            "parent_schedule" => false,
+            "rotation_blocks" => false
+        );
+        $distribution_data["distribution_delegator"] = false;
+        $distribution_data["distribution_delegator_name"] = false;
+        $distribution_data["delegations"] = false;
+        $distribution_data["delegations_count"] = false;
+        $distribution_data["delegation_assignments"] = false;
+
+        $distribution_data["distribution_assessors_summary"] = false;
+        $distribution_data["distribution_assessors"] = false;
+        $distribution_data["distribution_assessments_count"] = false;
+        $distribution_data["distribution_assessments"] = false;
+        $distribution_data["distribution_assessments_progress"] = false;
+
+        $distribution_data["distribution_targets_summary"] =  false;
+        $distribution_data["distribution_targets"] = false;
+        $distribution_data["distribution_assessment_targets_count"] = false;
+        $distribution_data["distribution_assessment_targets"] = false;
+
+        $distribution_data["distribution_approvers"] = false;
+        $distribution_data["distribution_approvals"] = false;
+
+        $distribution_data["distribution_eventtypes"] = false;
+        $distribution_data["events"] = false;
+        $distribution_data["events_count"] = false;
+
+        $distribution_data["deleted_tasks"] = false;
+
+        // Make sure we have a distribution ID to work with.
+        if (!$distribution_id) {
+            if (method_exists($this, "getDistributionID")) {
+                $distribution_id = $this->getDistributionID();
+            } else if (method_exists($this, "getADistributionID")) {
+                $distribution_id = $this->getADistributionID();
+            } else if (method_exists($this, "getAdistributionID")) {
+                $distribution_id = $this->getAdistributionID();
+            }
+        }
+
+        if ($distribution_id && $distribution = Models_Assessments_Distribution::fetchRowByID($distribution_id)) {
+            $distribution_data["distribution"] = $distribution;
+
+            $distribution_data["adistribution_id"] = $distribution_id;
+            $distribution_data["distribution_id"] = $distribution_id;
+
+            $distribution_data["distribution_form"] = Models_Assessments_Form::fetchRowByIDIncludeDeleted($distribution->getFormID());
+
+            $distribution_data["curriculum_period"] = Models_Curriculum_Period::fetchRowByID($distribution->getCperiodID());
+            $distribution_data["course"] = Models_Course::fetchRowByID($distribution->getCourseID());
+            $distribution_data["authors"] = $this->addToArrayByPrimaryKey(Models_Assessments_Distribution_Author::fetchAllByDistributionID($distribution_id));
+            $distribution_data["reviewers"] = $this->addToArrayByPrimaryKey(Models_Assessments_Distribution_Reviewer::fetchAllByDistributionID($distribution_id));
+
+            $distribution_data["distribution_assessors"] = $this->addToArrayByPrimaryKey(Models_Assessments_Distribution_Assessor::fetchAllByDistributionID($distribution_id));
+            $distribution_data["distribution_assessors_summary"] =  $this->buildAssessorsSummary($distribution_data["distribution_assessors"]);
+
+            $distribution_data["distribution_targets"] = $this->addToArrayByPrimaryKey(Models_Assessments_Distribution_Target::fetchAllByDistributionID($distribution_id));
+            $distribution_data["distribution_targets_summary"] =  $this->buildTargetsSummary($distribution_data["distribution_targets"]);
+
+            $distribution_data["distribution_schedule"] = Models_Assessments_Distribution_Schedule::fetchRowByDistributionID($distribution_id);
+            if ($distribution_data["distribution_schedule"]) {
+                $schedule = Models_Schedule::fetchRowByID($distribution_data["distribution_schedule"]->getScheduleID());
+                if ($schedule) {
+                    $distribution_data["rotation_schedule"]["selected_schedule"] = $schedule;
+
+                    if ($schedule->getScheduleParentID()) {
+                        $distribution_data["rotation_schedule"]["parent_schedule"] = $schedule->getScheduleParentID();
+                        if ($include_rotation_blocks) {
+                            $distribution_data["rotation_schedule"]["rotation_blocks"] = Models_Schedule::fetchAllByParentID($schedule->getScheduleParentID());
+                        }
+                    } else {
+                        $distribution_data["rotation_schedule"]["parent_schedule"] = $schedule;
+                        if ($include_rotation_blocks) {
+                            $distribution_data["rotation_schedule"]["rotation_blocks"] = Models_Schedule::fetchAllByParentID($schedule->getID());
+                        }
+                    }
+                }
+            }
+
+            $distribution_data["distribution_delegator"] = Models_Assessments_Distribution_Delegator::fetchRowByDistributionID($distribution_id);
+            if ($distribution_data["distribution_delegator"]) {
+                $user_data = $this->getUserByType($distribution_data["distribution_delegator"]->getDelegatorID(), $distribution_data["distribution_delegator"]->getDelegatorType());
+                if ($user_data) {
+                    $distribution_data["distribution_delegator_name"] = "{$user_data->getFirstname()} {$user_data->getLastname()}";
+                }
+            }
+
+            if ($include_delegations) {
+                $distribution_data["delegations"] = $this->addToArrayByPrimaryKey(Models_Assessments_Distribution_Delegation::fetchAllByDistributionID($distribution_id));
+                $distribution_data["delegations_count"] = count($distribution_data["delegations"]);
+                $distribution_data["delegation_assignments"] = $this->addToArrayByPrimaryKey(Models_Assessments_Distribution_DelegationAssignment::fetchAllByDistributionIDIgnoreDeletedDate($distribution_id));
+            }
+
+            if ($include_assessments) {
+                $distribution_data["distribution_assessments"] = $this->addToArrayByPrimaryKey(Models_Assessments_Assessor::fetchAllRecordsByDistributionID($distribution_id));
+                $distribution_data["distribution_assessments_count"] = count($distribution_data["distribution_assessments"]);
+                if ($include_assessment_targets) {
+                    $distribution_data["distribution_assessment_targets"] = $this->addToArrayByPrimaryKey(Models_Assessments_AssessmentTarget::fetchAllByDistributionID($distribution_id));
+                    $distribution_data["distribution_assessment_targets_count"] = count($distribution_data["distribution_assessment_targets"]);
+                }
+                if ($include_assessment_progress) {
+                    $distribution_data["distribution_assessments_progress"] = $this->addToArrayByPrimaryKey(Models_Assessments_Progress::fetchAllByDistributionID($distribution_id));
+                }
+            }
+
+            if ($include_deleted_tasks) {
+                $tasks =  Models_Assessments_AssessmentTarget::fetchAllByDistributionID($distribution_id);
+                if ($tasks) {
+                    foreach ($tasks as $task) {
+                        if ($task->getDeletedDate()) {
+                            $distribution_data["deleted_tasks"][] = $task;
+                        }
+                    }
+                }
+            }
+
+            $distribution_data["distribution_eventtypes"] = Models_Assessments_Distribution_Eventtype::fetchAllByAdistributionID($distribution_id);
+            if ($include_events) {
+                $distribution_data["events"] = array();
+                $distribution_data["events_count"] = 0;
+                if (!empty($distribution_data["distribution_eventtypes"]) && $distribution_data["course"]) {
+                    foreach ($distribution_data["distribution_eventtypes"] as $eventtype) {
+                        $distribution_data["events"][$eventtype->getEventtypeID()] = Models_Event::fetchAllByCourseIDEventtypeID($distribution_data["course"]->getID(), $eventtype->getEventtypeID());
+                        $distribution_data["events_count"] += count($distribution_data["events"][$eventtype->getEventtypeID()]);
+                    }
+                }
+            }
+
+            $approvers = new Models_Assessments_Distribution_Approver();
+            $distribution_data["distribution_approvers"] = $approvers->fetchAllByDistributionID($distribution_id);
+            if ($include_assessment_approvals) {
+                $approvals = new Models_Assessments_Distribution_Approvals();
+                $distribution_data["distribution_approvals"] = $approvals->fetchAllByDistributionID($distribution_id);
+            }
+        }
+        return $distribution_data;
+    }
+
+    /**
+     * Fetch all distribution and assessment data and build a flat task list of targets and assessors.
+     *
+     * @param $format_timestamps
+     * @param $include_schedule_info
+     * @param $start_date
+     * @param $end_date
+     * @return array $list
+     */
+    public function buildFlatAssessmentList($format_timestamps = true, $include_schedule_info = false, $start_date = null, $end_date = null) {
+        global $translate;
+        $list = array();
+        $assessments_base = new Entrada_Assessments_Base();
+
+        $manually_fetched_target_names = array();
+        $manually_fetched_assessor_names = array();
+
+        $delegation_data = $this->getAllDistributionData(
+            $this->getAdistributionID(),
+            false,
+            true,
+            true,
+            false,
+            false,
+            true,
+            true
+        );
+
+        // If we have assessment data, continue and flatten the list.
+        if (!$delegation_data
+            || empty($delegation_data)
+            || empty($delegation_data["delegations"])
+            || empty($delegation_data["distribution_assessments"])
+        ) {
+            return $list;
+        }
+
+        $assignments = $this->getAssignmentsSummary($delegation_data["delegations"]);
+
+        // Match assessors, targets and progress as we go.
+        /* @var $assessment Models_Assessments_Assessor */
+        foreach ($delegation_data["distribution_assessments"] as $assessment) {
+
+            if ($start_date) {
+                if ($assessment->getDeliveryDate() < $start_date) {
+                    continue;
+                }
+            }
+            if ($end_date) {
+                if ($assessment->getDeliveryDate() > $end_date) {
+                    continue;
+                }
+            }
+
+            /* @var $assessor Models_Assessments_Distribution_Assessor */
+            foreach ($delegation_data["distribution_assessors"] as $assessor) {
+                if ($assessor->getAssessorValue() != $assessment->getAssessorValue()) {
+                    continue;
+                }
+
+                /* @var $target Models_Assessments_AssessmentTarget */
+                foreach ($delegation_data["distribution_assessment_targets"] as $target) {
+                    if ($target->getDassessmentID() != $assessment->getID()) {
+                        continue;
+                    }
+
+                    $assessor_name = "";
+                    $target_name = "";
+                    // Attempt to match target and assessor name to the assignments.
+                    foreach ($assignments as $assignment) {
+                        foreach ($assignment as $target_assignment) {
+                            foreach ($target_assignment["assessors"] as $assignment_assessor) {
+                                if ($assignment_assessor["dassessment_id"] == $assessment->getID()) {
+                                    $assessor_name = "{$assignment_assessor["firstname"]} {$assignment_assessor["lastname"]}";
+                                    $target_name = $target_assignment["use_members"] ? $target_assignment["member_fullname"] : $target_assignment["entity_name"];
+                                }
+                            }
+                        }
+                    }
+
+                    // If we didn't match on the assignments, perform a hard fetch of the data.
+                    // Store for future use as this is very expensive and the data tends to be repetitive.
+                    if (!$target_name || $target_name == "") {
+                        $key = "{$target->getTargetType()}-{$target->getTargetValue()}";
+                        if (array_key_exists($key, $manually_fetched_target_names)) {
+                            $target_name = $manually_fetched_target_names[$key];
+                        } else {
+                            $target_info = Entrada_Assessments_Base::getTargetInfo($target->getTargetType(), $target->getTargetValue());
+                            $target_name = $target_info ? $target_info["name"] : "";
+                            $manually_fetched_target_names[$key] = $target_name;
+                        }
+                    }
+                    if (!$assessor_name || $assessor_name == "") {
+                        $key = "{$assessment->getAssessorType()}-{$assessment->getAssessorValue()}";
+                        if (array_key_exists($key, $manually_fetched_assessor_names)) {
+                            $assessor_name = $manually_fetched_assessor_names[$key];
+                        } else {
+                            $assessor_info = $assessments_base->getUserByType($assessment->getAssessorValue(), $assessment->getAssessorType());
+                            $assessor_name = $assessor_info ? "{$assessor_info->getFirstname()} {$assessor_info->getLastname()}" : "";
+                            $manually_fetched_assessor_names[$key] = $assessor_name;
+                        }
+                    }
+
+                    $progress_string = "";
+                    $progress_found = false;
+                    $progress_counts = array("pending" => 0, "inprogress" => 0, "complete" => 0);
+
+                    if ($delegation_data["distribution_assessments_progress"] && !empty($delegation_data["distribution_assessments_progress"])) {
+                        /* @var $progress Models_Assessments_Progress */
+                        foreach ($delegation_data["distribution_assessments_progress"] as $progress) {
+                            if ($progress->getProgressValue() != "cancelled") {
+                                if ($progress->getTargetType() == $target->getTargetType()
+                                    && $progress->getTargetRecordID() == $target->getTargetValue()
+                                    && $progress->getDAssessmentID() == $assessment->getID()
+                                ) {
+                                    $progress_found = true;
+                                    $progress_counts[$progress->getProgressValue()]++;
+                                }
+                            }
+                        }
+                    }
+
+                    // If we did not find any progress, we can safely assume the task is pending.
+                    if (!$progress_found) {
+                        $progress_counts["pending"]++;
+                    }
+                    
+                    if (!empty($progress_counts["complete"])) {
+                        $progress_string .= "{$progress_counts["complete"]} " . $translate->_("Complete");
+                    }
+                    if (!empty($progress_counts["inprogress"])) {
+                        $progress_string .= "{$progress_counts["inprogress"]} " . $translate->_("In Progress");
+                    }
+                    if (!empty($progress_counts["pending"])) {
+                        $progress_string .= "{$progress_counts["pending"]} " . $translate->_("Pending");
+                    }
+
+                    $timestamp = "";
+                    // Parse out the assignment and delegation so that we can get the delivery date
+                    foreach ($delegation_data["delegation_assignments"] as $assignment) {
+                        if ($assignment->getDassessmentID() == $assessment->getID()) {
+                            $delegation_id = $assignment->getDelegationID();
+                        }
+                    }
+
+                    if (isset($delegation_id) && $delegation_id) {
+                        $delegation = $delegation_data["delegations"][$delegation_id];
+                        if ($delegation) {
+                            $timestamp = ($format_timestamps ? date("Y-m-d", $delegation->getDeliveryDate()) : $delegation->getDeliveryDate());
+                        }
+                    }
+                    // Pull in schedule information if requested.
+                    if ($include_schedule_info) {
+                        if ($delegation_data["distribution_schedule"]) {
+                            $schedule_badge_text = $this->getConcatenatedBlockString(
+                                null,
+                                $delegation_data["rotation_schedule"]["selected_schedule"],
+                                $assessment->getRotationStartDate() ? $assessment->getRotationStartDate() : $assessment->getStartDate(),
+                                $assessment->getRotationEndDate() ? $assessment->getRotationEndDate() : $assessment->getEndDate(),
+                                $assessment->getOrganisationID(),
+                                " - ",
+                                ", ",
+                                true,
+                                true
+                            );
+                            if ($schedule_badge_text) {
+                                $timestamp .= " ({$schedule_badge_text})";
+                            }
+
+                        }
+                    }
+
+                    // Add the final task to the list.
+                    $flattened_task = array(
+                        $this->getAdistributionID(),
+                        $delegation_data["distribution"]->getDeletedDate(),
+                        $delegation_data["distribution"]->getTitle(),
+                        $assessor_name,
+                        $target_name,
+                        $delegation_data["distribution_form"] ? $delegation_data["distribution_form"]->getTitle() : "",
+                        $timestamp,
+                        $progress_string
+                    );
+                    $list[] = $flattened_task;
+
+                }
+            }
+        }
+
+        return $list;
+    }
+
     //--- Private functions ---//
+
+    /**
+     * For rotation schedule based distributions, we must be aware of the schedule type. This method is used by expandTargetData() to
+     * limit the fetched targets to a specific set of learners. This function, based on schedule type, will fetch those audience IDs.
+     * In block-based distributions, we fetch audience IDs for learners that are in the block, regardless of whether their rotation
+     * includes multiple blocks (contiguous blocks). Default behaviour for non-block based distributions is to simply check the learner's
+     * entire rotation (the contigious blocks).
+     *
+     * @param $filter_start_date
+     * @param $filter_end_date
+     * @return null
+     */
+    private function fetchAudienceIDsForDistributionByScheduleTypeAndFilterDate($filter_start_date, $filter_end_date) {
+        $audience_ids = array();
+        $schedule_class = new Entrada_CBME_RotationSchedule();
+
+        if ($filter_start_date && $filter_end_date) {
+            if ($distribution = Models_Assessments_Distribution::fetchRowByIDIgnoreDeletedDate($this->getDistributionID())) {
+                if ($distribution_schedule = Models_Assessments_Distribution_Schedule::fetchRowByDistributionID($this->getDistributionID())) {
+                    if ($schedule = Models_Schedule::fetchRowByID($distribution_schedule->getScheduleID())) {
+                        if ($distribution_schedule->getScheduleType() == "block") {
+                            // Block based, used one block only
+                            $blocks = array();
+                            if ($schedule->getScheduleType() == "rotation_stream") {
+                                $blocks = Models_Schedule::fetchAllByParentID($schedule->getID());
+                            } else if ($schedule->getScheduleType() == "rotation_block") {
+                                $blocks[] = $schedule;
+                            }
+                            foreach ($blocks as $block) {
+                                $learner_blocks = $schedule_class->fetchLearnerBlocks($block->getID());
+                                foreach ($learner_blocks as $learner_block) {
+                                    if ($learner_block["start_date"] == $filter_start_date && $learner_block["end_date"] == $filter_end_date) {
+                                        $audience_ids[] = $learner_block["audience_value"];
+                                    }
+                                }
+                            }
+                        } else {
+                            // Rotation, use contiguous blocks
+                            $rotations = $schedule_class->fetchRotations($schedule->getID());
+                            if ($rotations) {
+                                $rotation_dates = $schedule_class->getRotationDates($rotations, $distribution->getOrganisationID());
+                                foreach ($rotation_dates["all_rotation_dates"] as $proxy_id => $rotation_info) {
+                                    foreach ($rotation_info as $end_date => $start_and_end_date) {
+                                        if ($start_and_end_date[0] == $filter_start_date && $start_and_end_date[1] == $filter_end_date) {
+                                            $audience_ids[] = $proxy_id;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return $audience_ids;
+    }
 
     /**
      * Create a new Distribtion Assessment record (top-level record). Returns false on record creation failure, otherwise returns the new distribution assessment object.
      *
-     * @param string $assessor_type
-     * @param int $assessor_value
-     * @param int $start_date
-     * @param int $end_date
-     * @param int $delivery_date
-     * @param int $min_sub
-     * @param int $max_sub
-     * @param int $delegator_id
+     * @param $form_id
+     * @param $organisation_id
+     * @param $course_id
+     * @param $associated_record_id
+     * @param $associated_record_type
+     * @param $assessor_type
+     * @param $assessor_value
+     * @param $start_date
+     * @param $end_date
+     * @param $delivery_date
+     * @param $min_sub
+     * @param $max_sub
+     * @param $delegator_id
      * @param bool $set_rotation_date
+     * @param bool $feedback_required
      * @return bool|Models_Assessments_Assessor
      */
-    private function createNewDAssessmentRecord ($assessor_type, $assessor_value, $start_date, $end_date, $delivery_date, $min_sub, $max_sub, $delegator_id, $set_rotation_date = false) {
-
+    private function createNewDAssessmentRecord($form_id, $organisation_id, $course_id, $associated_record_id, $associated_record_type, $assessor_type, $assessor_value, $start_date, $end_date, $delivery_date, $min_sub, $max_sub, $delegator_id, $set_rotation_date = false, $feedback_required = false) {
         $construction = array(
+            "form_id" => $form_id,
+            "organisation_id" => $organisation_id,
+            "associated_record_id" => $associated_record_id,
+            "associated_record_type" => $associated_record_type,
             "adistribution_id" => $this->getDistributionID(),
+            "course_id" => $course_id,
             "assessor_type" => $assessor_type,
             "assessor_value" => $assessor_value,
+            "assessment_type_id" => 1,
+            "assessment_method_id" => 1,
+            "additional_assessment" => 0,
             "published" => 1,
+            "feedback_required" => $feedback_required ? 1 : 0,
             "min_submittable" => $min_sub,
             "max_submittable" => $max_sub,
             "start_date" => $start_date,
@@ -1162,31 +1722,50 @@ class Entrada_Utilities_Assessments_DistributionDelegation extends Entrada_Utili
             $construction["rotation_start_date"] = $start_date;
             $construction["rotation_end_date"] = $end_date;
         }
-        $dist_assessment = new Models_Assessments_Assessor($construction);
-        return $dist_assessment->insert();
+        $assessment_api = new Entrada_Assessments_Assessment(array(
+            "actor_proxy_id" => $delegator_id,
+            "actor_organisation_id" => $organisation_id,
+            "limit_dataset" => array("assessment"))
+        );
+        $status = $assessment_api->createAssessment($construction);
+        if (!$status) {
+            $this->addErrorMessages($assessment_api->getErrorMessages());
+            return false;
+        }
+        return $assessment_api->getAssessmentRecord();
     }
 
     /**
      * Create a new Distribution Assessment Target record.
      *
+     * @param int $organisation_id
      * @param int $dassessment_id
+     * @param string $task_type
      * @param string $target_type
      * @param int $target_id
      * @param int $delegator_id
      * @return bool
      */
-    private function createNewDAssessmentTargetRecord ($dassessment_id, $target_type, $target_id, $delegator_id) {
-        $dist_assessment_target = new Models_Assessments_AssessmentTarget(array(
+    private function createNewDAssessmentTargetRecord($organisation_id, $dassessment_id, $task_type, $target_type, $target_id, $delegator_id) {
+        $assessment_api = new Entrada_Assessments_Assessment(array(
+            "actor_proxy_id" => $delegator_id,
+            "actor_organisation_id" => $organisation_id,
+            "limit_dataset" => array("assessment"),
+            "dassessment_id" => $dassessment_id
+        ));
+        $dist_assessment_target = array(
             "adistribution_id" => $this->getDistributionID(),
             "dassessment_id" => $dassessment_id,
+            "task_type" => $task_type,
             "target_type" => $target_type,
             "target_value" => $target_id,
-            "created_date" => time(),
-            "created_by" => $delegator_id,
-            "updated_date" => time(),
-            "updated_by" => $delegator_id
-        ));
-        return $dist_assessment_target->insert();
+        );
+        $status = $assessment_api->createAssessmentTarget($dist_assessment_target);
+        if (!$status) {
+            $this->addErrorMessages($assessment_api->getErrorMessages());
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -1198,7 +1777,7 @@ class Entrada_Utilities_Assessments_DistributionDelegation extends Entrada_Utili
      * @param int $assessor_value
      * @param string $target_type
      * @param int$target_value
-     * @return bool
+     * @return mixed
      */
     private function createNewDDelegationAssignmentRecord ($assessment_id, $delegator_id, $assessor_type, $assessor_value, $target_type, $target_value) {
         $delegation_assignment = new Models_Assessments_Distribution_DelegationAssignment(array(
@@ -1232,15 +1811,16 @@ class Entrada_Utilities_Assessments_DistributionDelegation extends Entrada_Utili
     /**
      * Create the assessment tasks for all of the specified targets for a rotation schedule for a given assessor.
      *
-     * @param Models_Assessments_Distribution $distribution
-     * @param int $delegator_id
-     * @param string $assessor_type
-     * @param int $assessor_value
+     * @param $distribution
+     * @param $distribution_schedule
+     * @param $delegator_id
+     * @param $assessor_type
+     * @param $assessor_value
      * @param array $rotation_blocks
      * @param bool $repeat
      * @return bool
      */
-    private function createDelegatedAssessmentTaskForRotationSchedule (&$distribution, $delegator_id, $assessor_type, $assessor_value, $rotation_blocks = array(), $repeat = false) {
+    private function createDelegatedAssessmentTaskForRotationSchedule(&$distribution, $distribution_schedule, $delegator_id, $assessor_type, $assessor_value, $rotation_blocks = array(), $repeat = false) {
         if (empty($rotation_blocks)) {
             application_log("error", "No rotation blocks specified when attempting to created delegated assessment for rotation schedule (distribution:'{$this->adistribution_id}' Delegator: $delegator_id)");
             return false;
@@ -1271,7 +1851,7 @@ class Entrada_Utilities_Assessments_DistributionDelegation extends Entrada_Utili
                         $dist_assessment = $existing;
                     } else {
                         // Create top level assessment record
-                        $dist_assessment = $this->createNewDAssessmentRecord($assessor_type, $assessor_value, $block_start_date, $block_end_date, time(), $min_sub, $max_sub, $delegator_id, true);
+                        $dist_assessment = $this->createNewDAssessmentRecord($distribution->getFormID(), $distribution->getOrganisationID(), $distribution->getCourseID(),  $distribution_schedule->getScheduleID(), "schedule_id", $assessor_type, $assessor_value, $block_start_date, $block_end_date, time(), $min_sub, $max_sub, $delegator_id, true, $distribution->getFeedbackRequired() ? true : false);
                         if (!$dist_assessment) {
                             $db_failures++;
                         }
@@ -1294,7 +1874,7 @@ class Entrada_Utilities_Assessments_DistributionDelegation extends Entrada_Utili
                                 continue; // skip duplicates
                             }
 
-                            if (!$this->createNewDAssessmentTargetRecord($assessment_id, $target_type, $target_id, $delegator_id)) {
+                            if (!$this->createNewDAssessmentTargetRecord($distribution->getOrganisationID(), $assessment_id, $distribution->getAssessmentType(), $target_type, $target_id, $delegator_id)) {
                                 $db_failures++;
                             }
                             // Create the delegation assignment record for this delegated assessment
@@ -1323,14 +1903,14 @@ class Entrada_Utilities_Assessments_DistributionDelegation extends Entrada_Utili
     /**
      * Create the assessment tasks for all of the specified targets for a date range delegation for a given assessor.
      *
-     * @param Models_Assessments_Distribution $distribution
-     * @param int $delegator_id
-     * @param string $assessor_type
-     * @param int $assessor_value
+     * @param $distribution
+     * @param $delegator_id
+     * @param $assessor_type
+     * @param $assessor_value
      * @param array $date_targets
      * @return bool
      */
-    private function createDelegatedAssessmentTaskForDateRange (&$distribution, $delegator_id, $assessor_type, $assessor_value, $date_targets = array()) {
+    private function createDelegatedAssessmentTaskForDateRange(&$distribution, $delegator_id, $assessor_type, $assessor_value, $date_targets = array()) {
         if (empty($date_targets)) {
             application_log("error", "No targets specified when attempting to created delegated assessment for date range (distribution:'{$this->adistribution_id}' Delegator: $delegator_id)");
             return false;
@@ -1354,7 +1934,7 @@ class Entrada_Utilities_Assessments_DistributionDelegation extends Entrada_Utili
                 $dist_assessment = $existing;
             } else {
                 // Create top level assessment record
-                $dist_assessment = $this->createNewDAssessmentRecord($assessor_type, $assessor_value, $start_date, $end_date, time(), $min_sub, $max_sub, $delegator_id);
+                $dist_assessment = $this->createNewDAssessmentRecord($distribution->getFormID(), $distribution->getOrganisationID(), $distribution->getCourseID(), null, "proxy_id", $assessor_type, $assessor_value, $start_date, $end_date, time(), $min_sub, $max_sub, $delegator_id, false, $distribution->getFeedbackRequired() ? true : false);
                 if (!$dist_assessment) {
                     $db_failures++;
                 }
@@ -1362,7 +1942,14 @@ class Entrada_Utilities_Assessments_DistributionDelegation extends Entrada_Utili
             if ($dist_assessment) {
                 // Create child targets and assessor assignment records
                 foreach ($date_targets as $i => $date_target) {
-                    if (!$this->createNewDAssessmentTargetRecord($dist_assessment->getID(), $date_target["type"], $date_target["target_id"], $delegator_id)) {
+
+                    // If we found an existing dassessment record, then make sure we're not adding a duplicate target to it.
+                    $duplicates = $this->findDuplicateDelegationAssignments($dist_assessment->getID(), $assessor_type, $assessor_value, $date_target["type"], $date_target["target_id"]);
+                    if (!empty($duplicates)) {
+                        continue; // skip duplicates
+                    }
+
+                    if (!$this->createNewDAssessmentTargetRecord($distribution->getOrganisationID(), $dist_assessment->getID(), $distribution->getAssessmentType(), $date_target["type"], $date_target["target_id"], $delegator_id)) {
                         $db_failures++;
                     }
                     $dassignment = $this->createNewDDelegationAssignmentRecord($dist_assessment->getID(), $delegator_id, $assessor_type, $assessor_value, $date_target["type"], $date_target["target_id"]);
@@ -1402,7 +1989,7 @@ class Entrada_Utilities_Assessments_DistributionDelegation extends Entrada_Utili
      * @param $assessor_type
      * @return array
      */
-    private function expandAssessorData ($assessor_id, $assessor_type) {
+    private function expandAssessorData($assessor_id, $assessor_type) {
         $assessor_data = array();
         switch ($assessor_type) {
             case "internal":
@@ -1441,7 +2028,7 @@ class Entrada_Utilities_Assessments_DistributionDelegation extends Entrada_Utili
      * @param array $target
      * @return array
      */
-    private function expandAssessorDataForTarget ($target) {
+    private function expandAssessorDataForTarget($target) {
         global $db;
 
         // Assessors can be proxy_id or external_hash only. We query for both, and merge the results.
@@ -1490,8 +2077,8 @@ class Entrada_Utilities_Assessments_DistributionDelegation extends Entrada_Utili
      * @param int $filter_end_date
      * @return array
      */
-    private function expandTargetData ($target_id, $type, $scope, $filter_start_date = NULL, $filter_end_date = NULL) {
-        global $db;
+    private function expandTargetData($target_id, $type, $scope, $filter_start_date = NULL, $filter_end_date = NULL) {
+        global $db, $translate;
         $distribution = Models_Assessments_Distribution::fetchRowByID($this->getDistributionID());
         if (!$distribution) {
             // distribution was deleted, or not found. Either way, no target data to expand.
@@ -1523,33 +2110,64 @@ class Entrada_Utilities_Assessments_DistributionDelegation extends Entrada_Utili
         switch ($type) {
 
             case "proxy_id": // Individual user  // target_scope = self / target_role = faculty, any, or learner
+                $valid_target = true;
 
-                // Fetch the single user
-                $user = Models_User::fetchRowByID($target_id);
-                $entity_info["entity_name"] = $user->getFullname(false);
+                // In the case of schedule based distributions, we still need to make sure the user is in the rotation.
+                $distribution_schedule = Models_Assessments_Distribution_Schedule::fetchRowByDistributionID($distribution->getID());
+                if ($distribution_schedule) {
+                    $schedule_class = new Entrada_CBME_RotationSchedule();
+                    $target_is_in_schedule = $schedule_class->fetchRotations($distribution_schedule->getScheduleID(), null, $target_id);
+                    if (!$target_is_in_schedule) {
+                        $valid_target = false;
+                    }
+                }
 
-                $p_info = $default_member_info;
-                $p_info["member_id"] = $user->getID();
-                $p_info["member_fullname"] = $user->getFullname(false);
-                $p_info["member_firstname"] = $user->getFirstname();
-                $p_info["member_lastname"] = $user->getLastname();
-                $p_info["member_email"] = $user->getEmail();
-                $p_info["member_number"] = $user->getNumber();
+                if ($valid_target) {
+                    // Fetch the single user
+                    $user = Models_User::fetchRowByID($target_id);
+                    $entity_info["entity_name"] = $user ? $user->getFullname(false) : $translate->_("User not found");
 
-                $entity_info["members"][] = $p_info;
+                    $p_info = $default_member_info;
+                    if ($user) {
+                        $p_info["member_id"] = $user->getID();
+                        $p_info["member_fullname"] = $user->getFullname(false);
+                        $p_info["member_firstname"] = $user->getFirstname();
+                        $p_info["member_lastname"] = $user->getLastname();
+                        $p_info["member_email"] = $user->getEmail();
+                        $p_info["member_number"] = $user->getNumber();
+                    } else {
+                        $p_info["member_id"] = $target_id;
+                        $p_info["member_fullname"] = $translate->_("User not found");
+                        $p_info["member_firstname"] = "";
+                        $p_info["member_lastname"] = "";
+                        $p_info["member_email"] = "";
+                        $p_info["member_number"] = 0;
+                    }
+                    $entity_info["members"][] = $p_info;
+                } else {
+                    $entity_info["no_targets"] = true;
+                }
                 break;
 
             case "external_hash": // External assessor, multiple records, either date or rotation based // scope is always self
                 $external = Models_Assessments_Distribution_ExternalAssessor::fetchRowByID($target_id);
-                $entity_info["entity_name"] = "{$external->getFirstname()} {$external->getLastname()}";
-
+                $entity_info["entity_name"] = $external ? "{$external->getFirstname()} {$external->getLastname()}" : $translate->_("External");
                 $ex_info = $default_member_info;
-                $ex_info["member_id"] = $external->getID();
-                $ex_info["member_fullname"] = "{$external->getFirstname()} {$external->getLastname()}";
-                $ex_info["member_firstname"] = $external->getFirstname();
-                $ex_info["member_lastname"] = $external->getLastname();
-                $ex_info["member_email"] = $external->getEmail();
+                if ($external) {
 
+                    $ex_info["member_id"] = $external->getID();
+                    $ex_info["member_fullname"] = "{$external->getFirstname()} {$external->getLastname()}";
+                    $ex_info["member_firstname"] = $external->getFirstname();
+                    $ex_info["member_lastname"] = $external->getLastname();
+                    $ex_info["member_email"] = $external->getEmail();
+                } else {
+                    $ex_info["member_id"] = $target_id;
+                    $ex_info["member_fullname"] = $translate->_("User not found");
+                    $ex_info["member_firstname"] = "";
+                    $ex_info["member_lastname"] = "";
+                    $ex_info["member_email"] = "";
+                    $ex_info["member_number"] = 0;
+                }
                 $entity_info["members"][] = $ex_info;
                 break;
 
@@ -1570,8 +2188,74 @@ class Entrada_Utilities_Assessments_DistributionDelegation extends Entrada_Utili
                 // We're fetching the group as an entity
                 $group = Models_Group::fetchRowByID($target_id);
 
-                $entity_info["entity_name"] = $group->getGroupName();
-                $entity_info["use_members"] = false;
+                switch ($scope) {
+                    case "self": // date range->select a group (target is the group entity)
+                        $entity_info["entity_name"] = $group->getGroupName();
+                        $entity_info["use_members"] = false;
+                        break;
+                    case "all_learners": // date range->select grouped learners (target is the group members)
+
+                        $results = Models_Group_Member::getUsersByGroupID($group->getID());
+                        if ($results) {
+                            foreach ($results as $user) {
+                                $scm_info = $default_member_info;
+                                $scm_info["member_id"] = $user->getID();
+
+                                $scm_info["member_fullname"] = $user->getFullname(false);
+                                $scm_info["member_firstname"] = $user->getFirstname();
+                                $scm_info["member_lastname"] = $user->getLastname();
+                                $scm_info["member_email"] = $user->getEmail();
+                                $scm_info["member_number"] = $user->getNumber();
+
+                                $entity_info["members"][] = $scm_info;
+                            }
+                        } else {
+                            if (empty($results)) {
+                                $entity_info["no_targets"] = true;
+                            }
+                        }
+
+                        break;
+                }
+
+                break;
+
+            case "cgroup_id": // date range->select Course Group
+
+                $group = Models_Course_Group::fetchRowByID($target_id);
+
+                switch ($scope) {
+                    case "self": // date range->select a course group (target is the course group entity)
+                        $entity_info["use_members"] = false;
+                        $entity_info["entity_name"] = "{$group->getGroupName()}";
+                        break;
+                    case "all_learners": // date range->select grouped learners (target is the course group members)
+
+                        $results = Models_Course_Group_Audience::fetchAllByCGroupID($group->getID(), 1);
+                        if ($results) {
+                            foreach ($results as $member) {
+                                $user = Models_User::fetchRowByID($member->getProxyID());
+                                if ($user) {
+                                    $scm_info = $default_member_info;
+                                    $scm_info["member_id"] = $user->getID();
+
+                                    $scm_info["member_fullname"] = $user->getFullname(false);
+                                    $scm_info["member_firstname"] = $user->getFirstname();
+                                    $scm_info["member_lastname"] = $user->getLastname();
+                                    $scm_info["member_email"] = $user->getEmail();
+                                    $scm_info["member_number"] = $user->getNumber();
+
+                                    $entity_info["members"][] = $scm_info;
+                                }
+                            }
+                        } else {
+                            if (empty($results)) {
+                                $entity_info["no_targets"] = true;
+                            }
+                        }
+
+                        break;
+                }
                 break;
 
             case "schedule_id": // Rotation schedule related targets
@@ -1769,7 +2453,7 @@ class Entrada_Utilities_Assessments_DistributionDelegation extends Entrada_Utili
      * @param string $scope
      * @return array
      */
-    private function expandSingleTargetData ($target_id, $type, $scope) {
+    private function expandSingleTargetData($target_id, $type, $scope) {
 
         // Everything should be treated as a proxy ID, except targets that are the group, course and schedule entities (in certain configurations)
         if ($type == "external" || $type == "external_hash") {
@@ -1799,7 +2483,7 @@ class Entrada_Utilities_Assessments_DistributionDelegation extends Entrada_Utili
      * @param array $member
      * @return array
      */
-    private function flattenEntityMemberData ($meta, $member) {
+    private function flattenEntityMemberData($meta, $member) {
         $flattened = array();
 
         $flattened["id"] = $meta["id"];
@@ -1870,7 +2554,7 @@ class Entrada_Utilities_Assessments_DistributionDelegation extends Entrada_Utili
      * @param array $assessments
      * @return array
      */
-    private function groupAssessmentsByBlock (&$assessments) {
+    private function groupAssessmentsByBlock(&$assessments) {
         $block_list = array();
         foreach ($assessments as $assessment) {
             foreach ($assessment["rotation_blocks"] as $rb) {
@@ -1952,8 +2636,9 @@ class Entrada_Utilities_Assessments_DistributionDelegation extends Entrada_Utili
      * @param bool $add_block_info
      * @return array
      */
-    private function buildTargetsAndAssessorsArray ($targets, $assessors, $add_block_info = false) {
+    private function buildTargetsAndAssessorsArray($targets, $assessors, $add_block_info = false) {
         $possible_assessments = array();
+        $schedule_class = new Entrada_CBME_RotationSchedule();
 
         // Sanitize targets array.
         foreach ($targets as $i => $t_data) {
@@ -1979,7 +2664,7 @@ class Entrada_Utilities_Assessments_DistributionDelegation extends Entrada_Utili
                 if ($schedule) {
                     foreach ($targets as $i => $t) {
                         if ($targets[$i]["type"] == "proxy_id") {
-                            $targets[$i]["rotation_blocks"] = $this->fetchRotations($schedule->getID(), null, $t["target_id"]);
+                            $targets[$i]["rotation_blocks"] = $schedule_class->fetchRotations($schedule->getID(), null, $t["target_id"]);
                         }
                     }
                 }
@@ -2083,6 +2768,14 @@ class Entrada_Utilities_Assessments_DistributionDelegation extends Entrada_Utili
         require_once("Classes/notifications/Notification.class.php");
         global $db;
 
+        if ($this->adistribution_id) {
+            if ($distribution = Models_Assessments_Distribution::fetchRowByID($this->adistribution_id)) {
+                if (!$distribution->getNotifications()) {
+                    // Notifications are disabled, so don't process the queue.
+                    return;
+                }
+            }
+        }
         foreach ($this->notifications as $n) {
             if ($n["assessor_type"] == "internal") {
                 $notification_assessor_type = "proxy_id";
@@ -2179,5 +2872,4 @@ class Entrada_Utilities_Assessments_DistributionDelegation extends Entrada_Utili
         }
         $this->notifications = array();
     }
-
 }

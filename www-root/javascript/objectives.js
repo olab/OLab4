@@ -1,18 +1,21 @@
+var script_name = document.scripts[document.scripts.length-1].src;
+jQuery.getScript(script_name.match(/.*\//) + "get-objective-text.js");
+
 var EDITABLE = false;
 var loaded = [];
 var loading_objectives = false;
 var linked_objective_id = 0;
 jQuery(document).ready(function(){
+    // handler for displaying the objective link modal
 	jQuery("#curriculum-tags-section").on("click", ".objective-link-control", function(e) {
-		linked_objective_id = jQuery(this).attr("data-id");
+    linked_objective_id = jQuery(this).attr("data-id");
 		var objective_id = jQuery(this).attr("data-id");
 		var linked_objective_list = jQuery(document.createElement("ul"));
 		var modal_data = jQuery(document.createElement("div"));
 		jQuery.ajax({
-			url: SITE_URL + "/admin/settings/manage/objectives?org=" + org_id + "&section=edit&id=" + objective_id + "&mode=ajax",
+			url: SITE_URL + "/admin/curriculum/objectives?section=edit&id=" + objective_id + "&mode=ajax",
 			type: "POST",
 			data: "method=fetch-linked-objectives&objective_set_id=" + objective_set_id,
-			async: false,
 			success: function(data) {
 				modal_data.append(data);
 			}
@@ -23,8 +26,8 @@ jQuery(document).ready(function(){
 		modal.dialog({
 			title: "Link Curriculum Tag",
 			modal: true,
-			draggable: false,
-			resizable: false,
+			draggable: true,
+			resizable: true,
 			width: 700,
 			minHeight: 550,
 			maxHeight: 700,
@@ -41,7 +44,9 @@ jQuery(document).ready(function(){
 		});
 		e.preventDefault();
 	});
-	
+
+    // Objective Link Modal - handler for selecting an objective within the 'Tags Available to Link' section
+    //                        this will expand or collapse the list of children
 	jQuery("#objective-link-modal").on("click", "#objective-link-modal .objective", function(e) {
 		
 		var objective_id = jQuery(this).attr("data-id");
@@ -55,7 +60,6 @@ jQuery(document).ready(function(){
 				url: SITE_URL + "/api/fetchobjectives.api.php?objective_id=" + objective_id + "&org_id=" + (typeof org_id !== 'undefined' && org_id ? org_id : default_org_id),
 				type: "POST",
 				data: "method=fetch-linked-objectives",
-				async: false,
 				success: function(data) {
 					var objective_list = jQuery(document.createElement("ul"));
 					var jsonData = JSON.parse(data);
@@ -74,7 +78,7 @@ jQuery(document).ready(function(){
 						} else {
 							var objective_link = jQuery(document.createElement("span"));
 						}
-						objective_link.addClass("objective").attr("href", "#").attr("data-id", jsonData[i].objective_id).html(jsonData[i].objective_name + (jsonData[i].has_child == true ? " <i class=\"icon-chevron-down\"></i>" : ""));
+						objective_link.addClass("objective").attr("href", "#").attr("data-id", jsonData[i].objective_id).html(get_objective_text(jsonData[i], true) + (jsonData[i].has_child == true ? " <i class=\"icon-chevron-down\"></i>" : ""));
 						objective_list_item.html(map_input + " ").append(objective_link).append("<div class=\"children\"></div>");
 						objective_list.append(objective_list_item);
 					}
@@ -84,10 +88,16 @@ jQuery(document).ready(function(){
 		}
 		e.preventDefault();
 	});
-	
+
+    // Objective Link Modal - handler for clicking the check box of an objective within the 'Tags Available to Link' section
+    //                        this will link the objective, or unlink if it is already selected
 	jQuery("#objective-link-modal").on("click", "#objective-link-modal .objective-check", function(e) {
 		
 		var checkbox = jQuery(this);
+        var curriculum_map_version_selected_id = 0;
+        if (jQuery("#cmapversion_select").length) {
+            curriculum_map_version_selected_id =  jQuery("#cmapversion_select").val();
+        }
 		var target_objective_id = jQuery(this).attr("data-id");
 		var action = "unlink";
 		if (checkbox.is(":checked")) {
@@ -95,10 +105,9 @@ jQuery(document).ready(function(){
 		}
 		
 		jQuery.ajax({
-			url: SITE_URL + "/admin/settings/manage/objectives?org=" + org_id + "&section=edit&id=" + linked_objective_id + "&target_objective_id=" + target_objective_id + "&mode=ajax",
+			url: SITE_URL + "/admin/curriculum/objectives?section=edit&id=" + linked_objective_id + "&target_objective_id=" + target_objective_id + "&cmapversion_id=" + curriculum_map_version_selected_id + "&mode=ajax",
 			type: "POST",
 			data: "method=link-objective&action="+action,
-			async: false,
 			success: function(data) {
 				var jsonResponse = JSON.parse(data);
 				if (jsonResponse.status == "success") {
@@ -121,17 +130,21 @@ jQuery(document).ready(function(){
 		});
 		
 	});
-	
+
+    // Objective Link Modal - handler for the delete icon displayed with the objectives in the 'Currently Linked' section
 	jQuery("#objective-link-modal").on("click", "#objective-link-modal .unlink", function(e) {
 		
 		var target_objective_id = jQuery(this).parent().attr("data-id");
 		var action = "unlink";
+		var curriculum_map_version_selected_id = 0;
+		if (jQuery("#cmapversion_select").length) {
+			curriculum_map_version_selected_id =  jQuery("#cmapversion_select").val();
+		}
 		
 		jQuery.ajax({
-			url: SITE_URL + "/admin/settings/manage/objectives?org=" + org_id + "&section=edit&id=" + linked_objective_id + "&target_objective_id=" + target_objective_id + "&mode=ajax",
+			url: SITE_URL + "/admin/curriculum/objectives?section=edit&id=" + linked_objective_id + "&target_objective_id=" + target_objective_id + "&cmapversion_id=" + curriculum_map_version_selected_id + "&mode=ajax",
 			type: "POST",
 			data: "method=link-objective&action="+action,
-			async: false,
 			success: function(data) {
 				var jsonResponse = JSON.parse(data);
 				if (jsonResponse.status == "success") {
@@ -148,6 +161,48 @@ jQuery(document).ready(function(){
 
 		e.preventDefault();
 	});
+
+    // Objective Link Modal - handler for the Curriculum Map Version select input. When it changes the list of
+    //                        'Currently Linked Objectives' will change to those in the selected version
+    jQuery("#objective-link-modal").on("change", "#cmapversion_select", function () {
+        var curriculum_map_version_selected_id = jQuery("#cmapversion_select").val();
+        var currently_linked_objectives_container = jQuery("#currently-linked-objectives");
+
+        jQuery.ajax({
+            url: SITE_URL + "/api/fetchobjectivelinks.api.php?objective_id=" + linked_objective_id + "&org_id=" + (typeof org_id !== 'undefined' && org_id ? org_id : default_org_id) + "&cmapversion_id=" + curriculum_map_version_selected_id,
+            type: "POST",
+            data: "method=get-objective-links",
+            success: function(data) {
+                // before filling in the new list of currently linked objectives, clear any checkboxes in the
+                // 'Tags Available to Link' section. Then we will check the ones that are being added
+                jQuery('#linked-objective-list .objective-check').each(function() {
+                    if (jQuery(this).is(":checked")) {
+                        jQuery(this).attr("checked", false);
+                    }
+                });
+                // fill the 'Currently Linked' section based on the json data
+                currently_linked_objectives_container.empty();
+                var jsonResponse = JSON.parse(data);
+                if (jsonResponse.status == "success") {
+                    var links = jsonResponse.data;
+                    for (var i = 0; i < links.length; i++) {
+                        var objectiveListItem = jQuery(document.createElement("li"));
+                        objectiveListItem.attr("data-id", links[i].objective_id);
+                        objectiveListItem.html("<strong>" + links[i].objective_name + "</strong><a href=\"#\" class=\"unlink\"><i class=\"icon-trash\"></i></a>" + (links[i].parent_objective != null ? "<br /><small class=\"content-small\">From " + links[i].parent_objective + "</small>" : "") + (links[i].objective_description != null ? "<br />" + links[i].objective_description : ""));
+                        currently_linked_objectives_container.append(objectiveListItem);
+                        // if the corresponding objective is visible in the 'Tags Available to Link' section, check the checkbox
+                        if (jQuery(".objective-check[data-id='" + links[i].objective_id + "']").length > 0) {
+                            jQuery(".objective-check[data-id='" + links[i].objective_id + "']").attr("checked", true);
+                        }
+                    }
+                } else if (jsonResponse.status == "empty") {
+                    var li = jQuery(document.createElement("li"));
+                    li.addClass("no-objectives").html(jsonResponse.data);
+                    currently_linked_objectives_container.append(li);
+                }
+            }
+        });
+    });
 	
 	jQuery(document).on('click', '.objective-collapse-control', function(){
 		var id = jQuery(this).attr('data-id');
@@ -235,7 +290,7 @@ jQuery(document).ready(function(){
 		var modal_container = jQuery(document.createElement("div"));
 
 		jQuery(modal_container).addClass("edit-objectiv-modal");
-		modal_container.load(SITE_URL + "/admin/settings/manage/objectives?org="+org_id+"&section=edit&id=" + objective_id + "&mode=ajax");
+		modal_container.load(SITE_URL + "/admin/curriculum/objectives?section=edit&id=" + objective_id + "&mode=ajax");
 		
 		modal_container.dialog({
 			title: "Edit Tag",
@@ -255,7 +310,6 @@ jQuery(document).ready(function(){
 					jQuery.ajax({
 						url: url,
 						type: "POST",
-						async: false,
 						data: modal_container.find("form").serialize(),
 						success: function(data) {
 							var jsonData = JSON.parse(data);
@@ -264,7 +318,7 @@ jQuery(document).ready(function(){
 								
 								var order = jsonData.updates.objective_order;
 								var objective_parent = jsonData.updates.objective_parent;
-								var data_title = ((jsonData.updates.objective_code && jsonData.updates.objective_code.length > 0) ? jsonData.updates.objective_code + ': ' : '') + jsonData.updates.objective_name;
+								var data_title = get_objective_text(jsonData.updates);
 								var list_item = jQuery("#objective_"+objective_id);
 								
 								jQuery("#objective_title_"+jsonData.updates.objective_id).html(data_title);
@@ -304,7 +358,7 @@ jQuery(document).ready(function(){
 		}
 		var parent_id = jQuery(this).attr("data-id");
 		var modal_container = jQuery(document.createElement("div"));
-		var url = SITE_URL + "/admin/settings/manage/objectives?org="+org_id+"&section=add&mode=ajax&parent_id="+parent_id;
+		var url = SITE_URL + "/admin/curriculum/objectives?section=add&mode=ajax&parent_id="+parent_id;
 
 		jQuery(modal_container).addClass("add-objectiv-modal");
 		modal_container.load(url);
@@ -327,7 +381,6 @@ jQuery(document).ready(function(){
 					jQuery.ajax({
 						url: url,
 						type: "POST",
-						async: false,
 						data: modal_container.find("form").serialize(),
 						success: function(data) {
 
@@ -337,7 +390,7 @@ jQuery(document).ready(function(){
 							
                                 var order = jsonData.updates.objective_order;
 								var objective_parent = jsonData.updates.objective_parent;
-								var data_title = ((jsonData.updates.objective_code && jsonData.updates.objective_code.length > 0) ? jsonData.updates.objective_code + ': ' : '') + jsonData.updates.objective_name;
+								var data_title = get_objective_text(jsonData.updates);
 								var list_item = jQuery(document.createElement("li"));
 								list_item.addClass("objective-container")
                                     .attr("id", "objective_"+jsonData.updates.objective_id)
@@ -391,7 +444,7 @@ jQuery(document).ready(function(){
 	jQuery("#curriculum-tags-section").on("click", ".objective-delete-control", function(){
 		var objective_id = jQuery(this).attr("data-id");
 		var modal_container = jQuery(document.createElement("div"));
-		var url = SITE_URL + "/admin/settings/manage/objectives?org="+org_id+"&section=delete&mode=ajax&objective_id="+objective_id;
+		var url = SITE_URL + "/admin/curriculum/objectives?section=delete&mode=ajax&objective_id="+objective_id;
 		modal_container.load(url);
 		
 		modal_container.dialog({
@@ -410,7 +463,6 @@ jQuery(document).ready(function(){
 					jQuery.ajax({
 						url: modal_container.find("form").attr("action"),
 						type: "POST",
-						async: false,
 						data: modal_container.find("form").serialize(),
 						success: function(data) {
 							var jsonData = JSON.parse(data);
@@ -437,6 +489,7 @@ jQuery(document).ready(function(){
 function buildDOM(children,id){
 	var container,title,title_text,controls,check,d_control,e_control,a_control,m_control,description,child_container;
 	jQuery('#children_'+id).hide();
+    jQuery('#objective_list_'+id).html("");
 	if(children.error !== undefined){
 		if(!EDITABLE){
 			jQuery('#check_objective_'+id).trigger('click');
@@ -446,7 +499,7 @@ function buildDOM(children,id){
 	}
 	for(i = 0;i<children.length;i++){
 		//Javascript to create DOM elements from JSON response
-		var data_title = ((children[i].objective_code && children[i].objective_code.length > 0) ? children[i].objective_code + ': ' : '') + children[i].objective_name;
+		var data_title = get_objective_text(children[i]);
 
 		container = jQuery(document.createElement('li'))
 					.attr('class','objective-container draggable')
@@ -527,24 +580,28 @@ function buildDOM(children,id){
 }
 
 function selectObjective(element, parent_id, objective_id) {
-    jQuery.ajax({
-        url: SITE_URL + "/api/objectives-list.api.php",
-        type : 'get',
-        data : {'pid': parent_id, 'id': objective_id, 'organisation_id': (typeof org_id !== 'undefined' && org_id ? org_id : default_org_id)}
-    }).done(function(result) {
-        jQuery(element).html(result)
-    });
+    if (parent_id != "") {
+        jQuery.ajax({
+            url: SITE_URL + "/api/objectives-list.api.php",
+            type : 'get',
+            data : {'pid': parent_id, 'id': objective_id, 'organisation_id': (typeof org_id !== 'undefined' && org_id ? org_id : default_org_id)}
+        }).done(function(result) {
+            jQuery(element).html(result)
+        });
+	}
 
     return;
 }
 function selectOrder(element, objective_id, parent_id) {
-    jQuery.ajax({
-        url: SITE_URL + "/api/objectives-list.api.php",
-        type: 'get',
-        data : {'id': objective_id, 'type': 'order', 'pid': parent_id, 'organisation_id': (typeof org_id !== 'undefined' && org_id ? org_id : default_org_id)}
-    }).done(function(result) {
-        jQuery(element).html(result)
-    });
+    if (objective_id !== "") {
+        jQuery.ajax({
+            url: SITE_URL + "/api/objectives-list.api.php",
+            type: 'get',
+            data : {'id': objective_id, 'type': 'order', 'pid': parent_id, 'organisation_id': (typeof org_id !== 'undefined' && org_id ? org_id : default_org_id)}
+        }).done(function(result) {
+            jQuery(element).html(result)
+        });
+	}
 
     return;
 }

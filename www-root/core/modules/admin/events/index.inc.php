@@ -40,7 +40,6 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
 
 	$default_csv_headings = array(
 			"event_id" => "Original Event",
-			"parent_id" => "Parent Event",
             "recurring_id" => "Recurring Event",
 			"event_term" => "Term",
 			"course_code" => "Course Code",
@@ -71,8 +70,10 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
 		"release_date" => "Release Date",
 		"release_until" => "Release Until",
 		"event_children" => "Child Events",
+        "parent_event" => "Parent Event",
+		"parent_id" => "Parent ID",
 		"event_message" => "Required Preparation",
-		"free_text_objectives" => "Free-Text Objectives",
+		"free_text_objectives" => "Free Text Objectives",
 		"curriculum_objectives" => $curriculum_objectives_name,
 		"clinical_presentations" => $clinical_presentations_name,
 		"hot_topics" => "Hot Topics",
@@ -80,6 +81,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
 		"attached_links" => "Attached Links",
 		"attached_quizzes" => "Attached Quizzes",
 		"attendance" => "Attendance",
+		"attendance_required" => "Attendance Required",
 		"auditor_numbers" => "Auditor Numbers",
 		"auditor_names" => "Auditor Names",
 		"teachers_assistant_numbers" => "Teacher's Assistant Numbers",
@@ -268,7 +270,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
 
 				echo "<tr id=\"event-".$result["event_id"]."\" class=\"event".((!$url) ? " np" : ((!$accessible) ? " na" : ""))."\">\n";
 				echo "	<td class=\"modified".((!$url) ? " np" : "")."\">".(($administrator) ? "<input type=\"checkbox\" name=\"checked[]\" value=\"".$result["event_id"]."\" />" : "<img src=\"".ENTRADA_URL."/images/pixel.gif\" width=\"19\" height=\"19\" alt=\"\" title=\"\" />")."</td>\n";
-				echo "	<td class=\"date".((!$url) ? " np" : "")."\">".(($url) ? "<a href=\"".$url."\" title=\"Event Date\">" : "").date(DEFAULT_DATE_FORMAT, $result["event_start"]).(($url) ? "</a>" : "")."</td>\n";
+				echo "	<td class=\"date".((!$url) ? " np" : "")."\">".(($url) ? "<a href=\"".$url."\" title=\"Event Date\">" : "").date(DEFAULT_DATETIME_FORMAT, $result["event_start"]).(($url) ? "</a>" : "")."</td>\n";
 				echo "	<td class=\"course".((!$url) ? " np" : "")."\">".(($url) ? "<a href=\"".$url."\" title=\"Intended For ".html_encode($result["course_code"])."\">" : "").html_encode($result["course_code"]).(($url) ? "</a>" : "")."</td>\n";
 				echo "	<td class=\"title".((!$url) ? " np" : "")."\">".(($url) ? "<a href=\"".$url."\" title=\"Event Title: ".html_encode($result["event_title"])."\">" : "").html_encode($result["event_title"]).(($url) ? "</a>" : "")."</td>\n";
 				echo "  <td class=\"attachment".((!$url) ? " np" : "")."\">";
@@ -309,7 +311,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
 			<?php
 			switch ($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["dtype"]) {
 				case "day" :
-					echo "that take place on <strong>".date(DEFAULT_DATE_FORMAT, $learning_events["duration_start"])."</strong>";
+					echo "that take place on <strong>".date(DEFAULT_DATETIME_FORMAT, $learning_events["duration_start"])."</strong>";
 				break;
 				case "month" :
 					echo "that take place during <strong>".date("F", $learning_events["duration_start"])."</strong> of <strong>".date("Y", $learning_events["duration_start"])."</strong>";
@@ -319,7 +321,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
 				break;
 				//default :
 				case "week" :
-					echo "from <strong>".date(DEFAULT_DATE_FORMAT, $learning_events["duration_start"])."</strong> to <strong>".date(DEFAULT_DATE_FORMAT, $learning_events["duration_end"])."</strong>";
+					echo "from <strong>".date(DEFAULT_DATETIME_FORMAT, $learning_events["duration_start"])."</strong> to <strong>".date(DEFAULT_DATETIME_FORMAT, $learning_events["duration_end"])."</strong>";
 				break;
 				default :
 					continue;

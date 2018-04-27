@@ -79,7 +79,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP"))) {
 						if ($db->Execute($query)) {
                             $url = ENTRADA_URL."/clerkship/electives";
 
-                            $msg	= " You will now be redirected to the clerkship index; this will happen <strong>automatically</strong> in 5 seconds or <a href=\"".$url."\" style=\"font-weight: bold\">click here</a> to continue.";
+                            $msg	= " You will now be redirected to the " . $translate->_("clerkship index") . "; this will happen <strong>automatically</strong> in 5 seconds or <a href=\"".$url."\" style=\"font-weight: bold\">click here</a> to continue.";
 
                             $SUCCESS++;
                             $SUCCESSSTR[]  	= "You have successfully cancelled your request for this <strong>".html_encode($PROCESSED["geo_location"])."</strong> elective in the system.<br /><br />".$msg;

@@ -505,7 +505,7 @@
 			if (input_type != "BODY") {
 				if (input_type != "BUTTON") {
 					if (input_type != "DIV") {
-					allowed = 0;
+						allowed = 0;
 					}
 				}
 			}

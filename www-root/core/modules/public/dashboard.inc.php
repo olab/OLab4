@@ -36,9 +36,16 @@ if (!$ENTRADA_ACL->amIAllowed("dashboard", "read")) {
 
 	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] does not have access to this module [".$MODULE."]");
 } else {
+	define("IN_DASHBOARD", 1);
+	
 	$DISPLAY_DURATION		= array();
 	$poll_where_clause		= "";
 	$PREFERENCES			= preferences_load("dashboard");
+    $calendar_http_url      = ENTRADA_URL . "/calendars" . (isset($_SESSION["details"]["private_hash"]) ? "/private-" . html_encode($ENTRADA_USER->getActivePrivateHash()) : "") . "/" . html_encode($ENTRADA_USER->getUsername()) . ".ics";
+    $calendar_webcal_url    = str_ireplace(array("https://", "http://"), "webcal://", $calendar_http_url);
+
+    $HEAD[] = "<script type=\"text/javascript\">var calendar_http_url = \"" . $calendar_http_url . "\";</script>";
+    $HEAD[] = "<script type=\"text/javascript\">var calendar_webcal_url = \"" . $calendar_webcal_url . "\";</script>";
 
  	$HEAD[] = "<script src=\"" . ENTRADA_RELATIVE . "/javascript/tabpane/tabpane.js?release=" . html_encode(APPLICATION_VERSION) . "\"></script>";
 	$HEAD[] = "<script src=\"" . ENTRADA_RELATIVE . "/javascript/rssreader.js?release=" . html_encode(APPLICATION_VERSION) . "\"></script>";
@@ -46,12 +53,29 @@ if (!$ENTRADA_ACL->amIAllowed("dashboard", "read")) {
 	$HEAD[] = "<link href=\"" . ENTRADA_RELATIVE . "/css/tabpane.css?release=" . html_encode(APPLICATION_VERSION) . "\" rel=\"stylesheet\" />";
 
 	$HEAD[]	= "<script src=\"" . ENTRADA_RELATIVE . "/javascript/dashboard-ics.js?release=" . html_encode(APPLICATION_VERSION) . "\"></script>";
+    $HEAD[]	= "<script src=\"" . ENTRADA_RELATIVE . "/javascript/dashboard.js?release=" . html_encode(APPLICATION_VERSION) . "\"></script>";
 	$HEAD[]	= "<script src=\"" . ENTRADA_RELATIVE . "/javascript/dashboard-event-colors.js?release=" . html_encode(APPLICATION_VERSION) . "\"></script>";
 	$HEAD[] = "<script src=\"" . ENTRADA_RELATIVE . "/javascript/dhtmlxscheduler/dhtmlxscheduler.js?release=" . html_encode(APPLICATION_VERSION) . "\"></script>";
 	$HEAD[] = "<link href=\"" . ENTRADA_RELATIVE . "/javascript/dhtmlxscheduler/dhtmlxscheduler.css?release=" . html_encode(APPLICATION_VERSION) . "\" rel=\"stylesheet\" />";
 	$HEAD[] = "<link href=\"" . $ENTRADA_TEMPLATE->relative() . "/css/dhtmlxscheduler.css?release=" . html_encode(APPLICATION_VERSION) . "\" rel=\"stylesheet\" />";
+    $HEAD[] = "<script type=\"text/javascript\" src=\"" . ENTRADA_URL . "/javascript/jquery/jquery.animated-notices.js?release=" . html_encode(APPLICATION_VERSION) . "\"></script>";
+    $HEAD[] = "<link rel=\"stylesheet\" type=\"text/css\" href=\"" . ENTRADA_URL . "/css/jquery/jquery.animated-notices.css?release=" . html_encode(APPLICATION_VERSION) . "\" />";
 
+    $JQUERY[] = "<script type=\"text/javascript\" src=\"".ENTRADA_RELATIVE."/javascript/jquery/jquery.moment.min.js?release=".html_encode(APPLICATION_VERSION)."\"></script>\n";
 	$JQUERY[] = "<script src=\"".ENTRADA_RELATIVE."/javascript/jquery/jquery.qtip.min.js?release=" . html_encode(APPLICATION_VERSION) . "\"></script>";
+
+	$JAVASCRIPT_TRANSLATIONS[] = "var schedule_localization = {};";
+    $JAVASCRIPT_TRANSLATIONS[] = "schedule_localization.title = \"{$translate->_("EPAs mapped to this rotation: ")}\";";
+    $JAVASCRIPT_TRANSLATIONS[] = "schedule_localization.objective_heading = \"{$translate->_("Objective")}\";";
+    $JAVASCRIPT_TRANSLATIONS[] = "schedule_localization.likelihood_heading = \"{$translate->_("Likelihood")}\";";
+    $JAVASCRIPT_TRANSLATIONS[] = "schedule_localization.priority_heading = \"{$translate->_("Priority")}\";";
+    $JAVASCRIPT_TRANSLATIONS[] = "schedule_localization.likely = \"{$translate->_("Likely")}\";";
+    $JAVASCRIPT_TRANSLATIONS[] = "schedule_localization.unlikely = \"{$translate->_("Unlikely")}\";";
+    $JAVASCRIPT_TRANSLATIONS[] = "schedule_localization.very_likely = \"{$translate->_("Very Likely")}\";";
+    $JAVASCRIPT_TRANSLATIONS[] = "schedule_localization.priority_tooltip = \"{$translate->_("Priority EPA means you should be assessed on this rotation")}\";";
+    $JAVASCRIPT_TRANSLATIONS[] = "schedule_localization.not_priority_tooltip = \"{$translate->_("Not Priority")}\";";
+    $JAVASCRIPT_TRANSLATIONS[] = "schedule_localization.no_results = \"{$translate->_("There are no EPAs mapped to this schedule")}\";";
+    $JAVASCRIPT_TRANSLATIONS[] = "schedule_localization.loading_message = \"{$translate->_("Loading Rotation Schedule Objectives")}\";";
 
 	/**
 	 * Fetch the latest feeds and links for this user.
@@ -67,12 +91,6 @@ if (!$ENTRADA_ACL->amIAllowed("dashboard", "read")) {
 		new_sidebar_item("Weather Forecast", display_weather(), "weather", "open");
     }
     
-    /*
-     * Renders the sandbox sidebar View Helper.
-     */
-    $sidebar = new Views_Olab_Sidebar();
-    $sidebar->render();
-
     //generates courses for use with the ics files
     $COURSE_LIST = array();
     $results = courses_fetch_courses(true, true);
@@ -80,41 +98,12 @@ if (!$ENTRADA_ACL->amIAllowed("dashboard", "read")) {
         foreach ($results as $result) {
             $COURSE_LIST[$result["course_id"]] = html_encode(($result["course_code"] ? $result["course_code"] . ": " : "") . $result["course_name"]);
         }
-	}
-
-    $calendar_http_url = ENTRADA_URL."/calendars".(isset($_SESSION["details"]["private_hash"]) ? "/private-".html_encode($ENTRADA_USER->getActivePrivateHash()) : "")."/".html_encode($ENTRADA_USER->getUsername()).".ics";
-    $calendar_webcal_url = str_ireplace(array("https://", "http://"), "webcal://", $calendar_http_url);
-    ?>
-   
-   <?php
+    }
 
 	/**
 	 * If user is a member of any communities, show them here.
 	 */
-	$query 		= "	SELECT b.`community_id`, b.`community_url`, b.`community_title`
-					FROM `community_members` AS a
-					LEFT JOIN `communities` AS b
-					ON b.`community_id` = a.`community_id`
-					WHERE a.`proxy_id` = ".$db->qstr($ENTRADA_USER->getActiveId())."
-					AND a.`member_active` = '1'
-					AND b.`community_active` = '1'
-					AND b.`community_template` <> 'course'
-					ORDER BY b.`community_title` ASC
-					LIMIT 0, 11";
-	$results	= $db->GetAll($query);
-	if ($results) {
-		$sidebar_html  = "<ul class=\"menu\">\n";
-		foreach ($results as $key => $result) {
-			if ($key < 10) {
-				$sidebar_html .= "<li class=\"community\"><a href=\"".ENTRADA_RELATIVE."/community".$result["community_url"]."\">".html_encode($result["community_title"])."</a></li>\n";
-			} else {
-				$sidebar_html .= "<li><a href=\"".ENTRADA_RELATIVE."/communities\">more ...</a></li>\n";
-				break;
-			}
-		}
-		$sidebar_html .= "</ul>\n";
-		new_sidebar_item("My Communities", $sidebar_html, "my-communities", "open");
-	} else {
+	if(!Models_Community::showSidebar()) {
         $settings = new Entrada_Settings();
         if ($settings->read("podcast_display_sidebar")) {
             $sidebar_html = "<div style=\"text-align: center\">\n";
@@ -123,7 +112,7 @@ if (!$ENTRADA_ACL->amIAllowed("dashboard", "read")) {
             $sidebar_html .= "</div>\n";
             new_sidebar_item("Podcasts in iTunes", $sidebar_html, "podcast-bar", "open");
         }
-	}
+    }
 
     /**
      * Show tweets for this user in the sidebar. Will include organisation, community, and course tweets
@@ -142,6 +131,7 @@ if (!$ENTRADA_ACL->amIAllowed("dashboard", "read")) {
 				foreach ($_POST["mark_read"] as $notice_id) {
 					if ($notice_id = (int) $notice_id) {
 						add_statistic("notices", "read", "notice_id", $notice_id);
+						Models_Notices_Read::create($notice_id);
 					}
 				}
 			}
@@ -209,7 +199,7 @@ if (!$ENTRADA_ACL->amIAllowed("dashboard", "read")) {
 	}
 
 	if ($_SESSION[APPLICATION_IDENTIFIER]["tmp"][$MODULE]["poll_id"]) {
-		$HEAD[] = "<script type=\"text/javascript\" src=\"".ENTRADA_RELATIVE."/javascript/poll-js.php\"></script>\n";
+		$HEAD[] = "<script type=\"text/javascript\" src=\"".ENTRADA_RELATIVE."/javascript/poll-js.php?release=".html_encode(APPLICATION_VERSION)."\"></script>\n";
 
 		new_sidebar_item($translate->_("Quick Polls"), poll_display($_SESSION[APPLICATION_IDENTIFIER]["tmp"][$MODULE]["poll_id"]), "quick-poll", "open");
 	}
@@ -230,11 +220,13 @@ if (!$ENTRADA_ACL->amIAllowed("dashboard", "read")) {
 					<?php
 					foreach ($notices_to_display as $announcement) {
 						echo "<div id=\"notice_box_".(int) $announcement["notice_id"]."\" class=\"new-notice\">";
-						echo "  <label class=\"checkbox\"><input type=\"checkbox\" name=\"mark_read[]\" id=\"notice_msg_".(int) $announcement["notice_id"]."\" value=\"".(int) $announcement["notice_id"]."\" /> ";
-						echo "	<strong>".date(DEFAULT_DATE_FORMAT, $announcement["updated_date"])."</strong>";
+
+						echo "<label class=\"checkbox\"><input type=\"checkbox\" name=\"mark_read[]\" id=\"notice_msg_".(int) $announcement["notice_id"]."\" value=\"".(int) $announcement["notice_id"]."\" /> ";
+						echo "<strong>".date(DEFAULT_DATETIME_FORMAT, $announcement["updated_date"])."</strong>";
+
 						echo    ($announcement["lastname"] ? " <small>by ".html_encode($announcement["firstname"]." ".$announcement["lastname"])."</small>" : "");
-						echo "  </label>\n";
-						echo "	<div class=\"space-left\">".trim(clean_input($announcement["notice_summary"], "html"))."</div>";
+						echo "</label>\n";
+						echo "<div class=\"space-left\">".trim(clean_input($announcement["notice_summary"], "html"))."</div>";
 						echo "</div>";
 					}
 					?>
@@ -260,7 +252,7 @@ if (!$ENTRADA_ACL->amIAllowed("dashboard", "read")) {
 		<?php
 		}
 	}
-	
+
 	switch ($_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]) {
 		case "medtech" :
 		case "student" :
@@ -282,7 +274,6 @@ if (!$ENTRADA_ACL->amIAllowed("dashboard", "read")) {
 			if (!isset($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["dstamp"])) {
 				$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["dstamp"] = time();
 			}
-
 
 			$display_schedule_tabs	= false;
 
@@ -308,7 +299,10 @@ if (!$ENTRADA_ACL->amIAllowed("dashboard", "read")) {
 				if ($clerkship_schedule) {
 					$display_schedule_tabs = true;
 				}
-			}
+			} else {
+			    // Make sure it's defined to avoid notices
+			    $clerkship_schedule = null;
+            }
 
 			if ($display_schedule_tabs) {
 
@@ -326,56 +320,67 @@ if (!$ENTRADA_ACL->amIAllowed("dashboard", "read")) {
                     $_SESSION[APPLICATION_IDENTIFIER]["tmp"]["caltime"] = time();
                 break;
             }
+            $settings = new Entrada_Settings();
+            $start_hour = $settings->read("calendar_display_start_hour");
+            $last_hour = $settings->read("calendar_display_last_hour");
             ?>
             <script type="text/javascript">
             jQuery(document).ready(function() {
                 scheduler.config.xml_date = '%Y-%m-%d %H:%i';// "%M %d, %Y";
                 scheduler.config.readonly = true;
                 scheduler.config.details_on_dblclick = true;
-                scheduler.config.first_hour = 7;
-                scheduler.config.last_hour = 19;
+                scheduler.config.first_hour = <?php echo (int) $start_hour; ?>;
+                scheduler.config.last_hour = <?php echo (int) $last_hour; ?>;
 
                 scheduler.ignore_week = function(date) {
                     if (date.getDay() == 6 || date.getDay() == 0) // hides Saturdays and Sundays
                         return true;
                 };
 
-                jQuery.getJSON('<?php echo ENTRADA_RELATIVE; ?>/calendars/<?php echo html_encode($_SESSION["details"]["username"]); ?>.json', function(data) {
-                    var cal_cleaned = data;
-                    for (var i=0; i < cal_cleaned.length; i++) {
-                        cal_cleaned[i]['start_date'] = (cal_cleaned[i]['start']).replace('T', ' ').substring(0, 16);
-                        cal_cleaned[i]['end_date'] = (cal_cleaned[i]['end']).replace('T', ' ').substring(0, 16);
-                        cal_cleaned[i]['text'] = (cal_cleaned[i]['title']);
+                scheduler.attachEvent("onViewChange", function(new_mode, new_date) {
+                    var start_date = moment(new_date).startOf(new_mode).unix();
+                    var end_date = moment(new_date).endOf(new_mode).unix();
+                    jQuery.getJSON('<?php echo ENTRADA_RELATIVE; ?>/calendars/<?php echo html_encode($_SESSION["details"]["username"]); ?>.json?start=' + start_date + '&end=' + end_date, function(data) {
+                        var cal_cleaned = data;
+                        var cal_event_color;
+                        for (var i=0; i < cal_cleaned.length; i++) {
+                            cal_cleaned[i]['start_date'] = (cal_cleaned[i]['start']).replace('T', ' ').substring(0, 16);
+                            cal_cleaned[i]['end_date'] = (cal_cleaned[i]['end']).replace('T', ' ').substring(0, 16);
+                            cal_cleaned[i]['text'] = (cal_cleaned[i]['title']);
 
-                        delete cal_cleaned[i]['start'];
-                        delete cal_cleaned[i]['end'];
-                        delete cal_cleaned[i]['title'];
+                            delete cal_cleaned[i]['start'];
+                            delete cal_cleaned[i]['end'];
+                            delete cal_cleaned[i]['title'];
 
-                        // set event color based on type
-                        if (cal_cleaned[i]['color'] == '') {
-                            switch (cal_cleaned[i]['type']) {
-                                case 3 :
-                                    cal_cleaned[i]['color'] = '#7E92B5';
-                                    break;
-                                case 2 :
-                                    cal_cleaned[i]['color'] = '#B5B37E';
+                            // set event color based on type
+                            if (cal_cleaned[i]['color'] == '') {
+                                switch (cal_cleaned[i]['type']) {
+                                    case 3 :
+                                        cal_cleaned[i]['color'] = '#7E92B5';
+                                        break;
+                                    case 2 :
+                                        cal_cleaned[i]['color'] = '#B5B37E';
 
-                                    if (cal_cleaned[i]['updated']) {
-                                        cal_cleaned[i]['text'] += '<div class="wc-updated-event calEventUpdated' + cal_cleaned[i]['id'] + '"> Last updated ' + cal_cleaned[i]['updated'] + '</div>';
-                                    }
-                                    break;
+                                        if (cal_cleaned[i]['updated']) {
+                                            cal_cleaned[i]['text'] += '<div class="wc-updated-event calEventUpdated' + cal_cleaned[i]['id'] + '"> Last updated ' + cal_cleaned[i]['updated'] + '</div>';
+                                        }
+                                        break;
+                                }
+                            } else {
+                                cal_event_color = dashboard_event_color(cal_cleaned[i]['color']);
+                                cal_cleaned[i]['color'] = cal_event_color.background;
+                                cal_cleaned[i]['textColor'] = cal_event_color.text;
                             }
                         }
-                    }
 
-                    scheduler.parse(cal_cleaned, "json");
+                        scheduler.parse(cal_cleaned, "json");
+                    });
                 });
 
                 scheduler.attachEvent('onDataRender', function() {
-                    jQuery('.dhx_cal_event').each(function() {
+                    jQuery('.dhx_cal_event,.dhx_cal_event_line_start,.dhx_cal_event_line_end').each(function() {
                         calEvent = scheduler.getEvent(jQuery(this).attr('event_id'));
-
-                        jQuery(this).find('.dhx_title,.dhx_body').qtip({
+                        jQuery(this).qtip({
                             content: {
                                 text: '<img class="throbber" src="<?php echo ENTRADA_RELATIVE; ?>/images/throbber.gif" alt="Loading..." />',
                                 url: '<?php echo ENTRADA_RELATIVE; ?>/api/events.api.php?id=' + calEvent.id + (calEvent.drid != 'undefined' ? '&drid=' + calEvent.drid : ''),
@@ -410,49 +415,11 @@ if (!$ENTRADA_ACL->amIAllowed("dashboard", "read")) {
 
                 scheduler.init('dashboardCalendar', new Date(<?php echo ((($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["caltime"]) ? $_SESSION[APPLICATION_IDENTIFIER]["tmp"]["caltime"] : time()) * 1000); ?>), "week" );
             });
-            
-            jQuery(document).ready(function($) {
-                //set inital settings
-                jQuery("div#dashboard_ics_calendar .content-calendar #subscribe-download").removeClass('btn-group');
-                //hides Subscribe versus Download till a course is chosen so they can't download the all link.
 
-                jQuery('#calendar-ics-btn').click(function() {
-                    show_hide_calendar_ics();
-                });
-                jQuery('div#dashboard_ics_calendar .content-calendar #close').click(function() {
-                    show_hide_calendar_ics();
-                });
-
-                jQuery("div#dashboard_ics_calendar .content-calendar #all-course .btn").click(function() {
-                    jQuery("div#dashboard_ics_calendar .content-calendar #calendar-subscribe .span10").hide();
-                    jQuery("div#dashboard_ics_calendar .content-calendar #calendar-download .span10").hide(); 
-                    //hides the course download/subscribe buttons if no course is set
-                    if (!jQuery("div#dashboard_ics_calendar .content-calendar #course-quick-select").val() == "") {
-                        update_html_ics('<?php echo $calendar_http_url;?>', '<?php echo $calendar_webcal_url;?>', jQuery(this).data('type'), true);
-                    } else {
-                        update_html_ics('<?php echo $calendar_http_url;?>', '<?php echo $calendar_webcal_url;?>', jQuery(this).data('type'), false);
-                    }
-                    course_switcher(this, jQuery(this).data('type'));
-                 });
-                jQuery("div#dashboard_ics_calendar .content-calendar #subscribe-download .btn").click(function() {
-                    download_switcher(this, jQuery(this).data('type'));
-                 });
-
-                jQuery("div#dashboard_ics_calendar .content-calendar #course-quick-select").change(function() {
-                   update_html_ics('<?php echo $calendar_http_url;?>', '<?php echo $calendar_webcal_url;?>', 'course', true);
-                })
-
-                $('a[data-toggle="tab"]').on('shown', function (e) {
-                    if ($(e.target).attr("href") == "#rotation-calendar") {
-                        $(".rotation-schedule").fullCalendar("render");
-                    }
-                });
-            });
-
-            function showCalendarLink(link) {
-                jQuery("#calendar-link-wrapper").html("<input id=\"calendar-link-input\" style=\"margin-bottom:0;\" type=\"text\" value=\"" + link + "\" />");
-                jQuery("#calendar-link-input").select();
-            }
+			function showCalendarLink(link) {
+				jQuery("#calendar-link-wrapper").html("<input id=\"calendar-link-input\" style=\"margin-bottom:0;\" type=\"text\" value=\"" + link + "\" />");
+				jQuery("#calendar-link-input").select();
+			}
             </script>
 
             <?php
@@ -473,19 +440,123 @@ if (!$ENTRADA_ACL->amIAllowed("dashboard", "read")) {
                 $show_tabs = false;
             }
 
+            $assessment_tasks = new Entrada_Assessments_Tasks(array("actor_proxy_id" => $ENTRADA_USER->getActiveId(), "actor_organisation_id" => $ENTRADA_USER->getActiveOrganisation()));
+            $in_progress_count = $assessment_tasks->fetchAssessmentTaskListCount(array("assessor-inprogress"), $ENTRADA_USER->getActiveId(), "proxy_id", "internal", true);
+            if ($in_progress_count) {
+                $in_progress_view = new Views_Dashboard_TasksInProgress();
+                $in_progress_view->render(array("in_progress_count" => $in_progress_count));
+            }
+
             if ($show_tabs) {
                 ?>
                 <ul class="nav nav-tabs">
-                    <li class="active"><a href="#event-calendar" data-toggle="tab"><?php echo $translate->_("My Event Calendar"); ?></a></li>
-                    <?php if ($draft_membership) { ?><li class=""><a href="#rotation-calendar" data-toggle="tab"><?php echo $translate->_("My Rotation Schedule"); ?></a></li><?php } ?>
+                    <?php if ($_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"] == "student") { ?>
+                        <li class="active"><a href="#cbme-progress" data-toggle="tab"><?php echo $translate->_("CBME Progress"); ?></a></li>
+                    <?php } ?>
+                    <li><a href="#event-calendar" data-toggle="tab"><?php echo $translate->_("My Event Calendar"); ?></a></li>
+                    <?php if ($draft_membership) { ?><li class=""><a href="#rotation-calendar" data-toggle="tab" id="rotation-schedule-tab"><?php echo $translate->_("My Rotation Schedule"); ?></a></li><?php } ?>
                     <?php if ($clerkship_schedule) { ?><li class=""><a href="#clerkship-schedule" data-toggle="tab"><?php echo $translate->_("My Clerkship Schedule"); ?></a></li><?php } ?>
                 </ul>
                 <?php
             }
             ?>
             <div class="tab-content">
+                <?php if ($_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"] == "student" && (new Entrada_Settings)->read("cbme_enabled")) { ?>
+                    <div class="tab-pane active" id="cbme-progress">
+                        <?php
+                        $navigation_urls = array(
+                            "stages" => ENTRADA_URL,
+                            "assessments" => ENTRADA_URL . "/cbme/assessments/completed",
+                            "items" => ENTRADA_URL . "/cbme/items",
+                            "trends" => ENTRADA_URL . "/cbme/trends",
+                            "comments" => ENTRADA_URL . "/cbme/comments",
+                            "assessment_pins" => ENTRADA_URL . "/cbme/pins/assessments",
+                            "item_pins" => ENTRADA_URL . "/cbme/pins/items",
+                            "comment_pins" => ENTRADA_URL . "/cbme/pins/comments",
+                            "unread_assessments" => ENTRADA_URL . "/cbme/assessments/unread"
+                        );
+
+                        $course_utility = new Models_CBME_Course();
+                        $cperiods = $course_utility->getCurrentCPeriodIDs($ENTRADA_USER->getActiveOrganisation());
+                        $courses = $course_utility->getActorCourses(
+                            "student",
+                            $ENTRADA_USER->getActiveRole(),
+                            $ENTRADA_USER->getActiveOrganisation(),
+                            $ENTRADA_USER->getActiveId(),
+                            null,
+                            $cperiods
+                        );
+                        /**
+                         * Instantiate the CBME visualization abstraction layer
+                         */
+                        
+                        $cbme_progress_api = new Entrada_CBME_Visualization(
+                            array(
+                                "actor_proxy_id"            => $ENTRADA_USER->getActiveId(),
+                                "actor_organisation_id"     => $ENTRADA_USER->getActiveOrganisation(),
+                                "datasource_type"           => "progress",
+                                "limit_dataset"             => array("epa_assessments", "unread_assessment_count"),
+                                "courses"                   => $courses,
+                                "secondary_proxy_id"        => $ENTRADA_USER->getActiveId()
+                            )
+                        );
+
+                        /**
+                         * Fetch EPA progress dataset
+                         */
+                        $dataset = $cbme_progress_api->fetchData();
+
+                        /**
+                         * Check for epa assessment view preferences
+                         */
+                        if (isset($PREFERENCES["epa_assessments_view_preference"])) {
+                            $epa_assessment_view_preferences = $PREFERENCES["epa_assessments_view_preference"];
+                        } else {
+                            $epa_assessment_view_preferences = array();
+                        }
+
+                        /**
+                         * Check if current user is a competencies committee member
+                         */
+                        $is_ccmember = in_array($ENTRADA_USER->getActiveID(), $cbme_progress_api->getCourseCCMembers());
+                        if ($is_ccmember) {
+                            $toggle_objective_modal = new Views_CBME_Modals_ObjectiveStatusToggle();
+                            $toggle_objective_modal->render(array("ccmember_proxy_id" => $ENTRADA_USER->getActiveID()));
+                        }
+
+                        /**
+                         * Instantiate CBME progress visualization view
+                         */
+                        $progress_view = new Views_CBME_Progress();
+
+                        /**
+                         * Render the progress view
+                         */
+                        $progress_view->render(
+                            array(
+                                "stage_data" => $dataset["stage_data"],
+                                "number_of_items_displayed" => 5,
+                                "epa_assessments_view_preferences" => $epa_assessment_view_preferences,
+                                "courses" => $cbme_progress_api->getCourses(),
+                                "course_id" => $cbme_progress_api->getCourseID(),
+                                "course_name" => $cbme_progress_api->getCourseName(),
+                                "navigation_urls" => $navigation_urls,
+                                "proxy_id" => $ENTRADA_USER->getActiveId(),
+                                "course_settings" => $cbme_progress_api->getCourseSettings(),
+                                "is_ccmember" => $is_ccmember,
+                                "hide_trigger_assessment" => false,
+                                "hide_meetings_log" => true,
+                                "unread_assessment_count" => $dataset["unread_assessment_count"]
+                            )
+                        );
+                                                
+                        
+                        ?>
+                    </div>
+                <?php
+                } ?>
                 <div class="tab-pane active" id="event-calendar">
-					<div id="dashboardCalendar" class="dhx_cal_container" style="width:100%; height:100%; min-height: 600px;">
+					<div id="dashboardCalendar" class="dhx_cal_container" style="width:100%; height:100%; min-height: 530px;">
 						<div class="dhx_cal_navline">
 							<div class="dhx_cal_prev_button">&nbsp;</div>
 							<div class="dhx_cal_next_button">&nbsp;</div>
@@ -494,11 +565,11 @@ if (!$ENTRADA_ACL->amIAllowed("dashboard", "read")) {
 							<div class="dhx_cal_tab" name="day_tab" style="right:204px;"></div>
 							<div class="dhx_cal_tab" name="week_tab" style="right:140px;"></div>
 							<div class="dhx_cal_tab" name="month_tab" style="right:76px;"></div>
-						</div>
+                        </div>
 						<div class="dhx_cal_header"></div>
 						<div class="dhx_cal_data"></div>       
-					</div>
-					<div id="dashboard_ics_calendar_container">
+                    </div>
+                    <div id="dashboard_ics_calendar_container">
                         <div id="dashboard_ics_calendar" class="hidden">
                             <div class="panel-head">Subscribe to Calendar or Download Calendar</div>
                             <div class="content-calendar">
@@ -509,7 +580,7 @@ if (!$ENTRADA_ACL->amIAllowed("dashboard", "read")) {
                                     </div>
                                 </div>
                                 <div class="row-fluid" id="course-selector">
-                                    <div class="span2"><strong>Course Select: </strong></div>
+                                    <div class="span2"><label for="course-quick-select"><strong>Course Select: </strong></label></div>
                                     <div class="span10">
                                         <select id="course-quick-select" name="course-quick-select">
                                             <option value="">-- Select a Course --</option>
@@ -552,10 +623,10 @@ if (!$ENTRADA_ACL->amIAllowed("dashboard", "read")) {
                                 <div class="cornerarrow"></div>
                             </div>
                         </div>
-	                    <div class="pull-right">
-	                        <a class="btn btn-primary" id="calendar-ics-btn"><i class="icon-calendar icon-white"></i> Subscribe to Calendar or Download Calendar</a>
-	                    </div>
-	                </div>
+                        <div class="pull-right">
+                            <a class="btn btn-primary" id="calendar-ics-btn"><i class="icon-calendar icon-white"></i> Subscribe to Calendar or Download Calendar</a>
+                        </div>
+                    </div>
                 </div>
                 <?php
                 if ($draft_membership) {
@@ -583,9 +654,9 @@ if (!$ENTRADA_ACL->amIAllowed("dashboard", "read")) {
                     if ($clerkship_schedule) {
                         ?>
                         <div class="display-notice">
-                            <strong>Notice:</strong> Keeping the Undergrad office informed of clerkship schedule changes is very important. This information is used to ensure you can graduate; therefore, if you see any inconsistencies, please let us know immediately: <a href="javascript:sendClerkship('<?php echo ENTRADA_RELATIVE; ?>/agent-clerkship.php')">click here</a>.
+                            <strong>Notice:</strong> Keeping the Undergrad office informed of <?php echo $translate->_("clerkship"); ?> schedule changes is very important. This information is used to ensure you can graduate; therefore, if you see any inconsistencies, please let us know immediately: <a href="javascript:sendClerkship('<?php echo ENTRADA_RELATIVE; ?>/agent-clerkship.php')">click here</a>.
                         </div>
-                        <h2>Remaining Clerkship Rotations</h2>
+                        <h2>Remaining <?php echo $translate->_("Clerkship Rotations"); ?></h2>
                         <div class="pull-right space-below">
                             <a href="<?php echo ENTRADA_RELATIVE."/clerkship/electives?section=add";?>" class="btn btn-success"><i class="icon-plus-sign icon-white"></i> Add Elective</a>
                             <a href="<?php echo ENTRADA_RELATIVE."/clerkship/logbook?section=add&event=".$clerkship_schedule[0]["event_id"];?>" class="btn btn-success"><i class="icon-plus-sign icon-white"></i> Log Encounter</a>
@@ -597,7 +668,7 @@ if (!$ENTRADA_ACL->amIAllowed("dashboard", "read")) {
                         $ROTATION_ID = $db->GetOne($query);
                         ?>
                         <div style="clear: both"></div>
-                        <table class="tableList" cellspacing="0" summary="List of Remaining Clerkship Rotations">
+                        <table class="tableList" cellspacing="0" summary="List of Remaining <?php echo $translate->_("Clerkship Rotations"); ?>">
                             <colgroup>
                                 <col class="modified" />
                                 <col class="type" />
@@ -711,6 +782,19 @@ if (!$ENTRADA_ACL->amIAllowed("dashboard", "read")) {
 		case "faculty" :
 			$BREADCRUMB[] = array("url" => ENTRADA_RELATIVE, "title" => ucwords($_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"])." Dashboard");
 
+            $assessment_tasks = new Entrada_Assessments_Tasks(array("actor_proxy_id" => $ENTRADA_USER->getActiveId(), "actor_organisation_id" => $ENTRADA_USER->getActiveOrganisation()));
+            $in_progress_count = $assessment_tasks->fetchAssessmentTaskListCount(array("assessor-inprogress"), $ENTRADA_USER->getActiveId(), "proxy_id", "internal", true);
+            if ($in_progress_count) {
+                $in_progress_view = new Views_Dashboard_TasksInProgress();
+                $in_progress_view->render(array("in_progress_count" => $in_progress_count));
+            }
+
+			if ($_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]=="faculty"): ?>
+            <div class="clearfix" style="margin-bottom: 20px;">
+                <a href="<?php echo ENTRADA_URL . "/assessments?section=tools" ?>" class="btn btn-success pull-right"><?php echo $translate->_("Trigger Assessment") ?></a>
+            </div>
+            <?php
+            endif;
 			/**
 			 * Update requested timestamp to display.
 			 * Valid: Unix timestamp
@@ -759,24 +843,24 @@ if (!$ENTRADA_ACL->amIAllowed("dashboard", "read")) {
 					}
 					break;
 			}
-
-            $results = events_fetch_filtered_events(
-                        $ENTRADA_USER->getActiveId(),
-                        $ENTRADA_USER->getActiveGroup(),
-                        $ENTRADA_USER->getActiveRole(),
-                        $ENTRADA_USER->getActiveOrganisation(),
-                        "date",
-                        "asc",
-                        "custom",
-                        $DISPLAY_DURATION["start"],
-                        $DISPLAY_DURATION["end"],
+			
+			$results = events_fetch_filtered_events(
+						$ENTRADA_USER->getActiveId(),
+						$ENTRADA_USER->getActiveGroup(),
+						$ENTRADA_USER->getActiveRole(),
+						$ENTRADA_USER->getActiveOrganisation(),
+						"date",
+						"asc",
+						"custom",
+						$DISPLAY_DURATION["start"],
+						$DISPLAY_DURATION["end"],
                         events_filters_defaults($ENTRADA_USER->getActiveId(), $ENTRADA_USER->getActiveGroup(), $ENTRADA_USER->getActiveRole(), $ENTRADA_USER->getActiveOrganisation()),
-                        false,
-                        0,
-                        0,
-                        0,
-                        false);
-            $TOTAL_ROWS = count($results["result_ids_map"]);
+						false,
+						0,
+						0,
+						0,
+						false);
+			$TOTAL_ROWS = count($results["result_ids_map"]);
 			?>
 			<table style="width: 100%" cellspacing="0" cellpadding="0" border="0" summary="Weekly Student Calendar">
 				<tr>
@@ -802,7 +886,7 @@ if (!$ENTRADA_ACL->amIAllowed("dashboard", "read")) {
 				<div id="list-of-learning-events" style="max-height: 300px; overflow: auto">
 					<div style="background-color: #FAFAFA; padding: 3px; border: 1px #9D9D9D solid; border-bottom: none">
 						<img src="<?php echo ENTRADA_RELATIVE; ?>/images/lecture-info.gif" width="15" height="15" alt="" title="" style="vertical-align: middle" />
-										<?php echo "Found ".$TOTAL_ROWS." event".(($TOTAL_ROWS != 1) ? "s" : "")." from <strong>".date("D, M jS, Y", $DISPLAY_DURATION["start"])."</strong> to <strong>".date("D, M jS, Y", $DISPLAY_DURATION["end"])."</strong>.\n"; ?>
+                        <?php echo "Found ".$TOTAL_ROWS." event".(($TOTAL_ROWS != 1) ? "s" : "")." from <strong>".date("D, M jS, Y", $DISPLAY_DURATION["start"])."</strong> to <strong>".date("D, M jS, Y", $DISPLAY_DURATION["end"])."</strong>.\n"; ?>
 					</div>
 					<table class="tableList" cellspacing="0" summary="List of Learning Events">
 						<colgroup>
@@ -847,8 +931,8 @@ if (!$ENTRADA_ACL->amIAllowed("dashboard", "read")) {
                                 }
 
                                 echo "<tr id=\"event-".$result["event_id"]."\" class=\"event".(!$accessible ? " na" : "")."\">\n";
-                                echo "<td class=\"modified\">".(($is_modified) ? "<img src=\"".ENTRADA_RELATIVE."/images/lecture-modified.gif\" width=\"15\" height=\"15\" alt=\"This event has been modified since your last visit on ".date(DEFAULT_DATE_FORMAT, $result["last_visited"]).".\" title=\"This event has been modified since your last visit on ".date(DEFAULT_DATE_FORMAT, $result["last_visited"]).".\" style=\"vertical-align: middle\" />" : "<img src=\"".ENTRADA_RELATIVE."/images/pixel.gif\" width=\"15\" height=\"15\" alt=\"\" title=\"\" style=\"vertical-align: middle\" />")."</td>\n";
-                                echo "<td class=\"date\"><a href=\"".$url."\">".date(DEFAULT_DATE_FORMAT, $result["event_start"])."</a></td>\n";
+                                echo "<td class=\"modified\">".(($is_modified) ? "<img src=\"".ENTRADA_RELATIVE."/images/lecture-modified.gif\" width=\"15\" height=\"15\" alt=\"This event has been modified since your last visit on ".date(DEFAULT_DATETIME_FORMAT, $result["last_visited"]).".\" title=\"This event has been modified since your last visit on ".date(DEFAULT_DATETIME_FORMAT, $result["last_visited"]).".\" style=\"vertical-align: middle\" />" : "<img src=\"".ENTRADA_RELATIVE."/images/pixel.gif\" width=\"15\" height=\"15\" alt=\"\" title=\"\" style=\"vertical-align: middle\" />")."</td>\n";
+                                echo "<td class=\"date\"><a href=\"".$url."\">".date(DEFAULT_DATETIME_FORMAT, $result["event_start"])."</a></td>\n";
                                 echo "<td class=\"course-code\"><a href=\"".$url."\">".html_encode($result["course_code"])."</a></td>\n";
                                 echo "<td class=\"title\"><a href=\"".$url."\" title=\"Event Title: ".html_encode($result["event_title"])."\">".html_encode($result["event_title"])."</a></td>\n";
                                 echo "<td class=\"attachment\">".(($attachments) ? "<img src=\"".ENTRADA_RELATIVE."/images/attachment.gif\" width=\"16\" height=\"16\" alt=\"Contains ".$attachments." attachment".(($attachments != 1) ? "s" : "")."\" title=\"Contains ".$attachments." attachment".(($attachments != 1) ? "s" : "")."\" />" : "<img src=\"".ENTRADA_RELATIVE."/images/pixel.gif\" width=\"16\" height=\"16\" alt=\"\" title=\"\" style=\"vertical-align: middle\" />")."</td>\n";
@@ -889,8 +973,8 @@ if (!$ENTRADA_ACL->amIAllowed("dashboard", "read")) {
 			<div style="text-align: right; margin-top: 5px">
 				<a href="<?php echo ENTRADA_URL; ?>/calendars<?php echo ((isset($_SESSION["details"]["private_hash"])) ? "/private-".html_encode($_SESSION["details"]["private_hash"]) : ""); ?>/<?php echo html_encode($_SESSION["details"]["username"]); ?>.ics" class="feeds ics">Subscribe to Calendar</a>
 			</div>
-			<?php
-		break;
+            <?php
+            break;
 		case "staff" :
 		default :
 			continue;

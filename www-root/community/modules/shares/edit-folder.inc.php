@@ -36,8 +36,6 @@ if ($RECORD_ID) {
 		if ((int) $folder_record["folder_active"]) {
 
 			Models_Community_Share::getParentsBreadCrumbs($RECORD_ID);
-//            Models_Community_Share::getParentsBreadCrumbs($folder_record["parent_folder_id"]);
-			$BREADCRUMB[] = array("url" => COMMUNITY_URL.$COMMUNITY_URL.":".$PAGE_URL."?section=view-folder&id=".$RECORD_ID, "title" => limit_chars($folder_record["folder_title"], 32));
 			$BREADCRUMB[] = array("url" => COMMUNITY_URL.$COMMUNITY_URL.":".$PAGE_URL."?section=edit-folder&amp;id=".$RECORD_ID, "title" => "Edit Shared Folder");
 
             //Selects the current parent folder name and id
@@ -207,6 +205,14 @@ if ($RECORD_ID) {
                         $PROCESSED["student_hidden"] = 0;
                     }        
 
+					/**
+					 * Non-Required field "show_file_versions" / View Method.
+					 */
+					if ((isset($_POST["show_file_versions"])) && clean_input($_POST["show_file_versions"], array("int")) == 1) {
+						$PROCESSED["show_file_versions"] = 1;
+					} else {
+						$PROCESSED["show_file_versions"] = 0;
+					}
 
 					/**
 					 * Email Notificaions.
@@ -328,6 +334,19 @@ if ($RECORD_ID) {
 				case 1 :
 				default :
 					$PROCESSED = $folder_record;
+                    /**
+                     * Non-Required field "show_file_versions" / View Method.
+                     */
+                    if (is_null($PROCESSED["show_file_versions"])) {
+                        // if it's null default to system setting community_share_show_file_versions
+                        $settings = new Entrada_Settings();
+
+                        if ($settings->read("community_share_show_file_versions") == 1) {
+                            $PROCESSED["show_file_versions"] = 1;
+                        } else {
+                            $PROCESSED["show_file_versions"] = 0;
+                        }
+                    }
 				break;
 			}
 
@@ -441,7 +460,7 @@ if ($RECORD_ID) {
                                             			<input id="community-all-checkbox" class="permission-type-checkbox" type="radio" name="permission_acl_style" value="CourseCommunityEnrollment"<?php if ($permission_db['assertion'] == 'CourseCommunityEnrollment') { echo " checked='checked'"; } ?> />
 													</td>
 													<td>
-                                            			<label for="community-all-checkbox" class="content-small">All Community Members</label>
+                                            			<label for="community-all-checkbox" class="content-small"><?php echo $translate->_("All Community Members"); ?></label>
 													</td>
                                     			</tr>
 												<tr>
@@ -636,13 +655,13 @@ if ($RECORD_ID) {
 										</thead>
 										<tbody>
 											<tr>
-												<td class="left"><strong>Community Administrators</strong></td>
+												<td class="left"><strong><?php echo $translate->_("Community Administrators"); ?></strong></td>
 												<td class="on" style="text-align: center"><input type="checkbox" id="allow_admin_read" name="allow_admin_read" value="1" checked="checked" onclick="this.checked = true" /></td>
 												<td style="text-align: center"><input type="checkbox" id="allow_admin_upload" name="allow_admin_upload" value="1" checked="checked" onclick="this.checked = true" /></td>
 												<td class="on" style="text-align: center"><input type="checkbox" id="allow_admin_comment" name="allow_admin_comment" value="1" checked="checked" onclick="this.checked = true" /></td>
 											</tr>
 											<tr>
-												<td class="left"><strong>Community Members</strong></td>
+												<td class="left"><strong><?php echo $translate->_("Community Members"); ?></strong></td>
 												<td class="on" style="text-align: center"><input type="checkbox" id="allow_member_read" name="allow_member_read" value="1"<?php echo (((!isset($PROCESSED["allow_member_read"])) || ((isset($PROCESSED["allow_member_read"])) && ($PROCESSED["allow_member_read"] == 1))) ? " checked=\"checked\"" : ""); ?> /></td>
 												<td style="text-align: center"><input type="checkbox" id="allow_member_upload" name="allow_member_upload" value="1"<?php echo (((!isset($PROCESSED["allow_member_upload"])) || ((isset($PROCESSED["allow_member_upload"])) && ($PROCESSED["allow_member_upload"] == 1))) ? " checked=\"checked\"" : ""); ?> /></td>
 												<td class="on" style="text-align: center"><input type="checkbox" id="allow_member_comment" name="allow_member_comment" value="1"<?php echo (((!isset($PROCESSED["allow_member_comment"])) || ((isset($PROCESSED["allow_member_comment"])) && ($PROCESSED["allow_member_comment"] == 1))) ? " checked=\"checked\"" : ""); ?> /></td>
@@ -705,6 +724,44 @@ if ($RECORD_ID) {
 									</td>
 								</tr>
 								<tr>
+									<tr>
+										<td colspan="3">
+											<h2>Hide File Versions</h2>
+										</td>
+									</tr>
+									<tr>
+										<td colspan="2" style="vertical-align: top;">
+											<label class="form-nrequired">Would you like to hide file versions from students in this folder?</label>
+										</td>
+										<td>
+											<table class="table table-bordered no-thead">
+												<colgroup>
+													<col style="width: 5%" />
+													<col style="width: auto" />
+												</colgroup>
+												<tbody>
+												<tr>
+													<td class="center">
+														<input type="radio" id="show_file_versions_1" name="show_file_versions" value="1" style="vertical-align: middle"<?php echo (($PROCESSED["show_file_versions"] == "1") ? " checked=\"checked\"" : ""); ?> />
+													</td>
+													<td>
+														<label for="show_file_versions_1" class="content-small">Allow students to view file versions.</label>
+													</td>
+												</tr>
+												<tr>
+													<td class="center">
+														<input type="radio" id="show_file_versions_0" name="show_file_versions" value="0" style="vertical-align: middle"<?php echo (($PROCESSED["show_file_versions"] != "1") ? " checked=\"checked\"" : ""); ?> />
+													</td>
+													<td>
+														<label for="show_file_versions_0" class="content-small">Don't allow students to view file versions.</label>
+													</td>
+												</tr>
+												</tbody>
+											</table>
+										</td>
+									</tr>
+								</tr>
+								<tr>
 									<td colspan="3">
 										<h2>Time Release Options</h2>
 									</td>
@@ -724,7 +781,7 @@ if ($RECORD_ID) {
 			}
 		} else {
 			$NOTICE++;
-			$NOTICESTR[] = "The shared folder that you are trying to edit was deactivated <strong>".date(DEFAULT_DATE_FORMAT, $folder_record["updated_date"])."</strong> by <strong>".html_encode(get_account_data("firstlast", $folder_record["updated_by"]))."</strong>.<br /><br />If there has been a mistake or you have questions relating to this issue please contact the MEdTech Unit directly.";
+			$NOTICESTR[] = "The shared folder that you are trying to edit was deactivated <strong>".date(DEFAULT_DATETIME_FORMAT, $folder_record["updated_date"])."</strong> by <strong>".html_encode(get_account_data("firstlast", $folder_record["updated_by"]))."</strong>.<br /><br />If there has been a mistake or you have questions relating to this issue please contact the MEdTech Unit directly.";
 
 			echo display_notice();
 

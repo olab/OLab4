@@ -164,7 +164,7 @@ if (isset($_SESSION["isAuthorized"]) && (bool) $_SESSION["isAuthorized"]) {
 		}
 		$last_title = false;
 		$margin = 0;
-		for ($level = 1; $level <= $count; $level++) {
+		for ($level = 2; $level <= $count; $level++) {
 			if ($objective_selected[$level]["parent"] !== false) {
 				if($objective_selected[$level]["parent"] == 0){
 					$query = "	SELECT a.* FROM `global_lu_objectives` AS a
@@ -186,14 +186,10 @@ if (isset($_SESSION["isAuthorized"]) && (bool) $_SESSION["isAuthorized"]) {
 				}
 				$results = $db->GetAll($query);
 				if ($results) {
-					echo "<div style=\"padding: 0px; margin-left: ".$margin."px;\">\n";
+					echo "<div id=\"container-objective-" . $objective_selected[$level]["parent"] . "\" style=\"padding: 0px; margin-left: ".$margin."px;\">\n";
 					echo "\t<img height=\"20\" width=\"15\" src=\"".ENTRADA_URL."/images/tree/minus".($margin ? "2" : "5").".gif\" alt=\"Level\" title=\"Level\" style=\"position: relative; top: 6px;\"/>";
-					echo "\t<select id=\"objective-".$objective_selected[$level]["parent"]."\" name=\"objective-".$objective_selected[$level]["parent"]."\" onChange=\"selectObjective(this.options[this.selectedIndex].value".($objective_id ? ", ".$objective_id : "").($excluded ? ", '".$excluded."'" : "")."); selectOrder(".($objective_id ? $objective_id.", " : "")."this.options[this.selectedIndex].value);\">\n";
-						if ($last_title) {
-							echo "\t\t<option value=\"".$objective_selected[$level]["parent"]."\">-- Under ".clean_input($last_title, array("notags"))." --</option>\n";
-						} else {
-							echo "\t\t<option value=\"".($level > 1 ? $objective_selected[($level-1)]["id"] : 0)."\"".($objective_selected[$level]["id"] == 0 ? " selected=\"selected\"" : "").">-- No Parent --</option>\n";
-						}
+					echo "\t<select id=\"objective-".$objective_selected[$level]["parent"]."\" name=\"objective_parent[]\" onChange=\"selectObjective('#m_selectObjectiveField_".$objective_id."',this.options[this.selectedIndex].value".($objective_id ? ", ".$objective_id : "").($excluded ? ", '".$excluded."'" : "")."); selectOrder(".($objective_id ? $objective_id.", " : "")."this.options[this.selectedIndex].value);\">\n";
+                    echo "\t\t<option value=\"" . $objective_selected[$level]["parent"] . "\"".($objective_selected[$level]["id"] == 0 ? " selected=\"selected\"" : "").">-- No Parent --</option>\n";
 					foreach ($results as $result) {
 						echo "\t\t<option value=\"".$result["objective_id"]."\"".($objective_selected[$level]["id"] == $result["objective_id"] ? " selected=\"selected\"" : "").">".clean_input($result["objective_name"], array("notags"))."</option>\n";
 						if (($count - 1) == $level && $objective_selected[$level]["id"] == $result["objective_id"]) {

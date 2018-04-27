@@ -76,7 +76,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                         }
 
                         $course_audience_object = new Models_Course_Audience();
-                        if ($ENTRADA_ACL->amIAllowed('group', 'update', false) && $PROCESSED["cperiod_id"] &&  $PROCESSED["course_id"]) {
+                        if ($ENTRADA_ACL->amIAllowed(new CourseResource($PROCESSED["course"], $ENTRADA_USER->getActiveOrganisation()), 'update', true) && $PROCESSED["cperiod_id"] &&  $PROCESSED["course_id"]) {
                             $audience_result = $course_audience_object->fetchAllByCourseIDCperiodID($PROCESSED["course_id"], $PROCESSED["cperiod_id"]);
                         }
 

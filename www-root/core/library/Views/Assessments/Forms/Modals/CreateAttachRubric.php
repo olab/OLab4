@@ -24,7 +24,7 @@
 class Views_Assessments_Forms_Modals_CreateAttachRubric extends Views_Assessments_Forms_Base {
 
     protected function validateOptions($options = array()) {
-        return $this->validateIsSet($options, array("action_url", "form_id", "fref"));
+        return $this->validateIsSet($options, array("action_url", "form_id", "fref", "rating_scale_types"));
     }
 
     /**
@@ -37,18 +37,28 @@ class Views_Assessments_Forms_Modals_CreateAttachRubric extends Views_Assessment
         $action_url = $options["action_url"];
         $form_id = $options["form_id"];
         $fref = $options["fref"];
+        $rating_scale_types = $options["rating_scale_types"];
         ?>
         <div id="create-attach-rubric-modal" class="modal hide fade">
-            <form class="form-horizontal no-margin" action="<?php echo $action_url; ?>" method="POST">
+            <form id="create-attach-rubric-modal-form" class="form-horizontal no-margin" action="<?php echo $action_url; ?>" method="POST">
                 <div class="modal-header"><h1><?php echo $translate->_("Create and Attach Grouped Item"); ?></h1></div>
-                <div class="modal-body">
+                <div class="modal-body overflow-inherit">
                     <div id="create-attach-rubric-msgs"></div>
-                    <div class="control-group no-margin">
+                    <div class="control-group">
                         <label class="control-label form-required" for="new-rubric-title"><?php echo $translate->_("New Grouped Item Title"); ?></label>
                         <div class="controls">
                             <input type="text" name="new-rubric-title" id="new-rubric-title" />
                         </div>
                     </div>
+                    <?php
+                    $scale_search = new Views_Assessments_Forms_Controls_ScaleSelectorSearch();
+                    $scale_search->render(array(
+                        "width" => 350,
+                        "parent_selector" => "create-attach-rubric-modal-form",
+                        "search_selector" => "item-rating-scale-btn",
+                        "submodule" => "rubrics", // Doesn't necessarily have to be rubrics, but it just has to not be "scales"
+                        "scale_type_datasource" => $rating_scale_types
+                    )); ?>
                 </div>
                 <div class="modal-footer">
                     <div class="row-fluid">

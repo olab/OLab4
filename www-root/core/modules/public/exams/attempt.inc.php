@@ -414,7 +414,7 @@ switch ($STEP) {
                                             proxy_id            = <?php echo $ENTRADA_USER->getID();?>;
                                             menu_open           = <?php echo $progress->getMenuOpen();?>;
                                             current_page        = <?php echo $page;?>;
-                                            use_time_limit      = <?php echo (int)$post->getUseTimeLimit($ENTRADA_USER);?>;
+                                            use_time_limit = <?php echo (int)$post->getUseTimeLimit();?>;
                                             time_limit          = <?php echo (int)$time_limit;?>;
                                             use_self_timer      = "<?php echo $post->getUseSelfTimer();?>";
                                             create_time         = <?php echo $progress->getCreatedDate();?>;
@@ -651,7 +651,10 @@ switch ($STEP) {
                                                             ?>
                                                         </div>
                                                     </div>
-                                                    <div class="span6" id="control-bar-pagination">
+                                                    <div class="span3" id="control-bar-progress">
+                                                        <?php echo $progress_view->renderExamProgressBar(); ?>
+                                                    </div>
+                                                    <div class="span3" id="control-bar-pagination">
                                                         <?php echo $progress_view->renderPageLinks($page, $secure_mode); ?>
                                                     </div>
                                                     <div class="span4 pull-right" id="control-bar-buttons">
@@ -727,11 +730,20 @@ switch ($STEP) {
                                             <h4><?php echo $SECTION_TEXT["text_exam_information"]; ?></h4>
                                             <?php
                                             $post_view = new Views_Exam_Post($post);
-                                            echo $post_view->renderPublicPostSettings();
+                                            if ($post_view) {
+                                                echo $post_view->renderPublicPostSettings();
+                                            }
                                             ?>
                                             <input id="instructions_viewed" name="instructions_viewed" type="hidden" value="true">
-                                            <input type="submit" id="instructions-start-exam" name="start-exam" value="Start Exam" class="btn btn-primary" />
                                         </div>
+                                        <?php
+                                        if ($post_view) {
+                                            if ($post->getUseHonorCode()) {
+                                                echo $post_view->renderHonorCode();
+                                            }
+                                        }
+                                        ?>
+                                        <input type="submit" id="instructions-start-exam" name="start-exam" value="Start Exam" class="btn btn-primary <?php echo ($post->getUseHonorCode() ? " disabled" : ""); ?>"  <?php echo ($post->getUseHonorCode() ? " disabled" : ""); ?>/>
                                     </form>
                                     <?php
                                 } else {
@@ -846,11 +858,11 @@ switch ($STEP) {
                     switch ($post->getSecureMode()) {
                         case "rp_now" :
                             add_error($SECTION_TEXT["text"]["secure_mode_required_rpnow"]);
-                            application_log("error", $SECTION_TEXT["text"]["secure_mode_required"]);
+                            application_log("error", $SECTION_TEXT["text"]["secure_mode_required_rpnow"]);
                             break;
                         case "seb" :
                             default :
-                            add_error($SECTION_TEXT["text"]["secure_mode_required_rpnow"]);
+                            add_error($SECTION_TEXT["text"]["secure_mode_required"]);
                             application_log("error", $SECTION_TEXT["text"]["secure_mode_required"]);
                             break;
                     }

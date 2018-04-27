@@ -56,7 +56,7 @@ if (!defined("PARENT_INCLUDED")) {
 	$output[] = "<!DOCTYPE html>\n";
 	$output[] = "<html>\n";
 	$output[] = "<head>\n";
-	$output[] = "<title>".$ENTRADA_USER->getFullname(true)." Portfolio</title>\n";
+	$output[] = "<title>".$ENTRADA_USER->getFullname(true)." ".$translate->_("Portfolio")."</title>\n";
 	$output[] = "<link rel=\"stylesheet\" type=\"text/css\" href=\"css/bootstrap.min.css\" />\n";
 	$output[] = "<style type=\"text/css\">
 					body {font-family:Helvetica, Arial, sans-serif;margin:1cm;}
@@ -180,8 +180,8 @@ if (!defined("PARENT_INCLUDED")) {
 
 		}
 	} else {
-		echo "<h1>Export My Eportfolio</h1>";
-		echo display_notice("Your eportfolio artifacts do not have any entries. Please return to <a href=\"".ENTRADA_URL."/profile/eportfolio\">your eportfolio</a> and add entries to the appropriate artifacts before exporting it.");
+		echo "<h1>" . $translate->_("Export My Eportfolio") . "</h1>";
+		echo display_notice($translate->_("Your eportfolio artifacts do not have any entries").". ".$translate->_("Please return to")." <a href=\"".ENTRADA_URL."/profile/eportfolio\">".$translate->_("your eportfolio")."</a> ".$translate->_("and add entries to the appropriate artifacts before exporting it").".");
 		echo "<div class=\"row-fluid\"><a href=\"".ENTRADA_URL."/profile/eportfolio\" class=\"btn btn-primary\">Back</a></div>";
 	}
 	

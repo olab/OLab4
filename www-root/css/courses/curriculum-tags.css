@@ -3,7 +3,7 @@
     text-align: left;
 }
 
-#curriculum-tag-upload {
+.uploader {
     height: 200px;
     margin-bottom: 0;
 }
@@ -14,7 +14,7 @@
     text-align: center;
 }
 
-#curriculum-tag-upload.is-dragover {
+.uploader.is-dragover {
     background: #e8edf1;
  }
 
@@ -29,7 +29,7 @@
 
 }
 
-#curriculum-tag-upload.has-advanced-upload .form-dragndrop {
+.uploader.has-advanced-upload .form-dragndrop {
     display: inline;
 }
 
@@ -45,7 +45,7 @@
     text-align: center;
 }
 
-#curriculum-tag-upload.is-uploading .form-input {
+.uploader.is-uploading .form-input {
     visibility: none;
 }
 #curriculum-tag-uploadis-uploading .form-uploading {
@@ -71,10 +71,6 @@
     margin: 15px auto 0 auto;
 }
 
-.hide {
-    display: none !important;
-}
-
 #upload-instructions {
     margin-bottom: -10px;
     text-align: center;
@@ -84,4 +80,348 @@
     height: 200px;
     line-height: 190px;
     font-size: 17px;
+}
+
+#curriculum-tag-container div.entrada-select-list-container:last-child {
+    margin-right: 0;
+}
+
+.entrada-select-list-search {
+    background: #e1e7ec;
+    padding: 6px;
+    text-align: center;
+}
+
+.entrada-select-list-search:hover {
+    background: #e1e7ec !important;
+}
+
+.entrada-select-list-search input {
+    margin-bottom: 0;
+    -moz-transition: none;
+    -webkit-transition: none;
+    transition: none;
+    width: 100%;
+}
+
+.entrada-select-list-container {
+    border: 2px solid #d0d4d8;
+    border-radius: 6px;
+    box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    float: left;
+    margin: 0 0.5% 0 0;
+    overflow: hidden;
+    width: 24.6%;
+}
+
+.entrada-select-list {
+    border-top: 1px solid #d9dee2;
+    float: left;
+    list-style-position: inside !important;
+    list-style-type: none;
+    margin: 0;
+    max-height: 450px;
+    min-height: 450px;
+    overflow: scroll;
+    width: 100%;
+}
+
+.entrada-search-list-empty {
+    background: #f3f7f9;
+    color: #979ca0;
+    font-size: 16px !important;
+    height: 413px;
+    padding: 30px 6px 6px 6px;
+    text-align: center;
+}
+
+.entrada-search-list-empty:hover {
+    background: #f3f7f9 !important;
+}
+
+.entrada-select-list li:last-child {
+    border-bottom: none;
+}
+
+.entrada-select-list li {
+    border-bottom: 1px solid #e4e9ec;
+    cursor: pointer;
+    font-size: 14px;
+    -webkit-user-select: none; /* Chrome/Safari */
+    -moz-user-select: none; /* Firefox */
+    -ms-user-select: none; /* IE10+ */
+}
+
+.entrada-select-list li.active, .entrada-select-list li.active:hover {
+    background-color: #02afc5;
+    border-bottom: 1px solid #029eb3;
+    color: #fff;
+}
+
+.entrada-select-list li:hover {
+    background-color: #ecf0f3;
+}
+
+.entrada-select-list li .entrada-select-list-title {
+    padding: 10px 8px;
+}
+
+.entrada-select-list li .entrada-select-list-description {
+
+}
+
+.entrada-search-list-load-button {
+    border-top: 1px solid #d9dee2;
+}
+
+.entrada-search-list-load-button a {
+    background-color: #e1e7ec;
+    display: block;
+    padding: 10px 6px 10px 6px;
+    text-align: center;
+}
+
+.entrada-select-list-item-header {
+    background-color: #e1e7ec;
+    border-bottom: 1px solid #d9dee2 !important;
+    color: #7b7e80;
+    cursor: default !important;
+    font-size: 12px;
+    font-weight: bold;
+    padding: 6px;
+}
+
+.entrada-select-list-item-header:hover {
+    background-color: #e1e7ec !important;
+}
+
+.objective-code {
+    font-weight: bold;
+}
+.node circle {
+    fill: #fff;
+    stroke: #00a8be;
+    stroke-width: 4px;
+}
+
+.node text {
+    font-size: 12px;
+}
+
+.node--internal text {
+    text-shadow: 0 1px 0 #fff, 0 -1px 0 #fff, 1px 0 0 #fff, -1px 0 0 #fff;
+}
+
+.link {
+    fill: none;
+    stroke: #ccc !important;
+    stroke-width: 3px;
+}
+
+#cbme-curriculum-map .accordion-inner {
+    background: #fff;
+}
+
+#cbme-curriculum-map .accordion-heading {
+    background: #f9f9f9;
+}
+
+#cbme-curriculum-map .collapse {
+    transition: height 0.00001s;
+}
+
+.cv-response-circle {
+    -webkit-border-radius: 50%;
+    -moz-border-radius: 50%;
+    border-radius: 50%;
+    color: #fff;
+    display: inline-block;
+    font-size: 14px;
+    font-weight: bold;
+    height: 35px;
+    line-height: 35px;
+    margin-right: 3px;
+    margin-top: 3px;
+    width: 35px;
+    cursor: pointer;
+    text-align: center;
+}
+
+.cv-response-save {
+    background: #51a351;
+}
+
+.cv-response-center {
+    text-align: center !important;
+}
+
+.cv-response-description {
+    width: 97%;
+    resize: vertical;
+}
+
+.cv-response-code {
+    display: inline;
+}
+
+.table thead th {
+    padding: 10px;
+}
+
+.toggle-cv-response-text {
+    font-family: "Lucida Grande", Geneva, Verdana, Arial, Helvetica, sans-serif;
+    font-size: 13px;
+    color: #8b959d;
+}
+
+.toggle-cv-response {
+    cursor: pointer;
+    text-decoration: none !important;
+}
+
+.red-icon {
+    color: #E83631;
+    font-size: 1.5555555em !important;
+}
+
+.green-icon {
+    color: #5bb75b;
+    font-size: 1.5555555em !important;
+}
+
+.black-icon {
+    color: #000000;
+    font-size: 1.5555555em !important;
+}
+
+.remove-bottom-margin {
+    margin-bottom: -1px;
+}
+
+.cv-response-add {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+}
+
+.cv-response-remove, .cv-response-save, .cv-upload-criteria {
+    border: none;
+    height: 100%;
+    width: 100%;
+    padding-left: 0;
+    padding-right: 0;
+    padding-top: 25px;
+    border-radius: 0px;
+    background-color: transparent;
+}
+.remove-response-row, .save-response-row, .view-upload-criteria {
+    padding-left: 0 !important;
+    padding-right: 0px !important;
+    padding-top: 0px !important;
+    padding-bottom: 0 !important;
+    height: 100%;
+}
+
+.procedure-uploaded-criteria-uploader-body {
+    height: 215px;
+    overflow: hidden;
+    overflow-y: scroll;
+    margin-left: 0px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    border: 1px solid #eee;
+    border-radius: 5px;
+}
+
+.list-criteria-wrapper {
+    height: auto;
+    border-bottom: 1px solid #eee;
+    vertical-align: middle;
+    padding: 9px;
+    display: inline-block;
+    width: 97%;
+}
+
+.inline-block {
+    display: inline-block;
+}
+
+
+.rotate {
+    -webkit-transform: rotate(180deg);
+    -moz-transform: rotate(180deg);
+    -ms-transform: rotate(180deg);
+    -o-transform: rotate(180deg);
+    transform: rotate(180deg);
+}
+
+
+#procedure-criteria-uploaded-msg-modal {
+    height: 405px;
+    width: 650px;
+}
+
+#procedure-criteria-uploaded-msg-modal .modal-body {
+    height: 320px;
+    max-height: 410px;
+}
+
+.criteria-list {
+    width: 560px;
+}
+
+.epa-code {
+    font-size: 16px;
+    margin-left: 5px;
+}
+
+.procedure-details-container {
+    margin-left: 5px;
+}
+
+.epa-criteria-toggle {
+    cursor: pointer;
+}
+
+.edit-objective-container {
+    padding: 10px 20px;
+}
+
+.edit-objective-container textarea {
+    width: 100%;
+}
+
+.list-set-item-cell {
+    display: block;
+}
+
+#import-cbme-data-list {
+    counter-reset: item;
+    list-style-type: none;
+    margin-left: 0;
+}
+
+#import-cbme-data-list li.cbme-data-item:before {
+    content: 'Step ' counter(item, decimal) ': ';
+    counter-increment: item;
+}
+
+#import-cbme-data-list li.cbme-data-item {
+    color: #f07f2c;
+    font-size: 20px;
+    list-style-position: inside;
+}
+
+#import-cbme-data-list li.cbme-data-item div {
+    color: #333;
+    font-size: 15px;
+}
+
+#import-cbme-data-list .alert-error {
+    color: #b94a48 !important;
+}
+
+#import-cbme-data-list .panel {
+    margin-top: 20px;
 }

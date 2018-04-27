@@ -30,6 +30,8 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 		header("Location: ".ENTRADA_URL);
 		exit;
 } else {
+	$HEAD[] = "<script>var SITE_URL = '".ENTRADA_URL."';</script>";
+
     $BREADCRUMB[]	= array("url" => ENTRADA_URL."/".$MODULE, "title" => "View " . $translate->_($MODULE));
 
 	/**
@@ -102,13 +104,14 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 					WHERE `course_id` = ".$db->qstr($COURSE_ID)."
 					AND `course_active` = '1'";
 		$course_details	= ((USE_CACHE) ? $db->CacheGetRow(CACHE_TIMEOUT, $query) : $db->GetRow($query));
+		$course_detail_object = new Models_Course($course_details);
 		if (!$course_details) {
 			$ERROR++;
 			$ERRORSTR[] = "The course identifier that was presented to this page currently does not exist in the system.";
 
 			echo display_error();
 		} else {
-			if ($ENTRADA_ACL->amIAllowed(new CourseResource($COURSE_ID, $ENTRADA_USER->getActiveOrganisation), "read")) {
+			if ($ENTRADA_ACL->amIAllowed(new CourseResource($COURSE_ID, $ENTRADA_USER->getActiveOrganisation()), "read")) {
 				add_statistic($MODULE, "view", "course_id", $COURSE_ID);
 
 				$BREADCRUMB[] = array("url" => ENTRADA_URL."/".$MODULE."?".replace_query(array("id" => $course_details["course_id"])), "title" => $course_details["course_name"].(($course_details["course_code"]) ? ": ".$course_details["course_code"] : ""));
@@ -130,12 +133,15 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 
 				$course_details_section			= true;
 				$course_description_section		= false;
-				$course_objectives_section		= false;
+				$course_objectives_section		= true;
 				$course_assessment_section		= false;
 				$course_textbook_section		= false;
 				$course_message_section			= false;
 				$course_resources_section		= true;
 				?>
+                <script>
+                    var COURSE_ID = <?php echo $COURSE_ID; ?>;
+                </script>
 				<div class="no-printing text-right" >
 					<form class="form-horizontal">
 					<label for="course-quick-select" class="content-small"><?php echo $translate->_("course"); ?> Quick Select:</label>
@@ -179,7 +185,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 					<h1><?php echo html_encode($course_details["course_name"].(($course_details["course_code"]) ? ": ".$course_details["course_code"] : "")); ?></h1>
 				</div>
 
-				<a name="course-details-section"></a>
+				<a name="course-details-section-anchor"></a>
 				<h2 title="Course Details Section"><?php echo $translate->_("course"); ?> Details</h2>
 				<div id="course-details-section">
 					<?php
@@ -321,7 +327,56 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 					} ?>
 				</div>
 
-				<?php
+                <?php
+                $cperiod_id = $course_detail_object->getCperiodID();
+
+                if ($cperiod_id) {
+                    $course_units = Models_Course_Unit::fetchAllByCourseIDCperiodID($COURSE_ID, $cperiod_id);
+                } else {
+                    $course_units = Models_Course_Unit::fetchAllByCourseID($COURSE_ID);
+                }
+
+                if ($course_units) {
+                    $unit_list_view = new Zend_View();
+                    $unit_list_view->setScriptPath(dirname(__FILE__));
+                    $unit_list_view->course_units = $course_units;
+                    $unit_list_view->translate = $translate;
+                    echo $unit_list_view->render("units/list.view.php");
+                }
+
+				if (defined("COURSE_OBJECTIVES_SHOW_LINKS") && COURSE_OBJECTIVES_SHOW_LINKS) {
+					try {
+						$objectives_repository = Models_Repository_Objectives::getInstance();
+						$objective_rows = $objectives_repository->toArrays($course_detail_object->getObjectives($cperiod_id));
+						$objectives_by_tag_set = $objectives_repository->groupArraysByTagSet($objective_rows);
+						$map_version = $course_detail_object->getCurriculumMapVersion($cperiod_id);
+						$version_id = $map_version ? $map_version->getID() : null;
+
+						$course_objectives_view = new Zend_View();
+						$course_objectives_view->setScriptPath(dirname(dirname(dirname(dirname(__FILE__)))) . "/includes/views/");
+						$course_objectives_view->translate = $translate;
+						$course_objectives_view->element_id = "course-objectives-section";
+						$course_objectives_view->anchor_name = "course-objectives-section";
+						$course_objectives_view->direction = "both";
+						$course_objectives_view->section_title = "Course Objectives Section";
+						$course_objectives_view->heading_title = "Course Objectives";
+						$course_objectives_view->version_id = $version_id;
+						$course_objectives_view->objectives = $objectives_by_tag_set;
+						$course_objectives_view->course_id = $course_detail_object->getID();
+						$course_objectives_view->cperiod_id = $cperiod_id;
+						$exclude_tag_set_ids = array();
+						foreach(explode(",", OBJECTIVE_LINKS_VIEW_EXCLUDE) as $exclude_tag_set_name) {
+							$exclude_tag_set = Models_Objective::fetchRowByNameParentID($ENTRADA_USER->getActiveOrganisation(), $exclude_tag_set_name, 0);
+							if ($exclude_tag_set) {
+								$exclude_tag_set_ids[] = $exclude_tag_set->getID();
+							}
+						}
+						$course_objectives_view->exclude_tag_set_ids = $exclude_tag_set_ids;
+						echo $course_objectives_view->render("objectives.inc.php");
+					} catch (Exception $e) {
+						echo display_error($e->getMessage());
+					}
+				} else {
 				$show_objectives = false;
 				list($objectives,$top_level_id) = courses_fetch_objectives($ORGANISATION_ID,array($COURSE_ID));
 				foreach ($objectives["objectives"] as $objective) {
@@ -349,7 +404,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 					}
 					</script>
 
-					<a name="course-objectives-section"></a>
+					<a name="course-objectives-section-anchor"></a>
 					<h2 title="<?php echo $translate->_("Course Objectives Section"); ?>"><?php echo $translate->_("course") . " " . $translate->_("Objectives"); ?></h2>
 					<div id="course-objectives-section">
 					<?php
@@ -401,7 +456,8 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
                 <div class="clear_both"></div>
                 <?php
 				} ?>
-				<a name="course-resources-section"></a>
+                <?php } ?>
+				<a name="course-resources-section-anchor"></a>
 				<h2 title="Course Resources Section"><?php echo $translate->_("course"); ?> Resources</h2>
 				<div id="course-resources-section">
 					<?php
@@ -472,10 +528,10 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 										<div class="content-small space-above">
 							<?php
 							if (((int) $result["valid_from"]) && ($result["valid_from"] > time())) { ?>
-											This file will be available for downloading <strong><?php echo date(DEFAULT_DATE_FORMAT, $result["valid_from"]);?></strong>.
+											This file will be available for downloading <strong><?php echo date(DEFAULT_DATETIME_FORMAT, $result["valid_from"]);?></strong>.
 							<?php
 							} elseif (((int) $result["valid_until"]) && ($result["valid_until"] < time())) { ?>
-											This file was only available for download until <strong><?php echo date(DEFAULT_DATE_FORMAT, $result["valid_until"]);?></strong>. Please contact the primary teacher for assistance if required.
+											This file was only available for download until <strong><?php echo date(DEFAULT_DATETIME_FORMAT, $result["valid_until"]);?></strong>. Please contact the primary teacher for assistance if required.
 							<?php
 							}
 
@@ -486,7 +542,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 										</div>
 								</td>
 								<td class="date">
-									<?php echo (((int) $result["updated_date"]) ? date(DEFAULT_DATE_FORMAT, $result["updated_date"]) : "Unknown");?>
+									<?php echo (((int) $result["updated_date"]) ? date(DEFAULT_DATETIME_FORMAT, $result["updated_date"]) : "Unknown");?>
 								</td>
 							</tr>
 						<?php
@@ -555,10 +611,10 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 									<div class="content-small">
 							<?php
 							if (((int) $result["valid_from"]) && ($result["valid_from"] > time())) { ?>
-										This link will become accessible <strong><?php echo date(DEFAULT_DATE_FORMAT, $result["valid_from"]);?></strong>.<br /><br />
+										This link will become accessible <strong><?php echo date(DEFAULT_DATETIME_FORMAT, $result["valid_from"]);?></strong>.<br /><br />
 							<?php
 							} elseif (((int) $result["valid_until"]) && ($result["valid_until"] < time())) { ?>
-										This link was only accessible until <strong><?php echo date(DEFAULT_DATE_FORMAT, $result["valid_until"]);?></strong>. Please contact the primary teacher for assistance if required.<br /><br />
+										This link was only accessible until <strong><?php echo date(DEFAULT_DATETIME_FORMAT, $result["valid_until"]);?></strong>. Please contact the primary teacher for assistance if required.<br /><br />
 							<?php
 							}
 
@@ -568,7 +624,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 									</div>
 								</td>
 								<td class="date">
-									<?php echo (((int) $result["updated_date"]) ? date(DEFAULT_DATE_FORMAT, $result["updated_date"]) : "Unknown");?>
+									<?php echo (((int) $result["updated_date"]) ? date(DEFAULT_DATETIME_FORMAT, $result["updated_date"]) : "Unknown");?>
 								</td>
 							</tr>
 						<?php
@@ -681,10 +737,10 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
                                         <div class="content-small">
                                             <?php
                                             if (((int) $result["valid_from"]) && ($result["valid_from"] > time())) { ?>
-                                                This link will become accessible <strong><?php echo date(DEFAULT_DATE_FORMAT, $result["valid_from"]);?></strong>.<br /><br />
+                                                This link will become accessible <strong><?php echo date(DEFAULT_DATETIME_FORMAT, $result["valid_from"]);?></strong>.<br /><br />
                                             <?php
                                             } elseif (((int) $result["valid_until"]) && ($result["valid_until"] < time())) { ?>
-                                                This link was only accessible until <strong><?php echo date(DEFAULT_DATE_FORMAT, $result["valid_until"]);?></strong>. Please contact the primary teacher for assistance if required.<br /><br />
+                                                This link was only accessible until <strong><?php echo date(DEFAULT_DATETIME_FORMAT, $result["valid_until"]);?></strong>. Please contact the primary teacher for assistance if required.<br /><br />
                                             <?php
                                             }
 
@@ -694,7 +750,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
                                         </div>
                                     </td>
                                     <td class="date">
-                                        <?php echo (((int) $result["updated_date"]) ? date(DEFAULT_DATE_FORMAT, $result["updated_date"]) : "Unknown");?>
+                                        <?php echo (((int) $result["updated_date"]) ? date(DEFAULT_DATETIME_FORMAT, $result["updated_date"]) : "Unknown");?>
                                     </td>
                                 </tr>
                                 <?php
@@ -720,13 +776,13 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 				 */
 				$sidebar_html  = "<ul class=\"menu\">\n";
 				if ($course_details_section) {
-					$sidebar_html .= "	<li class=\"link\"><a href=\"#course-details-section\" title=\"Course Details\">" . $translate->_("course") . " Details</a></li>\n";
+					$sidebar_html .= "	<li class=\"link\"><a href=\"#course-details-section-anchor\" title=\"Course Details\">" . $translate->_("course") . " Details</a></li>\n";
 				}
 				if ($course_objectives_section) {
-					$sidebar_html .= "	<li class=\"link\"><a href=\"#course-objectives-section\" title=\"" . $translate->_("Course Objectives") . "\">" . $translate->_("course") . " " . $translate->_("Objectives") . "</a></li>\n";
+					$sidebar_html .= "	<li class=\"link\"><a href=\"#course-objectives-section-anchor\" title=\"" . $translate->_("Course Objectives") . "\">" . $translate->_("course") . " " . $translate->_("Objectives") . "</a></li>\n";
 				}
 				if ($course_resources_section) {
-					$sidebar_html .= "	<li class=\"link\"><a href=\"#course-resources-section\" title=\"Course Resources\">" . $translate->_("course") . " Resources</a></li>\n";
+					$sidebar_html .= "	<li class=\"link\"><a href=\"#course-resources-section-anchor\" title=\"Course Resources\">" . $translate->_("course") . " Resources</a></li>\n";
 				}
 				$sidebar_html .= "</ul>\n";
 

@@ -40,13 +40,6 @@ class Views_Assessments_Sidebar_DeliveryInfo extends Views_Assessments_Base
         if (!is_a($options["assessment_record"], "Models_Assessments_Assessor")) {
             return false;
         }
-        if (!isset($options["distribution"])) {
-            return false;
-        }
-        if (!is_a($options["distribution"], "Models_Assessments_Distribution")) {
-            return false;
-        }
-        // distribution
         return true;
     }
 
@@ -55,7 +48,7 @@ class Views_Assessments_Sidebar_DeliveryInfo extends Views_Assessments_Base
      */
     protected function renderError() {
         global $translate; ?>
-        <div id="assessment-delivery-info" class="space-below">
+        <div class="space-below">
             <?php echo $translate->_("Unable to determine task details."); ?>
         </div>
         <?php
@@ -69,19 +62,18 @@ class Views_Assessments_Sidebar_DeliveryInfo extends Views_Assessments_Base
     protected function renderView($options = array()) {
         global $translate;
 
-        $assessment_record = $options["assessment_record"];
-        $distribution = $options["distribution"];
-
-        $distribution_schedule = @$options["distribution_schedule"];
-        $is_pdf = @$options["is_pdf"];
-        $target_name = @$options["target_name"];
-        $assessor_name = @$options["assessor_name"];
-        $event_name = @$options["event_name"];
-        $completed_date = @$options["completed_date"];
-        $learning_event_time_start = @$options["timeframe_start"];
-        $learning_event_time_end = @$options["timeframe_end"];
+        $assessment_record          = $options["assessment_record"];
+        $distribution               = $options["distribution"];
+        $distribution_schedule      = array_key_exists("distribution_schedule", $options) ? $options["distribution_schedule"] : null;
+        $is_pdf                     = array_key_exists("is_pdf", $options) ? $options["is_pdf"] : null;
+        $target_name                = array_key_exists("target_name", $options) ? $options["target_name"] : null;
+        $assessor_name              = array_key_exists("assessor_name", $options) ? $options["assessor_name"] : null;
+        $event_name                 = array_key_exists("event_name", $options) ? $options["event_name"] : null;
+        $completed_date             = array_key_exists("completed_date", $options) ? $options["completed_date"] : null;
+        $learning_event_time_start  = array_key_exists("timeframe_start", $options) ? $options["timeframe_start"] : null;
+        $learning_event_time_end    = array_key_exists("timeframe_end", $options) ? $options["timeframe_end"] : null;
         ?>
-        <div id="assessment-delivery-info" class="space-below assessment-delivery-header">
+        <div class="space-below assessment-delivery-header">
             <?php if ($is_pdf && $target_name): ?>
                 <span class="assessment-delivery-detail"><?php echo $translate->_("Target")?>: <?php echo $target_name ?></span>
             <?php endif; ?>

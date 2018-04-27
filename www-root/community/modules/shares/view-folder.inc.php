@@ -411,7 +411,7 @@ if ($RECORD_ID) {
                 Entrada_Utilities_Flashmessenger::displayMessages($MODULE);
             ?>
             <h1><?php echo html_encode($folder_record["folder_title"]); ?></h1>
-            <div class="module-subTitle">
+            <div class="page-description space-below">
 				<?php echo nl2br(html_encode($folder_record["folder_description"])); ?>
 			</div>
             <?php
@@ -636,20 +636,22 @@ if ($RECORD_ID) {
                                     $folder_sub["type"] = "folder";
                                     $menu = Models_Community_Share::getEditMenu($COMMUNITY_ID, $folder_sub);
                                     echo "<tr>\n";
-                                        echo "<td style=\"vertical-align: top\">\n";
-                                            echo "<img src=\"".ENTRADA_URL."/community/templates/course/images/list-folder-".$folder_sub["folder_icon"].($student_hidden_folder ? "-hidden" : "").".gif\" width=\"16\" height=\"16\" style=\"vertical-align: middle; margin-right: 4px\" />";
-                                            echo "<a " . ($student_hidden_folder ? "class='hidden_shares'" : "") ."id=\"folder-".(int) $folder_sub["cshare_id"]."-title\" href=\"".COMMUNITY_URL.$COMMUNITY_URL.":".$PAGE_URL."?section=view-folder&amp;id=".$folder_sub["cshare_id"]."\" style=\"font-weight: bold; vertical-align: middle\">".limit_chars(html_encode($folder_sub["folder_title"]), 50, true)."</a>\n";
-                                            echo (!$accessible) ? "<span><i class='icon-time'></i> </span>" : "";
-                                            echo $menu;
-                                            echo "<div>";
-                                            echo "<span class='content-small'>(" . $cumulative_count['total_docs'] . " documents)</span>";
-                                            echo "<div class='content-small'>".(($folder_sub["folder_description"] != "") ? html_encode(limit_chars($folder_sub["folder_description"], 125)) : "")."</div>";
-                                        echo "</td>\n";
-                                        echo "<td style=\"font-size: 10px; white-space: nowrap; overflow: hidden\"><a href=\"".ENTRADA_URL."/people?profile=".html_encode($folder_sub["username"])."\" style=\"font-size: 10px\">".html_encode($folder_sub["owner"])."</a></td>\n";
-                                        echo "<td style=\"font-size: 10px; white-space: nowrap; overflow: hidden\">".date(DEFAULT_DATE_FORMAT, $folder_sub["updated_date"])."</td>\n";
-                                        if ($COMMUNITY_ADMIN) {
-                                            echo "<td class=\"accesses\" style=\"text-align: center\"><strong>-</strong></td>";
-                                        }
+                                    echo "<td style=\"vertical-align: top\">\n";
+                                    echo "<div style=\"float: left;\">";
+                                    echo "<img src=\"" . ENTRADA_URL . "/community/templates/course/images/list-folder-" . $folder_sub["folder_icon"] . ($student_hidden_folder ? "-hidden" : "") . ".gif\" width=\"16\" height=\"16\" style=\"vertical-align: middle; margin-right: 4px\" />";
+                                    echo "<a " . ($student_hidden_folder ? "class='hidden_shares'" : "") . "id=\"folder-" . (int)$folder_sub["cshare_id"] . "-title\" href=\"" . COMMUNITY_URL . $COMMUNITY_URL . ":" . $PAGE_URL . "?section=view-folder&amp;id=" . $folder_sub["cshare_id"] . "\" style=\"font-weight: bold; vertical-align: middle\">" . limit_chars(html_encode($folder_sub["folder_title"]), 50, true) . "</a>\n";
+                                    echo (!$accessible) ? "<span><i class='icon-time'></i> </span>" : "";
+                                    echo "<div>";
+                                    echo "<span class='content-small'>(" . $cumulative_count['total_docs'] . " documents)</span>";
+                                    echo "<div class='content-small'>" . (($folder_sub["folder_description"] != "") ? html_encode(limit_chars($folder_sub["folder_description"], 125)) : "") . "</div></div>";
+                                    echo "</div>";
+                                    echo "<div style=\"float: right;\">" . $menu . "</div>";
+                                    echo "</td>\n";
+                                    echo "<td style=\"font-size: 10px; overflow: hidden\"><a href=\"" . ENTRADA_URL . "/people?profile=" . html_encode($folder_sub["username"]) . "\" style=\"font-size: 10px\">" . html_encode($folder_sub["owner"]) . "</a></td>\n";
+                                    echo "<td style=\"font-size: 10px; overflow: hidden\">" . date(DEFAULT_DATETIME_FORMAT, $folder_sub["updated_date"]) . "</td>\n";
+                                    if ($COMMUNITY_ADMIN) {
+                                        echo "<td class=\"accesses\" style=\"text-align: center\"><strong>-</strong></td>";
+                                    }
                                     echo "</tr>\n";
                                 }
                             }
@@ -691,25 +693,54 @@ if ($RECORD_ID) {
                                     }
 
                                     $statistics = Models_Statistic::getCountByParams($params);
+                                    /*
                                     $download_button = Models_Community_Share_File::getDownloadButton($document_result["ID"]);
-                                    echo "<tr>\n";
-                                        echo "<td style=\"vertical-align: top\">\n";
-                                            //echo "<img src=\"".ENTRADA_URL."/serve-icon.php?ext=" . $ext['ext'] . "&hidden=" . $student_hidden . "\" width=\"16\" height=\"16\" alt=\"" . $ext['english'] . " \" title=\"" . $ext['english'] . " \" style=\"vertical-align: middle; margin-right: 4px\" />";
-                                            echo $document_menu;
-                                            echo "<a " . ($student_hidden ? "class='hidden_shares'" : "") . "id=\"file-".(int) $document_result["ID"]."-title\" href=\"".COMMUNITY_URL.$COMMUNITY_URL.":".$PAGE_URL."?section=view-file&amp;id=".$document_result["ID"]."\" style=\"font-weight: bold; vertical-align: middle\">".limit_chars(html_encode($document_result["title"]), 47, true)."</a>\n";
-                                            echo $download_button;
-                                            echo (!$accessible) ? "<span><i class='icon-time'></i> </span>" : "";
-                                            echo "<div  class=\"content-small\" style=\"padding-left: 23px\">".html_encode(limit_chars($document_result["description"], 125))."</div>";
-                                        echo "</td>\n";
-                                            echo "<td style=\"font-size: 10px; white-space: nowrap; overflow: hidden\"><a href=\"".ENTRADA_URL."/people?profile=".html_encode($document_result["owner_username"])."\" style=\"font-size: 10px\">".html_encode($document_result["owner"])."</a></td>\n";
-                                        echo "<td style=\"font-size: 10px; white-space: nowrap; overflow: hidden\">".date(DEFAULT_DATE_FORMAT, $last_updated)."</td>\n";
-                                        if ($COMMUNITY_ADMIN) {
-                                            if ($statistics['views'] && $statistics['views'] != '0') {
-                                                echo "<td class=\"accesses\" style=\"text-align: center\"><a class=\"views-dialog\" href=\"#file-views\" data-action='" . $params['action'] . "' data-action_field='" . $params['action_field'] . "' data-action_value='" . $params['action_value'] . "' title=\"Click to see access log ".html_encode($statistics['views'])."\" style=\"font-weight: bold\">".html_encode($statistics['views'])."</a></td>\n";
-                                            } else {
-                                                echo "<td class=\"accesses\" style=\"text-align: center\"><strong>0</strong></td>";
-                                            }
+                                    */
+
+                                    /* Optionally provide a 'show versions' icon based on settings set on the folder or default to system setting */
+                                    if (isset($folder_record["show_file_versions"])) {
+                                        if ($folder_record["show_file_versions"] == "1") {
+                                            $show_file_versions = true;
+                                        } else {
+                                            $show_file_versions = false;
                                         }
+                                    } else {
+                                        $settings = new Entrada_Settings();
+
+                                        if ($settings->read("community_share_show_file_versions") == 1) {
+                                            $show_file_versions = true;
+                                        } else {
+                                            $show_file_versions = false;
+                                        }
+                                    }
+
+                                    if ($show_file_versions) {
+                                        $download_button = Models_Community_Share_File::getVersionsButton($document_result["ID"]);
+                                    } else {
+                                        $download_button = "";
+                                    }
+
+                                    echo "<tr>\n";
+                                    echo "<td style=\"vertical-align: top\">\n";
+                                    echo "    <div style=\"float: left;\">";
+                                    echo "      <a " . ($student_hidden ? "class='hidden_shares'" : "") . "id=\"file-" . (int)$document_result["ID"] . "-title\" href=\"" . COMMUNITY_URL . $COMMUNITY_URL . ":" . $PAGE_URL . "?section=view-file&amp;id=" . $document_result["ID"] . "\" style=\"font-weight: bold; vertical-align: middle\">" . limit_chars(html_encode($document_result["title"]), 47, true) . "</a>";
+                                    echo $download_button;
+                                    echo          (!$accessible) ? "<span><i class='icon-time'></i> </span>" : "";
+                                    echo "        <div class=\"content-small\">" . html_encode(limit_chars($document_result["description"], 125)) . "</div>";
+                                    echo "    </div>";
+                                    echo "    <div style=\"float: right;\">" . $document_menu . "</div>";
+                                    echo "</td>\n";
+                                    echo "<td style=\"font-size: 10px; overflow: hidden\"><a href=\"" . ENTRADA_URL . "/people?profile=" . html_encode($document_result["owner_username"]) . "\" style=\"font-size: 10px\">" . html_encode($document_result["owner"]) . "</a></td>\n";
+                                    echo "<td style=\"font-size: 10px; overflow: hidden\">" . date(DEFAULT_DATETIME_FORMAT, $last_updated) . "</td>\n";
+                                    echo "<td class=\"accesses\" style=\"text-align: center;\">";
+                                    if ($COMMUNITY_ADMIN) {
+                                        if ($statistics["views"] && $statistics["views"] != "0") {
+                                            echo "<a class=\"views-dialog\" href=\"#file-views\" data-action='" . $params['action'] . "' data-action_field='" . $params['action_field'] . "' data-action_value='" . $params['action_value'] . "' title=\"Click to see access log " . html_encode($statistics['views']) . "\" style=\"font-weight: bold; font-size: 10px\">" . html_encode($statistics['views']) . "</a></td>\n";
+                                        } else {
+                                            echo "<strong>0</strong>";
+                                        }
+                                    }
+                                    echo "</td>";
                                     echo "</tr>\n";
                                 } else if ($document_result['type'] == 'link') {
                                     $params = array(
@@ -730,16 +761,18 @@ if ($RECORD_ID) {
 
                                     echo "<tr>\n";
                                     echo "<td style='vertical-align: top'>\n";
-                                    echo $document_menu;
-                                    echo "<a " . ($student_hidden ? "class='hidden_shares'" : "") . $access . " id='link-".(int) $document_result["ID"]."-title' href='".COMMUNITY_URL.$COMMUNITY_URL.":".$PAGE_URL."?section=view-link&amp;id=".$document_result["ID"]."&amp;access=".$access_location."' style='font-weight: bold; vertical-align: middle' >".limit_chars(html_encode($document_result["title"]), 50, true)."</a>\n";
+                                    echo "<div style=\"float: left;\">";
+                                    echo "<a " . ($student_hidden ? "class='hidden_shares'" : "") . $access . " id='link-" . (int)$document_result["ID"] . "-title' href='" . COMMUNITY_URL . $COMMUNITY_URL . ":" . $PAGE_URL . "?section=view-link&amp;id=" . $document_result["ID"] . "&amp;access=" . $access_location . "' style='font-weight: bold; vertical-align: middle' >" . limit_chars(html_encode($document_result["title"]), 50, true) . "</a>\n";
                                     echo (!$accessible) ? "<span><i class='icon-time'></i> </span>" : "";
-                                    echo "<div  class=\"content-small\" style=\"padding-left: 23px\">".html_encode(limit_chars($document_result["description"], 125))."</div>";
+                                    echo "<div  class=\"content-small\">" . html_encode(limit_chars($document_result["description"], 125)) . "</div>";
+                                    echo "</div>";
+                                    echo "<div style=\"float: right;\">" . $document_menu . "</div>";
                                     echo "</td>\n";
-                                    echo "<td style=\"font-size: 10px; white-space: nowrap; overflow: hidden\"><a href=\"".ENTRADA_URL."/people?profile=".html_encode($document_result["owner_username"])."\" style=\"font-size: 10px\">".html_encode($document_result["owner"])."</a></td>\n";
-                                    echo "<td style=\"font-size: 10px; white-space: nowrap; overflow: hidden\">".date(DEFAULT_DATE_FORMAT, $document_result["updated_date"])."</td>\n";
+                                    echo "<td style=\"font-size: 10px; overflow: hidden\"><a href=\"" . ENTRADA_URL . "/people?profile=" . html_encode($document_result["owner_username"]) . "\" style=\"font-size: 10px\">" . html_encode($document_result["owner"]) . "</a></td>\n";
+                                    echo "<td style=\"font-size: 10px; overflow: hidden\">" . date(DEFAULT_DATETIME_FORMAT, $document_result["updated_date"]) . "</td>\n";
                                     if ($COMMUNITY_ADMIN) {
                                         if ($statistics['views'] && $statistics['views'] != '0') {
-                                            echo "<td class=\"accesses\" style=\"text-align: center\"><a class=\"views-dialog\" href=\"#file-views\" data-action='" . $params['action'] . "' data-action_field='" . $params['action_field'] . "' data-action_value='" . $params['action_value'] . "' title=\"Click to see access log ".html_encode($statistics['views'])."\" style=\"font-weight: bold\">".html_encode($statistics['views'])."</a></td>\n";
+                                            echo "<td class=\"accesses\" style=\"text-align: center\"><a class=\"views-dialog\" href=\"#file-views\" data-action='" . $params['action'] . "' data-action_field='" . $params['action_field'] . "' data-action_value='" . $params['action_value'] . "' title=\"Click to see access log " . html_encode($statistics['views']) . "\" style=\"font-weight: bold\">" . html_encode($statistics['views']) . "</a></td>\n";
                                         } else {
                                             echo "<td class=\"accesses\" style=\"text-align: center\"><strong>0</strong></td>";
                                         }
@@ -765,18 +798,20 @@ if ($RECORD_ID) {
 
                                     echo "<tr>\n";
                                     echo "<td style='vertical-align: top'>\n";
-                                    echo $document_menu;
-                                    echo "<a " . ($student_hidden ? "class='hidden_shares'" : "") . $access . " id='html-".(int) $document_result["ID"]."-title' href='".COMMUNITY_URL.$COMMUNITY_URL.":".$PAGE_URL."?section=view-html&amp;id=".$document_result["ID"]."&amp;access=".$access_location."' style='font-weight: bold; vertical-align: middle' >".limit_chars(html_encode($document_result["title"]), 50, true)."</a>\n";
+                                    echo "<div style=\"float: left;\">";
+                                    echo "<a " . ($student_hidden ? "class='hidden_shares'" : "") . $access . " id='html-" . (int)$document_result["ID"] . "-title' href='" . COMMUNITY_URL . $COMMUNITY_URL . ":" . $PAGE_URL . "?section=view-html&amp;id=" . $document_result["ID"] . "&amp;access=" . $access_location . "' style='font-weight: bold; vertical-align: middle' >" . limit_chars(html_encode($document_result["title"]), 50, true) . "</a>\n";
                                     echo (!$accessible) ? "<span><i class='icon-time'></i> </span>" : "";
-                                    echo "<div  class=\"content-small\" style=\"padding-left: 23px\">".html_encode(limit_chars($document_result["description"], 125))."</div>";
+                                    echo "<div  class=\"content-small\">" . html_encode(limit_chars($document_result["description"], 125)) . "</div>";
+                                    echo "</div>";
+                                    echo "<div style=\"float: right;\">" . $document_menu . "</div>";
                                     echo "</td>\n";
-                                    echo "<td style=\"font-size: 10px; white-space: nowrap; overflow: hidden\"><a href=\"".ENTRADA_URL."/people?profile=".html_encode($document_result["owner_username"])."\" style=\"font-size: 10px\">".html_encode($document_result["owner"])."</a></td>\n";
-                                    echo "<td style=\"font-size: 10px; white-space: nowrap; overflow: hidden\">".date(DEFAULT_DATE_FORMAT, $document_result["updated_date"])."</td>\n";
+                                    echo "<td style=\"font-size: 10px; white-space: nowrap; overflow: hidden\"><a href=\"" . ENTRADA_URL . "/people?profile=" . html_encode($document_result["owner_username"]) . "\" style=\"font-size: 10px\">" . html_encode($document_result["owner"]) . "</a></td>\n";
+                                    echo "<td style=\"font-size: 10px; white-space: nowrap; overflow: hidden\">" . date(DEFAULT_DATETIME_FORMAT, $document_result["updated_date"]) . "</td>\n";
                                     if ($COMMUNITY_ADMIN) {
                                         if ($statistics['views'] && $statistics['views'] != '0') {
-                                            echo "<td class=\"accesses\" style=\"text-align: center\"><a class=\"views-dialog\" href=\"#file-views\" data-action='" . $params['action'] . "' data-action_field='" . $params['action_field'] . "' data-action_value='" . $params['action_value'] . "' title=\"Click to see access log ".html_encode($statistics['views'])."\" style=\"font-weight: bold\">".html_encode($statistics['views'])."</a></td>\n";
+                                            echo "<td class=\"accesses\" style=\"text-align: center\"><a class=\"views-dialog\" href=\"#file-views\" data-action='" . $params['action'] . "' data-action_field='" . $params['action_field'] . "' data-action_value='" . $params['action_value'] . "' title=\"Click to see access log " . html_encode($statistics['views']) . "\" style=\"font-weight: bold\">" . html_encode($statistics['views']) . "</a></td>\n";
                                         } else {
-                                             echo "<td class=\"accesses\" style=\"text-align: center\"><strong>0</strong></td>";
+                                            echo "<td class=\"accesses\" style=\"text-align: center\"><strong>0</strong></td>";
                                         }
                                     }
                                     echo "</tr>\n";

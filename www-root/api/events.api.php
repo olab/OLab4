@@ -38,6 +38,8 @@ if (isset($_GET["drid"])) {
 }
 
 if (($event_id) && (isset($_SESSION["isAuthorized"])) && ((bool) $_SESSION["isAuthorized"])) {
+    $events_repository = Models_Repository_Events::getInstance();
+    $associated_faculty = $events_repository->fetchAssociatedFacultyEventIDs($event_id);
 	?>
 	<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "DTD/xhtml1-transitional.dtd">
 	<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
@@ -91,14 +93,28 @@ if (($event_id) && (isset($_SESSION["isAuthorized"])) && ((bool) $_SESSION["isAu
 
 				?>
 				<div id="eventToolTip">
-					<div class="colLeft">
+					<div>
 						<table style="width: 100%" cellspacing="1" cellpadding="1" border="0">
 						<tr>
 							<td colspan="2" style="padding-bottom: 5px"><a href="<?php echo ENTRADA_URL; ?>/courses?id=<?php echo $event_info["course_id"]; ?>" target="_blank" style="font-weight: bold"><?php echo html_encode($event_info["course_code"]) . ": " . html_encode($event_info["course_name"]); ?></a></td>
 						</tr>
+						<?php
+						if (!empty($event_info["cunit_id"])) {
+							$course_unit = Models_Course_Unit::fetchRowByID($event_info["cunit_id"]);
+							?>
+							<tr>
+								<td colspan="2" style="padding-bottom: 5px"><a href="<?php echo ENTRADA_URL; ?>/courses/units?id=<?php echo $event_info["course_id"]; ?>&cunit_id=<?php echo $course_unit->getID(); ?>" target="_blank" style="font-weight: bold"><?php echo $course_unit->getUnitText(); ?></a></td>
+							</tr>
+							<?php
+						}
+						?>
+						</table>
+					</div>
+					<div class="colLeft">
+						<table style="width: 100%" cellspacing="1" cellpadding="1" border="0">
 						<tr>
 							<td><strong>Date &amp; Time</strong></td>
-							<td><?php echo date(DEFAULT_DATE_FORMAT, $event_info["event_start"]); ?></td>
+							<td><?php echo date(DEFAULT_DATETIME_FORMAT, $event_info["event_start"]); ?></td>
 						</tr>
 						<tr>
 							<td><strong>Duration</strong></td>
@@ -112,6 +128,19 @@ if (($event_id) && (isset($_SESSION["isAuthorized"])) && ((bool) $_SESSION["isAu
 							<td><strong>Attendance</strong></td>
 							<td><?php echo (isset($event_info["attendance_required"]) && ($event_info["attendance_required"] == 0) ? "<em>Optional</em>" :  "Required"); ?></td>
 						</tr>
+                        <?php
+                        if (isset($associated_faculty) && is_array($associated_faculty) && (count($associated_faculty) > 0)): ?>
+                        <tr>
+                            <td style="vertical-align:top"><strong><?php echo $translate->_("Contact Info")?></strong></td>
+                            <td>
+                                <ul style="margin: 0 5px 5px 0; padding-left: 0px; list-style-type: none">
+                                <?php foreach ($associated_faculty as $contact): ?>
+                                    <li><?php echo "<a href=\"".ENTRADA_RELATIVE."/people?id=".$contact["proxy_id"]."\" class=\"event-details-item\">".html_encode($contact["fullname"])."</a>\n";?></li>
+                                <?php endforeach; ?>
+                                </ul>
+                            </td>
+                        </tr>
+                        <?php endif; ?>
 						<?php if (trim($event_info["event_message"]) != "") : ?>
 						<tr>
 							<td colspan="2" style="padding-top: 15px">
@@ -125,17 +154,34 @@ if (($event_id) && (isset($_SESSION["isAuthorized"])) && ((bool) $_SESSION["isAu
 					<div class="colRight">
 						<img src="<?php echo ENTRADA_RELATIVE; ?>/images/attachment.gif" width="16" height="16" alt="Resources" style="vertical-align: middle" /> <strong style="vertical-align: middle">Event Resources</strong>
 						<ul style="margin: 5px 0 5px 5px; padding-left: 15px; list-style-type: none">
-							<li><a href="<?php echo ENTRADA_URL; ?>/events?id=<?php echo $event_id; ?>#event-resources-files"><?php echo $event_files; ?> attached file<?php echo (($event_files != 1) ? "s" : ""); ?></a></li>
-							<li><a href="<?php echo ENTRADA_URL; ?>/events?id=<?php echo $event_id; ?>#event-resources-links"><?php echo $event_links; ?> attached link<?php echo (($event_links != 1) ? "s" : ""); ?></a></li>
-							<li><a href="<?php echo ENTRADA_URL; ?>/events?id=<?php echo $event_id; ?>#event-resources-quizzes"><?php echo $event_quizzes; ?> attached quiz<?php echo (($event_quizzes != 1) ? "zes" : ""); ?></a></li>
-							<li style="margin-top: 15px"><a href="<?php echo ENTRADA_URL; ?>/events?id=<?php echo $event_id; ?>#event-comments-section"><?php echo $event_discussions; ?> discussion<?php echo (($event_discussions != 1) ? "s" : ""); ?></a></li>
-                            <?php
-                            if (isset($event_exams) && is_array($event_exams)) {
-                                $exam_count = count($event_exams);
-                                $EXAM_TEXT = $translate->_("exams");
+							<?php if (!ENABLE_DASHBOARD_EVENT_RESOURCE_LINKS) {
                                 ?>
-                                <li><a href="<?php echo ENTRADA_URL; ?>/events?drid=<?php echo $event_id; ?>#event-resources-exams"><?php echo $exam_count . " " . strtolower($EXAM_TEXT["exams"]["posts"]["title_singular"]) . (($exam_count != 1) ? "s" : ""); ?></a></li>
+                                <li><?php echo $event_files; ?> attached file<?php echo (($event_files != 1) ? "s" : ""); ?></li>
+                                <li><?php echo $event_links; ?> attached link<?php echo (($event_links != 1) ? "s" : ""); ?></li>
+                                <li><?php echo $event_quizzes; ?> attached quiz<?php echo (($event_quizzes != 1) ? "zes" : ""); ?></li>
+                                <li style="margin-top: 15px"><?php echo $event_discussions; ?> discussion<?php echo (($event_discussions != 1) ? "s" : ""); ?></li>
                                 <?php
+                                if (isset($event_exams) && is_array($event_exams)) {
+                                    $exam_count = count($event_exams);
+                                    $EXAM_TEXT = $translate->_("exams");
+                                    ?>
+                                    <li><?php echo $exam_count . " " . strtolower($EXAM_TEXT["exams"]["posts"]["title_singular"]) . (($exam_count != 1) ? "s" : ""); ?></li>
+                                    <?php
+                                }
+                            } else {
+                                ?>
+                                <li><a href="<?php echo ENTRADA_URL; ?>/events?id=<?php echo $event_id; ?>#event-resources-files"><?php echo $event_files; ?> attached file<?php echo (($event_files != 1) ? "s" : ""); ?></a></li>
+                                <li><a href="<?php echo ENTRADA_URL; ?>/events?id=<?php echo $event_id; ?>#event-resources-links"><?php echo $event_links; ?> attached link<?php echo (($event_links != 1) ? "s" : ""); ?></a></li>
+                                <li><a href="<?php echo ENTRADA_URL; ?>/events?id=<?php echo $event_id; ?>#event-resources-quizzes"><?php echo $event_quizzes; ?> attached quiz<?php echo (($event_quizzes != 1) ? "zes" : ""); ?></a></li>
+                                <li style="margin-top: 15px"><a href="<?php echo ENTRADA_URL; ?>/events?id=<?php echo $event_id; ?>#event-comments-section"><?php echo $event_discussions; ?> discussion<?php echo (($event_discussions != 1) ? "s" : ""); ?></a></li>
+                                <?php
+                                if (isset($event_exams) && is_array($event_exams)) {
+                                    $exam_count = count($event_exams);
+                                    $EXAM_TEXT = $translate->_("exams");
+                                    ?>
+                                    <li><a href="<?php echo ENTRADA_URL; ?>/events?drid=<?php echo $event_id; ?>#event-resources-exams"><?php echo $exam_count . " " . strtolower($EXAM_TEXT["exams"]["posts"]["title_singular"]) . (($exam_count != 1) ? "s" : ""); ?></a></li>
+                                    <?php
+                                }
                             }
                             ?>
 						</ul>
@@ -158,4 +204,4 @@ if (($event_id) && (isset($_SESSION["isAuthorized"])) && ((bool) $_SESSION["isAu
 	</html>
 	<?php
 }
-?>
+/* vim: set noexpandtab: */

@@ -1,4 +1,64 @@
 {
+    "Admissions": {
+        "basename": "Admissions",
+        "name": "Admissions",
+        "slug": "admissions",
+        "version": "1.0",
+        "description": "API Endpoints for the ADM flavor of Entrada",
+        "id": 2381569159,
+        "enabled": false,
+        "order": 9001
+    },
+    "Assessments": {
+        "basename": "Assessments",
+        "name": "Assessments",
+        "slug": "assessments",
+        "version": "1.0",
+        "description": "API Endpoints for the Entrada Assessments",
+        "id": 1274866698,
+        "enabled": false,
+        "order": 9001
+    },
+    "Clinical": {
+        "basename": "Clinical",
+        "name": "Clinical",
+        "slug": "clinical",
+        "version": "1.0",
+        "description": "This is the description for the Clinical module.",
+        "id": 1257534331,
+        "enabled": false,
+        "order": 9001
+    },
+    "Events": {
+        "basename": "Events",
+        "name": "Events",
+        "slug": "events",
+        "version": "1.0",
+        "description": "Endpoint for events",
+        "id": 1401378634,
+        "enabled": false,
+        "order": 9001
+    },
+    "Locations": {
+        "basename": "Locations",
+        "name": "Locations",
+        "slug": "locations",
+        "version": "1.0",
+        "description": "Locations REST end point",
+        "id": 400968378,
+        "enabled": false,
+        "order": 9001
+    },
+    "Notices": {
+        "basename": "Notices",
+        "name": "Notices",
+        "slug": "notices",
+        "version": "1.0",
+        "description": "REST API Endpoints for Notices",
+        "id": 1848402386,
+        "enabled": false,
+        "order": 9001
+    },
     "Sandbox": {
         "basename": "Sandbox",
         "name": "Sandbox",
@@ -9,23 +69,23 @@
         "order": 9001,
         "enabled": true
     },
-    "Olab": {
-        "basename": "Olab",
-        "name": "OpenLabyrinth",
-        "slug": "olab",
+    "User": {
+        "basename": "User",
+        "name": "User",
+        "slug": "user",
         "version": "1.0",
-        "description": "OpenLabyrinth integrated into the Entrada frontend.",
-        "id": 3700838559,
+        "description": "REST API endpoints for the current user",
+        "id": 2375276105,
         "enabled": true,
         "order": 9001
     },
-    "Foobar": {
-        "basename": "Foobar",
-        "name": "FooBar",
-        "slug": "foobar",
+    "Olab": {
+        "basename": "Olab",
+        "name": "Olab",
+        "slug": "olab",
         "version": "1.0",
-        "description": "This is the description. Fooooooo.",
-        "id": 2666930069,
+        "description": "Olab 4.x API module",
+        "id": 3700838559,
         "enabled": true,
         "order": 9001
     }

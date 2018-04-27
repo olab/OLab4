@@ -22,6 +22,13 @@ class Controllers_Assessment_Distribution extends Controllers_Base {
             "sanitization_params"   => array("trim", "striptags"),
             "step"                  => 1
         ),
+        "assessment_type"    => array(
+            "label"                 => "Task Type",
+            "required"              => true,
+            "default"               => "assessment",
+            "sanitization_params"   => array("trim", "striptags"),
+            "step"                  => 1
+        ),
         "distribution_form"         => array(
             "label"                 => "Form",
             "db_fieldname"          => "form_id",
@@ -117,10 +124,7 @@ class Controllers_Assessment_Distribution extends Controllers_Base {
             "default"                   => 0,
             "sanitization_params"       => array("trim", "striptags"),
             "allowed_values"            => array("1"),
-            "step"                      => 2,
-            "requirement_matrix"        => array(
-                "1" => array("eventtype_release_date"),
-            )
+            "step"                      => 2
         ),
         "eventtype_release_date"        => array(
             "label"                     => "Release Date",
@@ -128,6 +132,13 @@ class Controllers_Assessment_Distribution extends Controllers_Base {
             "default"                   => 0,
             "sanitization_params"       => array("trim", "strtotime"),
             "step"                      => 2,
+            "required_when"             => array(
+                "type" => "variable",
+                "number_required" => 1,
+                "values" => array(
+                    "eventtype_release_option" => "1"
+                )
+            ),
         ),
         "schedule_id"                   => array(
             "label"                     => "Rotation Schedule",
@@ -144,16 +155,68 @@ class Controllers_Assessment_Distribution extends Controllers_Base {
             "default"                   => 0,
             "sanitization_params"       => array("trim", "striptags"),
             "allowed_values"            => array("1"),
-            "step"                      => 2,
-            "requirement_matrix"        => array(
-                "1" => array("rotation_release_date"),
-            )
+            "step"                      => 2
         ),
         "rotation_release_date"         => array(
             "label"                     => "Release Date",
             "required"                  => false,
             "default"                   => 0,
             "sanitization_params"       => array("trim", "strtotime"),
+            "step"                      => 2,
+            "required_when"             => array(
+                "type" => "variable",
+                "number_required" => 1,
+                "values" => array(
+                    "rotation_release_option" => "1"
+                )
+            ),
+        ),
+        "expiry_date"                   => array(
+            "required"                  => false,
+            "default"                   => 0,
+            "sanitization_params"       => array("trim", "striptags"),
+            "step"                      => 2
+        ),
+        "expiry_option"                 => array(
+            "required"                  => false,
+            "default"                   => 0,
+            "sanitization_params"       => array("trim", "striptags"),
+            "allowed_values"            => array("1"),
+            "step"                      => 2
+        ),
+        "expiry_days"                   => array(
+            "label"                     => "Expiry Days",
+            "required"                  => false,
+            "default"                   => 0,
+            "sanitization_params"       => array("trim", "int"),
+            "step"                      => 2,
+        ),
+        "expiry_hours"                  => array(
+            "label"                     => "Expiry Hours",
+            "required"                  => false,
+            "default"                   => 0,
+            "sanitization_params"       => array("trim", "int"),
+            "step"                      => 2,
+        ),
+        "expiry_notification_option"    => array(
+            "required"                  => false,
+            "default"                   => 0,
+            "sanitization_params"       => array("trim", "striptags"),
+            "allowed_values"            => array("1"),
+            "step"                      => 2
+        ),
+        "expiry_notification_days"      => array(
+            "label"                     => "Expiry Notification Days",
+            "required"                  => false,
+            "default"                   => 0,
+            "sanitization_params"       => array("trim", "int"),
+            "step"                      => 2,
+        ),
+        "expiry_notification_hours"     => array(
+            "label"                     => "Expiry Notification Hours",
+            "required"                  => false,
+            "default"                   => 0,
+            "sanitization_params"       => array("trim", "int"),
             "step"                      => 2,
         ),
         "schedule_delivery_type"    => array(
@@ -228,7 +291,9 @@ class Controllers_Assessment_Distribution extends Controllers_Base {
                         "fields" => array(
                             "assessor_cohort_id",
                             "assessor_course_id",
-                            "assessor_organisation_id"
+                            "assessor_cgroup_id",
+                            "assessor_organisation_id",
+                            "assessor_individual"
                         )
                     )
                 ),
@@ -302,6 +367,12 @@ class Controllers_Assessment_Distribution extends Controllers_Base {
             "sanitization_params"   => array("trim", "int"),
             "step"                  => 4
         ),
+        "assessor_cgroup_id"        => array(
+            "label"                 => "Course Group",
+            "required"              => false,
+            "sanitization_params"   => array("trim", "int"),
+            "step"                  => 4
+        ),
         "assessor_organisation_id"  => array(
             "label"                 => "Organisation",
             "required"              => false,
@@ -310,6 +381,13 @@ class Controllers_Assessment_Distribution extends Controllers_Base {
         ),
         "assessor_faculty"          => array(
             "label"                 => "Faculty Member",
+            "required"              => false,
+            "array"                 => true,
+            "sanitization_params"   => array("trim", "int"),
+            "step"                  => 4
+        ),
+        "assessor_individual"       => array(
+            "label"                 => "Learners",
             "required"              => false,
             "array"                 => true,
             "sanitization_params"   => array("trim", "int"),
@@ -411,7 +489,7 @@ class Controllers_Assessment_Distribution extends Controllers_Base {
                 )
             ),
             "sanitization_params"       => array("trim"),
-            "allowed_values"            => array("self", "faculty", "grouped_users", "course", "individual_users"),
+            "allowed_values"            => array("self", "faculty", "grouped_users", "course", "individual_users", "external"),
             "requirement_matrix"        => array(
                 "faculty" => "target_faculty",
                 "grouped_users" => array(
@@ -420,12 +498,15 @@ class Controllers_Assessment_Distribution extends Controllers_Base {
                         "fields" => array(
                             "target_cohort_id",
                             "target_course_audience_id",
-                            "target_organisation_id"
+                            "target_cgroup_id",
+                            "target_organisation_id",
+                            "target_individual"
                         )
                     )
                 ),
                 "course" => "target_course_id",
-                "individual_users" => "selected_internal_targets"
+                "individual_users" => "selected_internal_targets",
+                "external" => "target-external-selector"
             ),
             "step"                      => 3
         ),
@@ -449,14 +530,41 @@ class Controllers_Assessment_Distribution extends Controllers_Base {
             "sanitization_params"   => array("trim", "int"),
             "step"                  => 3
         ),
+        "target_cgroup_id"          => array(
+            "label"                 => "Course Group",
+            "required"              => false,
+            "sanitization_params"   => array("trim", "int"),
+            "step"                  => 3
+        ),
         "target_organisation_id"     => array(
             "label"                 => "Organisation",
             "required"              => false,
             "sanitization_params"   => array("trim", "int"),
             "step"                  => 3
         ),
+        "target_individual"   => array(
+            "label"                     => "Learners",
+            "required"                  => false,
+            "array"                     => true,
+            "sanitization_params"       => array("trim", "int"),
+            "step"                      => 3
+        ),
         "target_faculty"            => array(
             "label"                 => "Faculty Member",
+            "required"              => false,
+            "array"                 => true,
+            "sanitization_params"   => array("trim", "int"),
+            "step"                  => 3
+        ),
+        "rs_target_external" => array(
+            "label"                 => "External Member",
+            "required"              => false,
+            "array"                 => true,
+            "sanitization_params"   => array("trim", "int"),
+            "step"                  => 3
+        ),
+        "target_external" => array(
+            "label"                 => "External Member",
             "required"              => false,
             "array"                 => true,
             "sanitization_params"   => array("trim", "int"),
@@ -475,6 +583,20 @@ class Controllers_Assessment_Distribution extends Controllers_Base {
             "sanitization_params"       => array("trim", "int"),
             "step"                      => 3
         ),
+        "target_option"             => array(
+            "label"                     => "CBME Option",
+            "required"                  => false,
+            "sanitization_params"       => array("trim"),
+            "default"                   => "non_cbme",
+            "allowed_values"            => array("all", "only_cbme", "non_cbme"),
+            "required_when"         => array(
+                "values" => array(
+                    "assessment_type" => "assessment"
+                ),
+                "type" => "variable"
+            ),
+            "step"                      => 3
+        ),
         "distribution_rs_target_option" => array(
             "label"                     => "Target Option",
             "required"                  => false,
@@ -487,10 +609,11 @@ class Controllers_Assessment_Distribution extends Controllers_Base {
                 )
             ),
             "sanitization_params"       => array("trim"),
-            "allowed_values"            => array("self", "learner", "faculty", "block"),
+            "allowed_values"            => array("self", "learner", "faculty", "block", "external"),
             "requirement_matrix"    => array(
                 "learner" => "distribution_rs_target_learner_option",
-                "faculty" => "additional_target_faculty"
+                "faculty" => "additional_target_faculty",
+                "external" => "target-rs-external-selector"
             ),
             "step"                      => 3
         ),
@@ -499,7 +622,7 @@ class Controllers_Assessment_Distribution extends Controllers_Base {
             "required"                  => false,
             "required_when"             => array(
                 "values" => array(
-                    "distribution_method" => "eventtype",
+                    "distribution_method" => "eventtype"
                 ),
                 "type" => "variable"
             ),
@@ -594,6 +717,14 @@ class Controllers_Assessment_Distribution extends Controllers_Base {
             "sanitization_params"   => array("trim", "int"),
             "step"                  => 3
         ),
+        "exclude_self_assessments"  => array(
+            "label"                     => "Exclude Self Assessments",
+            "required"                  => false,
+            "sanitization_params"       => array("trim"),
+            "default"                   => "0",
+            "allowed_values"            => array("1", "0"),
+            "step"                      => 4
+        ),
         "distribution_results_start_date"   => array(
             "label"                 => "Start Date",
             "db_fieldname"          => "release_start_date",
@@ -674,7 +805,91 @@ class Controllers_Assessment_Distribution extends Controllers_Base {
                 ),
                 "type" => "variable"
             )
-        )
+        ),
+        /**
+         * Target Options
+         */
+        // Task release
+        "target-task-release-option" => array(
+            "required"              => false,
+            "default"               => "never",
+            "sanitization_params"   => array("trim", "alpha"),
+            "allowed_values"        => array("always", "never", "threshold"),
+            "step"                  => 5
+        ),
+        "target-task-release-threshold-option" => array(
+            "label"                 => "Target task release criteria",
+            "sanitization_params"   => array("trim", "alpha"),
+            "allowed_values"        => array("unique"),
+            "step"                  => 5,
+            "required"              => false,
+            "required_when"         => array(
+                "values" => array(
+                    "target-task-release-option" => "threshold"
+                ),
+                "type" => "variable"
+            )
+        ),
+        "target-task-release-threshold-option-unique-percentage" => array(
+            "label"                 => "Target task release percentage",
+            "sanitization_params"   => array("trim", "int"),
+            "step"                  => 5,
+            "required"              => false,
+            "required_when"         => array(
+                "values" => array(
+                    "target-task-release-threshold-option" => "unique"
+                ),
+                "type" => "variable"
+            )
+        ),
+        // Report release
+        "target-report-release-option" => array(
+            "required"              => false,
+            "default"               => "never",
+            "sanitization_params"   => array("trim", "alpha"),
+            "allowed_values"        => array("always", "never", "threshold"),
+            "step"                  => 5
+        ),
+        "target-report-release-threshold-option" => array(
+            "label"                 => "Target report release criteria",
+            "sanitization_params"   => array("trim", "alpha"),
+            "allowed_values"        => array("unique"),
+            "step"                  => 5,
+            "required"              => false,
+            "required_when"         => array(
+                "values" => array(
+                    "target-report-release-option" => "threshold"
+                ),
+                "type" => "variable"
+            )
+        ),
+        "target-report-release-threshold-option-unique-percentage" => array(
+            "label"                 => "Target report release percentage",
+            "sanitization_params"   => array("trim", "int"),
+            "step"                  => 5,
+            "required"              => false,
+            "required_when"         => array(
+                "values" => array(
+                    "target-report-release-threshold-option" => "unique"
+                ),
+                "type" => "variable"
+            )
+        ),
+        // Report options
+        "target-report-comments-option" => array(
+            "label"                 => "Target reporting comment option",
+            "sanitization_params"   => array("trim", "alpha"),
+            "allowed_values"        => array("identifiable", "anonymous"),
+            "default"               => "anonymous",
+            "step"                  => 5,
+            "required"              => false,
+            "required_when"         => array(
+                "values" => array(
+                    "target-report-release-option" => array("always", "threshold")
+                ),
+                "type" => "variable"
+            )
+        ),
     );
 
     public function save() {
@@ -696,9 +911,9 @@ class Controllers_Assessment_Distribution extends Controllers_Base {
         $PROCESSED["created_by"] = $ENTRADA_USER->getActiveID();
         $PROCESSED["submittable_by_target"] = (isset($PROCESSED["attempts_scope"][0]) && $PROCESSED["attempts_scope"][0] == "targets" ? 1 : 0);
         $PROCESSED["release_date"] = NULL;
+        $PROCESSED["expiry_offset"] = NULL;
+        $PROCESSED["expiry_notification_offset"] = NULL;
         $PROCESSED["visibility_status"] = "visible";
-        $PROCESSED["assessment_type"] = "assessment";
-
 
         /**
          * "assessor_option" can pass validation with the value of "grouped_user", but "grouped_user" isn't a valid field value (the schema's enum
@@ -706,123 +921,6 @@ class Controllers_Assessment_Distribution extends Controllers_Base {
          */
         if (isset($PROCESSED["assessor_option"]) && $PROCESSED["assessor_option"] == "grouped_users") {
             $PROCESSED["assessor_option"] = "learner";
-        }
-        // Here we determine weather or not the distribution we are saving is an assessment or an evaluation
-        if(isset($PROCESSED["assessor_option"])) {
-            if(isset($PROCESSED["distribution_target_option"])) {
-                if ($PROCESSED["assessor_option"] === "learner" && $PROCESSED["distribution_target_option"] !== "learner") {
-                    if ($PROCESSED["assessor_option"] === "learner" && $PROCESSED["distribution_target_option"] === "individual_users") {
-                        //figure out if the target is faculty or learner.  Any means that it could be either one.
-                        foreach ($PROCESSED["targets"] as $key => $target_id) {
-                            $user_access = Models_User_Access::fetchRowByUserIDAppID($target_id);
-                            if ($user_access->getGroup() == "student") {
-                                $PROCESSED["assessment_type"] = "assessment";
-                            }
-                            if ($user_access->getGroup() == "faculty") {
-                                $PROCESSED["assessment_type"] = "evaluation";
-                            }
-                        }
-                    } else {
-                        $PROCESSED["assessment_type"] = "evaluation";
-                    }
-                }
-                if ($PROCESSED["assessor_option"] === "individual_users" && $PROCESSED["distribution_target_option"] !== "learner") {
-                    foreach ($PROCESSED["assessors"] as $key => $assessor_id) {
-                        $pieces = explode("_", $assessor_id);
-                        //individual users could be either faculty or learners. So we need to figure out which one they are.
-                        $user_access = Models_User_Access::fetchRowByUserIDAppID($pieces[1]);
-                        if($user_access->getGroup() == "student") {
-                            // need to see if the target is a learner that was selected individually
-                            if($PROCESSED["distribution_target_option"] === "individual_users") {
-                                foreach ($PROCESSED["targets"] as $key => $target_id) {
-                                    $user_access = Models_User_Access::fetchRowByUserIDAppID($target_id);
-                                    if ($user_access->getGroup() == "student") {
-                                        $PROCESSED["assessment_type"] = "assessment";
-                                    }
-                                    if ($user_access->getGroup() == "faculty") {
-                                        $PROCESSED["assessment_type"] = "evaluation";
-                                    }
-                                }
-                            } else {
-                                $PROCESSED["assessment_type"] = "evaluation";
-                            }
-                        } else {
-                            $PROCESSED["assessment_type"] = "evaluation";
-                        }
-                    }
-                }
-            }
-            if(isset($PROCESSED["distribution_rs_target_option"])) {
-                if ($PROCESSED["assessor_option"] === "learner" && $PROCESSED["distribution_rs_target_option"] !== "learner") {
-                    $PROCESSED["assessment_type"] = "evaluation";
-                }
-                if($PROCESSED["assessor_option"] === "learner" && $PROCESSED["distribution_rs_target_option"] === "any") {
-                    foreach ($PROCESSED["targets"] as $key => $target_id) {
-                        $user_access = Models_User_Access::fetchRowByUserIDAppID($target_id);
-                        if($user_access->getGroup() == "faculty") {
-                            $PROCESSED["assessment_type"] = "evaluation";
-                        }
-                        if($user_access->getGroup() == "student") {
-                            $PROCESSED["assessment_type"] = "assessment";
-                        }
-                    }
-                }
-                if ($PROCESSED["assessor_option"] === "individual_users" && $PROCESSED["distribution_rs_target_option"] !== "learner") {
-                    foreach ($PROCESSED["assessors"] as $key => $assessor_id) {
-                        $pieces = explode("_", $assessor_id);
-                        $user_access = Models_User_Access::fetchRowByUserIDAppID($pieces[1]);
-                        if($user_access->getGroup() == "student") {
-                            if($PROCESSED["distribution_target_option"] === "individual_users") {
-                                foreach ($PROCESSED["targets"] as $key => $target_id) {
-                                    $user_access = Models_User_Access::fetchRowByUserIDAppID($target_id);
-                                    if ($user_access->getGroup() == "student") {
-                                        $PROCESSED["assessment_type"] = "assessment";
-                                    }
-                                    if ($user_access->getGroup() == "faculty") {
-                                        $PROCESSED["assessment_type"] = "evaluation";
-                                    }
-                                }
-                            } else {
-                                $PROCESSED["assessment_type"] = "evaluation";
-                            }
-                        }
-                    }
-                }
-            }
-            if(isset($PROCESSED["distribution_eventtype_target_option"])) {
-                if ($PROCESSED["assessor_option"] === "learner" && $PROCESSED["distribution_eventtype_target_option"] !== "faculty") {
-                    $PROCESSED["assessment_type"] = "evaluation";
-                }
-                if($PROCESSED["assessor_option"] === "learner" && $PROCESSED["distribution_eventtype_target_option"] === "any") {
-                    foreach ($PROCESSED["targets"] as $key => $target_id) {
-                        $user_access = Models_User_Access::fetchRowByUserIDAppID($target_id);
-                        if($user_access->getGroup() == "student") {
-                            $PROCESSED["assessment_type"] = "assessment";
-                        }
-                    }
-                }
-                if ($PROCESSED["assessor_option"] === "individual_users" && $PROCESSED["distribution_eventtype_target_option"] !== "learner") {
-                    foreach ($PROCESSED["assessors"] as $key => $assessor_id) {
-                        $pieces = explode("_", $assessor_id);
-                        $user_access = Models_User_Access::fetchRowByUserIDAppID($pieces[1]);
-                        if($user_access->getGroup() == "student") {
-                            if($PROCESSED["distribution_target_option"] === "individual_users") {
-                                foreach ($PROCESSED["targets"] as $key => $target_id) {
-                                    $user_access = Models_User_Access::fetchRowByUserIDAppID($target_id);
-                                    if ($user_access->getGroup() == "student") {
-                                        $PROCESSED["assessment_type"] = "assessment";
-                                    }
-                                    if ($user_access->getGroup() == "faculty") {
-                                        $PROCESSED["assessment_type"] = "evaluation";
-                                    }
-                                }
-                            } else {
-                                $PROCESSED["assessment_type"] = "evaluation";
-                            }
-                        }
-                    }
-                }
-            }
         }
 
         $validated_as_date_range = false;
@@ -923,6 +1021,44 @@ class Controllers_Assessment_Distribution extends Controllers_Base {
         }
         if (isset($PROCESSED["release_end_date"]) && $PROCESSED["release_end_date"] && isset($PROCESSED["distribution_results_end_time"]) && $PROCESSED["distribution_results_end_time"]) {
             $PROCESSED["release_end_date"] += $PROCESSED["distribution_results_end_time"];
+        }
+
+        if (isset($PROCESSED["expiry_option"]) && $PROCESSED["expiry_option"]) {
+            if (isset($PROCESSED["expiry_days"]) && $PROCESSED["expiry_days"]) {
+                $PROCESSED["expiry_offset"] += $PROCESSED["expiry_days"] * 86400;
+            }
+            if (isset($PROCESSED["expiry_hours"]) && $PROCESSED["expiry_hours"]) {
+                $PROCESSED["expiry_offset"] += $PROCESSED["expiry_hours"] * 3600;
+            }
+
+            if (isset($PROCESSED["expiry_notification_option"]) && $PROCESSED["expiry_notification_option"]) {
+                if (isset($PROCESSED["expiry_notification_days"]) && $PROCESSED["expiry_notification_days"]) {
+                    $PROCESSED["expiry_notification_offset"] += $PROCESSED["expiry_notification_days"] * 86400;
+                }
+                if (isset($PROCESSED["expiry_notification_hours"]) && $PROCESSED["expiry_notification_hours"]) {
+                    $PROCESSED["expiry_notification_offset"] += $PROCESSED["expiry_notification_hours"] * 3600;
+                }
+            }
+        } else if(isset($PROCESSED["expiry_date"]) && $PROCESSED["expiry_date"]) {
+            // Specific expiry date (used in date range distributions).
+            $PROCESSED["expiry_offset"] = strtotime($PROCESSED["expiry_date"]) - $PROCESSED["delivery_date"];
+
+            if (isset($PROCESSED["expiry_notification_option"]) && $PROCESSED["expiry_notification_option"]) {
+                if (isset($PROCESSED["expiry_notification_days"]) && $PROCESSED["expiry_notification_days"]) {
+                    $PROCESSED["expiry_notification_offset"] += $PROCESSED["expiry_notification_days"] * 86400;
+                }
+                if (isset($PROCESSED["expiry_notification_hours"]) && $PROCESSED["expiry_notification_hours"]) {
+                    $PROCESSED["expiry_notification_offset"] += $PROCESSED["expiry_notification_hours"] * 3600;
+                }
+            }
+        }
+
+        if (isset($PROCESSED["exclude_self_assessments"])) {
+            if ($PROCESSED["exclude_self_assessments"]) {
+                $PROCESSED["exclude_self_assessments"] = 1;
+            } else {
+                $PROCESSED["exclude_self_assessments"] = 0;
+            }
         }
 
         $distribution = new Models_Assessments_Distribution($PROCESSED);
@@ -1095,7 +1231,6 @@ class Controllers_Assessment_Distribution extends Controllers_Base {
                 }
             }
 
-            $external_assessor_model = new Models_Assessments_Distribution_ExternalAssessor();
             $course_contact_model = new Models_Assessments_Distribution_CourseContact();
 
             if (isset($PROCESSED["assessor_option"]) && $PROCESSED["assessor_option"] && $validated_as_date_range) {
@@ -1141,27 +1276,45 @@ class Controllers_Assessment_Distribution extends Controllers_Base {
 
                     case "learner" :
                         $PROCESSED["assessor_role"] = "learner";
-                        $grouped_value = false;
+                        $grouped_values = array();
+                        $assessor_scope = "all_learners";
+                        $assessor_type = null;
+
                         if (isset($PROCESSED["assessor_cohort_id"])) {
                             $assessor_type = "group_id";
-                            $grouped_value = $PROCESSED["assessor_cohort_id"];
+                            $grouped_values[] = $PROCESSED["assessor_cohort_id"];
                         }
 
                         if (isset($PROCESSED["assessor_course_id"])) {
                             $assessor_type = "course_id";
-                            $grouped_value = $PROCESSED["assessor_course_id"];
+                            $grouped_values[] = $PROCESSED["assessor_course_id"];
                         }
 
-                        $assessor = new Models_Assessments_Distribution_Assessor(array(
-                            "adistribution_id" => $distribution->getID(),
-                            "assessor_type" => $assessor_type,
-                            "assessor_scope" => "all_learners",
-                            "assessor_value" => $grouped_value,
-                            "assessor_role" => "learner"
-                        ));
+                        if (isset($PROCESSED["assessor_individual"])) {
+                            $assessor_type = "proxy_id";
+                            $assessor_scope = "self";
+                            $grouped_values = $PROCESSED["assessor_individual"];
+                        }
 
-                        if (!$assessor->insert()) {
-                            add_error($translate->_("An error occurred while attempting to insert external assessors"));
+                        if (isset($PROCESSED["assessor_cgroup_id"])) {
+                            $assessor_type = "cgroup_id";
+                            $grouped_values[] = $PROCESSED["assessor_cgroup_id"];
+                        }
+
+                        if (is_array($grouped_values) && $assessor_type) {
+                            foreach ($grouped_values as $grouped_value) {
+                                $assessor = new Models_Assessments_Distribution_Assessor(array(
+                                    "adistribution_id" => $distribution->getID(),
+                                    "assessor_type" => $assessor_type,
+                                    "assessor_scope" => $assessor_scope,
+                                    "assessor_value" => $grouped_value,
+                                    "assessor_role" => "learner"
+                                ));
+
+                                if (!$assessor->insert()) {
+                                    add_error($translate->_("An error occurred while attempting to insert assessors"));
+                                }
+                            }
                         }
                         break;
 
@@ -1445,34 +1598,51 @@ class Controllers_Assessment_Distribution extends Controllers_Base {
                         }
                         break;
                     case "grouped_users" :
-                        $grouped_value = false;
+                        $grouped_values = array();
+                        $target_scope = "all_learners";
+                        $target_type = null;
+
                         if (isset($PROCESSED["target_cohort_id"])) {
                             $target_type = "group_id";
-                            $grouped_value = $PROCESSED["target_cohort_id"];
+                            $grouped_values[] = $PROCESSED["target_cohort_id"];
                         }
 
                         if (isset($PROCESSED["target_course_audience_id"])) {
                             $target_type = "course_id";
-                            $grouped_value = $PROCESSED["target_course_audience_id"];
+                            $grouped_values[] = $PROCESSED["target_course_audience_id"];
+                        }
+
+                        if (isset($PROCESSED["target_cgroup_id"])) {
+                            $target_type = "cgroup_id";
+                            $grouped_values[] = $PROCESSED["target_cgroup_id"];
                         }
 
                         if (isset($PROCESSED["target_organisation_id"])) {
                             $target_type = "organisation_id";
-                            $grouped_value = $PROCESSED["target_organisation_id"];
+                            $grouped_values[] = $PROCESSED["target_organisation_id"];
                         }
 
-                        $target = new Models_Assessments_Distribution_Target(array(
-                            "adistribution_id" => $distribution->getID(),
-                            "target_type" => $target_type,
-                            "target_scope" => "all_learners",
-                            "target_role" => "learner",
-                            "target_id" => $grouped_value
-                        ));
-
-                        if (!$target->insert()) {
-                            add_error($translate->_("An error occurred while attempting to insert a target"));
+                        if (isset($PROCESSED["target_individual"])) {
+                            $target_type = "proxy_id";
+                            $target_scope = "self";
+                            $grouped_values = $PROCESSED["target_individual"];
                         }
 
+                        if (is_array($grouped_values) && $target_type) {
+                            foreach ($grouped_values as $grouped_value) {
+                                $target = new Models_Assessments_Distribution_Target(array(
+                                    "adistribution_id" => $distribution->getID(),
+                                    "target_type" => $target_type,
+                                    "target_scope" => $target_scope,
+                                    "target_role" => "learner",
+                                    "target_id" => $grouped_value
+                                ));
+
+                                if (!$target->insert()) {
+                                    add_error($translate->_("An error occurred while attempting to insert a target"));
+                                }
+                            }
+                        }
                         break;
                     case "course" :
                         if (isset($PROCESSED["target_course_id"]) && $PROCESSED["target_course_id"]) {
@@ -1494,15 +1664,28 @@ class Controllers_Assessment_Distribution extends Controllers_Base {
                     case "individual_users" :
                         $PROCESSED["target_role"] = "any";
                         foreach ($PROCESSED["targets"] as $key => $target_id) {
-
-                            $target_type = "proxy_id";
-
                             $target = new Models_Assessments_Distribution_Target(array(
                                 "adistribution_id" => $distribution->getID(),
-                                "target_type" => $target_type,
+                                "target_type" => "proxy_id",
                                 "target_scope" => "self",
                                 "target_id" => $target_id,
                                 "target_role" => "any"
+                            ));
+
+                            if (!$target->insert()) {
+                                add_error($translate->_("An error occurred while attempting to insert individual targets"));
+                            }
+                        }
+                        break;
+                    case "external" :
+                        $PROCESSED["target_role"] = "faculty";
+                        foreach ($PROCESSED["target_external"] as $key => $target_id) {
+                            $target = new Models_Assessments_Distribution_Target(array(
+                                "adistribution_id" => $distribution->getID(),
+                                "target_type" => "external_hash",
+                                "target_scope" => "self",
+                                "target_id" => $target_id,
+                                "target_role" => "faculty"
                             ));
 
                             if (!$target->insert()) {
@@ -1629,21 +1812,38 @@ class Controllers_Assessment_Distribution extends Controllers_Base {
                             add_error($translate->_("An error occurred while attempting to insert a target."));
                         }
                         break;
+                    case "external" :
+                        if (isset($PROCESSED["rs_target_external"]) && is_array($PROCESSED["rs_target_external"])) {
+                            foreach ($PROCESSED["rs_target_external"] as $proxy_id) {
+                                $target = new Models_Assessments_Distribution_Target(array(
+                                    "adistribution_id" => $distribution->getID(),
+                                    "target_type" => "external_hash",
+                                    "target_scope" => "self",
+                                    "target_role" => "faculty",
+                                    "target_id" => $proxy_id
+                                ));
+
+                                if (!$target->insert()) {
+                                    add_error($translate->_("An error occurred while attempting to insert a target."));
+                                }
+                            }
+                        }
+                        break;
                 }
             } elseif (isset($PROCESSED["distribution_eventtype_target_option"])) {
                 switch ($PROCESSED["distribution_eventtype_target_option"]) {
                     case "learner" :
                         $target_scope = "self";
                         $target_role = "learner";
-                    break;
+                        break;
                     case "faculty" :
                         $target_scope = "self";
                         $target_role = "faculty";
-                    break;
+                        break;
                     case "event" :
                         $target_scope = "self";
                         $target_role = "any";
-                    break;
+                        break;
                 }
 
                 if (isset($PROCESSED["eventtypes"]) && is_array($PROCESSED["eventtypes"])) {
@@ -1684,6 +1884,113 @@ class Controllers_Assessment_Distribution extends Controllers_Base {
                         add_error($translate->_("An error occurred while attempting to insert a reviewer."));
                     }
                 }
+            }
+
+            $target_task_releases_model = new Models_Assessments_Distribution_Target_TaskReleases();
+            if ($method == "update") {
+                $target_task_releases = $target_task_releases_model->fetchAllByADistributionID($distribution->getID());
+                if ($target_task_releases) {
+                    foreach ($target_task_releases as $target_task_release) {
+                        $target_task_release->delete();
+                    }
+                }
+            }
+            if (isset($PROCESSED["target-task-release-option"])) {
+
+                $target_task_release_data = array(
+                    "adistribution_id"  => $distribution->getID(),
+                    "unique_targets"    => 0,
+                    "percent_threshold" => null,
+                    "created_date"      => time(),
+                    "created_by"        => $ENTRADA_USER->getActiveID()
+                );
+
+                switch ($PROCESSED["target-task-release-option"]) {
+                    case "threshold":
+                        if (isset($PROCESSED["target-task-release-threshold-option"])) {
+                            switch ($PROCESSED["target-task-release-threshold-option"]) {
+                                case "unique":
+                                    if ($PROCESSED["target-task-release-threshold-option-unique-percentage"]) {
+                                        $target_task_release_data["target_option"] = "percent";
+                                        $target_task_release_data["unique_targets"] = 1;
+                                        $target_task_release_data["percent_threshold"] = $PROCESSED["target-task-release-threshold-option-unique-percentage"];
+                                    }
+                                    break;
+                                default:
+                                    break;
+                            }
+                        }
+                        break;
+                    case "always":
+                        $target_task_release_data["target_option"] = "always";
+                        break;
+                    case "never":
+                        $target_task_release_data["target_option"] = "never";
+                        break;
+                    default:
+                        break;
+                }
+
+                if (!$target_task_releases_model->fromArray($target_task_release_data)->insert()) {
+                    add_error($translate->_("An error occurred while attempting to insert a distribution target task release., DB said " . $db->ErrorMsg()));
+                }
+            }
+
+            $target_report_releases_model = new Models_Assessments_Distribution_Target_ReportReleases();
+            if ($method == "update") {
+                $target_report_releases = $target_report_releases_model->fetchAllByADistributionID($distribution->getID());
+                if ($target_report_releases) {
+                    foreach ($target_report_releases as $target_report_release) {
+                        $target_report_release->delete();
+                    }
+                }
+            }
+            if (isset($PROCESSED["target-report-release-option"])) {
+
+                $target_report_release_data = array(
+                    "adistribution_id"  => $distribution->getID(),
+                    "unique_targets"    => 0,
+                    "percent_threshold" => null,
+                    "comment_options"   => $PROCESSED["target-report-comments-option"] ? $PROCESSED["target-report-comments-option"] : "anonymous",
+                    "created_date"      => time(),
+                    "created_by"        => $ENTRADA_USER->getActiveID()
+                );
+
+                switch ($PROCESSED["target-report-release-option"]) {
+                    case "threshold":
+                        if (isset($PROCESSED["target-report-release-threshold-option"])) {
+                            switch ($PROCESSED["target-report-release-threshold-option"]) {
+                                case "unique":
+                                    if ($PROCESSED["target-report-release-threshold-option-unique-percentage"]) {
+                                        $target_report_release_data["target_option"] = "percent";
+                                        $target_report_release_data["unique_targets"] = 1;
+                                        $target_report_release_data["percent_threshold"] = $PROCESSED["target-report-release-threshold-option-unique-percentage"];
+                                    }
+                                    break;
+                                default:
+                                    break;
+                            }
+                        }
+                        break;
+                    case "always":
+                        $target_report_release_data["target_option"] = "always";
+                        break;
+                    case "never":
+                        $target_report_release_data["target_option"] = "never";
+                        break;
+                    default:
+                        break;
+                }
+
+                if (!$target_report_releases_model->fromArray($target_report_release_data)->insert()) {
+                    add_error($translate->_("An error occurred while attempting to insert a distribution target report release., DB said " . $db->ErrorMsg()));
+                }
+            }
+
+            // Immediately apply new release options.
+            if ($distribution && $distribution->getID()) {
+                $assessments_base = new Entrada_Assessments_Base();
+                $assessments_base->processDistributionAssessmentOptions($distribution->getID());
             }
         } else {
             application_log("error", "An error occurred while attempting to save this distribution. DB:" . $db->ErrorMsg());

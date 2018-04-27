@@ -238,7 +238,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP"))) {
                                     if (in_array($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["sb"], Array("b.`location`", "c.`site_name`", "a.`patient_info`", "e.`rotation_title`", "f.`agerange_id`"))) {
                                         echo ($result["sort_by"] ? $result["sort_by"] : "No ".ucfirst($_GET["sb"])." Set");
                                     } elseif ($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["sb"] == "a.`encounter_date`") {
-                                        echo date(DEFAULT_DATE_FORMAT, $result["sort_by"]);
+                                        echo date(DEFAULT_DATETIME_FORMAT, $result["sort_by"]);
                                     }
                                     ?>
                                 </a>
@@ -271,9 +271,9 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP"))) {
         }
 
         if (array_key_exists($rotation_id, $rotation_names) && $rotation_names[$rotation_id]) {
-            add_notice("No clerkship logbook entries for this rotation [".$rotation_names[$rotation_id]."] have been found at this time. You may view all entries for all rotations by <a href=\"".ENTRADA_URL."/clerkship/logbook?".replace_query(array("rotation" => false))."\" />clicking here</a>.");
+            add_notice("No " . $translate->_("clerkship") . " logbook entries for this rotation [".$rotation_names[$rotation_id]."] have been found at this time. You may view all entries for all rotations by <a href=\"".ENTRADA_URL."/clerkship/logbook?".replace_query(array("rotation" => false))."\" />clicking here</a>.");
         } else {
-            add_notice("There are no clerkship logbook entries found at this time. To begin logging your encounters, click the Log New Encounter button above.");
+            add_notice("There are no " . $translate->_("clerkship logbook") . " entries found at this time. To begin logging your encounters, click the Log New Encounter button above.");
         }
 
         echo display_notice();

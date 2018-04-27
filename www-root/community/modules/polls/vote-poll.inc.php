@@ -242,7 +242,7 @@ if ($RECORD_ID) {
 			}
 		} else {
 			$NOTICE++;
-			$NOTICESTR[] = "The ".$terminology." that you are trying to vote in was deactivated or has already concluded <strong>".date(DEFAULT_DATE_FORMAT, $poll_record["updated_date"])."</strong> by <strong>".html_encode(get_account_data("firstlast", $poll_record["updated_by"]))."</strong>.<br /><br />If there has been a mistake or you have questions relating to this issue please contact the MEdTech Unit directly.";
+			$NOTICESTR[] = "The ".$terminology." that you are trying to vote in was deactivated or has already concluded <strong>".date(DEFAULT_DATETIME_FORMAT, $poll_record["updated_date"])."</strong> by <strong>".html_encode(get_account_data("firstlast", $poll_record["updated_by"]))."</strong>.<br /><br />If there has been a mistake or you have questions relating to this issue please contact the MEdTech Unit directly.";
 	
 			echo display_notice();
 	

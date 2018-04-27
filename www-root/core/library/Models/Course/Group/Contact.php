@@ -96,7 +96,7 @@ class Models_Course_Group_Contact extends Models_Base {
     public function getExportGroupContactsByGroupID($group_id) {
         global $db;
 
-        $query = "SELECT a.*, CONCAT_WS(', ', b.`lastname`, b.`firstname`) AS `fullname` FROM `course_group_contacts` AS a
+        $query = "SELECT a.*, CONCAT_WS(', ', b.`lastname`, b.`firstname`) AS `fullname`, b.`number` FROM `course_group_contacts` AS a
 						JOIN `".AUTH_DATABASE."`.`user_data` AS b
 						ON a.`proxy_id` = b.`id`
 						WHERE a.`cgroup_id` = ?

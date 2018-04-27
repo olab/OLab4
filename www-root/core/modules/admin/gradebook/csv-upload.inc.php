@@ -29,8 +29,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 } elseif (!$ENTRADA_ACL->amIAllowed("gradebook", "update", false)) {
 	$ONLOAD[]	= "setTimeout('window.location=\\'".ENTRADA_URL."/admin/".$MODULE."\\'', 15000)";
 
-	$ERROR++;
-	$ERRORSTR[]	= "Your account does not have the permissions required to use this feature of this module.<br /><br />If you believe you are receiving this message in error please contact <a href=\"mailto:".html_encode($AGENT_CONTACTS["administrator"]["email"])."\">".html_encode($AGENT_CONTACTS["administrator"]["name"])."</a> for assistance.";
+	add_error("Your account does not have the permissions required to use this feature of this module.<br /><br />If you believe you are receiving this message in error please contact <a href=\"mailto:".html_encode($AGENT_CONTACTS["administrator"]["email"])."\">".html_encode($AGENT_CONTACTS["administrator"]["name"])."</a> for assistance.");
 
 	echo display_error();
 
@@ -51,7 +50,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
         $url = ENTRADA_URL."/admin/gradebook/assessments?".replace_query(array("step" => false, "section" => "grade", "assessment_id" => $ASSESSMENT_ID));
         if ($_FILES["file"]["error"] > 0) {
             add_error("Error occurred while uploading file.");
-        } elseif(!in_array($_FILES["file"]["type"], array("text/csv", "application/vnd.ms-excel","text/comma-separated-values","application/csv", "application/excel", "application/vnd.ms-excel", "application/vnd.msexcel","application/octet-stream"))) {
+        } elseif(!in_array(mime_content_type($_FILES["file"]["tmp_name"]), array("text/csv", "text/plain", "application/vnd.ms-excel","text/comma-separated-values","application/csv", "application/excel", "application/vnd.ms-excel", "application/vnd.msexcel","application/octet-stream"))) {
             add_error("Invalid <strong>file type</strong> uploaded. Must be a CSV file in the proper format.");
         } else {
             if (!DEMO_MODE) {
@@ -60,27 +59,31 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
                 $lines = file(DEMO_GRADEBOOK);
             }
             $PROCESSED["assessment_id"] = $ASSESSMENT_ID;
-            $query = "SELECT *, a.`name` as `assessment_name` FROM `assessments` AS a
-                        JOIN `assessment_marking_schemes` AS b
-                        ON a.`marking_scheme_id` = b.`id`
-                        WHERE a.`assessment_id` = ".$db->qstr($ASSESSMENT_ID)."
-                        AND a.`active` = 1";
-            $assessment = $db->GetRow($query);
-            $GROUP = $assessment["cohort"];
-            $ASSESSMENT_NAME = $assessment["assessment_name"];
-            $clean_parameters = array("trim");
-            switch ($assessment["handler"]) {
-                case "Boolean" :
-                case "IncompleteComplete" :
-                    $clean_parameters[] = "alphanumeric";
-                break;
-                case "Numeric" :
-                case "Percentage" :
-                default :
-                    $clean_parameters[] = "float";
-                break;
-            }
-            if ($GROUP) {
+            $assessment_model = Models_Gradebook_Assessment::fetchRowByID($ASSESSMENT_ID);
+            if ($assessment_model) {
+                $assessment = $assessment_model->toArray();
+                $marking_scheme = Models_Gradebook_Assessment_Marking_Scheme::fetchRowByID($assessment["marking_scheme_id"]);
+                $assessment["handler"] = $marking_scheme->getHandler();
+                /**
+                 * fetch the audience for this assessment.
+                 */
+                $audience = new Models_Course_Audience();
+                $audience_array = $audience->getAllUsersByCourseIDCperiodIDOrganisationID($assessment["course_id"], $assessment["cperiod_id"], $ENTRADA_USER->getActiveOrganisation());
+                $audience_ids = array_map(function($arr) {return $arr["proxy_id"];}, $audience_array);
+                $clean_parameters = array("trim");
+
+                switch ($assessment["handler"]) {
+                    case "Boolean" :
+                    case "IncompleteComplete" :
+                        $clean_parameters[] = "alphanumeric";
+                    break;
+                    case "Numeric" :
+                    case "Percentage" :
+                    default :
+                        $clean_parameters[] = "float";
+                    break;
+                }
+
                 echo "<form id=\"errorForm\" action=\"".ENTRADA_URL."/admin/".$MODULE."/assessments?".replace_query(array("section" => "grade", "assessment_id" => $ASSESSMENT_ID))."\" method=\"POST\">";
                 foreach ($lines as $key => $line) {
                     $member_found = false;
@@ -115,30 +118,31 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
                         $valid_value = true;
                     }
                     if ($stud_num && isset($temp_value) && ($temp_value || $temp_value === false || $temp_value === 0. || $temp_value === 0)) {
-                        $query = "SELECT * FROM `".AUTH_DATABASE."`.`user_data` WHERE `number` = ".$db->qstr($stud_num);
+                        $user = Models_User::fetchRowByNumber($stud_num);
 
-                        $user = $db->GetRow($query);
                         if ($user) {
-                            $query = "SELECT * FROM `group_members` WHERE `group_id` = ".$db->qstr($GROUP)." AND `proxy_id` = ".$db->qstr($user["id"])." AND `member_active` = '1'";
-                            $member = $db->GetRow($query);
-                            if ($member) {
-                                $PROCESSED["proxy_id"] = $member["proxy_id"];
-                                $member_found = true;
-                            }
-                            if ($member_found) {
+                            if (in_array($user->getID(), $audience_ids)) {
                                 if ($valid_value) {
-                                    $query = "SELECT * FROM `assessment_grades` WHERE `assessment_id` = ".$db->qstr($ASSESSMENT_ID)." AND `proxy_id` = ".$db->qstr($member["proxy_id"]);
-                                    $grade = $db->GetRow($query);
 
-                                    if (isset($assessment["grade_threshold"]) && $PROCESSED["value"] < $assessment["grade_threshold"]) {
-                                        $PROCESSED["threshold_notified"] = 0;
+                                    // see if there is an existing grade record to update, otherwise we add a new one
+                                    $new_grade = new Models_Assessment_Grade(array("assessment_id" => $ASSESSMENT_ID, "proxy_id" => $user->getID(), "threshold_notified" => 0));
+                                    $found_grade = $new_grade->fetchRowByAssessmentIDProxyID();
+                                    $grade_model = $found_grade ? $found_grade : $new_grade;
+                                    $grade_model->setValue($PROCESSED["value"]);
+                                    if (null !== $assessment["grade_threshold"] && $PROCESSED["value"] < $assessment["grade_threshold"]) {
+                                        $grade_model->setThresholdNotified(0);
                                     }
 
-                                    if ($grade) {
-                                        $db->AutoExecute("assessment_grades",$PROCESSED, "UPDATE", "`grade_id`=".$db->qstr($grade["grade_id"]));
+                                    if ($grade_model->getGradeID()) {
+                                        $action = "update";
+                                        $grade_model->update();
                                     } else {
-                                        $db->AutoExecute("assessment_grades",$PROCESSED,"INSERT");
+                                        $action = "insert";
+                                        $grade_model->insert();
                                     }
+
+                                    // Store log for this api call at any change of assessment grades
+                                    Models_Statistic::addStatistic("assessment_grades", $action, "value", $PROCESSED["value"], $PROCESSED["proxy_id"]);
                                 } else {
                                     echo "<input type=\"hidden\" value=\"".html_encode($preserved_input)."\" name=\"error_grades[".$PROCESSED["proxy_id"]."]\" />\n";
                                     if (!has_error()) {
@@ -157,9 +161,9 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
                 }
                 echo "</form>";
                 if (!DEMO_MODE) {
-                    add_success("Successfully updated <strong>Gradebook</strong>. You will now be redirected to the <strong>Grade Assessment</strong> page for <strong>".$ASSESSMENT_NAME. "</strong>. This will happen <strong>automatically</strong> in 5 seconds or <a href=\"#\" onclick=\"$('errorForm').submit()\" style=\"font-weight: bold\">click here</a> to continue now.");
+                    add_success("Successfully updated <strong>Gradebook</strong>. You will now be redirected to the <strong>Grade Assessment</strong> page for <strong>".$assessment["name"]. "</strong>. This will happen <strong>automatically</strong> in 5 seconds or <a href=\"#\" onclick=\"$('errorForm').submit()\" style=\"font-weight: bold\">click here</a> to continue now.");
                 } else {
-                    add_success("Entrada is in demo mode therefore the Entrada demo grade file was used for this import instead of the file you attempted to import. You will now be redirected to the <strong>Grade Assessment</strong> page for <strong>".$ASSESSMENT_NAME. "</strong>. This will happen <strong>automatically</strong> in 5 seconds or <a href=\"#\" onclick=\"$('errorForm').submit()\" style=\"font-weight: bold\">click here</a> to continue now.");
+                    add_success("Entrada is in demo mode therefore the Entrada demo grade file was used for this import instead of the file you attempted to import. You will now be redirected to the <strong>Grade Assessment</strong> page for <strong>".$assessment["name"]. "</strong>. This will happen <strong>automatically</strong> in 5 seconds or <a href=\"#\" onclick=\"$('errorForm').submit()\" style=\"font-weight: bold\">click here</a> to continue now.");
                 }
                 $COURSE_ID = (int)$_GET["id"];
                 if (!has_error()) {

@@ -2,6 +2,11 @@
     font-family:Bebas;
     src:url(../fonts/BEBAS.ttf)
 }
+
+.modal-lg {
+    width: 800px;
+    margin-left: -420px;
+}
 /**
  *  Twitter Widget
  */
@@ -198,10 +203,6 @@ a {
     border:1px solid #ddd
 }
 
-iframe {
-    max-width: 500px;
-}
-
 header.page-header {
     background:url(../images/header-illustration.png) 98% top no-repeat;
     float:left;
@@ -322,11 +323,6 @@ td.community-page-list {
     margin-bottom:20px
 }
 
-ul.shares li {
-    /*border-bottom:1px solid #ddd;*/
-    padding:15px 0
-}
-
 ul.shares, ul.community-page-list {
     list-style:none;
     padding-left:0;
@@ -418,8 +414,8 @@ i.float-left{
     margin: 8px 0 0 0;
 }
 span.iconPlaceholder {
-    height: 16px;
-    width: 16px;
+    height: 14px;
+    width: 14px;
     float: left;
 }
 .clear{
@@ -816,9 +812,8 @@ nav.top-navigation ul,nav.breadcrumb ul,nav.breadcrumb li {
 }
 
 ul.shares li {
-    padding: 5px 0 2px 10px;
     list-style: none;
-    }
+}
 
 .tab8 a {
     background-color:#749ea1!important
@@ -1028,15 +1023,6 @@ table.discussions tbody td {
 
 table.discussions tbody tr:nth-child(even) {
     background-color:#fafafa
-}
-
-.content ul.shares li {
-    /*border-bottom:1px solid #ddd;*/
-    padding:15px 0
-}
-
-iframe {
-    max-width: 500px;
 }
 
 h2.gallery-heading {

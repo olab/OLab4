@@ -58,7 +58,6 @@ tbody td.community-notifications{
 }
 #profile-image-container.pull-right {
     right: 0;
-    top: 60px;
 }
 #profile-image-container .img-polaroid {
     object-fit: cover;

@@ -21,7 +21,11 @@
  * @copyright Copyright 2016 Queen's University. All Rights Reserved.
  */
 class Models_Assessments_FutureTaskSnapshot extends Models_Base {
-    protected $future_task_id, $adistribution_id, $assessor_type, $assessor_value, $assessment_type, $target_type, $target_value, $title, $rotation_start_date, $rotation_end_date, $delivery_date, $schedule_details, $created_date, $created_by;
+    protected   $future_task_id, $adistribution_id, $assessor_type, $assessor_value, $task_type,
+                $target_type, $target_value, $title, $rotation_start_date, $rotation_end_date, $delivery_date,
+                $schedule_details, $created_date, $created_by, $form_id, $assessment_type_id, $organisation_id,
+                $associated_record_id, $associated_record_type, $min_submittable, $max_submittable,
+                $feedback_required, $start_date, $end_date, $additional_assessment, $deleted_date, $deleted_by;
 
     protected static $table_name = "cbl_assessment_ss_future_tasks";
     protected static $primary_key = "future_task_id";
@@ -47,8 +51,8 @@ class Models_Assessments_FutureTaskSnapshot extends Models_Base {
         return $this->assessor_value;
     }
 
-    public function getAssessmentType() {
-        return $this->assessment_type;
+    public function getTaskType() {
+        return $this->task_type;
     }
 
     public function getTargetType() {
@@ -183,11 +187,28 @@ class Models_Assessments_FutureTaskSnapshot extends Models_Base {
         return false;
     }
 
-    public static function fetchRowByDistributionIDAssessorValueTargetValueDeliveryDate($distribution_id, $assessor_value, $target_value, $delivery_date, $deleted_date = NULL) {
+    public function setDeletedBy ($id) {
+        $this->deleted_by = $id;
+    }
+
+    public function setDeletedDate ($deleted_date) {
+        $this->deleted_date = $deleted_date;
+    }
+
+    public static function fetchRowByID($id) {
+        $self = new self();
+        return $self->fetchRow(array(
+            array("key" => "future_task_id", "value" => $id, "method" => "=")
+        ));
+    }
+
+    public static function fetchRowByDistributionIDAssessorTypeAssessorValueTargetTypeTargetValueDeliveryDate($distribution_id, $assessor_type, $assessor_value, $target_type, $target_value, $delivery_date, $deleted_date = NULL) {
         $self = new self();
         return $self->fetchRow(array(
             array("key" => "adistribution_id", "value" => $distribution_id, "method" => "="),
+            array("key" => "assessor_type", "value" => $assessor_type, "method" => "="),
             array("key" => "assessor_value", "value" => $assessor_value, "method" => "="),
+            array("key" => "target_type", "value" => $target_type, "method" => "="),
             array("key" => "target_value", "value" => $target_value, "method" => "="),
             array("key" => "delivery_date", "value" => $delivery_date, "method" => "="),
             array("key" => "deleted_date", "value" => ($deleted_date ? $deleted_date : NULL), "method" => ($deleted_date ? "<=" : "IS"))
@@ -240,27 +261,30 @@ class Models_Assessments_FutureTaskSnapshot extends Models_Base {
         }
 
         $assessor_type = ($is_external) ? 'external' : 'internal';
-        $query = "          SELECT a.*, b.`assessment_type` FROM `cbl_assessment_ss_future_tasks` AS a
-                            JOIN `cbl_assessment_distributions` AS b
-                            ON a.`adistribution_id` = b.`adistribution_id`                    
-                            JOIN `courses` AS c
-                            ON b.`course_id` = c.`course_id`                            
-                            WHERE a.`assessor_type` = ?
-                            AND a.`assessor_value` = ?
-                            AND b.`deleted_date` IS NULL
-                            
-                            $AND_course_in
-                            $AND_course_filter_in
-                            $AND_cperiod_in
-                            $AND_title_like
-                            $AND_date_greater
-                            $AND_date_less
-                            
-                            ORDER BY a.`delivery_date` DESC, 
-                            a.`rotation_start_date` DESC,
-                            a.`rotation_end_date` DESC
-                            $LIMIT $OFFSET
-                            ";
+        $query = "  SELECT a.*, b.`assessment_type` 
+                    FROM `cbl_assessment_ss_future_tasks` AS a
+                    JOIN `cbl_assessment_distributions` AS b
+                    ON a.`adistribution_id` = b.`adistribution_id`                    
+                    JOIN `courses` AS c
+                    ON b.`course_id` = c.`course_id`                            
+                    WHERE a.`assessor_type` = ?
+                    AND a.`assessor_value` = ?
+                    AND a.`deleted_date` IS NULL
+                    AND b.`deleted_date` IS NULL
+                    AND b.`visibility_status` = 'visible'
+                    
+                    $AND_course_in
+                    $AND_course_filter_in
+                    $AND_cperiod_in
+                    $AND_title_like
+                    $AND_date_greater
+                    $AND_date_less
+                    
+                    ORDER BY a.`delivery_date` DESC, 
+                    a.`rotation_start_date` DESC,
+                    a.`rotation_end_date` DESC
+                    $LIMIT $OFFSET
+                    ";
 
         $results = $db->GetAll($query, array($assessor_type, $assessor_value));
         if ($results) {
@@ -272,7 +296,7 @@ class Models_Assessments_FutureTaskSnapshot extends Models_Base {
         return $assessments;
     }
 
-    public static function fetchAllByTargetTypeTargetValueSortDeliveryDateRotationDatesDesc($target_type, $target_value, $current_section = "assessments", $filters = array(), $search_value = null, $start_date = null, $end_date = null, $limit = 10, $offset = 0) {
+    public static function fetchAllByTargetTypeTargetValueSortDeliveryDateRotationDatesDesc($target_type, $target_value, $current_section = "assessments", $filters = array(), $search_value = null, $start_date = null, $end_date = null, $limit = 100, $offset = 0) {
         global $db;
         $assessments = false;
 
@@ -317,27 +341,30 @@ class Models_Assessments_FutureTaskSnapshot extends Models_Base {
             $OFFSET = " OFFSET $offset";
         }
 
-        $query = "          SELECT a.* FROM `cbl_assessment_ss_future_tasks` AS a
-                            JOIN `cbl_assessment_distributions` AS b
-                            ON a.`adistribution_id` = b.`adistribution_id`                            
-                            JOIN `courses` AS c
-                            ON b.`course_id` = c.`course_id`                         
-                            WHERE a.`target_type` = ?
-                            AND a.`target_value` = ?
-                            AND b.`deleted_date` IS NULL
-                            
-                            $AND_course_in
-                            $AND_course_filter_in
-                            $AND_cperiod_in
-                            $AND_title_like
-                            $AND_date_greater
-                            $AND_date_less
-                            
-                            ORDER BY a.`delivery_date` DESC, 
-                            a.`rotation_start_date` DESC,
-                            a.`rotation_end_date` DESC
-                            $LIMIT $OFFSET
-                            ";
+        $query = "  SELECT a.* 
+                    FROM `cbl_assessment_ss_future_tasks` AS a
+                    JOIN `cbl_assessment_distributions` AS b
+                    ON a.`adistribution_id` = b.`adistribution_id`                            
+                    JOIN `courses` AS c
+                    ON b.`course_id` = c.`course_id`                         
+                    WHERE a.`target_type` = ?
+                    AND a.`target_value` = ?
+                    AND a.`deleted_date` IS NULL
+                    AND b.`deleted_date` IS NULL
+                    AND b.`visibility_status` = 'visible'
+                    
+                    $AND_course_in
+                    $AND_course_filter_in
+                    $AND_cperiod_in
+                    $AND_title_like
+                    $AND_date_greater
+                    $AND_date_less
+                    
+                    ORDER BY a.`delivery_date` DESC, 
+                    a.`rotation_start_date` DESC,
+                    a.`rotation_end_date` DESC
+                    $LIMIT $OFFSET
+                    ";
 
         $results = $db->GetAll($query, array($target_type, $target_value));
         if ($results) {
@@ -349,7 +376,7 @@ class Models_Assessments_FutureTaskSnapshot extends Models_Base {
         return $assessments;
     }
 
-    public static function getAllFutureTasksForAssociatedLearnersAssociatedFaculty($task_type, $offset = 0, $limit = 10, $count = false, $search_value = null, $start_date = null, $end_date = null) {
+    public static function fetchAllFutureTasksForAssociatedLearnersAssociatedFaculty($task_type, $organisation_id, $offset = 0, $limit = 10, $count = false, $search_value = null, $start_date = null, $end_date = null) {
         global $db;
         $tasks = array();
 
@@ -378,16 +405,16 @@ class Models_Assessments_FutureTaskSnapshot extends Models_Base {
         if (!is_null($search_value) && $search_value != "") {
             $LIMIT = "";
             $OFFSET = "";
-            $AND_TITLE_LIKE = " AND (b.`title` LIKE (". $db->qstr("%". $search_value ."%") .") OR CONCAT(c.`firstname`, ' ', c.`lastname`) LIKE (". $db->qstr("%". $search_value ."%") .") )";
+            $AND_TITLE_LIKE = " AND b.`title` LIKE (". $db->qstr("%". $search_value ."%") .")";
         }
 
-        $SELECT = " SELECT b.`title`, CONCAT(c.`firstname`, ' ', c.`lastname`) AS internal_full_name, CONCAT(d.`firstname`, ' ', d.`lastname`) AS external_full_name, a.`assessor_type`, a.`assessor_value`, a.`target_type`, a.`target_value`, a.`adistribution_id`, a.`delivery_date` ";
+        $SELECT = " SELECT a.* ";
         if ($count) {
             $SELECT = " SELECT COUNT(*) ";
         }
 
-        $USER_ID_LIST = Entrada_Utilities_Assessments_AssessmentTask::getAssociatedLearnerFacultyProxyList();
-        $EXTERNAL_ID_LIST = Entrada_Utilities_Assessments_AssessmentTask::getAssociatedExternalIDList();
+        $USER_ID_LIST = Entrada_Utilities_Assessments_DeprecatedAssessmentTask::getAssociatedLearnerFacultyProxyList();
+        $EXTERNAL_ID_LIST = Entrada_Utilities_Assessments_DeprecatedAssessmentTask::getAssociatedExternalIDList();
         $COURSE_ID_LIST = null;
         $AND_ASSESSOR = null;
 
@@ -401,11 +428,11 @@ class Models_Assessments_FutureTaskSnapshot extends Models_Base {
                 $AND_ASSESSOR = " AND ((a.`assessor_value` IN ({$USER_ID_LIST}) AND a.`assessor_type` = 'internal' OR a.`assessor_value` IN ({$EXTERNAL_ID_LIST}) AND a.`assessor_type` = 'external') OR a.`target_value` IN ({$USER_ID_LIST}))";
             } else {
                 if (!empty($USER_ID_LIST) && $USER_ID_LIST != "") {
-                    $AND_ASSESSOR = " AND (a.`assessor_value` IN ({$USER_ID_LIST}) AND a.`assessor_type` = 'internal') OR (a.`target_type` = 'proxy_id' && a.`target_value` IN ({$USER_ID_LIST}))";
+                    $AND_ASSESSOR = " AND ((a.`assessor_value` IN ({$USER_ID_LIST}) AND a.`assessor_type` = 'internal') OR (a.`target_type` = 'proxy_id' && a.`target_value` IN ({$USER_ID_LIST})))";
                 }
 
                 if (!empty($EXTERNAL_ID_LIST) && $EXTERNAL_ID_LIST != "") {
-                    $AND_ASSESSOR = " AND (a.`assessor_value` IN ({$EXTERNAL_ID_LIST}) AND a.`assessor_type` = 'external') OR (a.`target_type` = 'proxy_id' && a.`target_value` IN ({$USER_ID_LIST}))";
+                    $AND_ASSESSOR = " AND ((a.`assessor_value` IN ({$EXTERNAL_ID_LIST}) AND a.`assessor_type` = 'external') OR (a.`target_type` = 'proxy_id' && a.`target_value` IN ({$USER_ID_LIST})))";
                 }
             }
 
@@ -413,12 +440,9 @@ class Models_Assessments_FutureTaskSnapshot extends Models_Base {
                     $SELECT 
                     FROM `cbl_assessment_ss_future_tasks` AS a
                     JOIN `cbl_assessment_distributions` AS b
-                    ON a.`adistribution_id` = b.`adistribution_id`   
-                    LEFT JOIN `".AUTH_DATABASE."`.`user_data` AS c
-                    ON a.`assessor_value` = c.`id`
-                    LEFT JOIN `cbl_external_assessors` AS d
-                    ON a.`assessor_value` = d.`eassessor_id`   
+                    ON a.`adistribution_id` = b.`adistribution_id`                    
                     WHERE a.`deleted_date` IS NULL
+                    AND a.`organisation_id` = ?
                     AND b.`deleted_date` IS NULL
                     AND b.`visibility_status` = 'visible'
                     AND b.`assessment_type` = '$task_type'
@@ -434,9 +458,18 @@ class Models_Assessments_FutureTaskSnapshot extends Models_Base {
                     $LIMIT $OFFSET
                     ";
 
-            $tasks = $db->GetAll($query);
+            $results = $db->GetAll($query, array($organisation_id));
+
+            if ($count) {
+                return $results;
+            } else if ($results) {
+                foreach ($results as $result) {
+                    $tasks[] = new self($result);
+                }
+            }
         }
-        return $tasks ? $tasks : array();
+
+        return $tasks;
     }
 
     public static function truncate() {

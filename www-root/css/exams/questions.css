@@ -20,6 +20,10 @@
     width: 60%;
 }
 
+.btn-search-filter {
+    border-radius: 0 4px 4px 0 !important;
+}
+
 .answer-input {
     height: 20px;
     overflow: hidden;
@@ -134,7 +138,7 @@ i.fa-2x {
     font-size: 1.75em;
 }
 
-#toggle-question-bank i.fa-2x {
+#toggle-exam-bank i.fa-2x {
     font-size: 1.3em;
 }
 
@@ -145,19 +149,19 @@ i.fa-2x {
     width: 120px;
 }
 
-#exam-question-bank-container {
+#exam-bank-container {
     position: relative;
     width: 100%;
 }
 
-#exam-question-bank-tree {
-    border: 1px solid #dddddd;
+#exam-bank-tree {
+    border: 2px solid #dddddd;
     border-radius: 4px;
     display: inline-block;
     padding: 5px 15px;
 }
 
-#exam-question-bank-breadcrumbs {
+#exam-bank-breadcrumbs {
     height: inherit;
     background: #f4f7fa;
     border: 1px solid #d9dee2;
@@ -170,29 +174,31 @@ i.fa-2x {
     display: block;
 }
 
-#exam-question-bank-breadcrumbs .bread-separator {
+#exam-bank-breadcrumbs .bread-separator {
     margin: 0 5px;
 }
 
-#exam-question-bank-breadcrumbs a {
+#exam-bank-breadcrumbs a {
     cursor: pointer;
     color: #006699;
     padding: 0 5px;
 }
 
-#exam-question-bank-tree #folders ul {
+#exam-bank-tree #folders ul {
     list-style-type: none;
     margin: 0 0 10px 5px;
 }
 
-#exam-question-bank-tree #folders li {
-    margin: 5px 0px;
+#exam-bank-tree #folders li {
+    margin: 5px 0;
+    padding: 2px;
 }
-#exam-question-bank-tree  h3 {
+
+#exam-bank-tree  h3 {
     line-height: 20px
 }
 
-#exam-question-bank-tree #folders span.folder-title {
+#exam-bank-tree #folders span.folder-title {
     margin: 0px 0px 0px 5px;
 }
 
@@ -278,7 +284,7 @@ div.folder-edit-btn .icon-pencil {
 Add and Edit folder CSS
 */
 
-#qbf-selector {
+.qbf-selector {
     background: white;
     margin: 5px;
     padding: 5px;
@@ -291,11 +297,11 @@ Add and Edit folder CSS
     border-radius: 10px;
 }
 
-#qbf-selector .sub-folder-selector i {
+.qbf-selector .sub-folder-selector i {
     cursor: pointer;
 }
 
-#move-question-modal #qbf-selector {
+#move-question-modal .qbf-selector {
     width: 275px;
 }
 
@@ -311,7 +317,7 @@ Add and Edit folder CSS
     font-weight: 800;
 }
 
-#qbf-selector .qbf-folder table {
+.qbf-selector .qbf-folder table {
     width: 100%;
 }
 
@@ -404,7 +410,7 @@ span.folder-stacked {
     padding: 0px;
 }
 
-#qbf-selector span.folder-title {
+.qbf-selector span.folder-title {
     display: inline-block;
     margin-left: 10px;
     margin-bottom: 5px;
@@ -412,7 +418,7 @@ span.folder-stacked {
     width: 150px;
 }
 
-#qbf-selector span.folder-image img.folder-color {
+.qbf-selector span.folder-image img.folder-color {
     margin-left: 0;
     height: 26px;
     width: 28px;
@@ -462,20 +468,15 @@ a#select_parent_folder_button {
     background: #50bc00;
 }
 .question-table .select-item.select-question {
-    margin: -3px 0 0 10px;
     display: inline-block;
     vertical-align: middle;
     cursor: pointer;
     font-size: 18px !important;
     line-height: 0 !important;
+    padding: 3px 0 1px 5px;
+    margin: 5px;
 }
-.question-table .select-item.select-question.selected {
-    background: none !important;
-    border: none !important;
-    width: inherit !important;
-    height: inherit !important;
-}
-.question-table .select-item.select-question:hover .icon-select-item {
+.question-table .select-item.select-question:hover .select-item-icon {
     color: #666;
 }
 .question-answer-label {
@@ -566,6 +567,14 @@ td.answer-header  i.fa-check-circle.incorrect {
     color: #CB1E22;
 }
 
+td.answer-header  i.fa-lock.locked {
+    color: #CB1E22;
+}
+
+td.answer-header  i.fa-lock.locked:hover {
+    color: #CB1E22;
+}
+
 div#delete-question-modal span.no-delete, div#move-question-modal span.no-delete {
     color: #CB1E22;
 }
@@ -578,6 +587,9 @@ div.exam-question-group-elements div.exam-question ul.related_versions_menu {
     margin-left: -3.9em
 }
 
+#sub-folder-search {
+    margin: 0.5em 0em;
+}
 
 #sub-folder-search label{
     margin: 0 1em;
@@ -711,6 +723,10 @@ a.remove_correct_text_anchor {
     white-space: nowrap;
 }
 
+#question-bank-view-controls a {
+    display: inline-block;
+}
+
 #question-bank-view-controls.padding-right {
     padding-right: 6px;
 }
@@ -725,36 +741,36 @@ a.remove_correct_text_anchor {
 }
 
 .AnimationYellowToTransparent {
-    -webkit-animation: AnimationYellowToTransparent 3s ease-out 1 normal;
-    -moz-animation:    AnimationYellowToTransparent 3s ease-out 1 normal;
-    -o-animation:      AnimationYellowToTransparent 3s ease-out 1 normal;
-    animation:         AnimationYellowToTransparent 3s ease-out 1 normal;
+    -webkit-animation: AnimationYellowToTransparent .5s ease-out 1 normal;
+    -moz-animation:    AnimationYellowToTransparent .5s ease-out 1 normal;
+    -o-animation:      AnimationYellowToTransparent .5s ease-out 1 normal;
+    animation:         AnimationYellowToTransparent .5s ease-out 1 normal;
 }
 
 .AnimationTransparentToYellow {
-    -webkit-animation: AnimationTransparentToYellow 3s ease-out 1 normal;
-    -moz-animation:    AnimationTransparentToYellow 3s ease-out 1 normal;
-    -o-animation:      AnimationTransparentToYellow 3s ease-out 1 normal;
-    animation:         AnimationTransparentToYellow 3s ease-out 1 normal;
+    -webkit-animation: AnimationTransparentToYellow .5s ease-out 1 normal;
+    -moz-animation:    AnimationTransparentToYellow .5s ease-out 1 normal;
+    -o-animation:      AnimationTransparentToYellow .5s ease-out 1 normal;
+    animation:         AnimationTransparentToYellow .5s ease-out 1 normal;
 }
 
 .AnimationGrayToYellow {
-    -webkit-animation: AnimationGrayToYellow 3s ease-out 1 normal;
-    -moz-animation:    AnimationGrayToYellow 3s ease-out 1 normal;
-    -o-animation:      AnimationGrayToYellow 3s ease-out 1 normal;
-    animation:         AnimationGrayToYellow 3s ease-out 1 normal;
+    -webkit-animation: AnimationGrayToYellow .5s ease-out 1 normal;
+    -moz-animation:    AnimationGrayToYellow .5s ease-out 1 normal;
+    -o-animation:      AnimationGrayToYellow .5s ease-out 1 normal;
+    animation:         AnimationGrayToYellow .5s ease-out 1 normal;
 }
 
 .AnimationYellowToGray {
-    -webkit-animation: AnimationYellowToGray 3s ease-out 1 normal;
-    -moz-animation:    AnimationYellowToGray 3s ease-out 1 normal;
-    -o-animation:      AnimationYellowToGray 3s ease-out 1 normal;
-    animation:         AnimationYellowToGray 3s ease-out 1 normal;
+    -webkit-animation: AnimationYellowToGray .5s ease-out 1 normal;
+    -moz-animation:    AnimationYellowToGray .5s ease-out 1 normal;
+    -o-animation:      AnimationYellowToGray .5s ease-out 1 normal;
+    animation:         AnimationYellowToGray .5s ease-out 1 normal;
 }
 
 @keyframes AnimationYellowToTransparent {
     0% {
-        background-color: #D9EDF7;
+        background-color: #C8F253;
     }
     100% {
         background-color: transparent;
@@ -763,7 +779,7 @@ a.remove_correct_text_anchor {
 
 @keyframes AnimationYellowToGray {
     0% {
-        background-color: #D9EDF7;
+        background-color: #C8F253;
     }
     100% {
         background-color: #f9f9f9;
@@ -775,7 +791,7 @@ a.remove_correct_text_anchor {
         background-color: transparent;
     }
     100% {
-        background-color: #D9EDF7;
+        background-color: #C8F253;
     }
 }
 
@@ -784,7 +800,7 @@ a.remove_correct_text_anchor {
         background-color: #f9f9f9;
     }
     100% {
-        background-color: #D9EDF7;
+        background-color: #C8F253;
     }
 }
 
@@ -804,4 +820,12 @@ Over rides some bootstrap styles
 .table-bordered.admin-table thead:first-child tr:first-child > th:last-child, .table-bordered.admin-table tbody:first-child tr:first-child > td:last-child, .table-bordered.admin-table tbody:first-child tr:first-child > th:last-child {
     border-top-right-radius: 0px;
     border-top-left-radius: 0px;
+}
+
+.tooltip{
+    font-size: 10pt;
+}
+
+.add-match-correct{
+    font-size: initial;
 }

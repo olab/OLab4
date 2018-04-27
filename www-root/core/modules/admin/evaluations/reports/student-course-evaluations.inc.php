@@ -89,11 +89,11 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVALUATIONS"))) {
 				echo "		<tr><td colspan=\"2\">&nbsp;</td></tr>\n";
 				echo "		<tr>\n";
 				echo "			<td>Evaluation Start Date:</td>\n";
-				echo "			<td>".date(DEFAULT_DATE_FORMAT, $results[0]["evaluation_start"])."</td>\n";
+				echo "			<td>".date(DEFAULT_DATETIME_FORMAT, $results[0]["evaluation_start"])."</td>\n";
 				echo "		</tr>\n";
 				echo "		<tr>\n";
 				echo "			<td>Evaluation Finish Date:</td>\n";
-				echo "			<td>".date(DEFAULT_DATE_FORMAT, $results[0]["evaluation_finish"])."</td>\n";
+				echo "			<td>".date(DEFAULT_DATETIME_FORMAT, $results[0]["evaluation_finish"])."</td>\n";
 				echo "		</tr>\n";
 				if ($results[0]["min_submittable"] <> 1 or $results[0]["max_submittable"] <> 1) {
 					echo "	<tr><td colspan=\"2\">&nbsp;</td></tr>\n";
@@ -172,7 +172,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVALUATIONS"))) {
 									echo "	<td class=\"title\"><a href=\"".$url."\">".html_encode($result["course_code"]." - ".$result["course_name"])."</a></td>\n";
 									echo "	<td class=\"general\"><a href=\"".$url."\">".($evaluators ? round($progress / $evaluators * 100)."%&nbsp;&nbsp;&nbsp;(".$progress."/".$evaluators.")" : "")."</a></td>\n";
 									echo "	<td class=\"general\"><a href=\"".$url."\">".($evaluators ? round($completed / $evaluators * 100)."%&nbsp;&nbsp;&nbsp;(".$completed."/".$evaluators.")" : "")."</a></td>\n";
-									echo "	<td class=\"date\"><a href=\"".$url."\">".($updated ? date(DEFAULT_DATE_FORMAT, $updated) : "")."</a></td>\n";
+									echo "	<td class=\"date\"><a href=\"".$url."\">".($updated ? date(DEFAULT_DATETIME_FORMAT, $updated) : "")."</a></td>\n";
 									echo "</tr>\n";
 								}
 							}
@@ -447,8 +447,8 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVALUATIONS"))) {
 
 						echo "<tr>\n";
 						echo "	<td class=\"title\"><a href=\"".$url."\">".html_encode($result["evaluation_title"])."</a></td>\n";
-						echo "	<td class=\"date\"><a href=\"".$url."\">".date(DEFAULT_DATE_FORMAT, $result["evaluation_start"])."</a></td>\n";
-						echo "	<td class=\"date\"><a href=\"".$url."\">".date(DEFAULT_DATE_FORMAT, $result["evaluation_finish"])."</a></td>\n";
+						echo "	<td class=\"date\"><a href=\"".$url."\">".date(DEFAULT_DATETIME_FORMAT, $result["evaluation_start"])."</a></td>\n";
+						echo "	<td class=\"date\"><a href=\"".$url."\">".date(DEFAULT_DATETIME_FORMAT, $result["evaluation_finish"])."</a></td>\n";
 						echo "	<td class=\"general\"><a href=\"".$url."\">".($evaluators ? round($complete / ($evaluators * $result["targets"]) * 100)."%&nbsp;&nbsp;&nbsp;(".$complete."/".($evaluators * $result["targets"]).")" : "")."</a></td>\n";
 						echo "</tr>\n";
 					}

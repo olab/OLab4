@@ -36,7 +36,8 @@ class Models_Event_Resource_Link extends Models_Base {
             $release_date,
             $release_until,
             $updated_date,
-            $updated_by;
+            $updated_by,
+            $draft;
     
     protected static $table_name = "event_links";
     protected static $default_sort_column = "elink_id";
@@ -98,8 +99,8 @@ class Models_Event_Resource_Link extends Models_Base {
         return $this->updated_by;
     }
     
-    public function getActive() {
-        return $this->active;
+    public function getDraft() {
+        return $this->draft;
     }
 
     /* @return bool|Models_Event_Resource_Link */

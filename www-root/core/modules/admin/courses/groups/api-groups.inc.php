@@ -121,9 +121,9 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                         
                         $_SESSION[APPLICATION_IDENTIFIER]["courses"]["selected_curriculum_period"] = $PROCESSED["cperiod_id"];
 
-                        if ($ENTRADA_ACL->amIAllowed('group', 'update', false) && $PROCESSED["course"]) {
-                            $groups = $groups_object->getGroupsByCourseID($PROCESSED["course"],$PROCESSED["cperiod_id"],$PROCESSED["search_term"],$PROCESSED["offset"], $PROCESSED["limit"], $PROCESSED["sort_column"], $PROCESSED["sort_direction"]);
-                            $total_groups = $groups_object->getTotalCourseGroups($PROCESSED["course"],$PROCESSED["cperiod_id"],$PROCESSED["search_term"]);
+                        if ($ENTRADA_ACL->amIAllowed(new CourseResource($PROCESSED["course"], $ENTRADA_USER->getActiveOrganisation()), 'update', true)) {
+                            $groups = $groups_object->getGroupsByCourseID($PROCESSED["course"], $PROCESSED["cperiod_id"], $PROCESSED["search_term"], $PROCESSED["offset"], $PROCESSED["limit"], $PROCESSED["sort_column"], $PROCESSED["sort_direction"]);
+                            $total_groups = $groups_object->getTotalCourseGroups($PROCESSED["course"], $PROCESSED["cperiod_id"], $PROCESSED["search_term"]);
                         }
 
                         if ($groups) {

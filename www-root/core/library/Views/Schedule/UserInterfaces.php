@@ -80,7 +80,14 @@ class Views_Schedule_UserInterfaces extends Views_HTML {
         $html[] = "<div class=\"control-group\">";
         $html[] = "<label class=\"control-label form-required\">Block Type</label>";
         $html[] = "<div class=\"controls\">";
-        $html[] = "<select class=\"\" name=\"block_type_id\" ".($has_children == true ? "disabled=\"disabled\"" : "").">";
+
+        if ($has_children) {
+            $html[] = "<input type=\"hidden\" name=\"block_type_id\" value=\"" . $this->view_data["block_type_id"] . "\" />";
+            $html[] = "<select disabled=\"disabled\">";
+        } else {
+            $html[] = "<select name=\"block_type_id\">";
+        }
+
         foreach ($block_types as $block_type) {
             $html[] = "<option value=\"".$block_type->getID()."\" ".(isset($this->view_data["block_type_id"]) && $this->view_data["block_type_id"] == $block_type->getID() ? "selected=\"selected\"" : "").">".$block_type->getName()."</option>";
         }
@@ -210,6 +217,7 @@ class Views_Schedule_UserInterfaces extends Views_HTML {
         }
         if (!empty($learner_data["members"])) {
 
+            global $ENTRADA_USER;
             // Aggregate all of the learner IDs and attempt to fetch and cache their photos.
             $cache = new Entrada_Utilities_Cache();
             $assessment_user = new Entrada_Utilities_AssessmentUser();
@@ -256,7 +264,9 @@ class Views_Schedule_UserInterfaces extends Views_HTML {
                                         <img class="learner-cell-img pull-left" src="<?php echo $photo_src; ?>" width="40" height="40" />
                                         <div class="learner-cell-info pull-left">
                                             <a class="pull-left" href="<?php echo ENTRADA_URL . "/admin/" . $MODULE; ?>?section=learner-schedule-overview&proxy_id=<?php echo $learner["proxy_id"] . (!is_null($draft_id) ? "&draft_id=" . $draft_id : ""); ?>"><strong><?php echo $learner_name; ?></strong></a>
-                                            <!--<small class="pull-left">PGY 1</small>-->
+                                            <?php if ($learner["learner_level"]) { ?>
+                                                <small class="pull-right"><?php echo $learner["learner_level"]; ?></small>
+                                            <?php } ?>
                                             <div class="clearfix"></div>
                                             <span class="label"><?php echo $scheduled ? "Scheduled" : "Unscheduled"; ?></span>
                                         </div>
@@ -474,7 +484,7 @@ class Views_Schedule_UserInterfaces extends Views_HTML {
     }
 
     public static function renderFullLearnerSchedule($proxy_id, $draft_id, $learner_name = "", $admin_tools = false) {
-        global $JQUERY, $HEAD, $MODULE, $translate;
+        global $JQUERY, $HEAD, $MODULE, $SECTION, $translate;
 
         $draft = Models_Schedule_Draft::fetchRowByID($draft_id);
         $cperiod_id = $draft->getCPeriodID();
@@ -546,6 +556,7 @@ class Views_Schedule_UserInterfaces extends Views_HTML {
                     },list_data: {
                         selector: "#rotation-container-location"
                     },
+                    modal: true,
                     no_results_text: "No Rotations found matching the search criteria",
                     parent_form: $("#rotation-form"),
                     results_parent: $("#book-slot"),
@@ -564,9 +575,11 @@ class Views_Schedule_UserInterfaces extends Views_HTML {
                         },
                         "height" : 400,
                         "defaultDate" : $(v).data("moment"),
-                        "events" : "<?php echo ENTRADA_URL . "/api/api-schedule.api.php?proxy_id=".$proxy_id."&draft_id=".$draft_id; ?>",
+                        "events" : "<?php echo ENTRADA_URL . "/api/api-schedule.api.php?method=get-schedule-data&proxy_id=".$proxy_id."&draft_id=".$draft_id; ?>",
                         "nextDayThreshold" : "01:00:00",
                         "eventRender" : function(event, element) {
+                            $(element).attr("data-schedule-id", event.schedule_parent_id);
+                            event.schedule_parent_id ? $(element).addClass("rotation-schedule") : $(element).addClass("leave");
                             $(element).find(".fc-time").remove();
                         },
                         "eventClick" : function(calEvent, jsEvent, view) {
@@ -593,6 +606,12 @@ class Views_Schedule_UserInterfaces extends Views_HTML {
                                 }
                             <?php } else { ?>
                             <?php } ?>
+                        },
+                        "eventAfterAllRender" : function () {
+                            $.each($('.fc-event'), function (index, value) {
+                                $(this).attr("rel", "popover");
+                                $(this).attr("data-toggle", "popover");
+                            });
                         }
                     });
                 });
@@ -676,7 +695,7 @@ class Views_Schedule_UserInterfaces extends Views_HTML {
             $name = $user_data->getFirstname()." ".$user_data->getLastname();
         }
         ?>
-        <div id="book-slot" class="modal hide fade responsive-modal">
+        <div id="book-slot" class="modal modal-lg hide fade responsive-modal">
             <form id="rotation-form" class="form-horizontal" action="<?php echo ENTRADA_URL . "/admin/" . $MODULE . "?section=api-schedule"; ?>" method="POST">
                 <input type="hidden" name="proxy_id" value="" />
                 <input type="hidden" name="course_id" value="<?php echo ((int)$course_id); ?>" />

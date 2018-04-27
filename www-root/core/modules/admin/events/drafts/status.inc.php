@@ -75,7 +75,18 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
 				} elseif (isset($_GET["draft_id"]) && ($draft_id = clean_input($_GET["draft_id"], array("trim", "int")))) {
 					$draft_ids[] = $draft_id;
 				}
-
+                $copy_resources_as_drafts = array();
+                if ((isset($_POST["copy_resources_as_draft"])) && (is_array($_POST["copy_resources_as_draft"])) && (@count($_POST["copy_resources_as_draft"]))) {
+                    foreach ($_POST["copy_resources_as_draft"] as $copy_resources_as_draft) {
+                        $copy_resources_as_draft = (int)trim($copy_resources_as_draft);
+                        if ($copy_resources_as_draft) {
+                            $copy_resources_as_drafts[] = $copy_resources_as_draft;
+                        }
+                    }
+                } elseif (isset($_GET["copy_resources_as_draft"]) && ($copy_resources_as_draft = clean_input($_GET["copy_resources_as_draft"], array("trim", "int")))) {
+                    $copy_resources_as_drafts[] = $copy_resources_as_draft;
+                }
+				
 				if(!@count($draft_ids)) {
 					add_error("There were no valid draft identifiers provided to create. Please ensure that you access this section through the event index.");
 				}
@@ -92,8 +103,13 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
 		case 2 :
 			$approved = array();
 			foreach($draft_ids as $draft_id) {
+                if (in_array($draft_id, $copy_resources_as_drafts)) {
+                    $copy_resource_as_draft = 1;
+                } else {
+                    $copy_resource_as_draft = 0;
+                }
                 $d =  Models_Event_Draft::fetchRowByID($draft_id);
-                if ($d->fromArray(array("status" => $status))->update()) {
+                if ($d->fromArray(array("status" => $status, "copy_resources_as_draft" => $copy_resource_as_draft))->update()) {
                     $approved[] = $d;
                 } else {
                     application_log("error", "An unknown error was encountered while attempting to change the status [".$status."] of an event draft [".$draft_id."].");
@@ -160,18 +176,27 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                                 <th class="date">Creation Date &amp; Time</th>
                                 <th class="title">Draft Title</th>
                                 <th class="description">Description</th>
+                                <th class="description">Copy Resources as Draft</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php
                             foreach($drafts as $draft) {
+
+                                if ($draft && $draft->getCopyResourcesAsDraft() == 1) {
+                                    $copy_resources_as_draft = 1;
+                                } else {
+                                    $copy_resources_as_draft = 0;
+                                }
+                                
                                 $url 	= ENTRADA_URL."/admin/events/drafts?section=edit&amp;draft_id=".$draft->getDraftID();
 
                                 echo "<tr id=\"draft-".$draft->getDraftID()."\" class=\"event".((!$url) ? " np" : ((!$accessible) ? " na" : ""))."\">\n";
                                 echo "	<td class=\"modified\"><input type=\"checkbox\" name=\"checked[]\" value=\"".$draft->getDraftID()."\" checked=\"checked\" /></td>\n";
-                                echo "	<td class=\"date".((!$url) ? " np" : "")."\">".(($url) ? "<a href=\"".$url."\" title=\"Draft Creation Date\">" : "").date(DEFAULT_DATE_FORMAT, $draft->getCreated()).(($url) ? "</a>" : "")."</td>\n";
+                                echo "	<td class=\"date".((!$url) ? " np" : "")."\">".(($url) ? "<a href=\"".$url."\" title=\"Draft Creation Date\">" : "").date(DEFAULT_DATETIME_FORMAT, $draft->getCreated()).(($url) ? "</a>" : "")."</td>\n";
                                 echo "	<td class=\"title".((!$url) ? " np" : "")."\">".(($url) ? "<a href=\"".$url."\" title=\"Draft Title: ".html_encode($draft->getName())."\">" : "").html_encode($draft->getName()).(($url) ? "</a>" : "")."</td>\n";
                                 echo "	<td class=\"description".((!$url) ? " np" : "")."\">".(($url) ? "<a href=\"".$url."\" title=\"Draft Description: ".html_encode($draft->getDescription())."\">" : "").html_encode($draft->getDescription()).(($url) ? "</a>" : "")."</td>\n";
+                                echo "	<td class=\"copy-resources-as-draft\"><input type=\"checkbox\" name=\"copy_resources_as_draft[]\" value=\"".$draft->getDraftID()."\" ".(isset($copy_resources_as_draft) && $copy_resources_as_draft == 1? " checked=\"checked\"" : "")."\" /></td>\n";
                                 echo "</tr>\n";
                             }
                             ?>

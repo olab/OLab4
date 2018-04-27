@@ -447,7 +447,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_DISTRIBUTIONS"))) {
                     if ($user_courses) {
                         $data = array();
                         foreach ($user_courses as $course) {
-                            $data[] = array("target_id" => $course->getID(), "target_label" => $course->getCourseName());
+                            $data[] = array("target_id" => $course->getID(), "target_label" => $course->getCourseCode() . ": " . $course->getCourseName());
                         }
                         echo json_encode(array("status" => "success", "data" => $data, "level_selectable" => 1));
                     } else {
@@ -577,7 +577,16 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_DISTRIBUTIONS"))) {
                     if ($child_schedules) {
                         $data = array();
                         foreach ($child_schedules as $schedule) {
-                            $data[] = array("target_id" => $schedule->getID(), "target_parent" => $schedule->getScheduleParentID(), "target_label" => $schedule->getTitle(), "target_children" => Models_Schedule::countScheduleChildren($schedule->getID()));
+
+                            $suffix = "";
+                            if ($schedule->getScheduleType() == "rotation_block") {
+                                $block_type = Models_BlockType::fetchRowByID($schedule->getBlockTypeID());
+                                if ($block_type) {
+                                    $suffix = " ({$block_type->getName()})";
+                                }
+                            }
+
+                            $data[] = array("target_id" => $schedule->getID(), "target_parent" => $schedule->getScheduleParentID(), "target_label" => $schedule->getTitle() . $suffix, "target_children" => Models_Schedule::countScheduleChildren($schedule->getID()));
                         }
                         echo json_encode(array("status" => "success", "data" => $data, "parent_id" => ($parent_schedule ? $parent_schedule->getScheduleParentID() : "0"), "parent_name" => ($parent_schedule ? $parent_schedule->getTitle() : "0"), "level_selectable" => 1));
                     } else {
@@ -638,11 +647,37 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_DISTRIBUTIONS"))) {
 
                     if ($user_courses) {
                         foreach ($user_courses as $user_course) {
-                            $data[] = array("target_id" => $user_course->getID(), "target_label" => $user_course->getCourseName());
+                            $data[] = array("target_id" => $user_course->getID(), "target_label" =>  $user_course->getCourseCode() . ": " . $user_course->getCourseName());
                         }
                         echo json_encode(array("status" => "success", "data" => $data, "level_selectable" => 1));
                     } else {
                         echo json_encode(array("status" => "error", "data" => $translate->_("No Courses found")));
+                    }
+                break;
+                case "get-course-groups" :
+                    if (isset($request["search_value"]) && $tmp_input = clean_input(strtolower($request["search_value"]), array("trim", "striptags"))) {
+                        $PROCESSED["search_value"] = $tmp_input;
+                    } else {
+                        $PROCESSED["search_value"] = "";
+                    }
+
+                    if (isset($request["course_id"]) && $tmp_input = clean_input($request["course_id"], array("trim", "int"))) {
+                        $PROCESSED["course_id"] = $tmp_input;
+                    } else {
+                        echo json_encode(array("status" => "error", "data" => $translate->_("No Course provided")));
+                        exit;
+                    }
+
+                    $course_group_model = new Models_Course_Group();
+                    $course_groups = $course_group_model->getGroupsByCourseIDSearchTerm($PROCESSED["course_id"], $PROCESSED["search_value"]);
+
+                    if ($course_groups) {
+                        foreach ($course_groups as $course_group) {
+                            $data[] = array("target_id" => $course_group->getID(), "target_label" => $course_group->getGroupName());
+                        }
+                        echo json_encode(array("status" => "success", "data" => $data, "level_selectable" => 1));
+                    } else {
+                        echo json_encode(array("status" => "error", "data" => $translate->_("No Course Groups found")));
                     }
                 break;
                 case "get-course-learners" :
@@ -894,8 +929,9 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_DISTRIBUTIONS"))) {
                         if ($distribution_data) {
                             $controller = new Controllers_Assessment_Distribution();
 
-                            $distribution_data["release_date"] = (!is_null($distribution_data["release_date"]) ? date("Y-m-d", $distribution_data["release_date"]) : null);
+                            $distribution_data["release_date"] = (!is_null($distribution_data["release_date"]) && $distribution_data["release_date"] ? date("Y-m-d", $distribution_data["release_date"]) : null);
                             $distribution_data["delivery_date"] = (!is_null($distribution_data["delivery_date"]) ? date("Y-m-d", $distribution_data["delivery_date"]) : null);
+                            $distribution_data["expiry_date"] = (!is_null($distribution_data["expiry_date"]) ? date("Y-m-d", $distribution_data["expiry_date"]) : null);
 
                             $assessors = Models_Assessments_Distribution_Assessor::fetchAllByDistributionID($PROCESSED["adistribution_id"]);
                             $distribution_data["assessors"] = array();
@@ -918,10 +954,15 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_DISTRIBUTIONS"))) {
                                     } elseif ($tmp_assessor["assessor_type"] == "course_id") {
                                         $course = Models_Course::fetchRowByID($assessor->getAssessorValue());
                                         if ($course) {
-                                            $tmp_assessor["assessor_name"] = $course->getCourseName();
+                                            $tmp_assessor["assessor_name"] = $course->getCourseCode() . ": " . $course->getCourseName();
                                         }
                                     } elseif ($tmp_assessor["assessor_type"] == "group_id") {
                                         $cohort = Models_Group::fetchRowByID($assessor->getAssessorValue());
+                                        if ($cohort) {
+                                            $tmp_assessor["assessor_name"] = $cohort->getGroupName();
+                                        }
+                                    } elseif ($tmp_assessor["assessor_type"] == "cgroup_id") {
+                                        $cohort = Models_Course_Group::fetchRowByID($assessor->getAssessorValue());
                                         if ($cohort) {
                                             $tmp_assessor["assessor_name"] = $cohort->getGroupName();
                                         }
@@ -956,10 +997,15 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_DISTRIBUTIONS"))) {
                                     } elseif ($target->getTargetType() == "course_id") {
                                         $course = Models_Course::fetchRowByID($target->getTargetId());
                                         if ($course) {
-                                            $target_array["target_name"] = $course->getCourseName();
+                                            $target_array["target_name"] = $course->getCourseCode() . ": " . $course->getCourseName();
                                         }
                                     } elseif ($target->getTargetType() == "group_id") {
                                         $cohort = Models_Group::fetchRowByID($target->getTargetID());
+                                        if ($cohort) {
+                                            $target_array["target_name"] = $cohort->getGroupName();
+                                        }
+                                    } elseif ($target->getTargetType() == "cgroup_id") {
+                                        $cohort = Models_Course_Group::fetchRowByID($target->getTargetID());
                                         if ($cohort) {
                                             $target_array["target_name"] = $cohort->getGroupName();
                                         }
@@ -967,6 +1013,12 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_DISTRIBUTIONS"))) {
                                         $organisation = Models_Organisation::fetchRowByID($target->getTargetID());
                                         if ($organisation) {
                                             $target_array["target_name"] = $organisation->getOrganisationTitle();
+                                        }
+                                    } elseif ($target->getTargetType() == "external_hash") {
+                                        $entrada_base = new Entrada_Assessments_Base();
+                                        $user = $entrada_base->getUserByType($target->getTargetID(), "external");
+                                        if ($user) {
+                                            $target_array["target_name"] = "{$user->getFirstname()} {$user->getLastname()}";
                                         }
                                     }
                                     $distribution_data["targets"][] = $target_array;
@@ -1028,6 +1080,54 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_DISTRIBUTIONS"))) {
                                 }
                             }
 
+                            $distribution_data["distribution_target_task_release"] = null;
+                            $distribution_data["distribution_target_task_release_threshold_option"] = null;
+                            $distribution_data["distribution_target_task_release_threshold_percentage"] = null;
+                            $target_task_releases_model = new Models_Assessments_Distribution_Target_TaskReleases();
+                            $target_task_release = $target_task_releases_model->fetchRowByADistributionID($distribution_data["adistribution_id"]);
+                            if ($target_task_release) {
+                                switch ($target_task_release->getTargetOption()) {
+                                    case "always":
+                                        $distribution_data["distribution_target_task_release"] = "always";
+                                        break;
+                                    case "never":
+                                        $distribution_data["distribution_target_task_release"] = "never";
+                                        break;
+                                    case "percent":
+                                        $distribution_data["distribution_target_task_release"] = "threshold";
+                                        if ($target_task_release->getUniqueTargets()) {
+                                            $distribution_data["distribution_target_task_release_threshold_option"] = "unique";
+                                            $distribution_data["distribution_target_task_release_threshold_percentage"] = $target_task_release->getPercentThreshold();
+                                        }
+                                        break;
+                                }
+                            }
+
+                            $distribution_data["distribution_target_report_release"] = null;
+                            $distribution_data["distribution_target_report_release_threshold_option"] = null;
+                            $distribution_data["distribution_target_report_release_threshold_percentage"] = null;
+                            $distribution_data["distribution_target_report_comment_options"] = null;
+                            $target_report_releases_model = new Models_Assessments_Distribution_Target_ReportReleases();
+                            $target_report_release = $target_report_releases_model->fetchRowByADistributionID($distribution_data["adistribution_id"]);
+                            if ($target_report_release) {
+                                switch ($target_report_release->getTargetOption()) {
+                                    case "always":
+                                        $distribution_data["distribution_target_report_release"] = "always";
+                                        break;
+                                    case "never":
+                                        $distribution_data["distribution_target_report_release"] = "never";
+                                        break;
+                                    case "percent":
+                                        $distribution_data["distribution_target_report_release"] = "threshold";
+                                        if ($target_report_release->getUniqueTargets()) {
+                                            $distribution_data["distribution_target_report_release_threshold_option"] = "unique";
+                                            $distribution_data["distribution_target_report_release_threshold_percentage"] = $target_report_release->getPercentThreshold();
+                                        }
+                                        break;
+                                }
+                                $distribution_data["distribution_target_report_comment_options"] = $target_report_release->getCommentOptions();
+                            }
+
                             if (!empty($distribution_data)) {
                                 $distribution_data = $controller->loadRecordAsValidatedData($distribution_data);
                                 echo json_encode(array("status" => "success", "data" => $distribution_data));
@@ -1084,6 +1184,168 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_DISTRIBUTIONS"))) {
                     } else {
                         echo json_encode(array("status" => "error", "data" => $ERRORSTR));
                     }
+                    break;
+                case "get-external-targets" :
+                    $data = array();
+                    $active_user_course_id_list = Models_Course::getActiveUserCoursesIDList();
+                    $course_contact_model = new Models_Assessments_Distribution_CourseContact();
+
+                    foreach ($active_user_course_id_list as $course_id) {
+                        $external_targets = $course_contact_model->fetchAllByCourseID($course_id, "external");
+
+                        if ($external_targets) {
+                            foreach ($external_targets as $external_target) {
+                                $data[] = array("target_id" => $external_target["assessor_value"], "target_label" => $external_target["fullname"]);
+                            }
+                        }
+                    }
+
+                    if ($data) {
+                        echo json_encode(array("status" => "success", "data" => $data));
+                    } else {
+                        echo json_encode(array("status" => "error", "data" => array($translate->_("No External Targets found"))));
+                    }
+                    break;
+                case "get-organisation-individuals" :
+                    if (isset($request["search_value"]) && $tmp_input = clean_input(strtolower($request["search_value"]), array("trim", "striptags"))) {
+                        $PROCESSED["search_value"] = $tmp_input;
+                    } else {
+                        $PROCESSED["search_value"] = "";
+                    }
+                    if (isset($request["limit"]) && $tmp_input = clean_input(strtolower($request["limit"]), array("trim", "int"))) {
+                        $PROCESSED["limit"] = $tmp_input;
+                    } else {
+                        $PROCESSED["limit"] = "";
+                    }
+                    if (isset($request["offset"]) && $tmp_input = clean_input(strtolower($request["offset"]), array("trim", "int"))) {
+                        $PROCESSED["offset"] = $tmp_input;
+                    } else {
+                        $PROCESSED["offset"] = "";
+                    }
+
+                    $internal_users = Models_Organisation::fetchOrganisationUsers($PROCESSED["search_value"], $ENTRADA_USER->getActiveOrganisation(), "student", $PROCESSED["limit"], $PROCESSED["offset"]);
+
+                    $data = array();
+
+                    if ($internal_users) {
+                        foreach ($internal_users as $user) {
+                            $data[] = array("target_id" => $user["proxy_id"], "target_label" => $user["firstname"] . " " . $user["lastname"], "lastname" => $user["lastname"], "group" => $user["group"],  "role" => $user["role"], "email" => $user["email"]);
+                        }
+                    }
+
+                    if ($data) {
+                        echo json_encode(array("status" => "success", "data" => $data));
+                    } else {
+                        echo json_encode(array("status" => "error", "data" => $translate->_("No Users found")));
+                    }
+                    break;
+
+                case "get-user-popover-data":
+                    if (isset($request["advanced_search"]) && $tmp_input = clean_input($request["advanced_search"], array("trim", "int"))) {
+                        $results_as_advanced_search_datasource = $tmp_input ? true : false;
+                    } else {
+                        $results_as_advanced_search_datasource = false;
+                    }
+
+                    if (isset($_GET["proxy_id"]) && $tmp_input = clean_input(strtolower($_GET["proxy_id"]), array("trim", "int"))) {
+                        $PROCESSED["proxy_id"] = $tmp_input;
+                    } else {
+                        $PROCESSED["proxy_id"] = null;
+                    }
+
+                    // Attempt to fetch a faculty role, followed by resident, falling back on whatever is available.
+                    $organisation_model = new Models_Organisation();
+                    $user = $organisation_model->fetchOrganisationUserByID($PROCESSED["proxy_id"], $ENTRADA_USER->getActiveOrganisation(), array("faculty"));
+                    if (!$user) {
+                        $user = $organisation_model->fetchOrganisationUserByID($PROCESSED["proxy_id"], $ENTRADA_USER->getActiveOrganisation(), array("student"));
+                    }
+                    if (!$user) {
+                        $user = $organisation_model->fetchOrganisationUserByID($PROCESSED["proxy_id"], $ENTRADA_USER->getActiveOrganisation());
+                    }
+
+                    $data = array();
+                    if ($user) {
+                        $user["stage_code"] = "";
+                        $user["stage_name"] = "";
+                        /**
+                         * Instantiate the CBME visualization abstraction layer
+                         */
+                        $cbme_progress_api = new Entrada_CBME_Visualization(array(
+                            "actor_proxy_id" => $user["proxy_id"],
+                            "actor_organisation_id" => $ENTRADA_USER->getActiveOrganisation(),
+                            "datasource_type" => "progress",
+                        ));
+
+                        /**
+                         * Get the learner stage
+                         */
+                        $learner_stage = $cbme_progress_api->getLearnerStage();
+                        if ($learner_stage) {
+                            $user["stage_code"] = $learner_stage["objective_code"];
+                            $user["stage_name"] = $learner_stage["objective_name"];
+                        }
+
+                        /**
+                         * Get learner level data
+                         */
+                        $learner_cbme_flag = false;
+                        $learner_level_title = "";
+                        $learner_level = $cbme_progress_api->getLearnerLevel();
+                        if ($learner_level) {
+                            $learner_cbme_flag = $learner_level["cbme_flag"];
+                            $learner_level_title = $learner_level["learner_level"];
+                        }
+
+                        $data[] = array("target_id" => $user["proxy_id"], "target_label" => $user["firstname"] . " " . $user["lastname"], "lastname" => $user["lastname"], "role" => $translate->_(ucfirst($user["role"])), "email" => $user["email"], "group" => $user["group"], "stage" => $user["stage_code"], "stage_name" => $user["stage_name"],  "cbme_flag" => $learner_cbme_flag, "learner_level" => $learner_level_title);
+                    }
+
+                    if ($data) {
+                        echo json_encode(array("status" => "success", "data" => $data));
+                    } else {
+                        echo json_encode(array("status" => "error", "data" => $translate->_("No Users found")));
+                    }
+                    break;
+
+                case "get-distribution-csv-report":
+
+                    if (isset($request["adistribution_id"]) && $tmp_input = clean_input(strtolower($request["adistribution_id"]), array("trim", "int"))) {
+                        $PROCESSED["adistribution_id"] = $tmp_input;
+                    } else {
+                        add_error($translate->_("The provided distribution ID was invalid. Please try again."));
+                    }
+
+                    if (isset($request["form_id"]) && $tmp_input = clean_input(strtolower($request["form_id"]), array("trim", "int"))) {
+                        $PROCESSED["form_id"] = $tmp_input;
+                    } else {
+                        add_error($translate->_("The provided form ID was invalid. Please try again."));
+                    }
+
+                    if (has_error()) {
+                        echo json_encode(array("status" => "error", "data" => $ERRORSTR));
+                        exit;
+                    }
+
+                    $csv_report = new Entrada_Utilities_Assessments_CSVReports(array(
+                        "organisation_id"   => $ENTRADA_USER->getActiveOrganisation(),
+                        "adistribution_id"  => $PROCESSED["adistribution_id"],
+                        "form_id"           => $PROCESSED["form_id"]
+                    ));
+
+                    $report_data = $csv_report->generateReport();
+                    if (!$report_data) {
+                        echo json_encode(array("status" => "error", "data" => array($translate->_("No progress data found to generate report."))));
+                        exit;
+                    }
+
+                    $distribution = Models_Assessments_Distribution::fetchRowByIDIgnoreDeletedDate($PROCESSED["adistribution_id"]);
+
+                    $csv_view = new Views_Assessments_Reports_ScaleWeightedCSV();
+                    $csv = $csv_view->render(array(
+                        "report_data" => $report_data,
+                        "csv_title" => $distribution ? $distribution->getTitle() . " " . date("Y-m-d h:m", time()) : null
+                    ), false, true);
+
+                    exit;
                     break;
             }
         break;

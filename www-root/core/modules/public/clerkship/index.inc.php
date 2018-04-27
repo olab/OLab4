@@ -95,7 +95,7 @@ switch($_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]) {
 		}
 		</script>
 
-		<h1>My Clerkship Schedule</h1>
+		<h1><?php echo $translate->_("My Clerkship Schedule"); ?></h1>
 		<?php
 		if ($SHOW_LOGBOOK) {
 			?>
@@ -262,16 +262,16 @@ switch($_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]) {
 			<?php
 		} else {
 			$NOTICE++;
-			$NOTICESTR[] = "You currently have no scheduled clerkship core rotations or electives in the system.<br /><br />Your core rotation schedule will be added by the Undergraduate office, and you can begin to enter electives by clicking the <strong>Add Elective</strong> link above.";
+			$NOTICESTR[] = "You currently have no scheduled " . $translate->_("clerkship") . " core rotations or electives in the system.<br /><br />Your core rotation schedule will be added by the Undergraduate office, and you can begin to enter electives by clicking the <strong>Add Elective</strong> link above.";
 
 			echo display_notice();
 		}
 		} else {
 				$NOTICE++;
-				$NOTICESTR[] = "You currently have no scheduled clerkship core rotations or electives in the system.<br /><br />Your core rotation schedule will be released on ".date(DEFAULT_DATE_FORMAT, CLERKSHIP_SCHEDULE_RELEASE).", please check back then.";
+				$NOTICESTR[] = "You currently have no scheduled " . $translate->_("clerkship") . " core rotations or electives in the system.<br /><br />Your core rotation schedule will be released on ".date(DEFAULT_DATETIME_FORMAT, CLERKSHIP_SCHEDULE_RELEASE).", please check back then.";
 	
 				echo display_notice();
-        }
+    }
 	break;
 	default :
 		$HEAD[] = "<link href=\"".ENTRADA_URL."/javascript/calendar/css/xc2_default.css\" rel=\"stylesheet\" type=\"text/css\" media=\"all\" />";
@@ -369,7 +369,7 @@ switch($_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]) {
         
 		<div class="tab-pane" id="clerkship-tabs">
             <div class="tab-page">
-                <h3 class="tab">Departmental Clerkship Schedule</h3>
+                <h3 class="tab"><?php echo $translate->_("Departmental Clerkship Schedule"); ?></h3>
                 <div class="select-dep clearfix">
                     <form id="department-change-form" action="<?php echo ENTRADA_URL; ?>/clerkship" method="get" class="form-horizontal">
                         <div class="control-group">
@@ -431,7 +431,7 @@ switch($_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]) {
                     if (!empty($rotations)) {
                         ?>
                         <div class="tab-page">
-                            <h3 class="tab">Clerkship Rotations</h3>
+                            <h3 class="tab"><?php echo $translate->_("Clerkship Rotations"); ?></h3>
                             <form id="rotation-logbook-form" action="<?php echo ENTRADA_URL; ?>/clerkship" method="get">
                                 <table style="width: 100%" cellspacing="1" cellpadding="2" border="0" summary="Select Rotation">
                                 <colgroup>
@@ -652,7 +652,7 @@ switch($_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]) {
                 <?php
             } else {
                 $NOTICE++;
-                $NOTICESTR[] = "There are no entries in the Clerkship schedule for the <strong>".html_encode($department_title)."</strong> department in <strong>".html_encode($DATE_INFO["month"]." ".$DATE_INFO["year"])."</strong>.<br /><br />If you believe there is a problem, please contact the Undergrad office for more information.";
+                $NOTICESTR[] = "There are no entries in the " . $translate->_("Clerkship") . " schedule for the <strong>" . html_encode($department_title) . "</strong> department in <strong>" . html_encode($DATE_INFO["month"] . " " . $DATE_INFO["year"]) . "</strong>.<br /><br />If you believe there is a problem, please contact the Undergrad office for more information.";
 
                 echo display_notice();
             }

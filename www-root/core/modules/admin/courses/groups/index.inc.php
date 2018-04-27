@@ -54,7 +54,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
         echo "<h1 id=\"page-top\">" . $course->getFullCourseTitle() . "</h1>";
 
         courses_subnavigation($course->toArray(), "groups");
-        $curriculum_periods = Models_Curriculum_Period::fetchRowByCurriculumTypeIDCourseID($course->getCurriculumTypeID(), $course->getID());
+        $curriculum_periods = Models_Curriculum_Period::fetchAllByCurriculumTypeIDCourseID($course->getCurriculumTypeID(), $course->getID());
 
         switch ($STEP) {
             case 2 :
@@ -98,7 +98,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
                 if ($SUCCESS) {
                     echo display_success();
                 }
-                $curriculum_periods = Models_Curriculum_Period::fetchRowByCurriculumTypeIDCourseID($course->getCurriculumTypeID(), $course->getID());
+                $curriculum_periods = Models_Curriculum_Period::fetchAllByCurriculumTypeIDCourseID($course->getCurriculumTypeID(), $course->getID());
                 if ($curriculum_periods) {
                     ?>
                     <div id="msgs"></div>
@@ -167,16 +167,26 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
                                         </a>
                                     </div>
                                     <div id="enrolment-options" class="btn-group">
-                                        <a id="download-csv" class="btn" href="#"><i
-                                                class="icon-file"></i> <?php echo $translate->_("Download as CSV"); ?>
-                                        </a>
-                                        <button class="btn dropdown-toggle" data-toggle="dropdown">
+                                        <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
+                                            <?php echo $translate->_("Import / Export"); ?>
                                             <span class="caret"></span>
-                                        </button>
-                                        <ul id="secondary-enrolment-options" class="dropdown-menu">
-                                            <li><a href="#" id="print"><i
-                                                        class="icon-print"></i> <?php echo $translate->_("Print"); ?>
-                                                </a></li>
+                                        </a>
+                                        <ul class="dropdown-menu">
+                                            <li>
+                                                <a href="#modal-import-grades-csv" id="import-csv-button" data-toggle="modal" role="button">
+                                                    <?php echo $translate->_("Import from CSV file"); ?>
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a href="#" id="download-csv" class="export" role="button">
+                                                    <?php echo $translate->_("Export to CSV file"); ?>
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a href="#" id="printable-csv" class="export" role="button">
+                                                    <?php echo $translate->_("Export printable CSV file"); ?>
+                                                </a>
+                                            </li>
                                         </ul>
                                     </div>
                                     <div class="pull-left">
@@ -216,6 +226,37 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
                             </div>
                             <div id="item-detail-container" class="hide"></div>
                         </form>
+                        <div id="modal-import-csv" class="modal fade hide">
+                            <form enctype="multipart/form-data" id="import-form" name="import-form" method="POST" action="<?php echo ENTRADA_URL; ?>/admin/courses/groups?section=csv-import">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span></button>
+                                            <h4 id="email-rpnow-view-modal-heading" class="modal-title"> <?php echo $translate->_("Import Groups from CSV") ?></h4>
+                                        </div>
+                                        <div class="modal-body">
+                                            <div id="import-msgs"></div>
+                                            <div>
+                                                <input type="hidden" id="cperiod_import_select" name="cperiod_import_select" value="">
+                                                <input type="hidden" id="course_id" name="course_id" value="<?php echo $COURSE_ID; ?>">
+                                                <input type="hidden" id="method" name="method" value="import">
+                                                <div id="display-notice-box" class="display-notice">
+                                                    <a href="<?php echo ENTRADA_URL; ?>/admin/courses/groups?section=csv-import&method=demo">
+                                                        <img style="border: none;" src="<?php echo ENTRADA_URL; ?>/images/btn_help.gif" />
+                                                        <label><?php echo $translate->_("Download sample CSV file"); ?></label>
+                                                    </a>
+                                                </div>
+                                                <input type="file" id="file" name="file" style="padding:5px;" />
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-default pull-left" data-dismiss="modal"><?php echo $translate->_("Close") ?></button>
+                                            <button type="submit" id="submit-btn" class="btn btn-primary"><?php echo $translate->_("Import CSV") ?></button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
                         <div id="delete-groups-modal" class="modal hide fade">
                             <form id="delete-groups-modal-item" class="form-horizontal"
                                   action="<?php echo ENTRADA_URL . "/admin/" . $MODULE . "/" . $SUBMODULE . "?section=api-groups"; ?>"

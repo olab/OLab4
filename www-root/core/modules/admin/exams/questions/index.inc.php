@@ -29,14 +29,13 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUESTIONS"))) {
 } elseif ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
     header("Location: ".ENTRADA_URL);
     exit;
-} elseif (!$ENTRADA_ACL->amIAllowed("examquestion", "read", false)) {
+} elseif (!$ENTRADA_ACL->amIAllowed("examquestionindex", "read", false)) {
     add_error(sprintf($translate->_("Your account does not have the permissions required to use this feature of this module.<br /><br />If you believe you are receiving this message in error please contact <a href=\"mailto:%1\$s\">%2\$s</a> for assistance."), html_encode($AGENT_CONTACTS["administrator"]["email"]), html_encode($AGENT_CONTACTS["administrator"]["name"])));
 
     echo display_error();
 
     application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] does not have access to this module [".$MODULE."]");
 } else {
-
     if (isset($_GET["element_type"]) && $tmp_input = clean_input($_GET["element_type"], array("trim", "striptags"))) {
         $PROCESSED["element_type"] = $tmp_input;
     }
@@ -102,24 +101,28 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUESTIONS"))) {
         $HEAD[] = "<script> var exam_id = \"" . $PROCESSED["exam_id"] ."\";</script>";
     }
 
-    $HEAD[] = "<script type=\"text/javascript\">var ENTRADA_URL = \"". ENTRADA_URL ."\";</script>";
-    $HEAD[] = "<script type=\"text/javascript\">var VIEW_PREFERENCE = \"". (isset($PREFERENCES["questions"]["selected_view"]) ? $PREFERENCES["questions"]["selected_view"] : "detail") ."\";</script>";
-    $HEAD[] = "<script type=\"text/javascript\">var PREFERENCES = \"". (isset($PREFERENCES) ? $PREFERENCES : "[]") ."\";</script>";
-    $HEAD[] = "<script type=\"text/javascript\">var group_questions = \"". (isset($PREFERENCES) ? $PREFERENCES : "[]") ."\";</script>";
-    $HEAD[] = "<script type=\"text/javascript\">var API_URL = \"". ENTRADA_URL."/admin/" . $MODULE . "/" . $SUBMODULE . "?section=api-questions" ."\";</script>";
-    $HEAD[] = "<script type=\"text/javascript\">var FOLDER_API_URL = \"". ENTRADA_URL."/admin/" . $MODULE . "/" . $SUBMODULE . "?section=api-folders" ."\";</script>";
-    $HEAD[] = "<script type=\"text/javascript\">var EDIT_URL = \"". ENTRADA_URL."/admin/" . $MODULE . "/" . $SUBMODULE . "?section=edit-exam" ."\";</script>";
-    $HEAD[] = "<script type=\"text/javascript\" src=\"" .  ENTRADA_URL . "/javascript/". $MODULE ."/". $SUBMODULE ."/". $SUBMODULE .".js?release=". html_encode(APPLICATION_VERSION) ."\"></script>";
-    $HEAD[] = "<script type=\"text/javascript\" src=\"" .  ENTRADA_URL . "/javascript/". $MODULE ."/". $SUBMODULE ."/". $MODULE . "-" . $SUBMODULE . "-admin.js?release=". html_encode(APPLICATION_VERSION) ."\"></script>";
-    $HEAD[] = "<script type=\"text/javascript\" src=\"" .  ENTRADA_URL . "/javascript/". $MODULE ."/". $SUBMODULE ."/linked-questions.js?release=". html_encode(APPLICATION_VERSION) ."\"></script>";
-    $HEAD[] = "<script type=\"text/javascript\" src=\"" .  ENTRADA_URL . "/javascript/jquery/jquery.advancedsearch.js?release=". html_encode(APPLICATION_VERSION) ."\"></script>";
-    $HEAD[] = "<script type=\"text/javascript\" src=\"" .  ENTRADA_URL . "/javascript/jquery/jquery.inputselector.js?release=".html_encode(APPLICATION_VERSION)."\"></script>";
-    $HEAD[] = "<script type=\"text/javascript\" src=\"" .  ENTRADA_URL . "/javascript/jquery.growl.js?release=". html_encode(APPLICATION_VERSION) ."\"></script>";
-    $HEAD[] = "<link rel=\"stylesheet\" type=\"text/css\" href=\"" .  ENTRADA_URL . "/css/jquery/jquery.advancedsearch.css?release=". html_encode(APPLICATION_VERSION) ."\" />";
-    $HEAD[] = "<link rel=\"stylesheet\" type=\"text/css\" href=\"" .  ENTRADA_URL . "/css/jquery/jquery.growl.css?release=" . html_encode(APPLICATION_VERSION) . "\" />";
-    $HEAD[] = "<link rel=\"stylesheet\" type=\"text/css\" href=\"" .  ENTRADA_URL . "/css/jquery/jquery.inputselector.css?release=".html_encode(APPLICATION_VERSION)."\" />";
-    $HEAD[] = "<link rel=\"stylesheet\" type=\"text/css\" href=\"" .  ENTRADA_URL . "/css/" . $MODULE . "/" . $MODULE . ".css?release=" . html_encode(APPLICATION_VERSION) . "\" />";
-    $HEAD[] = "<link rel=\"stylesheet\" type=\"text/css\" href=\"" .  ENTRADA_URL . "/css/" . $MODULE . "/questions.css?release=" . html_encode(APPLICATION_VERSION) . "\" />";
+    // Url to add and attach a question to an exam. Must append folder id.
+    $add_attach_url = ENTRADA_URL . "/admin/" . $MODULE . "/" . $SUBMODULE . "?section=add-question&element_type=" . $PROCESSED["element_type"] . "&exam_id=" . $PROCESSED["exam_id"];
+
+    $HEAD[] = "<script type=\"text/javascript\">var ENTRADA_URL = \"" . ENTRADA_URL . "\";</script>";
+    $HEAD[] = "<script type=\"text/javascript\">var VIEW_PREFERENCE = \"" . (isset($PREFERENCES["questions"]["selected_view"]) ? $PREFERENCES["questions"]["selected_view"] : "detail") . "\";</script>";
+    $HEAD[] = "<script type=\"text/javascript\">var PREFERENCES = \"" . (isset($PREFERENCES) ? $PREFERENCES : "[]") . "\";</script>";
+    $HEAD[] = "<script type=\"text/javascript\">var group_questions = \"" . (isset($PREFERENCES) ? $PREFERENCES : "[]") . "\";</script>";
+    $HEAD[] = "<script type=\"text/javascript\">var API_URL = \"" . ENTRADA_URL."/admin/" . $MODULE . "/" . $SUBMODULE . "?section=api-questions" . "\";</script>";
+    $HEAD[] = "<script type=\"text/javascript\">var FOLDER_API_URL = \"" . ENTRADA_URL."/admin/" . $MODULE . "/" . $SUBMODULE . "?section=api-folders" . "\";</script>";
+    $HEAD[] = "<script type=\"text/javascript\">var EDIT_URL = \"" . ENTRADA_URL."/admin/" . $MODULE . "/" . $SUBMODULE . "?section=edit-exam" . "\";</script>";
+    $HEAD[] = "<script type=\"text/javascript\">var ADD_ATTACH_QUESTION_URL = \"" . $add_attach_url . "\";</script>";
+    $HEAD[] = "<script type=\"text/javascript\" src=\"" . ENTRADA_URL . "/javascript/" . $MODULE ."/". $SUBMODULE ."/". $SUBMODULE .".js?release=". html_encode(APPLICATION_VERSION) . "\"></script>";
+    $HEAD[] = "<script type=\"text/javascript\" src=\"" . ENTRADA_URL . "/javascript/" . $MODULE ."/". $SUBMODULE ."/". $MODULE . "-" . $SUBMODULE . "-admin.js?release=". html_encode(APPLICATION_VERSION) ."\"></script>";
+    $HEAD[] = "<script type=\"text/javascript\" src=\"" . ENTRADA_URL . "/javascript/" . $MODULE ."/". $SUBMODULE ."/linked-questions.js?release=". html_encode(APPLICATION_VERSION) . "\"></script>";
+    $HEAD[] = "<script type=\"text/javascript\" src=\"" . ENTRADA_URL . "/javascript/jquery/jquery.advancedsearch.js?release=". html_encode(APPLICATION_VERSION) . "\"></script>";
+    $HEAD[] = "<script type=\"text/javascript\" src=\"" . ENTRADA_URL . "/javascript/jquery/jquery.inputselector.js?release=".html_encode(APPLICATION_VERSION) . "\"></script>";
+    $HEAD[] = "<script type=\"text/javascript\" src=\"" . ENTRADA_URL . "/javascript/jquery.growl.js?release=". html_encode(APPLICATION_VERSION) . "\"></script>";
+    $HEAD[] = "<link rel=\"stylesheet\" type=\"text/css\" href=\"" . ENTRADA_URL . "/css/jquery/jquery.advancedsearch.css?release=". html_encode(APPLICATION_VERSION) . "\" />";
+    $HEAD[] = "<link rel=\"stylesheet\" type=\"text/css\" href=\"" . ENTRADA_URL . "/css/jquery/jquery.growl.css?release=" . html_encode(APPLICATION_VERSION) . "\" />";
+    $HEAD[] = "<link rel=\"stylesheet\" type=\"text/css\" href=\"" . ENTRADA_URL . "/css/jquery/jquery.inputselector.css?release=".html_encode(APPLICATION_VERSION) . "\" />";
+    $HEAD[] = "<link rel=\"stylesheet\" type=\"text/css\" href=\"" . ENTRADA_URL . "/css/" . $MODULE . "/" . $MODULE . ".css?release=" . html_encode(APPLICATION_VERSION) . "\" />";
+    $HEAD[] = "<link rel=\"stylesheet\" type=\"text/css\" href=\"" . ENTRADA_URL . "/css/" . $MODULE . "/questions.css?release=" . html_encode(APPLICATION_VERSION) . "\" />";
 
     if (isset($_SESSION[APPLICATION_IDENTIFIER]["exams"]["questions"]["selected_filters"]) && !empty($_SESSION[APPLICATION_IDENTIFIER]["exams"]["questions"]["selected_filters"])) {
         $sidebar_html = "";
@@ -128,15 +131,15 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUESTIONS"))) {
             $sidebar_html .= "<ul class=\"menu none\">";
             foreach ($filter_type as $target_id => $target_label) {
                 $sidebar_html .= "<li>";
-                $sidebar_html .= "<a href=\"#\" class=\"remove-target-toggle\" data-id=\"". html_encode($target_id) ."\" data-filter=\"". html_encode($key) ."\">";
-                $sidebar_html .= "<img src=\"". ENTRADA_URL ."/images/checkbox-on.gif\" class=\"remove-target-toggle\" data-id=\"". html_encode($target_id) ."\" data_filter=\"". html_encode($key) ."\" />";
-                $sidebar_html .= "<span> ". html_encode($target_label) ."</span>";
+                $sidebar_html .= "<a href=\"#\" class=\"remove-target-toggle\" data-id=\"" . html_encode($target_id) . "\" data-filter=\"" . html_encode($key) . "\">";
+                $sidebar_html .= "<img src=\"" . ENTRADA_URL . "/images/checkbox-on.gif\" class=\"remove-target-toggle\" data-id=\"" . html_encode($target_id) . "\" data_filter=\"" . html_encode($key) . "\" />";
+                $sidebar_html .= "<span>" . html_encode($target_label) . "</span>";
                 $sidebar_html .= "</a>";
                 $sidebar_html .= "</li>";
             }
             $sidebar_html .= "</ul>";
         }
-        $sidebar_html .= "<a href=\"#\" class=\"clear-filters\">".$translate->_("Clear All Filters")."</a>";
+        $sidebar_html .= "<a href=\"#\" class=\"clear-filters\">" . $translate->_("Clear All Filters") . "</a>";
 
         new_sidebar_item($translate->_("Selected Question Bank Filters"), $sidebar_html, "exam-filters", "open", 2);
     }
@@ -148,17 +151,6 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUESTIONS"))) {
         var group_descriptors = {group_descriptors : [<?php echo implode(",", $PROCESSED["group_descriptors"]); ?>]};
         current_folder_id = <?php echo (int) $PROCESSED["folder_id"];?>;
         var ajax_in_progress = false;
-
-        /* inactive filters
-         course : {
-         label : */"<?php //echo $translate->_("Courses"); ?>"/*,
-         data_source : "get-user-courses"
-         },
-         organisation : {
-         label : */"<?php //echo $translate->_("Organisations"); ?>"/*,
-         data_source : "get-user-organisations"
-         }
-         */
 
         jQuery(function($) {
             $("#advanced-search").advancedSearch(
@@ -172,12 +164,14 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUESTIONS"))) {
                             secondary_data_source : "get-child-objectives"
                         },
                         author : {
-                            label : "<?php echo $translate->_("Question Authors"); ?>",
-                            data_source : "get-question-authors"
+                            label : "<?php echo $translate->_("Question Permissions"); ?>",
+                            data_source : "get-question-permission-types",
+                            secondary_data_source : "get-question-permissions",
                         },
                         exam : {
                             label : "<?php echo $translate->_("Exams"); ?>",
                             data_source : "get-user-exams"
+
                         }
                     },
                     load_data_function: "get_questions",
@@ -319,6 +313,21 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUESTIONS"))) {
                                     $exam_element = new Models_Exam_Exam_Element($exam_element_data);
                                     if ($exam_element->insert()) {
                                         $inserted++;
+
+                                        $history = new Models_Exam_Creation_History(array(
+                                            "exam_id" => $exam->getExamID(),
+                                            "proxy_id" => $ENTRADA_USER->getID(),
+                                            "action" => "exam_element_add",
+                                            "action_resource_id" => $exam_element->getID(),
+                                            "secondary_action" => "version_id",
+                                            "secondary_action_resource_id" => $exam_element->getElementID(),
+                                            "history_message" => NULL,
+                                            "timestamp" => time(),
+                                        ));
+
+                                        if (!$history->insert()) {
+                                            echo json_encode(array("status" => "error", "data" => array($translate->_("Failed to insert history log for Edit Exam."))));
+                                        }
                                     } else {
                                         add_error($SECTION_TEXT["failed_to_create"]);
                                     }
@@ -401,15 +410,12 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUESTIONS"))) {
 
                                     $SUCCESS++;
                                 } else {
-                                    $ERROR++;
                                     add_error($SECTION_TEXT["failed_to_create"]);
                                 }
                             }  else {
-                                $ERROR++;
                                 add_error($SECTION_TEXT["already_attached"]);
                             }
                         } else {
-                            $ERROR++;
                             add_error($SECTION_TEXT["group_already_posted"]);
                         }
                     }
@@ -468,43 +474,55 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUESTIONS"))) {
             <script>
                 jQuery(document).ready(function($) {
                     $("#add-folder").click(function () {
-                        var current_folder = $(".active-folder").data('id');
-                        var url = "<?php echo ENTRADA_URL. "/admin/" . $MODULE. "/" . $SUBMODULE . "?section=add-folder&parent_folder_id="?>" + current_folder;
+                        var current_folder = $(".active-folder").data("id");
+                        var url = "<?php echo ENTRADA_URL . "/admin/" . $MODULE. "/" . $SUBMODULE . "?section=add-folder&parent_folder_id="; ?>" + current_folder;
                         window.location = url;
                     });
 
                     $("#add-question").click(function () {
-                        var current_folder = $(".active-folder").data('id');
+                        var current_folder = $(".active-folder").data("id");
                         if (!current_folder) {
                             current_folder = 0;
                         }
-                        var url = "<?php echo ENTRADA_URL. "/admin/" . $MODULE. "/" . $SUBMODULE . "?section=add-question&folder_id="?>" + current_folder;
+
+
+                        var url = "<?php echo ENTRADA_URL . "/admin/" . $MODULE. "/" . $SUBMODULE . "?section=add-question&folder_id="; ?>" + current_folder;
                         window.location = url;
                     });
 
-                    $("#folders").on("click", ".folder-edit-btn a", function () {
-                        var type = $(this).data('type');
-                        folder_id_selected = $(this).data('id');
-                        var href = $(this).data('href');
-                        if (type === "Delete") {
-                            $("#delete-folder-modal").modal("show");
-                        } else if (type === "Edit") {
-                            var url = "<?php echo ENTRADA_URL. "/admin/" . $MODULE. "/" . $SUBMODULE?>" + href;
-                            window.location = url;
+                    $("#folders").on("click", ".folder-edit-btn a", function (e) {
+                        e.preventDefault();
+                        var type = $(this).data("type");
+                        folder_id_selected = $(this).data("id");
+                        var href = $(this).attr("href");
+                        switch (type) {
+                            case "Delete":
+                                $("#delete-folder-modal").modal("show");
+                                break;
+                            case "Move":
+                                $("#move-folder-modal").modal("show");
+                                break;
+                            case "Copy":
+                                $("#copy-folder-modal").modal("show");
+                                break;
+                            case "Edit":
+                                var url = "<?php echo ENTRADA_URL . "/admin/" . $MODULE. "/"; ?>" + href;
+                                window.location = url;
+                                break;
                         }
                     });
 
-                    delete_url = "<?php echo ENTRADA_URL. "/admin/" . $MODULE. "/" . $SUBMODULE;?>" + "?section=api-questions";
-                    edit_exam = <?php echo (isset($PROCESSED["exam_id"]) && isset($PROCESSED["element_type"])) ? '"add"' : 'false'; ?>
+                    delete_url = "<?php echo ENTRADA_URL . "/admin/" . $MODULE. "/" . $SUBMODULE; ?>" + "?section=api-questions";
+                    edit_exam = <?php echo (isset($PROCESSED["exam_id"]) && isset($PROCESSED["element_type"])) ? '"add"' : "false"; ?>;
                 });
 
             </script>
             <div id="msgs"></div>
-            <div id="exam-question-bank-breadcrumbs" class="bread-crumb-trail">
+            <div id="exam-bank-breadcrumbs" class="bread-crumb-trail">
                 <ul class="question-bank-breadcrumbs"><li><span class="bread-separator"><i class="fa fa-angle-right"></i></span><strong><?php echo $translate->_("Index"); ?></strong></li></ul>
             </div>
-            <div id="exam-question-bank-container" class="row-fluid">
-                <div id="exam-question-bank-tree" class="span12">
+            <div id="exam-bank-container" class="row-fluid">
+                <div id="exam-bank-tree" class="span12">
                     <div class="row-fluid">
                         <div class="pull-left">
                             <h3 id="exam-question-bank-tree-title">
@@ -513,7 +531,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUESTIONS"))) {
                         </div>
                         <div class="pull-right">
                             <div id="question-bank-folder-view-controls" class="btn-group">
-                                <a href="#" id="toggle-question-bank" class="btn" title="<?php echo $SUBMODULE_TEXT["folder"]["buttons"]["question_bank_toggle_title"]; ?>"><i id="toggle-question-bank-icon" class="fa fa-2x fa-eye"></i></a>
+                                <a href="#" id="toggle-exam-bank" class="btn" title="<?php echo $SUBMODULE_TEXT["folder"]["buttons"]["question_bank_toggle_title"]; ?>"><i id="toggle-exam-bank-icon" class="fa fa-2x fa-eye"></i></a>
                             </div>
                             <?php
                             if ($ENTRADA_ACL->amIAllowed("examfolder", "create", false)) {
@@ -524,35 +542,18 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUESTIONS"))) {
                             ?>
                         </div>
                     </div>
-                    <div id="folders">
-                    <?php
-                    $folders = Models_Exam_Question_Bank_Folders::fetchAllByParentID(0);
-                    if (isset($folders) && is_array($folders)) {
-                        ?>
-                        <ul id="folder_ul">
-                            <?php
-                            foreach ($folders as $folder) {
-                                if (isset($folder) && is_object($folder)) {
-                                    $folder_view = new Views_Exam_Question_Bank_Folder($folder);
-                                    echo $folder_view->render();
-                                }
-                            }
-                            ?>
-                        </ul>
-                    <?php
-                    }
-                    ?>
-                    </div>
+                    <div id="folders"></div>
                 </div>
             </div>
 
             <div id="exam-questions-container">
                 <form id="search-targets-form"></form>
-                <form id="exam-search" class="exam-search form-search" action="<?php echo ENTRADA_URL."/admin/" . $MODULE . "/" . $SUBMODULE . "?step=2"; ?>" method="POST">
+                <form id="exam-search" class="exam-search form-search" action="<?php echo ENTRADA_URL . "/admin/" . $MODULE . "/" . $SUBMODULE . "?step=2"; ?>" method="POST">
                     <input type="hidden" id="element_type" name="element_type" value="<?php echo (isset($PROCESSED["element_type"]) ? $PROCESSED["element_type"] : ""); ?>" />
                     <input type="hidden" id="id" name="id" value="<?php echo (isset($PROCESSED["id"]) ? $PROCESSED["id"] : ""); ?>" />
                     <input type="hidden" id="exam_id" name="exam_id" value="<?php echo (isset($PROCESSED["exam_id"]) ? $PROCESSED["exam_id"] : ""); ?>" />
                     <input type="hidden" id="group_id" name="group_id" value="<?php echo (isset($PROCESSED["group_id"]) ? $PROCESSED["group_id"] : ""); ?>" />
+                    <input type="hidden" id="questions" name="questions" />
                     <div id="search-bar" class="search-bar">
                         <div class="row-fluid space-below">
                             <input type="text" id="question-search" placeholder="<?php echo $SUBMODULE_TEXT["placeholders"]["question_bank_search"]?>" class="input-block-level search-icon">
@@ -591,7 +592,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUESTIONS"))) {
                             <div class="pull-right">
                                 <div id="question-bank-view-controls" class="btn-group padding-right">
                                     <a href="#" id="toggle-all-question-bank" class="btn" title="<?php echo $SUBMODULE_TEXT["index"]["text_question_bank_toggle_title"]; ?>">
-                                        <i id="toggle-question-bank-icon" class="fa fa-2x fa-eye"></i>
+                                        <i id="toggle-exam-bank-icon" class="fa fa-2x fa-eye"></i>
                                     </a>
                                     <a href="#" id="select-all-question-bank" class="btn" title="<?php echo $SUBMODULE_TEXT["index"]["text_question_bank_select_title"]; ?>" >
                                         <i id="select-question-bank-icon" class="fa fa-2x fa-square-o"></i>
@@ -606,7 +607,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUESTIONS"))) {
                                         <li><a href="#delete-question-modal" data-toggle="modal"><i class="delete-icon fa fa-trash-o fa-fw"></i> <?php echo $SUBMODULE_TEXT["buttons"]["delete_questions"]; ?></a></li>
                                         <!--                            <li><a href="#move-exam-modal" data-toggle="modal"><i class="move-icon fa fa-arrows-v fa-fw"></i> --><?php //echo $SUBMODULE_TEXT["buttons"]["move_exam"]; ?><!--</a></li>-->
                                         <li><a href="#move-question-modal" data-toggle="modal"><i class="move-icon fa fa-arrows-v fa-fw"></i> <?php echo $SUBMODULE_TEXT["buttons"]["move_questions"]; ?></a></li>
-                                        <li class="disabled"><a href="#group-question-modal" data-toggle="modal"><i class="move-icon fa fa-tag fa-fw"></i> <?php echo $SUBMODULE_TEXT["buttons"]["tag_questions"]; ?></a></li>
+                                        <li><a href="#objective-modal" data-toggle="modal" id="objective-modal-toggle"><i class="move-icon fa fa-tag fa-fw"></i> <?php echo $SUBMODULE_TEXT["buttons"]["tag_questions"]; ?></a></li>
                                     </ul>
                                 </div>
                                 <?php
@@ -617,8 +618,9 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUESTIONS"))) {
                                             <span class="caret"></span>
                                         </button>
                                         <ul class="dropdown-menu">
-                                            <li><a href="<?php echo ENTRADA_URL."/admin/" . $MODULE . "/" . $SUBMODULE . "?section=add-question&element_type=" . $PROCESSED["element_type"] . "&exam_id=" . $PROCESSED["exam_id"]; ?>"><?php echo $SUBMODULE_TEXT["exam"]["btn_add_attach_question"]; ?></a></li>
+                                            <li><a id="btn-add-attach-question" href="<?php echo $add_attach_url ?>"><?php echo $SUBMODULE_TEXT["exam"]["btn_add_attach_question"]; ?></a></li>
                                         </ul>
+
                                     </div>
                                 <?php
                                 } else if ($ENTRADA_ACL->amIAllowed("examquestion", "create", false)) { ?>
@@ -680,16 +682,17 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUESTIONS"))) {
                 </div>
                 <?php
                 if ($PROCESSED["folder_id"] === 0) {
-                    $root_folder = new Models_Exam_Question_Bank_Folders(
+                    $root_folder = new Models_Exam_Bank_Folders(
                         array(
                             "folder_id" => 0,
                             "folder_title" => "Index",
-                            "image_id" => 3
+                            "image_id" => 3,
+                            "folder_type" => "question"
                         )
                     );
 
                     if ($root_folder && is_object($root_folder)) {
-                        $initial_folder_view = new Views_Exam_Question_Bank_Folder($root_folder);
+                        $initial_folder_view = new Views_Exam_Bank_Folder($root_folder);
                         if (isset($initial_folder_view) && is_object($initial_folder_view)) {
                             $title              = $initial_folder_view->renderFolderSelectorTitle();
                             $folder_view        = $initial_folder_view->renderSimpleView();
@@ -697,9 +700,9 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUESTIONS"))) {
                         }
                     }
                 } else {
-                    $parent_folder = Models_Exam_Question_Bank_Folders::fetchRowByID($PROCESSED["folder_id"]);
+                    $parent_folder = Models_Exam_Bank_Folders::fetchRowByID($PROCESSED["folder_id"]);
                     if (isset($parent_folder) && is_object($parent_folder)) {
-                        $parent_folder_view = new Views_Exam_Question_Bank_Folder($parent_folder);
+                        $parent_folder_view = new Views_Exam_Bank_Folder($parent_folder);
                         if ($parent_folder_view && is_object($parent_folder_view)) {
                             $title              = $parent_folder_view->renderFolderSelectorTitle();
                             $folder_view        = $parent_folder_view->renderSimpleView();
@@ -723,20 +726,20 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUESTIONS"))) {
                                 <h3><?php echo $SUBMODULE_TEXT["index"]["text_modal_move_questions"] ?></h3>
                                 <div id="move-questions-container"></div>
                                 <h3><?php echo $SUBMODULE_TEXT["index"]["text_modal_move_destination"] ?></h3>
-                                <div id="qbf-selector" class="well">
+                                <div class="qbf-selector well">
                                     <div id="qbf-title">
                                         <span class="qbf-title"><?php echo $title;?></span>
                                     </div>
                                     <div id="qbf-nav">
                                         <?php echo $nav;?>
                                     </div>
-                                    <span id="qbf-folder-<?php echo $PROCESSED["folder_id"];?>" class="qbf-folder active">
+                                    <div id="qbf-folder-<?php echo $PROCESSED["folder_id"];?>" class="qbf-folder active">
                                         <table>
                                             <?php
                                             echo $sub_folder_html;
                                             ?>
                                         </table>
-                                    </span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -774,7 +777,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUESTIONS"))) {
                         <input type="hidden" name="step" value="2" />
                         <div class="modal-header"><h3><?php echo $SUBMODULE_TEXT["index"]["title_modal_linked_questions"]; ?></h3></div>
                         <div class="modal-body">
-                            This question belongs to the following question groups.
+                            <?php echo $translate->_("This question belongs to the following question groups.") ?>
                             <div id="table-question-groups-container"></div>
                         </div>
                         <div class="modal-footer">
@@ -783,6 +786,39 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUESTIONS"))) {
                             </div>
                         </div>
                     </form>
+                </div>
+                <div id="objective-modal" class="modal hide fade">
+                    <div class="modal-header"><h2><?php echo $translate->_("Curriculum Tags") ?></h2><span id="response-questions-objetive"></span></div>
+                    <div class="modal-body">
+                        <div>
+                            <h3 id="tagging_question_ids"></h3>
+                            <form>
+                                <div class="form-group">
+                                    <label for="tag_editing_mode" class="radio">
+                                        <input type="radio" name="tag_editing_mode" value="add_tags" checked="checked">
+                                        <?php echo $translate->_("Add the selected Curriculum Tags.") ?>
+                                    </label>
+                                    <label for="tag_editing_mode" class="radio">
+                                        <input type="radio" name="tag_editing_mode" value="replace_tags">
+                                        <?php echo $translate->_("Remove all existing Curriculum Tags and replace with the selected tags."); ?>
+                                    </label>
+                                    <label for="tag_editing_mode" class="radio">
+                                        <input type="radio" name="tag_editing_mode" value="remove_tags">
+                                        <?php echo $translate->_("Remove the selected Curriculum Tags."); ?>
+                                    </label>
+                                </div>
+                            </form>
+                        </div>
+                        <?php
+                        echo Views_Exam_Question_Objective::renderObjectiveControlsBulkTagging($ENTRADA_USER->getActiveOrganisation());
+                        ?>
+                    </div>
+                    <div class="modal-footer">
+                        <div class="row-fluid">
+                            <a href="#" class="btn btn-default" data-dismiss="modal"><?php echo $DEFAULT_TEXT_LABELS["btn_close"]; ?></a>
+                            <a href="#" class="btn btn-success" id="apply_tags"><?php echo $DEFAULT_TEXT_LABELS["btn_apply"]; ?></a>
+                        </div>
+                    </div>
                 </div>
                 <div id="preview-question-modal" class="modal hide fade">
                     <form id="preview-question" class="exam-horizontal" style="margin:0px;">

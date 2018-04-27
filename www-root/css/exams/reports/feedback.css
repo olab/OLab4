@@ -1,0 +1,28 @@
+
+li.selected-list-item {
+    list-style-type: none;
+    background: transparent url("../../../images/list-community.gif") no-repeat scroll 0px 4px;
+}
+
+@media print {
+    div#content {
+        display:block !important;
+        float:none !important;
+        width: 100%!important;
+    }
+
+    #bread-crumb-trail {
+        display: none !important;
+    }
+
+    ul.nav-tabs {
+        display: none !important;
+    }
+    #feedback_scores {
+        width: 80%;
+    }
+
+    .exam-element {
+        page-break-inside: avoid !important;
+    }
+}

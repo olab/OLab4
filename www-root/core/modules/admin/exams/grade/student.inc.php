@@ -65,7 +65,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADE_EXAMS"))) {
 
         <h1><?php echo sprintf($translate->_("Grading %s's Submission for %s"), $grading_student->getFullname(), $exam_post->getTitle()); ?></h1>
         <p>
-            <strong><?php echo $translate->_("Submitted on:"); ?></strong> <?php echo date(DEFAULT_DATE_FORMAT, $exam_progress->getSubmissionDate()); ?><br />
+            <strong><?php echo $translate->_("Submitted on:"); ?></strong> <?php echo date(DEFAULT_DATETIME_FORMAT, $exam_progress->getSubmissionDate()); ?><br />
             <strong><?php echo $translate->_("Attempt:"); ?></strong> <?php echo Models_Exam_Progress::fetchAttemptNumber($exam_progress); ?><br />
             <strong><?php echo $translate->_("Score:"); ?></strong> <span id="student_overall_score"><?php echo $exam_progress->getExamPoints()." / ".$exam_progress->getExamValue()." (".$exam_progress->getExamScore()."%)"; ?></span>
         </p>

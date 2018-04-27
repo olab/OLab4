@@ -37,6 +37,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_ITEM") && !defined("EDIT_ITE
     $render_form_page = true;
     $disabled = false;
     $lock_itemtype = false;
+    $lock_rating_scale = false;
     $force_descriptors_readonly = false;
     $clone_on_edit = false;
     $show_grid_controls = false;
@@ -46,24 +47,70 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_ITEM") && !defined("EDIT_ITE
     $item_data = array();
     $item_in_use = false;
     $notice_message = $alert_message = "";
-    $valid_rubric_referrer = false;
-    $referrer_rubric_editable = false;
     $usage_delivered = $usage_rubrics = array();
     $used_in_rubrics = $used_in_assessments = 0;
     $objective_name = false;
     $session_referrer_type = Entrada_Utilities_FormStorageSessionHelper::determineReferrerType($PROCESSED["fref"], $PROCESSED["rref"]);
     $session_referrer_url = Entrada_Utilities_FormStorageSessionHelper::determineReferrerURI($PROCESSED["fref"], $PROCESSED["rref"]);
 
+    // Objective course id processing.
+    $disable_course_select = false;
+    $user_courses = Models_Course::getUserCourses($ENTRADA_USER->getActiveID(), $ENTRADA_USER->getActiveOrganisation());
+    $formatted_courses_datasource = array();
+
+    $lock_course_selector = false;
+    if (isset($_POST["course_id"]) && $tmp_input = clean_input($_POST["course_id"], array("trim", "int"))) {
+        $PROCESSED["course_id"] = $tmp_input;
+    } else if ($PROCESSED["fref"] && $form_session_data = Entrada_Utilities_FormStorageSessionHelper::fetch($PROCESSED["fref"])) {
+        $PROCESSED["course_id"] = isset($form_session_data["course_id"]) ? $form_session_data["course_id"] : null;
+        $lock_course_selector = true;
+    } else {
+        $PROCESSED["course_id"] = null;
+        $PROCESSED["course_name"] = null;
+    }
+
+    if ($user_courses) {
+        foreach ($user_courses as $user_course) {
+            $formatted_courses_datasource[] = array("target_id" => $user_course->getID(), "target_label" => $user_course->getCourseName());
+            if ($PROCESSED["course_id"] && $user_course->getID() == $PROCESSED["course_id"]) {
+                $PROCESSED["course_name"] = $user_course->getCourseName();
+
+            }
+        }
+
+        if (!$PROCESSED["course_id"] && count($formatted_courses_datasource) == 1) {
+            $disable_course_select = true;
+            $PROCESSED["course_name"] = $formatted_courses_datasource[0]["target_label"];
+            $PROCESSED["course_id"] = $formatted_courses_datasource[0]["target_id"];
+        }
+    }
+
+    if ($PROCESSED["course_id"]) { ?>
+        <input id="objective_course_<?php echo $PROCESSED["course_id"]; ?>" name="course_id" type="hidden" class="choose-objective-course-selector" value="<?php echo $PROCESSED["course_id"]; ?>" data-label="<?php echo $PROCESSED["course_name"]; ?>"/>
+        <input id="course-name" name="objective_course_name" type="hidden" value="<?php echo html_encode($PROCESSED["course_name"]); ?>"/>
+    <?php
+    }
+
     // Get session information about associated rubric, if applicable.
     $PROCESSED["rubric_descriptors"] = array();
-    $PROCESSED["rubric_items"] = array();
     if (!empty($rubric_referrer_data)) {
-        $valid_rubric_referrer = true;
         $PROCESSED["rubric_descriptors"] = $rubric_referrer_data["descriptors"];
-        $PROCESSED["rubric_items"] = $rubric_referrer_data["items"];
-        if ($forms_api->isRubricEditable($rubric_referrer_data["rubric_id"])) {
-            $referrer_rubric_editable = true;
+    }
+
+    if (isset($PROCESSED["rating_scale_id"]) && $PROCESSED["rating_scale_id"]) {
+        $rating_scale_model = Models_Assessments_RatingScale::fetchRowByID($PROCESSED["rating_scale_id"]);
+        if ($rating_scale_model) {
+            $PROCESSED["rating_scale_type_id"] = $rating_scale_model->getRatingScaleType();
+            $PROCESSED["rating_scale_title"] = $rating_scale_model->getRatingScaleTitle();
+        } else {
+            $PROCESSED["rating_scale_type_id"] = 0;
         }
+    } else {
+        $PROCESSED["rating_scale_type_id"] = 0;
+    }
+
+    if ($PROCESSED["rating_scale_id"]) {
+        $scale_data = $forms_api->fetchScaleData($PROCESSED["rating_scale_id"]);
     }
 
     // We have an item ID, so set relevant flags
@@ -113,10 +160,6 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_ITEM") && !defined("EDIT_ITE
         $rubrics_using_this_item_url = Entrada_Utilities_FormStorageSessionHelper::buildRefURL(ENTRADA_URL."/admin/assessments/rubrics?item_id={$PROCESSED["item_id"]}", $PROCESSED["fref"], $PROCESSED["rref"]);
         $forms_using_this_item_url = Entrada_Utilities_FormStorageSessionHelper::buildRefURL(ENTRADA_URL."/admin/assessments/forms?item_id={$PROCESSED["item_id"]}", $PROCESSED["fref"], $PROCESSED["rref"]);
 
-        $lock_itemtype = true;
-        $force_descriptors_readonly = true;
-        $disabled = true;
-
         // Set the messaging on the form, and what controls appear, based on the item's usage
         $item_editability = $forms_api->getItemEditabilityState(@$form_referrer_data["form_id"], @$rubric_referrer_data["rubric_id"]);
 
@@ -126,6 +169,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_ITEM") && !defined("EDIT_ITE
                 $lock_itemtype = false;
                 $force_descriptors_readonly = false;
                 $disabled = false;
+                $lock_rating_scale = false;
                 $show_grid_controls = true;
                 break;
             case "editable-by-attached-form":
@@ -133,6 +177,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_ITEM") && !defined("EDIT_ITE
                 $lock_itemtype = false;
                 $force_descriptors_readonly = false;
                 $disabled = false;
+                $lock_rating_scale = false;
                 $show_grid_controls = true;
                 break;
             case "editable-by-attached-rubric":
@@ -140,6 +185,8 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_ITEM") && !defined("EDIT_ITE
                 $lock_itemtype = true;
                 $force_descriptors_readonly = true;
                 $disabled = false;
+                $lock_rating_scale = true;
+                $show_grid_controls = false;
                 break;
             case "editable-by-attached-form-and-rubric-unlocked-descriptors":
             case "editable-by-attached-rubric-unlocked-descriptors":
@@ -148,6 +195,16 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_ITEM") && !defined("EDIT_ITE
                 $force_descriptors_readonly = false;
                 $show_grid_controls = true;
                 $disabled = false;
+                $lock_rating_scale = false;
+                break;
+            case "editable-by-attached-form-and-rubric-has-scale":
+            case "editable-by-attached-rubric-has-scale":
+                $lock_itemtype = true;
+                $force_descriptors_readonly = true;
+                $disabled = false;
+                $show_grid_controls = false;
+                $lock_rating_scale = true;
+                $notice_message = $translate->_("This item uses a pre-defined <strong>Rating Scale</strong>. Response descriptors cannot be individually modified.");
                 break;
             case "editable-attached-form-multiple":
                 // This item is attached to multiple forms, but no rubrics
@@ -155,6 +212,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_ITEM") && !defined("EDIT_ITE
                 $disabled = false;
                 $force_descriptors_readonly = false;
                 $show_grid_controls = true;
+                $lock_rating_scale = false;
                 $notice_message = sprintf($translate->_("This item is attached to one or more forms. <strong>Making changes to this item will affect all of the associated forms</strong>. <a href='%s'>Click here</a> to see which forms use this item."), $forms_using_this_item_url);
                 break;
             case "editable-attached-rubric-multiple":
@@ -162,12 +220,16 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_ITEM") && !defined("EDIT_ITE
                 $lock_itemtype = true;
                 $force_descriptors_readonly = true;
                 $disabled = false;
+                $show_grid_controls = false;
+                $lock_rating_scale = true;
                 $notice_message = sprintf($translate->_("This item is in use by one or more Grouped Items. <strong>Making changes to this item will affect all of the associated Grouped Items</strong>. <a href='%s'>Click here</a> to see which Grouped Items use this item."), $rubrics_using_this_item_url);
                 break;
             case "editable-attached-multiple":
                 $lock_itemtype = true;
                 $force_descriptors_readonly = true;
                 $disabled = false;
+                $show_grid_controls = false;
+                $lock_rating_scale = true;
                 $notice_message = $translate->_("This item is in use by multiple forms and Grouped Items. <strong>Making changes to this item will affect all of the associated forms and Grouped Items</strong>.");
                 $notice_message .= "<br/><br/>";
                 $notice_message .= sprintf($translate->_("<a href='%s'>Click here</a> to see which forms use this item."), $forms_using_this_item_url);
@@ -175,26 +237,61 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_ITEM") && !defined("EDIT_ITE
                 $notice_message .= sprintf($translate->_("<a href='%s'>Click here</a> to see which Grouped Items use this item."), $rubrics_using_this_item_url);
                 break;
             case "readonly":
+                $lock_itemtype = true;
+                $force_descriptors_readonly = true;
+                $disabled = true;
+                $show_grid_controls = false;
+                $lock_rating_scale = true;
                 $alert_message = $translate->_("This <strong>item is in use</strong> by a <strong>form</strong> that has been delivered. Only <strong>permissions</strong> can be edited when an item is used in tasks that have been delivered. Please make a copy if you wish to make changes.");
                 break;
             case "readonly-clone-to-rubric":
                 $clone_on_edit = true;
+                $lock_itemtype = true;
+                $force_descriptors_readonly = true;
+                $disabled = true;
+                $show_grid_controls = false;
+                $lock_rating_scale = true;
                 $alert_message = $translate->_("This <strong>item is in use</strong> by a <strong>form</strong> that has been delivered. Only <strong>permissions</strong> can be edited when an item is used in tasks that have been delivered. If you wish to make changes, please use the <strong>\"Copy & Attach\"</strong> button to replace this item in the rubric with a new version.");
                 $show_copy_and_attach_button = true;
                 break;
             case "readonly-clone-to-form":
                 $clone_on_edit = true;
+                $lock_itemtype = true;
+                $force_descriptors_readonly = true;
+                $disabled = true;
+                $show_grid_controls = false;
+                $lock_rating_scale = true;
                 $alert_message = $translate->_("This <strong>item is in use</strong> by a <strong>form</strong> that has been delivered. Only <strong>permissions</strong> can be edited when an item is used in tasks that have been delivered. If you wish to make changes, please use the <strong>\"Copy & Attach\"</strong> button to replace this item on the form with a new version.");
                 $show_copy_and_attach_button = true;
                 break;
+            default: // unknown type, so default as read-only
+                $lock_itemtype = true;
+                $force_descriptors_readonly = true;
+                $disabled = true;
+                $show_grid_controls = false;
+                $lock_rating_scale = true;
+                break;
         }
 
-        if ($notice_message) {
-            add_notice($notice_message);
+    } else {
+        // This is a new item
+        // If we're referred by a rubric, lock the scale selector
+        if (!empty($rubric_referrer_data)) {
+            if ($rubric_referrer_data["rating_scale_id"] || !empty($rubric_referrer_data["descriptors"])) {
+                $lock_rating_scale = true;
+                $force_descriptors_readonly = true;
+                $PROCESSED["rating_scale_id"] = (int)$rubric_referrer_data["rating_scale_id"]; // defaulting to 0 is valid
+            }
         }
-        if ($alert_message) {
-            add_generic($alert_message);
-        }
+    }
+
+    $PROCESSED["mapped_objectives"] = array();
+
+    if ($notice_message) {
+        add_notice($notice_message);
+    }
+    if ($alert_message) {
+        add_generic($alert_message);
     }
 
     switch ($STEP) {
@@ -233,6 +330,17 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_ITEM") && !defined("EDIT_ITE
                 $PROCESSED["item_code"] = "";
             }
 
+            if (isset($_POST["attributes"]) && $tmp_input = clean_input($_POST["attributes"], array("trim", "striptags"))) {
+                $PROCESSED["attributes"] = urldecode($tmp_input);
+            } else {
+                $PROCESSED["attributes"] = "";
+            }
+
+            $PROCESSED["rating_scale_id"] = "";
+            if (isset($_POST["rating_scale_id"]) && $tmp_input = clean_input($_POST["rating_scale_id"], array("trim", "int"))) {
+                $PROCESSED["rating_scale_id"] = $tmp_input;
+            }
+
             if (isset($_POST["allow_comments"]) && $tmp_input = clean_input($_POST["allow_comments"], array("trim", "int"))) {
                 if (isset($_POST["comment_type"]) && $tmp_input = clean_input($_POST["comment_type"], array("trim", "striptags"))) {
                     $PROCESSED["comment_type"] = $tmp_input;
@@ -256,6 +364,18 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_ITEM") && !defined("EDIT_ITE
                 $PROCESSED["mandatory"] = $tmp_input;
             } else {
                 $PROCESSED["mandatory"] = false;
+            }
+
+            if (isset($_POST["allow_default"]) && $tmp_input = clean_input($_POST["allow_default"], array("trim", "int"))) {
+                $PROCESSED["allow_default"] = $tmp_input;
+                if (isset($_POST["default_response"]) && $tmp_input = clean_input($_POST["default_response"], array("trim", "int"))) {
+                    $PROCESSED["default_response"] = $tmp_input;
+                } else {
+                    $PROCESSED["default_response"] = 1;
+                }
+            } else {
+                $PROCESSED["allow_default"] = false;
+                $PROCESSED["default_response"] = null;
             }
 
             if (isset($_POST["ardescriptor_id"]) && is_array($_POST["ardescriptor_id"])) {
@@ -323,9 +443,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_ITEM") && !defined("EDIT_ITE
                 }
 
             } else {
-
                 // Standard (Non-field note) item responses
-
                 $item_response_types = array(
                     "horizontal_multiple_choice_single",
                     "vertical_multiple_choice_single",
@@ -336,6 +454,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_ITEM") && !defined("EDIT_ITE
                     "rubric_line",
                     "scale"
                 );
+
                 if (in_array($itemtype_shortname, $item_response_types)) {
                     // We require a minimum of 2 item responses for these types.
                     if (!isset($_POST["item_responses"]) || count($_POST["item_responses"]) < 2) {
@@ -382,8 +501,39 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_ITEM") && !defined("EDIT_ITE
                     }
                 }
 
-                if ((isset($_POST["objective_ids_1"])) && (is_array($_POST["objective_ids_1"]))) {
-                    foreach ($_POST["objective_ids_1"] as $objective_id) {
+                $PROCESSED["objective_ids"] = array();
+                if ((isset($_POST["mapped_objective_ids"])) && (is_array($_POST["mapped_objective_ids"]))) {
+                    if (isset($_POST["mapped_objective_breadcrumbs"]) && is_array($_POST["mapped_objective_breadcrumbs"])) {
+                        $PROCESSED["objectives_breadcrumbs"] = array_map(function($breadcrumb) {
+                            return clean_input($breadcrumb, array("trim", "striptags"));
+                        }, $_POST["mapped_objective_breadcrumbs"]);
+                    } else {
+                        $PROCESSED["objectives_breadcrumbs"] = array();
+                    }
+
+                    foreach ($_POST["mapped_objective_ids"] as $objective_id) {
+                        $metadata = array();
+                        if ((isset($_POST["mapped_objective_tree_ids_{$objective_id}"])) && (is_array($_POST["mapped_objective_tree_ids_{$objective_id}"]))) {
+                            $PROCESSED["objective_tree_ids"][$objective_id] = array_map("intval", $_POST["mapped_objective_tree_ids_{$objective_id}"]);
+                            $objective_info = Models_Objective::fetchRow($objective_id);
+                            if ($objective_info) {
+                                foreach ($PROCESSED["objective_tree_ids"][$objective_id] as $tree_id) {
+                                    $metadata = array("tree_node_id" => $tree_id);
+                                    if (array_key_exists($tree_id, $PROCESSED["objectives_breadcrumbs"])) {
+                                        $metadata["breadcrumb"] = $PROCESSED["objectives_breadcrumbs"][$tree_id];
+                                    }
+
+                                    $metadata = count($metadata) ? json_encode($metadata) : null;
+                                    $PROCESSED["mapped_objectives"][] = array_merge($objective_info->toArray(), array("objective_metadata" => $metadata));
+                                }
+                            }
+                        } else {
+                            $objective_info = Models_Objective::fetchRow($objective_id);
+                            if ($objective_info) {
+                                $PROCESSED["mapped_objectives"][] = array_merge($objective_info->toArray(), array("objective_metadata" => null));
+                            }
+                        }
+
                         $objective_id = clean_input($objective_id, array("trim", "int"));
                         if ($objective_id && isset($PROCESSED["objective_ids"]) && @count($PROCESSED["objective_ids"])) {
                             foreach ($PROCESSED["objective_ids"] as $temp_objective_id) {
@@ -392,6 +542,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_ITEM") && !defined("EDIT_ITE
                                 }
                             }
                         }
+
                         $PROCESSED["objective_ids"][] = $objective_id;
                     }
                 }
@@ -408,29 +559,41 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_ITEM") && !defined("EDIT_ITE
                     "item_code" => $PROCESSED["item_code"],
                     "item_text" => $PROCESSED["item_text"],
                     "item_description" => $PROCESSED["item_description"],
+                    "comment_type" => $PROCESSED["comment_type"],
+                    "rating_scale_id" => $PROCESSED["rating_scale_id"],
                     "mandatory" => $PROCESSED["mandatory"],
-                    "comment_type" => $PROCESSED["comment_type"]
+                    "allow_default" => $PROCESSED["allow_default"],
+                    "default_response" => $PROCESSED["default_response"],
+                    "attributes" => $PROCESSED["attributes"] // encode the (presumably) json string
                 ),
                 "flag_response" => $PROCESSED["flag_response"],
                 "responses" => @$PROCESSED["responses"],
                 "descriptors" => @$PROCESSED["ardescriptor_id"],
-                "objectives" => @$PROCESSED["objective_ids"]
+                "objectives" => @$PROCESSED["objective_ids"],
+                "objectives_tree_ids" => @$PROCESSED["objective_tree_ids"],
+                "objectives_breadcrumbs" => @$PROCESSED["objectives_breadcrumbs"]
             );
+
             $temp_item_id = $PROCESSED["item_id"] ? $PROCESSED["item_id"] : 0; // 0 means new item (this can't be null due to the storage mechanism in the base class)
             $forms_api->loadItemData($save_item_data, $temp_item_id);
-            $item_data = $forms_api->fetchItemData($temp_item_id); // re-fetch the item data since we've processed some new data.
-
+            $item_data = $forms_api->fetchItemData($temp_item_id, false); // re-fetch the item data since we've processed some new data.
         break;
         case 1 :
+            $PROCESSED["objective_ids"] = array();
+            $PROCESSED["mapped_objectives"] = array();
             if ($item) {
-                $PROCESSED["objective_ids"] = array();
                 $objectives = $item->getItemObjectives();
                 if ($objectives) {
                     foreach ($objectives as $objective) {
                         $PROCESSED["objective_ids"][] = $objective->getObjectiveID();
+                        $objective_info = Models_Objective::fetchRow($objective->getObjectiveID());
+                        if ($objective_info) {
+                            $PROCESSED["mapped_objectives"][] = array_merge($objective_info->toArray(), array("objective_metadata" => $objective->getObjectiveMetadata()));
+                        }
                     }
                 }
             }
+
         break;
     }
 
@@ -439,11 +602,14 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_ITEM") && !defined("EDIT_ITE
         // Limit the selectable itemtypes if we're in a rubric
         $itemtypes = $forms_api->getAllowableRubricItemTypes();
 
-        // It could be the case that the item type of this item that  is added to this rubric is actually invalid (e.g. a
+        // It could be the case that the item type of this item that is added to this rubric is actually invalid (e.g. a
         // horizontal multiple choice instead of rubric_line/scale item). This is possible in some legacy data.
-        // Let's adjust it here.
+        // Instead of forcing an overwrite, we just load the previous non-rubric approved version
         if (!array_key_exists($PROCESSED["itemtype_id"], $itemtypes)) {
-            $PROCESSED["itemtype_id"] = reset($itemtypes)->getID();
+            if ($record = Models_Assessments_Itemtype::fetchRowByID($PROCESSED["itemtype_id"])) {
+                // Add the item type
+                $itemtypes[$record->getItemtypeID()] = $record;
+            }
         }
     } else {
         // Otherwise, all itemtypes
@@ -520,7 +686,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_ITEM") && !defined("EDIT_ITE
 
                 if ($PROCESSED["rref"]) {
                     // Our referrer was specified as a rubric. So let's replaced the cloned item
-                    if (!$forms_api->replaceItemOnRubric($rubric_referrer_data["rubric_id"], $PROCESSED["item_id"], $new_item_id)) {
+                    if (!$forms_api->replaceItemInRubric($rubric_referrer_data["rubric_id"], $PROCESSED["item_id"], $new_item_id)) {
                         foreach ($forms_api->getErrorMessages() as $message) {
                             add_error($message);
                         }
@@ -548,13 +714,15 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_ITEM") && !defined("EDIT_ITE
                 add_success($success_msg);
                 $ONLOAD[] = "setTimeout(\"window.location='$url'\", 5000);";
             } else {
-                echo display_error();
                 $STEP = 1;
             }
 
         } else {
             // Failed
             add_error($translate->_("Unable to save item."));
+            foreach ($forms_api->getErrorMessages() as $error_message) {
+                add_error($translate->_($error_message));
+            }
         }
     }
 
@@ -598,12 +766,9 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_ITEM") && !defined("EDIT_ITE
                 }
             }
         }
-        // Add the ones from the already existing saved item
-        if (isset($PROCESSED["ardescriptor_id"]) && is_array($PROCESSED["ardescriptor_id"])) {
-            foreach ($PROCESSED["ardescriptor_id"] as $selected_rubric_descriptors) {
-                if ($specific_descriptor = Models_Assessments_Response_Descriptor::fetchRowByIDIgnoreDeletedDate($selected_rubric_descriptors)) {
-                    $formatted_all_response_descriptors[$specific_descriptor->getID()] = array("target_id" => $specific_descriptor->getID(), "target_label" => $specific_descriptor->getDescriptor());
-                }
+        if (isset($item_data["descriptors"]) && !empty($item_data["descriptors"])) {
+            foreach ($item_data["descriptors"] as $descriptor_id => $descriptor_data) {
+                $formatted_all_response_descriptors[$descriptor_id] = array("target_id" => $descriptor_id, "target_label" => $descriptor_data["descriptor"]);
             }
         }
     }
@@ -612,6 +777,60 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_ITEM") && !defined("EDIT_ITE
     usort($formatted_all_response_descriptors, function($a, $b) {
         return ($a["target_label"] > $b["target_label"]);
     });
+
+    // Determine what flags to show on the editor.
+    // We only show non 1 or 0 values when the current organisation uses specially defined flag values (via system settings->flag severity levels).
+    // 0 is a hardcoded default for "Not Flagged", and 1 is a global (organisation agnostic) default flag value ("Flagged").
+    // The flag value of 1 corresponds to the primary key of 1 in the flags table.
+    // Other flags are set with arbitrary values and any primary key that is greater than 1.
+    $custom_flags = Models_Assessments_Flag::organisationUsesCustomFlags($ENTRADA_USER->getActiveOrganisation());
+    $flags = array();
+    $flags_datasource = array();
+
+    if ($custom_flags) {
+        $flags_datasource = array();
+        $flags = Models_Assessments_Flag::fetchAllByOrganisation($ENTRADA_USER->getActiveOrganisation());
+        $flag_keys = array_keys($flags);
+        if (count($flag_keys) == 1 && $flag_keys[0] == 1) {
+            // There's only one flag, and it's the default, non-organisation specific flag of 1
+            // So disable the picker, and use the checkbox instead.
+            $flags = array();
+            $custom_flags = 0;
+        } else {
+            $flags_datasource = Entrada_Utilities_AdvancedSearchHelper::buildSearchSource($flags, "flag_id", "title", array("flag_value", "organisation_id", "color") );
+        }
+        if (!empty($flags_datasource)) {
+            // Prepend the "Not Flagged" response
+            array_unshift($flags_datasource, array("target_id" => 0, "target_label" => $translate->_("Not Flagged"), "flag_value" => 0, "organisation_id" => null, "color" => "#000000"));
+        }
+        // Fetch the admin-only flags; these are only ever displayed if an admin-only flag is set on an item.
+        $admin_flag_records = Models_Assessments_Flag::fetchAllByOrganisation($ENTRADA_USER->getActiveOrganisation(), "", false, false, false, true);
+        $admin_flags_append = array();
+        // Check if any of the responses use any admin flags, and add those flags to the datasource.
+        if (array_key_exists("flag_response", $PROCESSED) && is_array($PROCESSED["flag_response"])) {
+            foreach ($PROCESSED["flag_response"] as $flag) {
+                foreach ($admin_flag_records as $admin_flag) {
+                    if ($admin_flag->getID() == $flag) {
+                        $admin_flags_append[$flag] = $flag;
+                    }
+                }
+            }
+        }
+        if (!empty($admin_flags_append)) {
+            // For the admin flags we found, add them to the datasource
+            foreach ($admin_flags_append as $admin_append) {
+                $flags_datasource = array_merge(
+                    $flags_datasource,
+                    Entrada_Utilities_AdvancedSearchHelper::buildSearchSource(
+                        array($admin_flag_records[$admin_append]),
+                        "flag_id",
+                        "title",
+                        array("flag_value", "organisation_id", "color")
+                    )
+                );
+            }
+        }
+    }
 
     // If we have item data, then we use it to render with, otherwise, set a default
     if ($item_data) {
@@ -623,10 +842,12 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_ITEM") && !defined("EDIT_ITE
             "flag_response" => @$PROCESSED["flag_response"],
             "rubric_descriptors" => $PROCESSED["rubric_descriptors"],
             "selected_descriptors" => @$PROCESSED["ardescriptor_id"],
-            "item_response_descriptors" => $item_data["descriptors"],
             "advanced_search_descriptor_datasource" => $formatted_all_response_descriptors,
             "readonly_override" => $force_descriptors_readonly,
-            "disabled" => $disabled
+            "disabled" => $disabled,
+            "default_response" => $PROCESSED["default_response"],
+            "use_custom_flags" => $custom_flags,
+            "flags_datasource" => $flags_datasource
         );
     } else {
         // This is a new item
@@ -637,10 +858,12 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_ITEM") && !defined("EDIT_ITE
             "flag_response" => array(),
             "rubric_descriptors" => $PROCESSED["rubric_descriptors"],
             "selected_descriptors" => array(),
-            "item_response_descriptors" => array(),
             "advanced_search_descriptor_datasource" => $formatted_all_response_descriptors,
-            "show_grid_controls" => true,
-            "disabled" => $disabled
+            "show_grid_controls" => intval($PROCESSED["rating_scale_id"]) ? false : true,
+            "readonly_override" => $force_descriptors_readonly,
+            "disabled" => $disabled,
+            "use_custom_flags" => $custom_flags,
+            "flags_datasource" => $flags_datasource
         );
 
         // If we're creating and attaching to a rubric, we have to take the rubric response descriptors into account.
@@ -651,6 +874,11 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_ITEM") && !defined("EDIT_ITE
                 $item_responses_render_options["show_grid_controls"] = false;
             }
         }
+    }
+    // If we're dealing with a scale item, we ALWAYS disable descriptor editing
+    if (isset($rubric_referrer_data["rating_scale_id"]) || $PROCESSED["rating_scale_id"]) {
+        $item_responses_render_options["readonly_override"] = true;
+        $item_responses_render_options["show_grid_controls"] = false;
     }
 
     if ($STEP == 2) {
@@ -690,21 +918,21 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_ITEM") && !defined("EDIT_ITE
 
         $HEAD[] = "<script>var API_URL = \"" . ENTRADA_URL . "/admin/assessments/items?section=api-items" . "\";</script>";
         $HEAD[] = "<script>var SITE_URL = '" . ENTRADA_URL . "';</script>";
-        $HEAD[] = "<script src=\"" . ENTRADA_URL . "/javascript/objectives.js\"></script>";
         $HEAD[] = "<script src=\"" . ENTRADA_URL . "/javascript/jquery/jquery.audienceselector.js?release=" . html_encode(APPLICATION_VERSION) . "\"></script>";
         $HEAD[] = "<link rel=\"stylesheet\" href=\"" . ENTRADA_URL . "/css/jquery/jquery.audienceselector.css?release=" . html_encode(APPLICATION_VERSION) . "\" />";
-        $HEAD[] = "<script src=\"" . ENTRADA_URL . "/javascript/jquery/jquery.advancedsearch.js\"></script>";
+        $HEAD[] = "<script src=\"" . ENTRADA_URL . "/javascript/jquery/jquery.advancedsearch.js?release=" . html_encode(APPLICATION_VERSION) . "\"></script>";
         $HEAD[] = "<link rel=\"stylesheet\" href=\"" . ENTRADA_URL . "/css/jquery/jquery.advancedsearch.css\" />";
         $HEAD[] = Entrada_Utilities_jQueryHelper::addjQuery();
         $HEAD[] = Entrada_Utilities_jQueryHelper::addjQueryLoadTemplate();
         ?>
-        <script>
+        <script type="text/javascript">
             var ENTRADA_URL = "<?php echo ENTRADA_URL; ?>";
+            var SCALE_API_URL = '<?php echo ENTRADA_URL . "/admin/assessments/scales?section=api-scales" ?>';
             var submodule_text = JSON.parse('<?php echo json_encode($SUBMODULE_TEXT); ?>');
             var assessment_item_localization = {};
             assessment_item_localization.response_item_template = "<?php echo $translate->_("Response <span>%s</span>"); ?>";
             assessment_item_localization.error_default_json = "<?php echo $translate->_("An unknown error occurred."); ?>"; // json parse error
-            assessment_item_localization.error_unable_to_copy = "<?php echo $translate->_("The action could not be completed. Please try again later."); ?>"
+            assessment_item_localization.error_unable_to_copy = "<?php echo $translate->_("The action could not be completed. Please try again later."); ?>";
             assessment_item_localization.success_removed_item = "<?php echo $translate->_("Response removed."); ?>";
 
             jQuery(document).ready(function ($) {
@@ -723,17 +951,42 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_ITEM") && !defined("EDIT_ITE
                     control_class: "field-note-objective-control",
                     no_results_text: "<?php echo $translate->_(""); ?>",
                     parent_form: $("#item-form"),
-                    width: 400
+                    width: 350
+                });
+                jQuery(document).ready(function ($) {
+                    $("#choose-objective-course-btn").advancedSearch({
+                        filters: {
+                            course: {
+                                label: "<?php echo $translate->_("Course"); ?>",
+                                data_source: <?php echo json_encode($formatted_courses_datasource); ?>,
+                                mode: "radio",
+                                selector_control_name: "course_id",
+                                search_mode: false
+                            }
+                        },
+                        control_class: "choose-objective-course-selector",
+                        no_results_text: "<?php echo $translate->_(""); ?>",
+                        parent_form: $("#item-form"),
+                        width: 300,
+                        modal: false
+                    });
                 });
             });
         </script>
-        <script src="<?php echo ENTRADA_URL; ?>/javascript/assessments/items/assessments-items-admin.js"></script>
-        <?php $item_form_action_url = Entrada_Utilities_FormStorageSessionHelper::buildRefURL(ENTRADA_URL."/admin/assessments/items?step=2&section={$SECTION}", $PROCESSED["fref"], $PROCESSED["rref"]); ?>
+        <script src="<?php echo ENTRADA_URL; ?>/javascript/assessments/items/assessments-items-admin.js?release=<?php echo APPLICATION_VERSION; ?>"></script>
+        <?php
+        $item_id_url = "";
+        if (array_key_exists("item_id", $PROCESSED) && $PROCESSED["item_id"]) {
+            $item_id_url = "&item_id={$PROCESSED["item_id"]}";
+        }
+        $item_form_action_url = Entrada_Utilities_FormStorageSessionHelper::buildRefURL(ENTRADA_URL."/admin/assessments/items?step=2{$item_id_url}&section={$SECTION}", $PROCESSED["fref"], $PROCESSED["rref"]); ?>
         <form id="item-form" action="<?php echo $item_form_action_url;?>" class="form-horizontal" method="POST">
             <input type="hidden" name="rref" value="<?php echo(isset($PROCESSED["rref"]) ? $PROCESSED["rref"] : ""); ?>"/>
             <input type="hidden" name="fref" value="<?php echo(isset($PROCESSED["fref"]) ? $PROCESSED["fref"] : ""); ?>"/>
             <input type="hidden" name="item_id" value="<?php echo(isset($PROCESSED["item_id"]) ? $PROCESSED["item_id"] : ""); ?>"/>
             <input type="hidden" name="rubric_id" value="<?php echo(isset($PROCESSED["rubric_id"]) ? $PROCESSED["rubric_id"] : ""); ?>"/>
+            <input type="hidden" name="attributes" value="<?php echo(isset($PROCESSED["attributes"]) ? urlencode($PROCESSED["attributes"]) : ""); ?>"/>
+            <input type="hidden" id="rating_scale_disable" value="<?php echo $lock_rating_scale; ?>"/>
 
             <h2><?php echo $translate->_("Item Information"); ?></h2>
 
@@ -742,6 +995,33 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_ITEM") && !defined("EDIT_ITE
             if ($REQUEST_MODE == "edit") {
                 $authors = Models_Assessments_Item_Author::fetchAllByItemID($PROCESSED["item_id"], $ENTRADA_USER->getActiveOrganisation());
             }
+
+            $scale_type_datasource = Entrada_Utilities_AdvancedSearchHelper::buildSearchSource(
+                $forms_api->getScaleTypesInUse($ENTRADA_USER->getActiveOrganisation(), true),
+                "rating_scale_type_id",
+                "title",
+                array("shortname") // List of additional properties to include in the data source (from the source records)
+            );
+
+            // If we're adding a new item, the item_data array will be empty, but we still need to know about the given rating scale (if given to us via a referrer)
+            // So we have to fetch the specific item and type.
+
+            if ($PROCESSED["rating_scale_id"] && empty($item_data)) {
+                if ($rating_scale_record = Models_Assessments_RatingScale::fetchRowByID($PROCESSED["rating_scale_id"])) {
+                    $item_data["rating_scale"]["rating_scale_id"] = $PROCESSED["rating_scale_id"];
+                    $item_data["rating_scale"]["rating_scale_title"] = $rating_scale_record->getRatingScaleTitle();
+                    if ($rating_scale_record->getRatingScaleID()) {
+                        if ($rating_scale_type_record = Models_Assessments_RatingScale_Type::fetchRowByID($rating_scale_record->getRatingScaleType())) {
+                            $item_data["rating_scale_type"]["rating_scale_type_id"] = $rating_scale_type_record->getID();
+                            $item_data["rating_scale_type"]["shortname"] = $rating_scale_type_record->getShortname();
+                            $item_data["rating_scale_type"]["title"] = $rating_scale_type_record->getTitle();
+                        }
+                    }
+                }
+            }
+
+            /* TODO: In the future, refactor this so that the item_data array always exists and can be generated with defaults,
+             * including any inferred properties (such as rating scale data). */
 
             // Render basic form controls; item type/text/code
             $item_information_view = new Views_Assessments_Forms_Sections_ItemInformation();
@@ -756,9 +1036,20 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_ITEM") && !defined("EDIT_ITE
                     "itemtype_shortname" => $itemtype_shortname,
                     "mandatory" => $PROCESSED["mandatory"],
                     "comment_type" => @$PROCESSED["comment_type"],
+                    "allow_default" => $PROCESSED["allow_default"],
                     "item_code" => $PROCESSED["item_code"],
                     "item_text" => $PROCESSED["item_text"],
-                    "disabled" => $disabled
+                    "disabled" => $disabled,
+
+                    // Scale related
+                    "lock_rating_scale" => $lock_rating_scale,
+                    "scale_type_datasource" => $scale_type_datasource, // For advanced search
+                    "rating_scale_id" => @$item_data["rating_scale"]["rating_scale_id"],
+                    "rating_scale_title" => @$item_data["rating_scale"]["rating_scale_title"],
+                    "rating_scale_type_id" => @$item_data["rating_scale_type"]["rating_scale_type_id"],
+                    "rating_scale_type_shortname" => @$item_data["rating_scale_type"]["shortname"],
+                    "rating_scale_type_title" => @$item_data["rating_scale_type"]["title"],
+                    "rating_scale_deleted" => @$item_data["rating_scale"]["deleted_date"]
                 )
             );
             ?>
@@ -794,39 +1085,42 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_ITEM") && !defined("EDIT_ITE
                     )
                 );
 
-            // Render objective set selector
-            // TODO: Address this when objectives rendering is refactored
+            // Render objective sets selector and mapped objective list.
             ?>
             <div id="objective-options" class="row-fluid <?php echo Entrada_Assessments_Forms::canHaveObjectives($itemtype_shortname) ? "" : "hide"; ?>">
                 <div class="span12">
-                    <div id="objectives_1_list" class="hidden">
-                        <?php
-                        $objective_ids_string = "";
-                        if (isset($PROCESSED["objective_ids"]) && @count($PROCESSED["objective_ids"])) {
-                            foreach ($PROCESSED["objective_ids"] as $objective_id) {
-                                $objective_ids_string .= ($objective_ids_string ? "," : "") . ((int)$objective_id);
-                                ?>
-                                <input type="hidden" class="objective_ids_1" id="objective_ids_1_<?php echo $objective_id; ?>" name="objective_ids_1[]" value="<?php echo $objective_id; ?>"/>
-                                <?php
-                            }
-                        }
-                        ?>
-                        <input type="hidden" name="objective_ids_string_1" id="objective_ids_string_1" value="<?php echo($objective_ids_string ? $objective_ids_string : ""); ?>"/>
-                        <input type="hidden" id="qrow" value="1"/>
-                    </div>
                     <?php if (!$disabled): ?>
-                        <a href="#objective-modal" data-toggle="modal" class="btn btn-success pull-right space-above"><i class="icon-plus-sign icon-white"></i> <?php echo $translate->_("Add Curriculum Tag"); ?></a>
-                        <?php echo Views_Deprecated_Objective::renderTaggedObjectivesList($objective_ids_string); ?>
-                        <?php
-                            $objectives_modal = new Views_Assessments_Forms_Modals_AddObjective();
-                            $objectives_modal->render(
-                                array(
-                                    "organisation_id" =>  ($item && $item->getOrganisationID() ? $item->getOrganisationID() : $ENTRADA_USER->getActiveOrganisation()),
-                                    "objective_ids" => @$PROCESSED["objective_ids"]
-                                )
-                            );
-                        ?>
-                    <?php endif; ?>
+                        <div id="objectives-selector" class="pull-left">
+                            <h2><?php echo $translate->_("Curriculum Tag Sets"); ?></h2>
+                            <div id="objectives-selector-inner">
+                                <?php
+                                // There is no point in showing the course select if the user only has one course to choose from.
+                                if (!$disable_course_select) : ?>
+                                    <div class="course-select control-group">
+                                        <label for="choose-objective-course-btn" class="control-label form-required"><?php echo $translate->_("Select a Course"); ?></label>
+                                        <div class="controls">
+                                            <button id="choose-objective-course-btn" class="btn btn-search-filter"<?php echo $lock_course_selector ? " disabled='disabled'" : ""; ?>>
+                                                <?php echo (isset($PROCESSED["course_name"])) ? html_encode($PROCESSED["course_name"]) : $translate->_("Browse Courses"); ?>
+                                                <i class="icon-chevron-down btn-icon pull-right"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                <?php endif; ?>
+                                <div id="objectives-selector-error" class="hide"></div>
+                                <div id="objectives-selector-controls">
+                                    <?php
+                                    $objective_model = new Entrada_CBME_CourseObjective();
+                                    $objective_sets = $objective_model->fetchObjectiveSetsByCourse($ENTRADA_USER->getActiveOrganisation(), $PROCESSED["course_id"], $ENTRADA_USER->getActiveId());
+                                    $objective_set_view = new Views_Assessments_Forms_Objectives_ObjectiveSetSelector();
+                                    $objective_set_view->render(array("objective_sets" => $objective_sets));
+                                    ?>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endif;
+                    $mapped_objective_set_view = new Views_Assessments_Forms_Objectives_MappedObjectiveList();
+                    $mapped_objective_set_view->render(array("objectives" => $PROCESSED["mapped_objectives"]));
+                    ?>
                 </div>
             </div>
 
@@ -847,7 +1141,22 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_ITEM") && !defined("EDIT_ITE
         <?php
         // Render templates for loadTemplate functionality
         $response_row_template = new Views_Assessments_Forms_Templates_ItemResponseRow();
-        $response_row_template->render(array("disabled" => $disabled));
+        $response_row_template->render(array(
+            "disabled" => $disabled,
+            "custom_flags" => $custom_flags
+        ));
+
+        $scale_response_row_template = new Views_Assessments_Forms_Templates_ItemScaleResponseRow();
+        $scale_response_row_template->render(array(
+            "custom_flags" => $custom_flags
+        ));
+
+        $objective_set_selector_template = new Views_Assessments_Forms_Templates_ObjectiveSetSelector();
+        $objective_set_selector_template->render(array());
+        $objective_selector_template = new Views_Assessments_Forms_Templates_ObjectiveSelector();
+        $objective_selector_template->render(array());
+        $mapped_objective_template = new Views_Assessments_Forms_Templates_MappedObjective();
+        $mapped_objective_template->render(array());
 
         // Helpful modals
         $delete_response_modal = new Views_Assessments_Forms_Modals_DeleteItemResponse();

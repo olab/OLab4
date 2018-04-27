@@ -178,4 +178,12 @@ class Models_Exam_Question_Objectives extends Models_Base {
 
         return $output;
     }
+
+    public function delete() {
+        if (empty($this->deleted_date)) {
+            $this->deleted_date = time();
+        }
+        return $this->update();
+    }
+
 }

@@ -33,6 +33,10 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ASSESSMENTS"))) {
 
     application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] does not have access to this module [".$MODULE."]");
 } else {
+
+    $MODULE_TEXT = $translate->_($MODULE);
+    $SUBMODULE_TEXT = $MODULE_TEXT[$SUBMODULE];
+
     $BREADCRUMB[] = array("url" => "", "title" => $translate->_("Learning Event Evaluations"));
     $HEAD[] = "<script type=\"text/javascript\">var ENTRADA_URL = '" . ENTRADA_URL . "';</script>";
     $JQUERY[] = "<script type=\"text/javascript\" src=\"" . ENTRADA_URL . "/javascript/assessments/evaluation-reports.js?release=" . html_encode(APPLICATION_VERSION) . "\"></script>";
@@ -99,6 +103,23 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ASSESSMENTS"))) {
                 control_class: "form-selector",
                 width: 300
             });
+
+            $("#choose-individual-events-btn").advancedSearch({
+                filters: {
+                    learning_events: {
+                        label: "<?php echo $translate->_("Events"); ?>",
+                        data_source: <?php echo json_encode(array()); ?>,
+                        mode: "checkbox",
+                        selector_control_name: "individual-events"
+                    }
+                },
+                control_class: "individual-events-selector",
+                no_results_text: "<?php echo $translate->_("No Events found."); ?>",
+                parent_form: $("#evaluation-form"),
+                width: 300,
+                modal: false,
+                select_all_enabled: true
+            });
         });
     </script>
     <h1><?php echo $translate->_("Learning Event Evaluations"); ?></h1>
@@ -117,23 +138,55 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ASSESSMENTS"))) {
                 </div>
             </div>
         </div>
-        <div class="control-group <?php is_null($start_date) && is_null($end_date) ? "hide" : "" ?> " id="evaluation-search">
+        <div class="control-group <?php echo is_null($start_date) && is_null($end_date) ? "hide" : ""; ?>" id="individual-event-section">
+            <label class="control-label" for="select-individual-events-checkbox"><?php echo $translate->_("Select Individual Events"); ?></label>
+            <div class="controls">
+                <input type="checkbox" id="select-individual-events-checkbox" />
+            </div>
+        </div>
+        <div class="control-group <?php echo is_null($start_date) && is_null($end_date) ? "hide" : ""; ?> " id="evaluation-search">
             <label class="control-label" for="choose-evaluation-btn"><?php echo $translate->_("Select Events Types:"); ?></label>
             <div class="controls">
                 <a href="#" id="choose-evaluation-btn" class="btn" type="button"><?php echo $translate->_("Browse Events Types "); ?><i class="icon-chevron-down"></i></a>
             </div>
         </div>
         <div id="evaluation-subtypes"></div>
+        <div class="control-group hide space-above" id="individual-events-list">
+            <label class="control-label" for="choose-individual-events-btn"><?php echo $translate->_("Select Learning Events:"); ?></label>
+            <div class="controls">
+                <a href="#" id="choose-individual-events-btn" class="btn" type="button"><?php echo $translate->_("Browse Learning Events "); ?><i class="icon-chevron-down"></i></a>
+            </div>
+        </div>
         <div class="control-group hide space-above" id="form-selector">
             <label class="control-label" for="choose-form-btn"><?php echo $translate->_("Select Form:"); ?></label>
             <div class="controls">
                 <a href="#" id="choose-form-btn" class="btn" type="button"><?php echo $translate->_("Browse Forms "); ?><i class="icon-chevron-down"></i></a>
             </div>
         </div>
-        <div class="control-group hide" id="additional-comments">
-            <label class="control-label" for="include-comments"><?php echo $translate->_("Include Comments:"); ?></label>
+        <div class="hide" id="additional-comments">
+            <div class="control-group">
+                <label class="control-label" for="include-comments"><?php echo $translate->_("Include Comments:"); ?></label>
+                <div class="controls">
+                    <input type="checkbox" id="include-comments" checked>
+                </div>
+            </div>
+            <div class="control-group" id="commenter-id-controls">
+                <label class="control-label" for="include-commenter-id" data-toggle="tooltip" title="<?php echo $translate->_("This option will include a set of characters unique to each assessor alongside each comment."); ?>"><?php echo $translate->_("Unique Commenter ID:"); ?> <i class="icon-question-sign"></i></label>
+                <div class="controls">
+                    <input type="checkbox" id="include-commenter-id"/>
+                </div>
+            </div>
+            <div class="control-group" id="commenter-name-controls">
+                <label class="control-label" for="include-commenter-name" data-toggle="tooltip"><?php echo $translate->_("Include Commenter Name:"); ?></label>
+                <div class="controls">
+                    <input type="checkbox" id="include-commenter-name"/>
+                </div>
+            </div>
+        </div>
+        <div class="control-group hide" id="output-options">
+            <label class="control-label" for="output-associated-records"><?php echo $translate->_("Event Info Subheader:"); ?></label>
             <div class="controls">
-                <input type="checkbox" id="include-comments" checked>
+                <input type="checkbox" id="output-associated-records" />
             </div>
         </div>
         <div class="control-group hide" id="additional-description">
@@ -143,6 +196,20 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ASSESSMENTS"))) {
             </div>
             <div class="controls space-above">
                 <textarea id="description-text" class="expandable hide"></textarea>
+            </div>
+        </div>
+        <div class=hide" id="additional-statistics">
+            <div class="control-group">
+                <label class="control-label" for="include-statistics" data-toggle="tooltip" title="<?php echo $translate->_("This will include an automatically calculated average, weighted in ascending order. Descriptors such as 'N/A' are excluded."); ?>"><?php echo $translate->_("Include Average:"); ?> <i class="icon-question-sign"></i></label>
+                <div class="controls">
+                    <input type="checkbox" id="include-statistics">
+                </div>
+            </div>
+            <div id="include-positivity-controls" class="control-group hide">
+                <label class="control-label" for="include-positivity" data-toggle="tooltip" title="<?php echo $SUBMODULE_TEXT["positive_negative_tooltip"]; ?>""><?php echo $translate->_("Include Aggregate Scoring:"); ?> <i class="icon-question-sign"></i></label>
+                <div class="controls">
+                    <input type="checkbox" id="include-positivity">
+                </div>
             </div>
         </div>
         <input type="button" class="btn btn-primary hide pull-right" id="generate-report" value="<?php echo $translate->_("Generate Report"); ?>" />

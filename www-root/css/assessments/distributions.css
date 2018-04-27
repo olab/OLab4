@@ -733,23 +733,19 @@ div#distributions-modal div.search-overlay {
     height: 100%;
 }
 
-.assessment-delegation-assessor-sub-table.assessor-content-blocks {
-    padding-top:7px;
-}
-
 .table-header-headings-row {
 }
 
 /* "Targets" heading  */
 .table-header-headings-row th:nth-child(1) {
-    width:201px;
+    width:210px;
     padding-left:10px;
     padding-right:3px;
 }
 
 /* "Assessors" heading */
 .table-header-headings-row th:nth-child(2) {
-    width:151px;
+    width:227px;
     padding-left:10px;
     padding-right:3px;
 }
@@ -778,7 +774,7 @@ div#distributions-modal div.search-overlay {
 
 /* Assessors block */
 .assessment-delegation-assessor-sub-table.assessor-content-blocks td:nth-child(1) {
-    width:151px;
+    width:227px;
     padding-left:10px;
     padding-right:3px;
     padding-top:8px;
@@ -892,4 +888,68 @@ div#distributions-modal div.search-overlay {
 
 #distribution-data-form .control-group {
     margin-bottom: 5px;
+}
+
+#change-task-type {
+    cursor: pointer;
+    color: #006699;
+}
+
+.accordion-heading {
+    background: #f9f9f9;
+}
+
+.accordion-toggle {
+    padding: 0 15px !important;
+}
+
+#accordion-target-release, #accordion-target-reporting, #target-report-controls {
+    padding-left: 15px;
+}
+
+.target-threshold-controls {
+    padding-left: 20px;
+}
+
+input.distribution-number-input {
+    width: 30px !important;
+}
+
+i.accordion-icon {
+    margin-top: 12px;
+}
+
+.center-align {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+}
+
+.square-image {
+    width: 64px;
+    height: 84px;
+}
+
+.popover {
+    z-index: 9999;
+    width: 100%;
+    min-width: 250px;
+}
+
+.truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.popover-content {
+    height: 180px;
+    width: 250px;
+}
+
+.inner-popover-content {
+    position: absolute;
+    min-height: 180px;
+    width: 250px
 }

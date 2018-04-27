@@ -33,7 +33,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADE_EXAMS"))) {
     echo display_error();
     application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] does not have access to this module [".$MODULE."]");
 } else {
-    $HEAD[] = "<script type=\"text/javascript\" src=\"".ENTRADA_URL."/javascript/jquery/jquery.dataTables.min.js?release=".html_encode(APPLICATION_VERSION).""."\"></script>";
+    $HEAD[] = "<script type=\"text/javascript\" src=\"".ENTRADA_URL."/javascript/jquery/jquery.dataTables.min-1.10.1.js?release=".html_encode(APPLICATION_VERSION).""."\"></script>";
     ?>
 
     <div class="no-printing">
@@ -121,7 +121,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADE_EXAMS"))) {
                 $question_version = $exam_element->getQuestionVersion();
                 if ($question_version) {
                     echo "<tr>\n";
-                    echo "<td><a href=\"".$link."\">".($exam_element->getOrder() + 1)."</a></td>\n";
+                    echo "<td><a href=\"".$link."\">".($exam_element->getOrder() )."</a></td>\n";
                     echo "<td><a href=\"".$link."\">".$question_version->getQuestionType()->getName()."</a></td>\n";
                     echo "<td><a href=\"".$link."\">".$question_version->getQuestionDescription()."</a></td>\n";
                     echo "<td><a href=\"".$link."\">Not Started</a></td>\n";
@@ -142,10 +142,12 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADE_EXAMS"))) {
                 <col style="width: 25%" />
             </colgroup>
             <thead>
-                <th>Order</th>
-                <th>Type</th>
-                <th>Description</th>
-                <th>Progress</th>
+                <tr>
+                    <th>Order</th>
+                    <th>Type</th>
+                    <th>Description</th>
+                    <th>Progress</th>
+                </tr>
             </thead>
             <tbody>
             <?php
@@ -156,7 +158,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADE_EXAMS"))) {
                 $question_version = $exam_element->getQuestionVersion();
                 if ($question_version) {
                     echo "<tr>\n";
-                    echo "<td><a href=\"".$link."\">".($exam_element->getOrder() + 1)."</a></td>\n";
+                    echo "<td><a href=\"".$link."\">".($exam_element->getOrder()) ."</a></td>\n";
                     echo "<td><a href=\"".$link."\">".$question_version->getQuestionType()->getName()."</a></td>\n";
                     echo "<td><a href=\"".$link."\">".$question_version->getQuestionDescription()."</a></td>\n";
                     echo "<td><a href=\"".$link."\">In Progress ($graded_submission_num/$submissions_num)</a></td>\n";
@@ -189,7 +191,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADE_EXAMS"))) {
                 $question_version = $exam_element->getQuestionVersion();
                 if ($question_version) {
                     echo "<tr>\n";
-                    echo "<td><a href=\"".$link."\">".($exam_element->getOrder() + 1)."</a></td>\n";
+                    echo "<td><a href=\"".$link."\">".($exam_element->getOrder()) ."</a></td>\n";
                     echo "<td><a href=\"".$link."\">".$question_version->getQuestionType()->getName()."</a></td>\n";
                     echo "<td><a href=\"".$link."\">".$question_version->getQuestionDescription()."</a></td>\n";
                     echo "<td><a href=\"".$link."\">Completed</a></td>\n";
@@ -208,7 +210,8 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADE_EXAMS"))) {
             bPaginate: false,
             iDisplayLength: 25,
             sDom: '<"top">rt<"bottom"p><"clear">',
-            aaSorting: [[ 0, "asc" ]]
+            columnDefs: [
+                {"type": "html-num", "targets": 0}]
         });
         $('.exam-card-status-btn').on('click', function() {
             $('.grading-table-wrapper').hide();

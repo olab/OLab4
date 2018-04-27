@@ -226,14 +226,12 @@ class Entrada_Base {
             if (!empty($where)) {
                 $query = "SELECT * FROM `".static::$table_name."` ".$replacements;
                 $result = $db->GetRow($query, $where);
-
                 if ($result) {
                     $class = get_called_class();
                     $self = new $class($result);
                 }
             }
         }
-
         return $self;
     }
 }

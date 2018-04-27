@@ -116,11 +116,11 @@ jQuery(document).ready(function($) {
 			proxyQuery = "&proxy_id=" + studentId;
 		}
 
-		$(".selector-documents", $modal).load(ENTRADA_URL + "/admin/assessments/forms?section=api-forms&method=get-rendered-file-selector" + proxyQuery + "&assessment_id=" + assessmentId + "&assignment_id=" + assignment.id + "&course_id=" + courseId, function(e) {
+		$(".selector-documents", $modal).load(ENTRADA_URL + "/admin/gradebook/assessments?section=api-forms&method=get-rendered-file-selector" + proxyQuery + "&assessment_id=" + assessmentId + "&assignment_id=" + assignment.id + "&course_id=" + courseId, function(e) {
 			var afversionId = $(".selector-documents option:first", $modal).val();
 
 			if (afversionId) {
-				$(".file", $modal).load(ENTRADA_URL + "/admin/assessments/forms?section=api-forms&method=get-rendered-assignment-file&assessment_id=" + assessmentId + "&afversion_id=" + afversionId + "&organisation_id=" + organisationId + "&proxy_id=" + studentId);
+				$(".file", $modal).load(ENTRADA_URL + "/admin/gradebook/assessments?section=api-forms&method=get-rendered-assignment-file&assessment_id=" + assessmentId + "&afversion_id=" + afversionId + "&organisation_id=" + organisationId + "&proxy_id=" + studentId);
 				$(".file, .marking-scheme", $modal).removeAttr("style");
 			}
 			else {
@@ -130,11 +130,11 @@ jQuery(document).ready(function($) {
 
 			$("#selector-student-files").on("change", function(e) {
 				var afversionId = $(this).val();
-				$(".file", $modal).load(ENTRADA_URL + "/admin/assessments/forms?section=api-forms&method=get-rendered-assignment-file&assessment_id=" + assessmentId + "&afversion_id=" + afversionId + "&organisation_id=" + organisationId + "&proxy_id=" + studentId);
+				$(".file", $modal).load(ENTRADA_URL + "/admin/gradebook/assessments?section=api-forms&method=get-rendered-assignment-file&assessment_id=" + assessmentId + "&afversion_id=" + afversionId + "&organisation_id=" + organisationId + "&proxy_id=" + studentId);
 			})
 		});
 
-		$(".marking-scheme", $modal).load(ENTRADA_URL + "/admin/assessments/forms?section=api-forms&method=get-rendered-form&form_id=" + formId + "&assessment_id=" + assessmentId + "&proxy_id=" + studentId + "&edit_comments=true", function(e) {
+		$(".marking-scheme", $modal).load(ENTRADA_URL + "/admin/gradebook/assessments?section=api-forms&method=get-rendered-form&form_id=" + formId + "&assessment_id=" + assessmentId + "&proxy_id=" + studentId + "&edit_comments=true", function(e) {
 			$(".loading", $modal).hide();
 
 			function updateInputScores() {
@@ -241,7 +241,7 @@ jQuery(document).ready(function($) {
 				var grade = grade ? grade : getCalculatedGrade();
 
 				return $.ajax({
-					url: ENTRADA_URL + "/admin/assessments/forms?section=api-forms&method=get-student-grade&assessment_id=" + assessmentId + "&grade=" + grade + "&proxy_id=" + studentId,
+					url: ENTRADA_URL + "/admin/gradebook/assessments?section=api-forms&method=get-student-grade&assessment_id=" + assessmentId + "&grade=" + grade + "&proxy_id=" + studentId,
 					success: onSuccess
 				});
 			}
@@ -325,7 +325,7 @@ jQuery(document).ready(function($) {
 						$("#grade_" + assessmentId + "_" + studentId).text(customGrade)
 						$("#grade_" + assessmentId + "_" + studentId).attr("data-formatted-grade", customGrade)
 
-						$.get(ENTRADA_URL + "/admin/assessments/forms?section=api-forms&method=get-storage-grade&grade=" + customGrade + "&assessment_id=" + assessmentId, function(data) {
+						$.get(ENTRADA_URL + "/admin/gradebook/assessments?section=api-forms&method=get-storage-grade&grade=" + customGrade + "&assessment_id=" + assessmentId, function(data) {
 							var json = $.parseJSON(data);
 							$("#grade_" + assessmentId + "_" + studentId).attr("data-grade-value", json.storage_grade)
 						})
@@ -356,12 +356,12 @@ jQuery(document).ready(function($) {
 				if (inGroup) {
 					$(".in-group-" + groupId).each(function(i, grade) {
 						data.proxy_id = $(grade).attr("data-proxy-id");
-						$.post(ENTRADA_URL + "/admin/assessments/forms?section=api-forms&assessment_id=" + assessmentId, data);
+						$.post(ENTRADA_URL + "/admin/gradebook/assessments?section=api-forms&assessment_id=" + assessmentId, data);
 						updateDisplayedGrade(data.proxy_id);
 					});
 				}
 				else {
-					$.post(ENTRADA_URL + "/admin/assessments/forms?section=api-forms&assessment_id=" + assessmentId, data);
+					$.post(ENTRADA_URL + "/admin/gradebook/assessments?section=api-forms&assessment_id=" + assessmentId, data);
 					updateDisplayedGrade(studentId);
 				}
 

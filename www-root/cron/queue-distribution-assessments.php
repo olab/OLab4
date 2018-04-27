@@ -12,6 +12,7 @@
  *
 */
 
+@ini_set("memory_limit", "-1");
 @set_time_limit(0);
 @set_include_path(implode(PATH_SEPARATOR, array(
     dirname(__FILE__) . "/../core",

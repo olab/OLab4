@@ -344,7 +344,7 @@ if (!defined("IN_REGIONALED")) {
 													foreach ($apartment["occupants"] as $result) {
 														echo "<li class=\"".(($result["group"] == "student") ? "undergrad" : "postgrad")."\">\n";
 														echo	(($result["fullname"]) ? (($result["gender"]) ? ($result["gender"] == 1 ? "F: " : "M: ") : "")."<a href=\"".ENTRADA_URL."/people?profile=".html_encode($result["username"])."\" target=\"_blank\">".$result["fullname"]."</a>" : $result["occupant_title"]);
-														echo "	<div class=\"content-small\">".date(DEFAULT_DATE_FORMAT, $result["inhabiting_start"])." until ".date(DEFAULT_DATE_FORMAT, $result["inhabiting_finish"])."</div>";
+														echo "	<div class=\"content-small\">".date(DEFAULT_DATETIME_FORMAT, $result["inhabiting_start"])." until ".date(DEFAULT_DATETIME_FORMAT, $result["inhabiting_finish"])."</div>";
 														echo "</li>";
 													}
 													echo "</ul>\n";

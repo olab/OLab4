@@ -174,7 +174,7 @@ if ($results_forum_cat) {
 
 } else {
     $NOTICE++;
-    $NOTICESTR[] = "There are currently no forums available in this community.<br /><br />".((communities_module_access($COMMUNITY_ID, $MODULE_ID, "add-forum")) ? "As a community administrator you can add forums by clicking <a href=\"".COMMUNITY_URL.$COMMUNITY_URL.":".$PAGE_URL."?section=add-forum\">Add Discussion Forum</a>." : "Please check back later.");
+    $NOTICESTR[] = $translate->_("There are currently no forums available in this community.<br /><br />").((communities_module_access($COMMUNITY_ID, $MODULE_ID, "add-forum")) ? "As a community administrator you can add forums by clicking <a href=\"".COMMUNITY_URL.$COMMUNITY_URL.":".$PAGE_URL."?section=add-forum\">Add Discussion Forum</a>." : "Please check back later.");
     echo display_notice();
 }
 
@@ -336,3 +336,4 @@ if ($isCommunityCourse) {
         }
     }
 }//end not connected to community loop
+

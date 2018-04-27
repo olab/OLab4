@@ -9,6 +9,6 @@ services:
       - 3306:3306
     volumes:
       - ./Data:/var/lib/mysql
-      - ../..:/var/www/vhosts
+      - ../../..:/var/www/vhosts
       - ./OLab4/apache/vhosts.d:/etc/httpd/vhosts.d
     restart: always

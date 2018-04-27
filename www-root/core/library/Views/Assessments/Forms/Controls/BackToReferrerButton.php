@@ -44,7 +44,7 @@ class Views_Assessments_Forms_Controls_BackToReferrerButton extends Views_Assess
                         echo $translate->_("Back to Form");
                         break;
                     case "rubric":
-                        echo $translate->_("Back to Rubric");
+                        echo $translate->_("Back to Grouped Item");
                         break;
                     default:
                         echo $translate->_("Back");

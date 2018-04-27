@@ -176,17 +176,17 @@ if ($RECORD_ID) {
 					 */
 					if (($release_date = (int) $photo_record["release_date"]) && ($release_date > time())) {
 						$NOTICE++;
-						$NOTICESTR[] = "This photo will not be accessible to others until <strong>".date(DEFAULT_DATE_FORMAT, $release_date)."</strong>.";
+						$NOTICESTR[] = "This photo will not be accessible to others until <strong>".date(DEFAULT_DATETIME_FORMAT, $release_date)."</strong>.";
 					} elseif ($release_until = (int) $photo_record["release_until"]) {
 						if ($release_until > time()) {
 							$NOTICE++;
-							$NOTICESTR[] = "This photo will be accessible until <strong>".date(DEFAULT_DATE_FORMAT, $release_until)."</strong>.";
+							$NOTICESTR[] = "This photo will be accessible until <strong>".date(DEFAULT_DATETIME_FORMAT, $release_until)."</strong>.";
 						} else {
 							/**
 							 * Only administrators or people who wrote the post will get this.
 							 */
 							$NOTICE++;
-							$NOTICESTR[] = "This photo was only accessible until <strong>".date(DEFAULT_DATE_FORMAT, $release_until)."</strong> by others.";
+							$NOTICESTR[] = "This photo was only accessible until <strong>".date(DEFAULT_DATETIME_FORMAT, $release_until)."</strong> by others.";
 						}
 					}
 
@@ -242,7 +242,7 @@ if ($RECORD_ID) {
 												<td style="border-right: none"><span class="content-small">By:</span> <a href="<?php echo ENTRADA_URL."/people?profile=".html_encode($photo_record["uploader_username"]); ?>" style="font-size: 10px"><?php echo html_encode($photo_record["uploader_fullname"]); ?></a></td>
 												<td>
 													<div style="float: left">
-														<span class="content-small"><strong>Uploaded:</strong> <?php echo date(DEFAULT_DATE_FORMAT, $photo_record["updated_date"]); ?></span>
+														<span class="content-small"><strong>Uploaded:</strong> <?php echo date(DEFAULT_DATETIME_FORMAT, $photo_record["updated_date"]); ?></span>
 													</div>
 													<div style="float: right">
 														<?php
@@ -299,7 +299,7 @@ if ($RECORD_ID) {
 												<td style="border-bottom: none; border-right: none"><span class="content-small">By:</span> <a href="<?php echo ENTRADA_URL."/people?profile=".html_encode($result["commenter_username"]); ?>" style="font-size: 10px"><?php echo html_encode($result["commenter_fullname"]); ?></a></td>
 												<td style="border-bottom: none">
 													<div style="float: left">
-														<span class="content-small"><strong>Commented:</strong> <?php echo date(DEFAULT_DATE_FORMAT, $result["updated_date"]); ?></span>
+														<span class="content-small"><strong>Commented:</strong> <?php echo date(DEFAULT_DATETIME_FORMAT, $result["updated_date"]); ?></span>
 													</div>
 													<div style="float: right">
 														<?php
@@ -318,7 +318,7 @@ if ($RECORD_ID) {
 
 													if ($result["release_date"] != $result["updated_date"]) {
 														echo "<div class=\"content-small\" style=\"margin-top: 15px\">\n";
-														echo "	<strong>Last updated:</strong> ".date(DEFAULT_DATE_FORMAT, $result["updated_date"])." by ".(($result["proxy_id"] == $result["updated_by"]) ? html_encode($result["commenter_fullname"]) : html_encode(get_account_data("firstlast", $result["updated_by"]))).".";
+														echo "	<strong>Last updated:</strong> ".date(DEFAULT_DATETIME_FORMAT, $result["updated_date"])." by ".(($result["proxy_id"] == $result["updated_by"]) ? html_encode($result["commenter_fullname"]) : html_encode(get_account_data("firstlast", $result["updated_by"]))).".";
 														echo "</div>\n";
 													}
 												?>

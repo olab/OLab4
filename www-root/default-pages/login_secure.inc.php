@@ -15,12 +15,12 @@
  * You should have received a copy of the GNU General Public License
  * along with Entrada.  If not, see <http://www.gnu.org/licenses/>.
  *
- * The main login page for Entrada.
+ * The secure login page for Entrada.
  *
- * @author Organisation: Queen's University
- * @author Unit: School of Medicine
- * @author Developer: Matt Simpson <simpson@queensu.ca>
- * @copyright Copyright 2008 Queen's University. All Rights Reserved.
+ * @author Organisation: David Geffen School of Medicine at UCLA
+ * @author Unit: Instructional Design and Technology Unit
+ * @author Developer: Daniel Noji <dnoji@mednet.ucla.edu>
+ * @copyright Copyright 2014 UC Regents. All Rights Reserved.
  *
  */
 
@@ -32,7 +32,7 @@ if (!defined("PARENT_INCLUDED")) exit;
 $ONLOAD[] = "jQuery('#username').focus()";
 
 if (($ACTION == "login") && $ERROR) {
-    echo display_error();
+	echo display_error();
 }
 
 /**
@@ -40,7 +40,7 @@ if (($ACTION == "login") && $ERROR) {
  * notice to inform the user that they need to log in first.
  */
 if ($PROCEED_TO && (stristr($PROCEED_TO, "link-course.php") || stristr($PROCEED_TO, "link-event.php"))) {
-    echo display_notice("You must log in to access this link; once you have logged in you will be automatically redirected to the requested location.");
+	echo display_notice("You must log in to access this link; once you have logged in you will be automatically redirected to the requested location.");
 }
 
 /**
@@ -48,8 +48,9 @@ if ($PROCEED_TO && (stristr($PROCEED_TO, "link-course.php") || stristr($PROCEED_
  * notice to inform the user that they need to log in first.
  */
 if ($PROCEED_TO && (stristr($PROCEED_TO, "file-course.php") || stristr($PROCEED_TO, "file-event.php"))) {
-    echo display_notice("You must log in to download the requested file; once you have logged in the download will start automatically.");
-}
+	echo display_notice("You must log in to download the requested file; once you have logged in the download will start automatically.");
+}   
+    
 ?>
 <div class="row-fluid">
     <div id="login-form" class="span4">

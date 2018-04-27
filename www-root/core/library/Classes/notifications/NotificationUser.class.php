@@ -217,7 +217,7 @@ class NotificationUser {
 			default :
 				$query = "SELECT `event_title`, `event_start` FROM `events` WHERE `event_id` = ".$db->qstr($this->record_id);
 				if ($event = $db->GetRow($query)) {
-					$content_title = $event["event_title"]." - ".date(DEFAULT_DATE_FORMAT, $event["event_start"]);
+					$content_title = $event["event_title"]." - ".date(DEFAULT_DATETIME_FORMAT, $event["event_start"]);
 				}
 				break;
 		}

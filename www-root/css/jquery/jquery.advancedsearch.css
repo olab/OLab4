@@ -287,6 +287,7 @@
     color: #3a87ad;
 }
 .entrada-search-widget .search-target-label-text {
+    display: inline-block !important;
     margin-bottom: 0;
     width: 85%;
 }
@@ -613,4 +614,52 @@
     text-align: center;
     width: 100%;
     z-index: 5000;
+}
+
+.entrada-search-widget .filter-preset-container {
+    background: #eeeded;
+}
+
+.entrada-search-widget .filter-preset-list {
+    list-style-type: none;
+    margin: 0;
+    padding: 0 16px 5px 16px;
+}
+
+.entrada-search-widget .filter-preset-item {
+    margin-right: 5px;
+}
+
+.entrada-search-widget .filter-preset-anchor {
+    background: #67c1ee;
+    border: 2px solid #67c1ee;
+    border-radius: 4px;
+    color: #fff;
+    display: inline-block;
+    float: left;
+    font-size: 11px;
+    margin: 2px 5px 2px 0;
+    padding: 0 7px 1px 7px;
+}
+
+.entrada-search-widget .filter-preset-anchor.active {
+    background: #0797df;
+    border-color: #0797df;
+}
+
+.entrada-search-widget .filter-presets-heading {
+    border-bottom: none;
+    padding: 2px 16px 1px 16px;
+}
+
+.entrada-search-widget .active-filter-presets-heading {
+    border-bottom: 1px solid #ddd;
+    border-top: 1px solid #ddd;
+}
+
+.entrada-search-widget .filter-preset-empty {
+    color: #b94a48;
+    font-size: 14px;
+    padding: 15px 10px;
+    text-align: center;
 }

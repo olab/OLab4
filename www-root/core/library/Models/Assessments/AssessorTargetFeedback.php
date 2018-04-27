@@ -98,6 +98,14 @@ class Models_Assessments_AssessorTargetFeedback extends Models_Base {
         ));
     }
 
+    public static function fetchAllByDassessmentID($dassessment_id) {
+        $self = new self();
+        return $self->fetchAll(array(
+            array("key" => "dassessment_id", "value" => $dassessment_id, "method" => "="),
+            array("key" => "deleted_date", "value" => null, "method" => "IS")
+        ));
+    }
+
     public static function sendFeedbackNotification ($target_record_id = null, $aprogress_id = null, $assessor_id = null, $adistribution_id = null) {
         require_once("Classes/notifications/NotificationUser.class.php");
         require_once("Classes/notifications/Notification.class.php");

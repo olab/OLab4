@@ -2,7 +2,7 @@
 /**
  * OpenLabyrinth 4 [ http://www.openlabyrinth.ca ]
  */
-use App\Modules\Olab\Classes\HostSystemApi;
+use Entrada\Modules\Olab\Classes\HostSystemApi;
 
 $HEAD[] = "<script>var WEBSITE_ROOT = \"" . HostSystemApi::GetRootUrl() . "\";</script>";
 $HEAD[] = "<script type=\"text/javascript\" src=\"". HostSystemApi::GetRelativePath() ."/javascript/jquery/jquery.dataTables-1.10.11.min.js\" defer></script>";

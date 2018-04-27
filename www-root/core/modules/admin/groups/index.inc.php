@@ -20,7 +20,7 @@
  * @author Organisation: Univeristy of Calgary
  * @author Unit: Faculty of Medicine
  * @author Developer: Doug Hall <yhlu@ucalgary.ca>
- * @copyright Copyright 2010 University of Calgary. All Rights Reserved.
+ * @copyright Copyright 2017 University of Calgary. All Rights Reserved.
  *
 */
 if (!defined("IN_GROUPS")) {
@@ -29,12 +29,24 @@ if (!defined("IN_GROUPS")) {
 	header("Location: ".ENTRADA_URL);
 	exit;
 } elseif (!$ENTRADA_ACL->amIAllowed("group", "update", false)) {
-	add_error("Your account does not have the permissions required to use this feature of this module.<br /><br />If you believe you are receiving this message in error please contact <a href=\"mailto:".html_encode($AGENT_CONTACTS["administrator"]["email"])."\">".html_encode($AGENT_CONTACTS["administrator"]["name"])."</a> for assistance.");
+    add_error(sprintf($translate->_("You do not have the permissions required to use this module.<br /><br />If you believe you are receiving this message in error please contact <a href=\"mailto:%s\"> %s </a> for assistance."), html_encode($AGENT_CONTACTS["administrator"]["email"]), html_encode($AGENT_CONTACTS["administrator"]["name"])));
 
 	echo display_error();
 
 	application_log("error", "Group [".$GROUP."] and role [".$ROLE."] does not have access to this module [".$MODULE."]");
 } else {
+
+	function in_array_r($array, $fields, $find){  // table class table-striped not working with error and warning clasess
+		foreach($array as $item){
+			foreach($fields as $field) {
+			    if($item[$field] == $find) {
+				    return true;
+			    }
+			}
+		}
+		return false;
+	}
+
 	/**
 	 * Update requested column to sort by.
 	 * Valid: director, name
@@ -43,27 +55,14 @@ if (!defined("IN_GROUPS")) {
 	$HEAD[] = "<script type=\"text/javascript\" src=\"".ENTRADA_URL."/javascript/tabpane/tabpane.js?release=".html_encode(APPLICATION_VERSION)."\"></script>\n";
 	$HEAD[] = "<link href=\"".ENTRADA_URL."/css/tabpane.css?release=".html_encode(APPLICATION_VERSION)."\" rel=\"stylesheet\" type=\"text/css\" media=\"all\" />\n";
 
-	$search_type		= "browse-newest";
-	$browse_number		= 25;
-	$results_per_page	= 25;
 	$search_query		= "";
-	$search_query_text	= "";
-	$query_counter		= "";
-	$query_search		= "";
-	$show_results		= false;
-
-	$admin_wording = "Administrator View";
-	$admin_url = ENTRADA_URL."/admin/groups";
 
 	/**
 	 * Determine the type of search that is requested.
 	 */
-	if ((isset($_GET["type"])) && (in_array(trim($_GET["type"]), array("search", "browse-group", "browse-dept")))) {
-		$search_type = clean_input($_GET["type"], "trim");
-	}
 
 	if (isset($_GET["sb"])) {
-		if (@in_array(trim($_GET["sb"]), array("group_name", "members", "updated_date"))) {
+		if (@in_array(trim($_GET["sb"]), array("group_name", "group_type", "members", "updated_date"))) {
 			$_SESSION[APPLICATION_IDENTIFIER][$MODULE]["sb"]	= trim($_GET["sb"]);
 		}
 
@@ -149,65 +148,47 @@ if (!defined("IN_GROUPS")) {
 	 */
 	switch ($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["sb"]) {
 		case "group_name" :
-			$sort_by = "a.`group_name` ".strtoupper($_SESSION[APPLICATION_IDENTIFIER]["groups"]["so"]).", a.`group_name` ASC";
+			$sort_by = "a.`group_name` ".strtoupper($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["so"]).", a.`group_name` ASC";
 		break;
+        case "group_type" :
+            $sort_by = "a.`group_type` ".strtoupper($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["so"]).", a.`group_type` ASC";
+            break;
 		case "members" :
-			$sort_by = "`members` ".strtoupper($_SESSION[APPLICATION_IDENTIFIER]["groups"]["so"]).", `members` ASC";
+			$sort_by = "`members` ".strtoupper($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["so"]).", `members` ASC";
 		break;
 		case "updated_date" :
 		default :
-			$sort_by = "a.`updated_date` ".strtoupper($_SESSION[APPLICATION_IDENTIFIER]["groups"]["so"]).", a.`updated_date` ASC";
+			$sort_by = "a.`updated_date` ".strtoupper($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["so"]).", a.`updated_date` ASC";
 		break;
 	}
 	
-	$query_count = "	SELECT COUNT(a.`group_id`) AS `total_rows`
-						FROM `groups` AS a
-						JOIN `group_organisations` AS b
-						ON b.`group_id` = a.`group_id`
-						WHERE a.`group_active` = '1'
-						AND b.`organisation_id` = ".$db->qstr($ENTRADA_USER->getActiveOrganisation());
-
-	$query_groups = "	SELECT a.*, COUNT(b.`gmember_id`) AS members, CASE WHEN (MIN(b.`member_active`) = 0) THEN 1 ELSE 0 END AS `inactive`
-						FROM `groups` AS a
-						LEFT JOIN `group_members` b
-						ON b.`group_id` = a.`group_id`
-						AND b.`member_active` = 1
-						JOIN `group_organisations` AS c
-						ON c.`group_id` = a.`group_id`
-						WHERE a.`group_active` = '1'
-						AND c.`organisation_id` = ".$db->qstr($ENTRADA_USER->getActiveOrganisation());
-	
-	switch ($search_type) {
-		case "search" :
-		default :
-			if ((isset($_GET["q"])) && ($query = clean_input($_GET["q"], array("trim", "notags")))) {
-				$search_query = $query;
-				$search_query_text = html_encode($query);
-			}
-
-			$sql_ext = "	and (`group_name` LIKE ".$db->qstr("%%".str_replace("%", "", $search_query)."%%").")  ";
-			$query_count = $query_count.$sql_ext;
-			$query_groups = $query_groups.$sql_ext;
-		break;
+	if (!isset($_GET["active"]) || $_GET["active"]==1) {
+		$active = 1;
+	} else {
+		$active = 0;
 	}
-
-	$query_groups = $query_groups." GROUP By a.`group_id` ORDER BY %s LIMIT %s, %s";
+	
+	if ((isset($_GET["q"])) && ($query = clean_input($_GET["q"], array("trim", "notags")))) {
+		$search_query = html_encode($query);
+	} else {
+		$query = false;
+	}
 
 	/**
 	 * Get the total number of results using the generated queries above and calculate the total number
 	 * of pages that are available based on the results per page preferences.
 	 */
-	$result_count = $db->GetRow($query_count);
+	$result_count = Models_Group::getCountAllGroups($ENTRADA_USER->getActiveOrganisation(),$active,$query);
 
 	if ($result_count) {
-		$scheduler_groups["total_rows"] = (int) $result_count["total_rows"];
+		$scheduler_groups["total_rows"] = $result_count;
 
-		if ($scheduler_groups["total_rows"] <= $_SESSION[APPLICATION_IDENTIFIER]["groups"]["pp"]) {
+		if ($scheduler_groups["total_rows"] <= $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["pp"]) {
 			$scheduler_groups["total_pages"] = 1;
-		} elseif (($scheduler_groups["total_rows"] % $_SESSION[APPLICATION_IDENTIFIER]["groups"]["pp"]) == 0) {
-			$scheduler_groups["total_pages"] = (int) ($scheduler_groups["total_rows"] / $_SESSION[APPLICATION_IDENTIFIER]["groups"]["pp"]);
+		} elseif (($scheduler_groups["total_rows"] % $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["pp"]) == 0) {
+			$scheduler_groups["total_pages"] = (int) ($scheduler_groups["total_rows"] / $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["pp"]);
 		} else {
-			$scheduler_groups["total_pages"] = (int) ($scheduler_groups["total_rows"] / $_SESSION[APPLICATION_IDENTIFIER]["groups"]["pp"]) + 1;
+			$scheduler_groups["total_pages"] = (int) ($scheduler_groups["total_rows"] / $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["pp"]) + 1;
 		}
 	} else {
 		$scheduler_groups["total_rows"] = 0;
@@ -232,48 +213,157 @@ if (!defined("IN_GROUPS")) {
 	/**
 	 * Provides the first parameter of MySQLs LIMIT statement by calculating which row to start results from.
 	 */
-	$limit_parameter = (int) (($_SESSION[APPLICATION_IDENTIFIER]["groups"]["pp"] * $scheduler_groups["page_current"]) - $_SESSION[APPLICATION_IDENTIFIER]["groups"]["pp"]);
+	$limit_parameter = (int) (($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["pp"] * $scheduler_groups["page_current"]) - $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["pp"]);
 
-	/**
-	 * Provide the previous query so we can have previous / next event links on the details page.
-	 */
-	$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["groups"]["previous_query"]["query"] = $query_groups;
-	$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["groups"]["previous_query"]["total_rows"] = $scheduler_groups["total_rows"];
-
-	$query_groups = sprintf($query_groups, $sort_by, $limit_parameter, $_SESSION[APPLICATION_IDENTIFIER]["groups"]["pp"]);
-	$scheduler_groups["groups"] = $db->GetAll($query_groups);
-//	Zend_Debug::dump($scheduler_groups);
+	$scheduler_groups["groups"] = Models_Group::getAllGroups($ENTRADA_USER->getActiveOrganisation(),$active, $query, $sort_by, $limit_parameter, $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["pp"]);
 
 	?>
-
     <form action="<?php echo ENTRADA_URL; ?>/admin/groups" method="get" class="form-inline">
-        <input type="hidden" name="type" value="search" />
-        <label for="q" class="form-required control-label">Cohort Search:</label>
-        <input type="text" id="q" name="q" value="<?php echo html_encode($search_query); ?>" style="width: 350px" placeholder="<?php echo $translate->_("Search in Cohort Name"); ?>" />
+        <input type="text" id="q" name="q" value="<?php echo $search_query; ?>" placeholder="<?php echo $translate->_("Search in Cohort Name"); ?>" class="input-large search-icon">
         <input type="submit" class="btn btn-primary" value="Search" />
+        <label for="active">
+            <input type="radio" name="active" id="active" value=1 <?php echo ($active == 1 ? "checked=\"checked\"" : ""); ?> />
+            <?php echo $translate->_("Active");?>
+        </label>
+        <label for="all" class="space-right">
+            <input type="radio" name="active" id="all" value=0 <?php echo ($active == 0 ? "checked=\"checked\"" : "") ?>/>
+            <?php echo $translate->_("All");?>
+        </label>
     </form>
 
+    <div id="modal-import-csv" class="modal fade hide">
+        <form enctype="multipart/form-data" id="import-form" name="import-form" method="POST">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span></button>
+                        <h4 id="email-rpnow-view-modal-heading" class="modal-title"> <?php echo $translate->_("Import Cohorts from CSV") ?></h4>
+                    </div>
+                    <div class="modal-body">
+                        <div id="msgs"></div>
+                        <div>
+                            <input type="hidden" id="method" name="method" value="import">
+                            <div id="display-notice-box" class="display-notice">
+                                <a href="<?php echo ENTRADA_URL; ?>/admin/groups?section=csv&method=demo">
+                                    <img style="border: none;" src="<?php echo ENTRADA_URL; ?>/images/btn_help.gif" />
+                                    <label><?php echo $translate->_("Download sample CSV file"); ?></label>
+                                </a>
+                            </div>
+                            <input type="file" id="file" name="file" style="padding:5px;" />
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default pull-left" data-dismiss="modal"><?php echo $translate->_("Close") ?></button>
+                        <button type="submit" id="submit-btn" class="btn btn-primary"><?php echo $translate->_("Import CSV") ?></button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <script type="text/javascript">
+        jQuery(document).ready(function($) {
+            $("#import-csv-button").on("click", function (event) {
+                $("#msgs").empty();
+                $("#modal-import-csv").modal("show");
+                $("#modal-import-csv").on("hidden", function() {
+                    window.location.reload();
+                })
+            });
+
+            $("#import-form").submit(function(e) {
+                $("#msgs").empty();
+                var formData = new FormData($(this)[0]);
+                $("#submit-btn").attr("disabled", "disabled");
+                $.ajax({
+                    type: "POST",
+                    url: ENTRADA_URL + "/admin/groups?section=csv",
+                    data: formData,
+                    contentType: false,
+                    cache: false,
+                    processData: false,
+                    success: function (data) {
+                        var jsonResponse = JSON.parse(data);
+                        if (jsonResponse.status === "success") {
+                            if (jsonResponse.dataNotice.length > 0) {
+                                display_notice(jsonResponse.dataNotice, "#msgs");
+                            }
+                            if (jsonResponse.dataSuccess.length > 0) {
+                                display_success(jsonResponse.dataSuccess, "#msgs");
+                            }
+                            if (jsonResponse.dataError.length > 0) {
+                                display_error(jsonResponse.dataError, "#msgs");
+                            }
+                        }
+                        $("#submit-btn").removeAttr("disabled");
+                    }
+                });
+                e.preventDefault();
+            });
+        });
+    </script>
 	<?php
 	echo "<p />";
-	if ($scheduler_groups["total_pages"] > 1) {
-        $pagination = new Entrada_Pagination($scheduler_groups["page_current"], $_SESSION[APPLICATION_IDENTIFIER]["groups"]["pp"], $scheduler_groups["total_rows"], ENTRADA_URL."/admin/".$MODULE, replace_query());
-        echo $pagination->GetPageBar();
-	}
-
 	if ($scheduler_groups["groups"] && count($scheduler_groups["groups"])) {
+		unset($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["ids"]);
         ?>
 		<form id="frmSelect"  action="<?php echo ENTRADA_URL; ?>/admin/groups?section=manage" method="post">
-            <table class="table table-striped" cellspacing="0" cellpadding="1" summary="List of Cohorts">
-                <colgroup>
-                    <col class="modified" />
-                    <col class="community_title" />
-                    <col class="community_shortname" />
-                </colgroup>
+            <div class="row-fluid">
+                <?php
+                if ($ENTRADA_ACL->amIAllowed("group", "read", false)) {
+                    ?>
+                    <div class="btn-group">
+                        <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
+                            <?php echo $translate->_("Import / Export"); ?>
+                            <span class="caret"></span>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a href="#modal-import-csv" id="import-csv-button" role="button">
+                                    <?php echo $translate->_("Import Cohorts from CSV file"); ?>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#" id="export-csv-button" role="button" onClick="$('frmSelect').action ='<?php echo ENTRADA_URL; ?>/admin/groups?section=csv&method=export';$('frmSelect').submit();">
+                                    <?php echo $translate->_("Export Selected"); ?>
+                                </a>
+                                <input type="hidden" id="method" name="method" value="export">
+                            </li>
+                        </ul>
+                    </div>
+
+                    <?php
+                }
+                //delete
+                if ($ENTRADA_ACL->amIAllowed("group", "delete", false)) {
+                    ?>
+                    <input type="submit" class="btn btn-danger pull-right space-left" value="<?php echo $translate->_("Delete Selected"); ?>"  onClick="$('frmSelect').action ='<?php echo ENTRADA_URL; ?>/admin/groups?section=manage'" />
+                    <?php
+                }
+                //update
+                if ($ENTRADA_ACL->amIAllowed("group", "update", false)) {
+                    ?>
+                    <input type="submit" class="btn btn-primary pull-right" value="<?php echo $translate->_("Edit Selected"); ?>" onClick="$('frmSelect').action ='<?php echo ENTRADA_URL; ?>/admin/groups?section=edit'" />
+                    <?php
+                }
+
+                ?>
+            </div>
+            <p class="muted text-center">
+                <small>
+                    <?php
+                    echo sprintf($translate->_("Found %d cohorts or course lists."), $result_count);
+                    ?>
+                </small>
+            </p>
+            <table class="table table-bordered table-striped <?php echo (in_array_r($scheduler_groups["groups"], array("expired","inactive"),"1") ? "table-hover" : "table-striped")?>" summary="List of Cohorts">
                 <thead>
                     <tr>
-                        <th class="modified">&nbsp;</th>
-                        <th class="community_title<?php echo (($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["sb"] == "group_name") ? " sorted".strtoupper($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["so"]) : ""); ?>"><?php echo admin_order_link("group_name", "Cohort Name"); ?></th>
-                        <th class="community_shortname<?php echo (($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["sb"] == "members") ? " sorted".strtoupper($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["so"]) : ""); ?>"><?php echo admin_order_link("members", "Number of Learners"); ?></th>
+                        <th width="5%"></th>
+                        <th width="35%" class="general<?php echo (($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["sb"] == "group_name") ? " sorted".strtoupper($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["so"]) : ""); ?>"><?php echo admin_order_link("group_name", $translate->_("Cohort Name")); ?></th>
+                        <th width="20%" class="general<?php echo (($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["sb"] == "group_type") ? " sorted".strtoupper($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["so"]) : ""); ?>"><?php echo admin_order_link("group_type", $translate->_("Group Type")); ?></th>
+                        <th width="15%" class="general<?php echo (($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["sb"] == "members") ? " sorted".strtoupper($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["so"]) : ""); ?>"><?php echo admin_order_link("members", $translate->_("Learners")); ?></th>
+                        <th width="25%" class="general<?php echo (($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["sb"] == "updated_date") ? " sorted".strtoupper($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["so"]) : ""); ?>"><?php echo admin_order_link("updated_date", $translate->_("Last Updated")); ?></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -281,50 +371,32 @@ if (!defined("IN_GROUPS")) {
                 foreach ($scheduler_groups["groups"] as $result) {
                     $url = ENTRADA_URL."/admin/groups?section=edit&ids=".$result["group_id"];
 
-                    echo "<tr id=\"group-".$result["group_id"]."\" class=\"group".((!$result["group_active"]) ? " na" : (($result["inactive"]) ? " np" : ""))."\">\n";
+                    echo "<tr id=\"group-".$result["group_id"]."\" class=\" ".((!$result["group_active"]) ? "error" : (($result["inactive"]) ? "warning" : (($result["expired"]) ? "success" : "")))."\">\n";
                     echo "	<td class=\"modified\"><input type=\"checkbox\" name=\"checked[]\" value=\"".$result["group_id"]."\" /></td>\n";
-                    echo "	<td class=\"community_title\"><a href=\"".$url."\">".html_encode($result["group_name"])."</a></td>\n";
-                    echo "	<td class=\"community_shortname\"><a href=\"".$url."\">".$result["members"]."</a></td>\n";
+                    echo "	<td class=\"title\"><a href=\"".$url."\">".html_encode($result["group_name"])."</a></td>\n";
+                    echo "	<td class=\"title\"><a href=\"".$url."\">".html_encode(ucwords(str_replace("_", " ", $result["group_type"])))."</a></td>\n";
+                    echo "	<td><a href=\"".$url."\">".$result["members"]."</a></td>\n";
+                    echo "	<td class=\"date\"><a href=\"".$url."\">".date("M jS Y", $result["updated_date"])."</a></td>\n";
                     echo "</tr>\n";
                 }
                 ?>
                 </tbody>
             </table>
-            <div class="row-fluid" style="margin-top:10px;">
-                <?php
-                //delete
-                if ($ENTRADA_ACL->amIAllowed("group", "delete", false)) {
-                    ?>
-                    <input type="submit" class="btn btn-danger" value="Delete Selected"  onClick="$('frmSelect').action ='<?php echo ENTRADA_URL; ?>/admin/groups?section=manage'" />
-                    <?php
-                }
-                //update
-                if ($ENTRADA_ACL->amIAllowed("group", "update", false)) {
-                    ?>
-                    <input type="submit" class="btn" value="Edit Selected" onClick="$('frmSelect').action ='<?php echo ENTRADA_URL; ?>/admin/groups?section=edit'" />
-                    <?php
-                }
-                if ($ENTRADA_ACL->amIAllowed("group", "read", false)) {
-                    ?>
-                    <input type="submit" class="btn pull-right" value="Export Selected" onClick="$('frmSelect').action ='<?php echo ENTRADA_URL; ?>/admin/groups?section=csv'" />
-                    <?php
-                }
-                ?>
-            </div>
 		</form>
 		<?php
 	} else {
 		?>
 		<div class="display-notice">
-			<h3><?php echo $translate->_("No Available Cohorts"); ?></h3>
-			There are currently no available small groups in the system. To begin click the <strong><?php echo $translate->_("Add Cohort"); ?></strong> link above.
+			<h3><?php echo $translate->_("No Available Cohorts."); ?></h3>
+			<?php echo sprintf($translate->_("There are currently no available groups in the system. To begin click the <strong>%s</strong> link above."), $translate->_("Add New Cohort")); ?>
 		</div>
 		<?php
 	}
 
-	echo "<form action=\"\" method=\"get\">\n";
-	echo "<input type=\"hidden\" id=\"dstamp\" name=\"dstamp\" value=\"".html_encode($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["dstamp"])."\" />\n";
-	echo "</form>\n";
+	if ($scheduler_groups["total_pages"] > 1) {
+        $pagination = new Entrada_Pagination($scheduler_groups["page_current"], $_SESSION[APPLICATION_IDENTIFIER]["groups"]["pp"], $scheduler_groups["total_rows"], ENTRADA_URL."/admin/".$MODULE, replace_query());
+        echo $pagination->GetPageBar();
+    }
 
 	$ONLOAD[] = "initList()";
 }

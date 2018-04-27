@@ -38,6 +38,8 @@ class Models_Exam_Post extends Models_Base {
                 $use_resume_password,
                 $resume_password,
                 $secure_mode,
+                $use_honor_code,
+                $honor_code,
                 $mark_faculty_review,
                 $use_calculator,
                 $hide_exam,
@@ -134,6 +136,14 @@ class Models_Exam_Post extends Models_Base {
 
     public function getSecure() {
         return $this->secure;
+    }
+
+    public function getUseHonorCode() {
+        return $this->use_honor_code;
+    }
+
+    public function getHonorCode() {
+        return $this->honor_code;
     }
 
     public function getAllowFeedback() {
@@ -430,8 +440,7 @@ class Models_Exam_Post extends Models_Base {
         return $this->resume_password;
     }
 
-    public function getSecureMode()
-    {
+    public function getSecureMode() {
         return $this->secure_mode;
     }
 
@@ -488,6 +497,13 @@ class Models_Exam_Post extends Models_Base {
         $this->hide_exam = $hide_exam;
     }
 
+    public function setUseCalculator($use_calculator) {
+        $this->use_calculator = $use_calculator;
+    }
+
+    public function setUseSelfTimer($use_self_timer) {
+        $this->use_self_timer = $use_self_timer;
+    }
 
     /* @return bool|Models_Exam_Post */
     public static function fetchRowByID($post_id, $deleted_date = NULL) {
@@ -1826,6 +1842,7 @@ class Models_Exam_Post extends Models_Base {
 									JOIN `" . AUTH_DATABASE . "`.`user_data` u
 									ON a.`proxy_id` = u.`id`
 									AND a.`cgroup_id` = " . $db->qstr($result["audience_value"]) . "
+									AND a.`active` = 1
                                     WHERE u.`id` = " . $db->qstr($proxy_id);
                         $group_audience = $db->getAll($query);
                         if ($group_audience) {
@@ -1838,6 +1855,7 @@ class Models_Exam_Post extends Models_Base {
 									JOIN `" . AUTH_DATABASE . "`.`user_data` u
 									ON a.`proxy_id` = u.`id`
 									AND a.`group_id` = " . $db->qstr($result["audience_value"]) . "
+									AND a.`member_active` = 1
 									WHERE u.`id` = " . $db->qstr($proxy_id);
                         $group_audience = $db->getAll($query);
                         if ($group_audience) {
@@ -2412,8 +2430,6 @@ class Models_Exam_Post extends Models_Base {
                     "updated_date" => time(),
                 ));
             }
-
-
         }
         return $category_result;
     }

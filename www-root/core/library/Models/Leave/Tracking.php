@@ -110,12 +110,26 @@ class Models_Leave_Tracking extends Models_Base {
         );
     }
 
-    public static function fetchAllGroupedByProxyID($created_by = NULL) {
+    public static function fetchAllGroupedByProxyID($created_by = NULL, $search_user = "") {
         global $db;
 
         $output = false;
 
-        $query = "SELECT * FROM `cbl_leave_tracking` WHERE `deleted_date` IS NULL ".(!is_null($created_by) ? " AND `created_by` = " . $db->qstr($created_by) : "")." GROUP BY `proxy_id`";
+        $query = "SELECT a.* FROM `cbl_leave_tracking` as a ";
+
+        if ($search_user != "") {
+            $query .= "INNER JOIN `".AUTH_DATABASE."`.`user_data` as b
+                        ON a.`proxy_id` = b.`id` ";
+        }
+
+        $query .= "WHERE a.`deleted_date` IS NULL";
+
+        if ($search_user != "") {
+            $query .=  " AND CONCAT(b.`firstname`, ' ', b.`lastname`) LIKE (".$db->qstr("%".$search_user."%").") ";
+        }
+
+        $query .= " GROUP BY a.`proxy_id`";
+
         $results = $db->GetAll($query);
         if ($results) {
             $output = array();
@@ -136,11 +150,11 @@ class Models_Leave_Tracking extends Models_Base {
         if (!is_null($start_date) && !is_null($end_date)) {
             $query .= "AND (
                         (`start_date` >= ? AND `end_date` <= ?) OR
-                        (`start_date` >= ? AND `end_date` >= ?) OR
+                        ((`start_date` >= ? AND `start_date` <= ?) AND `end_date` >= ?) OR
                         (`start_date` <= ? AND (`end_date` <= ? AND `end_date` >= ?)) OR
                         (`start_date` <= ? AND `end_date` >= ?)
                         )";
-            $constraints = array($proxy_id, $start_date, $end_date, $start_date, $end_date, $start_date, $end_date, $start_date, $start_date, $end_date);
+            $constraints = array($proxy_id, $start_date, $end_date, $start_date, $end_date, $end_date, $start_date, $end_date, $start_date, $start_date, $end_date);
         }
         if (!is_null($deleted_date)) {
             $query .= " AND `deleted_date` <= ".$db->qstr($deleted_date);
@@ -157,13 +171,37 @@ class Models_Leave_Tracking extends Models_Base {
         return $output;
     }
 
-    public static function fetchLeaveDayTotalByProxyID($proxy_id) {
+    public static function fetchLeaveDayTotalByProxyID($proxy_id, $start_date = null, $end_date = null) {
         global $db;
+        $constraints = array($proxy_id);
         
         $query = "SELECT SUM(`days_used`) AS `leave_days`
                     FROM `cbl_leave_tracking`
-                    WHERE `proxy_id` = ? AND `deleted_date` IS NULL";
-        return ($db->GetOne($query, array($proxy_id)));
+                    WHERE `proxy_id` = ? 
+                    AND `deleted_date` IS NULL";
+
+        if (!is_null($start_date) && !is_null($end_date)) {
+            $query .= "AND (
+                        (`start_date` >= ? AND `end_date` <= ?) OR
+                        ((`start_date` >= ? AND `start_date` <= ?) AND `end_date` >= ?) OR
+                        (`start_date` <= ? AND (`end_date` <= ? AND `end_date` >= ?)) OR
+                        (`start_date` <= ? AND `end_date` >= ?)
+                        )";
+            $constraints = array($proxy_id, $start_date, $end_date, $start_date, $end_date, $end_date, $start_date, $end_date, $start_date, $start_date, $end_date);
+        }
+
+        return ($db->GetOne($query, $constraints));
+    }
+
+    public static function fetchLeaveDayTotalByProxyIDDateRange($proxy_id, $start_date, $end_date) {
+        global $db;
+        $query = "SELECT SUM(`days_used`) AS `leave_days`
+                    FROM `cbl_leave_tracking`
+                    WHERE `proxy_id` = ? 
+                    AND `deleted_date` IS NULL
+                    AND (`start_date` >= ? AND `start_date` <= ?)
+                    AND (`end_date` >= ? AND `end_date` <= ?)";
+        return ($db->GetOne($query, array($proxy_id, $start_date, $end_date, $start_date, $end_date)));
     }
 
     public static function fetchAllBySearchTerm($search_term) {
@@ -258,7 +296,7 @@ class Models_Leave_Tracking extends Models_Base {
     public static function fetchAllByAssociatedLearnerFacultyProxyList($current_date) {
         global $db;
 
-        $USER_ID_LIST = Entrada_Utilities_Assessments_AssessmentTask::getAssociatedLearnerFacultyProxyList();
+        $USER_ID_LIST = Entrada_Utilities_Assessments_DeprecatedAssessmentTask::getAssociatedLearnerFacultyProxyList();
         if ($USER_ID_LIST) {
             $query = "  SELECT CONCAT(b.`firstname`, ' ', b.`lastname`) AS 'full_name', a.`days_used`, a.`start_date`, a.`end_date`, a.`proxy_id`, c.`type_value` as `leave_type`
                         FROM `cbl_leave_tracking` AS a

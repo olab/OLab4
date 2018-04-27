@@ -35,7 +35,7 @@ if ($MAILING_LISTS["active"]) {
 	require_once("Entrada/mail-list/mail-list.class.php");
 }
 
-$BREADCRUMB[]		= array("url" => ENTRADA_URL."/communities?".replace_query(array("section" => "modify")), "title" => "Modifying a Community");
+$BREADCRUMB[]		= array("url" => ENTRADA_URL."/communities?".replace_query(array("section" => "modify")), "title" => $translate->_("Modifying a Community"));
 
 $COMMUNITY_ID		= 0;
 

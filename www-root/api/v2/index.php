@@ -19,7 +19,17 @@
 |
 */
 
-$app = require_once __DIR__.'/../../core/api/bootstrap/app.php';
+@set_include_path(implode(PATH_SEPARATOR, array(
+    dirname(__FILE__) . "/../../core",
+    dirname(__FILE__) . "/../../core/includes",
+    dirname(__FILE__) . "/../../core/library",
+    dirname(__FILE__) . "/../../core/library/vendor",
+    get_include_path(),
+)));
+
+require_once("init.inc.php");
+
+$app = require_once 'entradapackages/entrada-1x-api/bootstrap/app.php';
 
 /*
 |--------------------------------------------------------------------------

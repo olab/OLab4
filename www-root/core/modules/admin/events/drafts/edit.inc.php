@@ -38,7 +38,8 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
 
     $default_csv_headings = array(
         "event_id" => "Original Event",
-        "parent_id" => "Parent Event",
+        "parent_event" => "Parent Event",
+        "parent_id" => "Parent ID",
         "recurring_id" => "Recurring Event",
         "event_term" => "Term",
         "course_code" => "Course Code",
@@ -69,7 +70,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
         "release_until" => "Release Until",
         "event_children" => "Child Events",
         "event_message" => "Required Preparation",
-        "free_text_objectives" => "Free-Text Objectives",
+        "free_text_objectives" => "Free Text Objectives",
         "curriculum_objectives" => $curriculum_objectives_name,
         "clinical_presentations" => $clinical_presentations_name,
         "hot_topics" => "Hot Topics",
@@ -77,6 +78,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
         "attached_links" => "Attached Links",
         "attached_quizzes" => "Attached Quizzes",
         "attendance" => "Attendance",
+        "attendance_required" => "Attendance Required",
         "auditor_numbers" => "Auditor Numbers",
         "auditor_names" => "Auditor Names",
         "teachers_assistant_numbers" => "Teacher's Assistant Numbers",

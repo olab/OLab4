@@ -29,13 +29,21 @@ if ($ENTRADA_ACL->isUserAuthorized("gradebook", "update", false, array("PARENT_I
     ob_clear_open_buffers();
 
     // Sanitize URL parameters
-    $url_params = Entrada_Utilities::getCleanUrlParams(array('cperiod_id' => 'int', 'title' => 'trim'));
+    $url_params = Entrada_Utilities::getCleanUrlParams(array('cperiod_id' => 'int', 'title' => 'trim', 'assessment_id' => 'int'));
 
     if ($COURSE_ID) {
         if ($url_params['cperiod_id']) {
-            // Get all assessments for this course & curriculum period
-            $model_assessment = new Models_Gradebook_Assessment();
-            $assessments = $model_assessment->fetchAssessmentsByCurriculumPeriodIDWithMarkingScheme($COURSE_ID, $url_params['cperiod_id']);
+            // Get the assessments to include. If an assessment_id has been provided, then just generate for that assessment
+            if (isset($url_params["assessment_id"])) {
+                $model_assessment = Models_Gradebook_Assessment::fetchRowByID($url_params["assessment_id"]);
+                $assessment = $model_assessment->toArray();
+                $marking_scheme = Models_Gradebook_Assessment_Marking_Scheme::fetchRowByID($model_assessment->getMarkingSchemeID());
+                $assessment["handler"] = $marking_scheme->getHandler();
+                $assessments = array($assessment);
+            } else {
+                $model_assessment = new Models_Gradebook_Assessment();
+                $assessments = $model_assessment->fetchAssessmentsByCurriculumPeriodIDWithMarkingScheme($COURSE_ID, $url_params['cperiod_id']);
+            }
 
             // Create CSV header row
             $header_row = array($translate->_('Number'), $translate->_('Full Name'));
@@ -91,7 +99,7 @@ if ($ENTRADA_ACL->isUserAuthorized("gradebook", "update", false, array("PARENT_I
                     $csv_student_row['b'.$i.'grade'] = format_retrieved_grade($student['b'.$i.'grade'], $assessment);
 
                     // Get the grade_weighting either from the student if one exists or the assessment standard weighting
-                    $grade_weighting = $student['c'.$i.'weight'] ? $student['c'.$i.'weight'] : $assessment['grade_weighting'];
+                    $grade_weighting = $student['c'.$i.'weight'] !== null ? $student['c'.$i.'weight'] : $assessment['grade_weighting'];
 
                     // Add to the weighted total
                     $weighted_total += ($student['b'.$i.'grade'] * $grade_weighting) / 100;
@@ -107,15 +115,13 @@ if ($ENTRADA_ACL->isUserAuthorized("gradebook", "update", false, array("PARENT_I
             fclose($csv);
         }
         else {
-            $ERROR++;
-            $ERRORSTR[] = $translate->_("In order to export a gradebook you must provide a valid curriculum period identifier.");
+            add_error($translate->_("In order to export a gradebook you must provide a valid curriculum period identifier."));
             echo display_error();
             application_log("notice", $translate->_("Failed to provide curriculum period when attempting to export an gradebook's grades."));
         }
     }
     else {
-        $ERROR++;
-        $ERRORSTR[] = $translate->_("In order to export a gradebook you must provide a valid course identifier.");
+        add_error($translate->_("In order to export a gradebook you must provide a valid course identifier."));
         echo display_error();
         application_log("notice", $translate->_("Failed to provide course identifier when attempting to export an gradebook's grades."));
     }

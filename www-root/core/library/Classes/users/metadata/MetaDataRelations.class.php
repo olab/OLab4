@@ -34,16 +34,18 @@ class MetaDataRelations extends Collection {
 	 */
 	public static function getRelations($organisation=null, $group=null, $role=null, $user=null) {
 		$cache = SimpleCache::getCache();
-		$relation_set = $cache->get("MetaTypeRelation", "$organization-$group-$role-$user");
+		$relation_set = $cache->get("MetaTypeRelation", "$organisation-$group-$role-$user");
 		if ($relation_set) {
 			return $relation_set;
 		}
-		global $db;
+		global $db, $ORGANISATION_ID;
 		$conditions = generateMaskConditions($organisation, $group, $role, $user);
 		$query = "SELECT * from `meta_type_relations`";
 		if ($conditions) {
 			$query .= "\n WHERE ".$conditions;
 			
+		} else {
+			$query .= "\n WHERE `entity_value` LIKE ".$db->qstr($ORGANISATION_ID.":%");
 		}
 		$results = $db->getAll($query);
 		$relations = array();
@@ -54,8 +56,31 @@ class MetaDataRelations extends Collection {
 			}
 		}
 		$relation_set = new self($relations);
-		$cache->set($relation_set,"MetaTypeRelation", "$organization-$group-$role-$user" );
+		$cache->set($relation_set,"MetaTypeRelation", "$organisation-$group-$role-$user" );
 		return $relation_set;
 	}
 	
+	/**
+	 * Returns a collection of MetaDataRelation objects based on the relations of a MetaType record
+	 * <code>
+	 * $relations = MetaDataRelations::getRelationsByID($meta_type_id); 
+	 * // returns relations for $meta_type_id
+	 * </code>
+	 * @param int $meta_type_id
+	 * @return MetaDataRelations
+	 */
+	public function getRelationsByID($id) {
+		global $db;
+		$query = "SELECT * from `meta_type_relations` WHERE `meta_type_id` = ".$db->qstr($id);
+		$results = $db->getAll($query);
+		$relations = array();
+		if ($results) {
+			foreach ($results as $result) {
+				$relation =  MetaDataRelation::fromArray($result);
+				$relations[] = $relation;
+			}
+		}
+		$relation_set = new self($relations);
+		return $relation_set;
+	}
 }

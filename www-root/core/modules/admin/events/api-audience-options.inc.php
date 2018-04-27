@@ -99,8 +99,12 @@ if (!defined("IN_EVENTS")) {
                                         <input type="radio" name="event_audience_type" id="event_audience_type_course" value="course" onclick="selectEventAudienceOption('course')" style="vertical-align: middle"<?php echo ((($PROCESSED["event_audience_type"] == "course") || !isset($PROCESSED["event_audience_type"])) ? " checked=\"checked\"" : ""); ?> />
                                     </td>
 									<td colspan="2" style="padding-bottom: 15px">
-										<label for="event_audience_type_course" class="radio-group-title">All Learners Enroled in <?php echo html_encode($course_info["course_code"]); ?></label>
-										<div class="content-small">This event is intended for all learners enrolled in this <?php echo strtolower($translate->_("course")); ?>.</div>
+										<label for="event_audience_type_course" class="radio-group-title">
+                                            <?php echo $translate->_("All Learners Enroled in") . " " . html_encode($course_info["course_code"]); ?>
+                                        </label>
+										<div class="content-small">
+                                            <?php echo $translate->_("This event is intended for all learners enroled in this") . " " . strtolower($translate->_("course")); ?>.
+                                        </div>
 									</td>
 								</tr>
 								<?php

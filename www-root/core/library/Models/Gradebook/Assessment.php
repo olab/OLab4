@@ -24,11 +24,42 @@
  */
 class Models_Gradebook_Assessment extends Models_Base {
 
-    protected $assessment_id, $course_id, $cohort, $cperiod_id, $collection_id, $form_id, $name, $description, $type,
-        $marking_scheme_id, $numeric_grade_points_total, $grade_weighting = 0,
-        $narrative = 0, $required = 1, $characteristic_id, $show_learner = 0, $due_date = 0, $self_assessment = 0, 
-        $group_assessment = 0, $release_date = 0, $release_until = 0, $order, $grade_threshold = 0, $notify_threshold = 0, $active = 1,
-        $created_date, $created_by, $updated_date, $updated_by, $published = 1;
+    protected $assessment_id,
+        $course_id,
+        $cohort = 0,
+        $cperiod_id,
+        $collection_id,
+        $form_id,
+        $name,
+        $description,
+        $type,
+        $marking_scheme_id,
+        $scoring_method,
+        $numeric_grade_points_total,
+        $grade_weighting = 0,
+        $narrative = 0,
+        $required = 1,
+        $characteristic_id,
+        $show_learner = 0,
+        $due_date = 0,
+        $self_assessment = 0,
+        $group_assessment = 0,
+        $release_date = 0,
+        $release_until = 0,
+        $order,
+        $grade_threshold = 0,
+        $notify_threshold = 0,
+        $active = 1,
+        $created_date,
+        $created_by,
+        $updated_date,
+        $updated_by,
+        $published = 1,
+        $portfolio_id;
+
+    protected $meta_options,
+        $marking_scheme,
+        $meta;
     
     protected static $table_name          = "assessments";
     protected static $default_sort_column = "order";
@@ -38,55 +69,12 @@ class Models_Gradebook_Assessment extends Models_Base {
         parent::__construct($arr);
     }
 
-    public static function fetchRowByID($assessment_id, $active = 1) {
-        $self = new self();
-        return $self->fetchRow(array(
-                array("key" => "assessment_id", "value" => $assessment_id, "method" => "=", "mode" => "AND"),
-                array("key" => "active", "value" => $active, "method" => "=", "mode" => "AND")
-            )
-        );
+    public function getID() {
+        return $this->assessment_id;
     }
 
-    public static function fetchAllRecords($course_id = NULL, $cperiod_id = NULL, $active = 1, $sort_col = NULL, $sort_order = NULL) {
-        $self = new self();
-
-        $constraints = array(
-            array(
-                "mode"      => "AND",
-                "key"       => "active",
-                "value"     => $active,
-                "method"    => "="
-            )
-        );
-
-        if (!is_null($cperiod_id)) {
-            $constraints[] = array(
-                "mode"      => "AND",
-                "key"       => "cohort",
-                "value"     => $cperiod_id,
-                "method"    => "="
-            );
-        }
-
-        if (!is_null($course_id)) {
-            $constraints[] = array(
-                "mode"      => "AND",
-                "key"       => "course_id",
-                "value"     => $course_id,
-                "method"    => "="
-            );
-        }
-
-        $objs = $self->fetchAll($constraints, "=", "AND", $sort_col, $sort_order);
-        $output = array();
-
-        if (!empty($objs)) {
-            foreach ($objs as $o) {
-                $output[] = $o;
-            }
-        }
-
-        return $output;
+    public function setID($assessment_id) {
+        $this->assessment_id = $assessment_id;
     }
 
     public function getAssessmentID() {
@@ -125,6 +113,14 @@ class Models_Gradebook_Assessment extends Models_Base {
         $this->form_id = $form_id;
     }
 
+    public function getEportfolioId() {
+        return $this->portfolio_id;
+    }
+
+    public function setEportfolioID($portfolio_id) {
+        $this->portfolio_id = $portfolio_id;
+    }
+
     public function getName() {
         return $this->name;
     }
@@ -145,6 +141,21 @@ class Models_Gradebook_Assessment extends Models_Base {
         return $this->numeric_grade_points_total;
     }
 
+    public function getScoringMethod() {
+        return $this->scoring_method;
+    }
+
+    public function setScoringMethod($scoring_method) {
+        $this->scoring_method = $scoring_method;
+    }
+
+    /**
+     * @param mixed $numeric_grade_points_total
+     */
+    public function setNumericGradePointsTotal($numeric_grade_points_total) {
+        $this->numeric_grade_points_total = $numeric_grade_points_total;
+    }
+
     public function getGradeWeighting() {
         return $this->grade_weighting;
     }
@@ -153,7 +164,7 @@ class Models_Gradebook_Assessment extends Models_Base {
         return $this->narrative;
     }
 
-    public function getSeflAssessment() {
+    public function getSelfAssessment() {
         return $this->self_assessment;
     }
 
@@ -231,6 +242,209 @@ class Models_Gradebook_Assessment extends Models_Base {
 
     public function getUpdatedBy() {
         return $this->updated_by;
+    }
+
+    /* @return bool|Models_Gradebook_Assessment */
+    public static function fetchRowByID($assessment_id, $active = 1) {
+        $self = new self();
+        return $self->fetchRow(array(
+                array("key" => "assessment_id", "value" => $assessment_id, "method" => "=", "mode" => "AND"),
+                array("key" => "active", "value" => $active, "method" => "=", "mode" => "AND")
+            )
+        );
+    }
+
+    /* @return ArrayObject|Models_Gradebook_Assessment[] */
+    public static function fetchAllRecords($course_id = NULL, $cperiod_id = NULL, $active = 1, $sort_col = NULL, $sort_order = NULL) {
+        $self = new self();
+
+        $constraints = array(
+            array(
+                "mode"      => "AND",
+                "key"       => "active",
+                "value"     => $active,
+                "method"    => "="
+            )
+        );
+
+        if (!is_null($cperiod_id)) {
+            $constraints[] = array(
+                "mode"      => "AND",
+                "key"       => "cohort",
+                "value"     => $cperiod_id,
+                "method"    => "="
+            );
+        }
+
+        if (!is_null($course_id)) {
+            $constraints[] = array(
+                "mode"      => "AND",
+                "key"       => "course_id",
+                "value"     => $course_id,
+                "method"    => "="
+            );
+        }
+
+        $objs = $self->fetchAll($constraints, "=", "AND", $sort_col, $sort_order);
+        $output = array();
+
+        if (!empty($objs)) {
+            foreach ($objs as $o) {
+                $output[] = $o;
+            }
+        }
+
+        return $output;
+    }
+
+    public function getAssessmentMarkingSchemesID() {
+        if (NULL === $this->marking_scheme) {
+            $this->marking_scheme = Models_Gradebook_Assessment_Marking_Scheme::fetchRowByID($this->marking_scheme_id);
+        }
+        $marking_scheme = $this->marking_scheme;
+        if (is_object($marking_scheme)) {
+            return $marking_scheme->getID();
+        } else {
+            return false;
+        }
+    }
+
+    public function getAssessmentMarkingSchemesHandler() {
+        if (NULL === $this->marking_scheme) {
+            $this->marking_scheme = Models_Gradebook_Assessment_Marking_Scheme::fetchRowByID($this->marking_scheme_id);
+        }
+        $marking_scheme = $this->marking_scheme;
+        if (is_object($marking_scheme)) {
+            return $marking_scheme->getHandler();
+        } else {
+            return false;
+        }
+    }
+
+    public function getAssessmentMarkingSchemesDescription() {
+        if (NULL === $this->marking_scheme) {
+            $this->marking_scheme = Models_Gradebook_Assessment_Marking_Scheme::fetchRowByID($this->marking_scheme_id);
+        }
+        $marking_scheme = $this->marking_scheme;
+        if (is_object($marking_scheme)) {
+            return $marking_scheme->getDescription();
+        } else {
+            return false;
+        }
+    }
+
+    public function getAssessmentLuMetaType() {
+        if (NULL === $this->meta) {
+            $this->meta = Models_Gradebook_Assessment_LuMeta::fetchRowByID($this->characteristic_id);
+        }
+        $meta = $this->meta;
+
+        if (is_object($meta)) {
+            return $meta->getType();
+        } else {
+            return false;
+        }
+    }
+
+    public function getAssessmentLuMetaTitle() {
+        if (NULL === $this->meta) {
+            $this->meta = Models_Gradebook_Assessment_LuMeta::fetchRowByID($this->characteristic_id);
+        }
+        $meta = $this->meta;
+
+        if (is_object($meta)) {
+            return $meta->getTitle();
+        } else {
+            return false;
+        }
+    }
+
+    public function getGradeID($proxy_id) {
+        $grade = new Models_Assessment_Grade(array(
+            "assessment_id" => $this->assessment_id,
+            "proxy_id" => $proxy_id
+        ));
+        $grade->fetchRowByAssessmentIDProxyID();
+        if (is_object($grade)) {
+            return $grade->getGradeID();
+        } else {
+            return false;
+        }
+    }
+
+    public function getGradeValue($proxy_id) {
+        $grade = new Models_Assessment_Grade(array(
+            "assessment_id" => $this->assessment_id,
+            "proxy_id" => $proxy_id
+        ));
+        $grade->fetchRowByAssessmentIDProxyID();
+        if (is_object($grade)) {
+            return $grade->getValue();
+        } else {
+            return false;
+        }
+    }
+
+    public function getStudentGradeWeighting($proxy_id) {
+        $weighting = Models_Gradebook_Assessment_Weighting::fetchRowByAssessmentIDProxyID($this->assessment_id, $proxy_id);
+        if (is_object($weighting)) {
+            return $weighting->getGradeWeighting();
+        } else {
+            return false;
+        }
+    }
+
+    /* @return ArrayObject|Models_Gradebook_Assessment_Option[] */
+    public function getGradeBookMetaOptions() {
+        if (NULL === $this->meta_options) {
+            $this->meta_options = Models_Gradebook_Assessment_Option::fetchAllByAssessmentID($this->assessment_id, 1);
+        }
+
+        return $this->meta_options;
+    }
+
+    public static function fetchProxyIDsByAssessmentID(Models_Gradebook_Assessment $assessment) {
+        $assessment_members = array();
+        if ($assessment && is_object($assessment)) {
+            $course_audiences_obj = new Models_Course_Audience();
+            $course_audiences = $course_audiences_obj->fetchAllByCourseIDCperiodID($assessment->getCourseID(), $assessment->getCurriculumPeriodID());
+            if ($course_audiences && is_array($course_audiences) && !empty($course_audiences)) {
+                foreach ($course_audiences as $course_audience) {
+                    if (is_object($course_audience)) {
+                        $assessment_members = Models_Gradebook_Assessment::addAssessmentAudienceMembers($course_audience, $assessment_members);
+                    }
+                }
+            }
+        }
+
+        return $assessment_members;
+    }
+
+    public static function addAssessmentAudienceMembers($audience, $assessment_members) {
+        if (is_object($audience)) {
+            if ($audience->getAudienceType() == "group_id") {
+                $cohort_members = Models_Group_Member::getUsersByGroupID($audience->getAudienceValue());
+                if ($cohort_members && is_array($cohort_members) && !empty($cohort_members)) {
+                    foreach ($cohort_members as $cohort_member) {
+                        if ($cohort_member && is_object($cohort_member)) {
+                            if (!in_array($cohort_member->getProxyID(), $assessment_members)) {
+                                $assessment_members[] = (int)$cohort_member->getProxyID();
+                            }
+                        }
+                    }
+                }
+            } else if ($audience->getAudienceType() == "proxy_id") {
+                $proxy_id = Models_User::fetchRowByID($audience->getAudienceValue());
+                if (is_object($proxy_id)) {
+                    if (!in_array($proxy_id->getProxyID(), $assessment_members)) {
+                        $assessment_members[] = (int)$proxy_id->getProxyID();
+                    }
+                }
+            }
+        }
+        sort($assessment_members);
+
+        return $assessment_members;
     }
 
     public function fetchAssessmentByIDWithMarkingScheme() {
@@ -410,13 +624,47 @@ class Models_Gradebook_Assessment extends Models_Base {
         }
     }
 
+
+    /**
+     * Gets a list of assessments for a given course and cperiod, with joined marking scheme handler
+     * @param  int $course_id
+     * @param  int $cperiod_id
+     * @param string $title
+     * @return ArrayObject|Models_Gradebook_Assessment[]
+     */
+    public static function fetchAssessmentsByCurriculumPeriodIdTitle($course_id, $cperiod_id, $title) {
+        global $db;
+        $title = "%" . $title . "%";
+
+        $query = "SELECT a.* FROM `" . DATABASE_NAME . "`.`" . static::$table_name . "` a
+                    WHERE a.course_id = ?
+                    AND a.cperiod_id = ?
+                    AND a.active = 1
+                    AND `a`.`name` LIKE (" . $db->qstr($title) . ")
+                    ORDER BY a.`" . static::$default_sort_column . "` ASC";
+        $results = $db->getAll($query, array($course_id, $cperiod_id));
+        if ($results) {
+            $output = array();
+
+            foreach ($results as $result) {
+                $class = get_called_class();
+                $output[] = new $class($result);
+            }
+
+            return $output;
+        } else {
+            return false;
+        }
+    }
+
+
     /**
      * Query to select all marks for a given list of students and list of assessments
      * @param  array        $assessments   
      * @param  array        $student_ids
      * @param  string       $first_column   "number" or "fullname"
      * @param  bool         $get_grade_id   specify whether to select due date in query
-     * @param  bool         $get_proxy_id   specify whetehr to select proxy_id in query
+     * @param  bool         $get_proxy_id   specify whether to select proxy_id in query
      * @return array|false                  
      */
     public function fetchStudentMarksAndGradeWeightingsPerAssessment($assessments, $student_ids, $first_column = "number", $get_grade_id = false, $get_proxy_id = false) {
@@ -530,6 +778,7 @@ class Models_Gradebook_Assessment extends Models_Base {
         return false;
     }
 
+    /* @return ArrayObject|Models_Gradebook_Assessment[] */
     public static function fetchAssessmentsInIDArray($assessment_ids = array(), $course_id = NULL, $cperiod_id = NULL, $active = 1, $sort_col = NULL, $sort_order = NULL) {
         global $db;
 
@@ -556,6 +805,7 @@ class Models_Gradebook_Assessment extends Models_Base {
         }
     }
 
+    /* @return ArrayObject|Models_Gradebook_Assessment[] */
     public static function fetchAssessmentsByCollectionIds($collection_ids = array()) {
         global $db;
 
@@ -584,33 +834,20 @@ class Models_Gradebook_Assessment extends Models_Base {
         }
     }
 
-    public static function fetchNextOrder($course_id, $group_id = NULL, $active = 1) {
+    public static function fetchNextOrder($course_id, $active = 1) {
         global $db;
 
         $query = "SELECT MAX(`order`) + 1
                     FROM `assessments`
                     WHERE `course_id` = ?
-                    AND `cohort` = ?
                     AND `active` = ?";
-        $result = $db->getOne($query, array($course_id, $group_id, $active));
+        $result = $db->getOne($query, array($course_id, $active));
         
         if ($result) {
             return $result;
         } else {
             return "0";
         }
-    }
-
-    public function insert() {
-        global $db;
-
-        if ($db->AutoExecute(static::$table_name, $this->toArray(), "INSERT")) {
-            $this->assessment_id = $db->Insert_ID();
-            return $this;
-        } else {
-            return false;
-        }
-
     }
 
     /**
@@ -639,33 +876,6 @@ class Models_Gradebook_Assessment extends Models_Base {
             return false;
         }
 
-    }
-
-    /**
-     * Updates the database with values in the model. By default updates all values regardless of null status. 
-     * Optional parameter allows to specify which values will get updated.
-     * @param  array|null $fields_to_update Ex. array('assessment_id', 'order')
-     * @return $this 
-     */
-    public function update($fields_to_update = null) {
-        global $db;
-
-        // if fields_to_update is not set or not an array, use the standard toArray()
-        if (!$fields_to_update || !is_array($fields_to_update)) {
-            $update_array = $this->toArray();
-        } else {
-            $update_array = array();
-
-            foreach($fields_to_update as $field) {
-                $update_array[$field] = $this->$field;
-            }
-        }
-
-        if ($db->AutoExecute(static::$table_name, $update_array, "UPDATE", "`assessment_id` = ".$this->assessment_id)) {
-            return $this;
-        } else {
-            return false;
-        }
     }
 
     public function attachQuizzes($quiz_ids) {
@@ -775,7 +985,7 @@ class Models_Gradebook_Assessment extends Models_Base {
         }
     }
 
-    public function updateAssignementDueDate() {
+    public function updateAssignmentDueDate() {
         global $db;
 
         $query = "UPDATE `assignments` SET 
@@ -788,15 +998,16 @@ class Models_Gradebook_Assessment extends Models_Base {
     public static function fetchAssessmentsByCourseIdAndGraderId($course_id, $grader_proxy_id) {
         global $db;
 
-        $query = "SELECT a.*, 
-                    (SELECT IF( a.due_date !=0, a.due_date, am.due_date )) AS due_date
-                  FROM assessments AS a, assessment_graders AS ag, assignments AS am
-                  WHERE a.assessment_id=ag.assessment_id 
-                  AND a.course_id = ? 
-                  AND ag.grader_proxy_id = ?
-                  AND a.assessment_id = am.assessment_id 
-                  AND a.active=1
-                  GROUP BY assessment_id";
+        $query = "SELECT a.*, (SELECT IF( a.`due_date` !=0, a.`due_date`, am.`due_date` )) AS due_date
+                  FROM `assessments` AS a
+                  JOIN `assessment_graders` AS ag
+                  ON a.`assessment_id` = ag.`assessment_id`
+                  LEFT JOIN `assignments` AS am
+                  ON a.`assessment_id` = am.`assessment_id`
+                  WHERE a.`course_id` = ? 
+                  AND ag.`grader_proxy_id` = ?
+                  AND a.`active` = 1
+                  GROUP BY a.`assessment_id`";
 
         return $db->getAll($query, array($course_id, $grader_proxy_id));
     }

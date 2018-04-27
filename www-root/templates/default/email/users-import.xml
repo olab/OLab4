@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates>
+    <template lang="en">
+        <subject>Import Users Report</subject>
+        <body>
+<![CDATA[
+Dear %TARGET_FIRSTNAME% %TARGET_LASTNAME%,
+
+<p>Your CSV import of users into %APPLICATION_NAME% has completed. Please review the following log associated with this action:</p>
+
+%LOG_MSGS%
+
+Sincerely,<br />
+The %APPLICATION_NAME% Team
+]]>
+        </body>
+    </template>
+</templates>

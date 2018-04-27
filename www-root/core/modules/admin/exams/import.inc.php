@@ -42,6 +42,63 @@ if (!defined("PARENT_INCLUDED")) {
     <h1><?php echo $SUBMODULE_TEXT["title_import"]; ?></h1>
     <?php
     $default_folder_id = isset($_POST["folder_id"]) ? (int)$_POST["folder_id"] : 0;
+
+    $folder_array = array();
+    if ($ENTRADA_USER->getActiveGroup() === "medtech") {
+        $folders = Models_Exam_Bank_Folders::fetchAllByType("question", $ENTRADA_USER->getActiveOrganisation());
+        if ($folders && is_array($folders) && !empty($folders)) {
+            foreach ($folders as $folder) {
+                if (!in_array($folder->getID(), $folder_array)) {
+                    $folder_array[$folder->getID()] = $folder->getID();
+                }
+            }
+        }
+    } else {
+        $folders = Models_Exam_Bank_Folders::fetchAllByTypeAuthor("question", $ENTRADA_USER->getID());
+        if ($folders && is_array($folders) && !empty($folders)) {
+            foreach ($folders as $folder) {
+                if ($folder && is_object($folder)) {
+                    if (!in_array($folder->getID(), $folder_array)) {
+                        $folder_array[$folder->getID()] = $folder->getID();
+                    }
+                    $folder_array = Models_Exam_Bank_Folders::getChildrenFolders($folder->getID(), $folder_array, "question");
+                }
+            }
+        }
+    }
+
+    $folder_select = "";
+    $folders_formatted = array();
+    if ($folder_array && is_array($folder_array) && !empty($folder_array)) {
+        foreach ($folder_array as $folder_id) {
+            $folder = Models_Exam_Bank_Folders::fetchRowByID($folder_id);
+            if ($folder && is_object($folder)) {
+                $breads = array();
+                $folder_path = array();
+                $breads = $folder->getBreadcrumbsByFolderID($breads, "export_array");
+                if ($breads && is_array($breads) && !empty($breads)) {
+                    krsort($breads);
+                    foreach ($breads as $bread) {
+                        if ($bread["folder-id"] !== 0) {
+                            $folder_path[] = $bread["folder-title"];
+                        }
+                    }
+                }
+                $selected = isset($_POST["folder_id"]) && $_POST["folder_id"] == $folder->getID();
+                if (!in_array(html_encode(implode("/", $folder_path)), $folders_formatted)) {
+                    $folders_formatted[html_encode(implode("/", $folder_path))] =  "<option value=\"" . $folder->getID() . "\"" . ($selected ? " selected" : "") . ">" . html_encode(implode("/", $folder_path)) . "</option>\n";
+                }
+            }
+        }
+
+        if ($folders_formatted && is_array($folders_formatted) && !empty($folders_formatted)) {
+            ksort($folders_formatted);
+            foreach ($folders_formatted as $output) {
+                $folder_select .= $output;
+            }
+        }
+    }
+
     // Error checking
     switch ($STEP) {
         case 3:
@@ -123,44 +180,41 @@ if (!defined("PARENT_INCLUDED")) {
         case 3:
             ?>
             <div class="alert alert-info">
-                <?php echo $translate->_('
-                This is a tool to allow you to import one or more exam questions using a specific
-                text format. Questions are separated by a blank line. The format for each
-                question is as follows:<br /><br />
+                <?php
+                echo $translate->_("
+                    You are also waiting for text changes from me!  For the Import Exam Questions screen:<br/>
 
-                Each question begins with a question stem, which begins with "Q:" or "1."
-                where 1 can be any number, so you can number your questions sequentially.
-                Question stems can span multiple lines, and may contain blank lines. The
-                following are valid question stems:<br /><br />
+                    This tool allows you to import one or more exam questions using a specific text format. Questions are separated by a blank line. The format for each question is as follows:<br/><br/>
 
-                Q: What is your favorite color?<br /><br />
+                    Each question begins with a question stem, which begins with \"Q:\" or \"1.\" where 1 can be any number, so you can number your questions sequentially. Question stems can span multiple lines, and may contain blank lines. The following are valid question stems:<br/><br/>
 
-                1. What is<br />
-                your favorite<br />
-                <br />
-                color?<br /><br />
+                    Q: What is your favorite color?<br/><br/>
 
-                2. What is your favorite color?<br /><br />
+                    1. What is<br/>
+                    your favorite<br/><br/>
 
-                The question stem is followed by question choices and attributes, each of
-                which must be on a separate line. Question choices begin with a letter followed
-                by a period, like "a." or "b.". Attributes begin with a word followed by
-                a colon, like "type:" or "folder:".<br /><br />
+                    color?<br/><br/>
 
-                The "type" attribute is required for all question types. The "folder" attribute
-                is required if no default folder is selected. For multiple choice questions, at
-                least one answer choice is required, as well as the "answer" attribute. Optional
-                attributes are "description", "rationale", "correct_text", and "code". A full
-                example of a multiple choice question is shown below.<br /><br />
+                    2. What is your favorite color?<br/><br/>
 
-                1. What is your favorite color?<br />
-                a. blue<br />
-                b. red <br />
-                c. green<br />
-                answer: a<br />
-                type: mc_v<br />
-                folder: /some/folder
-                '); ?>
+                    The question stem is followed by question choices and attributes, each of which must be on a separate line. Question choices begin with a letter followed by a period, like \"a.\" or \"b.\". Attributes begin with a word followed by a colon, like \"type:\" or \"folder:\".<br/><br/>
+
+                    The \"type\" attribute is required for all question types. The \"folder\" attribute is required if no default folder is selected. For multiple choice questions, at least one answer choice is required, as well as the \"answer\" attribute (multiple correct answers should be separated by commas).<br/><br/>
+
+                    Optional attributes are \"description\", \"rationale\", \"correct_text\", \"code\", \"curriculum_tags\" and \"locked\".  Curriculum tags must be identified with the id number.  Locked should list multiple choice answer(s) that should be locked in place even when answer options are randomized.  A full example of a multiple choice question is shown below.<br/><br/>
+
+                    1. What color is the ocean?<br/>
+                    a. blue<br/>
+                    b. purple<br/>
+                    c. yellow<br/>
+                    d. none of the above<br/>
+                    answer: a<br/>
+                    type: mc_v<br/>
+                    folder: /some/folder<br/>
+                    locked: d<br/>
+                    curriculum_tags: 342, 1024
+                    ");
+                ?>
             </div>
             <form class="form" method="post">
                 <input type="hidden" name="step" value="2" />
@@ -172,16 +226,7 @@ if (!defined("PARENT_INCLUDED")) {
                         <select id="folder_id" name="folder_id">
                             <option value="0">-- <?php echo $SUBMODULE_TEXT["text_select_folder"]; ?> --</option>
                             <?php
-                            function output_folder_options($parent_folder_id = 0, $prefix = "/") {
-                                $folders = Models_Exam_Question_Bank_Folders::fetchAllByParentID($parent_folder_id);
-                                foreach ($folders as $folder) {
-                                    $folder_path = $prefix . $folder->getFolderTitle();
-                                    $selected = isset($_POST["folder_id"]) && $_POST["folder_id"] == $folder->getID();
-                                    echo "<option value=\"" . $folder->getID() . "\"" . ($selected ? " selected" : "") . ">" . html_encode($folder_path) . "</option>\n";
-                                    output_folder_options($folder->getID(), $folder_path."/");
-                                }
-                            }
-                            output_folder_options();
+                            echo $folder_select;
                             ?>
                         </select>
                     </div>

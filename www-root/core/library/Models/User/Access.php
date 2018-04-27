@@ -99,13 +99,70 @@ class Models_User_Access extends Models_Base {
         return $this->notes;
     }
 
-    /* @return bool|Models_User_Access */
+    public static function easyInsert($INSERT_DATA) {
+        global $db;
+
+        if (!$db->AutoExecute(AUTH_DATABASE . ".user_access", $INSERT_DATA, "INSERT")) {
+            application_log("error", "Error inserting User Access record, DB said: " . $db->ErrorMsg());
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    /**
+     * Update the account options for a user given their id.
+     *
+     * @param $user_id
+     * @param $account_active
+     * @param $account_starts
+     * @param int $account_expires
+     * @return bool
+     */
+    public static function updateAccountOptionsByUserId($user_id, $account_active, $account_starts, $account_expires = 0) {
+        global $db;
+
+        $user_id = (int) $user_id;
+        $account_starts = (int) $account_starts;
+        $account_expires = (int) $account_expires;
+
+        $query = "UPDATE `" . AUTH_DATABASE . "`.`user_access` 
+                  SET `account_active` = ?, `access_starts` = ?, `access_expires` = ? 
+                  WHERE user_id = ? 
+                  AND app_id = ?";
+
+        if ($db->Execute($query, array($account_active, $account_starts, $account_expires, $user_id, AUTH_APP_ID))) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Fetch Row by User ID
+     * @param  bool     $account_active
+     * @return bool|Models_User_Access
+     */
     public function fetchRowByUserIDOrganisationIDGroup($account_active = "true") {
         return $this->fetchRow(array(
             array("key" => "user_id", "value" => $this->user_id, "method" => "="),
             array("key" => "organisation_id", "value" => $this->organisation_id, "method" => "="),
             array("key" => "group", "value" => $this->group, "method" => "="),
             array("key" => "account_active", "value" => $account_active, "method" => "=")
+        ));
+    }
+
+    /**
+     * Fetch Row by User ID
+     * @param  bool     $account_active
+     * @return bool|Models_User_Access
+     */
+    public static function fetchRowByAppIdUserIDOrganisationIDGroup($app_id, $user_id, $organisation_id, $group) {
+        $self = new self();
+        return $self->fetchRow(array(
+            array("key" => "app_id", "value" => $app_id, "method" => "="),
+            array("key" => "user_id", "value" => $user_id, "method" => "="),
+            array("key" => "organisation_id", "value" => $organisation_id, "method" => "="),
+            array("key" => "group", "value" => $group, "method" => "="),
         ));
     }
 
@@ -140,6 +197,61 @@ class Models_User_Access extends Models_Base {
         ));
     }
 
+    public static function fetchAllByGroupOrganisationID($group, $organisation_id, $active = "true") {
+        global $db;
+        $query	= "	SELECT a.`id` AS 'proxy_id', a.`number`, CONCAT_WS(' ', a.`firstname`, a.`lastname`) AS `fullname`, a.`firstname`, a.`lastname`, a.`username`, a.`email`, a.`organisation_id`, b.`group`, b.`role`
+                    FROM `" . static::$database_name . "`.`user_data` AS a
+                    LEFT JOIN `" . static::$database_name . "`.`user_access` AS b
+                    ON a.`id` = b.`user_id` 
+                    WHERE b.`app_id` IN (" . AUTH_APP_IDS_STRING . ")
+                    AND b.`account_active` = ?
+                    AND b.`organisation_id` = ?
+                    AND b.`group` = ?
+                    GROUP BY a.`id`
+                    ORDER BY a.`lastname` ASC, a.`firstname` ASC";
+
+        return $db->GetAll($query, array($active, $organisation_id, $group));
+    }
+
+    public static function fetchAllByUserIdAppIdOrganisationIdIn($user_id, $app_id, $organisation_ids) {
+        global $db;
+
+        /**
+         * Make sure we have an array of organisation ID's to process, then sanitize them and make into a string
+         */
+        if (!is_array($organisation_ids)) {
+            $organisation_ids = array($organisation_ids);
+        }
+
+        $org_ids = "";
+        foreach ($organisation_ids as $organisation_id) {
+            $org_ids .= ($org_ids ? ", " : "") . $db->qstr($organisation_id);
+        }
+
+        $query	= "	  SELECT `last_login`, `last_ip`, `organisation_id`, `role`, `group` FROM `" . AUTH_DATABASE . "`.`user_access`
+                      WHERE `user_id` = ?
+                      AND `app_id` = ?
+                      AND `organisation_id` IN (" . $org_ids . ")";
+
+        return $db->GetAll($query, array($user_id, $app_id));
+    }
+
+    public static function deleteByUserIdOrganisationIdGroupRole($user_id, $organisation_id, $group, $role) {
+        global $db;
+        $query = "DELETE FROM `" . AUTH_DATABASE . "`.`user_access`
+              WHERE `user_id` = ? 
+              AND `group` = ?
+              AND `role` = ?
+              AND `app_id` = ?
+              AND `organisation_id` = ?";
+
+        if ($db->Execute($query, array($user_id, $role, $group, AUTH_APP_ID, $organisation_id))) {
+            return true;
+        }
+
+        return false;
+    }
+
     /* @return ArrayObject|Models_User_Access[] */
     public static function fetchAllRecords($account_active) {
         $self = new self();
@@ -156,9 +268,7 @@ class Models_User_Access extends Models_Base {
         if ($result) {
             return $result;
         }
-
         return false;
-
     }
 
     /* @return ArrayObject|Models_User_Access[] */
@@ -179,12 +289,16 @@ class Models_User_Access extends Models_Base {
     }
 
     /* @return ArrayObject|Models_User_Access[] */
-    public static function fetchAllByUserIDAppID($user_id) {
+    public static function fetchAllByUserIDAppID($user_id, $organisation_id = null) {
         $self = new self();
-        return $self->fetchAll(array(
+        $constraints = array(
             array("key" => "user_id", "value" => $user_id, "method" => "="),
             array("key" => "app_id", "value" => AUTH_APP_ID, "method" => "=")
-        ));
+        );
+        if ($organisation_id) {
+            $constraints[] = array("key" => "organisation_id", "value" => $organisation_id, "method" => "=");
+        }
+        return $self->fetchAll($constraints);
     }
 
     public static function getGroupRoleMembers($organisation_id, $group_name, $role_name) {
@@ -211,23 +325,51 @@ class Models_User_Access extends Models_Base {
      * Returns all valid user_access records for the given user (proxy_id).
      * The user must be active, and the current date must be in the range of the start and expiry dates
      *
-     * @param $user_id
+     * @param $proxy_id
      * @param $app_id
+     * @param $organisation_id
      * @return bool|array
      */
-    public static function fetchAllActiveByProxyIDAppID($proxy_id, $app_id) {
+    public static function fetchAllActiveByProxyIDAppID($proxy_id, $app_id, $organisation_id = null) {
         global $db;
 
         $proxy_id = (int) $proxy_id;
         $app_id = (int) $app_id;
+        $AND_organisation_id = ($organisation_id) ? "AND `organisation_id` = ?" : "";
 
         $query =   "SELECT * FROM `".static::$database_name."`.`".static::$table_name."` 
                     WHERE `user_id` = ?
                     AND `app_id` = ?
                     AND `account_active` = 'true'
                     AND (`access_starts` = '0' OR `access_starts` < ?)
-                    AND (`access_expires` = '0' OR `access_expires` > ?)";
+                    AND (`access_expires` = '0' OR `access_expires` > ?)
+                    $AND_organisation_id";
 
-        return $db->GetAll($query, array($proxy_id, $app_id, time(), time()));
+        $constraints = array($proxy_id, $app_id, time(), time());
+        if ($organisation_id) {
+            $constraints[] = $organisation_id;
+        }
+        return $db->GetAll($query, $constraints);
+    }
+
+    /**
+     * Fetch a user access record based on a proxy_id, $organisation_id, $role and $group.
+     * A record is returned regardless of the account_active flag
+     *
+     * account_active is ignored
+     * @param $user_id
+     * @param $organisation_id
+     * @param $role
+     * @param $group
+     * @return bool|Models_Base
+     */
+    public static function fetchRowByUserIDOrganisationIDRoleGroupIgnoreActive($user_id, $organisation_id, $role, $group) {
+        $self = new self();
+        return $self->fetchRow(array(
+            array("key" => "user_id", "value" => $user_id, "method" => "="),
+            array("key" => "organisation_id", "value" => $organisation_id, "method" => "="),
+            array("key" => "role", "value" => $role, "method" => "="),
+            array("key" => "group", "value" => $group, "method" => "="),
+        ));
     }
 }

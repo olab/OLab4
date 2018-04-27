@@ -179,17 +179,20 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                             if (is_array($PROCESSED["questions"]) && !empty($PROCESSED["questions"])){
                                 $errors = array();
                                 $added = array();
-                                foreach ($PROCESSED["questions"] as $key => $question){
+                                foreach ($PROCESSED["questions"] as $key => $question) {
                                     $question_version_id = clean_input($question["value"], array("trim", "notags", "int"));
                                     if (!$question_version_id) {
                                         $question_version_id = clean_input($question["version_id"], array("trim", "notags", "int"));
                                     }
+
+                                    $exam_element_id = clean_input($question["element_id"], array("trim", "notags", "int"));
+
                                     $question_version = Models_Exam_Question_Versions::fetchRowByVersionID($question_version_id);
-                                    if ($question_version){
-                                        if (!$group->hasQuestion($question_version)){
+                                    if ($question_version) {
+                                        if (!$group->hasQuestion($question_version)) {
                                             $group_question_array = array(
                                                 "group_id"      => $group->getID(),
-                                                "question_id"   => $question_version->getQuestion()->getID(),
+                                                "question_id"   => $question_version->getQuestionID(),
                                                 "version_id"    => $question_version->getVersionID(),
                                                 "order"         => $key,
                                                 "updated_by"    => $ENTRADA_USER->getID(),
@@ -200,6 +203,16 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                                                 $errors[] = "<strong>ID: " . $question_version->getQuestionID() . " / Ver: " . $question_version->getVersionID() . "</strong> - An error occurred while attempting to add this question to the group. Please try again.";
                                             } else {
                                                 $added[] = $question_version->getVersionID();
+
+                                                if ($exam_element_id) {
+                                                    $exam_element = Models_Exam_Exam_Element::fetchRowByID($exam_element_id);
+                                                    if ($exam_element) {
+                                                        $exam_element->setGroupID($group->getID());
+                                                        if (!$exam_element->update()) {
+                                                            $errors[] = "<strong>ID: " . $question_version->getQuestionID() . " / Ver: " . $question_version->getVersionID() . "</strong> - unable to update the exam element with the specified group id.";
+                                                        }
+                                                    }
+                                                }
                                             }
                                         } else {
                                             $errors[] = "<strong>ID: " . $question_version->getQuestionID() . " / Ver: " . $question_version->getVersionID() . "</strong> - This question (or another version of it) already belongs to this group.";
@@ -708,7 +721,10 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                         $data = array();
                         foreach ($authored_groups as $authored_group) {
                             if (isset($authored_group) && is_object($authored_group)) {
-                                $group_title = ($authored_group->getGroup()->getGroupTitle() ? $authored_group->getGroup()->getGroupTitle() : "N/A");
+                                $group = $authored_group->getGroup();
+                                if ($group) {
+                                    $group_title = ($group->getGroupTitle() ? $group->getGroupTitle() : "N/A");
+                                }
                                 $data[] = array("target_id" => $authored_group->getGroupID(), "target_label" => $group_title);
                             }
                         }
@@ -717,9 +733,51 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                         echo json_encode(array("status" => "error", "data" => $translate->_("No question groups were found.")));
                     }
                     break;
+
+                case "get-exam-groups" :
+
+                    if (isset($request["search_value"]) && $tmp_input = clean_input(strtolower($request["search_value"]), array("trim", "striptags"))) {
+                        $PROCESSED["search_value"] = $tmp_input;
+                    } else {
+                        $PROCESSED["search_value"] = null;
+                    }
+
+                    if (isset($request["exam_id"])) {
+                        $tmp_input = (int)$request["exam_id"];
+                        $PROCESSED["exam_id"] = $tmp_input;
+                    }
+
+                    $groups = array();
+
+                    $exam_elements_grouped = Models_Exam_Exam_Element::fetchAllByExamIDGrouped($PROCESSED["exam_id"]);
+                    if ($exam_elements_grouped && is_array($exam_elements_grouped)) {
+                        foreach ($exam_elements_grouped as $element) {
+                            if ($element && is_object($element)) {
+                                $group_id = $element->getGroupID();
+                                if (!array_key_exists($group_id, $groups)) {
+                                    $group = Models_Exam_Group::fetchRowByID($group_id);
+                                    $groups[$group_id] = $group;
+                                }
+                            }
+                        }
+                    }
                     
-                    
+                    if (isset($groups) && is_array($groups)) {
+                        $data = array();
+                        foreach ($groups as $group) {
+                            if (isset($group) && is_object($group)) {
+                                if ($group) {
+                                    $group_title = ($group->getGroupTitle() ? $group->getGroupTitle() : "N/A");
+                                }
+                                $data[] = array("target_id" => $group->getGroupID(), "target_label" => $group_title);
+                            }
+                        }
+                        echo json_encode(array("status" => "success", "data" => $data, "level_selectable" => 1));
+                    } else {
+                        echo json_encode(array("status" => "error", "data" => $translate->_("No question groups were found.")));
+                    }
                     break;
+
                 case "get-filtered-audience" :
 
                     if (isset($request["search_value"]) && $tmp_input = clean_input(strtolower($request["search_value"]), array("trim", "striptags"))) {

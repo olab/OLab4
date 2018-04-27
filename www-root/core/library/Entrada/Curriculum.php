@@ -50,6 +50,7 @@ class Entrada_Curriculum {
 										ON a.`group_id` = b.`group_id`
 										WHERE b.`organisation_id` = ".$db->qstr($ENTRADA_USER->getActiveOrganisation())."
 										AND a.`group_active` = 1
+										AND a.`group_type` = 'cohort'
 										ORDER BY `group_name` DESC";
         return $db->GetAll($query);
     }

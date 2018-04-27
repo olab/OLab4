@@ -36,6 +36,8 @@ if (!defined("IN_DISTRIBUTIONS")) {
 } else {
     $DISTRIBUTION_ID = 0;
     $PREFERENCES = preferences_load($MODULE);
+    $MODULE_TEXT = $translate->_($MODULE);
+    $SUBMODULE_TEXT = $MODULE_TEXT[$SUBMODULE];
 
     if (isset($_GET["adistribution_id"]) && $tmp_input = clean_input($_GET["adistribution_id"], array("trim", "int"))) {
         $DISTRIBUTION_ID = $tmp_input;
@@ -49,11 +51,28 @@ if (!defined("IN_DISTRIBUTIONS")) {
         $DTYPE = "";
     }
 
+
     if (isset($_GET["mode"]) && $tmp_input = clean_input($_GET["mode"], array("trim", "striptags"))) {
         $mode = $tmp_input;
     } else {
         $mode = "";
     }
+
+    if (isset($_GET["active_tab"]) && $tmp_input = clean_input($_GET["active_tab"], array("trim", "striptags"))) {
+        $active_tab = $tmp_input;
+    } else {
+        $active_tab = "";
+    }
+
+    if (isset($_GET["event_id"]) && $tmp_input = clean_input($_GET["event_id"], array("trim", "striptags"))) {
+        $event_id = $tmp_input;
+    } else {
+        $event_id = null;
+    }
+
+    $date_range = false;
+    $start_date = 0;
+    $end_date = 0;
 
     $delegator = false;
     $distribution_methods = array();
@@ -83,8 +102,8 @@ if (!defined("IN_DISTRIBUTIONS")) {
 
         $HEAD[] = "<script type=\"text/javascript\" >var ENTRADA_URL = '" . ENTRADA_URL . "';</script>";
         $HEAD[] = "<script type=\"text/javascript\" >var MODULE = '" . $MODULE . "';</script>";
-        $HEAD[] = "<link rel=\"stylesheet\" type=\"text/css\" href=\"" . ENTRADA_URL . "/css/" . $MODULE . "/" . $MODULE . ".css\" />";
-        $HEAD[] = "<link rel=\"stylesheet\" type=\"text/css\" href=\"" . ENTRADA_URL . "/css/" . $MODULE . "/distribution-progress.css\" />";
+        $HEAD[] = "<link rel=\"stylesheet\" type=\"text/css\" href=\"" . ENTRADA_URL . "/css/" . $MODULE . "/" . $MODULE . ".css?release=" . html_encode(APPLICATION_VERSION) . "\" />";
+        $HEAD[] = "<link rel=\"stylesheet\" type=\"text/css\" href=\"" . ENTRADA_URL . "/css/" . $MODULE . "/distribution-progress.css?release=" . html_encode(APPLICATION_VERSION) . "\" />";
         $HEAD[] = "<script type=\"text/javascript\" src=\"" . ENTRADA_URL . "/javascript/jquery/jquery.advancedsearch.js?release=" . html_encode(APPLICATION_VERSION) . "\"></script>";
         $HEAD[] = "<script type=\"text/javascript\" src=\"" . ENTRADA_URL . "/javascript/assessments/assessment-targets.js?release=" . html_encode(APPLICATION_VERSION) . "\"></script>";
         $HEAD[] = "<script type=\"text/javascript\" src=\"" . ENTRADA_URL . "/javascript/assessments/distributions/index.js?release=" . html_encode(APPLICATION_VERSION) . "\"></script>";
@@ -96,7 +115,7 @@ if (!defined("IN_DISTRIBUTIONS")) {
         $HEAD[] = "<script type=\"text/javascript\" >var individual_author_label = '" . $translate->_("Individual") . "';</script>";
         $HEAD[] = "<script type=\"text/javascript\" >var course_author_label = '" . $translate->_("Course") . "';</script>";
         $HEAD[] = "<script type=\"text/javascript\" >var organisation_author_label = '" . $translate->_("Organisation") . "';</script>";
-        $HEAD[] = "<link href=\"" . ENTRADA_URL . "/css/assessments/assessment-public-index.css\" rel=\"stylesheet\" type=\"text/css\" media=\"all\" />";
+        $HEAD[] = "<link href=\"" . ENTRADA_URL . "/css/assessments/assessment-public-index.css?release=" . html_encode(APPLICATION_VERSION) . "\" rel=\"stylesheet\" type=\"text/css\" media=\"all\" />";
         ?>
         <script type="text/javascript">
             var progress_page_translations = {};
@@ -106,13 +125,21 @@ if (!defined("IN_DISTRIBUTIONS")) {
         if (!$ERROR) {
             $HEAD[] = "<script type=\"text/javascript\">var distribution_id =\"" . $DISTRIBUTION_ID . "\"</script>";
             $distribution = Models_Assessments_Distribution::fetchRowByID($DISTRIBUTION_ID);
-            $date_range_start = 0;
-            $date_range_end = 0;
+            $date_range_start = null;
+            $date_range_end = null;
             $details = array();
 
             if ($distribution) { ?>
                 <div class="row-fluid clear center">
                     <h1 class="space-below"><?php echo $translate->_("Progress for ") . $distribution->getTitle(); ?></h1>
+                    <?php
+                    if ($event_id) {
+                        $event = Models_Event::fetchRowByID($event_id);
+                        if ($event) { ?>
+                            <h2 class="space-below"><?php echo html_encode($event->getEventTitle()); ?></h2>
+                        <?php }
+                    }
+                    ?>
                 </div>
                 <?php
                 if ($delegator = Models_Assessments_Distribution_Delegator::fetchRowByDistributionID($distribution->getID())) {
@@ -188,9 +215,38 @@ if (!defined("IN_DISTRIBUTIONS")) {
                 } else { // Non delegation based progress page
 
                     if ($distribution_eventtype = Models_Assessments_Distribution_Eventtype::fetchAllByAdistributionID($distribution->getID())) {
+                        if ($cperiod = Models_Curriculum_Period::fetchRowByID($distribution->getCperiodID())) {
+                            $date_range_start = $cperiod->getStartDate();
+                            $data_range_end = $cperiod->getFinishDate();
+                        } else {
+                            $date_range_start = $distribution->getStartDate();
+                            $date_range_end = $distribution->getEndDate();
+                        }
 
-                        echo "<div class=\"alert alert-notice space-above\">{$translate->_("The distribution progress page does not currently display progress for learning event based distributions. Please visit the <strong>My Assessments</strong> page for information on learning event based assessment tasks.")}</div>";
+                        if ((isset($_POST["date_range_start"])) && ((int)trim($_POST["date_range_start"]))) {
+                            $date_range_start = strtotime($_POST["date_range_start"] . " 00:00:00");
+                        }
 
+                        if ((isset($_POST["date_range_end"])) && ((int)trim($_POST["date_range_end"]))) {
+                            $date_range_end = strtotime($_POST["date_range_end"] . " 23:59:59");
+                        }
+
+                        $learning_event = new Entrada_Utilities_Assessments_DistributionLearningEvent(array("adistribution_id" => $distribution->getID()));
+                        $events = $learning_event->getLearningEventsWithAssessments($date_range_start, $date_range_end);
+                        $assessment_permissions = $ENTRADA_ACL->amIAllowed("assessments", "update", false);
+
+                        $events_view = new Views_Assessments_Distribution_LearningEventProgress();
+                        $events_view->render(array(
+                            "distribution" => $distribution,
+                            "events" => $events,
+                            "event_id" => $event_id,
+                            "preferences" => $PREFERENCES,
+                            "assessment_permissions" => $assessment_permissions,
+                            "dtype" => $DTYPE,
+                            "date_range_start" => $date_range_start,
+                            "date_range_end" => $date_range_end,
+                            "active_tab" => $active_tab
+                        ));
                     } else {
 
                         if ($distribution_schedule = Models_Assessments_Distribution_Schedule::fetchRowByDistributionID($DISTRIBUTION_ID)) {
@@ -199,7 +255,12 @@ if (!defined("IN_DISTRIBUTIONS")) {
                             $rotation_schedule = Models_Schedule::fetchRowByID($distribution_schedule->getScheduleID());
                             $rotation_start = $rotation_schedule->getStartDate();
                             $rotation_end = $rotation_schedule->getEndDate();
-                            $children = $rotation_schedule->getChildren();
+                            // Fetching the four week child blocks.
+                            $children = $rotation_schedule->getChildren(3);
+                            if (!$children) {
+                                // If that didn't work, just fetch all children regardless of block type.
+                                $children = $rotation_schedule->getChildren();
+                            }
                             $child_count = count($children);
                             $previous_block = 0;
                             $current_block = (isset($_GET["block"]) ? $_GET["block"] : 0);
@@ -318,9 +379,16 @@ if (!defined("IN_DISTRIBUTIONS")) {
                                 }
                             }
 
-                        } else { ?>
+                        } else {
+                            $date_range = true;
+                            ?>
                             <div class="row-fluid clear center space-below">
                                 <h2><?php echo sprintf($translate->_("Date Range: %s to %s"), html_encode(date("Y-m-d", $distribution->getStartDate())), html_encode(date("Y-m-d", $distribution->getEndDate()))) ?></h2>
+                                <?php if ($distribution->getExpiryOffset()) {
+                                    $expiry_date = date("Y-m-d", ($distribution->getDeliveryDate() + $distribution->getExpiryOffset()));
+                                    ?>
+                                        <h2><?php echo sprintf($translate->_("Expiry Date: %s"), html_encode($expiry_date)) ?></h2>
+                                <?php } ?>
                             </div>
                             <?php
                         }
@@ -334,45 +402,51 @@ if (!defined("IN_DISTRIBUTIONS")) {
                             <?php
                         }
 
-                        $progress_object = new Entrada_Utilities_DistributionProgress();
-                        $details = $progress_object->getDistributionProgress($DISTRIBUTION_ID, $date_range_start, $date_range_end);
+                        $target_list = array();
+                        $form_action = "";
+                        if ($distribution->getAssessmentType() == "evaluation") {
+                            if ($distribution->getStartDate() && $distribution->getEndDate()) {
+                                $start_date = $distribution->getStartDate();
+                                $end_date = $distribution->getEndDate();
+                            } else {
+                                $curriculum_period = Models_Curriculum_Period::fetchRowByID($distribution->getCperiodID());
+                                if ($curriculum_period) {
+                                    $start_date = $curriculum_period->getStartDate();
+                                    $end_date = $curriculum_period->getFinishDate();
+                                }
+                            }
+                            $distribution_targets = Models_Assessments_Distribution_Target::fetchAllByDistributionID($distribution->getID());
+                            if ($distribution_targets) {
+                                foreach ($distribution_targets as $distribution_target) {
+                                    if ($distribution_target->getTargetType() == "proxy_id" && $distribution_target->getTargetRole() == "faculty") {
+                                        $form_action = ENTRADA_URL . "/admin/assessments/reports?section=faculty-reports";
+                                        $user = Models_User::fetchRowByID($distribution_target->getTargetID());
+                                        $progress_records = Models_Assessments_Progress::fetchAllByADistributionIDTargetRecordID($distribution->getID(), $distribution_target->getTargetID());
+                                        if ($progress_records) {
+                                            foreach ($progress_records as $progress_record) {
+                                                if ($progress_record->getProgressValue() == "complete") {
+                                                    if ($user) {
+                                                        $target_list[$distribution_target->getTargetID()] = array("proxy_id" => $distribution_target->getTargetID(), "target_name" => $user->getFirstname() . " " . $user->getLastname());
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
 
-                        $pending = 0;
-                        if (isset($details["pending"])) {
-                            foreach ($details["pending"] as $assessor_types) {
-                                foreach ($assessor_types as $assessor) {
-                                    foreach ($assessor["targets"] as $target) {
-                                        $pending++;
-                                    }
-                                }
-                            }
-                        }
-                        $in_progress = 0;
-                        if (isset($details["inprogress"])) {
-                            foreach ($details["inprogress"] as $assessor_types) {
-                                foreach ($assessor_types as $assessor) {
-                                    foreach ($assessor["targets"] as $target) {
-                                        $in_progress++;
-                                    }
-                                }
-                            }
-                        }
-                        $complete = 0;
-                        if (isset($details["complete"])) {
-                            foreach ($details["complete"] as $assessor_types) {
-                                foreach ($assessor_types as $assessor) {
-                                    foreach ($assessor["targets"] as $target) {
-                                        $complete++;
-                                    }
-                                }
-                            }
-                        }
+                        $distribution_assessment_utility = new Entrada_Utilities_Assessments_DistributionAssessment(array("adistribution_id" => $distribution->getID()));
+                        $distribution_assessment_utility->buildAssessmentTaskList($date_range_start, $date_range_end);
+                        $rearranged_list = $distribution_assessment_utility->getTargetListGroupedByProgressValueAssessor();
+
                         $assessment_permissions = $ENTRADA_ACL->amIAllowed("assessments", "update", false);
                         $pdf_generator = new Entrada_Utilities_Assessments_HTMLForPDFGenerator();
                         $disable_pdf_button = !$pdf_generator->configure();
 
-                        if ($details) {
-                            Views_Assessments_Distribution_Progress::renderProgressSection($PREFERENCES, $DISTRIBUTION_ID, $distribution, $details, $pending, $in_progress, $complete, $assessment_permissions, $disable_pdf_button);
+                        if ($rearranged_list) {
+                            Views_Assessments_Distribution_Progress::renderHead($active_tab);
+                            Views_Assessments_Distribution_Progress::renderProgressSection($SUBMODULE_TEXT, $PREFERENCES, $DISTRIBUTION_ID, $distribution, $rearranged_list["progress"], $rearranged_list["counts"]["pending"], $rearranged_list["counts"]["inprogress"], $rearranged_list["counts"]["complete"], $assessment_permissions, $disable_pdf_button, $form_action, $target_list, $start_date, $end_date);
                         } else {
                             echo "<div class=\"alert alert-danger\">" . $translate->_("There were no targets found for this distribution.") . "</div>";
                         }
@@ -405,13 +479,12 @@ if (!defined("IN_DISTRIBUTIONS")) {
 
     $pdf_modal = new Views_Assessments_Modals_GeneratePDF();
     $pdf_modal->render(array(
-        "action_url" => ENTRADA_URL . "/admin/assessments/distributions?section=api-distributions&current-location=distributions"
+        "action_url" => ENTRADA_URL . "/assessments/assessment?section=api-assessment&adistribution_id=$DISTRIBUTION_ID"
     ));
 
-    if (isset($details) && array_key_exists("distribution_target_type", $details) && $details["distribution_target_type"] == "proxy_id") {
-        $add_task_modal = new Views_Assessments_Modals_AddTask();
-        $add_task_modal->render(array(
-            "action_url" => ENTRADA_URL . "/assessments/assessment?section=api-assessment&adistribution_id=$DISTRIBUTION_ID"
-        ));
-    }
+    $add_task_modal = new Views_Assessments_Modals_AddTask();
+    $add_task_modal->render(array(
+        "action_url" => ENTRADA_URL . "/assessments/assessment?section=api-assessment&adistribution_id=$DISTRIBUTION_ID"
+    ));
+
 }

@@ -565,7 +565,7 @@ if ($isAuthenticated) {
 							if (((int) $event["last_visited"]) && ((int) $event["last_visited"] < (int) $event["updated_date"])) {
 								$cal_type = 2;
 
-								$cal_updated = date(DEFAULT_DATE_FORMAT, $event["updated_date"]);
+								$cal_updated = date(DEFAULT_DATETIME_FORMAT, $event["updated_date"]);
 							}
 
 							$events[] = array(
@@ -590,11 +590,11 @@ if ($isAuthenticated) {
 						foreach ($notices_to_display as $result) {
 							if ((!$result["statistic_id"]) || ($result["last_read"] <= $result["updated_date"])) {
 								$result['notice_status'] = 'new';
-								$result["updated_date"] = date(DEFAULT_DATE_FORMAT, $result["updated_date"]);
+								$result["updated_date"] = date(DEFAULT_DATETIME_FORMAT, $result["updated_date"]);
 								$output[] = $result;
 							} else {
 								$result['notice_status'] = 'read';
-								$result["updated_date"] = date(DEFAULT_DATE_FORMAT, $result["updated_date"]);
+								$result["updated_date"] = date(DEFAULT_DATETIME_FORMAT, $result["updated_date"]);
 								$output[] = $result;
 							}
 							$rows ++;
@@ -1077,7 +1077,7 @@ if ($isAuthenticated) {
 												if ($evaluation_record["evaluation_finish"] < time() && $evaluation_record["min_submittable"] > $completed_attempts) {
 
 													$NOTICE++;
-													$NOTICESTR[] = "This evaluation has not been completed and was marked as to be completed by ".date(DEFAULT_DATE_FORMAT, $evaluation_record["evaluation_finish"]).". Please complete this evaluation now to continue using ".APPLICATION_NAME.".";
+													$NOTICESTR[] = "This evaluation has not been completed and was marked as to be completed by ".date(DEFAULT_DATETIME_FORMAT, $evaluation_record["evaluation_finish"]).". Please complete this evaluation now to continue using ".APPLICATION_NAME.".";
 												}
 
 												if (isset($evaluation_record["evaluation_description"]) && $evaluation_record["evaluation_description"]) {
@@ -1177,7 +1177,7 @@ if ($isAuthenticated) {
 															$content["evaluation_attempt"] .= "</select>";
 															$content["evaluation_attempt"] .= "</div>";
 														} elseif ($PROCESSED["target_shortname"] == "rotation_core" || $PROCESSED["target_shortname"] == "rotation_elective" || $PROCESSED["target_shortname"] == "preceptor") {
-															$content["evaluation_attempt"] .= "<div class=\"content-small\">Please choose a clerkship service to evaluate: \n";
+															$content["evaluation_attempt"] .= "<div class=\"content-small\">Please choose a " . $translate->_("clerkship") . " service to evaluate: \n";
 															$content["evaluation_attempt"] .= "<input type=\"hidden\" id=\"evaluation_target\" name=\"evaluation_target\" value=\"".$evaluation_targets[0]["etarget_id"]."\" />";
 															$content["evaluation_attempt"] .= "<select id=\"event_id\" name=\"event_id\"".($PROCESSED["target_shortname"] == "preceptor" ? " onchange=\"loadPreceptors(this.options[this.selectedIndex].value)\"" : "").">";
 															$content["evaluation_attempt"] .= "<option value=\"0\">-- Select an event --</option>\n";
@@ -1190,7 +1190,7 @@ if ($isAuthenticated) {
 																if (isset($PROCESSED["event_id"]) && $PROCESSED["event_id"]) {
 																	$content["evaluation_attempt"] .= Classes_Evaluation::getPreceptorSelect($evaluation_id, $PROCESSED["event_id"], $ENTRADA_USER->getID(), (isset($PROCESSED["preceptor_proxy_id"]) && $PROCESSED["preceptor_proxy_id"] ? $PROCESSED["preceptor_proxy_id"] : 0));
 																} else {
-																	$content["evaluation_attempt"] .= display_notice("Please select a <strong>Clerkship Service</strong> to evaluate a <strong>Preceptor</strong> for.", true);
+																	$content["evaluation_attempt"] .= display_notice("Please select a <strong>" . $translate->_("Clerkship") . " Service</strong> to evaluate a <strong>Preceptor</strong> for.", true);
 																}
 																$content["evaluation_attempt"] .= "</div>\n";
 															} 
@@ -1348,7 +1348,7 @@ if ($isAuthenticated) {
 						}
 						$output = Classes_Evaluation::getPreceptorSelect($evaluation_id, $event_id, $ENTRADA_USER->getID(), (isset($preceptor_proxy_id) && $preceptor_proxy_id ? $preceptor_proxy_id : 0));
 						if ($output) {
-							echo "<br /><div class=\"content-small\">Please choose a clerkship preceptor to evaluate: \n";
+							echo "<br /><div class=\"content-small\">Please choose a " . $translate->_("clerkship") . " preceptor to evaluate: \n";
 							echo $output;
 							echo "</div>\n";
 						}
@@ -1356,6 +1356,7 @@ if ($isAuthenticated) {
 					break;
 				case 'mark':
 					add_statistic("notices", "read", "notice_id", $notice_id, $user_details['id']);
+                    Models_Notices_Read::create($notice_id);
 					echo $notice_id;
 					break;
 				case 'groups':
@@ -1473,7 +1474,7 @@ if ($isAuthenticated) {
 							if (((int) $event["last_visited"]) && ((int) $event["last_visited"] < (int) $event["updated_date"])) {
 								$cal_type = 2;
 
-								$cal_updated = date(DEFAULT_DATE_FORMAT, $event["updated_date"]);
+								$cal_updated = date(DEFAULT_DATETIME_FORMAT, $event["updated_date"]);
 							}
 
 							$events[] = array(
@@ -1497,11 +1498,11 @@ if ($isAuthenticated) {
 						foreach ($notices_to_display as $result) {
 							if ((!$result["statistic_id"]) || ($result["last_read"] <= $result["updated_date"])) {
 								$result['notice_status'] = 'new';
-								$result["updated_date"] = date(DEFAULT_DATE_FORMAT, $result["updated_date"]);
+								$result["updated_date"] = date(DEFAULT_DATETIME_FORMAT, $result["updated_date"]);
 								$notices_to_display[] = $result;
 							} else {
 								$result['notice_status'] = 'read';
-								$result["updated_date"] = date(DEFAULT_DATE_FORMAT, $result["updated_date"]);
+								$result["updated_date"] = date(DEFAULT_DATETIME_FORMAT, $result["updated_date"]);
 								$notices_to_display[] = $result;
 							}
 							$rows ++;
@@ -1966,7 +1967,7 @@ if ($isAuthenticated) {
 											if ($evaluation_record["evaluation_finish"] < time() && $evaluation_record["min_submittable"] > $completed_attempts) {
 
 												$NOTICE++;
-												$NOTICESTR[] = "This evaluation has not been completed and was marked as to be completed by ".date(DEFAULT_DATE_FORMAT, $evaluation_record["evaluation_finish"]).". Please complete this evaluation now to continue using ".APPLICATION_NAME.".";
+												$NOTICESTR[] = "This evaluation has not been completed and was marked as to be completed by ".date(DEFAULT_DATETIME_FORMAT, $evaluation_record["evaluation_finish"]).". Please complete this evaluation now to continue using ".APPLICATION_NAME.".";
 											}
 
 											if (isset($evaluation_record["evaluation_description"]) && $evaluation_record["evaluation_description"]) {
@@ -2066,7 +2067,7 @@ if ($isAuthenticated) {
 														$content["evaluation_attempt"] .= "</select>";
 														$content["evaluation_attempt"] .= "</div>";
 													} elseif ($PROCESSED["target_shortname"] == "rotation_core" || $PROCESSED["target_shortname"] == "rotation_elective" || $PROCESSED["target_shortname"] == "preceptor") {
-														$content["evaluation_attempt"] .= "<div class=\"content-small\">Please choose a clerkship service to evaluate: \n";
+														$content["evaluation_attempt"] .= "<div class=\"content-small\">Please choose a " . $translate->_("clerkship") . " service to evaluate: \n";
 														$content["evaluation_attempt"] .= "<input type=\"hidden\" id=\"evaluation_target\" name=\"evaluation_target\" value=\"".$evaluation_targets[0]["etarget_id"]."\" />";
 														$content["evaluation_attempt"] .= "<select id=\"event_id\" name=\"event_id\"".($PROCESSED["target_shortname"] == "preceptor" ? " onchange=\"loadPreceptors(this.options[this.selectedIndex].value)\"" : "").">";
 														$content["evaluation_attempt"] .= "<option value=\"0\">-- Select an event --</option>\n";
@@ -2079,7 +2080,7 @@ if ($isAuthenticated) {
 															if (isset($PROCESSED["event_id"]) && $PROCESSED["event_id"]) {
 																$content["evaluation_attempt"] .= Classes_Evaluation::getPreceptorSelect($evaluation_id, $PROCESSED["event_id"], $ENTRADA_USER->getID(), (isset($PROCESSED["preceptor_proxy_id"]) && $PROCESSED["preceptor_proxy_id"] ? $PROCESSED["preceptor_proxy_id"] : 0));
 															} else {
-																$content["evaluation_attempt"] .= display_notice("Please select a <strong>Clerkship Service</strong> to evaluate a <strong>Preceptor</strong> for.");
+																$content["evaluation_attempt"] .= display_notice("Please select a <strong>" . $translate->_("Clerkship") . " Service</strong> to evaluate a <strong>Preceptor</strong> for.");
 															}
 															$content["evaluation_attempt"] .= "</div>\n";
 														} 
@@ -2207,6 +2208,7 @@ if ($isAuthenticated) {
 					break;
 				case 'mark':
 					add_statistic("notices", "read", "notice_id", $notice_id, $user_details['id']);
+                    Models_Notices_Read::create($notice_id, $user_details['id']);
 					echo $notice_id;
 					break;
 				case 'groups':

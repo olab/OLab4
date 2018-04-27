@@ -1,31 +1,83 @@
-.remove_audience, .remove_student, .remove_period {
+#courseForm {
+    margin: 0;
+}
+
+.audience_selector {
+    margin: 0 0 15px 0 !important;
+}
+
+.remove_audience,
+.remove_student,
+.remove_period {
     cursor: pointer;
 }
-ol.sortableList {
-    margin-top: 0px;
+
+.remove_period {
+    background-color: #fff;
+    border: 1px solid #d9dee2;
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px;
+    font-size: 15px;
+    margin-left: 10px;
+    padding: 7px 10px;
+    position: relative;
+    top: 1px;
+    transition: .2s;
 }
-.sortableList li {
-    width: 175px;
-    border-bottom: 0;
+
+.remove_period:hover {
+    background-color: #ecf0f3;
 }
-.sortableList img {
-    padding-top: 10px;
+
+.no_audience_msg {
+    margin-top: 20px;
 }
-.listContainer {
-    list-style-type:none;
+
+#period_list h3 {
+    line-height: 1;
+    margin: 0 0 15px 0;
 }
+
+.period_item {
+    background-color: #f4f7fa;
+    padding: 15px;
+    position: relative;
+    margin-top: 20px;
+    border: 2px solid #d9dee2;
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px;
+}
+
+.period_item:first-of-type {
+    margin-top: 0;
+}
+
+.period_item .listContainer {
+    margin: 0;
+}
+
+.period-item-title {
+    display: inline;
+    font-size: 14px;
+    position: relative;
+    top: 3px;
+}
+
+.audience_section h5 {
+    color: #17323b;
+    clear: both;
+    font-family: "Lucida Grande", Geneva, Verdana, Arial, Helvetica, sans-serif;
+    font-size: 13px;
+    line-height: 1;
+    margin: 15px 0 10px 0;
+}
+
 .enrollment-toggle {
     display:inline;
-    background:transparent url(../../images/btn_add.gif) no-repeat center left;
-    padding:0 14px 0 16px;
     color:#693;
     font-weight:700;
-}
-img.list-cancel-image {
-    position: relative;
-    right: 0;
-    float: right;
-    margin-right: 3px;
 }
 
 .tracks-container tr:first-child td {
@@ -198,4 +250,12 @@ div.autocomplete {
     margin-right: 5px;
     height: 100%;
     border-left: 2px solid #ced9e2;
+}
+
+#version-period-select {
+    float: right;
+}
+
+#version-select {
+    float: right;
 }

@@ -198,17 +198,36 @@ class Models_Community_Share_File extends Models_Base {
     public static function getDownloadButton($id = 0) {
         global $COMMUNITY_URL, $PAGE_URL;
         if ($id != 0) {
-            $output = "<div class=\"btn-group file-download-btn\">\n";
+            $output = "<div class=\"btn-group file-download-btn space-left\">\n";
                 $output .= "<a href=\"" . COMMUNITY_URL . $COMMUNITY_URL . ":" . $PAGE_URL . "?section=view-file&id=" . $id . "&download=latest\">\n";
                     $output .= "<button class=\"btn btn-primary btn-mini\">";
                         $output .= "<i class=\"icon-download-alt icon-white\"></i>\n";
                     $output .= "</button>\n";
                 $output .= "</a>\n";
-            $output .= "</div>\n";
+            $output .= "</div>";
         } else {
             $output = false;
         }
 
+
+        return $output;
+    }
+
+    public static function getVersionsButton($id = 0)
+    {
+        global $COMMUNITY_URL, $PAGE_URL;
+
+        if ($id != 0) {
+            $output = "<div class=\"btn-group file-download-btn space-left\">\n";
+            $output .= "<a href=\"" . COMMUNITY_URL . $COMMUNITY_URL . ":" . $PAGE_URL . "?section=view-file&id=" . $id . "\">\n";
+            $output .= "<button class=\"btn btn-primary btn-mini\">";
+            $output .= "<i class=\"icon-download-alt icon-white\"></i>\n";
+            $output .= "</button>\n";
+            $output .= "</a>\n";
+            $output .= "</div>";
+        } else {
+            $output = false;
+        }
 
         return $output;
     }

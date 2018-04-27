@@ -51,6 +51,15 @@ class Models_Curriculum_Period extends Models_Base {
         return $this->start_date;
     }
 
+    public function getPeriodText() {
+        $range = date("F jS, Y", $this->getStartDate())." to ".date("F jS, Y", $this->getFinishDate());
+        if ($this->getCurriculumPeriodTitle()) {
+            return sprintf("%s - %s", $this->getCurriculumPeriodTitle(), $range);
+        } else {
+            return $range;
+        }
+    }
+
     public function getAudienceValue () {
         return $this->audience_value;
     }
@@ -63,11 +72,13 @@ class Models_Curriculum_Period extends Models_Base {
         }
     }
 
+    /* @return bool|Models_Curriculum_Period */
     public static function fetchRowByID($cperiod_id) {
         $self = new self();
         return $self->fetchRow(array("cperiod_id" => $cperiod_id));
     }
 
+    /* @return bool|Models_Curriculum_Period */
     public static function fetchRowByMultipleIDAsc($cperiod_id_array = array()) {
         $self = new self();
 
@@ -89,6 +100,28 @@ class Models_Curriculum_Period extends Models_Base {
 
     }
 
+    /* @return ArrayObject|Models_Curriculum_Period[] */
+    public static function fetchAllByCourseID($course_id) {
+        global $db;
+        $query = "
+        SELECT `a`.* FROM `".static::$table_name."` AS `a`
+        INNER JOIN `course_audience` AS `b` ON `a`.`cperiod_id` = `b`.`cperiod_id`
+        WHERE `b`.`course_id` = ?
+        AND `a`.`active` = 1
+        ORDER BY `a`.`finish_date` DESC";
+        $results = $db->GetAll($query, array($course_id));
+        if ($results === false) {
+            throw new Exception($db->ErrorMsg());
+        } else {
+            $output = array();
+            foreach ($results as $result) {
+                $output[] = new self($result);
+            }
+            return $output;
+        }
+    }
+
+    /* @return ArrayObject|Models_Curriculum_Period[] */
     public static function fetchAllByCurriculumType($curriculum_type_id = 0, $active = 1) {
         $curriculum_type_id = (int) $curriculum_type_id;
         $active = (int) $active;
@@ -97,13 +130,21 @@ class Models_Curriculum_Period extends Models_Base {
         return $self->fetchAll(array("curriculum_type_id" => $curriculum_type_id, "active" => $active), $default_method = "=", $default_mode = "AND", $sort_column = "cperiod_id", $sort_order = "DESC", $limit = null);
     }
 
+    public static function fetchAllByCurriculumTypeID($curriculum_type_id = null, $active = 1) {
+        $self = new self();
+        return $self->fetchAll(array(
+            array("key" => "curriculum_type_id", "value" => $curriculum_type_id, "method" => "="),
+            array("key" => "active", "value" => $active, "method" => "="),
+        ));
+    }
+
     /**
      * Takes in a curriculum type id and an option search value
      * Gets all curriculum periods using the title or start and finsh date for filters
      * Returns a list of curriculum periods
      * @param $curriculum_type_id
      * @param $search_value
-     * @return array
+     * @return ArrayObject|Models_Curriculum_Period[]
      */
     
     public static function fetchAllByCurriculumTypeSearchTerm($curriculum_type_id, $search_value = null) {
@@ -145,6 +186,7 @@ class Models_Curriculum_Period extends Models_Base {
         return $output;
     }
 
+    /* @return ArrayObject|Models_Curriculum_Period[] */
     public static function fetchAllByDateRangeCourseID($start_date = 0, $end_date = 0, $course_id = 0) {
         global $db;
 
@@ -174,6 +216,28 @@ class Models_Curriculum_Period extends Models_Base {
         return $output;
     }
 
+    public static function fetchAllByDateCourseID($date, $course_id) {
+        global $db;
+        $query = "
+            SELECT `a`.* FROM `".static::$table_name."` AS `a`
+            INNER JOIN `course_audience` AS `b` ON `a`.`cperiod_id` = `b`.`cperiod_id`
+            WHERE `b`.`course_id` = ?
+            AND `a`.`start_date` <= ?
+            AND `a`.`active` = 1
+            ORDER BY `a`.`finish_date` DESC";
+        $results = $db->GetAll($query, array($course_id, $date));
+        if ($results === false) {
+            throw new Exception($db->ErrorMsg());
+        } else {
+            $output = array();
+            foreach ($results as $result) {
+                $output[] = new self($result);
+            }
+            return $output;
+        }
+    }
+
+    /* @return ArrayObject|Models_Curriculum_Period[] */
     public function getAllByFinishDateCurriculumType($curriculum_type_id = null, $finish_date = 0){
         global $db;
 
@@ -198,7 +262,8 @@ class Models_Curriculum_Period extends Models_Base {
         return false;
     }
 
-    public static function fetchRowByCurriculumTypeIDCourseID ($curriculum_type_id = null, $course_id = null, $active = 1) {
+    /* @return ArrayObject|Models_Curriculum_Period[] */
+    public static function fetchAllByCurriculumTypeIDCourseID ($curriculum_type_id = null, $course_id = null, $active = 1) {
         global $db;
         $periods = false;
 
@@ -221,6 +286,7 @@ class Models_Curriculum_Period extends Models_Base {
         return $periods;
     }
 
+    /* @return bool|Models_Curriculum_Period */
     public static function fetchLastActiveByCurriculumTypeID ($curriculum_type_id = null, $date = null, $active = 1) {
         global $db;
         $curriculum_period = false;
@@ -240,6 +306,7 @@ class Models_Curriculum_Period extends Models_Base {
         return $curriculum_period;
     }
 
+    /* @return ArrayObject|Models_Curriculum_Period[] */
     public function fetchAllCurrent($active = 1) {
         $self = new self();
         return $self->fetchAll(array(
@@ -249,4 +316,109 @@ class Models_Curriculum_Period extends Models_Base {
         ));
     }
 
+    public static function fetchAllCurrentIDs($active = 1, $curriculum_type_ids = null) {
+        global $db;
+
+        $query = "SELECT cperiod_id 
+                  FROM `curriculum_periods`
+                  WHERE `start_date` <= ?
+                  AND `finish_date` >= ?
+                  AND active = ?";
+
+        if ($curriculum_type_ids) {
+            $query .= " AND `curriculum_type_id` IN (".implode(", ", $curriculum_type_ids).")";
+        }
+
+        return $db->getCol($query, array(time(), time(), $active));
+    }
+
+    public function fetchAllCurrentIDsByOrganisation($organisation_id) {
+        $cperiod_ids = array();
+        $curriculum_type_ids = array();
+
+        $all_ctypes = Models_Curriculum_Type::fetchAllByOrg($organisation_id);
+        if ($all_ctypes) {
+
+            foreach ($all_ctypes as $ctype) {
+                $curriculum_type_ids[] = $ctype->getID();
+            }
+            $cperiod_ids = Models_Curriculum_Period::fetchAllCurrentIDs(1, $curriculum_type_ids);
+        }
+
+        return $cperiod_ids;
+    }
+
+    public static function fetchRowByCurriculumTypeIDCourseID($curriculum_type_id = null, $course_id = null, $active = 1) {
+        global $db;
+        $periods = false;
+
+        $query = "	SELECT * FROM `curriculum_periods` a
+                    JOIN `course_audience` b
+                    ON a.`cperiod_id` = b.`cperiod_id`
+                    WHERE a.`curriculum_type_id` = ? 
+                    AND a.`active` = ?
+                    AND b.`course_id` = ?
+                    GROUP BY a.`cperiod_id`
+                    ORDER BY a.`start_date` DESC";
+
+        $results = $db->GetAll($query, array($curriculum_type_id, $active, $course_id));
+        if ($results) {
+            foreach ($results as $result) {
+                $period = new self($result);
+                $periods[] = $period;
+            }
+        }
+        return $periods;
+    }
+
+    /**
+     * returns a string of curriculum periods that are consumable by the Advanced Search Widget
+     * @return string
+     */
+    public function fetchCurriculumPeriodsAdvancedSearch() {
+        global $ENTRADA_USER;
+        $curriculum_types = Models_Curriculum_Type::fetchAllByOrg($ENTRADA_USER->getActiveOrganisation());
+        $data = array();
+        if ($curriculum_types) {
+            foreach ($curriculum_types as $curriculum_type) {
+                $cperiods = Models_Curriculum_Period::fetchAllByCurriculumType($curriculum_type->getID());
+                if ($cperiods) {
+                    foreach ($cperiods as $cperiod) {
+                        $data[] = array("target_id" => $cperiod->getID(), "target_label" => date("Y-m-d", $cperiod->getStartDate())." - ".date("Y-m-d", $cperiod->getFinishDate()), "level_selectable" => false, "target_children" => 1);
+                    }
+                }
+            }
+        }
+
+        if ($data) {
+            return json_encode(array("status" => "success", "data" => $data, "parent_name" => "0"));
+        } else {
+            return json_encode(array("status" => "error", "data" => "There were no curriculum periods found"));
+        }
+    }
+
+    public static function fetchAllByCurriculumTypeIDOrganisationID($curriculum_type_id, $organisation_id) {
+        global $db;
+
+        $query = "SELECT a.* FROM `curriculum_periods` a
+                  JOIN `curriculum_lu_types` b ON b.`curriculum_type_id` = a.`curriculum_type_id`
+                  JOIN `curriculum_type_organisation` c ON c.`curriculum_type_id` = b.`curriculum_type_id`
+                  WHERE a.`curriculum_type_id` = ?
+                  AND c.`organisation_id` = ?
+                  AND a.`active` = 1
+                  AND b.`curriculum_type_active` = 1
+                  GROUP BY a.`cperiod_id`
+                  ORDER BY a.`start_date` DESC";
+
+        $results = $db->GetAll($query, array($curriculum_type_id, $organisation_id));
+        if ($results === false) {
+            throw new Exception($db->ErrorMsg());
+        } else {
+            $output = array();
+            foreach ($results as $result) {
+                $output[] = new self($result);
+            }
+            return $output;
+        }
+    }
 }

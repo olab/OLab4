@@ -30,7 +30,7 @@ if (!defined("PARENT_INCLUDED")) {
 } elseif((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 	header("Location: ".ENTRADA_URL);
 	exit;
-} elseif (!$ENTRADA_ACL->amIAllowed($MODULES["exams"]["resource"], $MODULES["exams"]["permission"], false)) {
+} elseif (!$ENTRADA_ACL->amIAllowed("exam", "create", false)) {
 	add_error(sprintf($translate->_("You do not have the permissions required to use this module.<br /><br />If you believe you are receiving this message in error please contact <a href=\"mailto:%1\$s\">%2\$s</a> for assistance."), html_encode($AGENT_CONTACTS["administrator"]["email"]), html_encode($AGENT_CONTACTS["administrator"]["name"])));
 
 	echo display_error();

@@ -78,6 +78,10 @@ label.checkbox,
 label.radio {
     display: block;
 }
+label.checkbox-table,
+label.radio-table {
+    display: table !important;
+}
 
 .alert ul{
     margin-bottom: 0;
@@ -852,7 +856,10 @@ input[disabled],
 textarea[disabled]:hover,
 input[disabled]:hover,
 textarea[disabled]:focus,
-input[disabled]:focus {
+input[disabled]:focus,
+select[disabled],
+select[disabled]:hover,
+select[disabled]:focus {
     padding: 5px 13px;
     font-family: "Lucida Grande", Geneva, Verdana, Arial, Helvetica, sans-serif;
     font-size: 13px !important;
@@ -946,7 +953,7 @@ input[type="url"]:focus,
 input[type="search"]:focus,
 input[type="tel"]:focus,
 input[type="color"]:focus {
-    border-color: #f02c56;
+    border-color: #028ed4;
     outline: 0;
     outline: thin dotted \9;
     -webkit-box-shadow: none;
@@ -1004,7 +1011,7 @@ select:hover {
 }
 
 select:focus {
-    border-color: #f02c56;
+    border-color: #028ed4;
     outline: 0;
     outline: thin dotted \9;
     -webkit-box-shadow: none;
@@ -1029,9 +1036,9 @@ select[size] {
     font-weight: normal;
     line-height: 20px;
     text-align: center;
-    text-shadow: 0 1px 0 #ffffff;
-    background-color: #eeeeee;
-    border: 1px solid #ccc;
+    text-shadow: none;
+    background-color: #ecf0f3;
+    border: 1px solid #d9dee2;
     -webkit-box-sizing: border-box;
     -moz-box-sizing:    border-box;
     box-sizing:         border-box;
@@ -1086,6 +1093,29 @@ a.exit_exam:hover {
   text-decoration:none;
   color:#FFF;
 }
+
+/* Communities Sidebar */
+#my-communities ul {
+    max-height: 480px;
+    overflow-x: auto;
+}
+#my-communities ul li.community:last-child {
+    margin-bottom: 20px;
+}
+#my-communities ul li.community.hidden, #my-communities ul li.community.not-found, #my-communities ul li.community.hidden.not-found.active {
+    display: none !important;
+}
+
+#my-communities ul li.community.hidden.active, #my-communities ul li.community.found {
+    display: block !important;
+}
+
+#my-communities ul li.community a {
+    padding: 0 5px;
+    display: block;
+}
+
+/* End - Communities Sidebar */
 
 #sidebar .panel {
     margin-bottom: 30px;
@@ -1229,12 +1259,10 @@ table.table {
 }
 
 .table-responsive {
-    overflow-x: scroll;
+    overflow-x: auto;
     -webkit-border-radius: 5px;
     -moz-border-radius: 5px;
     border-radius: 5px;
-    box-shadow: inset 0 0 0 1px #d9dee2;
-    background-color: #ecf0f3;
 }
 
 .middle {
@@ -1587,7 +1615,7 @@ div.ps-row-margin-top {
 
 .statsLIHeader {
     list-style: none;
-    padding: 5px; 
+    padding: 5px;
 }
 
 .statsLISpan1 {
@@ -1655,6 +1683,17 @@ div.ps-row-margin-top {
 
 .event-title {
     margin: 10px 0 30px 0 !important;
+}
+
+ul.event-contacts {
+    max-height: 500px;
+    overflow: scroll;
+    margin-left: 0;
+    list-style-type: none;
+}
+
+ul.event-contacts a {
+    font-size: 12px;
 }
 
 div.event-message {

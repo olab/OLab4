@@ -192,6 +192,47 @@ class Models_Base {
     }
 
     /**
+     * Convert a record to an ID depending on what type it is.
+     * @param var $record
+     * @return int $id
+     */
+    public static function toID($record) {
+        if (is_int($record)) {
+            return $record;
+        } else if (is_string($record)) {
+            return (int) $record;
+        } else if (is_null($record)) {
+            return null;
+        } else if ($record instanceof static) {
+            return self::toID($record->toArray());
+        } else if (isset(static::$primary_key) && is_array($record)) {
+            if (array_key_exists(static::$primary_key, $record)) {
+                return self::toID($record[static::$primary_key]);
+            } else {
+                throw new InvalidArgumentException("Missing " . static::$primary_key . " field");
+            }
+        } else if (isset(static::$primary_key) && is_object($record)) {
+            if (property_exists($record, static::$primary_key)) {
+                return self::toID($record->{static::$primary_key});
+            } else {
+                throw new InvalidArgumentException("Missing " . static::$primary_key . " field");
+            }
+        } else {
+            throw new InvalidArgumentException("Invalid type of " . is_object($event) ? get_class($event) : gettype($event));
+        }
+    }
+
+    /**
+     * Convert provided records to IDs no matter what type they are
+     * @param array $records
+     * @return array(int) $ids
+     */
+    public static function toIDs(array $records) {
+        $to_id = array(get_called_class(), "toID");
+        return array_map($to_id, $records);
+    }
+
+    /**
      * See the fetchRow method for documentation. These two are functionally identical other than the fact
      * fetchAll returns all the results (by using $db->GetAll()) whereas fetchRow only returns the first result.
      *
@@ -448,8 +489,6 @@ class Models_Base {
         } else {
             application_log("error", "Error inserting a ".get_called_class().". DB Said: " . $db->ErrorMsg());
 
-            echo $db->ErrorMsg();
-
             return false;
         }
     }
@@ -484,5 +523,91 @@ class Models_Base {
         }
 
         return false;
+    }
+
+    /**
+     * Retrieve the column names from the information schema for the model's corresponding table.
+     *
+     * @return array|boolean result
+     */
+    public function getColumnNames() {
+        global $db;
+
+        $query = "SELECT `column_name` FROM `information_schema`.`columns` WHERE `table_schema` = ? AND `table_name` = ?";
+        $results = $db->GetAll($query, array(static::$database_name, static::$table_name));
+
+        // This gets returned in a sort of silly format with each column being an array, so we need to parse them out.
+        if ($results) {
+            $result = array();
+            foreach ($results as $field_array) {
+                $result[$field_array["column_name"]] = $field_array["column_name"];
+            }
+            return $result;
+        }
+
+        return false;
+    }
+
+    /**
+     * Method to take a set of arrays of this model and insert them in one query.
+     *
+     * @param $values
+     * @return boolean success
+     */
+    public function bulkInsertOnDuplicateKeyUpdate($values) {
+        global $db;
+
+        if (!is_array($values) || empty($values)) {
+            return false;
+        }
+
+        $fields = $this->getColumnNames();
+        if (!$fields || !is_array($fields)) {
+            return false;
+        }
+
+        // Build the record value sets that will be used in the SQL statement.
+        $statement_values = array();
+        foreach ($values as $key => $value_set) {
+            /**
+             * Ensure all fields are set for each set of values, setting a null default for anything that is missing.
+             * Sets need to follow the order of the field names. This will allow us to perform all inserts and updates
+             * in one statement using ON DUPLICATE KEY.
+             */
+            $processed_set = array();
+            foreach ($fields as $field) {
+                if (array_key_exists($field, $value_set)) {
+                    $processed_set[$field] = $db->qstr($value_set[$field]);
+                } else {
+                    $processed_set[$field] = "null"; // The value set ends up being a string, so we need it to include the null during implosion.
+                }
+            }
+
+            // Add to statement values set.
+            if (!empty($processed_set)) {
+                $statement_values[] = "(" . implode(",", $processed_set) . ")";
+            }
+        }
+        $statement_values_string = implode(",\n", $statement_values);
+
+        // Prepare field names for insert column declaration.
+        $field_name_string = implode(",", $fields);
+
+        // Prepare field names for update column value declarations.
+        // Throw out the primary key.
+        unset($fields[$this::$primary_key]);
+        $update_columns = array();
+        foreach ($fields as $field) {
+            $update_columns[] = "{$field}=VALUES({$field})";
+        }
+        $update_columns_string = implode(",\n", $update_columns);
+
+        $query = "INSERT INTO `{$this::$table_name}`({$field_name_string})
+                  VALUES 
+                  {$statement_values_string}
+                  ON DUPLICATE KEY UPDATE
+                  {$update_columns_string}";
+        $results = $db->Execute($query);
+        return $results;
     }
 }

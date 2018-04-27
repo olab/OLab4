@@ -34,7 +34,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 } elseif((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 	header("Location: ".ENTRADA_URL);
 	exit;
-} elseif($ENTRADA_ACL->amIAllowed('coursecontent', 'update ', false)) {
+} elseif(!$ENTRADA_ACL->amIAllowed("coursecontent", "update", false)) {
 	$ONLOAD[]	= "setTimeout('window.location=\\'".ENTRADA_URL."/admin/".$MODULE."\\'', 15000)";
 
 	$ERROR++;
@@ -48,12 +48,12 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 		if(!isset($ORGANISATION_ID) || !$ORGANISATION_ID){
 			$query = "SELECT `organisation_id` FROM `courses` WHERE `course_id` = ".$db->qstr($COURSE_ID);
 			$result = $db->GetOne($query);
-			if($result)
-				$ORGANISATION_ID = (int)$result;
-			else
-				$ORGANISATION_ID = 1;
+			if ($result) {
+                $ORGANISATION_ID = (int) $result;
+            } else {
+                $ORGANISATION_ID = 0;
+            }
 		}
-
 
 		list($course_objectives,$top_level_id) = courses_fetch_objectives($ORGANISATION_ID,array($COURSE_ID),-1, 1, false, false, 0, true);
 		$query			= "	SELECT * FROM `courses`
@@ -460,7 +460,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 					echo display_error();
 				}
 				?>
-				<a name="course-details-section"></a>
+				<a name="course-details-section-anchor"></a>
 				<h2 title="Course Setup Section"><?php echo $translate->_("Course Setup"); ?></h2>
 				<div id="course-setup-section" class="clearfix">
 					<form class="form-horizontal" action="<?php echo ENTRADA_URL; ?>/admin/<?php echo $MODULE; ?>?<?php echo replace_query(); ?>" method="post">
@@ -563,6 +563,32 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 							</div>
 						</div>
 
+                        <?php if ((new Entrada_Settings)->read("cbme_enabled")) : ?>
+                        <div class="control-group">
+                            <label for="associated_ccmember" class="form-nrequired control-label"><?php echo $translate->_("Competency Committee Members"); ?></label>
+                            <div class="controls">
+                                <?php
+                                $query		= "	SELECT a.`proxy_id`, CONCAT_WS(' ', b.`firstname`, b.`lastname`) AS `fullname`, b.`email`
+													FROM `course_contacts` AS a
+													LEFT JOIN `".AUTH_DATABASE."`.`user_data` AS b
+													ON b.`id` = a.`proxy_id`
+													WHERE a.`course_id` = ".$db->qstr($course_details["course_id"])."
+													AND a.`contact_type` = 'ccmember'
+													AND b.`id` IS NOT NULL
+													ORDER BY a.`contact_order` ASC";
+                                $results	= $db->GetAll($query);
+                                if($results) {
+                                    foreach($results as $key => $sresult) {
+                                        echo "<a href=\"mailto:".html_encode($sresult["email"])."\">".html_encode($sresult["fullname"])."</a><br />\n";
+                                    }
+                                } else {
+                                    echo "To Be Announced";
+                                }
+                                ?>
+                            </div>
+                        </div>
+                        <?php endif; ?>
+
 						<?php
 						if (isset($course_details["pcoord_id"]) && (int)$course_details["pcoord_id"]) { ?>
 						<div class="control-group">
@@ -626,7 +652,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 
 				if ($result) {
 					?>
-				<a name="course-objectives-section"></a>
+				<a name="course-objectives-section-anchor"></a>
 				<h2 title="<?php echo $translate->_("Course Objectives Section"); ?>"><?php echo $translate->_("course"); ?> <?php echo $translate->_("Objectives"); ?></h2>
 				<div id="course-objectives-section">
 					<form action="<?php echo ENTRADA_URL; ?>/admin/<?php echo $MODULE; ?>?<?php echo replace_query(); ?>" method="post">
@@ -647,7 +673,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 						$results = Models_Course_Objective::fetchAllByOrganisationIDCourseID($ENTRADA_USER->getActiveOrganisation(), $COURSE_ID);
 
 					if ($results) { ?>
-						<h3>Clinical Presentations</h3>
+						<h3><?php echo $translate->_("Clinical Presentations"); ?></h3>
 						<ul class="objectives">
 						<?php
 						foreach ($results as $result) {
@@ -681,10 +707,11 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 						echo "</script>\n";
 					}
 				}
-				?>
+
+				if (!$course_community && ($PROCESSED["course_url"] && !$PROCESSED["course_redirect"])) : ?>
                 <div class="clearfix"></div>
-				<a name="course-resources-section"></a>
-				<h2 title="Course Resources Section"><?php echo $translate->_("course"); ?> Resources</h2>
+				<a name="course-resources-section-anchor"></a>
+				<h2 title="Course Resources Section"><?php echo $translate->_("Course"); ?> Resources</h2>
 				<div id="course-resources-section">
 					<div class="space-bottom medium">
 						<div class="clearfix">
@@ -770,12 +797,12 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 										</td>
 										<td class="date-small">
 											<span class="content-date">
-												<?php echo (((int) $result["valid_from"]) ? date(DEFAULT_DATE_FORMAT, $result["valid_from"]) : "No Restrictions");?>
+												<?php echo (((int) $result["valid_from"]) ? date(DEFAULT_DATETIME_FORMAT, $result["valid_from"]) : "No Restrictions");?>
 											</span>
 										</td>
 										<td class="date-small">
 											<span class="content-date">
-												<?php echo (((int) $result["valid_until"]) ? date(DEFAULT_DATE_FORMAT, $result["valid_until"]) : "No Restrictions");?>
+												<?php echo (((int) $result["valid_until"]) ? date(DEFAULT_DATETIME_FORMAT, $result["valid_until"]) : "No Restrictions");?>
 											</span>
 										</td>
 										<td class="accesses text-center"><?php echo $result["accesses"];?></td>
@@ -870,12 +897,12 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 										</td>
 										<td class="date-small">
 											<span class="content-date">
-												<?php echo (((int) $result["valid_from"]) ? date(DEFAULT_DATE_FORMAT, $result["valid_from"]) : "No Restrictions");?>
+												<?php echo (((int) $result["valid_from"]) ? date(DEFAULT_DATETIME_FORMAT, $result["valid_from"]) : "No Restrictions");?>
 											</span>
 										</td>
 										<td class="date-small">
 											<span class="content-date">
-												<?php echo (((int) $result["valid_until"]) ? date(DEFAULT_DATE_FORMAT, $result["valid_until"]) : "No Restrictions");?>
+												<?php echo (((int) $result["valid_until"]) ? date(DEFAULT_DATETIME_FORMAT, $result["valid_until"]) : "No Restrictions");?>
 											</span>
 										</td>
 										<td class="accesses text-center">
@@ -966,12 +993,12 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
                                             </td>
                                             <td class="date-small">
 											<span class="content-date">
-												<?php echo (((int) $result["valid_from"]) ? date(DEFAULT_DATE_FORMAT, $result["valid_from"]) : "No Restrictions");?>
+												<?php echo (((int) $result["valid_from"]) ? date(DEFAULT_DATETIME_FORMAT, $result["valid_from"]) : "No Restrictions");?>
 											</span>
                                             </td>
                                             <td class="date-small">
 											<span class="content-date">
-												<?php echo (((int) $result["valid_until"]) ? date(DEFAULT_DATE_FORMAT, $result["valid_until"]) : "No Restrictions");?>
+												<?php echo (((int) $result["valid_until"]) ? date(DEFAULT_DATETIME_FORMAT, $result["valid_until"]) : "No Restrictions");?>
 											</span>
                                             </td>
                                         </tr>
@@ -993,14 +1020,15 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
                     </div>
 				</div>
 				<?php
+                endif;
 				/**
 				 * Sidebar item that will provide the links to the different sections within this page.
 				 */
-				$sidebar_html  = "<ul class=\"menu\">\n";
-				$sidebar_html .= "	<li class=\"link\"><a href=\"#course-details-section\" onclick=\"$('course-details-section').scrollTo(); return false;\" title=\"Course Setup\">" . $translate->_("Course Setup") . "</a></li>\n";
-				$sidebar_html .= "	<li class=\"link\"><a href=\"#course-objectives-section\" onclick=\"$('course-objectives-section').scrollTo(); return false;\" title=\"" . $translate->_("Course Objectives") . "\">" . $translate->_("course") . " " . $translate->_("Objectives") . "</a></li>\n";
-				$sidebar_html .= "	<li class=\"link\"><a href=\"#course-resources-section\" onclick=\"$('course-resources-section').scrollTo(); return false;\" title=\"Course Resources\">" . $translate->_("course") . " Resources</a></li>\n";
-				$sidebar_html .= "</ul>\n";
+                $sidebar_html  = "<ul class=\"menu\">\n";
+                $sidebar_html .= "	<li class=\"link\"><a href=\"#course-details-section-anchor\" onclick=\"$('course-details-section-anchor').scrollTo(); return false;\" title=\"Course Setup\">" . $translate->_("Course Setup") . "</a></li>\n";
+                $sidebar_html .= "	<li class=\"link\"><a href=\"#course-objectives-section-anchor\" onclick=\"$('course-objectives-section-anchor').scrollTo(); return false;\" title=\"" . $translate->_("Course Objectives") . "\">" . $translate->_("course") . " " . $translate->_("Objectives") . "</a></li>\n";
+                $sidebar_html .= "	<li class=\"link\"><a href=\"#course-resources-section-anchor\" onclick=\"$('course-resources-section-anchor').scrollTo(); return false;\" title=\"Course Resources\">" . $translate->_("course") . " Resources</a></li>\n";
+                $sidebar_html .= "</ul>\n";
 
 				new_sidebar_item("Page Anchors", $sidebar_html, "page-anchors", "open", "1.9");
 

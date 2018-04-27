@@ -49,7 +49,7 @@ class Views_Assessments_Forms_Controls_FreeTextLabel extends Views_Assessments_F
                                             <?php echo $translate->_("Save"); ?>
                                         </a>
                                         <span href="#" class="btn"><input type="checkbox" class="delete" name="delete[]" value="<?php echo $afelement_id ?>"/></span>
-                                        <a href="#" title="<?php echo $translate->_("Attach to Form"); ?>" class="btn move"><i class="icon-move"></i></a>
+                                        <a class="btn always-enabled" id="move-form-item" title="<?php echo $translate->_("Move"); ?>"><i class="icon-move"></i></a>
                                     </div>
                                 </div>
                             </td>
@@ -73,8 +73,8 @@ class Views_Assessments_Forms_Controls_FreeTextLabel extends Views_Assessments_F
 
         <?php else: ?>
 
-            <div class="form-text-container">
-                <p><?php echo $element_text ?></p>
+            <div class="form-text-container space-above">
+                <?php echo $element_text ?>
             </div>
 
         <?php endif; ?>

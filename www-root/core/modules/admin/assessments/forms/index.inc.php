@@ -38,6 +38,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_FORMS"))) {
 
     $HEAD[] = "<script type=\"text/javascript\" src=\"".  ENTRADA_URL ."/javascript/jquery/jquery.advancedsearch.js\"></script>";
     $HEAD[] = "<link rel=\"stylesheet\" type=\"text/css\" href=\"".  ENTRADA_URL ."/css/jquery/jquery.advancedsearch.css\" />";
+    $HEAD[] = '<link rel="stylesheet" type="text/css" href="'.ENTRADA_URL.'/css/assessments/items.css?release='.html_encode(APPLICATION_VERSION).'" />';
     $HEAD[] = "<script type=\"text/javascript\">var ENTRADA_URL = \"". ENTRADA_URL ."\";</script>";
     $HEAD[] = Entrada_Utilities_jQueryHelper::addjQuery();
     $HEAD[] = Entrada_Utilities_jQueryHelper::addjQueryLoadTemplate();
@@ -45,6 +46,15 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_FORMS"))) {
     $forms_api = new Entrada_Assessments_Forms(array("actor_proxy_id" => $ENTRADA_USER->getActiveId(), "actor_organisation_id" => $ENTRADA_USER->getActiveOrganisation()));
     $assessments_base = new Entrada_Utilities_Assessments_Base();
     $PREFERENCES = $assessments_base->getAssessmentPreferences($MODULE);
+
+    $user_courses = array();
+    $user_courses_records = $forms_api->fetchUserCourseList(($ENTRADA_USER->getActiveRole() == "admin"));
+    $user_courses = array_map(
+        function ($r) {
+            return array("course_id" => $r->getID(), "course_name" => $r->getCourseName());
+        },
+        $user_courses_records
+    );
 
     $PROCESSED["filters"] = array();
     if (isset($PREFERENCES["forms"]["selected_filters"])) {
@@ -102,15 +112,26 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_FORMS"))) {
     }
 
     $assessment_evaluation_tabs = new Views_Assessments_Dashboard_NavigationTabs();
-    $assessment_evaluation_tabs->render(array("active" => "forms"));
+    $assessment_evaluation_tabs->render(array(
+        "active" => "forms",
+        "group" => $ENTRADA_USER->getActiveGroup(),
+        "role" => $ENTRADA_USER->getActiveRole()
+    ));
     ?>
     <h1><?php echo $translate->_("Forms"); ?></h1>
+    <?php
+        if (($filter_by_single_item || $filter_by_single_rubric) && isset($_SESSION[APPLICATION_IDENTIFIER][$MODULE][$SUBMODULE]["selected_filters"]) &&
+            !empty($_SESSION[APPLICATION_IDENTIFIER][$MODULE][$SUBMODULE]["selected_filters"])
+        ) {
+            echo display_notice($translate->_("<strong>Please Note:</strong> You have filters set that may affect the search results."));
+        }
+    ?>
     <?php
     if ($filter_by_single_rubric) {
         // Draw the rubric we're filtering by
         $rubric_data = $forms_api->fetchRubricData($PROCESSED["rubric_id"]);
         if (!empty($rubric_data)) {
-            echo display_notice($translate->_("<strong>Please Note:</strong> You are viewing all forms associated with a single <strong>Grouped Item</strong>. If you wish to modify any of the forms listed below, clicking on its name will redirect you to that form in a new window."));
+            echo display_notice($translate->_("<strong>Please Note:</strong> You are viewing all forms associated with a single <strong>Grouped Item</strong>. If you wish to modify any of the forms listed below, clicking on its name will redirect you to that form. Any forms that you do not have permission to modify will not be listed below."));
             $rubric_view = new Views_Assessments_Forms_Rubric(array("mode" => "editor", "rubric_state" => "editor-readonly"));
             $rubric_view->render(
                 array(
@@ -130,9 +151,9 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_FORMS"))) {
         $item_data = $forms_api->fetchItemData($PROCESSED["item_id"]);
         if (!empty($item_data)) {
             if (!$item_data["item"]["deleted_date"]) {
-                $item_options = $forms_api->buildItemViewOptionsForRender($PROCESSED["filter_item_id"], true);
+                $item_options = $forms_api->buildItemViewOptionsForRender($item_data, true);
                 if (!empty($item_options)) {
-                    echo display_notice($translate->_("<strong>Please Note:</strong> You are viewing all forms associated with a single <strong>Item</strong>. If you wish to modify any of the forms listed below, clicking on its name will redirect you to that form in a new window."));
+                    echo display_notice($translate->_("<strong>Please Note:</strong> You are viewing all forms associated with a single <strong>Item</strong>. If you wish to modify any of the forms listed below, clicking on its name will redirect you to that form. Any forms that you do not have permission to modify will not be listed below."));
                     $item_view = new Views_Assessments_Forms_Item(array("mode" => "editor-readonly"));
                     $item_view->render($item_options);
                 } else {
@@ -195,6 +216,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_FORMS"))) {
             );
         });
     </script>
+
     <script type="text/javascript" src="<?php echo ENTRADA_URL . "/javascript/assessments/forms/assessments-forms-admin.js?release=" . html_encode(APPLICATION_VERSION); ?>"></script>
     <div id="assessment-forms-container">
         <form id="form-table-form" action="<?php echo ENTRADA_URL . "/admin/assessments/forms?section=delete&step=1"; ?>" method="POST">
@@ -233,7 +255,14 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_FORMS"))) {
         <?php
         // Render helpful modals
         $add_form_modal = new Views_Assessments_Forms_Modals_AddForm();
-        $add_form_modal->render(array("action_url" => ENTRADA_URL."/admin/assessments/forms/?section=add-form"));
+        $add_form_modal->render(
+            array (
+                "action_url" => ENTRADA_URL."/admin/assessments/forms/?section=add-form",
+                "form_types" => Models_Assessments_Form_Type::fetchAllByOrganisationID($ENTRADA_USER->getActiveOrganisation()),
+                "user_courses" => $user_courses,
+                "medtech_admin" => ($ENTRADA_USER->getActiveRole() == "admin" && $ENTRADA_USER->getActiveGroup() == "medtech")
+            )
+        );
 
         $delete_form_modal = new Views_Assessments_Forms_Modals_DeleteForm();
         $delete_form_modal->render(array("action_url" => ENTRADA_URL . "/admin/assessments/forms?section=api-forms"));

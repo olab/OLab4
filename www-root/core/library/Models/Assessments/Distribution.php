@@ -21,7 +21,7 @@
  */
 
 class Models_Assessments_Distribution extends Models_Base {
-    protected $adistribution_id, $one45_scenariosAttached_id, $form_id, $method, $organisation_id, $title, $description, $assessment_type, $cperiod_id, $course_id, $assessor_option, $min_submittable, $max_submittable, $repeat_targets, $submittable_by_target, $flagging_notifications, $start_date, $end_date, $release_start_date, $release_end_date, $release_date, $mandatory, $feedback_required, $distributor_timeout, $notifications, $visibility_status, $delivery_date, $updated_date, $updated_by, $created_date, $created_by, $deleted_date;
+    protected $adistribution_id, $one45_scenariosAttached_id, $form_id, $method, $organisation_id, $title, $description, $assessment_type, $cperiod_id, $course_id, $assessor_option, $target_option, $exclude_self_assessments, $min_submittable, $max_submittable, $repeat_targets, $submittable_by_target, $flagging_notifications, $start_date, $end_date, $release_start_date, $release_end_date, $release_date, $expiry_offset, $expiry_notification_offset, $mandatory, $feedback_required, $distributor_timeout, $notifications, $visibility_status, $delivery_date, $updated_date, $updated_by, $created_date, $created_by, $deleted_date;
 
     protected static $table_name = "cbl_assessment_distributions";
     protected static $primary_key = "adistribution_id";
@@ -79,6 +79,14 @@ class Models_Assessments_Distribution extends Models_Base {
         return $this->assessor_option;
     }
 
+    public function getTargetOption() {
+        return $this->target_option;
+    }
+
+    public function getExcludeSelfAssessments() {
+        return $this->exclude_self_assessments;
+    }
+
     public function getMinSubmittable() {
         return $this->min_submittable;
     }
@@ -117,6 +125,14 @@ class Models_Assessments_Distribution extends Models_Base {
 
     public function getReleaseDate() {
         return $this->release_date;
+    }
+
+    public function getExpiryOffset() {
+        return $this->expiry_offset;
+    }
+
+    public function getExpiryNotificationOffset() {
+        return $this->expiry_notification_offset;
     }
 
     public function getMandatory() {
@@ -167,6 +183,18 @@ class Models_Assessments_Distribution extends Models_Base {
         $this->delivery_date = $delivery_date;
     }
 
+    public function setAssessmentType($assessment_type) {
+        $this->assessment_type = $assessment_type;
+    }
+
+    public function setTargetOption($target_option) {
+        $this->target_option = $target_option;
+    }
+
+    public function setExcludeSelfAssessments($exclude_self_assessments) {
+        $this->exclude_self_assessments = $exclude_self_assessments;
+    }
+
     public static function fetchRowByID($adistribution_id, $deleted_date = NULL) {
         $self = new self();
         return $self->fetchRow(array(
@@ -175,24 +203,33 @@ class Models_Assessments_Distribution extends Models_Base {
         ));
     }
 
-    public static function fetchRowByIDCourseIDFormID($adistribution_id, $course_id, $form_id = NULL) {
+    public static function fetchRowByIDCourseIDFormIDTaskType($adistribution_id, $course_id, $form_id = null, $task_type = null) {
         global $db;
         $distribution = false;
-        $AND_FORM_ID = "";
+        $AND_FORM_ID = $AND_TASK_TYPE = "";
 
         if (is_array($course_id) && !empty($course_id)) {
             $imploded = implode(",", $course_id);
-            $AND_COURSE_ID = "AND `course_id` IN ($imploded)";
+            $AND_COURSE_ID = " AND a.`course_id` IN ($imploded)";
         } else {
-            $AND_COURSE_ID = "AND `course_id` = " . $db->qstr($course_id);
+            $AND_COURSE_ID = " AND a.`course_id` = " . $db->qstr($course_id);
         }
 
         if (!is_null($form_id)) {
-            $AND_FORM_ID = "AND `form_id` = " . $db->qstr($form_id);
+            $AND_FORM_ID = " AND a.`form_id` = " . $db->qstr($form_id);
         }
 
-        $query = "  SELECT * FROM `cbl_assessment_distributions` 
-                    WHERE `adistribution_id` = ? 
+        if (!is_null($task_type)) {
+            $AND_TASK_TYPE = " AND a.`assessment_type` = " . $db->qstr($task_type);
+        }
+
+        $query = "  SELECT * FROM `cbl_assessment_distributions` AS a
+                    JOIN `cbl_assessment_progress` AS b 
+                    ON a.`adistribution_id` = b.`adistribution_id`
+                    WHERE a.`adistribution_id` = ? 
+                    AND b.`progress_value` = 'complete'
+                    AND b.`deleted_date` IS NULL
+                    $AND_TASK_TYPE
                     $AND_FORM_ID 
                     $AND_COURSE_ID ";
 
@@ -223,12 +260,67 @@ class Models_Assessments_Distribution extends Models_Base {
 
     public static function fetchAllRecords($deleted_date = NULL) {
         $self = new self();
-        return $self->fetchAll(array(array("key" => "deleted_date", "value" => ($deleted_date ? $deleted_date : NULL), "method" => ($deleted_date ? "<=" : "IS"))));
+        return $self->fetchAll(array(array("key" => "deleted_date", "value" => ($deleted_date ? $deleted_date : NULL), "method" => ($deleted_date ? "<=" : "IS"))), "=", "AND", "adistribution_id", "DESC");
     }
 
     public static function fetchAllRecordsIgnoreDeletedDate() {
         $self = new self();
         return $self->fetchAll(array(array("key" => "adistribution_id", "value" => 1, "method" => ">=")));
+    }
+
+    public static function fetchAllDistributionDateData($specific_ids = null, $include_deleted_distributions = false, $only_delegation_distributions = false) {
+        global $db;
+
+        // Filter by specific distribution IDs
+        $AND_adistribution_ids_IN = "";
+        if (is_array($specific_ids) && !empty($specific_ids)) {
+            $specific_ids_array = array_map(function($v) { return clean_input($v, array("trim", "int")); }, $specific_ids);
+            if (!empty($specific_ids_array)) {
+                $specific_ids_string = implode(",", $specific_ids_array);
+                $AND_adistribution_ids_IN = "AND d.`adistribution_id` IN($specific_ids_string) ";
+            }
+        }
+
+        // Add delegators if required
+        $LEFT_JOIN_delegators_table = "LEFT JOIN `cbl_assessment_distribution_delegators` AS dg ON d.`adistribution_id` = dg.`adistribution_id`";
+        $AND_delegator_id = "AND dg.`delegator_id` IS NULL";
+        if ($only_delegation_distributions) {
+            $AND_delegator_id = "AND dg.`delegator_id` IS NOT NULL";
+        }
+
+        // Deleted distros?
+        if ($include_deleted_distributions) {
+            $AND_deleted_date = "";
+        } else {
+            $AND_deleted_date = "AND d.`deleted_date` IS NULL";
+        }
+
+        $query = "SELECT
+                      d.`adistribution_id`, d.`release_date`, d.`deleted_date`, d.`cperiod_id`,
+                      c.`start_date` AS `cperiod_start`, c.`finish_date` AS `cperiod_end`
+                  FROM `cbl_assessment_distributions` AS d
+                  LEFT JOIN `curriculum_periods` AS c ON c.`cperiod_id` = d.`cperiod_id`
+                  $LEFT_JOIN_delegators_table
+                  WHERE 1
+                  $AND_adistribution_ids_IN
+                  $AND_deleted_date
+                  $AND_delegator_id
+                  AND d.`visibility_status` = 'visible'
+                  ORDER BY `adistribution_id` ASC";
+        $results = $db->GetAll($query);
+        $id_list = array();
+        if (!empty($results)) {
+            foreach ($results as $result) {
+                $id_list[$result["adistribution_id"]] = array(
+                    "adistribution_id" => $result["adistribution_id"],
+                    "deleted_date" => $result["deleted_date"],
+                    "release_date" => $result["release_date"],
+                    "cperiod_id" => $result["cperiod_id"],
+                    "cperiod_end" => $result["cperiod_end"]
+                );
+            }
+        }
+        return $id_list;
     }
 
     public static function fetchAllRecordsByDate($search_date, $deleted_date = NULL) {
@@ -323,10 +415,11 @@ class Models_Assessments_Distribution extends Models_Base {
 
     // TODO: Remove global $ENTRADA_USER dependency
     public static function fetchFilteredDistributions($search_value = null, $filters = array(), $offset = 0, $limit = 50) {
-        global $db, $ENTRADA_USER;
+        global $db, $ENTRADA_USER, $ENTRADA_ACL;
         $course_permissions = $ENTRADA_USER->getCoursePermissions();
         
-        $query = "          SELECT a.`adistribution_id`, a.`title`, a.`course_id`, a.`updated_date`, a.`cperiod_id`, e.`course_name`, f.`start_date`, f.`finish_date`, f.`curriculum_period_title` FROM `cbl_assessment_distributions` AS a
+        $query = "          SELECT a.`adistribution_id`, a.`title`, a.`course_id`, a.`updated_date`, a.`cperiod_id`, e.`course_name`, f.`start_date`, f.`finish_date`, f.`curriculum_period_title` 
+                            FROM `cbl_assessment_distributions` AS a
                             JOIN `courses` AS e
                             ON a.`course_id` = e.`course_id`
                             JOIN `curriculum_periods` AS f
@@ -334,7 +427,10 @@ class Models_Assessments_Distribution extends Models_Base {
 
         if ($filters) {
             if (array_key_exists("cperiod", $filters) && !array_key_exists("author", $filters) && !array_key_exists("course", $filters)) {
-                if (!($ENTRADA_USER->getActiveRole() == "admin" && $ENTRADA_USER->getActiveGroup() == "medtech")) {
+
+                if (!($ENTRADA_USER->getActiveRole() == "admin" && $ENTRADA_USER->getActiveGroup() == "medtech") &&
+                    !$ENTRADA_ACL->amIAllowed("assessmentreportadmin", "read", true)) {
+
                     $query .= " JOIN `cbl_assessment_distribution_authors` AS b
                                 ON a.`adistribution_id` = b.`adistribution_id`
                                 AND
@@ -358,10 +454,7 @@ class Models_Assessments_Distribution extends Models_Base {
                 }
 
                 if (array_key_exists("course", $filters)) {
-                    $query .= " JOIN `cbl_assessment_distribution_authors` AS d
-                                ON a.`adistribution_id` = d.`adistribution_id`
-                                AND d.`author_type` = 'course_id'
-                                AND d.`author_id`  IN (". implode(",", array_keys($filters["course"])) .")";
+                    $query .= " AND a.`course_id` IN (". implode(",", array_keys($filters["course"])) .")";
                 }
 
                 if (array_key_exists("cperiod", $filters)) {
@@ -370,7 +463,9 @@ class Models_Assessments_Distribution extends Models_Base {
                 }
             }
         } else {
-            if (!($ENTRADA_USER->getActiveRole() == "admin" && $ENTRADA_USER->getActiveGroup() == "medtech")) {
+            if (!($ENTRADA_USER->getActiveRole() == "admin" && $ENTRADA_USER->getActiveGroup() == "medtech") &&
+                !$ENTRADA_ACL->amIAllowed("assessmentreportadmin", "read", true)) {
+
                 $query .= " JOIN `cbl_assessment_distribution_authors` AS b
                             ON a.`adistribution_id` = b.`adistribution_id` 
                             AND 	
@@ -386,6 +481,10 @@ class Models_Assessments_Distribution extends Models_Base {
 
         $query .= " WHERE a.`deleted_date` IS NULL
                     AND a.`organisation_id` = ". $db->qstr($ENTRADA_USER->getActiveOrganisation());
+
+        if (!($ENTRADA_USER->getActiveRole() == "admin" && $ENTRADA_USER->getActiveGroup() == "medtech") && $ENTRADA_ACL->amIAllowed("assessmentreportadmin", "read", true)) {
+            $query .= " AND a.`assessment_type` = 'evaluation'";
+        }
 
         if($search_value != null) {
             self::removeTextBetweenDates($search_value);
@@ -407,10 +506,6 @@ class Models_Assessments_Distribution extends Models_Base {
             if (array_key_exists("author", $filters)) {
                 $query .= " AND b.`deleted_date` IS NULL";
             }
-            
-            if (array_key_exists("course", $filters)) {
-                $query .= " AND d.`deleted_date` IS NULL";
-            }
         }
         
         $query .= " GROUP BY a.`adistribution_id`
@@ -422,7 +517,7 @@ class Models_Assessments_Distribution extends Models_Base {
 
     // TODO: Remove global $ENTRADA_USER dependency
     public static function countAllDistributions ($search_value = null, $filters = array()) {
-        global $db, $ENTRADA_USER;
+        global $db, $ENTRADA_USER, $ENTRADA_ACL;
         $results = false;
         $course_permissions = $ENTRADA_USER->getCoursePermissions();
         
@@ -434,7 +529,8 @@ class Models_Assessments_Distribution extends Models_Base {
         
         if ($filters) {
             if (array_key_exists("cperiod", $filters) && !array_key_exists("author", $filters) && !array_key_exists("course", $filters)) {
-                if (!($ENTRADA_USER->getActiveRole() == "admin" && $ENTRADA_USER->getActiveGroup() == "medtech")) {
+                if (!($ENTRADA_USER->getActiveRole() == "admin" && $ENTRADA_USER->getActiveGroup() == "medtech") &&
+                    !$ENTRADA_ACL->amIAllowed("assessmentreportadmin", "read", true)) {
                     $query .= " JOIN `cbl_assessment_distribution_authors` AS b
                                 ON a.`adistribution_id` = b.`adistribution_id`
                                 AND
@@ -458,10 +554,7 @@ class Models_Assessments_Distribution extends Models_Base {
                 }
 
                 if (array_key_exists("course", $filters)) {
-                    $query .= " JOIN `cbl_assessment_distribution_authors` AS d
-                                ON a.`adistribution_id` = d.`adistribution_id`
-                                AND d.`author_type` = 'course_id'
-                                AND d.`author_id`  IN (". implode(",", array_keys($filters["course"])) .")";
+                    $query .= " AND a.`course_id`  IN (". implode(",", array_keys($filters["course"])) .")";
                 }
 
                 if (array_key_exists("cperiod", $filters)) {
@@ -470,7 +563,8 @@ class Models_Assessments_Distribution extends Models_Base {
                 }
             }
         } else {
-            if (!($ENTRADA_USER->getActiveRole() == "admin" && $ENTRADA_USER->getActiveGroup() == "medtech")) {
+            if (!($ENTRADA_USER->getActiveRole() == "admin" && $ENTRADA_USER->getActiveGroup() == "medtech") &&
+                !$ENTRADA_ACL->amIAllowed("assessmentreportadmin", "read", true)) {
                 $query .= " JOIN `cbl_assessment_distribution_authors` AS b
                             ON a.`adistribution_id` = b.`adistribution_id` 
                             AND 	
@@ -486,6 +580,10 @@ class Models_Assessments_Distribution extends Models_Base {
 
         $query .= " WHERE a.`deleted_date` IS NULL
                     AND a.`organisation_id` = ". $db->qstr($ENTRADA_USER->getActiveOrganisation());
+
+        if (!($ENTRADA_USER->getActiveRole() == "admin" && $ENTRADA_USER->getActiveGroup() == "medtech") && $ENTRADA_ACL->amIAllowed("assessmentreportadmin", "read", true)) {
+            $query .= " AND a.`assessment_type` = 'evaluation'";
+        }
 
         if($search_value != null) {
             self::removeTextBetweenDates($search_value);
@@ -506,10 +604,6 @@ class Models_Assessments_Distribution extends Models_Base {
         if ($filters) {
             if (array_key_exists("author", $filters)) {
                 $query .= " AND b.`deleted_date` IS NULL";
-            }
-
-            if (array_key_exists("course", $filters)) {
-                $query .= " AND d.`deleted_date` IS NULL";
             }
         }
 
@@ -663,7 +757,7 @@ class Models_Assessments_Distribution extends Models_Base {
 
     public static function fetchDistributionData($adistribution_id) {
         global $db;
-        $query = "SELECT a.`adistribution_id`, a.`title`, a.`description`, a.`cperiod_id`, a.`release_date`, a.`mandatory`, a.`feedback_required`, a.`form_id`, a.`start_date`, a.`end_date`, b.`title` AS `form_title`, a.`course_id`, a.`assessor_option`, c.`schedule_type`, d.`course_name`, a.`submittable_by_target`, a.`flagging_notifications`, a.`repeat_targets`, a.`min_submittable`, a.`max_submittable`, a.`delivery_date`
+        $query = "SELECT a.`adistribution_id`, a.`title`, a.`description`, a.`cperiod_id`, a.`release_date`, a.`mandatory`, a.`feedback_required`, a.`form_id`, a.`start_date`, a.`end_date`, b.`title` AS `form_title`, a.`course_id`, a.`assessor_option`, c.`schedule_type`, d.`course_name`, a.`submittable_by_target`, a.`flagging_notifications`, a.`repeat_targets`, a.`min_submittable`, a.`max_submittable`, a.`delivery_date`, a.`target_option`, a.`exclude_self_assessments`, a.`expiry_offset`, a.`expiry_notification_offset`
                     FROM `cbl_assessment_distributions` AS a
                     JOIN `cbl_assessments_lu_forms` AS b
                     ON a.`form_id` = b.`form_id`
@@ -672,11 +766,56 @@ class Models_Assessments_Distribution extends Models_Base {
                     LEFT JOIN `courses` AS d
                     ON a.`course_id` = d.`course_id`
                     WHERE a.`adistribution_id` = ?";
-        return $db->GetRow($query, array($adistribution_id));
-    }
+        $result = $db->GetRow($query, array($adistribution_id));
 
-    public function getTargets ($dassessment_id) {
-        return Models_Assessments_Distribution_Target::getAssessmentTargets($this->getID(), $dassessment_id);
+        if ($result) {
+
+            /**
+             * Extrapolating expiry offsets for easy use of days/hours.
+             */
+            $result["expiry_days"] = null;
+            $result["expiry_hours"] = null;
+            $result["expiry_date"] = null;
+
+            if ($result["expiry_offset"]) {
+                // 1 day = 86400 seconds
+                // 1 hour = 3600 seconds
+                $day = 86400;
+                $hour = 3600;
+
+                // Number of full days.
+                $num_full_days = floor($result["expiry_offset"] / $day);
+                $result["expiry_days"] = $num_full_days;
+
+                // Number of hull hours.
+                $full_days_total = $num_full_days * $day;
+                $remainder = $result["expiry_offset"] - $full_days_total;
+                $num_full_hours = floor($remainder / $hour);
+                $result["expiry_hours"] = $num_full_hours;
+
+                // Expiry notification.
+                if ($result["expiry_notification_offset"]) {
+
+                    $result["expiry_notification_days"] = null;
+                    $result["expiry_notification_hours"] = null;
+
+                    // Number of full days.
+                    $num_full_days = floor($result["expiry_notification_offset"] / $day);
+                    $result["expiry_notification_days"] = $num_full_days;
+
+                    // Number of hull hours.
+                    $full_days_total = $num_full_days * $day;
+                    $remainder = $result["expiry_notification_offset"] - $full_days_total;
+                    $num_full_hours = floor($remainder / $hour);
+                    $result["expiry_notification_hours"] = $num_full_hours;
+                }
+
+                // Specific expiry date (used in date range distributions).
+                $result["expiry_date"] = $result["delivery_date"] + $result["expiry_offset"];
+            }
+        }
+
+        return $result;
     }
 
     public function getAssessors ($delegator_id, $filter_start_date = false, $filter_end_date = false, $use_delegator = null) {
@@ -698,6 +837,227 @@ class Models_Assessments_Distribution extends Models_Base {
             array("key" => "course_id", "method" => "=", "value" => $course_id),
             array("key" => "deleted_date", "value" => ($deleted_date ? $deleted_date : NULL), "method" => ($deleted_date ? "<=" : "IS"))
         ));
+    }
+
+    /**
+     * Fetch all distributions for the given courses for the specified task type.
+     *
+     * @param string $task_type
+     * @param array $course_ids
+     * @param null|int|array $cperiod_ids
+     * @param bool $include_deleted
+     * @return array
+     */
+    public function fetchAllByTaskTypeCourseIDs($task_type, $course_ids, $cperiod_ids = null, $include_deleted = false) {
+        global $db;
+        $FILTERS = array();
+        $distributions = array();
+
+        if (is_array($course_ids)) {
+            $FILTERS[] = " WHERE ad.`course_id` IN (" . implode(",", $course_ids) . ")";
+        } else {
+            $FILTERS[] = " WHERE ad.`course_id` = " . $db->qstr($course_ids);
+        }
+
+        if ($cperiod_ids) {
+            $FILTERS[] = " AND ad.`cperiod_id` IN (" . implode(",", $cperiod_ids) . ")";
+        }
+
+        if (!$include_deleted) {
+            $FILTERS[] = " AND ad.`deleted_date` IS NULL";
+        }
+
+        switch ($task_type) {
+            case "course_evaluation":
+                $FILTERS[] = " AND adt.`target_type`    = 'course_id'";
+                $FILTERS[] = " AND adt.`target_scope`   = 'self'";
+                $FILTERS[] = " AND adt.`target_role`    = 'any'";
+                break;
+            case "rotation_evaluation":
+                $FILTERS[] = " AND adt.`target_type`    = 'schedule_id'";
+                $FILTERS[] = " AND adt.`target_scope`   = 'self'";
+                $FILTERS[] = " AND adt.`target_role`    = 'any'";
+                break;
+            case "learner_assessment_by_faculty":
+                $FILTERS[] = " AND (
+                                    (adt.`target_type` = 'proxy_id' AND adt.`target_scope` = 'self' AND adt.`target_role` IN ('any', 'learner')) OR
+                                    (adt.`target_type` = 'schedule_id' AND adt.`target_role` = 'learner') 
+                                )";
+                $FILTERS[] = " AND (
+                                    (ada.`assessor_type`  = 'proxy_id' AND ada.`assessor_scope` = 'self' AND ada.`assessor_role`  = 'faculty') OR
+                                    ada.`assessor_type`  = 'external_hash'
+                                )";
+                break;
+            case "faculty_evaluation_by_learners":
+                $FILTERS[] = " AND (
+                                    (adt.`target_type` = 'proxy_id' AND adt.`target_scope` = 'self' AND adt.`target_role` = 'faculty') OR
+                                    (adt.`target_type` = 'schedule_id' AND adt.`target_role` = 'faculty') 
+                                )";
+                $FILTERS[] = " AND ada.`assessor_role`  = 'learner'";
+                break;
+            case "all":
+                break;
+            default:
+                $FILTERS = array();
+                break;
+        }
+
+        if (!empty($FILTERS)) {
+
+            $CLAUSES = implode(" ", $FILTERS);
+
+            $query = "  SELECT ad.* FROM `cbl_assessment_distributions` AS ad
+                        JOIN `cbl_assessment_distribution_targets` AS adt
+                        ON adt.`adistribution_id` = ad.`adistribution_id`
+                        JOIN `cbl_assessment_distribution_assessors` AS ada
+                        ON ada.`adistribution_id` = ad.`adistribution_id`
+                        {$CLAUSES}
+                        GROUP BY ad.`adistribution_id`";
+
+            $results = $db->GetAll($query);
+            if ($results) {
+                $distributions = $results;
+            }
+        }
+
+        return $distributions;
+    }
+
+    /**
+     * Fetch distributions with completed progress records, optionally limiting to a list of courses,
+     * forms, and assessment types.
+     *
+     * @param null $search_value
+     * @param null $course_ids
+     * @param null $start_date
+     * @param null $end_date
+     * @param null $form_ids
+     * @param null $target_type
+     * @param null $target_ids
+     * * @param null $assessment_type_ids
+     * @return mixed
+     */
+    public function fetchAllWithCompletedProgressByCourseIDsFormIDsTargetTypeTargetIDs($search_value = null, $course_ids = null, $start_date = null, $end_date = null, $form_ids = null, $target_type = null, $target_ids = null, $assessment_type_ids = null) {
+        global $db;
+
+        $query = "  SELECT ad.* 
+                    FROM `cbl_assessment_distributions` AS ad
+                    JOIN `cbl_distribution_assessments` AS da
+                    ON da.`adistribution_id` = ad.`adistribution_id`
+                    JOIN `cbl_assessment_progress` AS ap
+                    ON ap.`dassessment_id` = da.`dassessment_id`
+                    WHERE ap.`progress_value` = 'complete'
+                    AND ap.`deleted_date` IS NULL";
+
+        $search_value = clean_input($search_value, array("trim", "striptags"));
+        if ($search_value) {
+            $query .= " AND (ad.`title` LIKE (". $db->qstr("%". $search_value ."%") .") OR ad.`description` LIKE (". $db->qstr("%". $search_value ."%") ."))";
+        }
+
+        $start_date = clean_input($start_date, array("int"));
+        if ($start_date) {
+            $query .= " AND da.`delivery_date` >= " . $db->qstr($start_date);
+        }
+
+        $end_date = clean_input($end_date, array("int"));
+        if ($end_date) {
+            $query .= " AND da.`delivery_date` <= " . $db->qstr($end_date);
+        }
+
+        $courses_string = Entrada_Utilities::sanitizeArrayAndImplode($course_ids, array("int"));
+        if ($courses_string) {
+            $query .= " AND da.`course_id` IN ({$courses_string})";
+        }
+
+        $forms_string = Entrada_Utilities::sanitizeArrayAndImplode($form_ids, array("int"));
+        if ($forms_string) {
+            $query .= " AND da.`form_id` IN ({$forms_string})";
+        }
+
+        $target_type = clean_input($target_type, array("trim", "striptags"));
+        $target_ids_string = Entrada_Utilities::sanitizeArrayAndImplode($target_ids, array("int"));
+        if ($target_type && $target_ids_string) {
+            $query .= " AND (ap.`target_type` = " . $db->qstr($target_type) . " AND ap.`target_record_id` IN ({$target_ids_string}))";
+        }
+
+        $assessment_types_string = Entrada_Utilities::sanitizeArrayAndImplode($assessment_type_ids, array("int"));
+        if ($assessment_types_string) {
+            $query .= " AND da.`assessment_type_id` IN ({$assessment_types_string})";
+        }
+
+        $query .= " GROUP BY ad.`adistribution_id`
+                    ORDER BY ad.`title` ASC";
+
+        return $db->GetAll($query);
+    }
+
+    /**
+     * Fetch distributions with completed progress records, optionally limiting to a list of courses,
+     * forms, and assessment types.
+     *
+     * @param $reviewer_id
+     * @param $organisation_id
+     * @param null $search_value
+     * @param null $course_ids
+     * @param null $start_date
+     * @param null $end_date
+     * @param null $form_ids
+     * @param null $target_type
+     * @param null $target_ids
+     * @return mixed
+     */
+    public function fetchAllWithCompletedProgressForReviewerByCourseIDsFormIDsTargetTypeTargetIDs($reviewer_id, $organisation_id, $search_value = null, $course_ids = null, $start_date = null, $end_date = null, $form_ids = null, $target_type = null, $target_ids = null) {
+        global $db;
+
+        $query = "  SELECT ad.* 
+                    FROM `cbl_assessment_distribution_reviewers` AS dr 
+                    JOIN `cbl_assessment_distributions` AS ad 
+                    ON ad.`adistribution_id` = dr.`adistribution_id` 
+                    JOIN `cbl_distribution_assessments` AS da
+                    ON da.`adistribution_id` = ad.`adistribution_id`
+                    JOIN `cbl_assessment_progress` AS ap
+                    ON ap.`dassessment_id` = da.`dassessment_id`
+                    WHERE dr.`proxy_id` = ?
+                    AND ad.`organisation_id` = ? 
+                    AND ap.`progress_value` = 'complete'
+                    AND dr.`deleted_date` IS NULL
+                    AND ap.`deleted_date` IS NULL";
+
+        $search_value = clean_input($search_value, array("trim", "striptags"));
+        if ($search_value) {
+            $query .= " AND (ad.`title` LIKE (". $db->qstr("%". $search_value ."%") .") OR ad.`description` LIKE (". $db->qstr("%". $search_value ."%") ."))";
+        }
+
+        $start_date = clean_input($start_date, array("int"));
+        if ($start_date) {
+            $query .= " AND da.`delivery_date` >= " . $db->qstr($start_date);
+        }
+
+        $end_date = clean_input($end_date, array("int"));
+        if ($end_date) {
+            $query .= " AND da.`delivery_date` <= " . $db->qstr($end_date);
+        }
+
+        $courses_string = Entrada_Utilities::sanitizeArrayAndImplode($course_ids, array("int"));
+        if ($courses_string) {
+            $query .= " AND da.`course_id` IN ({$courses_string})";
+        }
+
+        $forms_string = Entrada_Utilities::sanitizeArrayAndImplode($form_ids, array("int"));
+        if ($forms_string) {
+            $query .= " AND da.`form_id` IN ({$forms_string})";
+        }
+
+        $target_type = clean_input($target_type, array("trim", "striptags"));
+        $target_ids_string = Entrada_Utilities::sanitizeArrayAndImplode($target_ids, array("int"));
+        if ($target_type && $target_ids_string) {
+            $query .= " AND (ap.`target_type` = " . $db->qstr($target_type) . " AND ap.`target_record_id` IN ({$target_ids_string}))";
+        }
+
+        $query .= " GROUP BY ad.`adistribution_id`
+                    ORDER BY ad.`title` ASC";
+
+        return $db->GetAll($query, array($reviewer_id, $organisation_id));
     }
 
 }

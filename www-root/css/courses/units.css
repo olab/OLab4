@@ -1,0 +1,94 @@
+.unit-index-label {
+    width: 80px !important;
+}
+.unit-index-select {
+    margin-left: 95px !important;
+}
+#units-items-loading p,
+#units-no-results p {
+    color: #bfbfbf;
+    font-size: 22px;
+    line-height:30px;
+    margin-top: 25px;
+    text-align: center;
+}
+#units-items-loading, #units-no-results {
+    text-align: center;
+}
+.weekly-summary-title {
+    font-weight: bold;
+}
+h2.weekly-objective-title {
+    width: 100%;
+    float: left;
+    margin-top: 50px;
+}
+a.btn-expand,
+a.btn-collapse {
+    font-size: 0.9em;
+}
+a.btn-expand {
+    margin-right: 20px;
+}
+p.desc {
+    color: #999;
+}
+.weekly-objectives-container {
+    margin-top: 20px;
+    float: left;
+    width: 100%;
+}
+.weekly-objectives {
+    border: 0px;
+    margin: 0px -20px;
+    float: left;
+    width: 100%;
+}
+.weekly-objective h3 {
+    font-size: 1em;
+    line-height: 1.3em;
+}
+.weekly-objective.expandable h3 {
+    cursor: pointer;
+}
+.weekly-objective.expandable h3:hover {
+    color: #0088cc;
+}
+.weekly-objective {
+    padding: 20px;
+    background-color: #FEFEFE;
+    float: left;
+    width: 100%;
+}
+.weekly-objective a {
+    color: #333;
+}
+.weekly-objective-wrapper {
+    padding: 10px 20px;
+}
+.weekly-objective-header {
+    width: 100%;
+    float: left;
+    margin-top: 10px;
+}
+.weekly-objective-header a {
+    font-weight: bold;
+    float: left;
+}
+.weekly-objective-header span {
+    margin: 8px 10px 4px;
+    background: #BBB;
+    color: #fff;
+    padding: 2px 10px;
+    border-radius: 5px;
+    font-size: 0.8em;
+    display: block;
+    float: left;
+}
+.weekly-objective-details {
+    float: left;
+    width: 100%;
+}
+.weekly-objective:nth-child(odd) {
+    background-color: #F6F6F6;
+}

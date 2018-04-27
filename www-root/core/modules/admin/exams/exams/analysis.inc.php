@@ -35,8 +35,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
 
     application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] does not have access to this module [".$MODULE."]");
 } else {
-    ?>
-    <?php
+    ini_set("max_execution_time", 120);
     $HEAD[] = "<script type=\"text/javascript\">var ENTRADA_URL = \"". ENTRADA_URL ."\";</script>";
     $HEAD[] = "<script type=\"text/javascript\" src=\"".ENTRADA_RELATIVE."/javascript/jquery/jquery.dataTables.min-1.10.1.js?release=".html_encode(APPLICATION_VERSION)."\"></script>";
     $HEAD[] = "<script type=\"text/javascript\" src=\"".ENTRADA_RELATIVE."/javascript/jquery/dataTables.colVis.min.js?release=".html_encode(APPLICATION_VERSION)."\"></script>";
@@ -122,7 +121,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
                     $checked = isset($_POST["post_ids"]) && in_array($post->getID(), $_POST["post_ids"]);
                     echo "<label class=\"checkbox\">\n";
                     echo "<input type=\"checkbox\" name=\"post_ids[]\" value=\"".$post->getID()."\" ".($checked ? "checked" : "")." />\n";
-                    echo html_encode($post->getTitle())."(".date("m/d/y", $post->getStartDate()).")\n";
+                    echo html_encode($post->getTitle())." (".date("m/d/y", $post->getStartDate()).")\n";
                     echo "</label>\n";
                     echo "<br />\n";
                 }
@@ -162,36 +161,38 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
                 $bottom_27  = array_map(function($a) { return $a->getID(); }, array_slice($submissions, 0, count($submissions) * 0.27));
 
                 // Use the scores to find measures of central tendency
-                $scores         = array_map(function($submission) { return $submission->getExamPoints(); }, $submissions);
-                $num_scores     = count($scores);
+                $points         = array_map(function($submission) { return $submission->getExamPoints(); }, $submissions);
+                $scores         = array_map(function($submission) { return $submission->getExamScore(); }, $submissions);
+                $num_scores     = count($points);
                 $total_points   = $num_scores ? $submissions[0]->getExamValue() : 1;
-                $mean           = $num_scores ? array_sum($scores) / $num_scores : false;
+                $mean           = $num_scores ? array_sum($points) / $num_scores : false;
+                $mean_score     = $num_scores ? array_sum($scores) / $num_scores : false;
                 $mean_percent   = $num_scores ? $mean * 100 / $total_points : false;
                 if (!$num_scores) {
                     $median = false;
                 } else if (0 === $num_scores % 2) {
-                    $median = ($scores[($num_scores / 2) - 1] + $scores[$num_scores / 2]) / 2;
+                    $median = ($points[($num_scores / 2) - 1] + $points[$num_scores / 2]) / 2;
                 } else {
-                    $median = $scores[floor($num_scores / 2)];
+                    $median = $points[floor($num_scores / 2)];
                 }
                 $median_percent = $num_scores ? $median * 100 / $total_points : false;
                 if ($num_scores) {
-                    $min = $scores[0];
+                    $min = $points[0];
                     $min_percent = $min * 100 / $total_points;
-                    $max = $scores[$num_scores - 1];
+                    $max = $points[$num_scores - 1];
                     $max_percent = $max * 100 / $total_points;
                 } else {
                     $min = false;
                 }
                 if ($num_scores > 1) {
-                    $stdev = sqrt(array_sum(array_map(function($x) use ($mean) { return pow($x - $mean, 2); }, $scores)) / ($num_scores - 1));
+                    $stdev = sqrt(array_sum(array_map(function($x) use ($mean) { return pow($x - $mean, 2); }, $points)) / ($num_scores - 1));
                     $stdev_percent = $stdev * 100 / $total_points;
                 } else {
                     $stdev = false;
                     $stdev_percent = false;
                 }
 
-                $kr20 = Models_Exam_Exam::get_kr20($exam_elements, $scores, $mean);
+                $kr20 = Models_Exam_Exam::get_kr20($exam_elements, $scores, $mean_score);
 
                 // Get all the multiple choice letters we need columns for
                 $letters = array();

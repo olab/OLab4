@@ -141,6 +141,16 @@ class Models_Assessments_Form_Element extends Models_Base {
         ));
     }
 
+    public static function fetchAllByFormIDRubricIDNotNull($form_id) {
+        $self = new self();
+        return $self->fetchAll(array(
+            array("key" => "form_id", "value" => $form_id, "method" => "="),
+            array("key" => "rubric_id", "value" => NULL, "method" => "IS NOT"),
+            array("key" => "element_type", "value" => "item", "method" => "="),
+            array("key" => "deleted_date", "value" => NULL, "method" => "IS")
+        ),  "=", "AND", "order");
+    }
+
     public static function fetchAllByRubricID($rubric_id) {
         $self = new self();
         return $self->fetchAll(array(
@@ -421,5 +431,62 @@ class Models_Assessments_Form_Element extends Models_Base {
             }
         }
         return $form_ids;
+    }
+
+    public static function deleteFormElementByFormIDItemCode($form_id, $item_code, $proxy_id) {
+        global $db;
+
+        $query = "SELECT b.*
+                  FROM `cbl_assessment_form_elements` as a
+                  JOIN `cbl_assessments_lu_items` as b ON a.`element_type` = 'item' AND a.`element_id` = b.`item_id`
+                  WHERE a.`form_id` = ?
+                  AND b.`item_code` = ?";
+
+        $ids = array();
+        if ($results = $db->getAll($query, array($form_id, $item_code))) {
+            foreach ($results as $result) {
+                if ($result["attributes"]) {
+                    $att = json_decode($result["attributes"], true);
+                    if ($att["source_form"] == $form_id) {
+                        $ids[] = $result["item_id"];
+                    }
+                }
+            }
+        }
+
+        if (count($ids)) {
+            $query  = "UPDATE `cbl_assessment_form_elements` SET
+                    `deleted_date` = ?,
+                    `updated_date` = ?,
+                    `updated_by` = ? 
+                   WHERE `form_id` = ? 
+                   AND `element_type` = 'item' 
+                   AND `element_id` IN (".implode(",", $ids).")";
+
+            return $db->Execute($query, array(time(), time(), $proxy_id, $form_id));
+        }
+
+        return true;
+    }
+
+    public static function setOrderingStartForFormItems($form_id, $start = 0) {
+        global $db;
+
+        $query = "SELECT *
+                  FROM `cbl_assessment_form_elements`
+                  WHERE `form_id` = ?
+                  AND `deleted_date` IS NULL 
+                  ORDER BY `order`";
+
+        if ($elements = $db->query($query, array($form_id))) {
+            foreach ($elements as $element) {
+                $query = "UPDATE `cbl_assessment_form_elements` SET `order` = ? WHERE `afelement_id` = ?";
+                if (!$db->Execute($query, array($start++, $element["afelement_id"]))) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 }

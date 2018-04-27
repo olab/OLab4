@@ -113,8 +113,8 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 
                         $members_object = new Models_Course_Group_Audience();
 
-
-                        if ($ENTRADA_ACL->amIAllowed('group', 'update', false) && $PROCESSED["group_id"]) {
+                        if ($ENTRADA_ACL->amIAllowed(new CourseResource($course_id, $ENTRADA_USER->getActiveOrganisation()), 'update', true)) {
+                            $members_object = new Models_Course_Group_Audience();
                             $members = $members_object->getGroupMembersByGroupID($PROCESSED["group_id"],$PROCESSED["search_term"],$PROCESSED["offset"], $PROCESSED["limit"], $PROCESSED["sort_column"], $PROCESSED["sort_direction"]);
                             $total_members = $members_object->getTotalGroupMembersByGroupID($PROCESSED["group_id"],$PROCESSED["search_term"]);
                         }

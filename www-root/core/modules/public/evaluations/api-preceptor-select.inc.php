@@ -63,7 +63,7 @@ if ($RECORD_ID) {
 		}
 		$output = Classes_Evaluation::getPreceptorSelect($RECORD_ID, $event_id, $ENTRADA_USER->getID(), (isset($preceptor_proxy_id) && $preceptor_proxy_id ? $preceptor_proxy_id : 0));
 		if ($output) {
-			echo "<br /><div class=\"content-small\">Please choose a clerkship preceptor to evaluate: \n";
+			echo "<br /><div class=\"content-small\">Please choose a " . $translate->_("clerkship preceptor") . " to evaluate: \n";
 			echo $output;
 			echo "</div>\n";
 		}

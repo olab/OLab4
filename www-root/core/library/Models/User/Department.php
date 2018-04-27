@@ -50,6 +50,19 @@ class Models_User_Department extends Models_Base {
         return $this->dep_title;
     }
 
+    public static function fetchRowByUserIdDepartmentId($uid, $depid) {
+        $self = new self();
+        return $self->fetchRow(array(
+            array("key" => "user_id", "value" => $uid, "method" => "="),
+            array("key" => "dep_id", "value" => $depid, "method" => "=")
+        ));
+    }
+
+    /**
+     * Entrada Only flag should be set to 1 if the user was imported or added via the UI.
+     *
+     * @return mixed
+     */
     public function getEntradaOnly() {
         return $this->entrada_only;
     }

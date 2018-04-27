@@ -80,10 +80,11 @@ if(!defined("PARENT_INCLUDED")) {
 			}
 
 			$sidebar_html  = "<ul class=\"menu none\">\n";
-			$sidebar_html .= "	<li><a href=\"".ENTRADA_RELATIVE."/events".(($EVENT_ID) ? "?".replace_query(array("id" => $EVENT_ID, "action" => false, "section" => false)) : "")."\"><img src=\"".ENTRADA_RELATIVE."/images/checkbox-off.gif\" alt=\"\" /> <span>Learner View</span></a></li>\n";
-			if ($admin_wording) {
-				$sidebar_html .= "<li><a href=\"".ENTRADA_RELATIVE."/admin/events".(($EVENT_ID) ? "?".replace_query(array("id" => $EVENT_ID, "action" => "manage")) : "")."\"><img src=\"".ENTRADA_RELATIVE."/images/checkbox-on.gif\" alt=\"\" /> <span>".html_encode($admin_wording)."</span></a></li>\n";
-			}
+            $sidebar_html .= "<li><a href=\"".ENTRADA_RELATIVE."/events".(($EVENT_ID) ? "?".replace_query(array("id" => $EVENT_ID, "action" => false, "section" => false, "step" => false)) : "")."\"><img src=\"".ENTRADA_RELATIVE."/images/checkbox-off.gif\" alt=\"\" /> <span>Learner View</span></a></li>\n";
+            if ($admin_wording) {
+                $sidebar_html .= "<li><a href=\"".ENTRADA_RELATIVE."/admin/events".(($EVENT_ID) ? "?".replace_query(array("id" => $EVENT_ID, "action" => "manage", "step" => false)) : "")."\"><img src=\"".ENTRADA_RELATIVE."/images/checkbox-on.gif\" alt=\"\" /> <span>".html_encode($admin_wording)."</span></a></li>\n";
+
+            }
 			$sidebar_html .= "</ul>\n";
 			
 			new_sidebar_item("Display Style", $sidebar_html, "display-style", "open");

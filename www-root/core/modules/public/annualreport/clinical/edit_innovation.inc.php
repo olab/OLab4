@@ -36,7 +36,11 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 
 	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] do not have access to this module [".$MODULE."]");
 } else {
-	$CLINICAL_INNOVATION_ID = $_GET["rid"];
+    if (isset($_GET["rid"]) && (int) $_GET["rid"]) {
+        $CLINICAL_INNOVATION_ID = clean_input($_GET["rid"], "int");
+    } else {
+        $CLINICAL_INNOVATION_ID = 0;
+    }
 	
 	// This grid should be expanded upon redirecting back to the clinical index.
 	$_SESSION["clinical_expand_grid"] = "innovation_grid";
@@ -142,8 +146,8 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 				default :
 					if(!isset($PROCESSED) || count($PROCESSED) <= 0)
 					{
-						$innovationQuery = "SELECT * FROM `ar_clinical_innovation` WHERE `clinical_innovation_id` ='$CLINICAL_INNOVATION_ID'";						
-						$innovationResult = $db->GetRow($innovationQuery);
+						$innovationQuery = "SELECT * FROM `ar_clinical_innovation` WHERE `clinical_innovation_id` = ?";
+						$innovationResult = $db->GetRow($innovationQuery, array($CLINICAL_INNOVATION_ID));
 					}
 					
 					if($ERROR) {

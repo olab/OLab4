@@ -1,0 +1,106 @@
+.upload-file-btn {
+    padding-left: 7px !important;
+    padding-right: 7px !important;
+}
+
+.table td {
+    padding: 8px !important;
+}
+
+.user-card {
+    width: 100% !important;
+    padding: 0px 0px 10px 0px  !important;
+    margin-bottom: 10px !important;
+}
+
+#learner-form {
+    display: inline-block;
+    margin: 10px 0px 5px;
+}
+
+#form-selector {
+    margin-top: 0px !important;
+}
+
+#add-meeting {
+    margin-top: 10px;
+}
+
+#file-meeting-file-upload {
+    width:100%;
+    padding:0;
+    margin:0;
+}
+#meeting-file-upload-uploader {
+    width: 100%;
+    margin-left: 0;
+    padding: 0;
+}
+
+#file-label {
+    margin-top: 9%;
+    margin-right: 10px;
+    margin-left: 10px;
+    line-height: normal;
+}
+
+.control-label {
+    display: none;
+}
+
+.file-title {
+    display: block;
+}
+
+.meeting-download-icon {
+    font-size: 1.3em;
+}
+
+.meeting-comment {
+    max-width: 297px;
+}
+
+.meeting-delete-file-icon-disabled {
+    color: #858B93;
+    font-size: 1.3em;
+}
+
+.file-label {
+    display: inline-block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 190px;
+}
+
+.meeting-action-icon {
+    font-size: 1.3em;
+}
+
+.display-block {
+    display: block;
+}
+
+.file-text {
+    word-wrap: break-word;
+}
+
+.actions-column {
+    max-width: 100px;
+    white-space: nowrap;
+}
+
+.public-file-label {
+    display: inline-block;
+    max-width: 140px;
+    width: 100%;
+    float: right;
+}
+
+.meeting-file-form {
+    white-space: nowrap;
+}
+
+.files-column {
+    min-width: 200px;
+}

@@ -91,7 +91,7 @@ if (!defined("IN_ASSESSMENTS_REPORTS")) {
         $specified_form = Models_Assessments_Form::fetchRowByID($specified_form_id);
         if ($assessment_user && $specified_form) {
             if ($specified_role == "faculty") {
-                $override_permission = Entrada_Utilities_Assessments_AssessmentTask::getFacultyAccessOverrideByCourseFacultyOrWhitelist($ENTRADA_USER, $specified_proxy_id);
+                $override_permission = Entrada_Utilities_Assessments_DeprecatedAssessmentTask::getFacultyAccessOverrideByCourseFacultyOrWhitelist($ENTRADA_USER, $specified_proxy_id);
             } else {
                 $override_permission = null;
             }
@@ -102,7 +102,7 @@ if (!defined("IN_ASSESSMENTS_REPORTS")) {
                 $HEAD[] = "<script type=\"text/javascript\">var proxy_id = '" . $specified_proxy_id . "';</script>";
                 $HEAD[] = "<script type=\"text/javascript\">sidebarBegone();</script>";
                 $JQUERY[] = "<script type=\"text/javascript\" src=\"" . ENTRADA_URL . "/javascript/assessments/assessment-index.js?release=" . html_encode(APPLICATION_VERSION) . "\"></script>";
-                $HEAD[] = "<link href=\"" . ENTRADA_URL . "/css/assessments/assessment-public-index.css\" rel=\"stylesheet\" type=\"text/css\" media=\"all\" />";
+                $HEAD[] = "<link href=\"" . ENTRADA_URL . "/css/assessments/assessment-public-index.css?release=" . html_encode(APPLICATION_VERSION)."\" rel=\"stylesheet\" type=\"text/css\" media=\"all\" />";
 
                 $group_by_distribution = Entrada_Utilities_Assessments_Reports::getPreferenceFromSession("group_by_distribution");
                 $distribution = false;

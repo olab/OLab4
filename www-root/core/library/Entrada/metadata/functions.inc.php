@@ -22,6 +22,7 @@ require_once("Classes/users/metadata/MetaDataType.class.php");
 require_once("Classes/users/metadata/MetaDataTypes.class.php");
 require_once("Classes/users/metadata/MetaDataValue.class.php");
 require_once("Classes/users/metadata/MetaDataValues.class.php");
+require_once("Classes/users/metadata/CsvImporter.class.php");
 
 /**
  * @param MetaDataType $type
@@ -127,7 +128,7 @@ function editMetaDataRow(MetaDataValue $value, MetaDataType $category, array $de
 	$vid = $value->getID();
 	ob_start();	
 	?>
-	<tr class="value_edit" id="value_edit_<?php echo $vid; ?>">
+	<tr class="value_edit" style="background-color: <?php echo ($category->getRestricted()?"#ffE6E6":"#fefefe"); ?>" id="value_edit_<?php echo $vid; ?>">
 		<td class="control"><input type="checkbox" title="Delete record" class="delete_btn" id="delete_<?php echo $vid; ?>" name="value[<?php echo $vid; ?>][delete]" value="1" /></td>
 		<td><?php if ($descendant_type_sets) { ?>
 			<select name="value[<?php echo $vid; ?>][type]">
@@ -139,7 +140,8 @@ function editMetaDataRow(MetaDataValue $value, MetaDataType $category, array $de
 				} 
 				?>
 			</select>
-			<?php } else { ?>
+			<?php } else {
+			echo html_encode($category->getLabel()); ?>
 			<input type="hidden" name="value[<?php echo $vid; ?>][type]" value="<?php echo $category->getID(); ?>" />
 			<?php } ?>
 		</td>
@@ -182,16 +184,28 @@ function getUserCategoryValues(User $eUser, MetaDataType $category) {
 	return MetaDataValues::get($org_id, $group, $role,$proxy_id, $category, true, array("order by"=>array(array("meta_value_id", "desc"))));
 }
 
-function errNoCats_MetaDataTable() {
-	return display_notice("There are currently no Meta Data Categories applicable to this user.");
+function errNoCats_MetaDataTable($public =false) {
+	global $translate;
+	return display_notice($translate->_($public?"metadata_error_novalues":"metadata_error_nocategories"));
 }
 
 
-function editMetaDataTable($contents, $prepend=null) {
+function editMetaDataTable($contents, $prepend=null, $count=1, $loadpage=false) {
+	global $translate;
 	ob_start();
 	echo $prepend;
 	?>
 	<input type="hidden" name="request" value="update" />
+	<?php if ($count>20) { ?>
+		<div class="row-fluid space-below">
+		<?php if ($loadpage) { ?>
+			<input class="btn btn-success btn-small" type="reset" name="load_table" id="load_table_btn" <?php echo " value=\"".$translate->_("metadata_button_export")."\" onclick=\"loadpage()" ?>" />
+			<?php } ?>
+			<input class="pull-right btn btn-primary btn-small" type="submit" value="<?php echo $translate->_("global_button_save")?>" id="save_btnx" />
+		</div>
+		<?php }
+	?>
+
 	<table class="DataTable" callpadding="0" cellspacing="0">
 		<colgroup>
 			<col width="4%" />
@@ -203,24 +217,25 @@ function editMetaDataTable($contents, $prepend=null) {
 		</colgroup>
 		<thead>
 			<tr>
-				<th>Remove</th>
-				<th>Sub-type</th>
-				<th>Value</th>
-				<th>Notes</th>
-				<th>Effective Date</th>
-				<th>Expiry Date</th>
+				<th><?php echo $translate->_("metadata_field_remove")?></th>
+				<th><?php echo $translate->_("metadata_field_type")?></th>
+				<th><?php echo $translate->_("metadata_field_value")?></th>
+				<th><?php echo $translate->_("metadata_field_notes")?></th>
+				<th><?php echo $translate->_("metadata_field_effective")?></th>
+				<th><?php echo $translate->_("metadata_field_expiry")?></th>
 			</tr>
 		</thead>
-		<tfoot>
-			<tr>
-				<td></td>
-				<td colspan="5" class="control">
-					<input class="btn btn-primary" type="submit" value="Save" id="save_btn" />
-				</td>
-			</tr>
-		</tfoot>
 	<?php echo $contents; ?>
 	</table>	
+	<div class="row-fluid space-above">
+		<?php
+		if ($loadpage) { ?>
+		<input class="btn btn-success btn-small" type="reset" name="load_table" id="load_table_btn" <?php echo " value=\"".$translate->_("metadata_button_export")."\" onclick=\"loadpage()" ?>" />
+		<?php }
+		if ($count) {
+			echo "<input class=\"pull-right btn btn-primary btn-small\" type=\"submit\" value=\"".$translate->_("global_button_save")."\" id=\"save_btn\" />";
+		} ?>
+	</div>
 	<?php 
 	return ob_get_clean();
 }
@@ -241,6 +256,7 @@ function getHiddenMetaInputs($organisation_id, $group, $role, $category_id) {
 
 function editMetaDataTable_Category($organisation_id=null, $group=null, $role=null, $proxy_id=null, MetaDataType $category) {
 	//for this case we have to get the users which are members of the relevant org, group, role, and where relevant? proxy_id
+	global $translate;
 	$users = Users::get($organisation_id, $group, $role, $proxy_id);
 	$types = MetaDataTypes::get($organisation_id, $group, $role, $proxy_id);
 	$category_id = $category->getID(); 
@@ -256,7 +272,7 @@ function editMetaDataTable_Category($organisation_id=null, $group=null, $role=nu
 		<tr class="user_head" id="user_head_<?php echo $user->getID(); ?>">
 			<td></td>
 			<th colspan="2"><?php echo $label; ?></th>
-			<td class="control" colspan="3"><ul class="page-action"><li class="last"><a href="#" class="add_btn" id="add_btn_<?php echo $category_id; ?>">Add record for <?php echo $label; ?></a></li></ul></td>
+			<td class="control" colspan="3"><ul class="page-action"><li class="last"><a href="#" class="add_btn" id="add_btn_<?php echo "$category_id\">".$translate->_("Add record for")." $label"; ?></a></li></ul></td>
 		</tr>
 		<?php
 			foreach ($values as $value) {
@@ -266,10 +282,11 @@ function editMetaDataTable_Category($organisation_id=null, $group=null, $role=nu
 	<?php 
 	}
 	$prepend = getHiddenMetaInputs($organisation_id, $group, $role, $category_id);
-	return editMetaDataTable(ob_get_clean(), $prepend);
+	return editMetaDataTable(ob_get_clean(), $prepend, count($users),true);
 }
 
 function editMetaDataTable_User(User $eUser) {
+	global $translate;
 	
 	$types = getTypes_User($eUser);
 	$categories = getCategories($types);
@@ -282,13 +299,13 @@ function editMetaDataTable_User(User $eUser) {
 			$values = getUserCategoryValues($eUser, $category);
 			//var_dump($values);
 			$descendant_type_sets = getDescendentTypesArray($types, $category); 
-			$label = html_encode($category->getLabel());
+			$label = html_encode($category->getLabel()). ($category->getRestricted()?$translate->_(" [Non viewable]"):"");
 	?>
 	<tbody id="cat_<?php echo $category->getID(); ?>">
 		<tr class="cat_head" id="cat_head_<?php echo $category->getID(); ?>">
 			<td></td>
 			<th colspan="2"><?php echo $label; ?></th>
-			<td class="control" colspan="3"><ul class="page-action"><li class="last"><a href="#" class="add_btn" id="add_btn_<?php echo $category->getID(); ?>">Add <?php echo $label; ?></a></li></ul></td>
+			<td class="control" colspan="3"><ul class="page-action"><li class="last"><a href="#" class="add_btn" id="add_btn_<?php echo $category->getID()?>"> <?php echo $translate->_("Add")." $label"; ?></a></li></ul></td>
 		</tr>
 		<?php		
 			if ($values) {
@@ -347,6 +364,7 @@ function fmt_date($value) {
 }
 
 function display_category_select($organisation_id=null, $group=null, $role=null, $proxy_id=null, $cat_id=null) {
+	global $translate;
 	$types = MetaDataTypes::get($organisation_id, $group, $role, $proxy_id);
 	$categories = getCategories($types);
 	if (count($categories) == 0) {
@@ -357,10 +375,121 @@ function display_category_select($organisation_id=null, $group=null, $role=null,
 		<select id="associated_cat_id" name="associated_cat_id">
 			<?php
 				foreach ($categories as $category) {
-					echo build_option($category->getID(), $category->getLabel(), $cat_id == $category->getID());
+					echo build_option($category->getID(), $category->getLabel().($category->getRestricted()?$translate->_(" [admin]"):""), $cat_id == $category->getID());
 				} 
 			?>
 		</select>
 	<?php 
 	return ob_get_clean();	
+}
+
+function getFullLabel(MetaDataValue $value) {
+	$chain = getParentArray($value->getType());
+//	$top = array_shift($chain);//toss the top
+	if ($chain) {
+		$sub_type = implode(" > ", $chain);
+	} else {
+		$sub_type = "";
+	}
+	return html_encode($sub_type);
+}
+
+function viewMetaDataTable_User(User $eUser) {
+	global $translate, $ENTRADA_ACL;
+
+	$types = getTypes_User($eUser);
+	$categories = getCategories($types);
+	$public  = !$ENTRADA_ACL->amIAllowed("metadata", "create", false);
+	
+	if (count($categories) == 0) {
+		return errNoCats_MetaDataTable(true);
+	}
+	ob_start();
+
+		$no_values = true;
+	if ($categories) {
+
+		foreach ($categories as $category) {
+			$values = getUserCategoryValues($eUser, $category);
+			$descendant_type_sets = getDescendentTypesArray($types, $category);
+			if ($public && $category->getRestricted()) {
+				continue;
+			}
+			$label = html_encode($category->getLabel());
+			if (count($values)) {
+				if ($no_values) {
+	                $no_values = false;
+	            }
+	        }
+		?>
+		<h2><?php echo "$label". (count($values)?"":" N/A"); ?></h2>
+		<table class="table table-bordered table-striped">
+		<colgroup>
+			<col width="18%" />
+			<col width="19%" />
+			<col width="33%" />
+			<col width="15%" />
+			<col width="15%" />
+		</colgroup>
+		<thead>
+		<tr>
+			<th><?php echo $translate->_("metadata_field_type")?></th>
+			<th><?php echo $translate->_("metadata_field_value")?></th>
+			<th><?php echo $translate->_("metadata_field_notes")?></th>
+			<th><?php echo $translate->_("metadata_field_effective")?></th>
+			<th><?php echo $translate->_("metadata_field_expiry")?></th>
+		</tr>
+		</thead>
+			<tbody>
+			<?php
+				foreach ($values as $value) {
+					?>
+						<tr class="value_edit">
+						<td align="center">
+							<?php if ($descendant_type_sets) {
+								echo "&nbsp;<b>" . html_encode($value->getType())."</b>";
+							} else {
+								echo "$label";
+							} ?>
+						</td>
+						<td><?php echo "&nbsp;<b>" . html_encode($value->getValue()); ?></b></td>
+						<td><?php echo "&nbsp;<b>" . nl2br(html_encode($value->getNotes())); ?></b></td>
+						<td><?php echo "&nbsp;<b>" . (($eff_date = $value->getEffectiveDate()) ? date("Y-m-d", $eff_date) : "") ; ?></b></td>
+						<td><?php echo "&nbsp;<b>" . (($exp_date = $value->getExpiryDate()) ? date("Y-m-d", $exp_date) : "" ); ?></b></td>
+					</tr>
+					<?php
+				}
+			?>
+			</tbody>
+		</table>
+		<?php
+		}
+	}
+	return $no_values;
+}
+
+function dumpMetaDataTable_Category($organisation_id=null, $group=null, $role=null, $proxy_id=null, MetaDataType $category) {
+	$rows = array();
+	$users = Users::get($organisation_id, $group, $role, $proxy_id);
+	$types = MetaDataTypes::get($organisation_id, $group, $role, $proxy_id);
+	$descendant_type_sets = getDescendentTypesArray($types, $category);
+	$rows[] = array($category->getLabel(), count($descendant_type_sets));
+
+	foreach ($users as $user) {
+		$userrow = array($user->getID(), "\"".$user->getRole()."\"", "\"".html_encode($user->getFirstname())."\"", "\"".html_encode($user->getLastname())."\"", $user->getNumber());
+		$values = getUserCategoryValues($user, $category);
+
+		if (count($values)) {
+			foreach ($values as $value) {
+				$row = array(	($descendant_type_sets?"\"".html_encode($value->getType())."\"":""),
+								"\"".str_replace('"','""',$value->getValue())."\"", "\"".$value->getNotes()."\"",
+								($eff_date = $value->getEffectiveDate()) ? date("Y-m-d", $eff_date) : "",
+								($exp_date = $value->getExpiryDate()) ? date("Y-m-d", $exp_date) : "" );
+				$rows[] = array_merge($userrow, $row);
+			}
+		} else {
+			$rows[] = array_merge($userrow, array("", "", "", "", ""));
+		}
+	}
+	return $rows;
 }

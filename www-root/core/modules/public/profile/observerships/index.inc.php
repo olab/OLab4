@@ -72,7 +72,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_PUBLIC_OBSERVERSHIPS"))) {
 			observership_list.sortable( "disable" );
 			
 			var clicked = false;
-			jQuery("#reorder_observership").live("click", function(){
+			jQuery(document).on("click", "#reorder_observership", function(){
 				if (clicked == false) {
 					jQuery("#observership-list tbody .delete").hide();
 					jQuery("#observership-list tbody .modified").addClass("sort");
@@ -109,7 +109,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_PUBLIC_OBSERVERSHIPS"))) {
 				}
 				return false;
 			});
-			jQuery("#cancel_order").live("click", function() {
+			jQuery(document).on("click", "#cancel_order", function() {
 				if (dragged == true) {
 					observership_list.sortable( "cancel" );
 				}

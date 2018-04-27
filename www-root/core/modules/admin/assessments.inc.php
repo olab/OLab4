@@ -30,7 +30,7 @@ if(!defined("PARENT_INCLUDED")) {
 } elseif((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 	header("Location: ".ENTRADA_URL);
 	exit;
-} elseif (!$ENTRADA_ACL->amIAllowed($MODULES["events"]["resource"], $MODULES["events"]["permission"], false)) {
+} elseif (!$ENTRADA_ACL->amIAllowed($MODULES["assessments"]["resource"], $MODULES["assessments"]["permission"], false)) {
 	$ERROR++;
 	$ERRORSTR[]	= sprintf($translate->_("You do not have the permissions required to use this module.<br /><br />If you believe you are receiving this message in error please contact <a href=\"mailto:%1\$s\">%2\$s</a> for assistance."), html_encode($AGENT_CONTACTS["administrator"]["email"]), html_encode($AGENT_CONTACTS["administrator"]["name"]));
 
@@ -40,6 +40,19 @@ if(!defined("PARENT_INCLUDED")) {
 } else {
     $MODULE_TEXT = $translate->_($MODULE);
 
+    $sidebar_html  = "<ul class=\"menu\">\n";
+    $sidebar_html .= "	<li class=\"".(!$SUBMODULE ? "on" : "off")."\"><a href=\"".ENTRADA_URL."/admin/".$MODULE."\">".$translate->_("Dashboard")."</a></li>";
+    $sidebar_html .= "	<li class=\"".($SUBMODULE == "distributions" ? "on" : "off")."\"><a href=\"".ENTRADA_URL."/admin/".$MODULE."/distributions\">".$translate->_("Distributions")."</a></li>";
+    $sidebar_html .= "	<li class=\"".($SUBMODULE == "forms" ? "on" : "off")."\"><a href=\"".ENTRADA_URL."/admin/".$MODULE."/forms\">".$translate->_("Forms")."</a></li>";
+    $sidebar_html .= "	<li class=\"" . ($SUBMODULE == "blueprints" ? "on" : "off") . "\"><a href=\"" . ENTRADA_URL . "/admin/" . $MODULE . "/blueprints\">" . $translate->_("Form Templates") . "</a></li>";
+    $sidebar_html .= "	<li class=\"".($SUBMODULE == "items" || $SUBMODULE == "rubrics" ? "on" : "off")."\"><a href=\"".ENTRADA_URL."/admin/".$MODULE."/items\">".$translate->_("Items")."</a></li>";
+    if ($ENTRADA_USER->getActiveGroup() == "medtech" && $ENTRADA_USER->getActiveRole() == "admin") {
+        $sidebar_html .= "	<li class=\"" . ($SUBMODULE == "scales" ? "on" : "off") . "\"><a href=\"" . ENTRADA_URL . "/admin/" . $MODULE . "/scales\">" . $translate->_("Scales") . "</a></li>";
+    }
+    $sidebar_html .= "</ul>\n";
+
+    // new_sidebar_item($translate->_("Assessment & Evaluation"), $sidebar_html, "page-assessments-eval", "open");
+    
     define("IN_ASSESSMENTS", true);
 
     define("RUBRIC_ITEMTYPE_ID", 11);

@@ -172,7 +172,7 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_USERS")) {
 									".(($browse_role) ? "AND b.`role` = ".$db->qstr($browse_role) : "")."
 									GROUP BY a.`id`
 									$order_by
-									LIMIT %d, %d";
+									LIMIT ?, ?";
 			}
 		break;
 		case "browse-dept" :
@@ -212,7 +212,7 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_USERS")) {
 									AND c.`dep_id` = ".$db->qstr($browse_department)."
 									GROUP BY a.`id`
 									$order_by
-									LIMIT %d, %d";
+									LIMIT ?, ?";
 			} else {
                 echo display_error();
             }
@@ -255,125 +255,10 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_USERS")) {
 			}
 
 			if (isset($_GET["search-type"]) && $_GET["search-type"]) {
-				if ($_GET["search-type"] == "all") {
-					$query_counter	= "	SELECT count(*) as `total_rows` FROM (SELECT COUNT(a.`id`) AS `total_rows`
-										FROM `".AUTH_DATABASE."`.`user_data` AS a
-										LEFT JOIN `".AUTH_DATABASE."`.`user_access` AS b
-										ON b.`user_id` = a.`id`
-										AND b.`app_id` = ".$db->qstr(AUTH_APP_ID)."
-										WHERE (a.`number` LIKE ".$db->qstr("%%".str_replace("%", "", $search_query)."%%")."
-										OR a.`username` LIKE ".$db->qstr("%%".str_replace("%", "", $search_query)."%%")."
-										OR a.`email` LIKE ".$db->qstr("%%".str_replace("%", "", $search_query)."%%")."
-										OR a.`firstname` LIKE ".$db->qstr("%%".str_replace("%", "", $search_query)."%%")."
-										OR a.`lastname` LIKE ".$db->qstr("%%".str_replace("%", "", $search_query)."%%").")
-										GROUP BY a.`id`) as t";
-					$query_search	= "	SELECT a.*, CONCAT_WS(', ', a.`lastname`, a.`firstname`) AS `fullname`, b.`account_active`, b.`access_starts`, b.`access_expires`, b.`last_login`, b.`role`, b.`group`
-										FROM `".AUTH_DATABASE."`.`user_data` AS a
-										LEFT JOIN `".AUTH_DATABASE."`.`user_access` AS b
-										ON b.`user_id` = a.`id`
-										AND b.`app_id` = ".$db->qstr(AUTH_APP_ID)."
-										WHERE (a.`number` LIKE ".$db->qstr("%%".str_replace("%", "", $search_query)."%%")."
-										OR a.`username` LIKE ".$db->qstr("%%".str_replace("%", "", $search_query)."%%")."
-										OR a.`email` LIKE ".$db->qstr("%%".str_replace("%", "", $search_query)."%%")."
-										OR a.`firstname` LIKE ".$db->qstr("%%".str_replace("%", "", $search_query)."%%")."
-										OR a.`lastname` LIKE ".$db->qstr("%%".str_replace("%", "", $search_query)."%%").")
-										GROUP BY a.`id`
-										$order_by
-										LIMIT %d, %d";
-				} elseif ($_GET["search-type"] == "active") {
-					$query_counter	= "	SELECT count(*) as `total_rows` FROM (SELECT COUNT(a.`id`) AS `total_rows`
-										FROM `".AUTH_DATABASE."`.`user_data` AS a
-										LEFT JOIN `".AUTH_DATABASE."`.`user_access` AS b
-										ON b.`user_id` = a.`id`
-										AND b.`app_id` = ".$db->qstr(AUTH_APP_ID)."
-										WHERE b.`app_id` = ".$db->qstr(AUTH_APP_ID)."
-										AND b.`account_active` = 'true'
-										AND b.`access_starts` < ".$db->qstr(time())."
-										AND (b.`access_expires` > ".$db->qstr(time())." OR b.`access_expires` = 0) AND
-										(a.`number` LIKE ".$db->qstr("%%".str_replace("%", "", $search_query)."%%")."
-										OR a.`username` LIKE ".$db->qstr("%%".str_replace("%", "", $search_query)."%%")."
-										OR a.`email` LIKE ".$db->qstr("%%".str_replace("%", "", $search_query)."%%")."
-										OR a.`firstname` LIKE ".$db->qstr("%%".str_replace("%", "", $search_query)."%%")."
-										OR a.`lastname` LIKE ".$db->qstr("%%".str_replace("%", "", $search_query)."%%").")
-										GROUP BY a.`id`) as t";
-					$query_search	= "	SELECT a.*, CONCAT_WS(', ', a.`lastname`, a.`firstname`) AS `fullname`, b.`account_active`, b.`access_starts`, b.`access_expires`, b.`last_login`, b.`role`, b.`group`
-										FROM `".AUTH_DATABASE."`.`user_data` AS a
-										LEFT JOIN `".AUTH_DATABASE."`.`user_access` AS b
-										ON b.`user_id` = a.`id`
-										AND b.`app_id` = ".$db->qstr(AUTH_APP_ID)."
-										WHERE b.`app_id` = ".$db->qstr(AUTH_APP_ID)."
-										AND b.`account_active` = 'true'
-										AND b.`access_starts` < ".$db->qstr(time())."
-										AND (b.`access_expires` > ".$db->qstr(time())." OR b.`access_expires` = 0) AND
-										(a.`number` LIKE ".$db->qstr("%%".str_replace("%", "", $search_query)."%%")."
-										OR a.`username` LIKE ".$db->qstr("%%".str_replace("%", "", $search_query)."%%")."
-										OR a.`email` LIKE ".$db->qstr("%%".str_replace("%", "", $search_query)."%%")."
-										OR a.`firstname` LIKE ".$db->qstr("%%".str_replace("%", "", $search_query)."%%")."
-										OR a.`lastname` LIKE ".$db->qstr("%%".str_replace("%", "", $search_query)."%%").")
-										GROUP BY a.`id`
-										$order_by
-										LIMIT %d, %d";
-				} elseif ($_GET["search-type"] == "inactive") {
-					$query_counter	= "	SELECT count(*) as `total_rows` FROM (SELECT COUNT(a.`id`) AS `total_rows`
-										FROM `".AUTH_DATABASE."`.`user_data` AS a
-										LEFT JOIN `".AUTH_DATABASE."`.`user_access` AS b
-										ON b.`user_id` = a.`id`
-										AND b.`app_id` = ".$db->qstr(AUTH_APP_ID)."
-										WHERE b.`app_id` = ".$db->qstr(AUTH_APP_ID)."
-										AND (b.`account_active` = 'false'
-										OR (b.`access_starts` > ".$db->qstr(time())."
-										OR (b.`access_expires` < ".$db->qstr(time())." AND b.`access_expires` != 0))) AND
-										(a.`number` LIKE ".$db->qstr("%%".str_replace("%", "", $search_query)."%%")."
-										OR a.`username` LIKE ".$db->qstr("%%".str_replace("%", "", $search_query)."%%")."
-										OR a.`email` LIKE ".$db->qstr("%%".str_replace("%", "", $search_query)."%%")."
-										OR a.`firstname` LIKE ".$db->qstr("%%".str_replace("%", "", $search_query)."%%")."
-										OR a.`lastname` LIKE ".$db->qstr("%%".str_replace("%", "", $search_query)."%%").")
-										GROUP BY a.`id`) as t";
-					$query_search	= "	SELECT a.*, CONCAT_WS(', ', a.`lastname`, a.`firstname`) AS `fullname`, b.`account_active`, b.`access_starts`, b.`access_expires`, b.`last_login`, b.`role`, b.`group`
-										FROM `".AUTH_DATABASE."`.`user_data` AS a
-										LEFT JOIN `".AUTH_DATABASE."`.`user_access` AS b
-										ON b.`user_id` = a.`id`
-										AND b.`app_id` = ".$db->qstr(AUTH_APP_ID)."
-										WHERE b.`app_id` = ".$db->qstr(AUTH_APP_ID)."
-										AND (b.`account_active` = 'false'
-										OR (b.`access_starts` > ".$db->qstr(time())."
-										OR (b.`access_expires` < ".$db->qstr(time())." AND b.`access_expires` != 0))) AND
-										(a.`number` LIKE ".$db->qstr("%%".str_replace("%", "", $search_query)."%%")."
-										OR a.`username` LIKE ".$db->qstr("%%".str_replace("%", "", $search_query)."%%")."
-										OR a.`email` LIKE ".$db->qstr("%%".str_replace("%", "", $search_query)."%%")."
-										OR a.`firstname` LIKE ".$db->qstr("%%".str_replace("%", "", $search_query)."%%")."
-										OR a.`lastname` LIKE ".$db->qstr("%%".str_replace("%", "", $search_query)."%%").")
-										GROUP BY a.`id`
-										$order_by
-										LIMIT %d, %d";
-				} elseif ($_GET["search-type"] == "new") {
-					$query_counter	= "	SELECT count(*) as `total_rows` FROM (SELECT COUNT(a.`id`) AS `total_rows`
-										FROM `".AUTH_DATABASE."`.`user_data` AS a
-										LEFT JOIN `".AUTH_DATABASE."`.`user_access` AS b
-										ON b.`user_id` = a.`id`
-										AND b.`app_id` = ".$db->qstr(AUTH_APP_ID)."
-										WHERE b.`app_id` IS NULL AND
-										(a.`number` LIKE ".$db->qstr("%%".str_replace("%", "", $search_query)."%%")."
-										OR a.`username` LIKE ".$db->qstr("%%".str_replace("%", "", $search_query)."%%")."
-										OR a.`email` LIKE ".$db->qstr("%%".str_replace("%", "", $search_query)."%%")."
-										OR a.`firstname` LIKE ".$db->qstr("%%".str_replace("%", "", $search_query)."%%")."
-										OR a.`lastname` LIKE ".$db->qstr("%%".str_replace("%", "", $search_query)."%%").")
-										GROUP BY a.`id`) as t";
-					$query_search	= "	SELECT a.*, CONCAT_WS(', ', a.`lastname`, a.`firstname`) AS `fullname`, b.`account_active`, b.`access_starts`, b.`access_expires`, b.`last_login`, b.`role`, b.`group`
-										FROM `".AUTH_DATABASE."`.`user_data` AS a
-										LEFT JOIN `".AUTH_DATABASE."`.`user_access` AS b
-										ON b.`user_id` = a.`id`
-										AND b.`app_id` = ".$db->qstr(AUTH_APP_ID)."
-										WHERE b.`app_id` IS NULL AND
-										(a.`number` LIKE ".$db->qstr("%%".str_replace("%", "", $search_query)."%%")."
-										OR a.`username` LIKE ".$db->qstr("%%".str_replace("%", "", $search_query)."%%")."
-										OR a.`email` LIKE ".$db->qstr("%%".str_replace("%", "", $search_query)."%%")."
-										OR a.`firstname` LIKE ".$db->qstr("%%".str_replace("%", "", $search_query)."%%")."
-										OR a.`lastname` LIKE ".$db->qstr("%%".str_replace("%", "", $search_query)."%%").")
-										GROUP BY a.`id`
-										$order_by
-										LIMIT %d, %d";
-				}
+
+			    $search_type = $_GET["search-type"];
+                $query_search = Models_User::get_search_query_sql($search_type, $search_query, $order_by);
+                $query_counter = Models_User::get_search_counter_sql($search_type, $search_query);
 
 				$sidebar_html  = "<div style=\"margin: 2px 0px 10px 3px; font-size: 10px\">\n";
 				$sidebar_html .= "	<div><img src=\"".ENTRADA_URL."/images/legend-active-member.gif\" width=\"14\" height=\"14\" alt=\"\" title=\"\" style=\"vertical-align: middle\" /> Active Member</div>\n";
@@ -426,10 +311,16 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_USERS")) {
 
 	<h1><?php echo $MODULES[strtolower($MODULE)]["title"]; ?></h1>
 
-	<div style="float: right">
-        <a href="<?php echo ENTRADA_URL; ?>/admin/users?section=add" class="btn btn-primary">Add New User</a>
-	</div>
-	<div style="clear: both"></div>
+    <?php
+    Entrada_Utilities_Flashmessenger::displayMessages($MODULE);
+    ?>
+
+    <div class="row-fluid">
+        <div class="pull-right">
+            <a href="#import-csv" class="btn btn-default" data-toggle="modal"><i class="fa fa-upload"></i> <?php echo $translate->_("Import From CSV"); ?></a>
+            <a href="<?php echo ENTRADA_URL; ?>/admin/users?section=add" class="btn btn-success"><i class="icon-plus-sign icon-white"></i> <?php echo $translate->_("Add New User"); ?></a>
+        </div>
+    </div>
 
 	<style type="text/css">
         .departments-advanced-search {
@@ -438,6 +329,35 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_USERS")) {
             margin: 0px 0px 20px;
         }
 	</style>
+
+    <div class="modal hide fade" id="import-csv">
+        <form id="csv-form" action="<?php echo ENTRADA_URL; ?>/admin/users?section=csv-import" enctype="multipart/form-data" method="POST">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h3>Import CSV</h3>
+            </div>
+            <div class="modal-body">
+                <div id="display-notice-box" class="display-notice">
+                    <ul>
+                        <li>
+                            <strong><?php echo $translate->_("Important Notes:") ?></strong>
+                            <p><?php echo $translate->_("Upon uploading a CSV you will be prompted to confirm the association between column headings and their data points."); ?></p>
+                            <a href="<?php echo ENTRADA_URL; ?>/admin/users?section=csv-import&step=3">
+                                <img style="border: none;" src="<?php echo ENTRADA_URL; ?>/images/btn_help.gif" />
+                                <label><?php echo $translate->_("Download sample CSV file"); ?></label>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                <input type="file" name="csv_file" />
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default pull-left" data-dismiss="modal"><?php echo $translate->_("Close") ?></button>
+                <button type="submit" id="submit-btn" class="btn btn-primary"><?php echo $translate->_("Import CSV") ?></button>
+            </div>
+        </form>
+    </div>
+
 	<div class="tab-pane" id="user-tabs">
 		<div class="tab-page">
 			<h3 class="tab">Newest Users</h3>
@@ -567,10 +487,8 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_USERS")) {
 		/**
 		 * Provides the first parameter of MySQLs LIMIT statement by calculating which row to start results from.
 		 */
-		$limit_parameter = (int) (($results_per_page * $page_current) - $results_per_page);
-		$query	= sprintf($query_search, $limit_parameter, $results_per_page);
 
-		$results	= $db->GetAll($query);
+        $results = Models_User::search_user($query_search, $page_current, $results_per_page, $search_type);
 
 		if ($results) {
 			?>
@@ -650,7 +568,7 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_USERS")) {
 						echo "	<td class=\"title\">".(($url) ? "<a href=\"".$url."\" title=\"Edit Account: ".html_encode($result["fullname"])."\">" : "").html_encode($result["fullname"]).(($url) ? "</a>" : "")."</td>\n";
 						echo "	<td class=\"general\">".(($url) ? "<a href=\"".$url."\" title=\"Edit Account: ".html_encode($result["fullname"])."\">" : "").html_encode($result["username"]).(($url) ? "</a>" : "")."</td>\n";
 						echo "	<td class=\"general\">".(($url) ? "<a href=\"".$url."\" title=\"Edit Account: ".html_encode($result["fullname"])."\">" : "").ucwords($result["group"])." &rarr; ".ucwords($result["role"]).(($url) ? "</a>" : "")."</td>\n";
-						echo "	<td class=\"date\">".(($url) ? "<a href=\"".$url."\" title=\"Edit Account: ".html_encode($result["fullname"])."\">" : "").(((int) $result["last_login"]) ? date(DEFAULT_DATE_FORMAT, (int) $result["last_login"]) : "Never Logged In").(($url) ? "</a>" : "")."</td>\n";
+						echo "	<td class=\"date\">".(($url) ? "<a href=\"".$url."\" title=\"Edit Account: ".html_encode($result["fullname"])."\">" : "").(((int) $result["last_login"]) ? date(DEFAULT_DATETIME_FORMAT, (int) $result["last_login"]) : "Never Logged In").(($url) ? "</a>" : "")."</td>\n";
 						if ($ENTRADA_ACL->amIAllowed("masquerade", "read")) {
 							if ($result["id"] != $_SESSION["details"]["id"]) {
 								echo "	<td><a href=\"".ENTRADA_URL."/admin/users?section=masquerade&id=".$result["id"]."\">Login as</a></td>\n";

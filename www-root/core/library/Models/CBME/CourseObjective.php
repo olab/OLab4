@@ -86,4 +86,58 @@ class Models_CBME_CourseObjective extends Models_Base {
 
         return $objectives;
     }
+
+    public function fetchAllByCourseIDOrganisationID ($course_id = 0, $organisation_id = 0, $active = 1) {
+        global $db;
+        $course_objectives = array();
+
+        $query = "  SELECT a.*, b.*, c.* FROM `global_lu_objectives` AS a
+                    JOIN `objective_organisation` AS b
+                    ON a.`objective_id` = b.`objective_id`
+                    JOIN `cbme_course_objectives` AS c
+                    ON b.`objective_id` = c.`objective_id`
+                    WHERE b.`organisation_id` = ?
+                    AND c.`course_id` = ?
+                    AND a.`objective_active` = ?";
+
+        $results = $db->GetAll($query, array($organisation_id, $course_id, $active));
+        if ($results) {
+            foreach ($results as $result) {
+                $course_objective = new self();
+                $course_objectives[] = $course_objective->fromArray($result);
+            }
+        }
+
+        return $course_objectives;
+    }
+
+    /**
+     * Retrieves course objectives by objective name, course, shortname and the objective parent name
+     * @param $objective_name
+     * @param $course_id
+     * @param $shortname
+     * @param $objective_parent_name
+     * @return string
+     */
+    public function fetchRowByObjectiveNameCourseIDShortnameParent($objective_name, $course_id, $shortname, $objective_parent_name) {
+        global $db;
+
+        $query = "  SELECT go.`objective_id` FROM `global_lu_objectives` as go
+                    JOIN `cbme_course_objectives` as co
+                    ON go.`objective_id` = co.`objective_id`
+                    JOIN `global_lu_objective_sets` as os
+                    ON go.`objective_set_id` = os.`objective_set_id`
+                    JOIN `global_lu_objectives` as gob
+                    ON go.`objective_parent` = gob.`objective_id`
+                    WHERE go.`objective_name` = ?
+                    AND co.`course_id` = ?
+                    AND go.`objective_active` = 1
+                    AND os.`shortname` = ?
+                    AND gob.`objective_name` = ?";
+
+        $results = $db->getRow($query, array($objective_name, $course_id, $shortname, $objective_parent_name));
+        if ($results) {
+            return $results;
+        }
+    }
 }

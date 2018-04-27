@@ -129,17 +129,17 @@ if ($RECORD_ID) {
              */
             if (($release_date = (int) $file_record["release_date"]) && ($release_date > time())) {
                 $NOTICE++;
-                $NOTICESTR[] = "This link will not be accessible to others until <strong>".date(DEFAULT_DATE_FORMAT, $release_date)."</strong>.";
+                $NOTICESTR[] = "This link will not be accessible to others until <strong>".date(DEFAULT_DATETIME_FORMAT, $release_date)."</strong>.";
             } elseif ($release_until = (int) $file_record["release_until"]) {
                 if ($release_until > time()) {
                     $NOTICE++;
-                    $NOTICESTR[] = "This link will be accessible until <strong>".date(DEFAULT_DATE_FORMAT, $release_until)."</strong>.";
+                    $NOTICESTR[] = "This link will be accessible until <strong>".date(DEFAULT_DATETIME_FORMAT, $release_until)."</strong>.";
                 } else {
                     /**
                      * Only administrators or people who wrote the post will get this.
                      */
                     $NOTICE++;
-                    $NOTICESTR[] = "This link was only accessible until <strong>".date(DEFAULT_DATE_FORMAT, $release_until)."</strong> by others.";
+                    $NOTICESTR[] = "This link was only accessible until <strong>".date(DEFAULT_DATETIME_FORMAT, $release_until)."</strong> by others.";
                 }
             }
 

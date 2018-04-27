@@ -34,6 +34,8 @@ class Entrada_Utilities_Assessments_Reports extends Entrada_Utilities_Assessment
               $course_id = null,
               $organisation_id = null,
               $adistribution_id = null,
+              $associated_record_type = null,
+              $associated_record_ids = null,
               $form_id = null,
               $cperiod_id = null,
               $group_by_distribution = false,
@@ -41,16 +43,17 @@ class Entrada_Utilities_Assessments_Reports extends Entrada_Utilities_Assessment
               $cleanup_rubrics = true,
               $actor_proxy_id = null, // used for caching
               $start_date = null,
-              $end_date = null;
+              $end_date = null,
+              $reviewer_ids = null; // Used to limit to only distributions for the provided reviewer proxy_id.
 
     // Flag for disabling caching; can be set at construction time
     protected $disable_file_caching = true;
 
     // Internal data structure for report data.
-    private   $report_data = array();
+    protected $report_data = array();
 
     // Zend_Cache object.
-    private   $report_cache = null;
+    protected $report_cache = null;
 
     /**
      * Entrada_Utilities_Assessments_Reports constructor.
@@ -120,6 +123,9 @@ class Entrada_Utilities_Assessments_Reports extends Entrada_Utilities_Assessment
 
         if ($override_acl !== null) {
             return $override_acl;
+
+        } elseif ($role == "target" && $ENTRADA_USER->getActiveID() == $proxy_id) {
+            return true;
 
         } else if ($role == "learner" && ($ENTRADA_ACL->amIAllowed(new AcademicAdvisorResource($proxy_id), "read", true) || $ENTRADA_ACL->amIAllowed("assessmentreportadmin", "read", true))) {
             return true;
@@ -220,10 +226,10 @@ class Entrada_Utilities_Assessments_Reports extends Entrada_Utilities_Assessment
                 $target_ids
             );
             $imploded = implode(",", $clean_target_ids);
-            $AND_target_value = "AND e.`eventtype_id` IN ($imploded)";
+            $AND_target_value = "AND et.`eventtype_id` IN ($imploded)";
         } else {
             $target_id = clean_input($target_ids, array("trim", "int"));
-            $AND_target_value = "AND e.`eventtype_id` = $target_id";
+            $AND_target_value = "AND et.`eventtype_id` = $target_id";
         }
         return $AND_target_value;
     }
@@ -248,7 +254,7 @@ class Entrada_Utilities_Assessments_Reports extends Entrada_Utilities_Assessment
         return $AND_cperiod_value;
     }
 
-    private function createCourseIDClause($course_ids) {
+    private function createCourseIDClause($course_ids, $alias = "d") {
         $AND_course_value = "";
 
         if (is_array($course_ids) && !empty($course_ids)) {
@@ -259,28 +265,34 @@ class Entrada_Utilities_Assessments_Reports extends Entrada_Utilities_Assessment
                 $course_ids
             );
             $imploded = implode(",", $clean_target_ids);
-            $AND_course_value = "AND d.`course_id` IN ($imploded)";
+            $AND_course_value = "AND {$alias}.`course_id` IN ($imploded)";
         } else if ($course_ids) {
             $course_id = clean_input($course_ids, array("trim", "int"));
-            $AND_course_value = "AND d.`course_id` = $course_id";
+            $AND_course_value = "AND {$alias}.`course_id` = $course_id";
         }
 
         return $AND_course_value;
     }
 
     /**
-     * Fetch a summary of the assessments to report on.
+     * Fetch a summary of the assessments to report on. "Target" role will scope to appropriate assessment options.
      * The return value is cached, so this method can be called multiple times by other methods.
      *
+     * @param $target_role
      * @return array
      */
-    public function fetchCompletedAssessmentsMeta() {
+    public function fetchCompletedAssessmentsMeta($target_role = false) {
         global $db;
         $prepared_variables = array();
 
         $JOIN_events_on_event_id = "";
+        $JOIN_event_types_on_event_id = "";
+        $JOIN_target_reporting_release = "";
+        $JOIN_reviewer_ids = "";
+        $AND_target_reporting_release = "";
         $AND_associated_record_type = "";
-        $GROUP_by_adtarget_id = "";
+        $AND_associated_record_ids = "";
+        $GROUP_by_target_type = "";
         $GROUP_by_proxies = "";
 
         if (is_array($this->target_value)) {
@@ -299,15 +311,15 @@ class Entrada_Utilities_Assessments_Reports extends Entrada_Utilities_Assessment
         $AND_date_less       = "";
         $AND_target_course   = "";
         $AND_cperiod_id      = $this->createCperiodIDClause($this->cperiod_id);
-        $AND_course_id       = $this->createCourseIDClause($this->course_id);
+        // Self-reports (target reporting) need to see all results on them regardless of course.
+        $AND_course_id       = ($target_role == "target" ? "" : $this->createCourseIDClause($this->course_id));
 
         $AND_organisation_id = $this->organisation_id  ? "AND d.`organisation_id` = ?" : "";
         $AND_form_id         = $this->form_id          ? "AND d.`form_id` = ?" : "";
-        $AND_target_scope    = $this->target_scope     ? "AND adt.`target_scope` = ?" : "";
 
         $SELECT_additional_fields = $GROUP_by_distribution = "";
         if ($this->group_by_distribution) {
-            $SELECT_additional_fields = "p.`adtarget_id`, d.`adistribution_id`, d.`title` AS `distribution_title`, d.`description`,";
+            $SELECT_additional_fields = "d.`adistribution_id`, d.`title` AS `distribution_title`, d.`description`,";
             $GROUP_by_distribution =  "d.`adistribution_id`,";
         }
 
@@ -326,12 +338,13 @@ class Entrada_Utilities_Assessments_Reports extends Entrada_Utilities_Assessment
                 case "schedule_id":
                     if ($this->target_scope == "self") {
                         // The schedule is the target
-                        $GROUP_by_adtarget_id = "adt.`adtarget_id`, ";
+                        $GROUP_by_target_type = "dat.`target_type`, ";
                     }
                     break;
                 case "eventtype_id":
                     $JOIN_events_on_event_id = "JOIN `events` AS e ON a.`associated_record_id` = e.`event_id`";
-                    $SELECT_additional_fields .= "e.`event_id`, e.`eventtype_id`, d.`adistribution_id`, ";
+                    $JOIN_event_types_on_event_id = "JOIN `event_eventtypes` AS et ON a.`associated_record_id` = et.`event_id`";
+                    $SELECT_additional_fields .= "e.`event_id`, et.`eventtype_id`, d.`adistribution_id`, ";
                     $AND_associated_record_type = "AND a.`associated_record_type` = 'event_id'";
 
                     // Not using target value but rather distribution ID instead.
@@ -346,12 +359,105 @@ class Entrada_Utilities_Assessments_Reports extends Entrada_Utilities_Assessment
                 case "course_id":
                     $course_id = clean_input($this->target_value, array("trim", "int"));
                     $AND_course_id = $this->createCourseIDClause($course_id);
-                    $AND_target_course = "  AND adt.`target_type` = 'course_id'
-                                            AND adt.`target_scope` = 'self'
-                                            AND adt.`target_role` = 'any'
-                                            AND adt.`target_id` = $course_id";
+                    $AND_target_course = "  AND dat.`target_type` = 'course_id'";
+
+                    if (is_array($course_id) && !empty($course_id)) {
+                        $clean_target_ids = array_map(
+                            function($val) {
+                                return clean_input($val, array("trim", "int"));
+                            },
+                            $course_id
+                        );
+                        $imploded = implode(",", $clean_target_ids);
+                        $AND_target_course .= "AND dat.`target_value` IN ($imploded)";
+                    } else if ($course_id) {
+                        $course_id = clean_input($course_id, array("trim", "int"));
+                        $AND_target_course .= "AND dat.`target_value` = $course_id";
+                    }
                     break;
             }
+        }
+
+        if ($this->associated_record_type) {
+            $AND_associated_record_type = "AND a.`associated_record_type` = '$this->associated_record_type'";
+        }
+        if ($this->associated_record_ids) {
+            $imploded = implode(",", $this->associated_record_ids);
+            $AND_associated_record_ids = "AND a.`associated_record_id` IN ($imploded)";
+        }
+
+        /**
+         * Note that adding reviewer IDs will add a join that throws off form_count. If you need this count, it will
+         * need to be moved to a subquery to fix this.
+         */
+        if ($this->reviewer_ids) {
+            $JOIN_reviewer_ids = "  JOIN `cbl_assessment_distribution_reviewers` AS dr
+                                    ON dr.`adistribution_id` = d.`adistribution_id` AND dr.`deleted_date` IS NULL";
+
+            if (is_array($this->reviewer_ids) && !empty($this->reviewer_ids)) {
+                $clean_reviewer_ids = array_map(
+                    function($val) {
+                        return clean_input($val, array("trim", "int"));
+                    },
+                    $this->reviewer_ids
+                );
+                $imploded = implode(",", $clean_reviewer_ids);
+                $JOIN_reviewer_ids .= " AND dr.`proxy_id` IN ($imploded)";
+            } else {
+                $course_id = clean_input($this->reviewer_ids, array("trim", "int"));
+                $JOIN_reviewer_ids .= " AND dr.`proxy_id` = $course_id";
+            }
+        }
+
+        // Target self reporting restrictions.
+        if ($target_role == "target") {
+
+            // Targets can report on tasks where where target_reportable is true or where they have met the target_reportable_percent completion threshold.
+            $JOIN_target_reporting_release = "  JOIN `cbl_distribution_assessment_options` AS dao
+                                                ON a.`dassessment_id` = dao.`dassessment_id`";
+
+            $target_completion_count_sq = "   SELECT COUNT(cc_ap.`aprogress_id`) AS `completions`
+                                              FROM cbl_assessment_progress AS cc_ap 
+                                              WHERE (cc_ap.`target_type` = sq_at.`target_type` AND cc_ap.`target_record_id` = sq_at.`target_value`)
+                                              AND cc_ap.`dassessment_id` = sq_a.`dassessment_id`
+                                              AND cc_ap.`progress_value` = 'complete'
+                                              AND cc_ap.`deleted_date` IS NULL";
+
+            $AND_target_reporting_release = "   AND dao.`deleted_date` IS NULL 
+                                                AND 
+                                                (
+                                                    (dao.`option_name` = 'target_reportable' AND dao.`option_value` = 'true')
+                                                    OR
+                                                    (
+                                                        dao.`option_name` = 'target_reportable_percent' 
+                                                        AND dao.`option_value` <= 
+                                                        (
+                                                            (   
+                                                               SELECT SUM(
+                                                                    IF(({$target_completion_count_sq}) > a.`min_submittable`, a.`min_submittable`, ({$target_completion_count_sq}))
+                                                               ) AS `target_completion_count`
+                                                               FROM `cbl_distribution_assessment_targets` AS sq_at
+                                                               JOIN `cbl_distribution_assessments` AS sq_a
+                                                               ON sq_at.`dassessment_id` = sq_a.`dassessment_id`
+                                                               WHERE FIND_IN_SET(sq_a.`dassessment_id`, dao.`assessment_siblings`)
+                                                               AND sq_a.`assessor_value` = {$this->target_value} 
+                                                            )
+
+                                                            / 
+                                                            
+                                                            ((
+                                                                SELECT DISTINCT COUNT(sq2_at.`atarget_id`) AS `unique_target_total_required`
+                                                                FROM `cbl_distribution_assessment_targets` AS sq2_at
+                                                                JOIN `cbl_distribution_assessments` AS sq2_a
+                                                                ON sq2_a.`dassessment_id` = sq2_at.`dassessment_id`
+                                                                WHERE FIND_IN_SET(sq2_a.`dassessment_id`, dao.`assessment_siblings`)
+                                                                AND sq2_a.`assessor_value` = {$this->target_value}
+                                                            ) * a.`min_submittable`)
+                                                           
+                                                            * 100
+                                                        )
+                                                    )
+                                                )";
         }
 
         // Build pseudo-cache key using query variables.
@@ -376,21 +482,26 @@ class Entrada_Utilities_Assessments_Reports extends Entrada_Utilities_Assessment
         } else {
 
             // Find all completed assessments for the given parameters
-            $query = "  SELECT  COUNT(*) AS form_count,
+            $query = "  SELECT COUNT(*) AS form_count,
                             d.`form_id`, d.`course_id`, d.`cperiod_id`,
                             cp.`start_date` AS `cperiod_start`, cp.`finish_date` AS `cperiod_end`, cp.`active` AS `cperiod_active`,
                             p.`target_record_id`,
                             $SELECT_additional_fields
-                            f.`title` AS `form_title`,
-                            adt.`adtarget_id`, adt.`target_scope`
+                            f.`title` AS `form_title`
 
                     FROM `cbl_assessment_progress`              AS p
-                    JOIN `cbl_assessment_distributions`         AS d  ON p.`adistribution_id` = d.`adistribution_id`
-                    JOIN `cbl_distribution_assessments`         AS a  ON p.`dassessment_id` = a.`dassessment_id` $AND_associated_record_type
-                    JOIN `cbl_assessments_lu_forms`             AS f  ON d.`form_id` = f.`form_id`
-                    JOIN `curriculum_periods`                   AS cp ON d.`cperiod_id` = cp.`cperiod_id`
-                    JOIN `cbl_assessment_distribution_targets`  AS adt ON p.`adtarget_id` = adt.`adtarget_id`
+                    JOIN `cbl_assessment_distributions`         AS d   ON p.`adistribution_id` = d.`adistribution_id`
+                    $JOIN_reviewer_ids
+                    JOIN `cbl_distribution_assessments`         AS a   ON p.`dassessment_id` = a.`dassessment_id` 
+                    $AND_associated_record_type 
+                    $AND_associated_record_ids
+                    JOIN `cbl_assessments_lu_forms`             AS f   ON d.`form_id` = f.`form_id`
+                    JOIN `curriculum_periods`                   AS cp  ON d.`cperiod_id` = cp.`cperiod_id`
+                    JOIN `cbl_distribution_assessment_targets`  AS dat ON p.`target_record_id` = dat.`target_value` AND p.`target_type` = dat.`target_type` AND p.`dassessment_id` = dat.`dassessment_id`
                     $JOIN_events_on_event_id
+                    $JOIN_event_types_on_event_id
+                    $JOIN_target_reporting_release
+                    $AND_target_reporting_release
 
                     WHERE p.`progress_value` = 'complete'
                     AND   p.`deleted_date` IS NULL
@@ -400,16 +511,15 @@ class Entrada_Utilities_Assessments_Reports extends Entrada_Utilities_Assessment
                     $AND_course_id
                     $AND_form_id
                     $AND_cperiod_id
-                    $AND_target_scope
                     $AND_eventtype_id
                     $AND_target_course
                     $AND_date_greater
                     $AND_date_less
 
-                    GROUP BY $GROUP_by_proxies $GROUP_by_adtarget_id cp.`cperiod_id`, $GROUP_by_distribution d.`course_id`, f.`form_id`
+                    GROUP BY $GROUP_by_proxies $GROUP_by_target_type cp.`cperiod_id`, $GROUP_by_distribution d.`course_id`, f.`form_id`
                     ORDER BY f.`form_id`";
 
-            foreach (array($this->organisation_id, $this->form_id, $this->target_scope) as $prepare) {
+            foreach (array($this->organisation_id, $this->form_id) as $prepare) {
                 if ($prepare) {
                     $prepared_variables[] = $prepare;
                 }
@@ -417,6 +527,7 @@ class Entrada_Utilities_Assessments_Reports extends Entrada_Utilities_Assessment
 
             $grouped_by_cperiod = array();
             $result_set = $db->GetAll($query, $prepared_variables);
+
             if (is_array($result_set)) {
                 foreach ($result_set as $result) {
                     $grouped_by_cperiod[$result["cperiod_id"]][] = $result;
@@ -426,6 +537,168 @@ class Entrada_Utilities_Assessments_Reports extends Entrada_Utilities_Assessment
             // save the result set for later use.
             $this->addToStorage("completed_assessments_meta", $grouped_by_cperiod, $cache_key);
             return $grouped_by_cperiod;
+        }
+    }
+
+    /**
+     * Fetch a summary of the event evaluations to report on. "Target" role will scope to appropriate assessment options.
+     * The return value is cached, so this method can be called multiple times by other methods.
+     *
+     * @param $target_role
+     * @return array
+     */
+    public function fetchCompletedEventEvaluationsMeta($target_role = false) {
+        global $db;
+        $prepared_variables = array();
+
+        $JOIN_target_reporting_release  = "";
+        $AND_target_reporting_release   = "";
+        $AND_associated_record_ids      = "";
+        $AND_date_greater               = "";
+        $AND_date_less                  = "";
+        $AND_target_course              = "";
+
+        $AND_organisation_id            = $this->organisation_id ? "AND d.`organisation_id` = ?" : "";
+        $AND_form_id                    = $this->form_id ? "AND a.`form_id` = ?" : "";
+
+        $AND_cperiod_id                 = $this->createCperiodIDClause($this->cperiod_id);
+        $AND_course_id                  = $this->createCourseIDClause($this->course_id, "a");
+        $AND_eventtype_id               = $this->createEventTypeIDValueClause($this->target_value);
+
+        if ($this->adistribution_id) {
+            $AND_distribution_id = $this->createDistributionIDValueClause($this->adistribution_id);
+        } else {
+            $AND_distribution_id = " AND a.`adistribution_id` IS NULL";
+        }
+
+        if (!is_null($this->start_date)) {
+            $AND_date_greater = " AND a.`delivery_date` >= ". $db->qstr($this->start_date);
+        }
+
+        if (!is_null($this->end_date)) {
+            $AND_date_less = " AND a.`delivery_date` <= ". $db->qstr($this->end_date);
+        }
+
+        if ($this->associated_record_ids) {
+            $imploded = implode(",", $this->associated_record_ids);
+            $AND_associated_record_ids = "AND a.`associated_record_id` IN ($imploded)";
+        }
+
+        // Target self reporting restrictions.
+        if ($target_role == "target") {
+
+            // Targets can report on tasks where where target_reportable is true or where they have met the target_reportable_percent completion threshold.
+            $JOIN_target_reporting_release = "  JOIN `cbl_distribution_assessment_options` AS dao
+                                                ON a.`dassessment_id` = dao.`dassessment_id`";
+
+            $target_completion_count_sq = "   SELECT COUNT(cc_ap.`aprogress_id`) AS `completions`
+                                              FROM cbl_assessment_progress AS cc_ap 
+                                              WHERE (cc_ap.`target_type` = sq_at.`target_type` AND cc_ap.`target_record_id` = sq_at.`target_value`)
+                                              AND cc_ap.`dassessment_id` = sq_a.`dassessment_id`
+                                              AND cc_ap.`progress_value` = 'complete'
+                                              AND cc_ap.`deleted_date` IS NULL";
+
+            $AND_target_reporting_release = "   AND dao.`deleted_date` IS NULL 
+                                                AND 
+                                                (
+                                                    (dao.`option_name` = 'target_reportable' AND dao.`option_value` = 'true')
+                                                    OR
+                                                    (
+                                                        dao.`option_name` = 'target_reportable_percent' 
+                                                        AND dao.`option_value` <= 
+                                                        (
+                                                            (   
+                                                               SELECT SUM(
+                                                                    IF(({$target_completion_count_sq}) > a.`min_submittable`, a.`min_submittable`, ({$target_completion_count_sq}))
+                                                               ) AS `target_completion_count`
+                                                               FROM `cbl_distribution_assessment_targets` AS sq_at
+                                                               JOIN `cbl_distribution_assessments` AS sq_a
+                                                               ON sq_at.`dassessment_id` = sq_a.`dassessment_id`
+                                                               WHERE FIND_IN_SET(sq_a.`dassessment_id`, dao.`assessment_siblings`)
+                                                               AND sq_a.`assessor_value` = {$this->target_value} 
+                                                            )
+
+                                                            / 
+                                                            
+                                                            ((
+                                                                SELECT DISTINCT COUNT(sq2_at.`atarget_id`) AS `unique_target_total_required`
+                                                                FROM `cbl_distribution_assessment_targets` AS sq2_at
+                                                                JOIN `cbl_distribution_assessments` AS sq2_a
+                                                                ON sq2_a.`dassessment_id` = sq2_at.`dassessment_id`
+                                                                WHERE FIND_IN_SET(sq2_a.`dassessment_id`, dao.`assessment_siblings`)
+                                                                AND sq2_a.`assessor_value` = {$this->target_value}
+                                                            ) * a.`min_submittable`)
+                                                           
+                                                            * 100
+                                                        )
+                                                    )
+                                                )";
+        }
+
+        // Build pseudo-cache key using query variables.
+        $cache_key = array(
+            $this->target_value,
+            $this->target_type,
+            $this->organisation_id,
+            $this->adistribution_id,
+            $this->course_id,
+            $this->form_id,
+            $this->cperiod_id,
+            $this->group_by_distribution,
+            $this->target_scope
+        );
+        $cache_key = md5(serialize($cache_key));
+
+        // Check and see if this exact metadata was queried for already.
+        if ($this->isInStorage("completed_assessments_meta", $cache_key)) {
+            // Return the cached version
+            return $this->fetchFromStorage("completed_assessments_meta", $cache_key);
+
+        } else {
+            // Find all completed assessments for the given parameters
+            $query = "  SELECT COUNT(*) AS form_count,
+                            a.`form_id`, a.`course_id`, a.`adistribution_id`,
+                            p.`target_record_id`,
+                            e.`event_id`, et.`eventtype_id`, 
+                            f.`title` AS `form_title`
+
+                    FROM `cbl_assessment_progress`              AS p
+                    JOIN `cbl_distribution_assessments`         AS a   ON p.`dassessment_id` = a.`dassessment_id` AND a.`associated_record_type` = 'event_id' 
+                    $AND_associated_record_ids
+                    LEFT JOIN `cbl_assessment_distributions`    AS d   ON a.`adistribution_id` = d.`adistribution_id`
+                    JOIN `cbl_assessments_lu_forms`             AS f   ON a.`form_id` = f.`form_id`
+                    JOIN `cbl_distribution_assessment_targets`  AS dat ON p.`target_record_id` = dat.`target_value` AND p.`target_type` = dat.`target_type` AND p.`dassessment_id` = dat.`dassessment_id`
+                    JOIN `events`                               AS e   ON a.`associated_record_id` = e.`event_id`
+                    JOIN `event_eventtypes`                     AS et  ON a.`associated_record_id` = et.`event_id`
+                    $JOIN_target_reporting_release
+                    $AND_target_reporting_release
+
+                    WHERE p.`progress_value` = 'complete'
+                    AND   p.`deleted_date` IS NULL
+                    $AND_organisation_id
+                    $AND_distribution_id
+                    $AND_course_id
+                    $AND_form_id
+                    $AND_cperiod_id
+                    $AND_eventtype_id
+                    $AND_target_course
+                    $AND_date_greater
+                    $AND_date_less
+
+                    GROUP BY p.`target_record_id`, f.`form_id`
+                    ORDER BY f.`form_id`";
+
+            foreach (array($this->organisation_id, $this->form_id) as $prepare) {
+                if ($prepare) {
+                    $prepared_variables[] = $prepare;
+                }
+            }
+
+            $result_set = $db->GetAll($query, $prepared_variables);
+
+            // save the result set for later use.
+            $this->addToStorage("completed_assessments_meta", array($result_set), $cache_key);
+            return array($result_set);
         }
     }
 
@@ -465,8 +738,10 @@ class Entrada_Utilities_Assessments_Reports extends Entrada_Utilities_Assessment
                     (isset($meta["adistribution_id"])) ? $meta["adistribution_id"] : null // optionally filter by distribution ID
                 );
                 // For each completed assessment, fetch all the responses and store them in the results array
+                $assessment_api = new Entrada_Assessments_Assessment(array("limit_dataset" => array("targets")));
                 foreach ($completions as $completed) {
-                    $url = ENTRADA_URL ."/assessments/assessment?adistribution_id={$completed["adistribution_id"]}&target_record_id={$completed["target_record_id"]}&aprogress_id={$completed["aprogress_id"]}&dassessment_id={$completed["dassessment_id"]}";
+                    $url = $assessment_api->getAssessmentURL($completed["target_record_id"], "proxy_id", false, $completed["dassessment_id"], $completed["aprogress_id"]);
+
                     // fetch assessment
                     $assessment = Models_Assessments_Assessor::fetchRowByID($completed["dassessment_id"]);
                     $assessor_name = "";
@@ -494,15 +769,26 @@ class Entrada_Utilities_Assessments_Reports extends Entrada_Utilities_Assessment
     /**
      * Generate the report data for the given report parameters, either specified or derived from object properties.
      *
+     * @param $report_type
+     * @param $target_role
      * @return array
      */
-    public function generateReport() {
+    public function generateReport($report_type = null, $target_role = null) {
         if ($cached_report = $this->fetchCachedReport()) {
             $this->report_data = $cached_report;
         } else {
             // Fetch and iterate through the metadata (our report parameters).
             // fetchCompletedAssessmentsMeta() guarantees an array as return value.
-            foreach ($this->fetchCompletedAssessmentsMeta() as $cperiod_id => $summary) {
+            switch ($report_type) {
+                case "event_feedback":
+                    $meta = $this->fetchCompletedEventEvaluationsMeta($target_role);
+                    break;
+                default:
+                    $meta = $this->fetchCompletedAssessmentsMeta($target_role);
+                    break;
+            }
+
+            foreach ($meta as $cperiod_id => $summary) {
                 // The metadata could potentially be multiple records. The summary data is grouped by course_id and form_id (optionally limited by distribution ID).
                 foreach ($summary as $meta) {
                     // Seed our internal results array based on the current incarnation of the form. This ensures our report can display
@@ -510,32 +796,63 @@ class Entrada_Utilities_Assessments_Reports extends Entrada_Utilities_Assessment
                     $this->reportDataConfigure($meta["form_id"]);
 
                     // Fetch all completed progress records. We build the report using progress records as to ensure we find all responses, even if the form or form items have changed.
-                    $completions = $this->fetchCompletedProgressData(
-                        $meta["target_record_id"],
-                        $meta["course_id"],
-                        $meta["cperiod_id"],
-                        $meta["form_id"],
-                        (isset($meta["adistribution_id"])) ? $meta["adistribution_id"] : null, // optionally filter by distribution ID
-                        (isset($meta["eventtype_id"])) ? "event" : null
-                    );
+                    switch ($report_type) {
+                        case "event_feedback":
+                            $completions = $this->fetchCompletedEventFeedbackProgressData(
+                                $meta["target_record_id"],
+                                $meta["course_id"],
+                                $meta["form_id"]
+                            );
+                            break;
+                        default:
+                            $completions = $this->fetchCompletedProgressData(
+                                $meta["target_record_id"],
+                                $meta["course_id"],
+                                $meta["cperiod_id"],
+                                $meta["form_id"],
+                                (isset($meta["adistribution_id"])) ? $meta["adistribution_id"] : null, // optionally filter by distribution ID
+                                (isset($meta["eventtype_id"])) ? "event" : null
+                            );
+                            break;
+                    }
+
                     // For each completed assessment, fetch all the responses and store them in the internal report_data array
                     foreach ($completions as $completed) {
+                        $comment_anonymity = "anonymous";
+                        $assesment_options_model = new Models_Assessments_Options();
+                        $assesment_options = $assesment_options_model->fetchAllByDassessmentID($completed["dassessment_id"]);
+                        if ($assesment_options) {
+                            foreach ($assesment_options as $assesment_option) {
+                                if ($assesment_option->getOptionName() == "target_reporting_comment_anonymity") {
+                                    $comment_anonymity = $assesment_option->getOptionValue();
+                                }
+                            }
+                        }
                         $responses = $this->fetchAllAssessmentResponsesData($completed["aprogress_id"]);
                         foreach ($responses as $response_data) {
                             if ($response_data["element_type"] == "item") {
+
+                                $assessments_base = new Entrada_Utilities_Assessments_Base();
+                                $assessor = $assessments_base->getUserByType($response_data["assessor_value"], $response_data["assessor_type"])->toArray();
+                                $assessor_info = array(
+                                    "assessor_type"     => $response_data["assessor_type"],
+                                    "assessor_value"    => $response_data["assessor_value"],
+                                    "assessor_name"     => $assessor ? $assessor["firstname"] . " " . $assessor["lastname"] : null
+                                );
+
                                 if ($response_data["rubric_id"]) {
                                     // This form element is a rubric.
                                     // Fetch all of the rubric data and add it to the report data structure.
                                     $rubric = $this->fetchRubricData($response_data["rubric_id"]);
                                     if ($rubric) {
-                                        $this->reportDataAddNodeGroupedItem($response_data["rubric_id"], $response_data["element_id"], $response_data["ardescriptor_id"], $response_data["item_response_text"], $response_data["comments"], $rubric);
+                                        $this->reportDataAddNodeGroupedItem($response_data["rubric_id"], $response_data["element_id"], $response_data["ardescriptor_id"], $response_data["item_response_text"], $response_data["comments"], $rubric, $assessor_info, $comment_anonymity);
                                     } else {
                                         application_log("error", "Reports: Failed to fetch data for rubric {$response_data["rubric_id"]}");
                                     }
 
                                 } else if ($response_data["itemtype_shortname"] == "free_text") {
                                     // This form element a free-text comment.
-                                    $this->reportDataAddNodeFreeTextComment($response_data["element_id"], $response_data["form_element_order"], $response_data["comments"]);
+                                    $this->reportDataAddNodeFreeTextComment($response_data["element_id"], $response_data["form_element_order"], $response_data["comments"], $assessor_info, $comment_anonymity);
 
                                 } else {
                                     // This form element is a single item (a scale or multiple choice, or other)
@@ -553,7 +870,9 @@ class Entrada_Utilities_Assessments_Reports extends Entrada_Utilities_Assessment
                                         $response_data["element_id"],
                                         $compare_on_descriptor ? $response_data["response_descriptor"] : $response_data["item_response_text"],
                                         $response_data["comments"],
-                                        $grouped_responses
+                                        $grouped_responses,
+                                        $assessor_info,
+                                        $comment_anonymity
                                     );
                                 }
 
@@ -636,7 +955,7 @@ class Entrada_Utilities_Assessments_Reports extends Entrada_Utilities_Assessment
      * @param $item_responses
      * @return bool
      */
-    private function determineUseDescriptorComparison($item_responses) {
+    protected function determineUseDescriptorComparison($item_responses) {
         $use_descriptors = false;
         $unique_texts = false;
         $unique_descriptors = false;
@@ -676,9 +995,10 @@ class Entrada_Utilities_Assessments_Reports extends Entrada_Utilities_Assessment
      * @param $cperiod_id
      * @param $form_id
      * @param $distribution_id
+     * @param $type
      * @return array
      */
-    private function fetchCompletedProgressData($target_record_id, $course_id, $cperiod_id, $form_id, $distribution_id = null, $type = null) {
+    protected function fetchCompletedProgressData($target_record_id, $course_id, $cperiod_id, $form_id, $distribution_id = null, $type = null) {
         global $db;
 
         $AND_date_greater    = "";
@@ -708,6 +1028,12 @@ class Entrada_Utilities_Assessments_Reports extends Entrada_Utilities_Assessment
             }
         }
 
+        $AND_limit_to_associated_record = "";
+        if ($this->associated_record_type && $this->associated_record_ids) {
+            $imploded = implode(",", $this->associated_record_ids);
+            $AND_limit_to_associated_record = " AND a.`associated_record_type` = '$this->associated_record_type' AND a.`associated_record_id` IN ($imploded)";
+        }
+
         // Fetch all completed assessments (we're looking at the entire history of the form, even if elements have changed).
         // INNER JOIN for only those records that have assessment records.
         $query = "  SELECT  p.`target_record_id`, p.`aprogress_id`, p.`dassessment_id`, p.`adistribution_id`, p.`updated_date`
@@ -720,10 +1046,62 @@ class Entrada_Utilities_Assessments_Reports extends Entrada_Utilities_Assessment
                     AND     d.`cperiod_id` = ?
                     AND     d.`form_id` = ?
                     $AND_distribution_id
+                    $AND_limit_to_associated_record
                     $AND_date_greater
                     $AND_date_less";
 
         $prepared = array($target_record_id, $course_id, $cperiod_id, $form_id);
+
+        $completions = $db->GetAll($query, $prepared);
+        if (!is_array($completions)) {
+            return array();
+        }
+        return $completions;
+    }
+
+    /**
+     * Fetch completed event feedback evaluations on a particular target id.
+     *
+     * @param $target_record_id
+     * @param $course_id
+     * @param $form_id
+     * @return array
+     */
+    private function fetchCompletedEventFeedbackProgressData($target_record_id, $course_id, $form_id) {
+        global $db;
+
+        $AND_date_greater    = "";
+        $AND_date_less       = "";
+
+        if (!is_null($this->start_date)) {
+            $AND_date_greater = " AND a.`delivery_date` >= ". $db->qstr($this->start_date);
+        }
+
+        if (!is_null($this->end_date)) {
+            $AND_date_less = "    AND a.`delivery_date` <= ". $db->qstr($this->end_date);
+        }
+
+        $AND_limit_to_associated_record = "";
+        if ($this->associated_record_type && $this->associated_record_ids) {
+            $imploded = implode(",", $this->associated_record_ids);
+            $AND_limit_to_associated_record = " AND a.`associated_record_type` = '$this->associated_record_type' AND a.`associated_record_id` IN ($imploded)";
+        }
+
+        // Fetch all completed assessments (we're looking at the entire history of the form, even if elements have changed).
+        // INNER JOIN for only those records that have assessment records.
+        $query = "  SELECT  p.`target_record_id`, p.`aprogress_id`, p.`dassessment_id`, p.`adistribution_id`, p.`updated_date`
+                    FROM    `cbl_assessment_progress`       AS p
+                    JOIN    `cbl_distribution_assessments`  AS a ON p.`dassessment_id` = a.`dassessment_id`
+                    WHERE   p.`progress_value` = 'complete'
+                    AND     p.`target_record_id` = ?
+                    AND     a.`course_id` = ?
+                    AND     a.`form_id` = ?
+                    AND     a.`adistribution_id` IS NULL
+                    $AND_limit_to_associated_record
+                    $AND_date_greater
+                    $AND_date_less";
+
+        $prepared = array($target_record_id, $course_id, $form_id);
 
         $completions = $db->GetAll($query, $prepared);
         if (!is_array($completions)) {
@@ -738,7 +1116,7 @@ class Entrada_Utilities_Assessments_Reports extends Entrada_Utilities_Assessment
      * @param $aprogress_id
      * @return array
      */
-    private function fetchAllAssessmentResponsesData($aprogress_id) {
+    protected function fetchAllAssessmentResponsesData($aprogress_id) {
         global $db;
         // Fetch all the responses for the completed assessments
         // LEFT JOIN to include rows that may or may not have response descriptors or item responses.
@@ -756,6 +1134,7 @@ class Entrada_Utilities_Assessments_Reports extends Entrada_Utilities_Assessment
                   LEFT JOIN `cbl_assessments_lu_item_responses`       AS ir  ON ir.`iresponse_id`    = pr.`iresponse_id`
                   LEFT JOIN `cbl_assessments_lu_response_descriptors` AS rd  ON rd.`ardescriptor_id` = ir.`ardescriptor_id`
                   WHERE     pr.`aprogress_id` = ?
+                  AND       pr.`deleted_date` IS NULL
                   ORDER BY  fe.`order` ASC";
         $responses = $db->GetAll($query, array($aprogress_id));
         if (!is_array($responses)) {
@@ -772,7 +1151,7 @@ class Entrada_Utilities_Assessments_Reports extends Entrada_Utilities_Assessment
      * @param $element_id
      * @return array
      */
-    private function fetchItemResponsesDataByItemElement($element_id) {
+    protected function fetchItemResponsesDataByItemElement($element_id) {
         global $db;
 
         if ($this->isInStorage("responses_by_item_element", $element_id)) {
@@ -826,7 +1205,7 @@ class Entrada_Utilities_Assessments_Reports extends Entrada_Utilities_Assessment
      * @param $rubric_id
      * @return array
      */
-    private function fetchRubricData($rubric_id) {
+    protected function fetchRubricData($rubric_id) {
         global $db;
         if ($this->isInStorage("rubric_data", $rubric_id)) {
             return $this->fetchFromStorage("rubric_data", $rubric_id);
@@ -935,7 +1314,7 @@ class Entrada_Utilities_Assessments_Reports extends Entrada_Utilities_Assessment
      * @param $all_responses
      * @return array
      */
-    private function groupResponsesByGroupKey($all_responses) {
+    protected function groupResponsesByGroupKey($all_responses) {
         $grouped = array();
 
         foreach ($all_responses as $response) {
@@ -990,7 +1369,7 @@ class Entrada_Utilities_Assessments_Reports extends Entrada_Utilities_Assessment
      *
      * @param $form_id
      */
-    private function reportDataConfigure($form_id) {
+    protected function reportDataConfigure($form_id, $item_group_blacklist = null) {
         $formatted = array();
         if (empty($this->report_data)) {
             $elements = Models_Assessments_Form_Element::fetchAllByFormID($form_id); // fetch the current incarnation of the form
@@ -1018,17 +1397,28 @@ class Entrada_Utilities_Assessments_Reports extends Entrada_Utilities_Assessment
                         case "item":
                             // Otherwise, we're storing the basic structure. Fetch the element, and if possible, the itemtype_shortname
                             $item_data = $this->fetchItemDataByElementID($element->getElementID());
-                            if ($element->getRubricID()) {
-                                $index = "rubric-{$element->getRubricID()}";
-                                $rubric = $this->fetchStoredResultSet("rubric", $element->getRubricID(), "Models_Assessments_Rubric", "fetchRowByIDIncludeDeleted");
-                                if ($rubric) {
-                                    $formatted[$index] = $this->reportDataBuildNode($element->getElementType(), null, null, $rubric->getRubricTitle());
+
+                            $blacklisted = false;
+                            if ($item_group_blacklist) {
+                                $item_group = Models_Assessments_Item_Group::fetchRowByIDIgnoreActive($item_data["item_group_id"]);
+                                if ($item_group && in_array($item_group->getShortName(), $item_group_blacklist)) {
+                                    $blacklisted = true;
                                 }
-                            } else {
-                                $index = "element-{$element->getElementID()}";
-                                $short_name = isset($item_data["itemtype_shortname"]) ? $item_data["itemtype_shortname"] : "";
-                                $item_text = isset($item_data["item_text"]) ? $item_data["item_text"] : "";
-                                $formatted[$index] = $this->reportDataBuildNode($element->getElementType(), $short_name, $element->getOrder(), $item_text);
+                            }
+
+                            if (!$blacklisted) {
+                                if ($element->getRubricID()) {
+                                    $index = "rubric-{$element->getRubricID()}";
+                                    $rubric = $this->fetchStoredResultSet("rubric", $element->getRubricID(), "Models_Assessments_Rubric", "fetchRowByIDIncludeDeleted");
+                                    if ($rubric) {
+                                        $formatted[$index] = $this->reportDataBuildNode($element->getElementType(), null, null, $rubric->getRubricTitle());
+                                    }
+                                } else {
+                                    $index = "element-{$element->getElementID()}";
+                                    $short_name = isset($item_data["itemtype_shortname"]) ? $item_data["itemtype_shortname"] : "";
+                                    $item_text = isset($item_data["item_text"]) ? $item_data["item_text"] : "";
+                                    $formatted[$index] = $this->reportDataBuildNode($element->getElementType(), $short_name, $element->getOrder(), $item_text);
+                                }
                             }
                             break;
                     }
@@ -1066,8 +1456,10 @@ class Entrada_Utilities_Assessments_Reports extends Entrada_Utilities_Assessment
      * @param int $element_id
      * @param int $order
      * @param string $comment
+     * @param string $comment_anonymity
+     * @param array $assessor_info
      */
-    private function reportDataAddNodeFreeTextComment($element_id, $order, $comment) {
+    protected function reportDataAddNodeFreeTextComment($element_id, $order, $comment, $assessor_info, $comment_anonymity) {
         $index = "element-$element_id";
 
         // Create the data node
@@ -1076,7 +1468,14 @@ class Entrada_Utilities_Assessments_Reports extends Entrada_Utilities_Assessment
         }
         // Add this comment
         if (is_array($this->report_data[$index]["responses"])) {
-            $this->report_data[$index]["responses"][] = $comment;
+            $comment_data = array(
+                "assessor_type"     => $assessor_info["assessor_type"],
+                "assessor_value"    => $assessor_info["assessor_value"],
+                "assessor_name"     => $assessor_info["assessor_name"],
+                "comment_text"      => $comment,
+                "comment_anonymity" => $comment_anonymity
+            );
+            $this->report_data[$index]["responses"][] = $comment_data;
         }
     }
 
@@ -1089,8 +1488,10 @@ class Entrada_Utilities_Assessments_Reports extends Entrada_Utilities_Assessment
      * @param int $given_response_text
      * @param string $comments
      * @param array $rubric_data
+     * @param array $assessor_info
+     * @param string $comment_anonymity
      */
-    private function reportDataAddNodeGroupedItem($rubric_id, $given_element_id, $selected_response_descriptor_id, $given_response_text, $comments, $rubric_data) {
+    protected function reportDataAddNodeGroupedItem($rubric_id, $given_element_id, $selected_response_descriptor_id, $given_response_text, $comments, $rubric_data, $assessor_info, $comment_anonymity) {
         $index= "rubric-$rubric_id";
 
         // Create the data node if it's not already there
@@ -1136,12 +1537,26 @@ class Entrada_Utilities_Assessments_Reports extends Entrada_Utilities_Assessment
                             if ($descriptor["ardescriptor_id"] && ($descriptor["ardescriptor_id"] == $selected_response_descriptor_id)) {
                                 $this->report_data[$index]["responses"][$i]["rubric_response_detail"][$item_id][$item_order]["count"]++;
                                 if ($comments) {
-                                    $this->report_data[$index]["responses"][$i]["rubric_response_detail"][$item_id][$item_order]["comments"][] = $comments;
+                                    $comment_data = array(
+                                        "assessor_type"     => $assessor_info["assessor_type"],
+                                        "assessor_value"    => $assessor_info["assessor_value"],
+                                        "assessor_name"     => $assessor_info["assessor_name"],
+                                        "comment_text"      => $comments,
+                                        "comment_anonymity" => $comment_anonymity
+                                    );
+                                    $this->report_data[$index]["responses"][$i]["rubric_response_detail"][$item_id][$item_order]["comments"][] = $comment_data;
                                 }
                             } else if ($descriptor["text_sanitized"] && ($descriptor["text_sanitized"] == $this->sanitizeText($given_response_text))) {
                                 $this->report_data[$index]["responses"][$i]["rubric_response_detail"][$item_id][$item_order]["count"]++;
                                 if ($comments) {
-                                    $this->report_data[$index]["responses"][$i]["rubric_response_detail"][$item_id][$item_order]["comments"][] = $comments;
+                                    $comment_data = array(
+                                        "assessor_type"     => $assessor_info["assessor_type"],
+                                        "assessor_value"    => $assessor_info["assessor_value"],
+                                        "assessor_name"    => $assessor_info["assessor_name"],
+                                        "comment_text"      => $comments,
+                                        "comment_anonymity" => $comment_anonymity
+                                    );
+                                    $this->report_data[$index]["responses"][$i]["rubric_response_detail"][$item_id][$item_order]["comments"][] = $comment_data;
                                 }
                             }
                         }
@@ -1158,8 +1573,10 @@ class Entrada_Utilities_Assessments_Reports extends Entrada_Utilities_Assessment
      * @param string $single_selected_response
      * @param string $comments
      * @param array $all_responses
+     * @param array $assessor_info
+     * @param string $comment_anonymity
      */
-    private function reportDataAddNodeSingleElement($element_id, $single_selected_response, $comments, $all_responses) {
+    protected function reportDataAddNodeSingleElement($element_id, $single_selected_response, $comments, $all_responses, $assessor_info, $comment_anonymity) {
         $index = "element-$element_id";
 
         // If this item doesn't exist, add it
@@ -1181,7 +1598,14 @@ class Entrada_Utilities_Assessments_Reports extends Entrada_Utilities_Assessment
                         $this->report_data[$index]["responses"][$i]["count"]++;
                         if ($comments) {
                             if (!in_array($comments, $this->report_data[$index]["comments"])) {
-                                $this->report_data[$index]["comments"][] = $comments;
+                                $comment_data = array(
+                                    "assessor_type"     => $assessor_info["assessor_type"],
+                                    "assessor_value"    => $assessor_info["assessor_value"],
+                                    "assessor_name"     => $assessor_info["assessor_name"],
+                                    "comment_text"      => $comments,
+                                    "comment_anonymity" => $comment_anonymity
+                                );
+                                $this->report_data[$index]["comments"][] = $comment_data;
                             }
                         }
                     }
@@ -1256,7 +1680,7 @@ class Entrada_Utilities_Assessments_Reports extends Entrada_Utilities_Assessment
     /**
      * Save the current report result set to cache.
      */
-    private function cacheReport() {
+    protected function cacheReport() {
         // We can only save a cached version of a report if a viewer proxy ID is set.
         $params = $this->buildReportCacheParams();
         $this->report_cache->save($this->report_data, $params["report_key"]);
@@ -1281,7 +1705,7 @@ class Entrada_Utilities_Assessments_Reports extends Entrada_Utilities_Assessment
      *
      * @return bool|array
      */
-    private function fetchCachedReport() {
+    protected function fetchCachedReport() {
         if ($this->disable_file_caching) {
             return false;
         }

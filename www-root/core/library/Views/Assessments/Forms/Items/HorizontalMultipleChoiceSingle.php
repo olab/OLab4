@@ -24,7 +24,6 @@
  */
 
 class Views_Assessments_Forms_Items_HorizontalMultipleChoiceSingle extends Views_Assessments_Forms_Items_Base {
-
     /**
      * Render view.
      *
@@ -33,28 +32,47 @@ class Views_Assessments_Forms_Items_HorizontalMultipleChoiceSingle extends Views
     protected function renderView($options = array()) {
         global $translate; ?>
         <div class="assessment-horizontal-choice-item item-container" data-item-id="<?php echo $this->item["item_id"] ?>" data-comment-type="<?php echo html_encode($this->item["comment_type"]) ?>">
+
+            <?php $this->buildItemDisabledOverlay(); ?>
+
             <table class="item-table <?php echo str_replace("_", "-", $this->item["shortname"]) ?>">
 
                 <?php $this->buildItemHeader(); ?>
 
-                <?php if ($this->responses): $column_width = (100 / $this->response_count); ?>
+                <?php
+                if ($this->item["allow_default"] && $this->item["default_response"]) {
+                    $has_response_selected = false;
+                    foreach ($this->responses as $response) {
+                        if ($response["is_selected"]) {
+                            $has_response_selected = true;
+                        }
+                    }
+                } else {
+                    $has_response_selected = true;
+                }
+                ?>
+
+                <?php if ($this->responses): $column_width = floor(100 / $this->response_count); ?>
                     <tr class="horizontal-response-input item-response-view">
-                        <?php foreach ($this->responses as $iresponse_id => $response): ?>
-                            <td width="<?php echo $column_width ?>%">
+                        <?php
+                        $current_response = 1;
+                        foreach ($this->responses as $iresponse_id => $response): ?>
+                            <td width="<?php echo $column_width ?>%" <?php echo (($this->disabled) && ($response["is_selected"] || (!$has_response_selected && $this->item["default_response"] == $current_response))) ? "class=\"selected-response\"" : ""; ?>>
                                 <label for="<?php echo "item-{$this->item["item_id"]}-response-{$iresponse_id}"; ?>">
                                     <input type="radio"
-                                           class="item-control"
+                                           class="item-control <?php echo ($this->disabled) ? "hide" : ""; ?>"
                                            data-item-id="<?php echo $this->item["item_id"]; ?>"
                                            data-iresponse-id="<?php echo $iresponse_id; ?>"
                                            id="<?php echo "item-{$this->item["item_id"]}-response-{$iresponse_id}"; ?>"
                                            name="<?php echo "item-{$this->item["item_id"]}"; ?>"
                                            value="<?php echo $iresponse_id; ?>"
                                            <?php echo ($response["flag_response"])? "data-response-flagged='true'" : ""; ?>
-                                           <?php echo ($response["is_selected"]) ? "checked='checked'" : ""; ?>
+                                           <?php echo ($response["is_selected"] || (!$has_response_selected && $this->item["default_response"] == $current_response)) ? "checked='checked'" : ""; ?>
                                            <?php echo ($this->disabled) ? "disabled" : ""; ?>
                                     />
                                 </label>
                             </td>
+                            <?php $current_response++; ?>
                         <?php endforeach; ?>
                     </tr>
 
@@ -62,7 +80,11 @@ class Views_Assessments_Forms_Items_HorizontalMultipleChoiceSingle extends Views
                         <?php foreach ($this->responses as $iresponse => $response): ?>
                             <td width="<?php echo $column_width ?>%">
                                 <label for="<?php echo "item-{$this->item["item_id"]}-response-{$iresponse}" ?>">
-                                       <?php echo html_encode($response["response_descriptor_text"]) ?>
+                                    <?php if (Entrada_Assessments_Forms::usesDescriptorInsteadOfResponseText($this->item["shortname"])): ?>
+                                        <?php echo html_decode($response["response_descriptor_text"]) ?>
+                                    <?php else: ?>
+                                        <?php echo html_decode($response["text"]) ?>
+                                    <?php endif; ?>
                                 </label>
                             </td>
                         <?php endforeach; ?>
@@ -72,7 +94,7 @@ class Views_Assessments_Forms_Items_HorizontalMultipleChoiceSingle extends Views
                         <?php $this->buildItemDetails(); ?>
                     <?php endif; ?>
 
-                    <?php $this->buildItemComments(); ?>
+                    <?php $this->buildItemComments($options); ?>
 
                 <?php else: ?>
 

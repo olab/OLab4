@@ -106,7 +106,6 @@ if (!defined("IN_DISTRIBUTIONS")) {
                 // ID given was good, so fetch data.
                 $distribution_data = Models_Assessments_Distribution::fetchDistributionData($distribution->getID());
 
-
                 // The only valid modes are copy and edit.
                 if ($mode != "edit" && $mode != "copy") {
                     $mode = "edit";
@@ -145,7 +144,6 @@ if (!defined("IN_DISTRIBUTIONS")) {
         $HEAD[] = "<script type=\"text/javascript\" src=\"" . ENTRADA_URL . "/javascript/assessments/distributions/index.js?release=" . html_encode(APPLICATION_VERSION) . "\"></script>";
         $HEAD[] = "<script type=\"text/javascript\" src=\"" . ENTRADA_URL . "/javascript/jquery/jquery.advancedsearch.js?release=" . html_encode(APPLICATION_VERSION) . "\"></script>";
         $HEAD[] = "<script type=\"text/javascript\" src=\"" . ENTRADA_URL . "/javascript/assessments/assessment-targets.js?release=" . html_encode(APPLICATION_VERSION) . "\"></script>";
-        $HEAD[] = "<script type=\"text/javascript\" src=\"" . ENTRADA_URL . "/javascript/assessments/distributions/progress.js?release=" . html_encode(APPLICATION_VERSION) . "\"></script>";
         $HEAD[] = "<script type=\"text/javascript\" src=\"" . ENTRADA_URL . "/javascript/jquery/jquery.timepicker.js?release=" . html_encode(APPLICATION_VERSION) . "\"></script>";
         $HEAD[] = "<link rel=\"stylesheet\" type=\"text/css\" href=\"" . ENTRADA_URL . "/css/jquery/jquery.advancedsearch.css\" />";
         $HEAD[] = "<script type=\"text/javascript\" >var internal_assessor_label = '" . $translate->_("Internal assessor") . "';</script>";
@@ -153,7 +151,7 @@ if (!defined("IN_DISTRIBUTIONS")) {
         $HEAD[] = "<script type=\"text/javascript\" >var individual_author_label = '" . $translate->_("Individual") . "';</script>";
         $HEAD[] = "<script type=\"text/javascript\" >var course_author_label = '" . $translate->_("Course") . "';</script>";
         $HEAD[] = "<script type=\"text/javascript\" >var organisation_author_label = '" . $translate->_("Organisation") . "';</script>";
-        $HEAD[] = "<link href=\"" . ENTRADA_URL . "/css/assessments/assessment-public-index.css\" rel=\"stylesheet\" type=\"text/css\" media=\"all\" />";
+        $HEAD[] = "<link href=\"" . ENTRADA_URL . "/css/assessments/assessment-public-index.css?release=" . html_encode(APPLICATION_VERSION) . "\" rel=\"stylesheet\" type=\"text/css\" media=\"all\" />";
         ?>
         <script type="text/javascript">
             var distribution_form = {};
@@ -243,7 +241,8 @@ if (!defined("IN_DISTRIBUTIONS")) {
                     no_results_text: "<?php echo $translate->_("No Cohorts found matching the search criteria"); ?>",
                     parent_form: $("#distribution-data-form"),
                     width: 300,
-                    modal: false
+                    modal: false,
+                    user_card: true
                 });
 
                 $("#choose-form-btn").advancedSearch({
@@ -281,7 +280,8 @@ if (!defined("IN_DISTRIBUTIONS")) {
                     control_class: "delegator-selector",
                     width: 300,
                     lazyload: true,
-                    modal: false
+                    modal: false,
+                    user_card: true
                 });
 
                 $("#rs-choose-rotation-btn").advancedSearch({
@@ -318,13 +318,26 @@ if (!defined("IN_DISTRIBUTIONS")) {
                             data_source: "get-user-courses",
                             mode: "radio",
                             selector_control_name: "assessor_course_id"
+                        },
+                        assessor_cgroup: {
+                            label: "<?php echo $translate->_("Course Group"); ?>",
+                            data_source: "get-course-groups",
+                            mode: "radio",
+                            selector_control_name: "assessor_cgroup_id"
+                        },
+                        assessor_individual: {
+                            label: "<?php echo $translate->_("Individual"); ?>",
+                            data_source: "get-organisation-individuals",
+                            selector_control_name: "assessor_individual_id"
                         }
                     },
                     control_class: "assessor-audience-selector",
-                    no_results_text: "<?php echo $translate->_("No Cohorts found matching the search criteria"); ?>",
+                    no_results_text: "<?php echo $translate->_("No learners found matching the search criteria"); ?>",
                     parent_form: $("#distribution-data-form"),
                     width: 300,
-                    modal: false
+                    lazyload: true,
+                    modal: false,
+                    user_card: true
                 });
 
                 $("#choose-assessors-faculty-btn").advancedSearch({
@@ -347,7 +360,8 @@ if (!defined("IN_DISTRIBUTIONS")) {
                     parent_form: $("#distribution-data-form"),
                     width: 300,
                     lazyload: true,
-                    modal: false
+                    modal: false,
+                    user_card: true
                 });
 
                 $("#choose-targets-faculty-btn").advancedSearch({
@@ -369,7 +383,8 @@ if (!defined("IN_DISTRIBUTIONS")) {
                     parent_form: $("#distribution-data-form"),
                     width: 300,
                     lazyload: true,
-                    modal: false
+                    modal: false,
+                    user_card: true
                 });
 
                 $("#choose-targets-btn").advancedSearch({
@@ -387,13 +402,25 @@ if (!defined("IN_DISTRIBUTIONS")) {
                             data_source: "get-user-courses",
                             mode: "radio",
                             selector_control_name: "target_course_audience_id"
+                        },
+                        target_cgroup: {
+                            label: "<?php echo $translate->_("Course Group"); ?>",
+                            data_source: "get-course-groups",
+                            mode: "radio",
+                            selector_control_name: "target_cgroup_id"
+                        },
+                        target_individual: {
+                            label: "<?php echo $translate->_("Individual"); ?>",
+                            data_source: "get-course-learners",
+                            selector_control_name: "target_individual_id"
                         }
                     },
                     control_class: "target-audience-selector",
-                    no_results_text: "<?php echo $translate->_("No Cohorts found matching the search criteria"); ?>",
+                    no_results_text: "<?php echo $translate->_("No learners found matching the search criteria"); ?>",
                     parent_form: $("#distribution-data-form"),
                     width: 300,
-                    modal: false
+                    modal: false,
+                    user_card: true
                 });
 
                 $("#choose-assessors-rs-additional-learners").advancedSearch({
@@ -415,7 +442,8 @@ if (!defined("IN_DISTRIBUTIONS")) {
                     parent_form: $("#distribution-data-form"),
                     width: 300,
                     lazyload: true,
-                    modal: false
+                    modal: false,
+                    user_card: true
                 });
 
                 $("#choose-targets-rs-additional-learners").advancedSearch({
@@ -437,7 +465,8 @@ if (!defined("IN_DISTRIBUTIONS")) {
                     parent_form: $("#distribution-data-form"),
                     width: 300,
                     lazyload: true,
-                    modal: false
+                    modal: false,
+                    user_card: true
                 });
 
                 $("#choose-assessors-rs-faculty").advancedSearch({
@@ -459,7 +488,8 @@ if (!defined("IN_DISTRIBUTIONS")) {
                     parent_form: $("#distribution-data-form"),
                     width: 300,
                     lazyload: true,
-                    modal: false
+                    modal: false,
+                    user_card: true
                 });
 
                 $("#choose-targets-rs-faculty").advancedSearch({
@@ -477,7 +507,8 @@ if (!defined("IN_DISTRIBUTIONS")) {
                     parent_form: $("#distribution-data-form"),
                     width: 300,
                     lazyload: true,
-                    modal: false
+                    modal: false,
+                    user_card: true
                 });
 
                 $("#choose-targets-rs-individual-btn").advancedSearch({
@@ -498,7 +529,8 @@ if (!defined("IN_DISTRIBUTIONS")) {
                     no_results_text: "<?php echo $translate->_("No Cohorts found matching the search criteria"); ?>",
                     parent_form: $("#distribution-data-form"),
                     width: 300,
-                    modal: false
+                    modal: false,
+                    user_card: true
                 });
 
                 $("#choose-target-course-btn").advancedSearch({
@@ -597,7 +629,45 @@ if (!defined("IN_DISTRIBUTIONS")) {
                     width: 300,
                     modal: false
                 });
+
+                $("#choose-targets-rs-external").advancedSearch({
+                    api_url: ENTRADA_URL + "/admin/" + MODULE + "/distributions?section=api-distributions",
+                    resource_url: ENTRADA_URL,
+                    filters: {
+                        rs_target_external: {
+                            label: "<?php echo $translate->_("External Target"); ?>",
+                            data_source: "get-external-targets",
+                            mode: "checkbox"
+                        }
+                    },
+                    control_class: "target-rs-external-selector",
+                    no_results_text: "<?php echo $translate->_("No external targets found matching the search criteria"); ?>",
+                    parent_form: $("#distribution-data-form"),
+                    width: 300,
+                    lazyload: false,
+                    modal: false
+                });
+
+                $("#choose-target-external-btn").advancedSearch({
+                    api_url: ENTRADA_URL + "/admin/" + MODULE + "/distributions?section=api-distributions",
+                    resource_url: ENTRADA_URL,
+                    filters: {
+                        target_external: {
+                            label: "<?php echo $translate->_("External Target"); ?>",
+                            data_source: "get-external-targets",
+                            mode: "checkbox"
+                        }
+                    },
+                    control_class: "target-external-selector",
+                    no_results_text: "<?php echo $translate->_("No external targets found matching the search criteria"); ?>",
+                    parent_form: $("#distribution-data-form"),
+                    width: 300,
+                    lazyload: false,
+                    modal: false
+                });
             });
+
+            var cbme = <?php echo $ENTRADA_ACL->amIAllowed("cbme", "read", true) ? "true" : "false"; ?>;
         </script>
 
         <div id="distribution-editor-container">
@@ -658,6 +728,15 @@ if (!defined("IN_DISTRIBUTIONS")) {
                             </div>
                         </div>
                         <div class="control-group">
+                            <label for="assessment_type" class="control-label form-required" data-toggle="tooltip" title="<?php echo html_encode($translate->_("The Distribution Task Type will determine which Target and Assessor / Evaluator options will display in the wizard.\n\nAn Assessment is typically when a learner is the target of the assessment.\n\nAn Evaluation is typically when anything else is being evaluated (i.e. a faculty member, a learning event, a rotation, etc.).\n\nEvaluations are anonymous and will only be visible to the assessor of the task and PAs/PDs. Assessments will be immediately visible to the target upon completion unless the task requires approval.")); ?>"><?php echo $translate->_("Task Type"); ?> <i class="icon-question-sign"></i></label>
+                            <div class="controls">
+                                <select id="assessment_type" name="assessment_type">
+                                    <option value="assessment" <?php echo ($distribution && $distribution->getAssessmentType() == "assessment") ? "selected=\"selected\"" : "" ; ?>><?php echo $translate->_("Assessment"); ?></option>
+                                    <option value="evaluation" <?php echo ($distribution && $distribution->getAssessmentType() == "evaluation") ? "selected=\"selected\"" : "" ; ?>><?php echo $translate->_("Evaluation"); ?></option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="control-group">
                             <label for="assessment-mandatory" class="control-label"><?php echo $translate->_("Assessment Mandatory"); ?></label>
                             <div class="controls">
                                 <label class="checkbox" for="assessment-mandatory">
@@ -695,6 +774,7 @@ if (!defined("IN_DISTRIBUTIONS")) {
                     </div>
 
                     <div id="wizard-step-2" class="wizard-step hide">
+
                         <div id="distribution-method-choice-container" class="control-group">
                             <label for="choose-method-btn" class="control-label form-required"><?php echo $translate->_("Distribution Method"); ?></label>
                             <div class="controls">
@@ -807,12 +887,12 @@ if (!defined("IN_DISTRIBUTIONS")) {
                                 </div>
                             </div>
                         </div>
-                        <div id="distribution-rotation-delivery-options" class="<?php if (!$distribution_schedule) echo "hide"; ?>">
+                        <div id="distribution-rotation-delivery-options" class="<?php if (!$distribution_schedule) echo "hide"; ?> clearfix">
                             <div class="control-group">
-                                <label class="control-label release-date-tooltip" data-toggle="tooltip" title="<?php echo $translate->_("The release date tells the distribution wizard how far back in time to go in order to create assessment tasks. For example: If you set the release date to the first of this month, tasks will only be created based on scheduled events or rotations that take place after the first of this month within the curriculum period chosen in Step 1."); ?>"><?php echo $translate->_("Release Date "); ?><i class="icon-question-sign"></i></label>
+                                <label class="control-label " data-toggle="tooltip" title="<?php echo html_encode($translate->_("The release date tells the distribution wizard how far back in time to go in order to create assessment tasks. For example: If you set the release date to the first of this month, tasks will only be created based on scheduled events or rotations that take place after the first of this month within the curriculum period chosen in Step 1.")); ?>"><?php echo $translate->_("Release Date "); ?><i class="icon-question-sign"></i></label>
                                 <div class="controls">
                                     <label id="rotation-release-option-label" for="rotation-release-option" class="checkbox">
-                                        <input type="checkbox" id="rotation-release-option" name="rotation_release_option" value="1" <?php echo isset($distribution_data["release_date"])? "checked" : ""; ?> />
+                                        <input type="checkbox" id="rotation-release-option" name="rotation_release_option" value="1" <?php echo isset($distribution_data["release_date"]) && $distribution_data["release_date"] ? "checked" : ""; ?> />
                                     </label>
                                     <div id="rotation-release-control" style="display:<?php echo (!isset($distribution_data["release_date"]) || !$distribution_data["release_date"]) ? "none" : "inline-block" ?>">
                                         <div class="input-append space-right release-calendar">
@@ -882,10 +962,10 @@ if (!defined("IN_DISTRIBUTIONS")) {
                                 </div>
                             </div>
                             <div class="control-group">
-                                <label class="control-label release-date-tooltip" data-toggle="tooltip" title="<?php echo $translate->_("The release date tells the distribution wizard how far back in time to go in order to create assessment tasks. For example: If you set the release date to the first of this month, tasks will only be created based on scheduled events or rotations that take place after the first of this month within the curriculum period chosen in Step 1."); ?>"><?php echo $translate->_("Release Date "); ?><i class="icon-question-sign"></i></label>
+                                <label class="control-label " data-toggle="tooltip" title="<?php echo html_encode($translate->_("The release date tells the distribution wizard how far back in time to go in order to create assessment tasks. For example: If you set the release date to the first of this month, tasks will only be created based on scheduled events or rotations that take place after the first of this month within the curriculum period chosen in Step 1.")); ?>"><?php echo $translate->_("Release Date "); ?><i class="icon-question-sign"></i></label>
                                 <div class="controls">
                                     <label id="eventtype-release-option-label" for="eventtype-release-option" class="checkbox">
-                                        <input type="checkbox" id="eventtype-release-option" name="eventtype_release_option" value="1" <?php echo isset($distribution_data["release_date"])? "checked" : ""; ?> />
+                                        <input type="checkbox" id="eventtype-release-option" name="eventtype_release_option" value="1" <?php echo isset($distribution_data["release_date"]) && $distribution_data["release_date"] ? "checked" : ""; ?> />
                                     </label>
                                     <div id="eventtype-release-control" style="display:<?php echo (!isset($distribution_data["release_date"]) || !$distribution_data["release_date"]) ? "none" : "inline-block" ?>">
                                         <div class="input-append space-right release-calendar">
@@ -897,7 +977,47 @@ if (!defined("IN_DISTRIBUTIONS")) {
                                     </div>
                                 </div>
                             </div>
+                        </div>
 
+                        <div id="distribution-expiry-container" class="control-group">
+                            <div id="expiry-date-option-controls" class="control-group <?php echo $distribution_method != "date_range" ? "hide" : ""; ?>">
+                                <label for="expiry-date-option" class="control-label expiry-tooltip" data-toggle="tooltip" title="<?php echo html_encode($translate->_("Tasks will expire at 12:00 AM on the day that you select, so it is best to select the day after your intended expiry date.")); ?>"><?php echo $translate->_("Task Expiry Date"); ?> <i class="icon-question-sign"></i></label>
+                                <div class="controls">
+                                    <div class="input-append space-right">
+                                        <input id="expiry-date" type="text"
+                                               class="input-small datepicker"
+                                               value="<?php echo (isset($distribution_data["expiry_date"]) && $distribution_data["expiry_date"]) ? date("Y-m-d", $distribution_data["expiry_date"]) : ""; ?>"
+                                               name="expiry_date"/>
+                                        <span class="add-on pointer">
+                                        <i class="icon-calendar"></i>
+                                    </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="expiry-option-controls" class="control-group <?php if ($distribution_method == "date_range") echo "hide"; ?>">
+                                <label for="expiry-option" class="control-label expiry-tooltip" data-toggle="tooltip" title="<?php echo html_encode($translate->_("This offset controls whether or not the tasks generated by this distribution will automatically expire.")); ?>"><?php echo $translate->_("Task Expiry"); ?> <i class="icon-question-sign"></i></label>
+                                <div class="controls">
+                                    <input type="checkbox" id="expiry-option" name="expiry_option" value="1" <?php echo isset($distribution_data["expiry_offset"])? "checked" : ""; ?> />
+                                    <div id="expiry-control" style="display:<?php echo (!isset($distribution_data["expiry_offset"]) || !$distribution_data["expiry_offset"] ? "none" : "inline-block"); ?>">
+                                        <input type="text" id="expiry-days" name="expiry_days" class="distribution-number-input" value="<?php echo (isset($distribution_data["expiry_days"])) ? $distribution_data["expiry_days"] : "0" ;?>"/>
+                                        <?php echo $translate->_(" day(s) and "); ?>
+                                        <input type="text" id="expiry-hours" name="expiry_hours" class="distribution-number-input" value="<?php echo (isset($distribution_data["expiry_hours"])) ? $distribution_data["expiry_hours"] : "0" ;?>"/>
+                                        <?php echo $translate->_(" hour(s) <strong>after delivery</strong>"); ?>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="expiry-notification-option-controls" class="control-group hide">
+                                <label for="expiry-notification-option" class="control-label expiry-notification-tooltip" data-toggle="tooltip" title="<?php echo html_encode($translate->_("This offset controls whether or not the tasks generated by this distribution will automatically send out a reminder notification before they expire.")); ?>"><?php echo $translate->_("Warning Notification"); ?> <i class="icon-question-sign"></i></label>
+                                <div class="controls">
+                                    <input type="checkbox" id="expiry-notification-option" name="expiry_notification_option" value="1" <?php echo isset($distribution_data["expiry_notification_offset"])? "checked" : ""; ?> />
+                                    <div id="expiry-notification-control" style="display:<?php echo (!isset($distribution_data["expiry_notification_offset"]) || !$distribution_data["expiry_notification_offset"] ? "none" : "inline-block"); ?>">
+                                        <input type="text" id="expiry-notification-days" name="expiry_notification_days" class="distribution-number-input" value="<?php echo (isset($distribution_data["expiry_notification_days"])) ? $distribution_data["expiry_notification_days"] : "0" ;?>"/>
+                                        <?php echo $translate->_(" day(s) and "); ?>
+                                        <input type="text" id="expiry-notification-hours" name="expiry_notification_hours" class="distribution-number-input" value="<?php echo (isset($distribution_data["expiry_notification_hours"])) ? $distribution_data["expiry_notification_hours"] : "0" ;?>"/>
+                                        <?php echo $translate->_(" hour(s) <strong>before expiry</strong>"); ?>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div id="wizard-step-3" class="wizard-step hide">
@@ -914,7 +1034,7 @@ if (!defined("IN_DISTRIBUTIONS")) {
                                 <div class="controls">
                                     <label class="radio" for="distribution-eventtype-target-eventtype">
                                         <input type="radio" name="distribution_eventtype_target_option" id="distribution-eventtype-target-eventtype" value="learner" />
-                                        <?php echo $translate->_("Learners who are enrolled in events with the selected event types"); ?>
+                                        <?php echo $translate->_("Attendees who are enrolled in events with the selected event types"); ?>
                                     </label>
                                     <label class="radio" for="distribution-eventtype-target-faculty">
                                         <input type="radio" name="distribution_eventtype_target_option" id="distribution-eventtype-target-faculty" value="faculty" />
@@ -950,6 +1070,11 @@ if (!defined("IN_DISTRIBUTIONS")) {
                                         <input type="radio" name="distribution_rs_target_option"
                                                id="distribution-rs-target-block" value="block"/>
                                         <?php echo $translate->_("The target for this Distribution is the rotation itself"); ?>
+                                    </label>
+                                    <label class="radio" for="distribution-rs-target-external">
+                                        <input type="radio" name="distribution_rs_target_option"
+                                               id="distribution-rs-target-external" value="external"/>
+                                        <?php echo $translate->_("The targets for this Distribution are external"); ?>
                                     </label>
                                 </div>
                             </div>
@@ -1031,6 +1156,17 @@ if (!defined("IN_DISTRIBUTIONS")) {
                                     </div>
                                 </div>
                             </div>
+                            <div id="rs-target-external-options" class="hide rs-target-option">
+                                <div class="control-group">
+                                    <label for="choose-targets-rs-external" class="control-label form-required"><?php echo $translate->_("Add External Members"); ?></label>
+                                    <div class="controls">
+                                        <button id="choose-targets-rs-external"
+                                                class="btn btn-search-filter"><?php echo $translate->_("Browse Externals"); ?>
+                                            <i class="icon-chevron-down btn-icon pull-right"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <div id="specific_dates_target_options" class="target-options">
                             <div class="control-group">
@@ -1044,22 +1180,27 @@ if (!defined("IN_DISTRIBUTIONS")) {
                                     <label class="radio" for="distribution-target-faculty">
                                         <input type="radio" name="distribution_target_option"
                                                id="distribution-target-faculty" value="faculty"/>
-                                        <?php echo $translate->_("Select faculty members <span class=\"muted\"><strong>Course Contacts</strong></span>"); ?>
+                                        <?php echo $translate->_("Select faculty members"); ?>
                                     </label>
                                     <label class="radio" for="distribution-target-internal">
                                         <input type="radio" name="distribution_target_option"
                                                id="distribution-target-internal" value="grouped_users"/>
-                                        <?php echo $translate->_("Select grouped learners by <span class=\"muted\"><strong>Cohorts</strong> or <strong>Courses</strong></span>"); ?>
+                                        <?php echo $translate->_("Select learners"); ?>
                                     </label>
                                     <label class="radio" for="distribution-target-course">
                                         <input type="radio" name="distribution_target_option"
                                                id="distribution-target-course" value="course"/>
                                         <?php echo $translate->_("Select a Course"); ?>
                                     </label>
+                                    <label class="radio" for="distribution-target-individual-users">
+                                        <input type="radio" name="distribution_target_option"
+                                               id="distribution-target-individual-users" value="individual_users"/>
+                                        <?php echo $translate->_("Select individuals regardless of role"); ?>
+                                    </label>
                                     <label class="radio" for="distribution-target-external">
                                         <input type="radio" name="distribution_target_option"
-                                               id="distribution-target-external" value="individual_users"/>
-                                        <?php echo $translate->_("Select individuals regardless of role"); ?>
+                                               id="distribution-target-external" value="external"/>
+                                        <?php echo $translate->_("Select External Targets"); ?>
                                     </label>
                                 </div>
                             </div>
@@ -1110,7 +1251,26 @@ if (!defined("IN_DISTRIBUTIONS")) {
                                     </div>
                                 </div>
                             </div>
+                            <div id="select-targets-external" class="control-group hide target-option">
+                                <label for="choose-target-external-btn" class="control-label form-required"><?php echo $translate->_("Select External Targets"); ?></label>
+                                <div class="controls">
+                                    <button id="choose-target-external-btn"
+                                            class="btn btn-search-filter"><?php echo $translate->_("Browse Externals"); ?>
+                                        <i class="icon-chevron-down btn-icon pull-right"></i>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
+
+                        <div id="select-target-options" class="control-group hide">
+                            <label class="control-label form-required"><?php echo $translate->_("CBME Options"); ?></label>
+                            <div class="controls">
+                                <label class="radio" for="non-cbme-targets-btn"><input id="non-cbme-targets-btn" type="radio" name="target_option" value="non_cbme" checked /><?php echo $translate->_("Apply to <strong>non</strong> CBME learners"); ?></label>
+                                <label class="radio" for="all-targets-btn"><input id="all-targets-btn" type="radio" name="target_option" value="all" /><?php echo $translate->_("Apply to all learners"); ?></label>
+                                <label class="radio" for="cbme-targets-btn"><input id="cbme-targets-btn" type="radio" name="target_option" value="only_cbme" /><?php echo $translate->_("Apply to <strong>only</strong> CBME learners"); ?></label>
+                            </div>
+                        </div>
+
                         <div id="attempt-limit-controls" class="control-group">
                             <label class="control-label form-required"><?php echo $translate->_("Target Attempt Options"); ?></label>
                             <div class="controls">
@@ -1159,7 +1319,7 @@ if (!defined("IN_DISTRIBUTIONS")) {
                                 <div class="controls">
                                     <label class="radio" for="distribution-eventtype-assessor-learner">
                                         <input type="radio" name="distribution_eventtype_assessor_option" id="distribution-eventtype-assessor-learner" value="learner"/>
-                                        <?php echo $translate->_("The assessors for this Distribution are learners enrolled in the event"); ?>
+                                        <?php echo $translate->_("The assessors for this Distribution are attendees enrolled in the event"); ?>
                                     </label>
                                     <label class="radio" for="distribution-eventtype-assessor-faculty">
                                         <input type="radio" name="distribution_eventtype_assessor_option" id="distribution-eventtype-assessor-faculty" value="faculty"/>
@@ -1173,15 +1333,15 @@ if (!defined("IN_DISTRIBUTIONS")) {
                             </div>
                             <div id="eventtype-assessor-learner-options" class="hide eventtype-assessor-option">
                                 <div class="control-group">
-                                    <label class="control-label form-required"><?php echo $translate->_("Learner Options"); ?></label>
+                                    <label class="control-label form-required"><?php echo $translate->_("Attendee Options"); ?></label>
                                     <div class="controls">
                                         <label class="radio" for="distribution-eventtype-learners-attended">
                                             <input type="radio" name="distribution_eventtype_learners" id="distribution-eventtype-learners-attended" value="attended"/>
-                                            <?php echo $translate->_("Send this assessment to all enrolled learners that attended the event"); ?>
+                                            <?php echo $translate->_("Send this assessment to all enrolled attendees that attended the event"); ?>
                                         </label>
                                         <label class="radio" for="distribution-eventtype-learners">
                                             <input type="radio" name="distribution_eventtype_learners" id="distribution-eventtype-learners" value="all-learners"/>
-                                            <?php echo $translate->_("Send this assessment to all enrolled learners, even if they <strong>did not</strong> attend the event"); ?>
+                                            <?php echo $translate->_("Send this assessment to all enrolled attendees, even if they <strong>did not</strong> attend the event"); ?>
                                         </label>
                                     </div>
                                 </div>
@@ -1288,7 +1448,7 @@ if (!defined("IN_DISTRIBUTIONS")) {
                                     </div>
                                 </div>
                                 <div id="rs-additional-learners" class="control-group hide">
-                                    <label class="control-label form-required"><?php echo $translate->_("Additional Learners"); ?></label>
+                                    <label class="control-label"><?php echo $translate->_("Additional Learners"); ?></label>
                                     <div class="controls">
                                         <label class="checkbox" for="distribution-rs-additional-learners">
                                             <input type="checkbox" name="distribution_rs_additional_learners"
@@ -1341,7 +1501,7 @@ if (!defined("IN_DISTRIBUTIONS")) {
                                         <input id="rs-assessor-lastname" name="assessor_lastname" class="form-control input-small" type="text" placeholder="<?php echo $translate->_("Lastname"); ?>"/>
                                         <input id="rs-assessor-email" name="assessor_email" class="form-control input-medium" type="text" placeholder="<?php echo $translate->_("Email Address"); ?>"/>
                                         <a id="rs-add-external-user-btn" href="#" class="btn btn-mini btn-success"><?php echo $translate->_("Add Assessor"); ?></a>
-                                        <a id="rs-cancel-assessor-btn" href="#" class="btn btn-mini">Cancel</a>
+                                        <a id="rs-cancel-assessor-btn" href="#" class="btn btn-mini"><?php echo $translate->_("Cancel"); ?></a>
                                     </div>
                                 </div>
                             </div>
@@ -1353,12 +1513,12 @@ if (!defined("IN_DISTRIBUTIONS")) {
                                     <label class="radio" for="distribution-assessor-faculty">
                                         <input type="radio" name="distribution_assessor_option"
                                                id="distribution-assessor-faculty" value="faculty"/>
-                                        <?php echo $translate->_("Select faculty members <span class=\"muted\"><strong>Course Contacts</strong></span>"); ?>
+                                        <?php echo $translate->_("Select faculty members"); ?>
                                     </label>
                                     <label class="radio" for="distribution-assessor-internal">
                                         <input type="radio" name="distribution_assessor_option"
                                                id="distribution-assessor-internal" value="grouped_users"/>
-                                        <?php echo $translate->_("Select grouped learners <span class=\"muted\"><strong>Cohorts</strong> or <strong>courses</strong></span>"); ?>
+                                        <?php echo $translate->_("Select learners"); ?>
                                     </label>
                                     <label class="radio" for="distribution-assessor-external">
                                         <input type="radio" name="distribution_assessor_option"
@@ -1414,11 +1574,16 @@ if (!defined("IN_DISTRIBUTIONS")) {
                                         <input id="assessor-email" name="assessor_email"
                                                class="form-control input-medium" type="text"
                                                placeholder="<?php echo $translate->_("Email Address"); ?>"/>
-                                        <a id="add-external-user-btn" href="#"
-                                           class="btn btn-mini btn-success"><?php echo $translate->_("Add Assessor"); ?></a>
-                                        <a id="cancel-assessor-btn" href="#" class="btn btn-mini">Cancel</a>
+                                        <a id="add-external-user-btn" href="#" class="btn btn-mini btn-success"><?php echo $translate->_("Add Assessor"); ?></a>
+                                        <a id="cancel-assessor-btn" href="#" class="btn btn-mini"><?php echo $translate->_("Cancel"); ?></a>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+                        <div id="exclude_self_assessment_options" class="hide control-group space-above">
+                            <label for="exclude_self_assessments" class="control-label"><?php echo $translate->_("Exclude Self Assessments"); ?></label>
+                            <div class="controls">
+                                <input id="exclude_self_assessments" type="checkbox" value="1" name="exclude_self_assessments" />
                             </div>
                         </div>
                         <div id="distribution-feedback-options" class="hide">
@@ -1437,133 +1602,266 @@ if (!defined("IN_DISTRIBUTIONS")) {
 
                     <div id="wizard-step-5" class="wizard-step hide">
                         <?php echo display_generic($translate->_("That's it, just hit <strong>Save Distribution</strong> below and you're finished! <br /><br /> If you would like to set up additional reviewers aside from admin staff with implicit permission to review the results of this distribution, just check off the box below and fill in the form provided.")); ?>
-                        <div id="select-authors" class="authors-type-selector author-option space-below">
-                            <div class="control-group">
-                                <label for="author-type" class="control-label"><?php echo $translate->_("Author Type"); ?></label>
-                                <div class="controls">
-                                    <select class="span5" name="author_type" id="author-type" class="span3">
-                                        <?php foreach ($DEFAULT_TEXT_LABELS["contact_types"] as $contact_type => $contact_type_name) : ?>
-                                            <option value="<?php echo $contact_type; ?>"><?php echo $contact_type_name; ?></option>
-                                        <?php endforeach; ?>
-                                    </select>
+                        <div id="accordion-author-container" class="accordion on">
+                            <div class="accordion-group">
+                                <div class="accordion-heading">
+                                    <a href="#accordion-author" data-parent="accordion-author-container" data-toggle="collapse" data-target="#accordion-author" class="accordion-toggle collapsed">
+                                        <h3><?php echo $translate->_("Authorship"); ?></h3>
+                                    </a>
                                 </div>
-                            </div>
-                            <div class="control-group">
-                                <label for="authors-search" class="control-label"><?php echo $translate->_("Distribution Authors"); ?></label>
-                                <div id="autocomplete-container" class="controls">
-                                    <input id="authors-search" type="text" class="form-control search"
-                                           name="authors_search"
-                                           placeholder="<?php echo $translate->_("Type to search for Authors..."); ?>">
-                                    <div>
-                                        <div id="author-autocomplete-list-container"></div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div id="author-lists" class="space-below">
-                                <div id="author-list-section" class="hide">
-                                    <h3 id="selected-authors-list-heading"><?php echo $translate->_("Authors"); ?></h3>
-                                    <div id="authors-list-container"></div>
-                                </div>
-                            </div>
-                        </div>
-                        <div id="distribution-approver-option" class="hide">
-                            <div class="control-group">
-                                <label class="control-label"><?php echo $translate->_("Reviewer Option"); ?></label>
-                                <div class="controls">
-                                    <label for="approver-required" class="checkbox">
-                                        <input id="approver-required" type="checkbox" name="approver_required" value="1"/>
-                                        <?php echo $translate->_("Reviewer is required for this assessment"); ?>
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-                        <div id="select-approvers" class="hide space-above">
-                            <div class="control-group">
-                                <label for="distribution-approver-results" class="control-label form-nrequired"><?php echo $translate->_("Distribution Reviewer"); ?></label>
-                                <div class="controls">
-                                    <button id="distribution-approver-results" class="btn btn-search-filter"><?php echo $translate->_("Browse Reviewers"); ?>
-                                        <i class="icon-chevron-down btn-icon pull-right"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="control-group">
-                            <label for="flagging_notifications" class="control-label form-required"><?php echo $translate->_("Flagged Response Notifications"); ?></label>
-                            <div class="controls">
-                                <select name="flagging_notifications" id="flagging_notifications">
-                                    <option value="disabled">-- Disabled --</option>
-                                    <option value="reviewers"><?php echo $translate->_("Assessment Reviewers"); ?></option>
-                                    <option value="pcoordinators"><?php echo $translate->_("Program Coordinators"); ?></option>
-                                    <option value="directors"><?php echo $translate->_("Program Directors"); ?></option>
-                                    <option value="authors"><?php echo $translate->_("Distribution Authors"); ?></option>
-                                </select>
-                                <div class="content-small"><?php echo $translate->_("Send <strong>Email Notifications</strong> to the selected group whenever a <i>flagged</i> response is selected"); ?></div>
-                            </div>
-                        </div>
-                        <div id="review-options" class="hide space-above">
-                            <div class="control-group">
-                                <label for="distribution-review-results" class="control-label form-required"><?php echo $translate->_("Assessment Reviewers"); ?></label>
-                                <div class="controls">
-                                    <button id="distribution-review-results" class="btn btn-search-filter"><?php echo $translate->_("Browse Users"); ?>
-                                        <i class="icon-chevron-down btn-icon pull-right"></i>
-                                    </button>
-                                </div>
-                            </div>
-                            <?php /* // This code will be revisited later when requirements for it are reevaluated.
-                            <div id="reviewer-release-options" class="hide">
-                                <div class="control-group">
-                                    <label for="distribution-results-start-date" class="control-label form-required"><?php echo $translate->_("Release Results Starting"); ?></label>
-                                    <div class="controls">
-                                        <div class="input-append space-right">
-                                            <input id="distribution-results-start-date" type="text"
-                                                   class="input-small datepicker"
-                                                   value="<?php echo date("Y-m-d", strtotime("today")) ?>"
-                                                   name="distribution_results_start_date"/>
-                                <span class="add-on pointer">
-                                    <i class="icon-calendar"></i>
-                                </span>
+                                <div id="accordion-author" class="accordion-body collapse">
+                                    <div id="select-authors" class="authors-type-selector author-option">
+                                        <div class="control-group">
+                                            <label for="author-type" class="control-label"><?php echo $translate->_("Author Type"); ?></label>
+                                            <div class="controls">
+                                                <select class="span5" name="author_type" id="author-type" class="span3">
+                                                    <?php foreach ($DEFAULT_TEXT_LABELS["contact_types"] as $contact_type => $contact_type_name) : ?>
+                                                        <option value="<?php echo $contact_type; ?>"><?php echo $contact_type_name; ?></option>
+                                                    <?php endforeach; ?>
+                                                </select>
+                                            </div>
                                         </div>
-                                        <div class="input-append">
-                                            <input id="distribution-results-start-time" type="text"
-                                                   class="input-mini timepicker" value="00:00"
-                                                   name="distribution_results_start_time"/>
-                                <span class="add-on pointer">
-                                    <i class="icon-time"></i>
-                                </span>
+                                        <div class="control-group">
+                                            <label for="authors-search" class="control-label"><?php echo $translate->_("Distribution Authors"); ?></label>
+                                            <div id="autocomplete-container" class="controls">
+                                                <input id="authors-search" type="text" class="form-control search"
+                                                       name="authors_search"
+                                                       placeholder="<?php echo $translate->_("Type to search for Authors..."); ?>">
+                                                <div>
+                                                    <div id="author-autocomplete-list-container"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div id="author-lists" class="space-below">
+                                            <div id="author-list-section" class="hide">
+                                                <h3 id="selected-authors-list-heading"><?php echo $translate->_("Authors"); ?></h3>
+                                                <div id="authors-list-container"></div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="control-group">
-                                    <label for="distribution-results-end-date" class="control-label form-required"><?php echo $translate->_("Release Results Until"); ?></label>
-                                    <div class="controls">
-                                        <div class="input-append space-right">
-                                            <input id="distribution-results-end-date" type="text"
-                                                   class="input-small datepicker"
-                                                   value="<?php echo date("Y-m-d", strtotime("today + 1 week")) ?>"
-                                                   name="distribution_results_end_date"/>
-                                <span class="add-on pointer">
-                                    <i class="icon-calendar"></i>
-                                </span>
-                                        </div>
-                                        <div class="input-append">
-                                            <input id="distribution-results-end-time" type="text"
-                                                   class="input-mini timepicker" value="23:59"
-                                                   name="distribution_results_end_time"/>
-                                <span class="add-on pointer">
-                                    <i class="icon-time"></i>
-                                </span>
+                            </div>
+                        </div>
+                        <div id="accordion-target-release-container" class="accordion on">
+                            <div class="accordion-group">
+                                <div class="accordion-heading">
+                                    <a href="#accordion-target-release" data-parent="accordion-target-release-container" data-toggle="collapse" data-target="#accordion-target-release" class="accordion-toggle collapsed">
+                                        <h3><?php echo $translate->_("Target Release"); ?></h3>
+                                    </a>
+                                </div>
+                                <div id="accordion-target-release" class="accordion-body collapse">
+                                    <div id="target-task-release-controls"<?php echo ($distribution && $distribution->getAssessmentType() == "evaluation") ? " class=\"hide\"" : "" ; ?>>
+                                        <h4 class="target-options-header">
+                                            <i class="icon-question-sign pull-left space-right target-task-release-tooltip" data-toggle="tooltip"
+                                               title="<?php echo html_encode($translate->_("This option controls whether or not the targets can view individual identifiable tasks that were completed on them.")); ?>">
+                                            </i>
+                                            &nbsp;<?php echo $translate->_("Task List Release"); ?>
+                                        </h4>
+
+                                        <label class="radio" for="target-task-release-always">
+                                            <input type="radio" name="target-task-release-option" id="target-task-release-always" value="always">
+                                            <?php echo $translate->_("Targets can immediately view tasks completed on them"); ?>
+                                        </label>
+                                        <label class="radio target-task-release-never-tooltip" for="target-task-release-never" data-toggle="tooltip"
+                                               title="<?php echo html_encode($translate->_("This option ensures that learners cannot view identifiable tasks that were completed on them.")); ?>">
+                                            <input type="radio" name="target-task-release-option" id="target-task-release-never" value="never">
+                                            <?php echo $translate->_("Targets cannot view tasks completed on them"); ?> <i class="icon-question-sign space-left"></i>
+                                        </label>
+                                        <label class="radio" for="target-task-release-threshold">
+                                            <input type="radio" name="target-task-release-option" id="target-task-release-threshold" value="threshold">
+                                            <?php echo $translate->_("Targets can view tasks completed on them after meeting the following criteria:"); ?>
+                                        </label>
+                                        <div id="target-task-release-threshold-controls" class="target-threshold-controls hide">
+                                            <strong class="space-below"><?php echo $translate->_("Criteria"); ?></strong>
+                                            <label class="radio" for="target-task-release-threshold-option-unique">
+                                                <input type="radio" name="target-task-release-threshold-option" id="target-task-release-threshold-option-unique" value="unique">
+                                                <?php echo $translate->_("Target completes a percentage of their unique targets:"); ?>
+                                                <input type="number" min="1" max="100" id="target-task-release-threshold-option-unique-percentage" name="target-task-release-threshold-option-unique-percentage" class="input-small space-left"> %
+                                            </label>
                                         </div>
                                     </div>
-                                </div>
-                                <div class="control-group">
-                                    <label for="distribution-results-response-quantity" class="control-label form-required"><?php echo $translate->_("Quantity of responses before results can be reviewed"); ?></label>
-                                    <div class="controls">
-                                        <input id="distribution-results-response-quantity" class="input-small" type="text" name="distribution_results_response_quantity" value="0"/>
+                                    <div id="target-report-release-controls" class="space-above medium space-below medium">
+                                        <h4 class="target-options-header">
+                                            <i class="icon-question-sign pull-left space-right target-task-release-tooltip" data-toggle="tooltip"
+                                               title="<?php echo html_encode($translate->_("This option controls whether or not the targets can generate aggregated reports of tasks completed on them.")); ?>">
+                                            </i>
+                                            &nbsp;<?php echo $translate->_("Target Self-Reporting Release"); ?>
+                                        </h4>
+
+                                        <label class="radio" for="target-report-release-always">
+                                            <input type="radio" name="target-report-release-option" id="target-report-release-always" value="always">
+                                            <?php echo $translate->_("Targets can immediately view reports for tasks completed on them"); ?>
+                                        </label>
+                                        <label class="radio" for="target-report-release-never">
+                                            <input type="radio" name="target-report-release-option" id="target-report-release-never" value="never">
+                                            <?php echo $translate->_("Targets cannot view reports for tasks completed on them"); ?>
+                                        </label>
+                                        <label class="radio" for="target-report-release-threshold">
+                                            <input type="radio" name="target-report-release-option" id="target-report-release-threshold" value="threshold">
+                                            <?php echo $translate->_("Targets can view reports for tasks completed on them after meeting the following criteria:"); ?>
+                                        </label>
+
+                                        <div id="target-report-release-threshold-controls" class="target-threshold-controls hide">
+                                            <strong class="space-below"><?php echo $translate->_("Criteria"); ?></strong>
+                                            <label class="radio" for="target-report-release-threshold-option-unique">
+                                                <input type="radio" name="target-report-release-threshold-option" id="target-report-release-threshold-option-unique" value="unique">
+                                                <?php echo $translate->_("Target completes a percentage of their unique targets:"); ?>
+                                                <input type="number" min="1" max="100" id="target-report-release-threshold-option-unique-percentage" name="target-report-release-threshold-option-unique-percentage" class="input-small space-left"> %
+                                            </label>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                         */ ?>
                         </div>
+                        <div id="accordion-target-report-container" class="accordion on hide">
+                            <div class="accordion-group">
+                                <div class="accordion-heading">
+                                    <a href="#accordion-target-report" data-parent="accordion-target-report-container" data-toggle="collapse" data-target="#accordion-target-report" class="accordion-toggle collapsed">
+                                        <h3 class="target-options-header">
+                                            <i class="icon-question-sign pull-left space-right accordion-icon target-report-options-tooltip" data-toggle="tooltip"
+                                               title="<?php echo html_encode($translate->_("This option controls the aggregated reports specified in the 'Self-Reporting Release' section.")); ?>">
+                                            </i>
+                                            &nbsp;<?php echo $translate->_("Target Self-Reporting Options"); ?>
+                                        </h3>
+                                    </a>
+                                </div>
+                                <div id="accordion-target-report" class="accordion-body collapse space-below">
+                                    <div id="target-report-controls">
+                                        <h4><?php echo $translate->_("Comments"); ?></h4>
+
+                                        <label class="radio" for="target-report-comments-anonymous">
+                                            <input type="radio" name="target-report-comments-option" id="target-report-comments-anonymous" value="anonymous">
+                                            <?php echo $translate->_("Comments are anonymous"); ?>
+                                        </label>
+                                        <label class="radio" for="target-report-comments-identifiable">
+                                            <input type="radio" name="target-report-comments-option" id="target-report-comments-identifiable" value="identifiable">
+                                            <?php echo $translate->_("Comments are identifiable"); ?>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="accordion-approver-container" class="accordion on">
+                            <div class="accordion-group">
+                                <div class="accordion-heading">
+                                    <a href="#accordion-approver" data-parent="accordion-approver-container" data-toggle="collapse" data-target="#accordion-approver" class="accordion-toggle collapsed">
+                                        <h3><?php echo $translate->_("Reviewers"); ?></h3>
+                                    </a>
+                                </div>
+                                <div id="accordion-approver" class="accordion-body collapse">
+                                    <div id="distribution-approver-option">
+                                        <div class="control-group">
+                                            <label class="control-label"><?php echo $translate->_("Reviewer Option"); ?></label>
+                                            <div class="controls">
+                                                <label for="approver-required" class="checkbox">
+                                                    <input id="approver-required" type="checkbox" name="approver_required" value="1"/>
+                                                    <?php echo $translate->_("Reviewer is required for this assessment"); ?>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div id="select-approvers" class="hide space-above">
+                                        <div class="control-group">
+                                            <label for="distribution-approver-results" class="control-label form-nrequired"><?php echo $translate->_("Distribution Reviewer"); ?></label>
+                                            <div class="controls">
+                                                <button id="distribution-approver-results" class="btn btn-search-filter"><?php echo $translate->_("Browse Reviewers"); ?>
+                                                    <i class="icon-chevron-down btn-icon pull-right"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="accordion-flagging-container" class="accordion on">
+                            <div class="accordion-group">
+                                <div class="accordion-heading">
+                                    <a href="#accordion-flagging" data-parent="accordion-flagging-container" data-toggle="collapse" data-target="#accordion-flagging" class="accordion-toggle collapsed">
+                                        <h3><?php echo $translate->_("Prompted Response Notifications"); ?></h3>
+                                    </a>
+                                </div>
+                                <div id="accordion-flagging" class="accordion-body collapse">
+                                    <div class="control-group">
+                                        <label for="flagging_notifications" class="control-label form-required"><?php echo $translate->_("Prompted Response Notifications"); ?></label>
+                                        <div class="controls">
+                                            <select name="flagging_notifications" id="flagging_notifications">
+                                                <option value="disabled">-- Disabled --</option>
+                                                <option value="reviewers"><?php echo $translate->_("Assessment Reviewers"); ?></option>
+                                                <option value="pcoordinators"><?php echo $translate->_("Program Coordinators"); ?></option>
+                                                <option value="directors"><?php echo $translate->_("Program Directors"); ?></option>
+                                                <option value="authors"><?php echo $translate->_("Distribution Authors"); ?></option>
+                                            </select>
+                                            <div class="content-small"><?php echo $translate->_("Send <strong>Email Notifications</strong> to the selected group whenever a <i>prompted</i> response is selected"); ?></div>
+                                        </div>
+                                    </div>
+                                    <div id="review-options" class="hide space-above">
+                                        <div class="control-group">
+                                            <label for="distribution-review-results" class="control-label form-required"><?php echo $translate->_("Assessment Reviewers"); ?></label>
+                                            <div class="controls">
+                                                <button id="distribution-review-results" class="btn btn-search-filter"><?php echo $translate->_("Browse Users"); ?>
+                                                    <i class="icon-chevron-down btn-icon pull-right"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <?php /* // This code will be revisited later when requirements for it are reevaluated.
+                                        <div id="reviewer-release-options" class="hide">
+                                            <div class="control-group">
+                                                <label for="distribution-results-start-date" class="control-label form-required"><?php echo $translate->_("Release Results Starting"); ?></label>
+                                                <div class="controls">
+                                                    <div class="input-append space-right">
+                                                        <input id="distribution-results-start-date" type="text"
+                                                               class="input-small datepicker"
+                                                               value="<?php echo date("Y-m-d", strtotime("today")) ?>"
+                                                               name="distribution_results_start_date"/>
+                                            <span class="add-on pointer">
+                                                <i class="icon-calendar"></i>
+                                            </span>
+                                                    </div>
+                                                    <div class="input-append">
+                                                        <input id="distribution-results-start-time" type="text"
+                                                               class="input-mini timepicker" value="00:00"
+                                                               name="distribution_results_start_time"/>
+                                            <span class="add-on pointer">
+                                                <i class="icon-time"></i>
+                                            </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="control-group">
+                                                <label for="distribution-results-end-date" class="control-label form-required"><?php echo $translate->_("Release Results Until"); ?></label>
+                                                <div class="controls">
+                                                    <div class="input-append space-right">
+                                                        <input id="distribution-results-end-date" type="text"
+                                                               class="input-small datepicker"
+                                                               value="<?php echo date("Y-m-d", strtotime("today + 1 week")) ?>"
+                                                               name="distribution_results_end_date"/>
+                                            <span class="add-on pointer">
+                                                <i class="icon-calendar"></i>
+                                            </span>
+                                                    </div>
+                                                    <div class="input-append">
+                                                        <input id="distribution-results-end-time" type="text"
+                                                               class="input-mini timepicker" value="23:59"
+                                                               name="distribution_results_end_time"/>
+                                            <span class="add-on pointer">
+                                                <i class="icon-time"></i>
+                                            </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="control-group">
+                                                <label for="distribution-results-response-quantity" class="control-label form-required"><?php echo $translate->_("Quantity of responses before results can be reviewed"); ?></label>
+                                                <div class="controls">
+                                                    <input id="distribution-results-response-quantity" class="input-small" type="text" name="distribution_results_response_quantity" value="0"/>
+                                                </div>
+                                            </div>
+                                        </div>
+                                     */ ?>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
 
                     <div id="wizard-step-6" class="wizard-step hide"></div>

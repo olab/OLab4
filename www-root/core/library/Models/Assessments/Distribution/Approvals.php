@@ -21,18 +21,18 @@
  */
 
 class Models_Assessments_Distribution_Approvals extends Models_Base {
-    protected $adapproval_id, $aprogress_id, $adistribution_id, $approver_id, $release_status = 0, $comments, $created_date, $created_by;
+    protected $apapproval_id, $aprogress_id, $adistribution_id, $approver_id, $approval_status, $comments, $created_date, $created_by, $updated_date, $updated_by;
 
     protected static $table_name = "cbl_assessment_progress_approvals";
-    protected static $primary_key = "adapproval_id";
-    protected static $default_sort_column = "adapproval_id";
+    protected static $primary_key = "apapproval_id";
+    protected static $default_sort_column = "apapproval_id";
 
     public function __construct($arr = NULL) {
         parent::__construct($arr);
     }
 
     public function getID() {
-        return $this->adapproval_id;
+        return $this->apapproval_id;
     }
 
     public function getProgressID() {
@@ -47,8 +47,8 @@ class Models_Assessments_Distribution_Approvals extends Models_Base {
         return $this->approver_id;
     }
 
-    public function getReleaseStatus() {
-        return $this->release_status;
+    public function getApprovalStatus() {
+        return $this->approval_status;
     }
 
     public function getComments() {
@@ -63,9 +63,9 @@ class Models_Assessments_Distribution_Approvals extends Models_Base {
         return $this->created_by;
     }
 
-    public function fetchRowByID($adapproval_id) {
+    public function fetchRowByID($apapproval_id) {
         return $this->fetchRow(array(
-            array("key" => "adapproval_id", "value" => $adapproval_id, "method" => "=")
+            array("key" => "apapproval_id", "value" => $apapproval_id, "method" => "=")
         ));
     }
 
@@ -83,7 +83,7 @@ class Models_Assessments_Distribution_Approvals extends Models_Base {
     }
     
     public function fetchAllRecords() {
-        return $this->fetchAll(array(array("key" => "adapproval_id", "value" => 0, "method" => ">=")));
+        return $this->fetchAll(array(array("key" => "apapproval_id", "value" => 0, "method" => ">=")));
     }
 
     public function fetchAllByDistributionID($adistribution_id) {

@@ -22,9 +22,19 @@
  */
 
 class Views_Assessments_Forms_Templates_ItemResponseRow extends Views_Assessments_Forms_Base {
+    protected function validateOptions($options = array()) {
+        if (!$this->validateIsSet($options, array("custom_flags"))) {
+            return false;
+        }
+
+        return true;
+    }
 
     protected function renderView($options = array()) {
-        global $translate; ?>
+        global $translate;
+
+        $custom_flags = $options["custom_flags"];
+        ?>
         <script type="text/html" id="response-row-template" class="response-row">
             <td>
                 <label data-template-bind='[{"attribute": "for", "value":"tpl_response_element_id"}]'
@@ -43,9 +53,20 @@ class Views_Assessments_Forms_Templates_ItemResponseRow extends Views_Assessment
                 </button>
             </td>
             <td>
-                <input data-template-bind='[{"attribute": "name", "value": "tpl_flag_response"}]'
+                <?php if ($custom_flags): ?>
+                    <button data-id="tpl_flag_id" class="btn btn-search-filter text-left">
+                        <?php echo $translate->_("Not Flagged"); ?><i class="icon-chevron-down btn-icon pull-right"></i>
+                    </button>
+                <?php else: ?>
+                    <input data-template-bind='[{"attribute": "name", "value": "tpl_flag_response"}]'
+                           data-value="tpl_response_number"
+                           type="checkbox">
+                <?php endif; ?>
+            </td>
+            <td class="default_selection_column hide">
+                <input data-template-bind='[{"attribute": "id", "value": "tpl_default_response_id"},{"attribute": "name", "value": "tpl_default_response"}]'
                        data-value="tpl_response_number"
-                       type="checkbox">
+                       type="radio">
             </td>
             <td class="delete-item-response" data-template-bind='[{"attribute": "data-related-response-ordinal", "value": "tpl_response_number"}]'>
                 <i class="icon-trash"></i>

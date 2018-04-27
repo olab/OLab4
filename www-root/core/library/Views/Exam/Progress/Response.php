@@ -294,6 +294,7 @@ class Views_Exam_Progress_Response extends Views_Deprecated_Base {
                 if (isset($choice) && is_object($choice)) {
                     $answer_response = Models_Exam_Progress_Response_Answers::fetchRowByAnswerElement($response->getID(), $choice->getID());
                     $choice_weight = $choice->getWeight();
+                    $choice_weight = (isset($choice_weight) ? $choice_weight : 1.0);
                     //this section counts the number of correct and incorrect options for "Full" and adds up the weight for "Partial" and "Penalty"
                     if ($choice->getAdjustedCorrect($exam_element->getID(), $post->getExamID()) === 1) {
                         $possible_correct++;

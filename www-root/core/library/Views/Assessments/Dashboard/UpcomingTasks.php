@@ -40,16 +40,18 @@ class Views_Assessments_Dashboard_UpcomingTasks extends Views_Assessments_Base {
             <input type="text" placeholder="<?php echo $translate->_("Search Tasks..."); ?>" class="task-table-search search-icon space-left <?php echo html_encode($options["task_type"]); ?>-upcoming-tasks-search">
             <span class="badge assessment-badge hide <?php echo html_encode($options["task_type"]); ?>-upcoming-tasks-search-results-found"></span>
         </div>
-        <table class="hide table table-striped table-bordered task-table <?php echo html_encode($options["task_type"]); ?>-upcoming-tasks">
-            <thead>
-                <th style="width: 50%;"><?php echo $translate->_("Task"); ?></th>
-                <th style="width: 20%;"><?php echo $translate->_("Owner"); ?></th>
-                <th style="width: 20%;"><?php echo $translate->_("Target"); ?></th>
-                <th class="dashboard-center-info" style="width: 10%;"><i class="icon-trash"></i></th>
-            </thead>
-            <tbody>
-            </tbody>
-        </table>
+        <div class="fixed-tab-height task-table-wrap">
+            <table class="table table-striped table-bordered task-table <?php echo html_encode($options["task_type"]); ?>-upcoming-tasks">
+                <thead>
+                    <th style="width: 50%;"><?php echo $translate->_("Task"); ?></th>
+                    <th style="width: 20%;"><?php echo $translate->_("Owner"); ?></th>
+                    <th style="width: 20%;"><?php echo $translate->_("Target"); ?></th>
+                    <th class="dashboard-center-info" style="width: 10%;"><i class="icon-trash"></i></th>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
         <?php
     }
 }

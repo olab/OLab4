@@ -376,7 +376,7 @@ if ($RECORD_ID) {
                         '       <hr>'.
                         '   </div>'.
                         '   <div class="control-group">'.
-                        '    <label for="iframe_resize_" class="control-label form-nrequired">Iframe Javascript Resizing</label>' .
+                        '    <label for="iframe_resize_'.$link_id.'" class="control-label form-nrequired">Iframe Javascript Resizing</label>' .
                         '       <div class="controls" id="iframe_resize_'.$link_id.'">'.
                         '           <label for="iframe_resize_1_'.$link_id.'" class="radio"><input type="radio" id="iframe_resize_1_'.$link_id.'" name="iframe_resize['.$link_id.']" value="0" style="vertical-align: middle" />Use iframe javascript resizer method</label>'.
                         '           <label for="iframe_resize_0_'.$link_id.'" class="radio"><input type="radio" id="iframe_resize_0_'.$link_id.'" name="iframe_resize['.$link_id.']" value="1" style="vertical-align: middle" checked="checked"/>No iframe resizing.</label>' .
@@ -493,7 +493,7 @@ if ($RECORD_ID) {
                                         </colgroup>
                                         <tr>
                                             <td><input id="community-all-checkbox" class="permission-type-checkbox" type="radio" name="permission_acl_style" value="CourseCommunityEnrollment" checked="checked" /></td>
-                                            <td><label for="community-all-checkbox" class="content-small">All Community Members</label></td>
+                                            <td><label for="community-all-checkbox" class="content-small"><?php echo $translate->_("All Community Members"); ?></label></td>
                                         </tr>
                                         <tr>
                                             <td><input id="course-group-checkbox" class="permission-type-checkbox" type="radio" name="permission_acl_style" value="CourseGroupMember" /></td>
@@ -630,12 +630,12 @@ if ($RECORD_ID) {
                                                 </thead>
                                                 <tbody>
                                                 <tr>
-                                                    <td class="left"><strong>Community Administrators</strong></td>
+                                                    <td class="left"><strong><?php echo $translate->_("Community Administrators"); ?></strong></td>
                                                     <td class="on"><input type="checkbox" id="allow_admin_read" name="allow_admin_read" value="1" checked="checked" onclick="this.checked = true" /></td>
                                                     <td><input type="checkbox" id="allow_admin_revision" name="allow_admin_revision" value="1" checked="checked" onclick="this.checked = true" /></td>
                                                 </tr>
                                                 <tr>
-                                                    <td class="left"><strong>Community Members</strong></td>
+                                                    <td class="left"><strong><?php echo $translate->_("Community Members"); ?></strong></td>
                                                     <td class="on"><input type="checkbox" id="allow_member_read" name="allow_member_read" value="1"<?php echo (((!isset($PROCESSED["allow_member_read"])) || ((isset($PROCESSED["allow_member_read"])) && ($PROCESSED["allow_member_read"] == 1))) ? " checked=\"checked\"" : ""); ?> /></td>
                                                     <td><input type="checkbox" id="allow_member_revision" name="allow_member_revision" value="1"<?php echo ((((isset($PROCESSED["allow_member_revision"])) && ($PROCESSED["allow_member_revision"] == 1))) ? " checked=\"checked\"" : ""); ?> /></td>
                                                 </tr>

@@ -26,7 +26,7 @@ if ((isset($_SESSION["isAuthorized"])) && ((bool) $_SESSION["isAuthorized"])) {
 					"associated_role" => FILTER_SANITIZE_STRING,
 					"associated_cat_id" => FILTER_SANITIZE_NUMBER_INT
 				));
-				
+			
 				if (!$opts["associated_organisation_id"] ) {
 					add_error("Invalid or unspecified Organisation");
 				} else {
@@ -57,6 +57,7 @@ if ((isset($_SESSION["isAuthorized"])) && ((bool) $_SESSION["isAuthorized"])) {
 				}
 				break;
 			case 'get_table':
+				sleep(1); /* Needed sometimes for the loading image */
 				$opts = filter_input_array(INPUT_POST, array(
 					"associated_organisation_id" => FILTER_SANITIZE_NUMBER_INT,
 					"associated_group" => FILTER_SANITIZE_STRING,
@@ -90,7 +91,7 @@ if ((isset($_SESSION["isAuthorized"])) && ((bool) $_SESSION["isAuthorized"])) {
 					$role = $opts["associated_role"];
 				}
 				if (!has_error()) {
-					echo "<h2>".$category->getLabel()."</h2>";
+					echo "<h2>".$category->getLabel().($category->getRestricted()?$translate->_(" [ Administrative: Not Public Viewable]"):"")."</h2>";
 					echo "<div class=\"content-small\">for ". $organisation->getTitle(). " &gt; " . ucwords($group). " &gt; " . ucwords($opts["associated_role"]) . "</div><br />";
 					echo editMetaDataTable_Category($organisation_id, $group, $role, null, $category);
 				} else {

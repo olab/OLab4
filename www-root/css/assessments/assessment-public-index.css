@@ -46,29 +46,56 @@ input#form-search {
 }
 
 #assessment-block .assessment-card h4.pending,
-#assessment-block .assessment-card-count.pending {
-    color: #8b959d;
+#assessment-block .assessment-card-count.pending,
+#learning-events-progress .assessment-card-count.pending a,
+#learning-events-progress .th-pending {
+    color: #8b959d !important;
 }
 
 #assessment-block .assessment-card h4.inprogress,
-#assessment-block .assessment-card-count.inprogress {
-    color: #00a8be;
+#assessment-block .assessment-card-count.inprogress,
+#learning-events-progress .assessment-card-count.inprogress a,
+#learning-events-progress .th-inprogress {
+    color: #00a8be !important;
 }
 
 #assessment-block .assessment-card h4.complete,
-#assessment-block .assessment-card-count.complete {
-    color: #57b856;
+#assessment-block .assessment-card-count.complete,
+#learning-events-progress .assessment-card-count.complete a,
+#learning-events-progress .th-complete {
+    color: #57b856 !important;
 }
 
 #assessment-block .assessment-card-count {
     display: block;
-    color: #000;
+    color: #000 !important;
     font-size: 42px;
     line-height: 32px;
     font-weight: bold;
     padding: 0 20px 20px 20px;
     text-align: center;
     border-bottom: 1px solid #d9dee2;
+}
+
+#learning-events-progress .assessment-card-count{
+    display: block;
+    color: #000 !important;
+    font-size: 42px;
+    line-height: 32px;
+    font-weight: bold;
+    text-align: center;
+    border-bottom: 1px solid #d9dee2;
+}
+
+#learning-events-progress .assessment-card-count {
+    font-size: 25px;
+    border-bottom: 0px;
+}
+
+#learning-events-progress .th-pending,
+#learning-events-progress .th-inprogress,
+#learning-events-progress .th-complete {
+    text-align: center;
 }
 
 #assessment-block .assessment-card-description {
@@ -145,12 +172,12 @@ p.no-search-targets {
     margin-top: -10px;
 }
 
-#assessment-tasks {
+.assessment-tasks {
     margin: 0 -10px 10px -10px;
     padding: 0;
 }
 
-#assessment-tasks li {
+.assessment-tasks li {
     list-style: none;
     width: 33.33%;
     float: left;
@@ -308,7 +335,7 @@ span.dashboard-release-badge {
     margin: 10px 10px 10px 0;
 }
 
-#assessment-tasks a.progress-circle {
+.assessment-tasks a.progress-circle {
     display: table;
     width: 40px;
     height: 40px;
@@ -318,7 +345,7 @@ span.dashboard-release-badge {
     margin-right: 5px;
 }
 
-#assessment-tasks a.progress-circle div {
+.assessment-tasks a.progress-circle div {
     display: table-cell;
     width: 40px;
     text-align: center;
@@ -326,9 +353,10 @@ span.dashboard-release-badge {
     color: #fff;
     font-size: 16px;
     font-weight: 600;
+    line-height: 37px;
 }
 
-#assessment-tasks a.progress-circle div .icon-trash {
+.assessment-tasks a.progress-circle div .icon-trash {
     margin-top: 2px;
 }
 
@@ -338,12 +366,12 @@ span.dashboard-release-badge {
 }
 
 .assessment-progress .inprogress a.progress-circle {
-    background-color: #696a69;
+    background-color: #00A8BE;
     float: left;
 }
 
 .assessment-progress .complete a.progress-circle {
-    background-color: #5a5a5a;
+    background-color: #57B856;
     float: left;
 }
 
@@ -425,7 +453,7 @@ span.dashboard-release-badge {
     background-color: #e1e7ec;
 }
 
-.assessment-task-link .remove a {
+.assessment-task-link a.remove {
     color: #f32753;
 }
 
@@ -523,8 +551,29 @@ span.dashboard-release-badge {
 
 .user-list-card a,
 .assessment-target-media-list a {
-    display: block;
+    display: inline-block;
     font-size: 15px;
+}
+
+span.learner-level-badge {
+    -webkit-border-radius: 5px;
+    -moz-border-radius:    5px;
+    border-radius:         5px;
+    color: white;
+    background-color: #999999;
+    display: inline-block;
+    font-size: 11px;
+    font-weight: normal;
+    margin-top: 2px;
+    padding-bottom: 0;
+    padding-left: 8px;
+    padding-right: 8px;
+    padding-top: 0;
+    text-shadow: none;
+}
+
+span.learner-level-badge.cbme {
+    background-color: #00a8be;
 }
 
 .user-list-card span.assessment-count {
@@ -668,6 +717,28 @@ h2.task-list-heading {
     margin: 0;
 }
 
+#assessment-tab-pane .tab-content {
+    overflow: hidden;
+}
+
+#assessment-tab-pane .tab-content .task-table-wrap {
+    border: 2px solid #d9dee2;
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px;
+    overflow: auto;
+}
+
+#assessment-tab-pane .tab-content .task-table-wrap table.table {
+    border: none;
+    margin: 0;
+}
+
+#assessment-tab-pane .tab-content .task-table-wrap table.table thead tr th:first-child,
+#assessment-tab-pane .tab-content .task-table-wrap table.table tbody tr td:first-child {
+    border-left: none;
+}
+
 .filter-well {
     margin-bottom: 30px;
 }
@@ -767,7 +838,7 @@ h2.task-list-heading {
 }
 
 @media (max-width: 1199px) {
-    #assessment-tasks li {
+    .assessment-tasks li {
         width: 50%;
     }
 }
@@ -802,23 +873,124 @@ h2.task-list-heading {
     text-transform:capitalize;
 }
 
-.audience-name {
-    border: 2px solid #f1f1f1;
+/* Rotation Changes Deck */
+.schedule-deck {
+    border: 2px solid #d9dee2;
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px;
+    height: 266px;
 }
 
-.schedule-info .schedule-details {
-    height: 80px;
-    border: 2px solid #f1f1f1;
+.schedule-deck .schedule-header {
+    border-bottom: 2px solid #e8edf1;
+    font-size: 14px;
+    font-weight: bold;
+    height: 40px;
+    width: 100%;
+}
+
+.schedule-deck .schedule-header > div,
+.schedule-deck .schedule-details > div {
+    align-items: center;
+    box-sizing: border-box;
+    display: flex;
+    float: left;
+    justify-content: center;
+    line-height: 1.2;
+    min-height: 40px;
+    width: 33.33%;
+    padding: 0 10px;
+}
+
+.schedule-deck .schedule-info {
+    max-height: 224px;
+    overflow: auto;
+    width: 100%;
+}
+
+.schedule-info .audience {
+    border-bottom: 2px solid #e8edf1;
+}
+
+.schedule-info .audience:last-child {
+    border: none;
+}
+
+.schedule-info .audience:nth-child(odd) {
+    background-color: #f9fcfe;
+}
+
+.audience-name {
+    box-sizing: border-box;
+    border-bottom: 1px solid #e8edf1;
+    padding: 10px 20px;
+    width: 100%;
+}
+
+.schedule-details {
+    border-bottom: 2px solid #e8edf1;
+    padding: 15px 0;
+}
+
+.schedule-details:last-child {
+    border: none;
+}
+
+.schedule-details::after {
+    content: "";
+    display: block;
+    clear: both;
+}
+
+.schedule-arrow {
+    color: #8b959d;
+    margin-top: 15px;
+    font-size: 20px;
+}
+
+/* Leave Deck */
+.leave-deck {
+    border: 2px solid #d9dee2;
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px;
+    min-height: 266px;
+    overflow: auto;
+}
+
+.leave-link {
+    border-bottom: 1px solid #e8edf1;
+    display: table;
+    width: 100%;
+}
+
+.leave-link:nth-child(odd) {
+    background-color: #f9fcfe;
+}
+
+.leave-link::after {
+    content: "";
+    display: block;
+    clear: both;
 }
 
 .leave-details {
-    width: 70%;
-    display: inline-block;
+    display: table-cell;
+    padding: 15px 20px;
 }
 
 .leave-count {
-    width: 30%;
+    display: table-cell;
+    padding: 15px 20px;
     text-align: center;
+}
+
+.absent-label {
+    color: #8b959d;
+    font-size: 12px;
+    margin: 0;
+    font-weight: normal;
 }
 
 .table td.dashboard-center-info,
@@ -827,7 +999,7 @@ h2.task-list-heading {
 }
 
 .dashboard-remove-task {
-    background: #E83631;
+    background: #f02c56;
 }
 
 .dashboard-remove-task-disabled {
@@ -871,10 +1043,6 @@ h2.task-list-heading {
     cursor: pointer;
 }
 
-.schedule-deck table {
-    width: 100%;
-}
-
 .leave-link {
     color: #000;
     font-family: "Lucida Grande", Geneva, Verdana, Arial, Helvetica, sans-serif;
@@ -900,4 +1068,151 @@ h2.task-list-heading {
     text-shadow:         0 1px 0 #fff;
     padding-top: 3px;
     padding-bottom: 3px;
+}
+
+.dashboard-delivery-delegation-badge {
+    border: 2px solid #00a8be;
+    -webkit-border-radius: 5px;
+    -moz-border-radius:    5px;
+    border-radius:         5px;
+    color: #00a8be;
+    background-color: transparent;
+    display: inline-block;
+    font-size: 11px;
+    font-weight: normal;
+    margin-top: 2px;
+    padding-bottom: 0;
+    padding-left: 8px;
+    padding-right: 8px;
+    padding-top: 0;
+    -webkit-text-shadow: 0 1px 0 #fff;
+    -moz-text-shadow:    0 1px 0 #fff;
+    text-shadow:         0 1px 0 #fff;
+    padding-top: 3px;
+    padding-bottom: 3px;
+}
+
+.milestone-report-dropdown {
+    width: 30%;
+}
+
+.milestone-report-table {
+    display: inline-block;
+    overflow-x: scroll;
+    height: 600px;
+    table-layout: fixed;
+}
+
+.milestone-report-table th {
+    text-align: center;
+}
+
+.scale-responses {
+    font-size: 13px;
+    padding: 10px !important;
+}
+
+.milestone-cell {
+    padding: 7px !important;
+}
+
+.assessment-tool-list {
+    list-style: none;
+    border: 1px solid #d9dee2;
+    margin-left: 0px;
+    border-radius: 5px;
+    overflow: scroll;
+}
+
+.assessment-tool-list li {
+    border-bottom: 1px solid #d9dee2;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+.inline-block {
+    display: inline-block;
+}
+
+.assessment-tool-checkbox {
+    display: inline-block;
+    margin-top: 12px !important;
+    margin-right: 10px !important;
+    margin-bottom: 12px !important;
+}
+
+.assessment-tool-list-container {
+    vertical-align: bottom;
+}
+
+div.user-photo-upload-container {
+    display: inline-block;
+    position: relative;
+    padding: 0;
+    float: left;
+    margin-right: 15px;
+    height: 42px;
+    width: 42px;
+}
+
+#upload_profile_image_form {
+    margin: 0;
+    float: left;
+}
+
+#upload-image .modal-body {
+    max-height: none;
+}
+
+.profile-image-preview {
+    text-align:center;
+    max-width:275px;
+    margin:auto;
+}
+
+.upload-image-modal-btn {
+    height: 42px;
+    position: absolute;
+    width: 42px;
+    left: 0;
+    top: 0;
+    background-color: #00a8be;
+    border-radius: 100%;
+}
+
+.upload-image-modal-btn i {
+    position: absolute;
+    left: 12px;
+    top: 9px;
+    font-size: 20px;
+    color: #fff;
+}
+
+.milestone-report-control-container {
+    float: left;
+    width: 10%;
+}
+
+.milestone-report-title-container {
+    float: left;
+    width: 75%;
+}
+
+.milestone-report-date-container {
+    float: left;
+    width: 15%;
+}
+
+.milestone-report-title {
+    display:inline-block;
+    margin-top: 7px;
+}
+
+.milestone-report-date {
+    display:inline-block;
+    margin-top: 8px;
+}
+
+.milestone-report-assessment-tool-list .list-set-item:hover {
+    background-color: #fff !important;
 }

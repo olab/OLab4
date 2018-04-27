@@ -36,7 +36,7 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_MEDBIQRESOURCES")) {
 	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] do not have access to this module [".$MODULE."]");
 } else {
 ?>
-<h1>Delete Medbiquitous Assessment Methods</h1>
+<h1><?php echo $translate->_("Delete Medbiquitous Resources"); ?></h1>
 <?php
 	$BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/settings/manage/medbiqresources?section=delete&amp;org=".$ORGANISATION['organisation_id'], "title" => "Deactivate Medbiquitous Resource");
 
@@ -47,37 +47,39 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_MEDBIQRESOURCES")) {
 	}
 	
 	if ($PROCESSED["remove_ids"]) {
-		switch($STEP){
+		switch($STEP) {
 			case 2:
 				foreach($_POST["remove_ids"] as $id){
-					$query = "SELECT `resource` FROM `medbiq_resources` WHERE `resource_id` = ".$db->qstr($id);
-					$result = $db->GetRow($query);
-					
-					$query = "UPDATE `medbiq_resources` SET `active` = '0' WHERE `resource_id` = ".$db->qstr($id);
-					if($db->Execute($query)){
-						$SUCCESS++;
-						$SUCCESSSTR[] = "Successfully deactivated Medbiquitous Resource [".$result["resource"]."] from your organisation.<br/>";
+                    $medbiq_resource = Models_Medbiq_Resource::fetchRowByID($id);
+                    $medbiq_resource->setActive(0);
+                    $medbiq_resource->setUpdatedDate(time());
+                    $medbiq_resource->setUpdatedBy($ENTRADA_USER->getID());
+
+					if($medbiq_resource->update()){
+						add_success(sprintf($translate->_("Successfully deactivated Medbiquitous Resource [%s] from your organisation.<br/>"), $medbiq_resource->getResource()));
 					} else {
-						$ERROR++;
-						$ERRORSTR[] = "An error occurred while deactivating the Medbiquitous Resource [".$id."] from the system. The system administrator has been notified. You will now be redirected to the Medbiquitous Resource index; this will happen <strong>automatically</strong> in 5 seconds or <a href=\"".ENTRADA_URL."/admin/settings/manage/medbiqresources/?org=".$ORGANISATION_ID."\" style=\"font-weight: bold\">click here</a> to continue.";
+						add_error(sprintf($translate->_("An error occurred while deactivating the Medbiquitous Resource [%d] from the system. The system administrator has been notified. You will now be redirected to the Medbiquitous Resource index; this will happen <strong>automatically</strong> in 5 seconds or <a href=\"%s\" style=\"font-weight: bold\">click here</a> to continue."), $id, ENTRADA_URL."/admin/settings/manage/medbiqresources?org=".$ORGANISATION_ID));
 						application_log("error", "An error occurred while removing the Medbiquitous Resource [".$id."] from the system. ");
 					}
 				}
 
-				if($SUCCESS)
-					echo display_success();
-				if($NOTICE)
-					echo display_notice();
-				$ONLOAD[] = "setTimeout('window.location=\\'".ENTRADA_URL."/admin/settings/manage/medbiqresources/?org=".$ORGANISATION_ID."\\'', 5000)";
+				if (has_success()) {
+                    echo display_success();
+                }
+
+				if (has_notice()) {
+                    echo display_notice();
+                }
+
+				$ONLOAD[] = "setTimeout('window.location=\\'".ENTRADA_URL."/admin/settings/manage/medbiqresources?org=".$ORGANISATION_ID."\\'', 5000)";
 				break;
 			case 1:
-			default:	
-				add_notice("Please review the following Medbiquitous Assessment Methods to ensure that you wish to <strong>deactivate</strong> them.");
+			default:
+				add_notice($translate->_("Please review the following Medbiquitous Resources to ensure that you wish to <strong>deactivate</strong> them."));
 				echo display_notice();
-			?>
+                ?>
 
-
-			<form action ="<?php echo ENTRADA_URL."/admin/settings/manage/medbiqresources/?section=delete&org=".$ORGANISATION_ID."&step=2";?>" method="post">
+                <form action ="<?php echo ENTRADA_URL."/admin/settings/manage/medbiqresources/?section=delete&org=".$ORGANISATION_ID."&step=2";?>" method="post">
 					<table class="tableList" cellspacing="0" summary="List of Medbiq Assessment Methods">
 						<colgroup>
 							<col class="modified"/>
@@ -86,19 +88,17 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_MEDBIQRESOURCES")) {
 						<thead>
 							<tr>
 								<td class="modified">&nbsp;</td>
-								<td class="title">Medbiquitous Resource</td>
+								<td class="title"><?php echo $translate->_("Medbiquitous Resource"); ?></td>
 							</tr>
 						</thead>
 						<tbody>
 							<?php 
 								foreach ($PROCESSED["remove_ids"] as $id) {
-									$query = "SELECT * FROM `medbiq_resources` WHERE `resource_id` = ".$db->qstr($id);
-									$type = $db->GetRow($query);
-				
+                                    $medbiq_resource = Models_Medbiq_Resource::fetchRowByID($id);
 								?>
 							<tr>
 								<td><input type="checkbox" value="<?php echo $id;?>" name ="remove_ids[]" checked="checked"/></td>
-								<td><?php echo $type["resource"];?></td>
+								<td><?php echo $medbiq_resource->getResource();?></td>
 							</tr>
 							<?php } ?>
 						</tbody>
@@ -107,12 +107,13 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_MEDBIQRESOURCES")) {
 					<input type="submit" value="Deactivate" class="btn btn-danger" />
 				</form>
 				<?php
-					break;				
+				break;
 		}
-	}
-	else{
-		$ERROR++;
-		$ERRORSTR[] = "No Medbiquitous Assessment Methods were selected to be deleted. You will now be redirected to the Medbiquitous Resource index; this will happen <strong>automatically</strong> in 5 seconds or <a href=\"".ENTRADA_URL."/admin/settings/manage/medbiqresources/?org=".$ORGANISATION_ID."\" style=\"font-weight: bold\">click here</a> to continue.";
+	} else {
+        $url = ENTRADA_URL . "/admin/settings/manage/medbiqresources?org=".$ORGANISATION_ID;
+        $ONLOAD[] = "setTimeout('window.location=\\'".$url."\\'', 5000);";
+
+		add_error(sprintf($translate->_("No Medbiquitous Resources were selected to be deleted. You will now be redirected to the Medbiquitous Resource index; this will happen <strong>automatically</strong> in 5 seconds or <a href=\"%s\" style=\"font-weight: bold\">click here</a> to continue."), ENTRADA_URL."/admin/settings/manage/medbiqresources?org=".$ORGANISATION_ID));
 
 		echo display_error();
 	}

@@ -116,7 +116,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP"))) {
 	$ROTATION_TITLE = $db->GetOne("	SELECT `rotation_title` FROM `".CLERKSHIP_DATABASE."`.`global_lu_rotations`
 									WHERE `rotation_id` = ".$db->qstr($ROTATION_ID));
 	
-	$BREADCRUMB[]	= array("url" => ENTRADA_URL."/clerkship/logbook?section=add", "title" => "Clerkship Log deficiency plan");
+	$BREADCRUMB[]	= array("url" => ENTRADA_URL."/clerkship/logbook?section=add", "title" => $translate->_("Clerkship Log deficiency plan"));
 
 	$query = 	"SELECT `lentry_id` 
 				FROM `".CLERKSHIP_DATABASE."`.`logbook_entries` 
@@ -132,7 +132,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP"))) {
 		}
 	}
 	
-	echo "<h1>Clerkship Log deficiency plan</h1>\n";
+	echo "<h1>" . $translate->_("Clerkship Log deficiency plan") . "</h1>\n";
 	if ((isset($ROTATION_ID)) && ($ROTATION_ID)) {
 		$PROCESSED["rotation_id"] = $ROTATION_ID;
 	}
@@ -214,7 +214,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP"))) {
 							}
 							$url = ENTRADA_URL."/".$MODULE."/logbook";
 							$SUCCESS++;
-							$SUCCESSSTR[]  	= "You have successfully created a <strong>Deficiency Plan</strong> in the system.<br /><br />Please <a href=\"".$url."\">click here</a> to proceed to the clerkship logbook index or you will be automatically forwarded in 5 seconds.";
+							$SUCCESSSTR[]  	= "You have successfully created a <strong>Deficiency Plan</strong> in the system.<br /><br />Please <a href=\"".$url."\">click here</a> to proceed to the " . $translate->_("clerkship") . " logbook index or you will be automatically forwarded in 5 seconds.";
 							$ONLOAD[]		= "setTimeout('window.location=\\'".$url."\\'', 5000)";
 				
 							application_log("success", "New deficiency plan [".$PLAN_ID."] added to the system.");
@@ -552,12 +552,12 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP"))) {
 							<tr>
 								<td></td>
 								<td><label class="form-nrequired">Timeline Start</label></td>
-								<td><?php echo date(DEFAULT_DATE_FORMAT, $PROCESSED["timeline_start"]); ?></td>
+								<td><?php echo date(DEFAULT_DATETIME_FORMAT, $PROCESSED["timeline_start"]); ?></td>
 							</tr>
 							<tr>
 								<td></td>
 								<td><label class="form-nrequired">Timeline Finish</label></td>
-								<td><?php echo date(DEFAULT_DATE_FORMAT, $PROCESSED["timeline_finish"]); ?></td>
+								<td><?php echo date(DEFAULT_DATETIME_FORMAT, $PROCESSED["timeline_finish"]); ?></td>
 							</tr>
 							<?php
 						}
@@ -820,12 +820,12 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP"))) {
 						<tr>
 							<td></td>
 							<td><label class="form-nrequired">Timeline Start</label></td>
-							<td><?php echo date(DEFAULT_DATE_FORMAT, $PROCESSED["timeline_start"]); ?></td>
+							<td><?php echo date(DEFAULT_DATETIME_FORMAT, $PROCESSED["timeline_start"]); ?></td>
 						</tr>
 						<tr>
 							<td></td>
 							<td><label class="form-nrequired">Timeline Finish</label></td>
-							<td><?php echo date(DEFAULT_DATE_FORMAT, $PROCESSED["timeline_finish"]); ?></td>
+							<td><?php echo date(DEFAULT_DATETIME_FORMAT, $PROCESSED["timeline_finish"]); ?></td>
 						</tr>
 						<tr>
 							<td colspan="3">&nbsp;</td>

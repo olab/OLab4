@@ -27,10 +27,8 @@ class Views_Gradebook_Assessments_Form_Item_VerticalMultipleChoiceSingleResponse
     protected function renderTableHeader() {
         $html = array();
 
-        $html[] = '    <th class="text-left">';
         $html[] = '        <h3>'.html_encode($this->data['details']['title']).'</h3>';
         $html[] = '        '.$this->renderCurriculumTags($this->data['item']['curriculum-tags']);
-        $html[] = '    </th>';
 
         return implode("\n", $html);
     }
@@ -111,8 +109,14 @@ class Views_Gradebook_Assessments_Form_Item_VerticalMultipleChoiceSingleResponse
         $html[] = '     <thead>';
         $html[] = '         '.$this->renderEditBar();
         $html[] = '         <tr class="heading">';
-        $html[] = '             '.$this->renderTableHeader();
-        $html[] = '             '.$this->renderWeightCell($this->data['item']);
+        $html[] = '             <th class="text-left" colspan="100%">';
+        $html[] = '                 <div class="heading-table">';
+        $html[] = '                     <div class="heading-cell">';
+        $html[] = '                         '.$this->renderTableHeader();
+        $html[] = '                     </div>';
+        $html[] = '                     '.$this->renderWeightCell($this->data['item']);
+        $html[] = '                 </div>';
+        $html[] = '             </th>';
         $html[] = '         </tr>';
         $html[] = '     </thead>';
         $html[] = '     <tbody>';

@@ -40,24 +40,53 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_EXAM") && !defined("EDIT_EXA
     switch ($STEP) {
         case 2 :
 
+            $changed = array();
+
             if (isset($_POST["exam_title"]) && $tmp_input = clean_input($_POST["exam_title"], array("trim", "striptags"))) {
+                if ($PROCESSED["title"] != $tmp_input) {
+                    $changed[] = "Title";
+                }
                 $PROCESSED["title"] = $tmp_input;
             } else {
                 add_error($SUBMODULE_TEXT["exam"]["text_error_title"]);
             }
 
             if (isset($_POST["exam_description"]) && $tmp_input = clean_input($_POST["exam_description"], array("trim", "striptags"))) {
+                if ($PROCESSED["description"] != $tmp_input) {
+                    $changed[] = "Description";
+                }
                 $PROCESSED["description"] = $tmp_input;
             }
 
             if (isset($_POST["display_questions"])) {
                 $tmp_input = clean_input($_POST["display_questions"], array("trim", "striptags"));
+                if ($PROCESSED["display_questions"] != $tmp_input) {
+                    $changed[] = "Question Display";
+                }
                 $PROCESSED["display_questions"] = $tmp_input;
             }
 
             if (isset($_POST["random"])) {
                 $tmp_input = clean_input($_POST["random"], array("trim", "striptags"));
+                if ($PROCESSED["random"] != $tmp_input) {
+                    $changed[] = "Random";
+                }
                 $PROCESSED["random"] = $tmp_input;
+            }
+
+            if (isset($_POST["random_answers"])) {
+                $tmp_input = clean_input($_POST["random_answers"], array("trim", "striptags"));
+                if ($PROCESSED["random_answers"] != $tmp_input) {
+                    $changed[] = "random_answers";
+                }
+                $PROCESSED["random_answers"] = $tmp_input;
+            }
+
+            if (isset($_POST["folder_id"]) && $tmp_input = clean_input(strtolower($_POST["folder_id"]), array("trim", "int"))) {
+                $PROCESSED["folder_id"] = $tmp_input;
+            } elseif ($_POST["folder_id"] == 0) {
+                $PROCESSED["folder_id"] = 0;
+                add_error("An exam has to be in a folder and can't be saved in the index.");
             }
 
             if (!has_error()) {
@@ -88,6 +117,25 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_EXAM") && !defined("EDIT_EXA
                             break;
                     }
 
+                    if ($changed && is_array($changed) && !empty($changed)) {
+                        $message = "Changed fields:  ". implode(", ", $changed);
+
+                        $history = new Models_Exam_Creation_History(array(
+                            "exam_id" => $exam->getExamID(),
+                            "proxy_id" => $ENTRADA_USER->getID(),
+                            "action" => "exam_settings_edit",
+                            "action_resource_id" => NULL,
+                            "secondary_action" => NULL,
+                            "secondary_action_resource_id" => NULL,
+                            "history_message" => $message,
+                            "timestamp" => time(),
+                        ));
+
+                        if (!$history->insert()) {
+                            echo json_encode(array("status" => "error", "data" => array($translate->_("Failed to insert history log for Edit Exam."))));
+                        }
+                    }
+
                     Entrada_Utilities_Flashmessenger::addMessage($translate->_("Successfully updated the exam."), "success", $MODULE);
 
                     $url = ENTRADA_URL."/admin/".$MODULE."/".$SUBMODULE."?section=exam-settings&id=".$exam->getID();
@@ -115,14 +163,25 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_EXAM") && !defined("EDIT_EXA
         case 1 :
             $random_checked = 0;
             $random_disabled = 0;
+            $random_answers = 0;
             $display_checked = "all";
             if ($exam) {
                 $exam_elements  = $exam->getExamElements();
                 $random         = $exam->getRandom();
+                $random_answers = $exam->getRandomAnswers();
                 $display        = $exam->getDisplayQuestions();
+
+                $PROCESSED["folder_id"] = $exam->getFolderId();
+                if ($PROCESSED["folder_id"] == NULL) {
+                    $PROCESSED["folder_id"] = 0;
+                }
 
                 if (isset($random)) {
                     $random_checked = $random;
+                }
+
+                if (isset($random_answers)) {
+                    $random_answers_checked = $random_answers;
                 }
 
                 if (isset($display)) {
@@ -160,6 +219,8 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_EXAM") && !defined("EDIT_EXA
                 echo display_success();
             }
             $HEAD[] = "<script type=\"text/javascript\">var ENTRADA_URL = \"". ENTRADA_URL ."\";</script>";
+            $HEAD[] = "<script type=\"text/javascript\">var FOLDER_API_URL = \"". ENTRADA_URL."/admin/exams/questions?section=api-folders" ."\";</script>";
+
             $HEAD[] = "<script type=\"text/javascript\" src=\"".ENTRADA_RELATIVE."/javascript/jquery/jquery.dataTables.min-1.10.1.js?release=".html_encode(APPLICATION_VERSION)."\"></script>";
             $HEAD[] = "<script type=\"text/javascript\" src=\"".ENTRADA_RELATIVE."/javascript/jquery/dataTables.colVis.min.js?release=".html_encode(APPLICATION_VERSION)."\"></script>";
             $HEAD[] = "<link rel='stylesheet' type='text/css' href='". ENTRADA_RELATIVE . "/css/jquery/jquery.dataTables.css?release=".html_encode(APPLICATION_VERSION)."'>";
@@ -169,6 +230,33 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_EXAM") && !defined("EDIT_EXA
             $HEAD[] = "<script type=\"text/javascript\" src=\"".  ENTRADA_URL ."/javascript/jquery/jquery.audienceselector.js?release=". html_encode(APPLICATION_VERSION) ."\"></script>";
             $HEAD[] = "<script type=\"text/javascript\" src=\"".  ENTRADA_URL ."/javascript/" . $MODULE . "/" . $SUBMODULE . "/" . $MODULE . "-settings-admin.js?release=". html_encode(APPLICATION_VERSION) ."\"></script>";
             $HEAD[] = "<script type=\"text/javascript\" src=\"".  ENTRADA_URL ."/javascript/" . $MODULE . "/questions/questions.js?release=". html_encode(APPLICATION_VERSION) ."\"></script>";
+
+            $initial_folders = Models_Exam_Bank_Folders::fetchAllByParentID($PROCESSED["folder_id"], "exam");
+
+            if ($PROCESSED["folder_id"] === 0) {
+                $root_folder = new Models_Exam_Bank_Folders(
+                    array(
+                        "folder_id" => 0,
+                        "folder_title" => "Index",
+                        "image_id" => 3,
+                        "folder_type" => "exam"
+                    )
+                );
+
+                $initial_folder_view = new Views_Exam_Bank_Folder($root_folder);
+                if (isset($initial_folder_view) && is_object($initial_folder_view)) {
+                    $title          = $initial_folder_view->renderFolderSelectorTitle();
+                    $folder_view    = $initial_folder_view->renderSimpleView();
+                }
+            } else {
+                $parent_folder = Models_Exam_Bank_Folders::fetchRowByID($PROCESSED["folder_id"]);
+                if (isset($parent_folder) && is_object($parent_folder)) {
+                    $parent_folder_view = new Views_Exam_Bank_Folder($parent_folder);
+                    $title              = $parent_folder_view->renderFolderSelectorTitle();
+                    $folder_view        = $parent_folder_view->renderSimpleView();
+                    $nav                = $parent_folder_view->renderFolderSelectorBackNavigation();
+                }
+            }
             ?>
             <link rel="stylesheet" type="text/css" href="<?php echo ENTRADA_URL . "/css/" . $MODULE . "/" . $MODULE . ".css"; ?>" />
             <link rel="stylesheet" type="text/css" href="<?php echo ENTRADA_URL . "/css/" . $MODULE . "/groups.css"; ?>" />
@@ -180,6 +268,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_EXAM") && !defined("EDIT_EXA
                 var default_text_labels = JSON.parse('<?php echo json_encode($DEFAULT_TEXT_LABELS); ?>');
             </script>
             <form id="exam-elements" action="<?php echo ENTRADA_URL."/admin/" . $MODULE . "/" . $SUBMODULE . "?section=" . $SECTION . "&id=" . $PROCESSED["exam_id"]; ?>" data-exam-id="<?php echo $PROCESSED["exam_id"]; ?>" class="form-horizontal" method="POST">
+                <input type="hidden" name="folder_id" id="folder_id" value="<?php echo (isset($PROCESSED["folder_id"]) ? $PROCESSED["folder_id"] : ""); ?>" />
                 <input type="hidden" name="step" value="2" />
                 <div id="msgs"></div>
                 <h2 title="<?php echo $SUBMODULE_TEXT["exam"]["title_exam_info"]; ?>"><?php echo $SUBMODULE_TEXT["exam"]["title_exam_info"]; ?></h2>
@@ -191,9 +280,18 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_EXAM") && !defined("EDIT_EXA
                         </div>
                     </div>
                     <div class="control-group">
-                        <label class="control-label" for="exam-description"><?php echo $SUBMODULE_TEXT["exam"]["label_exam_description"]; ?></label>
+                        <label class="control-label" for="exam_description"><?php echo $SUBMODULE_TEXT["exam"]["label_exam_description"]; ?></label>
                         <div class="controls">
                             <textarea class="span11 expandable" name="exam_description" id="form-description"><?php echo $PROCESSED["description"]; ?></textarea>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label form-required" for="folder_id"><?php echo $translate->_("Parent Folder"); ?></label>
+                        <div class="controls">
+                            <div id="selected-parent-folder">
+                                <?php echo $folder_view;?>
+                                <a href="#parent-folder-modal" data-toggle="modal" class="btn btn-success" id="select_parent_folder_button"><?php echo $translate->_("Select Parent Folder"); ?></a>
+                            </div>
                         </div>
                     </div>
                     <?php
@@ -224,10 +322,10 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_EXAM") && !defined("EDIT_EXA
                                 <?php } ?>
                             </select>
                             <?php
+                            $author_array   = array();
                             $type_array     = array("organisation_id", "course_id", "proxy_id");
-                            $exam_authors = Models_Exam_Exam_Author::fetchAllByExamIdGroupedByType($PROCESSED["exam_id"]);
-                            // @todo once exam folders are added in replace this with that folder author query
-                            $exam_folders = false;
+                            $exam_authors   = Models_Exam_Exam_Author::fetchAllByExamIdGroupedByType($PROCESSED["exam_id"]);
+                            $folder_authors = Models_Exam_Bank_Folder_Authors::fetchAllInheritedByFolderID($PROCESSED["folder_id"]);
 
                             foreach ($type_array as $type) {
                                 if ($exam_authors && is_array($exam_authors)) {
@@ -235,7 +333,14 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_EXAM") && !defined("EDIT_EXA
                                 } else {
                                     $exam_author_type = false;
                                 }
-                                echo $html = Views_Exam_Exam_Author::renderTypeUL($type, $exam_folders, $exam_author_type);
+
+                                if ($folder_authors && is_array($folder_authors)) {
+                                    $folder_authors_type = $folder_authors[$type];
+                                } else {
+                                    $folder_authors_type  = false;
+                                }
+
+                                echo Views_Exam_Exam_Author::renderTypeUL($type, $folder_authors_type, $exam_author_type);
                             }
                             ?>
                         </div>
@@ -270,6 +375,19 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_EXAM") && !defined("EDIT_EXA
                             </label><br />
                             <label class="radio">
                                 <input type="radio" name="random" id="random_off" value="0" class="random" <?php echo ($random_checked == 0) ? " checked" : "";?>>
+                                <?php echo $SUBMODULE_TEXT["exam"]["settings"]["text_random_off"] ?>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label"><?php echo $SUBMODULE_TEXT["exam"]["settings"]["label_random_answers"] ?></label>
+                        <div class="controls">
+                            <label class="radio">
+                                <input type="radio" name="random_answers" id="random_answers_on" value="1" class="random" <?php echo ($random_answers_checked == 1) ? " checked" : ""; echo ($random_disabled ? " disabled" : "")?>>
+                                <?php echo $SUBMODULE_TEXT["exam"]["settings"]["text_random_on"] ?>
+                            </label><br />
+                            <label class="radio">
+                                <input type="radio" name="random_answers" id="random_answers_off" value="0" class="random" <?php echo ($random_answers_checked == 0) ? " checked" : "";?>>
                                 <?php echo $SUBMODULE_TEXT["exam"]["settings"]["text_random_off"] ?>
                             </label>
                         </div>
@@ -463,6 +581,57 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_EXAM") && !defined("EDIT_EXA
                     </div>
                 </div>
             </div>
+                <div id="parent-folder-modal" class="modal hide fade">
+                    <div class="modal-header">
+                        <h3>Select a parent folder</h3>
+                    </div>
+                    <div class="modal-body">
+                        <div class="qbf-selector">
+                            <div id="qbf-title">
+                                <span class="qbf-title">
+                                    <?php echo $title;?>
+                                </span>
+                            </div>
+                            <div id="qbf-nav">
+                                <?php echo $nav;?>
+                            </div>
+                            <div id="qbf-folder-<?php echo $PROCESSED["folder_id"];?>" class="qbf-folder active">
+                                <table>
+                                    <?php
+                                    if (isset($initial_folders) && is_array($initial_folders) && !empty($initial_folders)) {
+                                        if ($PROCESSED["folder_id"] == 0 && is_object($initial_folder_view)) {
+                                            echo $initial_folder_view->renderFolderSelectorRow();
+                                        }
+
+                                        foreach ($initial_folders as $folder) {
+                                            if (is_object($folder)) {
+                                                if ($folder->getID() == $PROCESSED["folder_id"]) {
+                                                    $selected = true;
+                                                } else {
+                                                    $selected = false;
+                                                }
+                                                $folder_view = new Views_Exam_Bank_Folder($folder);
+                                                echo $folder_view->renderFolderSelectorRow($selected);
+                                            }
+                                        }
+                                    } else {
+                                        //no folder create yet so just show the index
+                                        if ($PROCESSED["folder_id"] == 0 && is_object($initial_folder_view)) {
+                                            echo $initial_folder_view->renderFolderSelectorRow();
+                                        }
+                                    }
+                                    ?>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <div id="qpf-confirm">
+                            <button class="btn btn-default pull-left" id="cancel-folder-move"><?php echo $DEFAULT_TEXT_LABELS["btn_cancel"]; ?></button>
+                            <button class="btn btn-primary pull-right" id="confirm-folder-move" data-type="question"><?php echo $DEFAULT_TEXT_LABELS["btn_done"]; ?></button>
+                        </div>
+                    </div>
+                </div>
             <?php
         break;
     }

@@ -36,8 +36,8 @@ class Views_Gradebook_Assessments_Form_Item_VerticalMultipleChoiceSingleResponse
             	$label_width = $this->display_scores_and_weights ? '90%' : '95%';
 
             	$html[] = '<tr class="'.$row_stripe.'">';
-                $html[] = '	<td width="'.$label_width.'" class="cell-label">'.$this->renderItemResponseLabel($item_response).'</td>';
-                $html[] = $this->display_scores_and_weights ? '	<td width="30%" class="cell-score">'.$this->renderScore($item_response, true).'</td>' : '';
+                $html[] = '	<td class="cell-label">'.$this->renderItemResponseLabel($item_response).'</td>';
+                $html[] = $this->display_scores_and_weights ? '	<td class="cell-score">'.$this->renderScore($item_response, true).'</td>' : '';
                 $html[] = '</tr>';
             }
 
@@ -48,7 +48,7 @@ class Views_Gradebook_Assessments_Form_Item_VerticalMultipleChoiceSingleResponse
     protected function renderView($options = array()) {
 		$html = array();
 
-		$html[] = '	<table class="table-internal">';
+		$html[] = '	<table class="table-internal full-width">';
 		$html[] = '		<tbody>';
 		$html[] = '			'.$this->renderItemResponses();
         $html[] = '     </tbody>';
@@ -60,7 +60,7 @@ class Views_Gradebook_Assessments_Form_Item_VerticalMultipleChoiceSingleResponse
     public function html() {
         $html = array();
 
-        $html[] = ' <table class="table-internal">';
+        $html[] = ' <table class="table-internal full-width">';
         $html[] = '     <tbody>';
         $html[] = '         '.$this->renderItemResponses();
         $html[] = '     </tbody>';

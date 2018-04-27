@@ -1,7 +1,7 @@
 <?php
 /**
  * Entrada [ http://www.entrada-project.org ]
- * 
+ *
  * Entrada is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -16,20 +16,20 @@
  * along with Entrada.  If not, see <http://www.gnu.org/licenses/>.
  *
  * Renders an assessment form dropdown single reponse item
- * 
+ *
  * @author Organization: bitHeads, Inc.
  * @author Developer: Jean-Benoit Lesage <jblesage@bitheads.com>
  * @copyright Copyright 2016 Queen's University. All Rights Reserved.
- * 
+ *
  */
 class Views_Gradebook_Assessments_Form_Item_DropdownSingleResponse extends Views_Gradebook_Assessments_Form_Item_Base {
-	
+
 	/**
 	 * Renders each item response as a select option
 	 * @return string html
 	 */
 	protected function getItemResponsesAsOptions() {
-		
+
 		if ($this->data['item']['item_responses']) {
 
 			$html = array();
@@ -84,7 +84,7 @@ class Views_Gradebook_Assessments_Form_Item_DropdownSingleResponse extends Views
         if ($item['comment_type'] != 'disabled' && $item['item_responses']) {
 
             $comment_label_class = $item['comment_type'] == 'mandatory' ? ' form-required' : ($item['comment_type'] == 'flagged' ? ' form-flagged' : ''); // '' is for $item['comment_type'] == 'optional'
-       
+
             $html = array();
             $html[] = '<tr class="rubric-comment item-response-view">';
             $html[] = '  <td colspan="2">';
@@ -114,15 +114,20 @@ class Views_Gradebook_Assessments_Form_Item_DropdownSingleResponse extends Views
         $html[] = '     <thead>';
         $html[] = '         '.$this->renderEditBar();
         $html[] = '         <tr class="heading">';
-        $html[] = '             <th colspan="100%" class="text-left">';
-        $html[] = '                 <h3>'.html_encode($this->data['details']['title']).'</h3>';
-		$html[] = '                 '.$this->renderCurriculumTags($this->data['item']['curriculum-tags']);
+        $html[] = '             <th class="text-left" colspan="100%">';
+        $html[] = '                 <div class="heading-table">';
+        $html[] = '                     <div class="heading-cell">';
+        $html[] = '                         <h3>'.html_encode($this->data['details']['title']).'</h3>';
+		$html[] = '                         '.$this->renderCurriculumTags($this->data['item']['curriculum-tags']);
+        $html[] = '                     </div>';
+        $html[] = '                     '.$this->renderWeightCell($this->data['item']);
+        $html[] = '                 </div>';
         $html[] = '             </th>';
         $html[] = '         </tr>';
         $html[] = '     </thead>';
 		$html[] = '		<tbody>';
 		$html[] = '			<tr class="response-label item-response-view" id="item-response-view-'.html_encode($this->data['item']['item_id']).'">';
-		$html[] = '				<td width="45%" class="item-type-control middle">';
+		$html[] = '				<td class="item-type-control middle">';
 		$html[] = '					<select id="item-'.html_encode($this->data['item']['item_id']).'" data-item-id="'.html_encode($this->data['item']['item_id']).'" '.$this->getNameAttr().' class="item-control proxy-scores" '.$this->renderMultiple().'>';
 		$html[] = '						'.$this->renderDefaultOption();
 		$html[] = '						'.$this->getItemResponsesAsOptions();
@@ -131,7 +136,6 @@ class Views_Gradebook_Assessments_Form_Item_DropdownSingleResponse extends Views
         if ($out= $this->renderScoreList()) {
             $html[] = '         <td>' . $this->renderScoreList() . '</td>';
         }
-        $html[] = '             '.$this->renderWeightCell($this->data['item']);
         $html[] = '         </tr>';
         $html[] = '			'.$this->renderItemComment($this->data['item']);
         $html[] = '     </tbody>';

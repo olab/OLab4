@@ -15,17 +15,18 @@
  * You should have received a copy of the GNU General Public License
  * along with Entrada.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @author Organisation: Queen's University
- * @author Developer: James Ellis <james.ellis@queensu.ca>
- * @copyright Copyright 2014 Queen's University. All Rights Reserved.
+ * @author Organization: David Geffen School of Medicine at UCLA
+ * @author Unit: Instructional Design and Technology Unit
+ * @author Developer: Sam Payne <spayne@mednet.ucla.edu>
+ * @copyright Copyright 2017 Regents of The University of California. All Rights Reserved.
  */
 
 class Models_Exam_Exam_Author extends Models_Base {
     protected $aeauthor_id, $exam_id, $author_type, $author_id, $created_date, $created_by, $updated_date, $updated_by, $deleted_date;
 
-    protected static $table_name = "exam_authors";
-    protected static $primary_key = "aeauthor_id";
-    protected static $default_sort_column = "aeauthor_id";
+    protected static $table_name           = "exam_authors";
+    protected static $primary_key          = "aeauthor_id";
+    protected static $default_sort_column  = "aeauthor_id";
 
     public function __construct($arr = NULL) {
         parent::__construct($arr);
@@ -254,9 +255,9 @@ class Models_Exam_Exam_Author extends Models_Base {
         return $authors;
     }
 
-    private static function fetchAllByExamIdFormatted($version_id, $type, $author_array, $deleted_date = NULL) {
+    private static function fetchAllByExamIdFormatted($exam_id, $type, $author_array, $deleted_date = NULL) {
         global $db;
-        $authors = Models_Exam_Exam_Author::fetchAllByExamIDAuthorType($version_id, $type, $author_array, $deleted_date);
+        $authors = Models_Exam_Exam_Author::fetchAllByExamIDAuthorType($exam_id, $type, $deleted_date);
 
         //if authors are found add them to the array of the specific type, check if they already exist on an earlier folder before adding
         if (isset($authors) && is_array($authors) && !empty($authors)) {

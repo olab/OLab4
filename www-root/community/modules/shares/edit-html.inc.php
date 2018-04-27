@@ -414,7 +414,7 @@ if ($RECORD_ID) {
                                                     <input id="community-all-checkbox" class="permission-type-checkbox" type="radio" name="permission_acl_style" value="CourseCommunityEnrollment" <?php if ($permission_db['assertion'] == 'CourseCommunityEnrollment') { echo "checked='checked'"; } ?> />
                                                 </td>
                                                 <td>
-                                                    <label for="community-all-checkbox" class="content-small">All Community Members</label>
+                                                    <label for="community-all-checkbox" class="content-small"><?php echo $translate->_("All Community Members"); ?></label>
                                                 </td>
                                             </tr>
                                             <tr>
@@ -560,13 +560,13 @@ if ($RECORD_ID) {
                                         </thead>
                                         <tbody>
                                             <tr>
-                                                <td class="left"><strong>Community Administrators</strong></td>
+                                                <td class="left"><strong><?php echo $translate->_("Community Administrators"); ?></strong></td>
                                                 <td class="on"><input type="checkbox" id="allow_admin_read" name="allow_admin_read" value="1" checked="checked" onclick="this.checked = true" /></td>
                                                 <td>&nbsp;</td>
                                                 <td>&nbsp;</td>
                                             </tr>
                                             <tr>
-                                                <td class="left"><strong>Community Members</strong></td>
+                                                <td class="left"><strong><?php echo $translate->_("Community Members"); ?></strong></td>
                                                 <td class="on"><input type="checkbox" id="allow_member_read" name="allow_member_read" value="1"<?php echo (((!isset($PROCESSED["allow_member_read"])) || ((isset($PROCESSED["allow_member_read"])) && ($PROCESSED["allow_member_read"] == 1))) ? " checked=\"checked\"" : ""); ?> /></td>
                                                 <td>&nbsp;</td>
                                                 <td>&nbsp;</td>
@@ -616,25 +616,25 @@ if ($RECORD_ID) {
 			}
 		} else {
 			$NOTICE++;
-			$NOTICESTR[] = "The HTML documemnt that you are trying to edit was deactivated <strong>".date(DEFAULT_DATE_FORMAT, $html_record["updated_date"])."</strong> by <strong>".html_encode(get_account_data("firstlast", $html_record["updated_by"]))."</strong>.<br /><br />If there has been a mistake or you have questions relating to this issue please contact the " . SUPPORT_UNIT . " directly.";
+			$NOTICESTR[] = "The HTML document that you are trying to edit was deactivated <strong>".date(DEFAULT_DATETIME_FORMAT, $html_record["updated_date"])."</strong> by <strong>".html_encode(get_account_data("firstlast", $html_record["updated_by"]))."</strong>.<br /><br />If there has been a mistake or you have questions relating to this issue please contact the support unit directly.";
 
 			echo display_notice();
 
-			application_log("error", "The HTML documemnt record id [".$RECORD_ID."] is deactivated; however, ".$_SESSION["details"]["firstname"]." ".$_SESSION["details"]["lastname"]." [".$ENTRADA_USER->getID()."] has tried to edit it.");
+			application_log("error", "The HTML document record id [".$RECORD_ID."] is deactivated; however, ".$_SESSION["details"]["firstname"]." ".$_SESSION["details"]["lastname"]." [".$ENTRADA_USER->getID()."] has tried to edit it.");
 		}
 	} else {
 		$ERROR++;
-		$ERRORSTR[] = "The HTML documemnt id that you have provided does not exist in the system. Please provide a valid record id to proceed.";
+		$ERRORSTR[] = "The HTML document id that you have provided does not exist in the system. Please provide a valid record id to proceed.";
 
 		echo display_error();
 
-		application_log("error", "The provided HTML documemnt id was invalid [".$RECORD_ID."] (Edit HTML).");
+		application_log("error", "The provided HTML document id was invalid [".$RECORD_ID."] (Edit HTML).");
 	}
 } else {
 	$ERROR++;
-	$ERRORSTR[] = "Please provide a valid HTML documemnt id to proceed.";
+	$ERRORSTR[] = "Please provide a valid HTML document id to proceed.";
 
 	echo display_error();
 
-	application_log("error", "No HTML documemnt id was provided to edit. (Edit HTML)");
+	application_log("error", "No HTML document id was provided to edit. (Edit HTML)");
 }

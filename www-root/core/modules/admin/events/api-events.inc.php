@@ -74,6 +74,24 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                         echo json_encode(array("status" => "error", "data" => $translate->_("No event was found.")));
                     }
                     break;
+
+                case "get-medbiq-resources" :
+                    if (isset($request["search_value"]) && $tmp_input = clean_input(strtolower($request["search_value"]), array("trim", "striptags"))) {
+                        $PROCESSED["search_value"] = $tmp_input;
+                    } else {
+                        $PROCESSED["search_value"] = "";
+                    }
+                    $resources = Models_Medbiq_Resource::fetchAllRecords($PROCESSED["search_value"]);
+                    if ($resources) {
+                        $data = array();
+                        foreach ($resources as $resource) {
+                            $data[] = array("target_id" => $resource->getID(), "target_label" => $resource->getResource());
+                        }
+                        echo json_encode(array("status" => "success", "data" => $data));
+                    } else {
+                        echo json_encode(array("status" => "error", "data" => $translate->_("No Medbiq Resources found.")));
+                    }
+                    break;
             }
             break;
     }

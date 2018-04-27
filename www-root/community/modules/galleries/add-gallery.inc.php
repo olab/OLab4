@@ -248,7 +248,7 @@ switch($STEP) {
 								<tbody>
 									<tr>
 										<td>
-											<strong>Community Administrators</strong>
+											<strong><?php echo $translate->_("Community Administrators"); ?></strong>
 										</td>
 										<td class="on">
 											<input type="checkbox" id="allow_admin_read" name="allow_admin_read" value="1" checked="checked" onclick="this.checked = true" />
@@ -261,7 +261,7 @@ switch($STEP) {
 										</td>
 									</tr>
 									<tr>
-										<td><strong>Community Members</strong>
+										<td><strong><?php echo $translate->_("Community Members"); ?></strong>
 										</td>
 										<td class="on">
 											<input type="checkbox" id="allow_member_read" name="allow_member_read" value="1"<?php echo (((!isset($PROCESSED["allow_member_read"])) || ((isset($PROCESSED["allow_member_read"])) && ($PROCESSED["allow_member_read"] == 1))) ? " checked=\"checked\"" : ""); ?> />

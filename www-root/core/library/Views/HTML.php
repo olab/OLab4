@@ -100,12 +100,23 @@ class Views_HTML extends Views_Base {
     }
 
     /**
-     * Render a generic error message. Can (and probably should) be overridden by child class.
+     * Render a generic error message. If there are rendering error messages to display, then they are
+     * each added, otherwise a default message is displayed. If this renderError method is overridden, then the
+     * child is responsible for their own error message handling.
      */
     protected function renderError() {
         global $translate; ?>
         <div class="alert alert-danger">
-            <strong><?php echo $translate->_("Unable to render HTML view"); ?></strong>
+            <ul>
+                <?php if ($this->hasRenderingErrors()): ?>
+                    <?php foreach($this->getRenderingErrors() as $error_message): ?>
+                        <li><strong><?php echo html_encode($error_message) ?></strong></li>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <li><strong><?php echo html_encode($translate->_("Unable to render HTML view")); ?></strong></li>
+                <?php endif; ?>
+            </ul>
+            <div class="clearfix"></div>
         </div>
         <?php
     }

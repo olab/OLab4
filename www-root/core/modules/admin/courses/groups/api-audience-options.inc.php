@@ -67,7 +67,7 @@ if (!defined("IN_COURSE_GROUPS")) {
 		if ($course_info) {
 			$permission = $course_info["permission"];
 
-			$curriculum_periods = Models_Curriculum_Period::fetchRowByCurriculumTypeIDCourseID($course_info["curriculum_type_id"], $PROCESSED["course_id"]);
+			$curriculum_periods = Models_Curriculum_Period::fetchAllByCurriculumTypeIDCourseID($course_info["curriculum_type_id"], $PROCESSED["course_id"]);
 
 			//$query = "SELECT * FROM `groups` AS a JOIN `group_organisations` AS b ON a.`group_id` = b.`group_id` WHERE ((`group_type` = 'course_list' AND `group_value` = ".$db->qstr($PROCESSED["course_id"]).") OR (b.`organisation_id` = '".$course_info["organisation_id"]."'))".($use_ajax ? " AND `group_active` = '1'" : "");
 			$query = "SELECT a.* FROM `course_audience` AS a JOIN `courses` AS b ON a.`course_id` = b.`course_id` AND a.`course_id` = ".$db->qstr($PROCESSED["course_id"])." WHERE a.`audience_active` = '1'";

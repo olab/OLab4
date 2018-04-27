@@ -48,9 +48,8 @@
                         .append($(document.createElement("option")).val('auditor').html('Auditor'));
                     li.append(select);
                 }
-                var img = $(document.createElement("img"))
-                    .addClass('list-cancel-image')
-                    .attr({'src': settings.remove_image});
+                var img = $(document.createElement("span"))
+                    .addClass('list-cancel-image fa fa-close remove-list-item');
                 li.append(img);
                 $(settings.type_name).val('');
                 $(settings.type_id).val('');
@@ -173,7 +172,7 @@
         };
 
         // create a handler for the delete buttons
-        $(settings.type_list).on("click", 'img.list-cancel-image', function(e) {
+        $(settings.type_list).on("click", '.list-cancel-image', function(e) {
             id = $(this).parent().attr("data-proxy-id");
             removeItem(id);
             e.preventDefault();

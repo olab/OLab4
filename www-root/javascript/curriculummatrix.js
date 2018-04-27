@@ -116,6 +116,11 @@ jQuery(function($) {
                 $.each(count_tags, function( index, value ) {
                     $(matrix_header_row).find("[data-objective-id=\"" + index + "\"]").append("<br><small>" + value + " <i class=\"fa fa-star\" aria-hidden=\"true\"></i></small>");
                 });
+            } else {
+                var div = $(document.createElement("div")).attr("id", "msg");
+                $("#curriculum-matrix").empty();
+                $("#curriculum-matrix").append(div);
+                display_error([("There are no courses to display.")], "#msg");
             }
         }
         $("#objective-set").removeProp("disabled");

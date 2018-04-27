@@ -66,9 +66,17 @@ jQuery(document).ready(function ($) {
         e.stopPropagation();
     });
     
-    $("input#instructions-start-exam").click(function(e){
+    $("input#instructions-start-exam").on("click", function(e) {
         e.preventDefault();
        instructionsViewed();
+    });
+
+    $("#honor-code-ok").on("click", function(e) {
+        if ($(this).is(":checked")) {
+            $("input#instructions-start-exam").removeClass("disabled").prop("disabled", false);
+        } else {
+            $("input#instructions-start-exam").addClass("disabled").prop("disabled", true);
+        }
     });
 
     $("#pdf_viewer").css({
@@ -112,16 +120,48 @@ jQuery(document).ready(function ($) {
         setCookie("exam_dismiss_attempt_message_" + exam_progress_id, 1, 1);
     });
 
-    $(".question-control").on("change", function(e) {
+    $(".question-control").on("change", function (e) {
+        // This tracker should not treat text areas
+        if (e.target.type !== 'textarea' && e.target.type !== 'text') {
+            answerChange(this);
+        }
+    });
+
+    $("input[type='text'].question-control").on("focusout", function () {
+        // Text inputs are only saved once the user removed the focus from it
         answerChange(this);
     });
 
-    $(".learner_comments_text_area").on("change", function(e) {
+    var locked_textarea = false;
+
+    $("textarea.question-control").on("input", function () {
+        // If input is textarea type, lets save the answer every 5s to avoid overload the api
+        // with too many requests
+        if (!locked_textarea) {
+            locked_textarea = true;
+            answerChange(this);
+            setTimeout(function () {
+                locked_textarea = false;
+            }, 5000);
+        }
+    });
+
+    $("textarea.question-control").on("focusout", function () {
+        // Even saving textareas contents while the user is typing
+        // Lets sabe the answer again once the user left the text area box
+        answerChange(this);
+    })
+
+    $(".question-control").on("force_save", function(e){
+        answerChange(this);
+    });
+
+    $(".learner_comments_text_area").on("change input", function(e) {
         manage_learner_comment(this);
     });
 
     // Save when the user uses the navigation
-    $("#control-bar .pagination a").on("click", function(e) {
+    $("#control-bar-pagination a.btn-link").on("click", function(e) {
         e.preventDefault();
         e.stopPropagation();
 
@@ -601,12 +641,11 @@ jQuery(document).ready(function ($) {
                 }
                 break;
         }
-        $(".save-exam").click();
+        saveExam("auto");
     }
 
     function answerChange(element) {
         manageInputs(element);
-        saveExam("auto");
     }
 
     function manage_learner_comment(element) {
@@ -805,7 +844,6 @@ jQuery(document).ready(function ($) {
                 var jsonResponse = JSON.parse(data);
                 var message      = jsonResponse.data;
                 saved            = jsonResponse.saved;
-
                 if (jsonResponse.status == "success") {
                     /*
                     if (mode === "normal") {
@@ -922,6 +960,11 @@ jQuery(document).ready(function ($) {
     }
 
     function checkAllSaved() {
+
+        // Force to save text questions
+        $('input[type=text].question-control').trigger("force_save");
+        $('textarea.question-control').trigger("force_save");
+
         var submission = {"method" : "check-responses", "exam_progress_id" : exam_progress_id, "post_id": post_id, "exam_id": exam_id, "proxy_id": proxy_id};
         var message;
 
@@ -1019,16 +1062,16 @@ jQuery(document).ready(function ($) {
         var content_width   = $("#content").outerWidth();
         var gutters_width   = (window_width - content_width);
         var gutter_right    = gutters_width - $("#content").offset().left;
-        var full_width      = 1150;
+        var full_width      = "95%";
         var min_width       = 600;
 
-        if ((window_width >= min_width && window_width <= 1310 ) || (window_width <= 1430 && exam_menu_width > 215 ) ) {
+        if ((window_width >= min_width && window_width <= 1900 ) || (window_width <= 1430 && exam_menu_width > 215 ) ) {
             // generates the new size based on the current content width minus
             // the difference of the side bar menu width and the right gutter space
             var temp_content_width = content_width - (exam_menu_width - gutter_right);
             // adds 10 extra pixels for padding
             $("#content").width(temp_content_width - 20);
-        } else if (window_width >= 1311) {
+        } else if (window_width >= 1901) {
             $("#content").width(full_width);
         }
 
@@ -1042,7 +1085,7 @@ jQuery(document).ready(function ($) {
     //This function loads and hides the sidebar when clicking the icon for it on the control bar
     function toggleSidebarMenu() {
         var exam_menu   = $("#exam-menu");
-        var full_width  = 960;
+        var full_width      = "95%";
         var status;
 
         if (exam_menu.hasClass("hide")) {
@@ -1078,9 +1121,9 @@ jQuery(document).ready(function ($) {
 
         if (exam_menu.hasClass("hide")) {
             exam_menu.slideDown();
+            $("#page.container").css({"max-width": "1600px"});
             setTimeout(function() {
                 exam_menu.removeClass("hide").addClass("show");
-
                 adjust_main_window();
                 adjust_exam_height();
             }, 500);
@@ -1095,6 +1138,7 @@ jQuery(document).ready(function ($) {
             setTimeout(function() {
                 exam_menu.removeClass("show").addClass("hide");
                 $("#content").width(full_width);
+                $("#page.container").css({"max-width": "1400px"});
             }, 500);
 
             side_bar_right_open = 0;

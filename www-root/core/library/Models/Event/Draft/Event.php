@@ -28,6 +28,7 @@ class Models_Event_Draft_Event extends Models_Base {
               $event_id,
               $draft_id,
               $parent_id,
+              $draft_parent_id,
               $event_children,
               $recurring_id,
               $region_id,
@@ -82,6 +83,10 @@ class Models_Event_Draft_Event extends Models_Base {
 
     public function getParentID() {
         return $this->parent_id;
+    }
+
+    public function getDraftParentID() {
+        return $this->draft_parent_id;
     }
 
     public function getEventChildren() {
@@ -222,6 +227,34 @@ class Models_Event_Draft_Event extends Models_Base {
         
         return $output;
     }
+
+    public function fetchAllByCourseIdTitleDraftId($draft_id, $course_id = 0, $title = "") {
+        global $db;
+
+        $course_id = (int) $course_id;
+        $title = clean_input($title, ["striptags", "trim"]);
+
+        $events = [];
+
+        if ($course_id) {
+            $query = "SELECT *
+                        FROM `draft_events` 
+                        WHERE `course_id` = ?
+                        AND `draft_id` = ?
+                        AND (`devent_id` = ? OR `event_title` LIKE ?)
+                        AND (`draft_parent_id` = 0 OR `draft_parent_id` IS NULL)
+                        ORDER BY `event_start` ASC";
+            $results = $db->GetAll($query, [$course_id, $draft_id, (int) $title, ("%" . $title . "%")]);
+            if ($results) {
+                foreach ($results as $result) {
+                    $event = new self($result);
+                    $events[] = $event;
+                }
+            }
+        }
+
+        return $events;
+    }
     
     public static function fetchRowByID($devent_id = 0) {
         $self = new self();
@@ -229,5 +262,30 @@ class Models_Event_Draft_Event extends Models_Base {
                 array("key" => "devent_id", "value" => $devent_id, "method" => "=", "mode" => "AND")
             )
         );
+    }
+
+    public static function fetchRowByIDCourseId($devent_id = 0, $course_id = 0) {
+        $self = new self();
+        return $self->fetchRow(array(
+                array("key" => "devent_id", "method" => "=", "value" => $devent_id),
+                array("key" => "course_id", "method" => "=", "value" => $course_id)
+            )
+        );
+    }
+
+    public static function fetchRowByEventIdDraftId($event_id = 0, $draft_id = 0) {
+        $self = new self();
+        return $self->fetchRow(array(
+                array("key" => "event_id", "method" => "=", "value" => $event_id),
+                array("key" => "draft_id", "method" => "=", "value" => $draft_id)
+            )
+        );
+    }
+
+    public static function fetchAllByParentID($parent_id = null) {
+        $self = new self();
+        return $self->fetchAll(array(
+            array("key"=> "draft_parent_id", "method"=> "=", "value" => $parent_id)
+        ));
     }
 }

@@ -7,7 +7,7 @@
             jQuery('#toggle_sets').trigger('click');
         }
 
-		jQuery('.objective-remove').live('click',function(){
+		jQuery(document).on('click', '.objective-remove', function(){
 			var id = jQuery(this).attr('data-id');
 			var qrow = jQuery("#qrow").val();
 			var list = jQuery('#mapped_objective_'+id).parent().attr('data-importance');
@@ -20,7 +20,7 @@
 			return false;						
 		});
 
-		jQuery('.checked-objective').live('change',function(){
+		jQuery(document).on('change', '.checked-objective', function(){
 			var id = jQuery(this).val();
 			var qrow = jQuery("#qrow").val();
 			// parents will return all sets above that objective, which for anything other than curriculum objectives will be an array
@@ -44,7 +44,7 @@
 			
 		});
 
-		jQuery('.checked-mapped').live('change',function(){
+		jQuery(document).on('change', '.checked-mapped', function(){
 			var id = jQuery(this).val();
 			var qrow = jQuery("#qrow").val();
 			// parents will return all sets above that objective, which for anything other than curriculum objectives will be an array

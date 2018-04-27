@@ -30,8 +30,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 } elseif(!$ENTRADA_ACL->amIAllowed("gradebook", "update", false)) {
 	$ONLOAD[]	= "setTimeout('window.location=\\'".ENTRADA_URL."/admin/".$MODULE."\\'', 15000)";
 
-	$ERROR++;
-	$ERRORSTR[]	= "Your account does not have the permissions required to use this feature of this module.<br /><br />If you believe you are receiving this message in error please contact <a href=\"mailto:".html_encode($AGENT_CONTACTS["administrator"]["email"])."\">".html_encode($AGENT_CONTACTS["administrator"]["name"])."</a> for assistance.";
+	add_error("Your account does not have the permissions required to use this feature of this module.<br /><br />If you believe you are receiving this message in error please contact <a href=\"mailto:".html_encode($AGENT_CONTACTS["administrator"]["email"])."\">".html_encode($AGENT_CONTACTS["administrator"]["name"])."</a> for assistance.");
 
 	echo display_error();
 
@@ -68,7 +67,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 	}
 
 	/**
-	 * Update requsted number of rows per page.
+	 * Update requested number of rows per page.
 	 * Valid: any integer really.
 	 */
 	if ((isset($_GET["pp"])) && ((int) trim($_GET["pp"]))) {
@@ -86,7 +85,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 	}
 
 	/**
-	 * Update requsted organisation filter
+	 * Update requested organisation filter
 	 * Valid: any integer really.
 	 */
 
@@ -95,10 +94,10 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 	 */
 	preferences_update($MODULE, $PREFERENCES);
 
-	$JQUERY[] = "<script type=\"text/javascript\" src=\"".ENTRADA_URL."/javascript/$MODULE/$MODULE.js\"></script>\n";
+	$JQUERY[] = "<script type=\"text/javascript\" src=\"" . ENTRADA_URL . "/javascript/" . $MODULE . "/" . $MODULE . ".js\"></script>\n";
     $HEAD[] = "<link rel=\"stylesheet\" href=\"".  ENTRADA_URL ."/css/courses/courses.css\" />";
 
-	echo "<h1>Gradebooks</h1>";
+	echo "<h1>Manage Gradebooks</h1>";
 	?>
 
 	<div class="search-bar" id="search-bar">
@@ -121,27 +120,38 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 	
 	<table id="gradebook-table" class="table table-bordered table-striped" summary="List of Gradebooks">
 		<thead>
-		<th width="25%" class="general"> Category<i class="fa fa-sort<?php echo (($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["sb"] == "type") ?
-                "-".$_SESSION[APPLICATION_IDENTIFIER][$MODULE]["so"] : ""); ?>  gradebook-sort" aria-hidden="true" data-name="type" data-order=
-                "<?php echo (($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["sb"] == "type") ? $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["so"] : ""); ?>"></i>
-        </th>
-		<th width="25%" class="general"> Code<i class="fa fa-sort<?php echo (($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["sb"] == "code") ?
-                "-".$_SESSION[APPLICATION_IDENTIFIER][$MODULE]["so"] : ""); ?>  gradebook-sort" aria-hidden="true" data-name="code" data-order=
-                "<?php echo (($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["sb"] == "code") ? $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["so"] : ""); ?>"></i>
-        </th>
-		<th width="50%" class="title"> Name<i class="fa fa-sort<?php echo (($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["sb"] == "name") ?
-                "-".$_SESSION[APPLICATION_IDENTIFIER][$MODULE]["so"] : ""); ?>  gradebook-sort" aria-hidden="true" data-name="name" data-order=
-                "<?php echo (($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["sb"] == "name") ? $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["so"] : ""); ?>"></i>
-        </th>
+            <tr>
+                <th width="25%" class="general">
+                    Category
+                    <i class="fa fa-sort<?php echo (($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["sb"] == "type") ?
+                        "-".$_SESSION[APPLICATION_IDENTIFIER][$MODULE]["so"] : ""); ?>  gradebook-sort" aria-hidden="true" data-name="type" data-order=
+                                                            "<?php echo (($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["sb"] == "type") ? $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["so"] : ""); ?>">
+                    </i>
+                </th>
+                <th width="25%" class="general">
+                    Code
+                    <i class="fa fa-sort<?php echo (($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["sb"] == "code") ?
+                        "-".$_SESSION[APPLICATION_IDENTIFIER][$MODULE]["so"] : ""); ?>  gradebook-sort" aria-hidden="true" data-name="code" data-order=
+                                                        "<?php echo (($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["sb"] == "code") ? $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["so"] : ""); ?>">
+                    </i>
+                </th>
+                <th width="50%" class="title">
+                    Name
+                    <i class="fa fa-sort<?php echo (($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["sb"] == "name") ?
+                        "-".$_SESSION[APPLICATION_IDENTIFIER][$MODULE]["so"] : ""); ?>  gradebook-sort" aria-hidden="true" data-name="name" data-order=
+                                                      "<?php echo (($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["sb"] == "name") ? $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["so"] : ""); ?>">
+                    </i>
+                </th>
+            </tr>
 		</thead>
 		<tbody>
 		</tbody>
 	</table>
 
 	<div class="row-fluid">
-		<a id="load-more-gradebook" class="btn btn-block">Showing <span id="total_loaded">0</span> of <span id="total_available"></span> total gradebooks</a>
+		<a id="load-more-gradebook" class="btn btn-block">
+            Showing <span id="total_loaded">0</span> of <span id="total_available"></span> total gradebooks
+        </a>
 	</div>
-
 <?php
 }
-?>

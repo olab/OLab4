@@ -37,8 +37,27 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ROTATION_SCHEDULE"))) {
 
     $BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/" . $MODULE . "?section=drafts", "title" => "My Drafts");
 
-    $drafts = Models_Schedule_Draft::fetchAllByProxyID($ENTRADA_USER->getActiveID());
-
+    $drafts = array();
+    $is_admin = Entrada_Utilities::isCurrentUserSuperAdmin(array(array("resource" => "assessmentreportadmin")));
+    if ($is_admin) {
+        $all_drafts = Models_Schedule_Draft::fetchAllByOrg($ENTRADA_USER->getActiveOrganisation(), "draft", "draft_title");
+        if (is_array($all_drafts)) {
+            foreach ($all_drafts as $schedule_draft_record) {
+                $drafts[$schedule_draft_record->getID()] = $schedule_draft_record;
+            }
+        }
+    } else {
+        $courses = Models_Course::getUserCourses($ENTRADA_USER->getActiveID(), $ENTRADA_USER->getActiveOrganisation());
+        if ($courses) {
+            foreach ($courses as $course) {
+                if ($schedule_draft = Models_Schedule_Draft::fetchAllByProxyIDCourseID($ENTRADA_USER->getActiveID(), $course->getID(), "draft")) {
+                    foreach ($schedule_draft as $schedule_draft_record) {
+                        $drafts[$schedule_draft_record->getID()] = $schedule_draft_record;
+                    }
+                }
+            }
+        }
+    }
     if (isset($_GET["draft_id"]) && $tmp_input = clean_input($_GET["draft_id"], "int")) {
         $PROCESSED["current_draft_id"] = $tmp_input;
     }
@@ -58,7 +77,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ROTATION_SCHEDULE"))) {
         }
     } else {
         if (isset($method) && empty($_POST["draft_ids"])) {
-            add_error(sprintf($translate->_("Please check off the drafts you wish to %s"), $method));
+            add_error(sprintf($translate->_("Please check off the drafts you wish to %s."), $method));
             unset($method);
             $STEP = 1;
         }
@@ -101,7 +120,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ROTATION_SCHEDULE"))) {
                 foreach ($PROCESSED["draft_ids"] as $draft_id) {
                     $drafts[] = Models_Schedule_Draft::fetchRowByID($draft_id);
                 }
-                add_notice(sprintf($translate->_("You have chosen the following drafts to be %sd. Please confirm by clicking on the <strong>%s</strong> button below."), $method, ucwords($method)));
+                add_notice(sprintf($translate->_("You have chosen the following drafts to be %sed. Please confirm by clicking on the <strong>%s</strong> button below."), $method, ucwords($method)));
             }
 
         break;

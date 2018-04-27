@@ -20,7 +20,59 @@ return array (
 	 */
 	"navigation_tabs" => array (
 		"public" => array (
-                        "olab" => array("title" => "Maps") )
+			"dashboard" => array ("title" => "Dashboard"),
+			"communities" => array ("title" => "Communities"),
+			"curriculum" => array (
+				"title" => "Curriculum",
+				"children" => array (
+                    "curriculum/search" => array (
+                        "title" => "Curriculum Search"
+                    ),
+					"curriculum/explorer" => array (
+						"title" => "Curriculum Explorer"
+					),
+                    "curriculum/matrix" => array (
+						"title" => "Curriculum Matrix"
+					),
+                    "curriculum/reports" => array (
+						"title" => "Curriculum Reports",
+                        "resource" => "report",
+                        "permission" => "read",
+					),
+				)
+			),
+			"courses" => array ("title" => "Courses"),
+            "weeks" => array ("title" => "Weeks", "enabled" => "curriculum_weeks_enabled"),
+			"events" => array ("title" => "Learning Events"),
+			"clerkship" => array (
+			    "title" => "Clerkship",
+			    "resource" => "clerkship",
+			    "permission" => "read",
+			    "children" => array (
+			        "clerkship" => array (
+                        "title" => "Schedules",
+                    ),
+                    "clerkship/logbook" => array (
+                        "resource" => "clerkship",
+                        "permission" => "read",
+                        "limit-to-groups" => "student",
+                        "title" => "Logbook",
+                    ),
+                    "evaluations" => array (
+                        "title" => "Evaluations",
+                    ),
+                    "clerkship/dutyhours" => array (
+                        "title" => "Duty Hours",
+                    )
+                )
+			),
+			"people" => array ("title" => "People Search"),
+                        "lor" => array ("title" => "Learning Objects"),
+			"annualreport" => array ("title" => "My Annual Report", "resource" => "annualreport", "permission" => "read", "limit-to-groups" => "faculty")
+		),
+		"admin" => array (
+			"observerships" => array ("title" => "Manage Observerships")
+		)
 	),
 
 	/*
@@ -50,6 +102,10 @@ return array (
 	"all_courses" => "All Courses",
 	"no_courses" => "No Courses",
     "Course" => "Course",
+    "select_course" => "Select Course",
+    "course_select" => "Course Select",
+    "browse_course" => "Browse Course",
+    "browse_courses" => "Browse Courses",
 	"SSO Login" => "SSO Login",
 
 	/*
@@ -89,6 +145,9 @@ return array (
 		"course" => array (
 			"label" => "Course Filters"
 		),
+		"week" => array (
+			"label" => "Week Filters"
+		),
 		"term" => array (
 			"label" => "Term Filters"
 		),
@@ -122,10 +181,10 @@ return array (
 	 */
     "public_dashboard_feeds" => array (
 		"global" => array (
-			array ("title" => "Entrada Consortium", "url" => "http://www.entrada-project.org/feed/", "removable" => false),
-			array ("title" => "PBS NewsHour - Health", "url" => "http://www.pbs.org/newshour/topic/health/feed", "removable" => true),
+			array ("title" => "Entrada Consortium", "url" => "https://entrada.org/feed/", "removable" => false),
+			array ("title" => "World Health Organization", "url" => "http://www.who.int/feeds/entity/mediacentre/news/en/rss.xml", "removable" => true),
             array ("title" => "Zend Developer Zone", "url" => "http://feeds.feedburner.com/PHPDevZone", "removable" => true),
-			array ("title" => "CBC | Health News", "url" => "http://www.cbc.ca/cmlink/rss-health", "removable" => true)
+			array ("title" => "CBC Health News", "url" => "http://www.cbc.ca/cmlink/rss-health", "removable" => true)
 		),
 		"medtech" => array (
 			// array ("title" => "Admin Feed Example", "url" => "http://www.yourschool.ca/admin.rss", "removable" => false)
@@ -152,6 +211,7 @@ return array (
 			array ("title" => "School Library", "url" => ENTRADA_URL . "/library", "target" => "_blank"),
 			array ("title" => "MedSkl.com", "url" => "https://medskl.com", "target" => "_blank"),
 			array ("title" => "Wired Health News", "url" => "https://www.wired.com/tag/health", "target" => "_blank"),
+            array ("title" => "EPA Encyclopedia", "url" => ENTRADA_URL . "/cbme/encyclopedia", "target" => "_blank"),
 		),
 		"medtech" => array (
 			// array ("title" => "Additional Admin Link", "url" => "http://admin.yourschool.ca")
@@ -291,7 +351,8 @@ return array (
     "No Courses Selected to delete" => "No Courses Selected to delete",
     "Please confirm you would like to delete the selected Courses(s)?" => "Please confirm you would like to delete the selected Courses(s)?",
     "Load More Courses" => "Load More Courses",
-
+    "course_reports" => "Course Reports",
+    "Clerkship" => "Clerkship",
 	"evaluation_filtered_words" => "Dr. Doctor; Firstname Lastname",
 
 	/*
@@ -463,6 +524,21 @@ return array (
                     "course_id"         => "Course"
                 )
             ),
+            "folder" => array(
+                "label_folder_parent_select"  => "Select Parent Folder",
+                "label_folder_parent_id"      => "Parent Folder",
+                "label_folder_title"          => "Folder Text",
+                "label_folder_description"    => "Folder Description",
+                "label_folder_order"          => "Folder Order",
+                "label_folder_image_id"       => "Folder Image Color",
+                "label_folder_author"         => "Folder Authors",
+                "buttons" => array(
+                    "add_folder"              => "Add New Folder",
+                    "edit_folder"             => "Edit Folder",
+                    "delete_folder"           => "Delete Folder",
+                    "delete_folders"          => "Delete Folders",
+                )
+            ),
             "exam" => array(
                 "label_exam_type"               => "Exam Type",
                 "label_exam_title"              => "Exam Title",
@@ -497,7 +573,8 @@ return array (
                 "settings" => array(
                     "title_exam_settings"       => "Exam Settings",
                     "label_display"             => "Display",
-                    "label_random"              => "Randomization",
+                    "label_random"              => "Randomize questions",
+                    "label_random_answers"      => "Randomize answers",
                     "text_display_all"          => "All questions on one page ",
                     "text_display_one"          => "One question per page ",
                     "text_display_page_breaks"  => "Questions according to Page Breaks ",
@@ -574,7 +651,8 @@ return array (
                     "preview_post"   => "Preview Exam",
                     "adjust_scoring" => "Adjust Scoring",
                     "reports"        => "Reports",
-                    "print_view"     => "Printer Friendly View"
+                    "print_view"     => "Printer Friendly View",
+
                 ),
                 "post-info" => array(
                     "title_post" => "Exam Posted in Courses"
@@ -584,10 +662,10 @@ return array (
                 "steps" => array(
                     "1" => "Exam",
                     "2" => "Settings",
-                    "3" => "Security",
-                    "4" => "Exceptions",
-                    "5" => "Feedback",
-                    "6" => "Review",
+                    "3" => "Audience",
+                    "4" => "Feedback",
+                    "5" => "Review",
+                    "6" => "Security",
                 ),
                 "post_not_found"        => "The Post ID provided is not valid",
                 "event_not_found"       => "The Event ID provided is not valid",
@@ -657,9 +735,9 @@ return array (
                 "no_users_exam"         => "No learners found matching the search criteria",
                 "learner_name"          => "Learner Name",
                 "excluded"              => "Excluded",
-                "max_attempts"          => "Max Attempts",
-                "exception_start_date"  => "Exam Start Date",
-                "exception_end_date"    => "Exam End Date",
+                "max_attempts"          => "Attempts",
+                "exception_start_date"  => "Starts",
+                "exception_end_date"    => "Ends",
                 "exception_submission_date" => "Submission Deadline",
                 "exception_time_factor"     => "Extra Time",
                 "exc_time_factor_perc"      => "Extra Time Percentage",
@@ -980,6 +1058,7 @@ return array (
                 "success_msg_02" => "click here",
                 "success_msg_03" => " if you do not wish to wait.",
                 "success_msg_04" => "The question has successfully updated. You will be redirected to edit-exam, please ",
+                "correct_text_tooltip_text" => "Use Correct Text to explain the required components of an answer, or to provide a sample answer.  Correct Text will be visible to graders when they score an exam but never seen by learners.",
             ),
             "add-permission" => array(
                 "title" => "Add Question Permission",
@@ -1098,12 +1177,14 @@ return array (
                 "failed_to_create" => "Sorry, we were unable to edit this folder."
             ),
             "folder" => array(
+                "label_folder_parent_select"  => "Select Parent Folder",
                 "label_folder_parent_id"      => "Parent Folder",
                 "label_folder_title"          => "Folder Text",
                 "label_folder_description"    => "Folder Description",
                 "label_folder_order"          => "Folder Order",
                 "label_folder_image_id"       => "Folder Image Color",
                 "label_folder_author"         => "Folder Authors",
+                "label_folder_permissions"    => "Folder Permissions",
                 "buttons" => array(
                     "add_folder"              => "Add New Folder",
                     "edit_folder"             => "Edit Folder",
@@ -1372,10 +1453,101 @@ return array (
         "breadcrumb" => array(
             "title" => "Assessment & Evaluation"
         ),
+        "eportfolios" => array(
+            "title" => "ePortfolios",
+            "breadcrumb" => array(
+                "title" => "ePortfolios"
+            )
+        ),
         "forms" => array(
             "title" => "Forms",
             "breadcrumb" => array(
                 "title" => "Forms"
+            ),
+            "buttons" => array(
+                "add_form" => "Add Form",
+                "delete_form" => "Delete Form"
+            ),
+            "placeholders" => array(
+                "form_bank_search" => "Begin Typing to Search the Forms..."
+            ),
+            "add-form" => array(
+                "title" => "Create New Form",
+                "breadcrumb" => array(
+                    "title" => "Add Form"
+                ),
+            ),
+            "edit-form" => array(
+                "title" => "Editing Form:",
+                "breadcrumb" => array(
+                    "title" => "Edit Form"
+                ),
+                "form_not_found" => "Sorry, there was a problem loading the form using that ID.",
+                "no_form_elements" => "There are currently no items attached to this form."
+            ),
+            "add-permission" => array(
+                "title" => "Add Permission",
+                "breadcrumb" => array(
+                    "title" => "Add Permission"
+                ),
+                "labels" => array(
+                    "label_contact_type"    => "Contact Type",
+                    "label_contact_name"    => "Contact Name"
+                ),
+                "contact_types" => array(
+                    "proxy_id"          => "Individual",
+                    "organisation_id"   => "Organisation",
+                    "course_id"         => "Course"
+                )
+            ),
+            "form" => array(
+                "label_form_type"           => "Form Type",
+                "label_form_title"          => "Form Title",
+                "label_form_description"    => "Form Description",
+                "label_form_permissions"    => "Form Permissions",
+                "title_form_items"          => "Form Items",
+                "title_form_info"           => "Form Information",
+                "title_modal_delete_element" => "Delete Element",
+                "btn_add_single_item"       => "Add Individual Item(s)",
+                "btn_add_free_text"         => "Add Free Text",
+                "btn_add_item"              => "Add Item",
+                "btn_add_rubric"            => "Add Grouped Item",
+                "btn_add_data_src"          => "Add Data Source",
+                "btn_add_form_el"           => "Add Text",
+                "text_no_attached_items"    => "There are currently no items attached to this form.",
+                "text_modal_delete_element" => "Would you like to delete this form element?",
+                "text_modal_no_form_items_selected" => "No Forms Items Selected to delete.",
+                "text_modal_delete_form_items" => "Please confirm you would like to delete the selected <span></span> Form Item(s).",
+                "text_modal_delete_form_items_success" => "You have successfully deleted the selected <span></span> Form Item(s).",
+                "text_modal_delete_form_items_error" => "Unfortunately, an error was encountered while attempting to remove the selected <span></span> Form Item(s).",
+            ),
+            "add-element" => array(
+                "title" => "Add Form Element",
+                "breadcrumb" => array(
+                    "title" => "Add Element"
+                ),
+                "failed_to_create" => "Sorry, we were unable to add this element to the form.",
+                "already_attached" => "Sorry, the element you are attempting to add is already attached to the form.",
+                "no_available_items" => "There are no items available to attach to this form.",
+                "add_element_notice" => "Please check off the items you wish to add to your form and click the Add Elements button below."
+            ),
+            "index" => array(
+                "delete_success" => "Forms have been successfully deleted. You will now be taken back to the Forms index.",
+                "delete_error" => "There was a problem deleting the forms you selected. An administrator has been informed, please try again later.",
+                "title_heading" => "Form Title",
+                "created_heading" => "Date Created",
+                "items_heading" => "Items",
+                "no_forms_found" => "You currently have no forms to display. To Add a new form click the Add Form button above.",
+                "text_modal_no_forms_selected" => "No Forms Selected to delete.",
+                "text_modal_delete_forms" => "Please confirm you would like to delete the selected Form(s).",
+                "no_forms_found" => "You currently have no forms to display. To Add a new form click the Add Form button above.",
+                "title_modal_delete_forms" => "Delete Forms"
+            )
+        ),
+        "cbmeforms" => array(
+            "title" => "CBME Forms",
+            "breadcrumb" => array(
+                "title" => "CBME Forms"
             ),
             "buttons" => array(
                 "add_form" => "Add Form",
@@ -1619,6 +1791,7 @@ return array (
             "breadcrumb" => array(
                 "title" => "Distributions"
             ),
+            "weighted_csv_report" => "Weighted CSV Report"
         ),
         "schedule" => array(
             "title" => "Schedules",
@@ -1648,8 +1821,131 @@ return array (
                     "title" => "Add"
                 )
             )
+        ),
+        "reports" => array (
+            "positive_negative_tooltip" => "This will include an automatically calculated positive/negative weight. This is determined by dividing the number of responses in each scale and rounding down. The upper half are positive, and the lower half are negative. Descriptors such as 'N/A' are excluded."
         )
     ),
+
+    /**
+     * Profile>ePortfolio Module (and related Gradebook>Assessments>Portfolio)
+     */
+
+    "portfolio" => "portfolio",
+    "eportfolio" => "eportfolio",
+    "My Portfolio" => "My Portfolio",
+    "My ePortfolio" => "My ePortfolio",
+    "Manage ePortfolio" => "Manage ePortfolio",
+    "New Portfolio" => "New Portfolio",
+    "Edit Portfolio" => "Edit Portfolio",
+    "Copy Portfolio" => "Copy Portfolio",
+    "Delete Portfolio" => "Delete Portfolio",
+    "Entrada ePortfolio" => "Entrada ePortfolio",
+    "Export My Eportfolio" => "Export My Eportfolio",
+    "Export My Portfolio" => "Export My Portfolio",
+    "Used For Assessment" => "Used For Assessment",
+    "Not Used For Assessment" => "Not Used For Assessment",
+    "No folders in this portfolio" => "No folders in this portfolio",
+    "No artifacts in this folder" => "No artifacts in this folder",
+    "Successfully updated portfolio" => "Successfully updated portfolio",
+    "You are about to delete a portfolio" => "You are about to delete a portfolio",
+    "Please use the button below to confirm you wish to delete it" => "Please use the button below to confirm you wish to delete it",
+    "Allow learners to export their ePortfolio" => "Allow learners to export their ePortfolio",
+    "View Entry" => "View Entry",
+    "Add Folder" => "Add Folder",
+    //"Save" => "Save", // duplicate
+    //"Close" => "Close", // duplicate
+    "None assigned" => "None assigned",
+    "Review" => "Review",
+    "Manage" => "Manage",
+    "Advisors" => "Advisors",
+    "All" => "All",
+    "Flagged" => "Flagged",
+    "Save changes"=> "Save changes",
+    "Add Advisor" => "Add Advisor",
+    "Please select a student from the menu on the left to get started" => "Please select a student from the menu on the left to get started",
+    "Please select an eportfolio from the left to get started or use the New Portfolio item to create one" => "Please select an eportfolio from the left to get started, or use the New Portfolio item to create one",
+    "Please select an advisor from the list on the left, or please add an advisor with the button above" => "Please select an advisor from the list on the left, or please add an advisor with the button above",
+    "Manage Advisors" => "Manage Advisors",
+    "Add Advisors" => "Add Advisors",
+    "Advisor Name" => "Advisor Name",
+    "Add Students" => "Add Students",
+    "Student Name" => "Student Name",
+    "Your eportfolio artifacts do not have any entries" => "Your eportfolio artifacts do not have any entries",
+    "Please return to" => "Please return to",
+    "your eportfolio" => "your eportfolio",
+    "and add entries to the appropriate artifacts before exporting it" => "and add entries to the appropriate artifacts before exporting it",
+    "Please check all folders for required entries" => "Please check all folders for required entries",
+    "My Artifacts" => "My Artifacts",
+    "Artifacts that require entries" => "Artifacts that require entries",
+    "Artifacts with attached entries" => "Artifacts with attached entries",
+    "Artifacts created by you" => "Artifacts created by you",
+    "Create My Own Artifact" => "Create My Own Artifact",
+    "Some artifacts in this folder require an entry" => "Some artifacts in this folder require an entry",
+    "Cancel" => "Cancel",
+    "Save changes" => "Save changes",
+    "Sorry but your eportfolio not yet have any folders created" => "Sorry, but your eportfolio not yet have any folders created",
+    "Sorry but your class does not yet have an eportfolio created" => "Sorry, but your class does not yet have an eportfolio created",
+    "If you are receiving this message in error please use the feedback widget to contact a system administrator" => "If you are receiving this message in error please use the feedback widget to contact a system administrator",
+    "Choose a portfolio folder" => "Choose a portfolio folder",
+    "No folders have been defined for this portfolio" => "No folders have been defined for this portfolio",
+    "Portfolio does not exist" => "Portfolio does not exist",
+    "This folder has no artifacts" => "This folder has no artifacts",
+    "Error retrieving entries" => "Error retrieving entries",
+    "This artifact has no entries" => "This artifact has no entries",
+    "Create Artifact in" => "Create Artifact in",
+    "Submitted" => "Submitted",
+    "An error occurred while attempting save this entry" => "An error occurred while attempting save this entry",
+    "Please try again" => "Please try again",
+    "Save Entry" => "Save Entry",
+    "Add Entry" => "Add Entry",
+    "Delete Entry" => "Delete Entry",
+    "Remove" => "Remove",
+    "Warning" => "Warning",
+    "You have chosen to remove an artifact you have created" => "You have chosen to remove an artifact you have created",
+    "Please use the button below to remove the artifact" => "Please use the button below to remove the artifact",
+    "An error occurred while attempting to fetch this folder" => "An error occurred while attempting to fetch this folder",
+    "Please try again" => "Please try again",
+    "Read Reflection" => "Read Reflection",
+    "Download File" => "Download File",
+    "Visit URL" => "Visit URL",
+    "Due" => "Due",
+    "Please confirm that you wish to remove the entry titled" => "Please confirm that you wish to remove the entry titled",
+    "NA" => "N/A",
+    "Confirm Entry Removal" => "Confirm Entry Removal",
+    "Type" => "Type",
+    "Title" => "Title",
+    "Reflection Body" => "Reflection Body",
+    "Attach File" => "Attach File",
+    "Description" => "Description",
+    "URL" => "URL",
+    "There are no artifacts that require entries" => "There are no artifacts that require entries",
+    "There are no artifacts with attached entries" => "There are no artifacts with attached entries",
+    "You have not created any artifacts for this folder" => "You have not created any artifacts for this folder",
+    "An error occurred while attempting to fetch the artifact" => "An error occurred while attempting to fetch the artifact",
+    "An error occurred while attempting to fetch the entry" => "An error occurred while attempting to fetch the entry",
+    "An error occurred while attempting to fetch the entries associated with this artifact" => "An error occurred while attempting to fetch the entries associated with this artifact",
+    "An error occurred while attempting to fetch the artifacts associated with this folder" => "An error occurred while attempting to fetch the artifacts associated with this folder",
+    "To add an entry to an artifact select an artifact from the My Artifacts list" => "To add an entry to an artifact, select an artifact from the My Artifacts list",
+    "No Reflection provided" => "No Reflection provided",
+    "No URL provided" => "No URL provided",
+    "No File provided" => "No File provided",
+    "new window" => "new window",
+    "Portfolio Reflection" => "Portfolio Reflection",
+    "Return to ePortfolio" => "Return to ePortfolio",
+    "Reflection not found" => "Reflection not found",
+    "Required artifacts I have completed" => "Required artifacts <i>I have completed</i>",
+    "Completed artifacts approved by my advisor" => "Completed artifacts <i>approved by my advisor</i>",
+    "Completed artifacts reviewed by my advisor" => "Completed artifacts reviewed by my advisor",
+    "complete" => "complete",
+    "required" => "required",
+    "approved" => "approved",
+    "reviewed" => "reviewed",
+    "out of" => "/",
+    "Some folders have required entries" => "Some folders have required entries",
+    "please review the following folders" => "please review the following folders",
+    "Reviewed by my advisor" => "Reviewed by my advisor",
+    "Flagged by my advisor" => "Flagged by my advisor",
 
 	/**
 	 *  profile Module
@@ -1694,6 +1990,12 @@ return array (
         ),
         "drafts" => array(
             "title" => "My Drafts"
+        ),
+        "map-objectives" => array(
+            "title" => "Map Objectives",
+            "breadcumb" => array(
+                "title" => "Map Objectives"
+            )
         )
     ),
     "default" => array(
@@ -1709,6 +2011,7 @@ return array (
         "btn_delete"    => "Delete",
         "btn_remove"    => "Remove",
         "btn_done"      => "Done",
+        "btn_apply"     => "Apply",
         "btn_close"     => "Close",
         "btn_preview"           => "Preview",
         "btn_add_elements"      => "Add Elements",
@@ -1800,9 +2103,7 @@ return array (
                 "entity_missing_2" => "Please contact the system administrator.",
             )
         )
-	),
-
-
+    ),
 
     "settings" => array(
         /**
@@ -1983,6 +2284,94 @@ return array (
         )
     ),
 
+    /*
+     * Message texts
+     */
+    "module_no_permission" => "Your account does not have the permissions required to use this module",
+    "module_no_feature_permission" => "Your account does not have the permissions required to use this feature of this module",
+    "module_assistance" => "<br /><br />If you believe you are receiving this message in error please contact <a href=\"mailto:%admin_email%\">%admin_name%</a> for assistance.",
+
+    /*
+     * User Metadata Module
+     */
+    "metadata_add" => "Add Meta Data",
+    "metadata_bc_manage" => "Manage User Data",
+    "metadata_bc_load" => "Import / Export User Data",
+    "metadata_button_close" => "Close",
+    "metadata_button_csv" => "Export CSV",
+    "metadata_button_delete" => "Delete Selected",
+    "metadata_button_import" => "Import CSV",
+    "metadata_button_export" => "Export / Load",
+    "metadata_category" => "Category",
+    "metadata_confirm" => "Confirm Delete",
+    "metadata_delete" => "Delete Meta Data",
+    "metadata_delete_empty" => "Delete existing user record(s) if fields are empty in this upload file.",
+    "metadata_edit" => "Edit Meta Data",
+    "metadata_error_criteria" => "Invalid meta data import criteria.<br />",
+    "metadata_error_delete_type" => "Error deleting Meta Data Type [%id%] from system.<br />",
+    "metadata_error_delete_value" => "Failed to remove meta data from database.",
+    "metadata_error_edit" => "There was a problem inserting this meta data type into the system. The system administrator was informed of this error; please try again later.",
+    "metadata_error_file1-3" => "The file that uploaded did not complete the upload process or was interupted. Please <a href=\"%url%\">click here</a> and try your CSV again.",
+    "metadata_error_file4" => "You did not select a file on your computer to upload. Please <a href=\"%url%\">click here</a> and try your CSV again.",
+    "metadata_error_file6-7" => "Unable to store the new file on the server. Please <a href=\"%url%\">click here</a> and try your CSV again.",
+    "metadata_error_file_missing" => "An error ocurred while attempting to upload the CSV file. An administrator has been informed, please try again later.",
+    "metadata_error_file_none" => "ATo upload a file to this event you must select a file to upload from your computer.",
+    "metadata_error_groups" => "One of the <strong>groups</strong> you specified is invalid.",
+    "metadata_error_import" => "The following errors occured while attempting to load user values. Please review the errors below and correct them in your file. Once correct, please try again.<br /><br />",
+    "metadata_error_import_return" => "Please <a href=\"%url%\">click here</a> to return.",
+    "metadata_error_missing_name" => "The <strong>Meta Date Name</strong> is a required field.",
+    "metadata_error_nocategories" => "There are currently no Meta Data Categories applicable to this user.<br />",
+    "metadata_error_notypes" => "No Meta Data Types were selected to be deleted.<br />",
+    "metadata_error_nogroups" => "You must select at least one group to associate with the Meta Data and subtypes.",
+    "metadata_error_novalues" => "No information available.",
+    "metadata_error_provide_id" => "You must provide a Meta Data ID in order to edit it.",
+    "metadata_error_update" => "Failed to update meta data.",
+    "metadata_error_user" => "No valid user found",
+    "metadata_error_user_empty" => "Empty user record",
+    "metadata_error_user_search" => "No valid user search fields.",
+    "metadata_error_user_type" => "Invalid sub-type",
+    "metadata_field_id" => "ID",
+    "metadata_field_effective" => "Effective Date",
+    "metadata_field_expiry" => "Expiry Date",
+    "metadata_field_first" => "First Name",
+    "metadata_field_group" => "Group",
+    "metadata_field_last" => "Last Name",
+    "metadata_field_notes" => "Notes",
+    "metadata_field_number" => "Number",
+    "metadata_field_remove" => "Remove",
+    "metadata_field_role" => "Role / Year",
+    "metadata_field_type" => "Type",
+    "metadata_field_user" => "User Name",
+    "metadata_field_value" => "Value",
+    "metadata_group" => "Group",
+    "metadata_heading_excel" => "\"proxy\",\"role\",\"first\",\"last\",\"number\",\"type\",\"value\",\"notes\",\"effective date\",\"expiry date\"\n",
+    "metadata_heading" => "User Meta Data",
+    "metadata_heading_import" => "Meta Data Information Import",
+    "metadata_heading_manage" => "Manage User Data",
+    "metadata_heading_mapped" => "Mapped Field",
+    "metadata_heading_unmapped" => "Unmapped Fields",
+    "metadata_load" => "Load Data",
+    "metadata_notice_added" => "You have successfully added this <strong>%type%</strong> to the system.<br />",
+    "metadata_notice_delete" => "There were <strong>%count%</strong> records <strong>removed</strong> from <strong> %csv% </strong>.<br />",
+    "metadata_notice_empty" => "There were <strong>%count%</strong> empty records in <strong> %csv% </strong>.<br />",
+    "metadata_notice_imported" => "Successfully imported <strong>%count%</strong> records from <strong> %csv% </strong>.<br />",
+    "metadata_notice_csv" => "Please use this interface to map the meta data columns to the appropriate CSV columns. We will try to automatically map the headings to the correct columns via the titles in the first row, but if there are no titles this will need to be done manually.<br />",
+    "metadata_notice_deleted" => "Successfully removed Meta Data Type [%id%] from your organisation.<br />",
+    "metadata_notice_edited" => "You have successfully edited this <strong>%type%</strong> to the system.<br />",
+    "metadata_notice_export" => "<strong>Confirmation:</strong> Are you sure you want create Excel file?",
+    "metadata_notice_import" => "Upon uploading a CSV you will be prompted to confirm the association between column headings and their data points.",
+    "metadata_notice_none" => "There are currently no User Meta Data types assigned to this organization.",
+    "metadata_notice_categories" => "There are currently no Meta Data Categories applicable to this user.",
+    "metadata_notice_review" => "Please review the following meta data types to ensure that you wish to <strong>permanently delete</strong> them.",
+    "metadata_organization" => "Organization",
+    "metadata_redirect" => "<br />You will now be redirected to the Meta Data index; this will happen <strong>automatically</strong> in %time% seconds or <a href=\"%url%\" style = \"font-weight: bold\" > click here </a > to continue.",
+    "metadata_replace_entry" => "Replace existing user data record.",
+    "metadata_role" => "Role",
+    "metadata_select_group" => "-- Select a Group --",
+    "metadata_select_group_notice" => "Use the list above to add groups associated with this meta data. You must select at minimum one group to save.",
+    "metadata_select_group_parent" => "-- Same as Parent --",
+    "metadata_show" => "Show Table",
+    "metadata_topic" => "Topic",
 
     /**
      * Community Text
@@ -2032,6 +2421,29 @@ return array (
     "AAMC Program Name" => "AAMC Program Name",
 
     "Organisation Details" => "Organisation Details",
-    "Delete Organisations" => "Delete Organisations"
+    "Delete Organisations" => "Delete Organisations",
 
+    /**
+     * Admin - Settings - Flags
+     */
+    "flags_color_palette" => array("#0055B7", "#00A7E1", "#40B4E5", "#6EC4E8", "#97D4E9"),
+
+    //Export Curriculum Tags
+    "lbl_objective_id" => "Objective ID",
+    "lbl_translated_name" => "French Description",
+    "lbl_objective_description" => "English Description",
+    "lbl_DOMAIN" => "Domain",
+    "lbl_FACCOMP" => "Program Competencies",
+    "lbl_MCC" => "MCC",
+    "lbl_EPA" => "EPA",
+    "lbl_objective_status_description" => "Status",
+    "lbl_objective_translation_status_description" => "Translation Status",
+
+    // Login related error messages
+    "The application credentials are incorrect for this system." => "The application credentials are incorrect for this system.",
+    "The username or password you have provided is incorrect." => "The username or password you have provided is incorrect.",
+    "An internal server error has occurred." => "An internal server error has occurred.",
+    "An internal authentication error has occurred." => "An internal authentication error has occurred.",
+    "Your account is not currently set up for access to this application. Please contact a system administrator if you require further assistance." => "Your account is not currently set up for access to this application. Please contact a system administrator if you require further assistance.",
+    "To log in using guest credentials you must be a member of at least one community." => "To log in using guest credentials you must be a member of at least one community."
 );

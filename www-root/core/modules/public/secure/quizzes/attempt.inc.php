@@ -238,7 +238,7 @@ if ($RECORD_ID) {
                                                             exit;
                                                         } else {
                                                             $url = ENTRADA_URL."/secure/secure-logout";
-                                                            add_success("Thank you for completing the <strong>".html_encode($quiz_record["quiz_title"])."</strong> quiz. Your responses have been successfully recorded, and your grade and any feedback will be released <strong>".date(DEFAULT_DATE_FORMAT, $quiz_record["release_until"])."</strong>.<br /><br /><p>You may now logout of secure mode.</p><p><a href=\"".$url."\" class=\"btn btn-default\"><strong>Logout</strong></a></p>");
+                                                            add_success("Thank you for completing the <strong>".html_encode($quiz_record["quiz_title"])."</strong> quiz. Your responses have been successfully recorded, and your grade and any feedback will be released <strong>".date(DEFAULT_DATETIME_FORMAT, $quiz_record["release_until"])."</strong>.<br /><br /><p>You may now logout of secure mode.</p><p><a href=\"".$url."\" class=\"btn btn-default\"><strong>Logout</strong></a></p>");
 
                                                         }
                                                     } else {
@@ -269,7 +269,7 @@ if ($RECORD_ID) {
 
                                             $completed_attempts += 1;
 
-                                            add_error("We were unable to save your previous quiz attempt because your time limit expired <strong>".date(DEFAULT_DATE_FORMAT, $quiz_end_time)."</strong>, and you submitted your quiz <strong>".date(DEFAULT_DATE_FORMAT)."</strong>.");
+                                            add_error("We were unable to save your previous quiz attempt because your time limit expired <strong>".date(DEFAULT_DATETIME_FORMAT, $quiz_end_time)."</strong>, and you submitted your quiz <strong>".date(DEFAULT_DATETIME_FORMAT)."</strong>.");
 
                                             application_log("notice", "Unable to save qprogress_id [".$qprogress_id."] because it expired.");
                                         }
@@ -355,7 +355,7 @@ if ($RECORD_ID) {
                                             if ($quiz_end_time) {
                                                 ?>
                                                 <div id="display-quiz-timeout" class="display-generic">
-                                                    You have until <strong><?php echo date(DEFAULT_DATE_FORMAT, $quiz_end_time); ?></strong> to complete this quiz.
+                                                    You have until <strong><?php echo date(DEFAULT_DATETIME_FORMAT, $quiz_end_time); ?></strong> to complete this quiz.
 
                                                     <div id="quiz-timer" style="margin-top: 15px; display: none"></div>
                                                 </div>
@@ -657,7 +657,7 @@ if ($RECORD_ID) {
                                                 var total_pages = jQuery(".pagination-top").length >= 1 ? jQuery(".pagination-top ul li").length - 2 : 1;
                                                 var active_page = 1;
                                                 jQuery(function(){
-                                                    jQuery(".pagination ul li a").live("click", function() {
+                                                    jQuery(document).on("click", ".pagination ul li a", function() {
                                                         if (jQuery(this).hasClass("prev") || jQuery(this).hasClass("next")) {
                                                             old_page = active_page;
                                                             if (jQuery(this).hasClass("prev") && active_page > 1) {
@@ -757,14 +757,14 @@ if ($RECORD_ID) {
                             application_log("notice", "Someone attempted to complete aquiz_id [".$RECORD_ID."] (quiz_id [".$quiz_record["quiz_id"]."] / event_id [".$quiz_record["content_id"]."]) more than the total number of possible attempts [".$quiz_record["quiz_attempts"]."].");
                         }
                     } else {
-                        add_notice("You were only able to attempt this quiz until <strong>".date(DEFAULT_DATE_FORMAT, $quiz_record["release_until"])."</strong>.<br /><br />Please contact a teacher if you require further assistance.");
+                        add_notice("You were only able to attempt this quiz until <strong>".date(DEFAULT_DATETIME_FORMAT, $quiz_record["release_until"])."</strong>.<br /><br />Please contact a teacher if you require further assistance.");
 
                         echo display_notice();
 
                         application_log("error", "Someone attempted to complete aquiz_id [".$RECORD_ID."] (quiz_id [".$quiz_record["quiz_id"]."] / event_id [".$quiz_record["content_id"]."] after the release date.");
                     }
                 } else {
-                    add_notice("You cannot attempt this quiz until <strong>".date(DEFAULT_DATE_FORMAT, $quiz_record["release_date"])."</strong>.<br /><br />Please contact a teacher if you require further assistance.");
+                    add_notice("You cannot attempt this quiz until <strong>".date(DEFAULT_DATETIME_FORMAT, $quiz_record["release_date"])."</strong>.<br /><br />Please contact a teacher if you require further assistance.");
 
                     echo display_notice();
 

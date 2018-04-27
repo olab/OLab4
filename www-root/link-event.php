@@ -66,7 +66,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 				$accesses = $result["accesses"];
 				if(!$is_administrator && ($result["release_date"]) && ($result["release_date"] > time())) {
 					$TITLE	= "Not Available";
-					$BODY	= display_notice(array("The link that you are trying to access is not available until <strong>".date(DEFAULT_DATE_FORMAT, $result["release_date"])."</strong>.<br /><br />For further information or to contact a teacher, please see the <a href=\"".ENTRADA_URL."/events?id=".$result["event_id"]."\" style=\"font-weight: bold\">event page</a>."));
+					$BODY	= display_notice(array("The link that you are trying to access is not available until <strong>".date(DEFAULT_DATETIME_FORMAT, $result["release_date"])."</strong>.<br /><br />For further information or to contact a teacher, please see the <a href=\"".ENTRADA_URL."/events?id=".$result["event_id"]."\" style=\"font-weight: bold\">event page</a>."));
 
 					$template_html = fetch_template("global/external");
 					if ($template_html) {
@@ -76,7 +76,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 				} else {
 					if(!$is_administrator && ($result["release_until"]) && ($result["release_until"] < time())) {
 						$TITLE	= "Not Available";
-						$BODY	= display_notice(array("The link that you are trying to access was only available until <strong>".date(DEFAULT_DATE_FORMAT, $result["release_until"])."</strong>.<br /><br />For further information or to contact a teacher, please see the <a href=\"".ENTRADA_URL."/events?id=".$result["event_id"]."\" style=\"font-weight: bold\">event page</a>."));
+						$BODY	= display_notice(array("The link that you are trying to access was only available until <strong>".date(DEFAULT_DATETIME_FORMAT, $result["release_until"])."</strong>.<br /><br />For further information or to contact a teacher, please see the <a href=\"".ENTRADA_URL."/events?id=".$result["event_id"]."\" style=\"font-weight: bold\">event page</a>."));
 
 						$template_html = fetch_template("global/external");
 						if ($template_html) {

@@ -84,7 +84,7 @@ if (!defined("IN_MANAGE")) {
 
 	if ($APARTMENT_EXPIRED) {
 		if ($APARTMENT_INFO["available_finish"] <= time()) {
-			echo display_notice("This apartment expired on <strong>".date(DEFAULT_DATE_FORMAT, $APARTMENT_INFO["available_finish"])."</strong> and is no longer available for future occupants. It remains in the system in an <strong>expired state</strong> so that historical records can be retained.");
+			echo display_notice("This apartment expired on <strong>".date(DEFAULT_DATETIME_FORMAT, $APARTMENT_INFO["available_finish"])."</strong> and is no longer available for future occupants. It remains in the system in an <strong>expired state</strong> so that historical records can be retained.");
 		}
 	}
 

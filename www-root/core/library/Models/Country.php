@@ -69,7 +69,23 @@ class Models_Country extends Models_Base {
     public static function fetchRowByCountry($country) {
         $self = new self();
         return $self->fetchRow(array(
-            array("key" => "country", "value" => $country, "method" => "=")
+            array("key" => "country", "method" => "=", "value" => $country)
+        ));
+    }
+
+    /* @return bool|Models_Country */
+    public static function fetchRowByAbbreviation($abbreviation) {
+        $self = new self();
+        return $self->fetchRow(array(
+            array("key" => "abbreviation", "method" => "=", "value" => $abbreviation)
+        ));
+    }
+
+    /* @return bool|Models_Country */
+    public static function fetchRowByIso2($iso2) {
+        $self = new self();
+        return $self->fetchRow(array(
+            array("key" => "iso2", "method" => "=", "value" => $iso2)
         ));
     }
 

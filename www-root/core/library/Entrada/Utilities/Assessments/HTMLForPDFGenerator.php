@@ -23,8 +23,13 @@
  * @copyright Copyright 2016 Queen's University. All Rights Reserved.
  */
 
-class Entrada_Utilities_Assessments_HTMLForPDFGenerator extends Entrada_Utilities_Assessments_Base {
+class Entrada_Utilities_Assessments_HTMLForPDFGenerator extends Entrada_Assessments_Base {
     private $pdf = null;
+    private $configured = false;
+
+    public function getHtmlTypeConst() {
+        return \mikehaertl\wkhtmlto\Pdf::TYPE_HTML;
+    }
 
     /**
      * Debug dump the object.
@@ -38,9 +43,17 @@ class Entrada_Utilities_Assessments_HTMLForPDFGenerator extends Entrada_Utilitie
      *
      * @return bool
      */
-    function configure() {
-        if ($this->commandExists("wkhtmltopdf")) {
+    public function configure() {
+        global $APPLICATION_PATH;
+
+        if ($this->configured) {
+            return true;
+        }
+        if (isset($APPLICATION_PATH["wkhtmltopdf"]) && $this->commandExists($APPLICATION_PATH["wkhtmltopdf"])) {
             $this->pdf = new \mikehaertl\wkhtmlto\Pdf();
+            $this->pdf->binary = $APPLICATION_PATH["wkhtmltopdf"];
+            $this->pdf->ignoreWarnings = true;
+            $this->configured = true;
             return true;
         }
         return false;
@@ -49,7 +62,7 @@ class Entrada_Utilities_Assessments_HTMLForPDFGenerator extends Entrada_Utilitie
     /**
      * Reset the PDF generator object.
      */
-    function reset() {
+    public function reset() {
         $this->pdf = new \mikehaertl\wkhtmlto\Pdf();
     }
 
@@ -63,10 +76,10 @@ class Entrada_Utilities_Assessments_HTMLForPDFGenerator extends Entrada_Utilitie
      * @param bool $add_as_page
      * @return bool
      */
-    function send($filename, $html, $add_as_page = true) {
+    public function send($filename, $html = null, $add_as_page = true) {
         $status = false;
-        if ($this->pdf) {
-            if ($add_as_page) {
+        if ($this->configured && $this->pdf) {
+            if ($add_as_page && $html) {
                 $this->pdf->addPage($html);
             }
             $status = $this->pdf->send($filename);
@@ -77,9 +90,16 @@ class Entrada_Utilities_Assessments_HTMLForPDFGenerator extends Entrada_Utilitie
         return $status;
     }
 
-    function addHTMLPage($html) {
+    /**
+     * Add HTML via the PDF library's add page method.
+     *
+     * @param $html
+     * @param array $options
+     * @param null $type
+     */
+    public function addHTMLPage($html, $options = array(), $type = null) {
         if ($this->pdf && $html) {
-            $this->pdf->addPage($html);
+            $this->pdf->addPage($html, $options, $type);
         }
     }
 
@@ -89,8 +109,8 @@ class Entrada_Utilities_Assessments_HTMLForPDFGenerator extends Entrada_Utilitie
      * @param string $html
      * @return mixed
      */
-    function toString($html=null) {
-        if ($this->pdf) {
+    public function toString($html=null) {
+        if ($this->configured && $this->pdf) {
             if ($html) {
                 $this->pdf->addPage($html);
             }
@@ -110,7 +130,7 @@ class Entrada_Utilities_Assessments_HTMLForPDFGenerator extends Entrada_Utilitie
      * @param $description
      * @return string
      */
-    function generateAssessmentHTML($assessment_html, $organisation_id, $form_title = null, $header = null, $user_id = false, $description = null) {
+    public function generateAssessmentHTML($assessment_html, $organisation_id, $form_title = null, $header = null, $user_id = false, $description = null) {
         ob_clear_open_buffers();
         ob_start();
         ?>
@@ -122,24 +142,22 @@ class Entrada_Utilities_Assessments_HTMLForPDFGenerator extends Entrada_Utilitie
             <link rel="stylesheet" type="text/css" href="<?php echo ENTRADA_URL; ?>/css/assessments/items.css?release=<?php echo html_encode(APPLICATION_VERSION); ?>"/>
             <link rel="stylesheet" type="text/css" href="<?php echo ENTRADA_URL; ?>/css/assessments/assessments.css?release=<?php echo html_encode(APPLICATION_VERSION); ?>"/>
             <link rel="stylesheet" type="text/css" href="<?php echo ENTRADA_URL; ?>/css/assessments/assessment-form.css?release=<?php echo html_encode(APPLICATION_VERSION); ?>"/>
+            <link rel="stylesheet" type="text/css" href="<?php echo ENTRADA_URL; ?>/css/assessments/assessment-pdf.css?release=<?php echo html_encode(APPLICATION_VERSION); ?>"/>
             <link rel="stylesheet" type="text/css" href="<?php echo ENTRADA_URL; ?>/templates/default/css/bootstrap.css?release=<?php echo html_encode(APPLICATION_VERSION); ?>"/>
             <link rel="stylesheet" type="text/css" href="<?php echo ENTRADA_URL; ?>/css/common.css?release=<?php echo html_encode(APPLICATION_VERSION); ?>"/>
-            <link rel="stylesheet" type="text/css" href="<?php echo ENTRADA_URL; ?>/css/assessments/assessment-pdf.css?release=<?php echo html_encode(APPLICATION_VERSION); ?>"/>
         </head>
         <body>
             <div class="blank-space"></div>
             <?php
-
             $cache = new Entrada_Utilities_Cache();
             $logo_image_data = $cache->loadCache("organisation_logo_$organisation_id");
             $user_image_data = array();
-
             if ($user_id) {
                 $user_image_data = $cache->loadCache($user_id);
             }
-            $template_view = new Views_Assessments_Sections_Header();
+            $template_view = new Views_HTMLTemplate();
             $organisation = Models_Organisation::fetchRowByID($organisation_id);
-            $full_path = "/templates/" . $organisation->getTemplate() . "/views/assessments/header.tpl.php";
+            $full_path = "/templates/{$organisation->getTemplate()}/views/assessments/header.tpl.php";
             $template_view->setTemplatePath($full_path);
             $template_view->render(
                 array(
@@ -149,23 +167,19 @@ class Entrada_Utilities_Assessments_HTMLForPDFGenerator extends Entrada_Utilitie
                     "user_image_data" => $user_image_data
                 )
             );
-
-            if (!is_null($description)) {
-                echo "
-                    <div class=\"assessment-report-node\">
-                        <table class=\"table table-striped table-bordered\">
-                            <tbody>
-                                <tr>
-                                    <td class=\"form-search-message text-center\" colspan=\"4\">
-                                        <p class=\"no-search-targets space-above space-below medium\">" . $description . "</p>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                ";
-            }
-
+            if (!is_null($description)): ?>
+                <div class="assessment-report-node">
+                    <table class="table table-striped table-bordered">
+                        <tbody>
+                            <tr>
+                                <td class="form-search-message text-center" colspan="4">
+                                    <p class="no-search-targets space-above space-below medium"><?php echo $description; ?></p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            <?php endif; 
             echo $assessment_html;
             ?>
         </body>
@@ -182,7 +196,7 @@ class Entrada_Utilities_Assessments_HTMLForPDFGenerator extends Entrada_Utilitie
      * @param $header
      * @return string
      */
-    function generateEnrollmentHTML($enrollment, $form_title, $header) {
+    public function generateEnrollmentHTML($enrollment, $form_title, $header) {
         ob_clear_open_buffers();
         ob_start();
         ?>
@@ -215,7 +229,7 @@ class Entrada_Utilities_Assessments_HTMLForPDFGenerator extends Entrada_Utilitie
 	 * @param $report_html
 	 * @return string
 	 */
-	function generateAssessmentReportHTML($report_html) {
+    public function generateAssessmentReportHTML($report_html) {
 		ob_clear_open_buffers();
 		ob_start();
 		?>
@@ -241,7 +255,7 @@ class Entrada_Utilities_Assessments_HTMLForPDFGenerator extends Entrada_Utilitie
 			</style>
 		</head>
 		<body>
-            <?php echo $report_html; ?>
+		<?php echo $report_html; ?>
 		</body>
 		</html>
 		<?php
@@ -255,7 +269,7 @@ class Entrada_Utilities_Assessments_HTMLForPDFGenerator extends Entrada_Utilitie
 	 * @param $form
 	 * @return string
 	 */
-	function generateAssessmentFormHTML($form_html, $form) {
+    public function generateAssessmentFormHTML($form_html, $form) {
 		global $translate;
 
 		ob_clear_open_buffers();

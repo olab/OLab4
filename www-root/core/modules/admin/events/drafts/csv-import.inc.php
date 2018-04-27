@@ -38,7 +38,8 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
 
     $csv_headings = array(
         "original_event"            => array("title" => "Original Event"),
-        "parent_event"              => array("title" => "Parent Event",          "required" => true),
+        "parent_event"              => array("title" => "Parent Event"),
+        "parent_id"                 => array("title" => "Parent ID"),
         "course_code"               => array("title" => "Course Code",           "required" => true),
         "course_name"               => array("title" => "Course Name"),
         "term"                      => array("title" => "Term"),
@@ -54,11 +55,13 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
         "audience_groups"           => array("title" => "Audience (Groups)"),
         "audience_cohorts"           => array("title" => "Audience (Cohorts)"),
         "audience_students"         => array("title" => "Audience (Students)"),
+        "attendance_required"       => array("title" => "Attendance Required"),
         "teacher_names"             => array("title" => "Teacher Names"),
         "teacher_numbers"           => array("title" => "Teacher Numbers"),
         "objectives_release_date"   => array("title" => "Objective Release Date"),
         "event_tutors"              => array("title" => "Event Tutors"),
-        "recurring_event"           => array("title" => "Recurring Event")
+        "recurring_event"           => array("title" => "Recurring Event"),
+        "free_text_objectives"      => array("title" => "Free Text Objectives")
     );
     
 	$draft_id = (isset($_GET["draft_id"]) ? (int) $_GET["draft_id"] : 0);
@@ -203,19 +206,23 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                                             unset($unmapped_fields[$key]);
                                         }
 
-                                        $output[] = "<tr class=\"".($mapped === true && $csv_headings[$key]["required"] === true ? "success" : "")."\">\n";
-                                        $output[] = "<td style=\"text-align:center!important;\">".($mapped === true ? "<a href=\"#\" class=\"remove\"><i class=\"icon-remove-sign\"></i></a>" : "")."</td>\n";
-                                        $output[] = "<td class=\"".($mapped === false ? "droppable-title-container" : "")."\">".$title."<input type=\"hidden\" name=\"mapped_headings[".$j."]\" value=\"".$key."\" /></td>\n";
-                                        $output[] = "<td><strong>".$d."</strong></td>\n";
-                                        $output[] = "</tr>\n";
+                                        if (trim($key) !== "") {
+                                            $output[] = "<tr class=\"" . ($mapped === true && $csv_headings[$key]["required"] === true ? "success" : "") . "\">\n";
+                                            $output[] = "<td style=\"text-align:center!important;\">" . ($mapped === true ? "<a href=\"#\" class=\"remove\"><i class=\"icon-remove-sign\"></i></a>" : "") . "</td>\n";
+                                            $output[] = "<td class=\"" . ($mapped === false ? "droppable-title-container" : "") . "\">" . $title . "<input type=\"hidden\" name=\"mapped_headings[" . $j . "]\" value=\"" . $key . "\" /></td>\n";
+                                            $output[] = "<td><strong>" . $d . "</strong></td>\n";
+                                            $output[] = "</tr>\n";
+                                        }
 
                                         $j++;
                                     }  
                                 }
                                 $output_data = array();
                                 foreach ($data as $key => $field) {
-                                    $clean_field = str_replace("'", "&#39;", $field);
-                                    $output_data[$key] = $clean_field;
+                                    if (($i > 0) || ($i === 0 && trim($field) !== "")) {
+                                        $clean_field = str_replace("'", "&#39;", $field);
+                                        $output_data[$key] = $clean_field;
+                                    }
                                 }
                                 $json_rows[] = $output_data;
                                 $i++;

@@ -66,7 +66,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ASSESSMENT"))) {
             );
             $HEAD[] = "<script type=\"text/javascript\">var ENTRADA_URL = '" . ENTRADA_URL . "'</script>";
             $HEAD[] = "<script type=\"text/javascript\" src=\"" . ENTRADA_URL . "/javascript/assessments/delegation.js?release=" . html_encode(APPLICATION_VERSION) . "\"></script>";
-            $HEAD[] = "<link href=\"" . ENTRADA_URL . "/css/assessments/delegation.css\" rel=\"stylesheet\" type=\"text/css\" media=\"all\" />";
+            $HEAD[] = "<link href=\"" . ENTRADA_URL . "/css/assessments/delegation.css?release=" . html_encode(APPLICATION_VERSION)."\" rel=\"stylesheet\" type=\"text/css\" media=\"all\" />";
 
             $distribution_delegation = new Entrada_Utilities_Assessments_DistributionDelegation(array("adistribution_id" => $distribution->getID(), "addelegation_id" => $delegation->getID()));
 

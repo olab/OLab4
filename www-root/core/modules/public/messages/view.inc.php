@@ -40,16 +40,17 @@ if (!$ENTRADA_ACL->amIAllowed("dashboard", "read")) {
 		$notice = Models_Notice::fetchNotice($PROCESSED["notice_id"]);
 	}
 	
-	$BREADCRUMB[] = array("url" => ENTRADA_RELATIVE."/dashboard/notices?section=view", "title" => ($notice ? date(DEFAULT_DATE_FORMAT, $notice["updated_date"]) : ""));
+	$BREADCRUMB[] = array("url" => ENTRADA_RELATIVE."/dashboard/notices?section=view", "title" => ($notice ? date(DEFAULT_DATETIME_FORMAT, $notice["updated_date"]) : ""));
 	
 	?>
 	<?php 
 	if ($notice) {
 		echo "<div id=\"notice_box_".(int) $notice["notice_id"]."\" class=\"space-below\">";
-		echo	"<strong>".date(DEFAULT_DATE_FORMAT, $notice["updated_date"])."</strong>";
+		echo	"<strong>".date(DEFAULT_DATETIME_FORMAT, $notice["updated_date"])."</strong>";
 		echo	"<div class=\"space-left\">".trim(clean_input($notice["notice_summary"], "html"))."</div>";
 		echo "</div>";
 		add_statistic("notices", "read", "notice_id", $notice["notice_id"]);
+        Models_Notices_Read::create($notice["notice_id"]);
 	} else { ?>
 		<div class="alert alert-info">
 			<strong>No message found.</strong>

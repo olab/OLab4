@@ -7,9 +7,9 @@ jQuery(function($) {
 	}
 	
 	getFolder(pfolder_id);
-	
-	$("#create-artifact").on("click", function () {
-		$(".modal-header h3").html("Create Artifact in " + $("#current-folder").html());
+
+	$("body").on("click", "#create-artifact", function () {
+		$(".modal-header h3").html(eportfolio_index_localization.create_artifact_in + " " + $("#current-folder").html());
 		$("#save-button").html("Save Artifact").attr("data-type", "artifact");
 		artifactForm();
 	});
@@ -69,7 +69,7 @@ jQuery(function($) {
 						}
 
 						jQuery(entry_li_a).attr({"href": "#", "data-toggle": "modal", "data-target": "#portfolio-modal", "data-artifact": pfartifact_id, "data-entry": jsonResponse.data.pentry_id, "data-type": jsonResponse.data.type}).html(content).addClass("edit-entry");
-						jQuery(entry_div).html("Submitted: " + date.getFullYear() + "-" + (date.getMonth() <= 9 ? "0" : "") + (date.getMonth() + 1) + "-" +  (date.getDate() <= 9 ? "0" : "") + date.getDate() + ", Entry Type: " + jsonResponse.data.type).addClass("muted");
+						jQuery(entry_div).html(eportfolio_index_localization.submitted + ": " + date.getFullYear() + "-" + (date.getMonth() <= 9 ? "0" : "") + (date.getMonth() + 1) + "-" +  (date.getDate() <= 9 ? "0" : "") + date.getDate() + ", Entry Type: " + jsonResponse.data.type).addClass("muted");
 						jQuery(entry_delete_a).attr({"href": "#", "data-toggle": "modal", "data-target": "#portfolio-modal", "data-id": jsonResponse.data.pentry_id}).addClass("delete-entry").html("<i class=\"icon-trash\"></i>");
 						jQuery(entry_li).append(entry_li_a).append(entry_delete_a).append(entry_div);
 						jQuery("#artifact-" + pfartifact_id).append(entry_li);
@@ -77,7 +77,8 @@ jQuery(function($) {
 						if (jQuery("#artifact-" + pfartifact_id + " .no-entries").length) {
 							jQuery(".no-entries").remove();
 						}
-						updateArtifactList(pfolder_id);
+						//updateArtifactList(pfolder_id);
+						getFolderArtifacts(pfolder_id);
 					} else {
 						display_error(jsonResponse.data, "#modal-msg", "append");
 					}
@@ -96,7 +97,7 @@ jQuery(function($) {
 		getFolderArtifacts(pfolder_id);
 		location.hash = $(this).attr("data-id");
 		jQuery("#current-folder").html(jQuery(this).children("span").html());
-		
+
 		if (jQuery("#msgs .alert-success").length) {
 			jQuery("#msgs .alert-success").remove();
 		}
@@ -126,7 +127,7 @@ jQuery(function($) {
 			break;
 			case "file-edit" :
 				type = "file";
-				method = "media-entry&filename=" + jQuery("#file-upload").html() + "&pfartifact_id=" + pfartifact_id;
+				method = "media-entry&filename=" + jQuery("#entry-filename").val() + "&pfartifact_id=" + pfartifact_id;
 			break;
 			case "artifact" :
 				method = "create-artifact&pfolder_id=" + pfolder_id;
@@ -169,7 +170,7 @@ jQuery(function($) {
 					}
 				},
 				error: function (data) {
-					display_error(["An error occurred while attempting save this entry. Please try again."], "#modal-msg");
+					display_error([eportfolio_index_localization.error_saving_entry + ". " + eportfolio_index_localization.please_try_again + "."], "#modal-msg");
 				}
 			});
 		} else {
@@ -225,7 +226,7 @@ jQuery(function($) {
 		}
 		
 		if (jQuery("#save-button").hasClass("btn-danger")) {
-			jQuery("#save-button").removeClass("btn-danger").addClass("btn-primary").html("Save Entry");
+			jQuery("#save-button").removeClass("btn-danger").addClass("btn-primary").html(eportfolio_index_localization.save_entry);
 		}
 	});
 	
@@ -262,20 +263,20 @@ jQuery(function($) {
 			jQuery("#save-button").removeAttr("data-entry");
 		}
 
-		jQuery(".modal-header h3").html("Add Entry");
+		jQuery(".modal-header h3").html(eportfolio_index_localization.add_entry);
 		
 		if (jQuery(this).data("type") == "reflection") {
-			jQuery("#save-button").html("Save Entry").attr("data-type", "reflection");
+			jQuery("#save-button").html(eportfolio_index_localization.save_entry).attr("data-type", "reflection");
 			jQuery("#method").attr("value", "reflection-entry");
 		}
 		
 		if (jQuery(this).data("type") == "file") {
-			jQuery("#save-button").html("Save Entry").attr("data-type", "file");
+			jQuery("#save-button").html(eportfolio_index_localization.save_entry).attr("data-type", "file");
 			jQuery("#method").attr("value", "file-entry");
 		}
 		
 		if (jQuery(this).data("type") == "url") {
-			jQuery("#save-button").html("Save Entry").attr("data-type", "url");
+			jQuery("#save-button").html(eportfolio_index_localization.save_entry).attr("data-type", "url");
 			jQuery("#method").attr("value", "url-entry");
 		}
 		
@@ -295,21 +296,45 @@ jQuery(function($) {
 		var pentry_id = jQuery(this).attr("data-id");
 		var entry_title = jQuery("a[data-entry="+ pentry_id +"]").html();
 		jQuery("#save-button").attr("data-entry", pentry_id);
-		jQuery("#save-button").html("Delete Entry");
+		jQuery("#save-button").html(eportfolio_index_localization.delete_entry);
 		jQuery("#save-button").attr("data-type", "delete-entry");
 		populateDeleteForm(pentry_id, entry_title);
 	});
-	
-	jQuery("#artifact-list").on("click", ".artifact", function () {
+
+	jQuery("#artifact-container").on("click", ".edit-entry-assessable", function (e) {
+		var pentry_id = jQuery(this).data("id");
+		var pfartifact_id = jQuery(this).data("artifact-id");
+		var is_assessable = jQuery(this).data("assessable");
+
+		var action = "assessable";
+		if ( 1 == is_assessable ) {
+			action = "unassessable";
+		}
+
+		// calls an api to flop is_assessable flag in database
+		$.ajax({
+			url : ENTRADA_URL + "/api/eportfolio.api.php",
+			type : "POST",
+			data : "method=pentry-assessable&action="+action+"&pentry_id=" + pentry_id,
+			success: function(data) {
+				// redraw the artifact entries
+				getEntries(pfartifact_id);
+			}
+		});
+
+		e.preventDefault();
+	});
+
+	jQuery("body").on("click", ".artifact", function () {
 		var pfartifact_id = jQuery(this).data("id");
-		jQuery("#save-button").attr({"data-artifact": pfartifact_id}).html("Save Entry");
+		jQuery("#save-button").attr({"data-artifact": pfartifact_id}).html(eportfolio_index_localization.save_entry);
 		entryForm(pfartifact_id);
 	});
 	
 	jQuery("#artifact-list").on("click", ".remove-artifact", function(e) {
 		jQuery("#portfolio-modal .modal-header h3").html("Remove Artifact");
-		display_error(["<strong>Warning</strong> You have chosen to remove an artifact you have created.<br /><br />Please use the button below to remove the artifact."], "#portfolio-form", "prepend");
-		jQuery("#save-button").addClass("btn-danger").removeClass("btn-primary").html("Remove").attr("data-type", "delete-artifact");
+		display_error(["<strong>" + eportfolio_index_localization.warning + "</strong> " + eportfolio_index_localization.chosen_to_remove_artifact + ".<br /><br />" + eportfolio_index_localization.use_button_to_remove_artifact + "."], "#portfolio-form", "prepend");
+		jQuery("#save-button").addClass("btn-danger").removeClass("btn-primary").html(eportfolio_index_localization.remove).attr("data-type", "delete-artifact");
 		jQuery("#portfolio-form").append("<input id=\"pfartifact_id\" type=\"hidden\" name=\"pfartifact_id\" value=\""+jQuery(this).data("id")+"\" />")
 		e.preventDefault();
 	});
@@ -340,34 +365,77 @@ function getFolder (pfolder_id) {
 		},
 		error: function (data) {
 			jQuery(".artifact-container").removeClass("loading");
-			display_error(["An error occurred while attempting to fetch this folder. Please try again."], "#msgs", "append");
+			display_error([eportfolio_index_localization.error_fetching_folder + ". " + eportfolio_index_localization.please_try_again + "."], "#msgs", "append");
 		}
 	});
 }
 
 function getFolderArtifacts (pfolder_id) {
 	var proxy_id = PROXY_ID;
-	
+	var portfolio_id = PORTFOLIO_ID;
+
 	if (jQuery("#artifact-list .artifact-list-item").length) {
 		jQuery("#artifact-list .artifact-list-item").remove();
 	}
-	
+
+	// load folder details
+	jQuery("#portfolio-folder-pulse").load(ENTRADA_URL + "/api/eportfolio.api.php" + "?method=get-portfolio-pulse&pfolder_id=" + pfolder_id + "&proxy_id=" + proxy_id);
+	// find out whether folders have required entries
+	jQuery.ajax({
+		url: ENTRADA_URL + "/api/eportfolio.api.php",
+		data: "method=get-portfolio-pulse&portfolio_id=" + portfolio_id + "&proxy_id=" + proxy_id,
+		type: 'GET',
+		dataType: 'json',
+		success: function (obj) {
+			if (obj.data.pfa_required) {
+				jQuery(".portfolio-required-artifacts").html(' <span class="text-error"><i class="fa fa-bell" title="Some folders require entries"></i></span>');
+				var $anchor;
+				jQuery("#folder-list li").each(function() {
+					$anchor = jQuery(this).find("a.folder-item");
+					if ('undefined' != typeof($anchor.data('id'))) {
+						jQuery.each(obj.data.pf_data, function(i, pf_data) {
+							if (pf_data && pf_data.data_folder && pf_data.data_folder.pfolder_id == $anchor.data("id")) {
+								if (pf_data.fa_required_incomplete && pf_data.fa_required_incomplete > 0) {
+									$anchor.find("span").addClass("text-error");
+									$anchor.find("i").addClass("text-error");
+								}							}
+						});
+					}
+				});
+			}
+		},
+		error: function () {}
+	});
+
 	jQuery.ajax({
 		url: ENTRADA_URL + "/api/eportfolio.api.php",
 		data: "method=get-folder-artifacts&pfolder_id=" + pfolder_id + "&proxy_id=" + proxy_id,
 		type: 'GET',
 		success: function (data) {
 			var jsonResponse = JSON.parse(data);
+
+			// Only show the learner-created artifact controls if allowed for this folder
+			if ( 1 == jsonResponse.folder.allow_learner_artifacts ) {
+				jQuery("#artifact-learner-create").html("<a href=\"#\" data-id=\"2\" id=\"create-artifact\" data-toggle=\"modal\" data-target=\"#portfolio-modal\"><i class=\"fa fa-plus\"></i> " + eportfolio_index_localization.create_my_own_artifact + "</a>");
+				jQuery("#entries-user").show();
+			} else {
+				jQuery("#artifact-learner-create").html("");
+				jQuery("#entries-user").hide();
+			}
+
 			jQuery(".artifact-container").removeClass("loading");
 			jQuery(".artifact-container").empty();
+
 			if (jsonResponse.status == "success") {
 				if (jQuery("#msgs > .alert-notice").length) {
 					jQuery("#msgs .alert-notice").remove();
 				}
-				
+				jQuery(".artifact-container").append("<h1 class='text-center'>Artifacts with attached entries</h1>");
+
 				jQuery.each(jsonResponse.data, function (key, artifact) {
 					var pfartifact_id = artifact.pfartifact_id;
 					var artifact_title = artifact.title;
+					var artifact_description = artifact.description;
 					var artifact_due;
 					var proxy_id = artifact.proxy_id;
 					
@@ -378,21 +446,22 @@ function getFolderArtifacts (pfolder_id) {
 					} else {
 						artifact_due = 0;
 					}
-					appendArtifact(pfartifact_id, artifact_title, artifact_due, artifact.total_entries, artifact.has_entry, proxy_id);
+					appendArtifact(pfartifact_id, artifact_title, artifact_description, artifact_due, artifact.total_entries, artifact.has_entry, proxy_id);
 					getEntries(pfartifact_id);
 				});
 				
-				if (!jQuery(".artifact-group").length) {	
-					display_generic(["There are currently no portfolio artifacts with entries attached to them. To add an entry to an artifact, select an artifact from the <strong>My Artifacts</strong> list."], "#msgs", "append");
+				if (!jQuery(".artifact-group").length) {
+					display_generic([eportfolio_index_localization.no_artifacts_attached_entries + ". " + eportfolio_index_localization.to_add_entry_select_artifact + "."], "#msgs", "append");
 				}
 			} else {
 				display_notice([jsonResponse.data], "#msgs");
 			}
+			// this draws the "My Artifacts" menu
 			updateArtifactList(pfolder_id);
 		},
 		error: function () {
 			jQuery(".artifact-container").removeClass("loading");
-			display_error(["An error occurred while attempting to fetch the artifacts associated with this folder. Please try again."], "#msgs", "append");
+			display_error([eportfolio_index_localization.error_fetching_folder_artifacts + ". " + eportfolio_index_localization.please_try_again + "."], "#msgs", "append");
 		}
 	});
 }
@@ -404,20 +473,31 @@ function getEntries (pfartifact_id) {
 		data: "method=get-artifact-entries&pfartifact_id=" + pfartifact_id + "&proxy_id=" + proxy_id,
 		type: 'GET',
 		success: function (data) {
+			// clear current entries (to allow for ajax updates)
+			jQuery("#artifact-" + pfartifact_id).html("");
 			var jsonResponse = JSON.parse(data);
 			if (jsonResponse.status == "success") {
 				jQuery.each(jsonResponse.data, function(key, entry) {
-					var content = "";
 					var entry_li = document.createElement("li");
-					var entry_li_a = document.createElement("a");
-                    var entry_link = document.createElement("a");
-					var entry_link_icon = document.createElement("i");
-                    
-					var entry_delete_a = document.createElement("a");
+					var entry_well = document.createElement("div");
 					var entry_div = document.createElement("div");
+					var entry_controls = document.createElement("div");
+
+					var entry_li_h3 = document.createElement("h3");
+					var entry_assessable = document.createElement("a");
+					var entry_li_a = document.createElement("a");
+					var entry_link_a = document.createElement("a");
+					var entry_delete_a = document.createElement("a");
+
+					var entry_metadata = document.createElement("div");
+					var entry_date = document.createElement("p");
+
+					var entry_hr = document.createElement("hr");
+
 					var date = new Date(entry.entry.submitted_date * 1000);
+
 					var title = "";
-                    
+					var content = "";
 					if (typeof entry.entry._edata.title != "undefined") {
                         title = entry.entry._edata.title;
 						content = entry.entry._edata.title;
@@ -429,26 +509,88 @@ function getEntries (pfartifact_id) {
 					} else {
 						content = "N/A";
 					}
-					
-                    var commentBlock = "";
+
+					var assessable = 0;
+					if (typeof entry.entry.is_assessable != "undefined") {
+						if ("1" == entry.entry.is_assessable) {
+							assessable = 1;
+						}
+					}
+
+					var commentBlock;
                     if (typeof entry.comments != "undefined" && entry.comments.length > 0) {
-                        commentBlock = jQuery(document.createElement("div"));
-                        commentBlock.addClass("well").attr("style", "margin:10px;padding:6px 20px;").append("<h4>Comments" + (title.length > 1 ? " for " + title : "") + ":</h4>");
-                        jQuery.each(entry.comments, function (k, comment) {
-                            commentBlock.append("<p><strong>" + comment.commentor + "</strong> @ " + comment.submitted_date + "<br />" + comment.comment + "</p>");
-                        });
-                    }
-                    
-					jQuery(entry_li_a).attr({"href": "#", "data-toggle": "modal", "data-target": "#portfolio-modal", "data-artifact": pfartifact_id, "data-entry": entry.entry.pentry_id, "data-type": entry.entry.type}).html(content).addClass("edit-entry");
-					jQuery(entry_link_icon).addClass("icon-link");
-                    jQuery(entry_link).attr({"href" : ENTRADA_URL + "/profile/eportfolio?section=reflection&entry_id=" + entry.entry.pentry_id}).append(entry_link_icon);
-					jQuery(entry_delete_a).attr({"href": "#", "data-toggle": "modal", "data-target": "#portfolio-modal", "data-id": entry.entry.pentry_id}).addClass("delete-entry").html("<i class=\"icon-trash\"></i>");
-					jQuery(entry_div).html("Submitted: " + date.getFullYear() + "-" + (date.getMonth() <= 8 ? "0" : "") + (date.getMonth() + 1) + "-" +  (date.getDate() <= 9 ? "0" : "") + date.getDate() + ", Entry Type: " + entry.entry.type).addClass("muted");
-					jQuery(entry_li).append(entry_li_a).append(entry_delete_a);
-                    if (entry.entry.type == "reflection") {
-                        jQuery(entry_li).append(entry_link);
-                    }
-                    jQuery(entry_li).append(entry_div).append(commentBlock);
+						commentBlock = jQuery(document.createElement("div"));
+						jQuery.each(entry.comments, function (k, comment) {
+							commentBlock.append("<blockquote>" + comment.comment + "<small>" + "<b>" + comment.commentor + "</b>" + " " + comment.submitted_date + "</small>" + "</blockquote>");
+						});
+					}
+
+					jQuery(entry_li_h3).addClass("card-title clearfix muted");
+					jQuery(entry_li_h3).append("<i class=\"fa fa-edit\"></i> ").append(entry_li_a);
+					jQuery(entry_li_a).attr({"href": "#", "data-toggle": "modal", "data-target": "#portfolio-modal", "data-artifact": pfartifact_id, "data-entry": entry.entry.pentry_id, "data-type": entry.entry.type})
+										.addClass("edit-entry")
+										.html(content);
+					jQuery(entry_delete_a).attr({"href": "#", "data-toggle": "modal", "data-target": "#portfolio-modal", "data-id": entry.entry.pentry_id}).addClass("delete-entry").addClass("btn btn-danger pull-right").html("<i class=\"icon-trash icon-white\"></i>");
+					jQuery(entry_li_h3).append(entry_delete_a);
+
+					jQuery(entry_link_a).addClass("btn btn-success");
+					switch (entry.entry.type) {
+						case "reflection":
+							jQuery(entry_link_a).attr({"href" : ENTRADA_URL + "/profile/eportfolio?section=reflection&entry_id=" + entry.entry.pentry_id}).html("<i class=\"fa fa-file-text\"></i> " + eportfolio_index_localization.read_reflection);
+							break;
+						case "file":
+							jQuery(entry_link_a).attr({"href" : ENTRADA_URL + "/serve-eportfolio-entry.php?entry_id=" + entry.entry.pentry_id}).html("<i class=\"fa fa-download\"></i> " + eportfolio_index_localization.download_file);
+							break;
+						case "url":
+							if (entry.entry._edata.description) {
+								jQuery(entry_link_a).attr({
+									"href": entry.entry._edata.description,
+									"target": "_blank"
+								}).html("<i class=\"fa fa-share\"></i> " + eportfolio_index_localization.visit_url);
+							}
+							break;
+					}
+
+					var assessable_text = (assessable) ? eportfolio_index_localization.used_for_assessment : eportfolio_index_localization.not_used_for_assessment;
+					var assessable_class = (assessable) ? "btn-info" : "btn-warning";
+					jQuery(entry_assessable).attr({"href" : ENTRADA_URL, "data-id" : entry.entry.pentry_id, "data-artifact-id" : pfartifact_id, "data-assessable" : assessable})
+											.addClass("btn " + assessable_class + " pull-right edit-entry-assessable")
+											.html("<i class=\"fa fa-edit\"></i> " + assessable_text);
+
+
+					jQuery(entry_date).addClass("pull-right").html("<small>" + eportfolio_index_localization.submitted + ": <b>" + date.getFullYear() + "-" + (date.getMonth() <= 8 ? "0" : "") + (date.getMonth() + 1) + "-" +  (date.getDate() <= 9 ? "0" : "") + date.getDate() + "</b></small>");
+
+					jQuery(entry_metadata).addClass("clearfix");
+					jQuery(entry_metadata).append(entry_date);
+
+					if (0 < entry.entry.reviewed_date) {
+						jQuery(entry_metadata).append("<span class=\"text-info\"><i class=\"fa fa-check-square-o\"></i> <small>" + eportfolio_index_localization.reviewed_by_my_advisor + "</small></span>");
+						//console.log(entry);
+					}
+					if (1 == entry.entry.flag) {
+						jQuery(entry_metadata).append(" &nbsp; <span class=\"text-error\"><i class=\"fa fa-flag\"></i> <small>" + eportfolio_index_localization.flagged_by_my_advisor + "</small></span>");
+					}
+
+					jQuery(entry_controls).append(entry_link_a);
+
+					if (eportfolio_index_settings.eportfolio_can_attach_to_gradebook_assessment
+						&& eportfolio_index_settings.eportfolio_entry_is_assessable_set_by_learner) {
+						jQuery(entry_controls).append(entry_assessable);
+					}
+					jQuery(entry_div).addClass("card-block").attr("style", "padding-top:0;");
+
+
+					jQuery(entry_div).append(entry_metadata);
+					jQuery(entry_div).append(entry_controls);
+					if (commentBlock) {
+						jQuery(entry_div).append(entry_hr).append(commentBlock);
+					}
+
+					jQuery(entry_well).addClass("card artifact-entry");
+					jQuery(entry_well).append(entry_li_h3);
+					jQuery(entry_well).append(entry_div);
+
+					jQuery(entry_li).append(entry_well);
 					jQuery("#artifact-" + pfartifact_id).append(entry_li);
 				});
 			} else {
@@ -458,37 +600,72 @@ function getEntries (pfartifact_id) {
 		error: function(data) {
 			jQuery(".artifact-container").removeClass("loading");
 			jQuery(".artifact .row-fluid, .artifact .btn-group").remove();
-			display_error(["An error occurred while attempting to fetch the entries associated with this artifact. Please try again."], ".artifact", "append");
+			display_error([eportfolio_index_localization.error_fetching_artifact_entries + ". " + eportfolio_index_localization.please_try_again + "."], ".artifact", "append");
 		}
 	});
 }
 
-function artifactForm () {
-	// Create the divs that will hold the form controls for the create artifact form
+function artifactForm(folders, selected_folder_id) {
+	selected_folder_id = selected_folder_id || null;
+	folders = folders || [];
+
+    // Create the divs that will hold the form controls for the create artifact form
 	var title_control_group = document.createElement("div");
 	var title_controls = document.createElement("div");
+	var folder_control_group = document.createElement('div');
+	var folder_controls = document.createElement('div');
 	var description_control_group = document.createElement("div");
 	var description_controls = document.createElement("div");
+	
+	// Create the form elements
 	var title_input = document.createElement("input");
+	var folder_select = document.createElement('select');
 	var description_textarea = document.createElement("textarea");
+	
+	// Create element labels
 	var title_label = document.createElement("label");
+	var folder_label = document.createElement('label');
 	var description_label = document.createElement("label");
 	
 	jQuery(title_control_group).addClass("control-group");
 	jQuery(title_controls).addClass("controls");
+	jQuery(folder_control_group).addClass('control-group');
+	jQuery(folder_controls).addClass('controls');
 	jQuery(description_control_group).addClass("control-group");
 	jQuery(description_controls).addClass("controls");
+
 	jQuery(title_input).attr({type: "text", name: "title", id: "artifact-title"}).addClass("input-large");
+	jQuery(folder_select).attr({name: 'pfolder_id', id: 'artifact-folder'}).addClass('input-large');
 	jQuery(description_textarea).attr({name: "description", id: "artifact-description"}).addClass("input-large");
+
 	jQuery(title_label).html("Title<br /><em class=\"content-small muted\">required</em>").attr("for", "artifact-title").addClass("control-label form-required");
+	jQuery(folder_label).html('Folder<br /><em class=\"content-small muted\">required</em>').attr('for', 'artifact-folder').addClass("control-label form-required");
 	jQuery(description_label).html("Description:<br /><em class=\"content-small muted\">required</em>").attr("for", "artifact-description").addClass("control-label form-required");
+
+	// Populate the folder select
+	for(var i in folders) {
+		if(folders.hasOwnProperty(i)) {
+            var $option = jQuery('<option />');
+
+            $option.val(folders[i].pfolder_id);
+            $option.html(folders[i].title);
+
+            if(folders[i].pfolder_id == selected_folder_id) {
+            	$option.attr('selected', true);
+			}
+
+            jQuery(folder_select).append($option);
+		}
+	}
 
 	// Put it all together
 	jQuery(title_controls).append(title_input);
 	jQuery(title_control_group).append(title_label).append(title_controls);
+	jQuery(folder_controls).append(folder_select);
+	jQuery(folder_control_group).append([folder_label, folder_controls]);
 	jQuery(description_controls).append(description_textarea);
 	jQuery(description_control_group).append(description_label).append(description_controls);
-	jQuery("#portfolio-form").append(title_control_group).append(description_control_group);
+	jQuery("#portfolio-form").append(title_control_group).append(folder_control_group).append(description_control_group);
 }
 
 function entryForm (pfartifact_id) {
@@ -528,16 +705,33 @@ function entryForm (pfartifact_id) {
 	jQuery("#portfolio-form").append(type_control_group);
 }
 
-function appendArtifact (pfartifact_id, artifact_title, artifact_due, total_entries, has_entry, proxy_id) {
+function appendArtifact (pfartifact_id, artifact_title, artifact_description, artifact_due, total_entries, has_entry, proxy_id) {
 	if (has_entry) {
 		// Elements for artifact-entries-list
 		var artifact_div = document.createElement("div");
 		var artifact_title_h2 = document.createElement("h2");
+		var artifact_description_element = document.createElement("div");
+		var artifact_due_element = document.createElement("small");
 		var artifact_list = document.createElement("ul");
+		var artifact_add_entry_link = document.createElement("a");
+
+		if (artifact_due > 0) {
+			var artifact_due_date  = new Date(artifact_due  * 1000);
+		}
 		
 		jQuery(artifact_list).attr({"id": "artifact-" + pfartifact_id}).addClass("unstyled");
-		jQuery(artifact_title_h2).html(artifact_title);
-		jQuery(artifact_div).attr({"data-id": pfartifact_id}).append(artifact_title_h2).append(artifact_list).addClass("artifact-group");
+
+		jQuery(artifact_title_h2).addClass("card-title").html(artifact_title);
+
+		jQuery(artifact_add_entry_link).html("<i class=\"fa fa-plus\"></i> Add Entry").addClass("btn btn-outline-primary artifact").attr({"data-id": pfartifact_id, "href": "#", "data-toggle": "modal", "data-target": "#portfolio-modal"});
+		jQuery(artifact_add_entry_link).wrap("<p></p>");
+
+		jQuery(artifact_description_element).html(artifact_description).addClass("artifact-description");
+		if (artifact_due_date) {
+			jQuery(artifact_due_element).addClass("pull-right text-warning").html(eportfolio_index_localization.due + ": <b>" + artifact_due_date.getFullYear() + "-" + (artifact_due_date.getMonth() <= 8 ? "0" : "") + (artifact_due_date.getMonth() + 1) + "-" +  (artifact_due_date.getDate() <= 9 ? "0" : "") + artifact_due_date.getDate() + "</b>");
+			jQuery(artifact_title_h2).append(artifact_due_element);
+		}
+		jQuery(artifact_div).attr({"data-id": pfartifact_id}).append(artifact_title_h2).append(artifact_description_element).append(artifact_add_entry_link).append(artifact_list).addClass("artifact-group card card-block");
 		jQuery("#artifact-container").append(artifact_div);
 	}
 }
@@ -546,7 +740,8 @@ function appendContent (type, jsonResponse, pfartifact_id, pfolder_id) {
 	if (jQuery("#display-notice-box-modal").length) {
 		jQuery("#msgs").empty();
 	}
-	
+	// ToDo: pretty sure this block can go
+	/*
 	switch (type) {
 		case "artifact" :
 			display_success(["Successfully created artifact titled <strong>" + jsonResponse.title + "</strong>"], "#msgs", "append");
@@ -630,7 +825,9 @@ function appendContent (type, jsonResponse, pfartifact_id, pfolder_id) {
 			display_success(["Successfully removed entry titled: <strong>" + jsonResponse._edata.title + "</strong>"], "#msgs", "append");
 		break;
 	}
-	updateArtifactList(pfolder_id);
+	*/
+	//updateArtifactList(pfolder_id);
+	getFolderArtifacts(pfolder_id);
 }
 
 function populateEntryForm(pentry_id) {
@@ -651,6 +848,7 @@ function populateEntryForm(pentry_id) {
 					case "file" :
 						jQuery("#entry-title").val(jsonResponse.data._edata.title);
 						jQuery("#entry-description").val(jsonResponse.data._edata.description);
+						jQuery("#entry-filename").val(jsonResponse.data._edata.filename);
 					break;
 					case "url" :
 						jQuery("#entry-title").val(jsonResponse.data._edata.title);
@@ -664,7 +862,7 @@ function populateEntryForm(pentry_id) {
 		},
 		error: function (data) {
 			jQuery(".artifact-container").removeClass("loading");
-			display_error(["An error occurred while attempting to fetch the entry. Please try again."], "#modal-msg", "append");
+			display_error([eportfolio_index_localization.error_fetching_entry + ". " + eportfolio_index_localization.please_try_again + "."], "#modal-msg", "append");
 		}
 	});
 }
@@ -687,7 +885,7 @@ function populateArtifactForm (pfartifact_id) {
 		},
 		error: function (data) {
 			jQuery(".artifact-container").removeClass("loading");
-			display_error(["An error occurred while attempting to fetch the artifact. Please try again."], "#modal-msg", "append");
+			display_error([eportfolio_index_localization.error_fetching_artifact + ". " + eportfolio_index_localization.please_try_again + "."], "#modal-msg", "append");
 		}
 	});	
 }
@@ -700,13 +898,14 @@ function populateDeleteForm (pentry_id, entry_title) {
 	
 	jQuery(warning_div).addClass("alert alert-block alert-danger");
 	jQuery(warning_button).addClass("close").html("&times;");
-	jQuery(warning_li).html("Please confirm that you wish to remove the entry titled <strong>" + entry_title + "</strong>.");
+	jQuery(warning_li).html(eportfolio_index_localization.confirm_remove_entry + " <strong>" + entry_title + "</strong>.");
 	jQuery(warning_ul).append(warning_li);
 	jQuery(warning_div).append(warning_button).append(warning_ul);
 	jQuery("#portfolio-form").append(warning_div);
-	jQuery(".modal-header h3").html("Confirm Entry Removal");
+	jQuery(".modal-header h3").html(eportfolio_index_localization.confirm_entry_removal);
 }
 
+// ToDo: is this function called anywhere?
 function appendEntry(entry) {
 	var entry_li = document.createElement("li");
 	var entry_li_a = document.createElement("a");
@@ -714,12 +913,12 @@ function appendEntry(entry) {
 	
 	if (entry.submitted_date != 0) {
 		var date = new Date(entry.submitted_date * 1000);
-		var date_string = "Due: " + date.getFullYear() + "-" + (date.getMonth() <= 9 ? "0" : "") + (date.getMonth() + 1) + "-" +  (date.getDate() <= 9 ? "0" : "") + date.getDate()
+		var date_string = eportfolio_index_localization.due + ": " + date.getFullYear() + "-" + (date.getMonth() <= 9 ? "0" : "") + (date.getMonth() + 1) + "-" +  (date.getDate() <= 9 ? "0" : "") + date.getDate()
 	} else {
-		var date_string = "Due: N/A";
+		var date_string = eportfolio_index_localization.due + ": " + eportfolio_index_localization.na;
 	}
 	
-	jQuery(entry_div).html("Type: <strong>" + entry.type + "</strong>, Submitted: <strong>" + date_string + "</strong>").addClass("muted");
+	jQuery(entry_div).html(eportfolio_index_localization.type + ": <strong>" + entry.type + "</strong>, " + eportfolio_index_localization.submitted + ": <strong>" + date_string + "</strong>").addClass("muted");
 	jQuery(entry_li_a).attr({"href": "#"}).html((entry._edata.hasOwnProperty("title") ? entry._edata.title : (entry._edata.hasOwnProperty("description") && entry._edata.description.length ? entry._edata.description.replace(/(<([^>]+)>)/ig,"").substr(0, 80) : entry._edata.filename)));
 	jQuery(entry_li).append(entry_li_a).append(entry_div);
 	jQuery("#entries-list").append(entry_li);
@@ -734,7 +933,7 @@ function buildEntryForm(entry_type, pentry_id, edit_mode) {
 	
 	jQuery(title_controls).addClass("controls");
 	jQuery(title_input).attr({type: "text", name: "title", id: "entry-title"}).addClass("input-large");
-	jQuery(title_label).html("Title").attr("for", "entry-title").addClass("control-label");
+	jQuery(title_label).html(eportfolio_index_localization.title).attr("for", "entry-title").addClass("control-label");
 	jQuery(title_controls).append(title_input);
 	jQuery(title_control_group).addClass("control-group").append(title_label).append(title_controls);
 	jQuery(title_fieldset).append(title_control_group);
@@ -750,7 +949,7 @@ function buildEntryForm(entry_type, pentry_id, edit_mode) {
 			
 			jQuery(reflection_control_group).addClass("control-group");
 			jQuery(reflection_controls).addClass("controls");
-			jQuery(reflection_label).attr({"for": "reflection-body"}).html("Reflection Body").addClass("control-label");
+			jQuery(reflection_label).attr({"for": "reflection-body"}).html(eportfolio_index_localization.reflection_body).addClass("control-label");
 			jQuery(reflection_textarea).attr({"name": "description", "id": "reflection-body"}).ckeditor();
 			jQuery(reflection_controls).append(reflection_textarea);
 			jQuery(reflection_control_group).append(reflection_label).append(reflection_controls);
@@ -770,12 +969,15 @@ function buildEntryForm(entry_type, pentry_id, edit_mode) {
 				var file_download_controls = document.createElement("div");
 				var file_download_label = document.createElement("label");
 				var file_download_a = document.createElement("a");
+				var file_filename_input = document.createElement("input");
 				
 				jQuery(file_download_control_group).addClass("control-group");
 				jQuery(file_download_controls).addClass("controls");
-				jQuery(file_download_label).html("Download File").addClass("control-label");
-				jQuery(file_download_a).html("<i class=\"icon-download-alt icon-white\"></i> Download File").attr("href", ENTRADA_URL + "/serve-eportfolio-entry.php?entry_id=" + pentry_id).addClass("btn btn-success");
+				jQuery(file_download_label).html("eportfolio_index_localization.download_file").addClass("control-label");
+				jQuery(file_download_a).html("<i class=\"icon-download-alt icon-white\"></i> " + eportfolio_index_localization.download_file).attr("href", ENTRADA_URL + "/serve-eportfolio-entry.php?entry_id=" + pentry_id).addClass("btn btn-success");
 				jQuery(file_download_controls).append(file_download_a);
+				jQuery(file_filename_input).attr({"type": "hidden", "id": "entry-filename"});
+				jQuery(file_download_control_group).append(file_filename_input);
 				jQuery(file_download_control_group).append(file_download_label).append(file_download_controls);
 				jQuery(file_download_fieldset).append(file_download_control_group);
 			} else {
@@ -788,7 +990,7 @@ function buildEntryForm(entry_type, pentry_id, edit_mode) {
 				jQuery(file_control_group).addClass("control-group");
 				jQuery(file_controls).addClass("controls");
 				jQuery(file_upload).attr({"type": "file", "id": "file-upload"});
-				jQuery(file_label).attr({"for": "file-upload"}).html("Attach File").addClass("control-label");
+				jQuery(file_label).attr({"for": "file-upload"}).html(eportfolio_index_localization.attach_file).addClass("control-label");
 				jQuery(file_controls).append(file_upload);
 				jQuery(file_control_group).append(file_label).append(file_controls);
 				jQuery(file_fieldset).append(file_control_group);
@@ -796,7 +998,7 @@ function buildEntryForm(entry_type, pentry_id, edit_mode) {
 			
 			jQuery(file_description_control_group).addClass("control-group");
 			jQuery(file_description_controls).addClass("controls");
-			jQuery(file_description_label).attr({"for": "entry-description"}).html("Description").addClass("control-label");
+			jQuery(file_description_label).attr({"for": "entry-description"}).html(eportfolio_index_localization.description).addClass("control-label");
 			jQuery(file_description).attr({"name": "description", "id": "entry-description"});
 			jQuery(file_description_controls).append(file_description);
 			jQuery(file_description_control_group).append(file_description_label).append(file_description_controls);
@@ -813,7 +1015,7 @@ function buildEntryForm(entry_type, pentry_id, edit_mode) {
 			jQuery(url_control_group).addClass("control-group");
 			jQuery(url_controls).addClass("controls");
 			jQuery(url_input).attr({"name": "description", "id": "entry-description", "type": "text"});
-			jQuery(url_label).attr({"for": "entry-description"}).html("URL").addClass("control-label");
+			jQuery(url_label).attr({"for": "entry-description"}).html(eportfolio_index_localization.url).addClass("control-label");
 			jQuery(url_controls).append(url_input);
 			jQuery(url_control_group).append(url_label).append(url_controls);
 			jQuery(url_fieldset).append(url_control_group);
@@ -837,6 +1039,7 @@ function buildEntryForm(entry_type, pentry_id, edit_mode) {
 	}
 }
 
+// ToDo: is this function called anywhere?
 function appendArtifactItem(artifact) {
 	var artifact_item = document.createElement("li");
 	var artifact_item_a = document.createElement("a");
@@ -844,7 +1047,7 @@ function appendArtifactItem(artifact) {
 	var artifact_title_span = document.createElement("span");
 
 	jQuery(artifact_title_span).html(artifact.title);
-	jQuery(artifact_due).html("<span class=\"badge\">0</span> Due: N/A").addClass("muted");
+	jQuery(artifact_due).html("<span class=\"badge\">0</span> " + eportfolio_index_localization.due + ": " +eportfolio_index_localization.na).addClass("muted");
 	jQuery(artifact_item_a).attr({"href": "#", "data-id": artifact.pentry_id, "data-toggle": "modal", "data-target": "#portfolio-modal"}).append(artifact_title_span).append(artifact_due).css("padding-bottom", "8px").addClass("artifact");
 	jQuery(artifact_item).append(artifact_item_a).addClass("artifact-list-item");
 	jQuery("#entries-user").after(artifact_item);
@@ -856,7 +1059,7 @@ function appendArtifactItem(artifact) {
 
 function updateArtifactList (pfolder_id) {
 	var proxy_id = PROXY_ID;
-	
+
 	if (jQuery(".artifact-list-item").length) {
 		jQuery(".artifact-list-item").remove();
 	}
@@ -879,18 +1082,18 @@ function updateArtifactList (pfolder_id) {
 
 					if (artifact_due != 0) {
 						var date = new Date(artifact_due * 1000);
-						date_string = "Due: " + date.getFullYear() + "-" + (date.getMonth() <= 9 ? "0" : "") + (date.getMonth() + 1) + "-" +  (date.getDate() <= 9 ? "0" : "") + date.getDate();
+						date_string = eportfolio_index_localization.due + ": " + date.getFullYear() + "-" + (date.getMonth() <= 9 ? "0" : "") + (date.getMonth() + 1) + "-" +  (date.getDate() <= 9 ? "0" : "") + date.getDate();
 					} else {
-						date_string = "Due: N/A";
+						date_string = eportfolio_index_localization.due + ": " + eportfolio_index_localization.na;
 					}
 
-					if (artifact.has_entry || date_string == "Due: N/A") {
+					if (artifact.has_entry || date_string == eportfolio_index_localization.due + ": " + eportfolio_index_localization.na) {
 						jQuery(artifact_li_div).html((artifact.total_entries > 0 ? "<span class=\"badge badge-info\">" + artifact.total_entries + "</span> " + date_string : "<span class=\"badge\">" + artifact.total_entries + "</span> " + date_string )).addClass("muted");
 					} else {
 						var warning_span = document.createElement("span");
 
-						jQuery(artifact_li_a_span).addClass("artifact-meta-warning");
-						jQuery(warning_span).html(date_string).addClass("badge badge-important");
+						jQuery(artifact_li_a_span).addClass("artifact-meta-warning").addClass("text-error");
+						jQuery(warning_span).html(date_string).addClass("label label-important");
 						jQuery(artifact_li).addClass("artifact-due-warning");
 						jQuery(artifact_li_div).append(warning_span);
 					}
@@ -903,7 +1106,6 @@ function updateArtifactList (pfolder_id) {
 						if (!artifact.has_entry) {
 							jQuery(artifact_li).addClass("entries-required");
 							jQuery("#entries-required").after(artifact_li);
-
 							if (jQuery(".entries-required-error").length) {
 								jQuery(".entries-required-error").remove();
 							}
@@ -928,25 +1130,31 @@ function updateArtifactList (pfolder_id) {
 
 			if (!jQuery(".entries-required").length) {
 				var error_required_li = document.createElement("li");
-				jQuery(error_required_li).html("There are no artifacts that require entries.").addClass("artifact-list-item muted entries-required-error").css("padding", "8px 10px");
+				jQuery(error_required_li).html(eportfolio_index_localization.no_artifacts_require_entries).addClass("artifact-list-item muted entries-required-error").css("padding", "8px 10px");
 				jQuery("#entries-required").after(error_required_li);
 			}
 
 			if (!jQuery(".entries-attached").length) {
 				var error_attached_li = document.createElement("li");
-				jQuery(error_attached_li).html("There are no artifacts with attached entries.").addClass("artifact-list-item muted entries-attached-error").css("padding", "8px 10px");
+				jQuery(error_attached_li).html(eportfolio_index_localization.no_artifacts_attached_entries + ".").addClass("artifact-list-item muted entries-attached-error").css("padding", "8px 10px");
 				jQuery("#entries-attached").after(error_attached_li);
 			}
 
 			if (!jQuery(".entries-user").length) {
-				var error_user_li = document.createElement("li");
-				jQuery(error_user_li).html("You have not created any artifacts for this folder.").addClass("artifact-list-item muted entries-user-error").css("padding", "8px 10px");
-				jQuery("#entries-user").after(error_user_li);
+				// Only show learner-created artifact error message if allowed for this folder
+				if ( 1 == jsonResponse.folder.allow_learner_artifacts ) {
+					var error_user_li = document.createElement("li");
+					jQuery(error_user_li).html(eportfolio_index_localization.no_artifacts_for_folder + ".").addClass("artifact-list-item muted entries-user-error").css("padding", "8px 10px");
+					jQuery("#entries-user").after(error_user_li);
+					jQuery("#entries-user").show();
+				} else {
+					jQuery("#entries-user").hide();
+				}
 			}
 		},
 		error: function () {
 			jQuery(".artifact-container").removeClass("loading");
-			display_error(["An error occurred while attempting to fetch the artifacts associated with this folder. Please try again."], "#msgs", "append");
+			display_error([eportfolio_index_localization.error_fetching_folder_artifacts + ". " + eportfolio_index_localization.please_try_again + "."], "#msgs", "append");
 		}
 	});
 }

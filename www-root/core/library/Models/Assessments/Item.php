@@ -21,7 +21,7 @@
  */
 
 class Models_Assessments_Item extends Models_Base {
-    protected $item_id, $one45_element_id, $organisation_id, $itemtype_id, $item_code, $item_text, $item_description, $comment_type, $mandatory = 1, $created_date, $created_by, $updated_date, $updated_by, $deleted_date;
+    protected $item_id, $one45_element_id, $organisation_id, $itemtype_id, $item_group_id, $item_code, $rating_scale_id, $mandatory = 1, $allow_default = 0, $hide_from_index = 0, $default_response, $attributes, $item_text, $item_description, $comment_type, $created_date, $created_by, $updated_date, $updated_by, $deleted_date;
 
     protected static $table_name = "cbl_assessments_lu_items";
     protected static $primary_key = "item_id";
@@ -51,9 +51,17 @@ class Models_Assessments_Item extends Models_Base {
         return $this->itemtype_id;
     }
 
+    public function getItemGroupID() {
+        return $this->item_group_id;
+    }
+
     public function getItemCode() {
         return $this->item_code;
     }
+
+    public function getRatingScaleID() {
+        return $this->rating_scale_id;
+ 	}
 
     public function getItemText() {
         return $this->item_text;
@@ -67,8 +75,24 @@ class Models_Assessments_Item extends Models_Base {
         return $this->comment_type;
     }
 
+    public function getAttributes() {
+        return $this->attributes;
+    }
+
     public function getMandatory() {
         return $this->mandatory;
+    }
+
+    public function getHideFromIndex() {
+        return $this->hide_from_index;
+    }
+
+    public function getAllowDefault() {
+        return $this->allow_default;
+    }
+
+    public function getDefaultResponse() {
+        return $this->default_response;
     }
 
     public function getCreatedDate() {
@@ -89,6 +113,18 @@ class Models_Assessments_Item extends Models_Base {
 
     public function getDeletedDate() {
         return $this->deleted_date;
+    }
+
+    public function getCommentTypeEnumValues() {
+        if ($metadata = $this->fieldMetadata(DATABASE_NAME, "cbl_assessments_lu_items", "comment_type")) {
+            if ($metadata["Type"]) {
+                $enum_values_string = trim($metadata["Type"], "enum(");
+                $enum_values_string = trim($enum_values_string, ")");
+                $enum_values = explode(",", $enum_values_string);
+                return array_map(function($v) { return trim($v, "'"); }, $enum_values);
+            }
+        }
+        return false;
     }
 
     public static function fetchRowByID($item_id, $deleted_date = NULL) {
@@ -120,20 +156,20 @@ class Models_Assessments_Item extends Models_Base {
         return $self->fetchAll(array(array("key" => "deleted_date", "value" => ($deleted_date ? $deleted_date : NULL), "method" => ($deleted_date ? "<=" : "IS"))));
     }
 
-    public static function fetchAllRecordsBySearchTerm($search_value = null, $limit = null, $offset = null, $sort_direction = null, $sort_column = null, $rubric_width = null, $item_type = null, $existing_rubric_items = null, $rubric_descriptors = null, $exclude_item_ids = null, $form_id = null, $filters = array()) {
+    public static function fetchAllRecordsBySearchTerm($search_value = null, $limit = null, $offset = null, $sort_direction = null, $sort_column = null, $rubric_width = null, $item_type = null, $existing_rubric_items = null, $rubric_descriptors = null, $exclude_item_ids = null, $form_id = null, $filters = array(), $rating_scale_id = 0) {
         global $db;
         global $ENTRADA_USER;
 
         if (isset($sort_column) && $tmp_input = clean_input($sort_column, array("trim", "striptags"))) {
             $sort_column = $tmp_input;
         } else {
-            $sort_column = "item_id";
+            $sort_column = "created_date";
         }
         
         if (isset($sort_direction) && $tmp_input = clean_input($sort_direction, array("trim", "alpha"))) {
             $sort_direction = $tmp_input;
         } else {
-            $sort_direction = "ASC";
+            $sort_direction = "DESC";
         }
 
         $course_permissions = $ENTRADA_USER->getCoursePermissions();
@@ -198,6 +234,8 @@ class Models_Assessments_Item extends Models_Base {
                     ON a.`item_id` = h.`item_id` AND h.`deleted_date` IS NULL";
 
         $query .= " WHERE a.`deleted_date` IS NULL
+                    AND a.`item_group_id` IS NULL
+                    AND (a.`hide_from_index` = 0 OR a.`hide_from_index` IS NULL)
                     AND b.`deleted_date` IS NULL
                     AND
                     (
@@ -223,13 +261,17 @@ class Models_Assessments_Item extends Models_Base {
             $query .= " AND c.`deleted_date` IS NULL";
         }
 
+        if ($rating_scale_id) {
+            $query .= " AND a.`rating_scale_id`=". $db->qstr($rating_scale_id);
+        }
+
         if ($rubric_descriptors) {
             sort($rubric_descriptors);
         }
 
         $query .= " GROUP BY a.`item_id` " .
-            (isset($rubric_width) ? " HAVING count(*) = ".$db->qstr($rubric_width).
-                (isset($rubric_descriptors) && $rubric_descriptors ? " AND GROUP_CONCAT(h.`ardescriptor_id` ORDER BY h.`ardescriptor_id` ASC) = " . $db->qstr(implode(",", $rubric_descriptors)) : "") : "") . "
+            (isset($rubric_width) && !$rating_scale_id ? " HAVING count(*) = ".$db->qstr($rubric_width).
+                (isset($rubric_descriptors) && $rubric_descriptors && !$rating_scale_id ? " AND GROUP_CONCAT(h.`ardescriptor_id` ORDER BY h.`ardescriptor_id` ASC) = " . $db->qstr(implode(",", $rubric_descriptors)) : "") : "") . "
                     ORDER BY `" . $sort_column . "` " . $sort_direction . "
                     LIMIT " . ($offset ? (int) $offset : 0) . ", " . (int) $limit;
 
@@ -275,7 +317,7 @@ class Models_Assessments_Item extends Models_Base {
         return $result;
     }
 
-    public static function countAllRecordsBySearchTerm($search_value, $rubric_width, $item_type = null, $rubric_items = null, $rubric_descriptors = null, $filters = array()) {
+    public static function countAllRecordsBySearchTerm($search_value, $rubric_width, $item_type = null, $rubric_items = null, $rubric_descriptors = null, $filters = array(), $rating_scale_id = null) {
         global $db;
         global $ENTRADA_USER;
 
@@ -331,6 +373,8 @@ class Models_Assessments_Item extends Models_Base {
 
         $query .= " WHERE a.`deleted_date` IS NULL
                     AND b.`deleted_date` IS NULL
+                    AND a.`item_group_id` IS NULL
+                    AND (a.`hide_from_index` = 0 OR a.`hide_from_index` IS NULL)
                     AND
                     (
                         a.`item_text` LIKE (". $db->qstr("%". $search_value ."%") .")
@@ -338,6 +382,10 @@ class Models_Assessments_Item extends Models_Base {
                         OR a.`item_code` LIKE (". $db->qstr("%". $search_value ."%") .")
                     )
                     AND a.`organisation_id` = ". $db->qstr($ENTRADA_USER->getActiveOrganisation());
+
+        if ($rating_scale_id) {
+            $query .= " AND a.rating_scale_id = ".$db->qstr($rating_scale_id);
+        }
 
         if ($filters) {
             if (array_key_exists("author", $filters)) {
@@ -412,9 +460,20 @@ class Models_Assessments_Item extends Models_Base {
     public function getItemType() {
         return Models_Assessments_Itemtype::fetchRowByID($this->itemtype_id);
     }
-    
+
+    /**
+     * This method returns responses for the item. If there's a rating scale associated with it,
+     * it returns the responses associated to that scale, else it returns responses attached
+     * directly to the item.
+     *
+     * @return array
+     */
     public function getItemResponses() {
-        return Models_Assessments_Item_Response::fetchAllRecordsByItemID($this->item_id);
+        if ($this->rating_scale_id) {
+            return Models_Assessments_RatingScale_Response::fetchRowsByRatingScaleID($this->rating_scale_id);
+        } else {
+            return Models_Assessments_Item_Response::fetchAllRecordsByItemID($this->item_id);
+        }
     }
 
     public function getItemObjectives() {
@@ -526,9 +585,47 @@ class Models_Assessments_Item extends Models_Base {
                   LEFT JOIN `global_lu_objectives` b 
                   ON a.objective_id = b.objective_id
                   WHERE a.item_id = ?
-                  AND ISNULL(a.deleted_date)
+                  AND a.deleted_date IS NULL
                   AND b.objective_active = 1";
 
         return $db->getAll($query, array($item_id));
+    }
+
+    public static function fetchItemIDsByScaleID($scale_id) {
+        global $db;
+        $item_ids = array();
+
+        $sql = "SELECT DISTINCT `item_id`
+                FROM `cbl_assessments_lu_items`
+                WHERE `rating_scale_id` = ?";
+        $items = $db->GetAll($sql, array($scale_id));
+        if (is_array($items)) {
+            foreach ($items as $item) {
+                $item_ids[] = $item["item_id"];
+            }
+        }
+        return $item_ids;
+    }
+
+    public static function fetchItemIDsHavingScaleIDByRubricID($rubric_id) {
+        global $db;
+
+        // Fetch all item IDs for items contained in a rubric
+        $query = "SELECT i.`item_id`
+                  FROM `cbl_assessments_lu_items` AS i
+                  JOIN `cbl_assessment_rubric_items` AS ri ON i.`item_id` = ri.`item_id`
+                  WHERE ri.`rubric_id` = ?
+                  AND i.`rating_scale_id` >= 1
+                  AND i.`rating_scale_id` IS NOT NULL
+                  AND ri.`deleted_date` IS NULL";
+        $results = $db->GetAll($query, array($rubric_id));
+        if (empty($results)) {
+            return array();
+        }
+        $return_array = array();
+        foreach ($results as $result) {
+            $return_array[$result["item_id"]] = (int)$result["item_id"];
+        }
+        return $return_array;
     }
 }

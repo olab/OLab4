@@ -71,7 +71,7 @@ if ($COMMUNITY_ID) {
 		if ($ENTRADA_ACL->amIAllowed(new CommunityResource($COMMUNITY_ID), 'update')) {
 			?>
             <a class="btn space-below" href="<?php echo html_encode(ENTRADA_URL."/community".$community_details["community_url"]); ?>">
-                <i class="icon-chevron-left" style="margin: 0"></i> Back To Community
+                <i class="icon-chevron-left" style="margin: 0"></i> <?php echo $translate->_("Back To Community"); ?>
             </a>
             <?php
             Entrada_Utilities_Flashmessenger::displayMessages($MODULE);
@@ -751,7 +751,7 @@ if ($COMMUNITY_ID) {
 					<div class="tab-pane" id="community_members_div">
 						<div class="tab-page members">
 							<h3 class="tab">Members</h3>
-							<h2 style="margin-top: 0px">Community Members</h2>
+							<h2 style="margin-top: 0px"><?php echo $translate->_("Community Members"); ?></h2>
 							<?php
 							if ($MAILING_LISTS["active"]) {
                                 try {
@@ -838,7 +838,7 @@ if ($COMMUNITY_ID) {
 										foreach ($results as $result) {
 											echo "<tr>\n";
 											echo "	<td><input type=\"checkbox\" name=\"member_proxy_ids[]\" value=\"".(int) $result["proxy_id"]."\" /></td>\n";
-											echo "	<td>".date(DEFAULT_DATE_FORMAT, $result["member_joined"])."</td>\n";
+											echo "	<td>".date(DEFAULT_DATETIME_FORMAT, $result["member_joined"])."</td>\n";
 											echo "	<td><a href=\"".ENTRADA_URL."/people?profile=".html_encode($result["username"])."\"".(($result["proxy_id"] == $ENTRADA_USER->getActiveId()) ? " style=\"font-weight: bold" : "")."\">".html_encode($result["firstname"]." ".$result["lastname"])."</a></td>\n";
 											echo "	<td>".($result["group"] == "guest" ? "Guest" : "Member" )."</td>\n";
 											echo "	<td class=\"list-status\"><img src=\"images/".(($MAILING_LISTS["active"]) && $mail_list->users[($result["proxy_id"])]["member_active"] ? "list-status-online.gif\" alt=\"Enabled\"" : "list-status-offline.gif\" alt=\"Disabled\"")." /></td>\n";
@@ -857,7 +857,7 @@ if ($COMMUNITY_ID) {
 						</div>
 						<div class="tab-page members">
 							<h3 class="tab">Administrators</h3>
-							<h2 style="margin-top: 0px">Community Administrators</h2>
+							<h2 style="margin-top: 0px"><?php echo $translate->_("Community Administrators"); ?></h2>
 							<?php
 
 							/**
@@ -939,7 +939,7 @@ if ($COMMUNITY_ID) {
                                             foreach ($results as $result) {
                                                 echo "<tr>\n";
                                                 echo "	<td><input type=\"checkbox\" name=\"admin_proxy_ids[]\" value=\"".(int) $result["proxy_id"]."\"".(($result["proxy_id"] == $ENTRADA_USER->getActiveId()) ? " onclick=\"this.checked = false\" disabled=\"disabled\"" : "")." /></td>\n";
-                                                echo "	<td>".date(DEFAULT_DATE_FORMAT, $result["member_joined"])."</td>\n";
+                                                echo "	<td>".date(DEFAULT_DATETIME_FORMAT, $result["member_joined"])."</td>\n";
                                                 echo "	<td><a href=\"".ENTRADA_URL."/people?profile=".html_encode($result["username"])."\"".(($result["proxy_id"] == $ENTRADA_USER->getActiveId()) ? " style=\"font-weight: bold" : "")."\">".html_encode($result["firstname"]." ".$result["lastname"])."</a></td>\n";
                                                 echo "	<td class=\"list-status\"><img src=\"images/".(($MAILING_LISTS["active"]) && $mail_list->users[($result["proxy_id"])]["member_active"] ? "list-status-online.gif\" alt=\"Active\"" : "list-status-offline.gif\" alt=\"Disabled\"")." /></td>\n";
                                                 echo "</tr>\n";
@@ -963,8 +963,7 @@ if ($COMMUNITY_ID) {
                             <h2 style="margin-top: 0px">Add Members</h2>
                             <form id="add-members-form" action="<?php echo ENTRADA_URL."/".$MODULE."?".replace_query(array("section" => "members", "type" => "add", "step" => 2)); ?>" method="post" class="form-horizontal">
                                 <div class="row-fluid">
-                                    <p>If you would like to add users that already exist in the system to this community yourself, you can do so by clicking the checkbox beside their name from the list below.
-                                                            Once you have reviewed the list at the bottom and are ready, click the <strong>Add Members</strong> button at the bottom to complete the process.</p>
+                                    <?php echo $translate->_(" <p>If you would like to add users that already exist in the system to this community yourself, you can do so by clicking the checkbox beside their name from the list below. Once you have reviewed the list at the bottom and are ready, click the <strong>Add Members</strong> button at the bottom to complete the process.</p>"); ?>
                                 </div>
                                 <div class="row-fluid">
                                     <label for="choose-members-btn" class="control-label form-required"><?php echo $translate->_("Select Members"); ?></label>
@@ -1105,8 +1104,7 @@ if ($COMMUNITY_ID) {
                             <h2 style="margin-top: 0px">Add Guest Members</h2>
                             <form action="<?php echo ENTRADA_URL."/".$MODULE."?".replace_query(array("section" => "members", "type" => "addguest", "step" => 2)); ?>" method="post">
                                 <div class="member-add-type" id="guest-member-add-type">
-                                    <p>If you aren't able to find the user you wish to add on the Add Members tab, or you would like to add a new user to the system and register them in this community, you can do so by entering their e-mail, first name, and last name below.
-                                        Click the <strong>Add Guest</strong> button when you are done and the system will email the new user with their account information.</p>
+                                    <?php echo $translate->_("<p>If you aren't able to find the user you wish to add on the Add Members tab, or you would like to add a new user to the system and register them in this community, you can do so by entering their e-mail, first name, and last name below. Click the <strong>Add Guest</strong> button when you are done and the system will email the new user with their account information.</p>"); ?>
                                     <table cellspacing="0" cellpadding="2" border="0" summary="Adding Event" style="width: 100%;">
                                         <colgroup>
                                             <col style="width: 20%;"/>

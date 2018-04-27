@@ -369,7 +369,7 @@ if ($RECORD_ID) {
                                                         <input id="community-all-checkbox" class="permission-type-checkbox" type="radio" name="permission_acl_style" value="CourseCommunityEnrollment" <?php if ($permission_db['assertion'] == 'CourseCommunityEnrollment') { echo "checked='checked'"; } ?> />
                                                     </td>
                                                     <td>
-                                                        <label for="community-all-checkbox" class="content-small">All Community Members</label>
+                                                        <label for="community-all-checkbox" class="content-small"><?php echo $translate->_("All Community Members"); ?></label>
                                                     </td>
                                                 </tr>
                                                 <tr>
@@ -534,7 +534,7 @@ if ($RECORD_ID) {
                                             <tbody>
                                                 <tr>
                                                     <td>
-                                                        <strong>Community Administrators</strong>
+                                                        <strong><?php echo $translate->_("Community Administrators"); ?></strong>
                                                     </td>
                                                     <td class="on">
                                                         <input type="checkbox" id="allow_admin_read" name="allow_admin_read" value="1" checked="checked" onclick="this.checked = true" />
@@ -548,7 +548,7 @@ if ($RECORD_ID) {
                                                 </tr>
                                                 <tr>
                                                     <td>
-                                                        <strong>Community Members</strong>
+                                                        <strong><?php echo $translate->_("Community Members"); ?></strong>
                                                     </td>
                                                     <td class="on">
                                                          <input type="checkbox" id="allow_member_read" name="allow_member_read" value="1"<?php echo (((!isset($PROCESSED["allow_member_read"])) || ((isset($PROCESSED["allow_member_read"])) && ($PROCESSED["allow_member_read"] == 1))) ? " checked=\"checked\"" : ""); ?> />
@@ -618,7 +618,7 @@ if ($RECORD_ID) {
 				break;
 			}
 		} else {
-			add_notice("The discussion forum that you are trying to edit was deactivated ".date(DEFAULT_DATE_FORMAT, $discussion_record["updated_date"])."</strong> by ".html_encode(get_account_data("firstlast", $discussion_record["updated_by"]))."</strong>.");
+			add_notice("The discussion forum that you are trying to edit was deactivated ".date(DEFAULT_DATETIME_FORMAT, $discussion_record["updated_date"])."</strong> by ".html_encode(get_account_data("firstlast", $discussion_record["updated_by"]))."</strong>.");
 
 			echo display_notice();
 

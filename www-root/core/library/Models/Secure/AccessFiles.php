@@ -36,32 +36,6 @@ class Models_Secure_AccessFiles extends Models_Base {
         parent::__construct($arr);
     }
     
-    public static function fetchRowByID ($id, $deleted_date = NULL) {
-        $self = new self();
-        return $self->fetchRow(array(
-            array("key" => "id", "value" => $id, "method" => "="),
-            array("key" => "deleted_date", "value" => ($deleted_date ? $deleted_date : NULL), "method" => ($deleted_date ? "<=" : "IS"))
-        ));
-    }
-    
-    public static function fetchRowByResourceTypeResourceID ($resource_type, $resource_id = NULL, $deleted_date = NULL) {
-        $self = new self();
-        return $self->fetchRow(array(
-            array("key" => "resource_type", "value" => $resource_type, "method" => "="),
-            array("key" => "resource_id", "value" => $resource_id, "method" => "="),
-            array("key" => "deleted_date", "value" => ($deleted_date ? $deleted_date : NULL), "method" => ($deleted_date ? "<=" : "IS"))
-        ));
-    }
-
-    public static function fetchAllByResourceTypeResourceID ($resource_type, $resource_id = NULL, $deleted_date = NULL) {
-        $self = new self();
-        return $self->fetchAll(array(
-            array("key" => "resource_type", "value" => $resource_type, "method" => "="),
-            array("key" => "resource_id", "value" => $resource_id, "method" => "="),
-            array("key" => "deleted_date", "value" => ($deleted_date ? $deleted_date : NULL), "method" => ($deleted_date ? "<=" : "IS"))
-        ));
-    }
-    
     public function getID() {
         return $this->id;
     }
@@ -97,6 +71,34 @@ class Models_Secure_AccessFiles extends Models_Base {
     public function getUpdatedBy() {
         return $this->updated_by;
     }
+
+
+    public static function fetchRowByID ($id, $deleted_date = NULL) {
+        $self = new self();
+        return $self->fetchRow(array(
+            array("key" => "id", "value" => $id, "method" => "="),
+            array("key" => "deleted_date", "value" => ($deleted_date ? $deleted_date : NULL), "method" => ($deleted_date ? "<=" : "IS"))
+        ));
+    }
+
+    public static function fetchRowByResourceTypeResourceID ($resource_type, $resource_id = NULL, $deleted_date = NULL) {
+        $self = new self();
+        return $self->fetchRow(array(
+            array("key" => "resource_type", "value" => $resource_type, "method" => "="),
+            array("key" => "resource_id", "value" => $resource_id, "method" => "="),
+            array("key" => "deleted_date", "value" => ($deleted_date ? $deleted_date : NULL), "method" => ($deleted_date ? "<=" : "IS"))
+        ));
+    }
+
+    public static function fetchAllByResourceTypeResourceID ($resource_type, $resource_id = NULL, $deleted_date = NULL) {
+        $self = new self();
+        return $self->fetchAll(array(
+            array("key" => "resource_type", "value" => $resource_type, "method" => "="),
+            array("key" => "resource_id", "value" => $resource_id, "method" => "="),
+            array("key" => "deleted_date", "value" => ($deleted_date ? $deleted_date : NULL), "method" => ($deleted_date ? "<=" : "IS"))
+        ));
+    }
+
 
     public function delete() {
         $this->deleted_date = time();

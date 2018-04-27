@@ -22,14 +22,14 @@
  * 
  */
 
-jQuery('document').ready(function($) {
+jQuery("document").ready(function($) {
 
-	var tableSelector = '#datatable-assessments';
+	var tableSelector = "#datatable-assessments";
 
 	// init tooltips
-	$('.btn-tooltip').tooltip()
+	$(".btn-tooltip").tooltip()
 	// this is to counteract a known namespace conflict bug with Prototype https://github.com/twbs/bootstrap/issues/6921
-	.on('hidden.bs.popover', function() {
+	.on("hidden.bs.popover", function() {
 		$(this).show();
 	});
 
@@ -37,7 +37,7 @@ jQuery('document').ready(function($) {
 	/*
 	var table = $(tableSelector).DataTable({
 		// remove search box
-		dom: 'lrtip',
+		dom: "lrtip",
 
 		// remove ability to set number of results per page
 		lengthChange: false,
@@ -148,7 +148,7 @@ jQuery('document').ready(function($) {
 	*/
 
 	// on selector change, reload table via ajax
-	$('#selector-select-period').on('change', function(e) {
+	$("#selector-select-period").on("change", function(e) {
 		// table.ajax.reload(dataTableAjaxCallback)
 		reloadTable();
 
@@ -156,12 +156,12 @@ jQuery('document').ready(function($) {
 		$(".btn-download-csv").attr("href", csvDownloadUrl + "&cperiod_id=" + $("#selector-select-period").val());
 
 		$("#gradebook_assessment_add").attr("href", gradebook_assessment_add + "&cperiod_id=" + $("#selector-select-period").val());
-	})
+	});
 
 	// undisable checkbox buttons if any are checked
-	$(this).on('change', tableSelector + ' :checkbox', function(e) {
+	$(this).on("change", tableSelector + " :checkbox", function(e) {
 		// handleCheckboxChange(this);
-		if ($(':checkbox:checked', tableSelector).length) {
+		if ($(":checkbox:checked", tableSelector).length) {
 			// row_type keeps track of selected inner or outer row, excluding header row
 			var row_type = {};
 
@@ -170,36 +170,36 @@ jQuery('document').ready(function($) {
 				
 				if (parent.hasClass("outer")) {
 					if (!$(this).hasClass("group-checkbox-assessment")) {
-						row_type['outer'] = 1;
+						row_type["outer"] = 1;
 					} else {
-						row_type['group'] = 1;
+						row_type["group"] = 1;
 					}
 				} else {
-					row_type['inner'] = 1;
+					row_type["inner"] = 1;
 				}
 			});
 
 			if (Object.keys(row_type).length > 1) { // checking mixed-typed rows disable the buttons
 				// $(".btn-add-assessments-to-collection").addClass("disabled");
-				$('.btn-toolbar .btn-checkbox').addClass('disabled');
-			} else if (row_type['inner']) {
-				$('.btn-toolbar .btn-checkbox').removeClass('disabled');
-				$('.btn-add-assessments-to-collection').removeClass("btn-default").addClass("btn-danger").text("Remove From Collection").data("type","remove").removeClass("disabled");
-				$('.btn-delete-assessments').data("type","row");
-			} else if (row_type['outer']) {
-				$('.btn-toolbar .btn-checkbox').removeClass('disabled');
-				$(".btn-add-assessments-to-collection").removeClass("btn-danger").addClass("btn-default").text("Add To Collection").data("type","add").removeClass("disabled");
-				$('.btn-delete-assessments').data("type","row");
-			} else if (row_type['group']) {
-				$('.btn-toolbar .btn-checkbox').removeClass('disabled');
-				$('.btn-add-assessments-to-collection').removeClass("btn-default").addClass("btn-danger").text("Empty Collection").data("type","empty").removeClass("disabled");
-				$('.btn-copy-assessments').addClass('disabled');
-				$('.btn-delete-assessments').data("type","group");
+				$(".btn-toolbar .btn-checkbox").addClass("disabled");
+			} else if (row_type["inner"]) {
+				$(".btn-toolbar .btn-checkbox").removeClass("disabled");
+				$(".btn-add-assessments-to-collection").removeClass("btn-default").addClass("btn-danger").text("Remove From Collection").data("type", "remove").removeClass("disabled");
+				$(".btn-delete-assessments").data("type", "row");
+			} else if (row_type["outer"]) {
+				$(".btn-toolbar .btn-checkbox").removeClass("disabled");
+				$(".btn-add-assessments-to-collection").removeClass("btn-danger").addClass("btn-default").text("Add To Collection").data("type", "add").removeClass("disabled");
+				$(".btn-delete-assessments").data("type", "row");
+			} else if (row_type["group"]) {
+				$(".btn-toolbar .btn-checkbox").removeClass("disabled");
+				$(".btn-add-assessments-to-collection").removeClass("btn-default").addClass("btn-danger").text("Empty Collection").data("type", "empty").removeClass("disabled");
+				$(".btn-copy-assessments").addClass("disabled");
+				$(".btn-delete-assessments").data("type", "group");
 			}
 		} else {
-			$('.btn-toolbar .btn-checkbox').addClass('disabled');
+			$(".btn-toolbar .btn-checkbox").addClass("disabled");
 		}
-	})
+	});
 
 	var delay = (function(){
 	    var timer = 0;
@@ -210,7 +210,7 @@ jQuery('document').ready(function($) {
 	})();
 
 	// filter results based on search input
-	$('#input-search-assessments').on('keyup', function () {
+	$("#input-search-assessments").on("keyup", function () {
 	    var search_terms = this;
 
 	    delay(function(){
@@ -219,9 +219,9 @@ jQuery('document').ready(function($) {
 	});
 
 	// prevent normal form submission for search box
-	$('#search-assessments').on('submit', function(e) {
+	$("#search-assessments").on("submit", function(e) {
 		e.preventDefault();
-	})
+	});
 	/*
 	// generate links for dataTable cells
 	function getAssessmentLink(data, row) {
@@ -281,7 +281,7 @@ jQuery('document').ready(function($) {
 	*/
 	// Add param to a url
     function addParameterToUrl(param, url){
-        url += (url.split('?')[1] ? '&':'?') + param;
+        url += (url.split("?")[1] ? "&" : "?") + param;
         return url;
     }
 
@@ -290,12 +290,12 @@ jQuery('document').ready(function($) {
             search = null;
         }
 
-        $.get(ENTRADA_URL + '/admin/gradebook?section=api-assessments&method=load-table&id=' + COURSE_ID + '&cperiod_id=' + $("#selector-select-period").val() + (search ? "&search="+search : "" ))
+        $.get(ENTRADA_URL + "/admin/gradebook?section=api-assessments&method=load-table&id=" + COURSE_ID + "&cperiod_id=" + $("#selector-select-period").val() + (search ? "&search="+search : "" ))
         .done(function(json) {
             // if cperiod is the same as current, perform new ajax call
             // var jsonResponse = JSON.parse(res);
             if (json.status == "success") {
-                $('#form-assessments').empty().append(""+json.data);
+                $("#form-assessments").empty().append(""+json.data);
                 setGroupEdit();
                 // if we have entered some search terms, then disable sorting
                 if (!search) {
@@ -303,10 +303,10 @@ jQuery('document').ready(function($) {
                 }
                 updateTotalGradeWeighting();
 
-                $('#modal-add-to-collection').modal('hide');
-                $('#modal-copy-assessments').modal('hide');
-                $('#modal-delete-assessments').modal('hide');
-                $('.btn-toolbar .btn-checkbox').addClass('disabled');
+                $("#modal-add-to-collection").modal("hide");
+                $("#modal-copy-assessments").modal("hide");
+                $("#modal-delete-assessments").modal("hide");
+                $(".btn-toolbar .btn-checkbox").addClass("disabled");
             } else {
                 console.log("unable to fetch the data table");
             }
@@ -317,16 +317,16 @@ jQuery('document').ready(function($) {
     }
 
 	// Open "copy assessments" modal
-	$('.btn-copy-assessments').on('click', function(e) {
+	$(".btn-copy-assessments").on("click", function(e) {
 		e.preventDefault();
 
-		if (!$(this).hasClass('disabled')) {
-			$('#modal-copy-assessments').modal('show');
+		if (!$(this).hasClass("disabled")) {
+			$("#modal-copy-assessments").modal("show");
 		}
 	});
 
 	// Copy assessments button
-	$('.btn-submit-copy-assessments').on('click', function(e) {
+	$(".btn-submit-copy-assessments").on("click", function(e) {
 		e.preventDefault();
 
 		var $this = $(this);
@@ -335,48 +335,48 @@ jQuery('document').ready(function($) {
 		var originalText = $this.text();
 
 		// Disable this button and change text before ajax call occurs
-		$this.prop('disabled', true).text(COPY_ASSESSMENTS_TEXT);
+		$this.prop("disabled", true).text(COPY_ASSESSMENTS_TEXT);
 
 		// Get cperiod_id
 		var new_cperiod_id = $("#selector-copy-assessments").val();
 
 		// Get serialized data
-		var assessmentsToCopy = $('#form-assessments').serialize();
+		var assessmentsToCopy = $("#form-assessments").serialize();
 
 		// Make ajax call
-		$.post(ENTRADA_URL +'/admin/gradebook?section=api-assessments&method=copy&id='+COURSE_ID+'&cperiod_id='+new_cperiod_id, {
-			assessments: assessmentsToCopy,
+		$.post(ENTRADA_URL +"/admin/gradebook?section=api-assessments&method=copy&id="+COURSE_ID+"&cperiod_id="+new_cperiod_id, {
+			assessments: assessmentsToCopy
 		})
 		.done(function(res) {
-			$('.btn-submit-copy-assessments').text("Copy Assessments");
+			$(".btn-submit-copy-assessments").text("Copy Assessments");
 			reloadTable();
 		})
 		.fail(function(e) {
 			console.log(e);
 		})
 		.always(function(e) {
-            $this.prop('disabled', false).text(originalText);
-            $('#modal-copy-assessments').modal('hide');
+            $this.prop("disabled", false).text(originalText);
+            $("#modal-copy-assessments").modal("hide");
         });
 	});
 
 	// Open "delete assessments" modal
-    $('.btn-delete-assessments').on('click', function(e) {
+    $(".btn-delete-assessments").on("click", function(e) {
         e.preventDefault();
 
-        if (!$(this).hasClass('disabled')) {
+        if (!$(this).hasClass("disabled")) {
 
             if ($(this).data("type") == "group") {
                 // no assessment will be deleted, but rather, the collection group is emptied and then deleted.
-                var collections = $('#form-assessments').serialize();
+                var collections = $("#form-assessments").serialize();
 
-                $.post(ENTRADA_URL + '/admin/gradebook?section=api-assessments&method=empty-collection', {
-                    collections: collections,
+                $.post(ENTRADA_URL + "/admin/gradebook?section=api-assessments&method=empty-collection", {
+                    collections: collections
                 })
                 .done(function(res) {
-                    // Reload table when it's done to reflect server-side changes
-                    $.post(ENTRADA_URL + '/admin/gradebook?section=api-assessments&method=delete-collection', {
-                        collections: collections,
+                    // Reload table when it"s done to reflect server-side changes
+                    $.post(ENTRADA_URL + "/admin/gradebook?section=api-assessments&method=delete-collection", {
+                        collections: collections
                     })
                     .done(function(res) {
                         reOrderAssessments();
@@ -389,13 +389,13 @@ jQuery('document').ready(function($) {
                     console.log(e);
                 });
             } else { // $(this).data("type") == "row"
-                $('#modal-delete-assessments').modal('show');
+                $("#modal-delete-assessments").modal("show");
             }
         }
     });
 
 		// Delete assessments button
-	$('.btn-submit-delete-assessments').on('click', function(e) {
+	$(".btn-submit-delete-assessments").on("click", function(e) {
 		e.preventDefault();
 
 		var $this = $(this);
@@ -404,41 +404,41 @@ jQuery('document').ready(function($) {
 		var originalText = $this.text();
 
 		// Disable this button and change text before ajax call occurs
-		$this.prop('disabled', true).text(COPY_ASSESSMENTS_TEXT);
+		$this.prop("disabled", true).text(COPY_ASSESSMENTS_TEXT);
 
 		// Get serialized data
-		var assessmentsToDelete = $('#form-assessments').serialize();
+		var assessmentsToDelete = $("#form-assessments").serialize();
 
 		// Make ajax call
-		$.post(ENTRADA_URL + '/admin/gradebook?section=api-assessments&method=delete&id='+COURSE_ID, {
-			assessments: assessmentsToDelete,
+		$.post(ENTRADA_URL + "/admin/gradebook?section=api-assessments&method=delete&id=" + COURSE_ID, {
+			assessments: assessmentsToDelete
 		})
 		.done(function(res) {
-			$('.btn-submit-delete-assessments').text("Delete Assessments");
+			$(".btn-submit-delete-assessments").text("Delete Assessments");
 			reloadTable();
-			// Reload table when it's done to reflect server-side changes
+			// Reload table when it"s done to reflect server-side changes
 			// table.ajax.reload(dataTableAjaxCallback);
 		})
 		.fail(function(e) {
 			console.log(e);
 		})
 		.always(function(e) {
-			$this.prop('disabled', false).text(originalText);
-			$('#modal-delete-assessments').modal('hide');
+			$this.prop("disabled", false).text(originalText);
+			$("#modal-delete-assessments").modal("hide");
 		});
 	});
 
-    $('.btn-add-assessments-to-collection').on('click', function(e) {
+    $(".btn-add-assessments-to-collection").on("click", function(e) {
         e.preventDefault();
 
-        if (!$(this).hasClass('disabled')) {
+        if (!$(this).hasClass("disabled")) {
              // remove assessment from collection
 
              if ($(this).data("type") == "empty") {
-                var collections = $('#form-assessments').serialize();
+                var collections = $("#form-assessments").serialize();
 
-                $.post(ENTRADA_URL + '/admin/gradebook?section=api-assessments&method=empty-collection', {
-                    collections: collections,
+                $.post(ENTRADA_URL + "/admin/gradebook?section=api-assessments&method=empty-collection", {
+                    collections: collections
                 })
                 .done(function(res) {
                     // Reload table when it's done to reflect server-side changes
@@ -449,10 +449,10 @@ jQuery('document').ready(function($) {
                     console.log(e);
                 })
             } else if ($(this).data("type") == "remove") {
-                var assessments = $('#form-assessments').serialize();
+                var assessments = $("#form-assessments").serialize();
 
-                $.post(ENTRADA_URL + '/admin/gradebook?section=api-assessments&method=remove-from-collection', {
-                    assessments: assessments,
+                $.post(ENTRADA_URL + "/admin/gradebook?section=api-assessments&method=remove-from-collection", {
+                    assessments: assessments
                 })
                 .done(function(res) {
                     // Reload table when it's done to reflect server-side changes
@@ -463,30 +463,30 @@ jQuery('document').ready(function($) {
                     console.log(e);
                 })
             } else { // $(this).data("type") == "add"
-                $('#assessment-collections-select').empty();
+                $("#assessment-collections-select").empty();
                 $("#assessment-collections-title").val("");
                 $("#assessment-collections-desc").val("");
                 $("#assessment-collections-id").val("");
 
                 // fetch Collection ID, Title and Description through ajax call
-                $.get(ENTRADA_URL + '/admin/gradebook?section=api-assessments&method=fetch-collection-list&id=' + COURSE_ID)
+                $.get(ENTRADA_URL + "/admin/gradebook?section=api-assessments&method=fetch-collection-list&id=" + COURSE_ID)
                 .done(function(json) {
                     
-                    $('#assessment-collections-select').empty().append('<option value="new-collection">- Create New Collection -</option>');
+                    $("#assessment-collections-select").empty().append("<option value=\"new-collection\">- Create New Collection -</option>");
                     
                     if (json.status == "success") {
-                        $('#assessment-collections-select').append(json.data);
+                        $("#assessment-collections-select").append(json.data);
                     } else {
                         console.log("unable to fetch assessment collections");
                     }
                     $("#assessment-collections-title").val("").removeAttr("disabled");
                     $("#assessment-collections-desc").val("").removeAttr("disabled");
-                    $(".btn-submit-add-to-collection").data("type","new").empty().append("<span class='icon-plus'></span>Add to Collection").show(); 
+                    $(".btn-submit-add-to-collection").data("type","new").empty().append("<span class=\"icon-plus\"></span>Add to Collection").show();
                     $(".btn-cancel-add-to-collection").text("Cancel"); 
-                    $('#assessment-collections-select').show().find("option:first").attr('selected', true);
+                    $("#assessment-collections-select").show().find("option:first").attr("selected", true);
                     $("#add-to-collection-message").empty();
-                    $('#modal-add-to-collection .modal-header h3').text("Add Assessments to Collection");
-                    $('#modal-add-to-collection').modal("show");
+                    $("#modal-add-to-collection .modal-header h3").text("Add Assessments to Collection");
+                    $("#modal-add-to-collection").modal("show");
                 })
                 .fail(function(e) {
                     console.log(e);
@@ -495,7 +495,7 @@ jQuery('document').ready(function($) {
         }
     });
 
-    $('.btn-submit-add-to-collection').on('click', function(e) {
+    $(".btn-submit-add-to-collection").on("click", function(e) {
         e.preventDefault();
         var type = $(this).data("type");
         // var selected_collection_id = null;
@@ -506,18 +506,18 @@ jQuery('document').ready(function($) {
 
             if (title) {
 
-                $.post(ENTRADA_URL + '/admin/gradebook?section=api-assessments&method=add-collection', {title: title, description: description, id: COURSE_ID})
+                $.post(ENTRADA_URL + "/admin/gradebook?section=api-assessments&method=add-collection", {title: title, description: description, id: COURSE_ID})
                 .done(function(json) {
                     
                     if (json.status == "success") {
-                        var selected_val = $('#assessment-collections-select').append(json.data).find("option:last").attr('selected', true).val();
+                        var selected_val = $("#assessment-collections-select").append(json.data).find("option:last").attr("selected", true).val();
                         handleSelect(selected_val);
                         handleAddToSelection(selected_val);
                        
                     } else if (json.status == "abort") {
                         $("#assessment-collections-select").val(json.collection_id);
                         handleSelect(json.collection_id);
-                        $("#add-to-collection-message").html("<strong>Assessment collection "+title+" already exists.</strong>");
+                        $("#add-to-collection-message").html("<strong>Assessment collection " + title + " already exists.</strong>");
                     } else {
                         console.log("unable to create a new collections");
                         return false;
@@ -528,11 +528,11 @@ jQuery('document').ready(function($) {
                     return false;
                 });
             } else {
-                alert("Pleaes fill in the title field.");
+                alert("Please fill in the title field.");
                 return false;
             }
         } else if (type == "old") {
-            handleAddToSelection($('#assessment-collections-select').val());
+            handleAddToSelection($("#assessment-collections-select").val());
         } else { //type = "edit" up update an existing collection
             var collection_id = $("#assessment-collections-id").val();
             var title = $("#assessment-collections-title").val();
@@ -540,7 +540,7 @@ jQuery('document').ready(function($) {
 
             if (title) {
 
-                $.post(ENTRADA_URL + '/admin/gradebook?section=api-assessments&method=update-collection', {collection_id: collection_id, title: title, description: description})
+                $.post(ENTRADA_URL + "/admin/gradebook?section=api-assessments&method=update-collection", {collection_id: collection_id, title: title, description: description})
                 .done(function(json) {
                     
                     if (json.status == "success") {
@@ -555,7 +555,7 @@ jQuery('document').ready(function($) {
                     return false;
                 })
                 .always(function(e) {
-                    $('#modal-add-to-collection').modal('hide');
+                    $("#modal-add-to-collection").modal("hide");
                 });
             } else {
                 alert("Pleaes fill in the title field.");
@@ -585,7 +585,7 @@ jQuery('document').ready(function($) {
     function handleSelect(value) {
 
         if (!isNaN(value) && value) {
-             var selected = $("#assessment-collections-select").find("option[value='" + value + "']");
+             var selected = $("#assessment-collections-select").find("option[value=\"" + value + "\"]");
              $("#assessment-collections-title").val($(selected).text()).attr("disabled","disabled");
              $("#assessment-collections-desc").val($(selected).attr("desc")).attr("disabled","disabled");
              $(".btn-submit-add-to-collection").data("type","old"); 
@@ -597,20 +597,22 @@ jQuery('document').ready(function($) {
         $("#add-to-collection-message").empty();
     }
 
-    $("#assessment-collections-select").on('change', function () {
+    $("#assessment-collections-select").on("change", function () {
         handleSelect($(this).val());
     });
     
     function handleAddToSelection(collection_id) {
-        var assessments = $('#form-assessments').serialize();
+        var assessments = $("#form-assessments").serialize();
  
-        $.post(ENTRADA_URL + '/admin/gradebook?section=api-assessments&method=add-to-collection', {collection_id: collection_id, assessments: assessments})
+        $.post(ENTRADA_URL + "/admin/gradebook?section=api-assessments&method=add-to-collection", {collection_id: collection_id, assessments: assessments})
         .done(function(json) {
             
             if (json.status == "success") {
                 $(".btn-cancel-add-to-collection").text("Close");
                 $(".btn-submit-add-to-collection").hide();
-                $("#add-to-collection-message").html("<strong>assessment(s) added to '" + $('#assessment-collections-select option[value="' + collection_id + '"]').text() + "' successfully.</strong>");
+                var collection_text = $("#assessment-collections-select option[value=\"" + collection_id + "\"]").text();
+                var message = "<strong>assessment(s) added to '" + collection_text + "' successfully.</strong>";
+                $("#add-to-collection-message").html(message);
                 reOrderAssessments(collection_id);
             } else {
                 console.log("unable to update assessments");
@@ -622,7 +624,7 @@ jQuery('document').ready(function($) {
             return false;
         })
         .always(function(e) {
-            $('#modal-add-to-collection').modal('hide');
+            $("#modal-add-to-collection").modal("hide");
         });
     }
 
@@ -698,7 +700,7 @@ jQuery('document').ready(function($) {
         }
 
         if (new_order_ids.length > 0) {
-            $.post(ENTRADA_URL + '/admin/gradebook?section=api-assessments&method=update-assessments-order', {new_order: new_order_ids})
+            $.post(ENTRADA_URL + "/admin/gradebook?section=api-assessments&method=update-assessments-order", {new_order: new_order_ids})
             .done(function(json) {
                 
                 if (json.status == "success") {
@@ -717,7 +719,7 @@ jQuery('document').ready(function($) {
     }
 
     function setGroupEdit() {
-        $('.group-edit-cell').on('click', function(e) {
+        $(".group-edit-cell").on("click", function(e) {
             e.preventDefault();
             
             var title       =  $(this).closest(".row.group").attr("data-collection-title");
@@ -729,10 +731,10 @@ jQuery('document').ready(function($) {
             $("#assessment-collections-id").val(id);
             $(".btn-submit-add-to-collection").data("type","edit").empty().text("Update Collection").show(); 
             $(".btn-cancel-add-to-collection").text("Cancel"); 
-            $('#assessment-collections-select').hide();
+            $("#assessment-collections-select").hide();
             $("#add-to-collection-message").empty();
-            $('#modal-add-to-collection .modal-header h3').text("Edit "+title);
-            $('#modal-add-to-collection').modal('show');
+            $("#modal-add-to-collection .modal-header h3").text("Edit "+title);
+            $("#modal-add-to-collection").modal("show");
         })
     }
 
@@ -743,7 +745,7 @@ jQuery('document').ready(function($) {
                 var new_order = getAssessmentIds(false);
                 
                 if (new_order.length > 0) {
-                    $.post(ENTRADA_URL + '/admin/gradebook?section=api-assessments&method=update-assessments-order', {new_order: new_order})
+                    $.post(ENTRADA_URL + "/admin/gradebook?section=api-assessments&method=update-assessments-order", {new_order: new_order})
                     .done(function(json) {
                         
                         if (json.status == "success") {
@@ -758,7 +760,7 @@ jQuery('document').ready(function($) {
                         return false;
                     });
                 }
-            },
+            }
             // connectWith: ".ui-sortable",
         });
     }
@@ -774,7 +776,7 @@ jQuery('document').ready(function($) {
     function updateTotalGradeWeighting() {
         var total_grade_weighting = [];
         
-        $('.assessment-row .weight-cell').each(function () {
+        $(".assessment-row .weight-cell").each(function () {
             var row = $(this).closest(".outer > .row");
             var collection_id = ($(row).hasClass("group") ? $(row).attr("data-collection-id") : 0);
             
@@ -790,7 +792,7 @@ jQuery('document').ready(function($) {
             total += (total_grade_weighting[i] ? total_grade_weighting[i] : 0);
         }
 
-        $('#grade-weighting').removeClass('hide').text((Math.round(total)).toFixed(0));
+        $("#grade-weighting").removeClass("hide").text((Math.round(total)).toFixed(0));
     }
 
     var csvDownloadUrl = $(".btn-download-csv").attr("href");

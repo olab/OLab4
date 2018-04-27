@@ -27,7 +27,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ROTATION_SCHEDULE"))) {
 } elseif ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
     header("Location: ".ENTRADA_URL);
     exit;
-} elseif (!$ENTRADA_ACL->amIAllowed("rotationschedule", "read",false)) {
+} elseif (!$ENTRADA_ACL->amIAllowed("rotationschedule", "read", false)) {
     add_error("Your account does not have the permissions required to use this feature of this module.<br /><br />If you believe you are receiving this message in error please contact <a href=\"mailto:".html_encode($AGENT_CONTACTS["administrator"]["email"])."\">".html_encode($AGENT_CONTACTS["administrator"]["name"])."</a> for assistance.");
 
     echo display_error();
@@ -35,16 +35,16 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ROTATION_SCHEDULE"))) {
     application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] do not have access to this module [".$MODULE."]");
 } else {
 
-    $SECTION_TEXT = $MODULE_TEXT[$SECTION];
-
     $BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/" . $MODULE . "?section=drafts", "title" => $translate->_("My Drafts"));
 
+    $PROCESSED["schedule_id"] = null;
     if (isset($_GET["schedule_id"]) && $tmp_input = clean_input($_GET["schedule_id"], "int")) {
         $PROCESSED["schedule_id"] = $tmp_input;
         $PROCESSED["schedule"] = Models_Schedule::fetchRowByID($PROCESSED["schedule_id"]);
         $BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/" . $MODULE . "?section=edit&schedule_id=" . $PROCESSED["schedule_id"], "title" => $PROCESSED["schedule"]->getTitle());
     }
 
+    $PROCESSED["draft_id"] = null;
     if (isset($_GET["draft_id"]) && $tmp_input = clean_input($_GET["draft_id"], "int")) {
         $PROCESSED["draft_id"] = $tmp_input;
         $PROCESSED["draft"] = Models_Schedule_Draft::fetchRowByID($PROCESSED["draft_id"]);
@@ -55,18 +55,30 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ROTATION_SCHEDULE"))) {
 
     $PROCESSED["delete"] = array();
 
+    $is_admin = Entrada_Utilities::isCurrentUserSuperAdmin(array(array("resource" => "assessmentreportadmin")));
     if (isset($_POST["delete"]) && is_array($_POST["delete"])) {
         foreach ($_POST["delete"] as $delete) {
             $tmp_input = clean_input($delete, "int");
             if ($tmp_input) {
                 $schedule = Models_Schedule::fetchRowByID($tmp_input);
-                if (Models_Schedule_Draft_Author::isAuthor($schedule->getDraftID(), $ENTRADA_USER->getActiveId()) || $ENTRADA_USER->getActiveGroup() == "admin") {
-                    $PROCESSED["delete"][] = $schedule;
+                if (!$schedule) {
+                    add_error($translate->_("A specified schedule ID does not exist."));
+                } else {
+                    $is_author = Entrada_Utilities_ScheduleAuthor::isAuthor(
+                        $ENTRADA_USER->getActiveID(),
+                        $ENTRADA_USER->getActiveOrganisation(),
+                        $schedule->getCourseID(),
+                        $schedule->getDraftID()
+                    );
+                    if ($is_admin || $is_author) {
+                        $PROCESSED["delete"][] = $schedule;
+                    } else {
+                        add_error(sprintf($translate->_("You do not have authorization to delete the rotation schedule <strong>%s</strong>."), $schedule->getTitle()));
+                    }
                 }
             }
         }
     }
-
     ?>
     <h1><?php echo $translate->_("Delete Rotation"); ?></h1>
     <?php
@@ -74,16 +86,11 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ROTATION_SCHEDULE"))) {
         case 2 :
             if (!empty($PROCESSED["delete"])) {
                 foreach ($PROCESSED["delete"] as $schedule) {
-                    if (Models_Schedule_Draft_Author::isAuthor($schedule->getDraftID(), $ENTRADA_USER->getActiveId()) || $ENTRADA_USER->getActiveGroup() == "admin") {
-                        if (!$schedule->delete()) {
-                            $ERROR++;
-                        }
-                    } else {
-                        add_error(sprintf($translate->_("You do not have authorization to delete the rotation schedule <strong>%s</strong>."), $schedule->getTitle()));
+                    if (!$schedule->delete()) {
+                        $ERROR++;
                     }
                 }
             }
-
             if (!$ERROR) {
                 Entrada_Utilities_Flashmessenger::addMessage(sprintf($translate->_("Successfully deleted <strong>%s</strong> schedule blocks."), count($PROCESSED["delete"])));
 
@@ -93,7 +100,6 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ROTATION_SCHEDULE"))) {
                     $url = ENTRADA_URL . "/admin/" . $MODULE . "?section=edit&schedule_id=" . $PROCESSED["schedule_id"];
                 }
                 header("Location: " . $url);
-
                 exit;
             }
         break;
@@ -105,7 +111,9 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ROTATION_SCHEDULE"))) {
             ?>
             <form action="<?php echo ENTRADA_URL."/admin/" . $MODULE . "?section=delete" . ($PROCESSED["draft_id"] ? "&draft_id=" . $PROCESSED["draft_id"] : "&schedule_id=" . $PROCESSED["schedule_id"]); ?>" method="POST">
             <?php
-            if (empty($PROCESSED["delete"])) {
+            if (has_error()) {
+                echo display_error();
+            } else if (empty($PROCESSED["delete"])) {
                 echo display_error($translate->_("You have not selected any schedules for deletion."));
             } else {
                 echo display_notice($translate->_("You have selected the following schedules for deletion."));

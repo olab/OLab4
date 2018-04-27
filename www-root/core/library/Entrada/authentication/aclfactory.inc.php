@@ -179,14 +179,42 @@ class ACL_Factory {
 				} else {
 					$asserter = null;
                     if (isset($perm["assertion"])) {
-                        $assertions = explode('&', $perm["assertion"]);
 
-                        if (isset($assertions[1])) {
-                            $asserter = new MultipleAssertion($assertions);
+                        /**
+                         * look for multiple assertions. Can use AND (&), OR (|) but not both at the same time
+                         */
+                        $join_and = strpos($perm["assertion"], '&');
+                        $join_or  = strpos($perm["assertion"], '|');
+
+                        if ($join_and !== false && $join_or !== false) {
+                            // this assertion contains both type of joins. Not permitted
+                            application_log("error", "Assertion string [".$perm["assertion"]."] contains both & and | conditions which is not supported. Please fix this in acl_permissions table.");
+                        } elseif ($join_and !== false || $join_or !== false) {
+                            $join = ($join_and !== false ? '&' : '|');
+                            $assertions = explode($join, $perm["assertion"]);
+
+                            // make sure all the assertion classes exist
+                            $assertion_class_error = false;
+                            foreach ($assertions as $assertion) {
+                                $assertion_name = $assertion . "Assertion";
+                                if (!class_exists($assertion_name, true)) {
+                                    $assertion_class_error = true;
+                                    application_log("error", "Assertion [".$assertion_name."] class cannot be found. Please fix this in the entrada_acl.inc.php.");
+                                    break;
+                                }
+                            }
+
+                            // if all the assertion classes are found, create the multiple assertion object
+                            if (!$assertion_class_error) {
+                                $asserter = new MultipleAssertion($join, $assertions);
+                            }
                         } else {
+                            // single assertion
                             $assertion_name = $perm["assertion"] . "Assertion";
                             if (class_exists($assertion_name, true)) {
                                 $asserter = new $assertion_name();
+                            } else {
+                                application_log("error", "Assertion [".$assertion_name."] class cannot be found. Please fix this in the entrada_acl.inc.php.");
                             }
                         }
                     }

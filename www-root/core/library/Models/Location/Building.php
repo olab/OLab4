@@ -25,7 +25,7 @@
 
 class Models_Location_Building extends Models_Base {
     protected   $building_id,
-                $organisation_id,
+                $site_id,
                 $building_code,
                 $building_name,
                 $building_address1,
@@ -33,7 +33,10 @@ class Models_Location_Building extends Models_Base {
                 $building_city,
                 $building_province,
                 $building_country,
-                $building_postcode;
+                $building_province_id,
+                $building_country_id,
+                $building_postcode,
+                $site;
 
     protected static $table_name            = "global_lu_buildings";
     protected static $primary_key           = "building_id";
@@ -52,8 +55,8 @@ class Models_Location_Building extends Models_Base {
         return $this->building_id;
     }
 
-    public function getOrganisationID() {
-        return $this->organisation_id;
+    public function getSiteId() {
+        return $this->site_id;
     }
 
     public function getBuildingCode() {
@@ -82,6 +85,14 @@ class Models_Location_Building extends Models_Base {
 
     public function getBuildingCountry() {
         return $this->building_country;
+    }
+
+    public function getBuildingProvinceID() {
+        return $this->building_province_id;
+    }
+
+    public function getBuildingCountryID() {
+        return $this->building_country_id;
     }
 
     public function getBuildingPostcode() {
@@ -126,5 +137,47 @@ class Models_Location_Building extends Models_Base {
     public static function fetchAllRecords() {
         $self = new self();
         return $self->fetchAll(array(array("key" => "building_id", "value" => 0, "method" => ">=")));
+    }
+
+    /* @return bool|Models_Location_Site */
+    public function getSite() {
+        if (NULL === $this->site) {
+            $this->site = Models_Location_Site::fetchRowByID($this->getSiteId());
+        }
+
+        return $this->site;
+    }
+
+    /* @return ArrayObject|Models_Location_Building[] */
+    public static function fetchBuildingsWithRoomsBySiteId($site_id) {
+        global $db;
+
+        $items = false;
+
+        $query = "  SELECT b.*
+                    FROM `global_lu_buildings` b
+                    JOIN `global_lu_rooms` r
+                    ON b.`building_id` = r.`building_id`
+                    WHERE b.`site_id` = ?
+                    GROUP BY b.`building_id`
+                    ORDER BY b.`building_name` ASC";
+        $results = $db->GetAll($query, [$site_id]);
+
+        if ($results) {
+            foreach ($results as $result) {
+                $item = new self($result);
+                $items[] = $item;
+            }
+        }
+
+        return $items;
+    }
+
+    /* @return ArrayObject|Models_Location_Building[] */
+    public static function fetchAllBySiteID($site_id) {
+        $self = new self();
+        return $self->fetchAll(array(
+            array("key" => "site_id", "value" => $site_id, "method" => "=")
+        ));
     }
 }

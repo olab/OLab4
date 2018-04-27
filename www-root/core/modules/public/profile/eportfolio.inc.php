@@ -37,9 +37,9 @@ if(!defined("PARENT_INCLUDED")) {
 	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] do not have access to this module [".$MODULE."]");
 } else {
 
-	$BREADCRUMB[] = array("url" => ENTRADA_URL."/profile/eportfolio", "title" => "My ePortfolio");
+    $BREADCRUMB[] = array("url" => ENTRADA_URL."/profile/eportfolio", "title" => $translate->_("My ePortfolio"));
 
-	if (($router) && ($router->initRoute())) {
+    if (($router) && ($router->initRoute())) {
 		$PREFERENCES = preferences_load($MODULE);
 
 		$module_file = $router->getRoute();

@@ -32,7 +32,7 @@ class Views_Assessments_Modals_EditExternalEmail extends Views_Assessments_Base
     protected function renderView($options = array()) {
         global $translate;
         ?>
-        <div class="modal fade hide" id="edit-external-modal">
+        <div class="modal fade" id="edit-external-modal" style="display: none">
             <form name="edit-external-modal-form" id="edit-external-modal-form" method="POST" action="#">
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>

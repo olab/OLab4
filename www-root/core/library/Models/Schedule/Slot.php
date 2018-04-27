@@ -22,7 +22,20 @@
 
 class Models_Schedule_Slot extends Models_Base {
 
-    protected  $schedule_slot_id, $schedule_id, $slot_type_id, $slot_spaces, $course_id, $created_date, $created_by, $deleted_date, $updated_date, $updated_by;
+    protected $schedule_slot_id;
+    protected $schedule_id;
+    protected $slot_type_id;
+    protected $slot_min_spaces = 0;
+    protected $slot_spaces;
+    protected $strict_spaces = 0;
+    protected $course_id;
+    protected $created_date;
+    protected $created_by;
+    protected $deleted_date;
+    protected $updated_date;
+    protected $updated_by;
+
+    protected static $database_name = DATABASE_NAME;
     protected static $table_name = "cbl_schedule_slots";
     protected static $primary_key = "schedule_slot_id";
     protected static $default_sort_column = "schedule_slot_id";
@@ -31,32 +44,129 @@ class Models_Schedule_Slot extends Models_Base {
         parent::__construct($arr);
     }
 
-    public function getCreatedBy() {
-        return $this->created_by;
+    public function getID() {
+        return $this->schedule_slot_id;
     }
 
-    public function getCreatedDate() {
-        return $this->created_date;
+    public function getScheduleSlotID() {
+        return $this->schedule_slot_id;
     }
 
-    public function getDeletedDate() {
-        return $this->deleted_date;
+    public function setScheduleSlotID($schedule_slot_id) {
+        $this->schedule_slot_id = $schedule_slot_id;
+
+        return $this;
     }
 
     public function getScheduleID() {
         return $this->schedule_id;
     }
 
-    public function getID() {
-        return $this->schedule_slot_id;
+    public function setScheduleID($schedule_id) {
+        $this->schedule_id = $schedule_id;
+
+        return $this;
+    }
+
+    public function getSlotTypeID() {
+        return $this->slot_type_id;
+    }
+
+    public function setSlotTypeID($slot_type_id) {
+        $this->slot_type_id = $slot_type_id;
+
+        return $this;
+    }
+
+    public function getSlotMinSpaces() {
+        return $this->slot_spaces;
+    }
+
+    public function setSlotMinSpaces($slot_min_spaces) {
+        $this->slot_min_spaces = $slot_min_spaces;
+
+        return $this;
     }
 
     public function getSlotSpaces() {
         return $this->slot_spaces;
     }
 
-    public function getSlotTypeID() {
-        return $this->slot_type_id;
+    public function setSlotSpaces($slot_spaces) {
+        $this->slot_spaces = $slot_spaces;
+
+        return $this;
+    }
+
+    public function getStrictSpaces() {
+        return $this->strict_spaces;
+    }
+
+    public function setStrictSpaces($strict_spaces) {
+        $this->strict_spaces = $strict_spaces;
+
+        return $this;
+    }
+
+    public function getCourseID() {
+        return $this->course_id;
+    }
+
+    public function setCourseID($course_id) {
+        $this->course_id = $course_id;
+
+        return $this;
+    }
+
+    public function getCreatedDate() {
+        return $this->created_date;
+    }
+
+    public function setCreatedDate($created_date) {
+        $this->created_date = $created_date;
+
+        return $this;
+    }
+
+    public function getCreatedBy() {
+        return $this->created_by;
+    }
+
+    public function setCreatedBy($created_by) {
+        $this->created_by = $created_by;
+
+        return $this;
+    }
+
+
+    public function getDeletedDate() {
+        return $this->deleted_date;
+    }
+
+    public function setDeletedDate($deleted_date) {
+        $this->deleted_date = $deleted_date;
+
+        return $this;
+    }
+
+    public function getUpdatedDate() {
+        return $this->updated_date;
+    }
+
+    public function setUpdatedDate($updated_date) {
+        $this->updated_date = $updated_date;
+
+        return $this;
+    }
+
+    public function getUpdatedBy() {
+        return $this->updated_by;
+    }
+
+    public function setUpdatedBy($updated_by) {
+        $this->updated_by = $updated_by;
+
+        return $this;
     }
 
     public function getSlotType() {
@@ -65,8 +175,10 @@ class Models_Schedule_Slot extends Models_Base {
         return $db->GetRow($query, $this->slot_type_id);
     }
 
-    public function getCourseID() {
-        return $this->course_id;
+    public static function getSlotTypes() {
+        global $db;
+        $query = "SELECT * FROM `cbl_schedule_slot_types`";
+        return $db->GetAll($query);
     }
 
     public static function fetchSlotTypeIDByCode($slot_type_code) {
@@ -77,20 +189,6 @@ class Models_Schedule_Slot extends Models_Base {
 
     public function getAudience() {
         return Models_Schedule_Audience::fetchAllBySlotID($this->schedule_slot_id);
-    }
-
-    public function getUpdatedBy() {
-        return $this->updated_by;
-    }
-
-    public function getUpdatedDate() {
-        return $this->updated_date;
-    }
-
-    public static function getSlotTypes() {
-        global $db;
-        $query = "SELECT * FROM `cbl_schedule_slot_types`";
-        return $db->GetAll($query);
     }
 
     public static function fetchRowByID($schedule_slot_id) {
@@ -167,8 +265,8 @@ class Models_Schedule_Slot extends Models_Base {
     public static function addAllSlots($values) {
         global $db;
 
-        $query = "INSERT INTO `" . DATABASE_NAME . "`.`cbl_schedule_slots` (`schedule_slot_id`, `schedule_id`, `slot_type_id`, `slot_spaces`,
-                  `course_id`, `created_date`, `created_by`, `deleted_date`, `updated_date`, `updated_by`) VALUES " . $values;
+        $query = "INSERT INTO `" . DATABASE_NAME . "`.`cbl_schedule_slots` (`schedule_slot_id`, `schedule_id`, `slot_type_id`, `slot_min_spaces`, `slot_spaces`,
+                  `strict_spaces`, `course_id`, `created_date`, `created_by`, `deleted_date`, `updated_date`, `updated_by`) VALUES " . $values;
 
         $db->Execute($query);
     }
@@ -179,7 +277,9 @@ class Models_Schedule_Slot extends Models_Base {
         $values_array[] = "null";
         $values_array[] = $this->schedule_id ? $this->schedule_id : "null";
         $values_array[] = $this->slot_type_id ? $this->slot_type_id : "null";
+        $values_array[] = $this->slot_min_spaces ? $this->slot_min_spaces : "null";
         $values_array[] = $this->slot_spaces ? $this->slot_spaces : "null";
+        $values_array[] = $this->strict_spaces ? $this->strict_spaces : "null";
         $values_array[] = $this->course_id ? $this->course_id : "null";
         $values_array[] = $this->created_date ? $this->created_date : "null";
         $values_array[] = $this->created_by ? $this->created_by : "null";
@@ -190,4 +290,11 @@ class Models_Schedule_Slot extends Models_Base {
         return "(" . implode($values_array, ",") . ")";
     }
 
+    public function delete() {
+        if (empty($this->deleted_date)) {
+            $this->deleted_date = time();
+        }
+
+        return $this->update();
+    }
 }

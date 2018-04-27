@@ -24,7 +24,7 @@
  */
 class Models_Event_Draft extends Models_Base {
     
-    protected $draft_id, $status, $name, $description, $created, $preserve_elements;
+    protected $draft_id, $status, $name, $description, $created, $preserve_elements, $copy_resources_as_draft;
 
     protected static $table_name                = "drafts";
     protected static $default_sort_column       = "name";
@@ -60,6 +60,10 @@ class Models_Event_Draft extends Models_Base {
     
     public function getPreserveElements() {
         return $this->preserve_elements;
+    }
+
+    public function getCopyResourcesAsDraft() {
+        return $this->copy_resources_as_draft;
     }
     
     public static function fetchRowByID($id = 0) {

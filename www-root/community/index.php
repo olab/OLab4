@@ -577,6 +577,18 @@ if ($COMMUNITY_URL) {
 				$HEAD[] = "<link href=\"".ENTRADA_URL."/css/windows/medtech.css\" rel=\"stylesheet\" type=\"text/css\" />";
 
 				/**
+				 * If course, set course breadcrumbs.
+				 */
+				if (!empty($COMMUNITY_TYPE_OPTIONS["course_website"])) {
+
+					$BREADCRUMB[] = array("url" => ENTRADA_URL."/courses", "title" => $translate->_("courses"));
+
+					if (!empty($community_details["community_title"]) && $PAGE_URL != "pages") {
+						$BREADCRUMB[] = array("url" => COMMUNITY_URL.$COMMUNITY_URL, "title" => $community_details["community_title"]);
+					}
+				}
+
+				/**
 				 * Start another output buffer to collect the page contents.
 				 */
 				ob_start();
@@ -686,10 +698,10 @@ if ($COMMUNITY_URL) {
 
 					if (($LOGGED_IN) && ($COMMUNITY_ADMIN)) {
 						$sidebar_html  = "<ul class=\"menu\">\n";
-						$sidebar_html .= "	<li class=\"admin\"><a href=\"".ENTRADA_URL."/communities?section=modify&amp;community=".$COMMUNITY_ID."\" style=\"font-weight: bold\">Manage Community</a></li>\n";
+						$sidebar_html .= "	<li class=\"admin\"><a href=\"".ENTRADA_URL."/communities?section=modify&amp;community=".$COMMUNITY_ID."\" style=\"font-weight: bold\">" . $translate->_("Manage Community") . "</a></li>\n";
 						$sidebar_html .= "	<li class=\"admin\"><a href=\"".ENTRADA_URL."/communities?section=members&amp;community=".$COMMUNITY_ID."\" style=\"font-weight: bold\">Manage Members</a></li>\n";
 						$sidebar_html .= "	<li class=\"admin\"><a href=\"".COMMUNITY_URL.$COMMUNITY_URL.":pages\" style=\"font-weight: bold\">Manage Pages</a></li>\n";
-                        $sidebar_html .= "  <li class=\"admin\"><a href=\"".ENTRADA_URL."/communities/reports?community=".$COMMUNITY_ID."\" style=\"font-weight: bold\">Community Reports</a></li>\n";
+                        $sidebar_html .= "  <li class=\"admin\"><a href=\"".ENTRADA_URL."/communities/reports?community=".$COMMUNITY_ID."\" style=\"font-weight: bold\">" . $translate->_("Community Reports") . "</a></li>\n";
 						$sidebar_html .= "</ul>\n";
 
 						new_sidebar_item($translate->_("Admin Center"), $sidebar_html, "community-admin", "open");
@@ -734,7 +746,7 @@ if ($COMMUNITY_URL) {
 						$sidebar_html .= "	</li>";
 						$sidebar_html .= "</ul>\n";
 						$sidebar_html .= "<ul class=\"menu\">\n";
-						$sidebar_html .= "	<li class=\"on\"><a href=\"".ENTRADA_URL."/communities?section=leave&amp;community=".$COMMUNITY_ID."\">Quit This Community</a></li>";
+						$sidebar_html .= "	<li class=\"on\"><a href=\"".ENTRADA_URL."/communities?section=leave&amp;community=".$COMMUNITY_ID."\">" . $translate->_("Quit This Community") . "</a></li>";
 						$sidebar_html .= "</ul>\n";
 						$sidebar_html .= "<hr/>\n";
 						$sidebar_html .= "<ul class=\"menu\"><li class=\"community\"><a href=\"".ENTRADA_URL."/community".$COMMUNITY_URL.":members\">View All Members</a></li></ul>\n";
@@ -803,6 +815,7 @@ if ($COMMUNITY_URL) {
                             exit;
 						}
 					}  elseif ($COMMUNITY_MODULE == "lticonsumer") {
+
 						$query  = "SELECT `page_title`, `page_content` FROM `community_pages` WHERE `cpage_id` = " . $db->qstr($PAGE_ID);
 						$result = $db->GetRow($query);
 
@@ -870,6 +883,12 @@ if ($COMMUNITY_URL) {
 
 					            $ltiConsumer = new LTIConsumer();
 					            $signedParams = $ltiConsumer->sign($parameters, $lti_settings->lti_url, "POST", $lti_settings->lti_key, $lti_settings->lti_secret);
+
+								if (!empty($COMMUNITY_PAGES["details"][$PAGE_URL])) {
+									$MODULE_TITLE = $COMMUNITY_PAGES["details"][$PAGE_URL]["menu_title"];
+									$BREADCRUMB[] = array("url" => COMMUNITY_URL.$COMMUNITY_URL.":".$PAGE_URL, "title" => $MODULE_TITLE);
+								}
+
 					            ?>
                                 <iframe name="ltiTestFrame" id="ltiTestFrame" src="" width="100%" height="700px" scrolling="auto" style="border: 1px solid rgba(0, 0, 0, 0.075);" transparency=""></iframe>
                                 <form id="ltiSubmitForm" name="ltiSubmitForm" method="POST" action="<?php echo html_encode($lti_settings->lti_url); ?>" target="ltiTestFrame" enctype="application/x-www-form-urlencoded">
@@ -1065,11 +1084,7 @@ if ($COMMUNITY_URL) {
 
                 // Determine whether or not to display the Bookmarks sidebar.
                 $settings = new Entrada_Settings();
-                if ($settings->read("bookmarks_display_sidebar")) {
-                    $smarty->assign("site_bookmarks_sidebar", Models_Bookmarks::showSidebar(true));
-                } else {
-                    $smarty->assign("site_bookmarks_sidebar", "");
-                }
+                $smarty->assign("site_bookmarks_sidebar", ($LOGGED_IN && $settings->read("bookmarks_display_sidebar")) ? Models_Bookmarks::showSidebar(true): "");
 
 				//build entrada sidebar
 				$smarty->assign("site_entrada_sidebar", ($LOGGED_IN ? Entrada_Utilities::myEntradaSidebar(true) : ""));

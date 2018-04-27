@@ -35,7 +35,7 @@ class Views_Gradebook_Assignments_Modal extends Views_Gradebook_Modal {
 		$html[] = '<div id="'.$this->getID().'" class="modal hide '.$this->getClass().'" tabindex="-1" role="dialog" aria-labelledby="'.$this->getID().'" aria-hidden="true">';
 		$html[] = '	<div class="modal-header clearfix">';
 		$html[] = '		<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>';
-		$html[] = '		<h3 class="pull-left">'.$this->getTitle().'</h3>';
+		$html[] = '		<h3>'.$this->getTitle().'</h3>';
 		$html[] = '		'.$this->getHeaderContent();
 		$html[] = '	</div>';
 		$html[] = '	<div class="modal-body">';

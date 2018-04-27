@@ -91,10 +91,10 @@ if ($RECORD_ID) {
                             switch($_FILES["uploaded_file"]["error"][$tmp_file_id]) {
                                 case 0 :
                                     if (($file_filesize = (int) trim($_FILES["uploaded_file"]["size"][$tmp_file_id])) <= $VALID_MAX_FILESIZE) {
-                                        $PROCESSED["file_version"]        = 1;
-                                        $PROCESSED["file_mimetype"]        = strtolower(trim($_FILES["uploaded_file"]["type"][$tmp_file_id]));
-                                        $PROCESSED["file_filesize"]        = $file_filesize;
-                                        $PROCESSED["file_filename"]        = useable_filename(trim($file_name));
+                                        $PROCESSED["file_version"] = 1;
+                                        $PROCESSED["file_mimetype"] = mime_content_type($_FILES["uploaded_file"]["tmp_name"][$tmp_file_id]);
+                                        $PROCESSED["file_filesize"] = $file_filesize;
+                                        $PROCESSED["file_filename"] = useable_filename(trim($file_name));
 
                                         if ((!defined("COMMUNITY_STORAGE_DOCUMENTS")) || (!@is_dir(COMMUNITY_STORAGE_DOCUMENTS)) || (!@is_writable(COMMUNITY_STORAGE_DOCUMENTS))) {
                                             $ERROR++;

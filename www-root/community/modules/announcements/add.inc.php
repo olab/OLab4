@@ -186,7 +186,7 @@ switch($STEP) {
 												<input type="checkbox" name="notify_members" id="notify_members" />
 											</td>
 											<td>
-												<label for="notify_members" class="form-nrequired">Notify Community Members of Announcement</label>
+												<label for="notify_members" class="form-nrequired"><?php echo $translate->_("Notify Community Members of Announcement"); ?></label>
 											</td>
 										</tr>
 									</tbody>

@@ -51,7 +51,7 @@ if((isset($_SESSION["isAuthorized"])) && ($_SESSION["isAuthorized"])) {
     
     if ($PROCESSED["id"]) {
         
-        $lo_file = Models_LearningObject::fetchRowByID($PROCESSED["id"]);
+        $lo_file = Models_LearningObject_Files::fetchRowByID($PROCESSED["id"]);
         
         if ($lo_file) {
             $file_realpath = LOR_STORAGE_PATH . "/" . $lo_file->getProxyID() . "/" . $PROCESSED["id"];
@@ -77,7 +77,7 @@ if((isset($_SESSION["isAuthorized"])) && ($_SESSION["isAuthorized"])) {
                         $file_realpath = $thumbnail_realpath;
                         $mime_type = "image/png";
                     } else {
-                        if (Models_LearningObject::generateLearningObjectThumbnail($file_realpath, $mime_type)) {
+                        if (Entrada_LearningObject_Files::generateLearningObjectThumbnail($file_realpath, $mime_type)) {
                             $file_realpath = $thumbnail_realpath;
                             $mime_type = "image/png";
                         }

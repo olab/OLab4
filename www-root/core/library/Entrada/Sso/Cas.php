@@ -78,7 +78,7 @@ class Entrada_Sso_Cas implements Entrada_Sso_Provider
     /**
      * Process Authentication tokens from SSO provider and map to local authorization database
      *
-     * @return array | null
+     * @return array|bool
      */
     public function validateUser()
     {
@@ -98,7 +98,7 @@ class Entrada_Sso_Cas implements Entrada_Sso_Provider
             }
         }
 
-        return null;
+        return false;
     }
 
     /**

@@ -58,7 +58,7 @@ if ($RECORD_ID) {
 								if (($file_filesize = (int) trim($_FILES["uploaded_file"]["size"])) <= $VALID_MAX_FILESIZE) {
 									if (!DEMO_MODE) {
 										$PROCESSED["file_version"]		= 1;
-										$PROCESSED["file_mimetype"]		= strtolower(trim($_FILES["uploaded_file"]["type"]));
+										$PROCESSED["file_mimetype"]		= mime_content_type($_FILES["uploaded_file"]["tmp_name"]);
 										$PROCESSED["file_filesize"]		= $file_filesize;
 										$PROCESSED["file_filename"]		= useable_filename(trim($_FILES["uploaded_file"]["name"]));
 									} else {

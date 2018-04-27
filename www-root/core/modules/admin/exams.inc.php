@@ -30,19 +30,25 @@ if (!defined("PARENT_INCLUDED")) {
 } elseif((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
     header("Location: ".ENTRADA_URL);
     exit;
-} elseif (!$ENTRADA_ACL->amIAllowed($MODULES["exams"]["resource"], $MODULES["exams"]["permission"], false)) {
+} elseif (!$ENTRADA_ACL->amIAllowed("examdashboard", "read", false)) {
     add_error(sprintf($translate->_("You do not have the permissions required to use this module.<br /><br />If you believe you are receiving this message in error please contact <a href=\"mailto:%1\$s\">%2\$s</a> for assistance."), html_encode($AGENT_CONTACTS["administrator"]["email"]), html_encode($AGENT_CONTACTS["administrator"]["name"])));
 
     echo display_error();
 
-    application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] do not have access to this module [".$MODULE."]");
+    application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] do not have access to this module [" . $MODULE . "]");
 } else {
     $MODULE_TEXT = $translate->_($MODULE);
-    if ($ENTRADA_ACL->amIAllowed("exam", "create", false)) {
+    if ($ENTRADA_ACL->amIAllowed("examdashboard", "read", false)) {
         $sidebar_html  = "<ul class=\"menu\">\n";
-        $sidebar_html .= "	<li class=\"".(!$SUBMODULE ? "on" : "off")."\"><a href=\"".ENTRADA_URL."/admin/".$MODULE."\">".$translate->_("Dashboard")."</a></li>";
-        $sidebar_html .= "	<li class=\"".($SUBMODULE == "exams" ? "on" : "off")."\"><a href=\"".ENTRADA_URL."/admin/".$MODULE."/exams\">".$translate->_("Exams")."</a></li>";
-        $sidebar_html .= "	<li class=\"".(in_array($SUBMODULE, array("questions", "groups", "import", "migrate", "migrateimages", "migrateresponses", "flagged")) ? "on" : "off")."\"><a href=\"".ENTRADA_URL."/admin/".$MODULE."/questions\">".$translate->_("Questions")."</a></li>";
+        if ($ENTRADA_ACL->amIAllowed("examdashboard", "read", false)) {
+            $sidebar_html .= "	<li class=\"" . (!$SUBMODULE ? "on" : "off") . "\"><a href=\"" . ENTRADA_URL . "/admin/" . $MODULE . "\">" . $translate->_("Dashboard") . "</a></li>";
+        }
+        if ($ENTRADA_ACL->amIAllowed("exam", "create", false)) {
+            $sidebar_html .= "	<li class=\"" . ($SUBMODULE == "exams" ? "on" : "off") . "\"><a href=\"" . ENTRADA_URL . "/admin/" . $MODULE . "/exams\">" . $translate->_("Exams") . "</a></li>";
+        }
+        if ($ENTRADA_ACL->amIAllowed("examquestionindex", "read", false)) {
+            $sidebar_html .= "	<li class=\"" . (in_array($SUBMODULE, array("questions", "groups", "import", "migrate", "migrateimages", "migrateresponses", "flagged")) ? "on" : "off") . "\"><a href=\"" . ENTRADA_URL . "/admin/" . $MODULE . "/questions\">" . $translate->_("Questions") . "</a></li>";
+        }
         $sidebar_html .= "</ul>\n";
 
         new_sidebar_item($translate->_("Manage Exams"), $sidebar_html, "page-exam", "open", 2);

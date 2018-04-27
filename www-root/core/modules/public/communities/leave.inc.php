@@ -35,7 +35,7 @@ if ($MAILING_LISTS["active"]) {
 	require_once("Entrada/mail-list/mail-list.class.php");
 }
 
-$BREADCRUMB[]		= array("url" => ENTRADA_URL."/communities", "title" => "Community Registration");
+$BREADCRUMB[]		= array("url" => ENTRADA_URL."/communities", "title" => $translate->_("Community Registration"));
 
 $COMMUNITY_ID		= 0;
 
@@ -96,7 +96,7 @@ if($COMMUNITY_ID) {
 					default :
 						echo "<h1>".html_encode($community_details["community_title"])."</h1>\n";
 						if($community_details["community_description"]) {
-							echo "<div class=\"content-small\" style=\"margin-bottom: 15px\"><strong>Community Description:</strong> ".nl2br(html_encode($community_details["community_description"]))."</div>";
+							echo "<div class=\"content-small\" style=\"margin-bottom: 15px\"><strong>" . $translate->_("Community Description") . ":</strong> ".nl2br(html_encode($community_details["community_description"]))."</div>";
 						}
 
 						//Be sure guests are informed if they are leaving the community

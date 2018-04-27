@@ -123,7 +123,7 @@ class Views_Deprecated_Rubric extends Views_Deprecated_Base {
                 }
             }
             if ($item_responses) {
-                $html .= "<tr><th></th>";
+                $html .= "<tr class=\"rubric-descriptors\"><th></th>";
                 foreach($item_responses as $item) {
                     $response_descriptor = Models_Assessments_Response_Descriptor::fetchRowByIDIgnoreDeletedDate($item->getArdescriptorID());
                     $descriptor_id = "";

@@ -22,8 +22,16 @@
 
 class Models_Schedule_Audience extends Models_Base {
 
-    protected $saudience_id, $one45_p_id, $schedule_id, $schedule_slot_id, $audience_type, $audience_value, $deleted_date;
+    protected $saudience_id;
+    protected $schedule_id;
+    protected $schedule_slot_id;
+    protected $audience_type;
+    protected $audience_value;
+    protected $custom_start_date;
+    protected $custom_end_date;
+    protected $deleted_date;
 
+    protected static $database_name = DATABASE_NAME;
     protected static $table_name = "cbl_schedule_audience";
     protected static $primary_key = "saudience_id";
     protected static $default_sort_column = "saudience_id";
@@ -32,20 +40,12 @@ class Models_Schedule_Audience extends Models_Base {
         parent::__construct($arr);
     }
 
-    public function getAudienceType() {
-        return $this->audience_type;
+    public function getID() {
+        return $this->saudience_id;
     }
 
-    public function getAudienceValue() {
-        return $this->audience_value;
-    }
-
-    public function getDeletedDate() {
-        return $this->deleted_date;
-    }
-
-    public function getOne45PID() {
-        return $this->one45_p_id;
+    public function getSAudienceID() {
+        return $this->saudience_id;
     }
 
     public function getScheduleID() {
@@ -56,12 +56,24 @@ class Models_Schedule_Audience extends Models_Base {
         return $this->schedule_slot_id;
     }
 
-    public function getSaudienceID() {
-        return $this->saudience_id;
+    public function getAudienceType() {
+        return $this->audience_type;
     }
 
-    public function getID() {
-        return $this->saudience_id;
+    public function getAudienceValue() {
+        return $this->audience_value;
+    }
+
+    public function getCustomStartDate() {
+        return $this->custom_start_date;
+    }
+
+    public function getCustomEndDate() {
+        return $this->custom_end_date;
+    }
+
+    public function getDeletedDate() {
+        return $this->deleted_date;
     }
 
     public static function fetchRowByID($saudience_id) {
@@ -127,9 +139,15 @@ class Models_Schedule_Audience extends Models_Base {
         return $grouped;
     }
 
-    public static function fetchAllByProxyID($proxy_id) {
+    public static function fetchAllByProxyID($proxy_id, $group_by_parent_id = false) {
         global $db;
-        $query = "SELECT a.*, b.`schedule_order`, c.`slot_type_id`
+        if ($group_by_parent_id) {
+            $GROUP_BY = "GROUP BY b.`schedule_parent_id`";
+        } else {
+            $GROUP_BY = "";
+        }
+
+        $query = "SELECT a.*, b.`schedule_order`, c.`slot_type_id`, b.`schedule_parent_id`
                     FROM `cbl_schedule_audience` AS a
                     JOIN `cbl_schedule` AS b
                     ON  a.`schedule_id` = b.`schedule_id`
@@ -137,6 +155,7 @@ class Models_Schedule_Audience extends Models_Base {
                     ON a.`schedule_slot_id` = c.`schedule_slot_id`
                     WHERE a.`audience_value` = ?
                     AND a.`deleted_date` IS NULL
+                    $GROUP_BY
                     ORDER BY b.`start_date`";
         $results = $db->getAll($query, array($proxy_id));
         return $results;

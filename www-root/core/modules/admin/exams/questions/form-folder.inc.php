@@ -79,6 +79,12 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_FOLDER") && !defined("EDIT_F
                 add_error($translate->_("You must provide a <strong>Color</strong> for this folder."));
             }
 
+            if ($PROCESSED["folder_id"] === $PROCESSED["parent_folder_id"]) {
+                add_error("You can't make a folder its own parent. Please chose a different parent folder.");
+            }
+
+            $PROCESSED["folder_type"] = "question";
+
             if (!has_error()) {
                 $PROCESSED["organisation_id"] = $ENTRADA_USER->getActiveOrganisation();
                 $PROCESSED["created_date"] = time();
@@ -86,7 +92,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_FOLDER") && !defined("EDIT_F
                 $PROCESSED["created_by"] = $ENTRADA_USER->getActiveID();
                 $PROCESSED["updated_by"] = $ENTRADA_USER->getActiveID();
 
-                $parent_folder = Models_Exam_Question_Bank_Folders::fetchRowByID($PROCESSED["parent_folder_id"]);
+                $parent_folder = Models_Exam_Bank_Folders::fetchRowByID($PROCESSED["parent_folder_id"]);
                 if (isset($parent_folder) && is_object($parent_folder)) {
                     if ($METHOD == "insert") {
                         //only change order on new folders
@@ -94,7 +100,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_FOLDER") && !defined("EDIT_F
                     }
                 } else {
                     //need to create object for parent folder of 0 = index
-                    $parent_folder = new Models_Exam_Question_Bank_Folders(
+                    $parent_folder = new Models_Exam_Bank_Folders(
                         array(
                             "folder_id" => 0
                         )
@@ -104,14 +110,15 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_FOLDER") && !defined("EDIT_F
                         $PROCESSED["folder_order"] = $parent_folder->getNextFolderOrder();
                     }
                 }
-                $folder = new Models_Exam_Question_Bank_Folders($PROCESSED);
+
+                $folder = new Models_Exam_Bank_Folders($PROCESSED);
 
                 if ($folder->{$METHOD}()) {
                     if ($METHOD == "update") {
                         $url = ENTRADA_URL."/admin/".$MODULE."/".$SUBMODULE;
                         $success_msg = sprintf($translate->_("The folder has been successfully updated. You will be redirected to the question bank index, please <a href=\"%s\">click here</a> if you do not wish to wait."), $url);
                     } else {
-                        $folder_author = new Models_Exam_Question_Bank_Folder_Authors(
+                        $folder_author = new Models_Exam_Bank_Folder_Authors(
                             array(
                                 "folder_id"     => $folder->getID(),
                                 "author_type"   => "proxy_id",
@@ -125,7 +132,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_FOLDER") && !defined("EDIT_F
                             add_error($translate->_("An error occurred while attempting to save the folder author, database said: " . $db->ErrorMsg()));
                         }
 
-                        $folder_org = new Models_Exam_Question_Bank_Folder_Organisations(
+                        $folder_org = new Models_Exam_Bank_Folder_Organisations(
                             array(
                                 "folder_id"         => $folder->getID(),
                                 "organisation_id"   => $ENTRADA_USER->getActiveOrganisation(),
@@ -139,14 +146,13 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_FOLDER") && !defined("EDIT_F
                         }
 
                         $url = ENTRADA_URL."/admin/".$MODULE."/".$SUBMODULE;
-                        $success_msg = sprintf($translate->_("The folder has been successfully added. You will be redirected to the question bank index, please <a href=\"%s\">click here</a> if you do not wish to wait."), $url);
+
+                        $edit_folder_url = $url . "?section=edit-folder&id=" . $folder->getId();
+
+                        $success_msg = sprintf($translate->_("The folder has been successfully added. You will be redirected to the question bank index, please <a href=\"%s\">click here</a> if you do not wish to wait. <br><br>If you wish to add authors to the folder, please click <a href=\"%s\">here</a>."), $url, $edit_folder_url);
                     }
 
-                    if ($METHOD == "insert") {
-                        add_success($success_msg);
-                    } else {
-                        add_success($success_msg);
-                    }
+                    add_success($success_msg);
 
                     $ONLOAD[] = "setTimeout('window.location=\\'".$url."\\'', 5000)";
                 } else {
@@ -184,9 +190,11 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_FOLDER") && !defined("EDIT_F
             if (has_error()) {
                 echo display_error();
             }
+
             //get colors
-            $images = Models_Exam_Lu_Question_Bank_Folder_Images::fetchAllRecords();
-            $initial_folders = Models_Exam_Question_Bank_Folders::fetchAllByParentID($PROCESSED["parent_folder_id"]);
+            $images = Models_Exam_Lu_Bank_Folder_Images::fetchAllRecords();
+            $initial_folders = Models_Exam_Bank_Folders::fetchAllByParentID($PROCESSED["parent_folder_id"], "question");
+
             /**
              * Load the rich text editor.
              */
@@ -207,23 +215,24 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_FOLDER") && !defined("EDIT_F
             </script>
         <?php
             if ($PROCESSED["parent_folder_id"] === 0) {
-                $root_folder = new Models_Exam_Question_Bank_Folders(
+                $root_folder = new Models_Exam_Bank_Folders(
                     array(
                         "folder_id"     => 0,
                         "folder_title"  => "Index",
+                        "folder_type"   => "exam",
                         "image_id"      => 3
                     )
                 );
 
-                $initial_folder_view = new Views_Exam_Question_Bank_Folder($root_folder);
+                $initial_folder_view = new Views_Exam_Bank_Folder($root_folder);
                 if (isset($initial_folder_view) && is_object($initial_folder_view)) {
                     $title          = $initial_folder_view->renderFolderSelectorTitle();
                     $folder_view    = $initial_folder_view->renderSimpleView();
                 }
             } else {
-                $parent_folder = Models_Exam_Question_Bank_Folders::fetchRowByID($PROCESSED["parent_folder_id"]);
+                $parent_folder = Models_Exam_Bank_Folders::fetchRowByID($PROCESSED["parent_folder_id"]);
                 if (isset($parent_folder) && is_object($parent_folder)) {
-                    $parent_folder_view = new Views_Exam_Question_Bank_Folder($parent_folder);
+                    $parent_folder_view = new Views_Exam_Bank_Folder($parent_folder);
                     $title              = $parent_folder_view->renderFolderSelectorTitle();
                     $folder_view        = $parent_folder_view->renderSimpleView();
                     $nav                = $parent_folder_view->renderFolderSelectorBackNavigation();
@@ -251,7 +260,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_FOLDER") && !defined("EDIT_F
                         } else {
                             $active = 0;
                         }
-                        $image_view = new Views_Exam_Question_Bank_Folder_Image($image);
+                        $image_view = new Views_Exam_Bank_Folder_Image($image);
                         $image_html .= $image_view->render(1, $active, 1);
                     }
 
@@ -310,8 +319,10 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_FOLDER") && !defined("EDIT_F
                             });
                         });
                     </script>
+                    <h2>Folder Authors</h2>
+
                     <div class="control-group exam-authors">
-                        <label class="control-label form-nrequired" for="question-permissions"><?php echo $SUBMODULE_TEXT["folder"]["label_folder_author"]; ?></label>
+                        <label class="control-label form-nrequired" for="question-permissions"><?php echo $SUBMODULE_TEXT["folder"]["label_folder_permissions"]; ?></label>
                         <div class="controls">
                             <input class="span6" type="text" name="contact_select" id="contact-selector" />
                             <select class="span5" name="contact_type" id="contact-type" class="span3">
@@ -322,10 +333,10 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_FOLDER") && !defined("EDIT_F
                             <?php
 
                             $type_array     = array("organisation_id", "course_id", "proxy_id");
-                            $authors = Models_Exam_Question_Bank_Folder_Authors::fetchAllInheritedByFolderID($PROCESSED["folder_id"]);
+                            $authors = Models_Exam_Bank_Folder_Authors::fetchAllInheritedByFolderID($PROCESSED["folder_id"]);
 
                             foreach ($type_array as $type) {
-                                echo $html = Views_Exam_Question_Bank_Folder_Author::renderTypeUL($type, $authors[$type]);
+                                echo $html = Views_Exam_Bank_Folder_Author::renderTypeUL($type, $authors[$type]);
                             }
                             ?>
                         </div>
@@ -337,32 +348,43 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_FOLDER") && !defined("EDIT_F
                 </div>
             </form>
             <div id="parent-folder-modal" class="modal hide fade">
-                <div class="modal-header"><h1></h1></div>
+                <div class="modal-header"><h3><?php echo $SUBMODULE_TEXT["folder"]["label_folder_parent_select"];?></h3></div>
                 <div class="modal-body">
-                    <div id="qbf-selector">
+                    <div class="qbf-selector">
                         <div id="qbf-title">
                             <span class="qbf-title"><?php echo $title;?></span>
                         </div>
                         <div id="qbf-nav">
                             <?php echo $nav;?>
                         </div>
-                        <span id="qbf-folder-<?php echo $PROCESSED["parent_folder_id"];?>" class="qbf-folder active">
+                        <div id="qbf-folder-<?php echo $PROCESSED["parent_folder_id"];?>" class="qbf-folder active">
                             <table>
                                 <?php
                                 if (isset($initial_folders) && is_array($initial_folders) && !empty($initial_folders)) {
+
                                     if ($PROCESSED["parent_folder_id"] == 0) {
                                         echo $initial_folder_view->renderFolderSelectorRow();
                                     }
 
                                     foreach ($initial_folders as $folder) {
                                         if (is_object($folder)) {
-                                            if ($folder->getID() == $PROCESSED["parent_folder_id"]) {
-                                                $selected = true;
-                                            } else {
-                                                $selected = false;
+                                            if ((defined("EDIT_FOLDER") && EDIT_FOLDER === true) && ($folder->getID() != $_GET['id'])){
+                                                if ($folder->getID() == $PROCESSED["parent_folder_id"]) {
+                                                    $selected = true;
+                                                } else {
+                                                    $selected = false;
+                                                }
+                                                $folder_view = new Views_Exam_Bank_Folder($folder);
+                                                echo $folder_view->renderFolderSelectorRow($selected);
+                                            } else if (!defined("EDIT_FOLDER") && EDIT_FOLDER !== true) {
+                                                if ($folder->getID() == $PROCESSED["parent_folder_id"]) {
+                                                    $selected = true;
+                                                } else {
+                                                    $selected = false;
+                                                }
+                                                $folder_view = new Views_Exam_Bank_Folder($folder);
+                                                echo $folder_view->renderFolderSelectorRow($selected);
                                             }
-                                            $folder_view = new Views_Exam_Question_Bank_Folder($folder);
-                                            echo $folder_view->renderFolderSelectorRow($selected);
                                         }
                                     }
                                 } else {
@@ -373,13 +395,13 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("ADD_FOLDER") && !defined("EDIT_F
                                 }
                                 ?>
                             </table>
-                        </span>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <div id="qpf-confirm">
                         <button class="btn btn-default pull-left" id="cancel-folder-move"><?php echo $DEFAULT_TEXT_LABELS["btn_cancel"]; ?></button>
-                        <button class="btn btn-primary pull-right" id="confirm-folder-move" data-type="folder"><?php echo $DEFAULT_TEXT_LABELS["btn_move"]; ?></button>
+                        <button class="btn btn-primary pull-right" id="confirm-folder-move" data-type="folder"><?php echo defined("EDIT_FOLDER") && EDIT_FOLDER === true ? $DEFAULT_TEXT_LABELS["btn_move"] : $translate->_("Done") ?></button>
                     </div>
                 </div>
             </div>

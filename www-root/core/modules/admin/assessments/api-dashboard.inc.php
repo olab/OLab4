@@ -45,7 +45,8 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ASSESSMENTS"))) {
         case "POST":
             switch ($request["method"]) {
                 case "hide-deleted-tasks":
-                    $PROCESSED["deleted_task_ids"] = array();
+                    $PROCESSED["deleted_task_ids"] = $PROCESSED["deleted_task_types"] = array();
+
                     if (isset($_POST["deleted_task_ids"]) && is_array($_POST["deleted_task_ids"]) && !empty($_POST["deleted_task_ids"])) {
                         $PROCESSED["deleted_task_ids"] = array_map(
                             function ($val) {
@@ -55,12 +56,34 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ASSESSMENTS"))) {
                         );
                     }
 
-                    if (!empty($PROCESSED["deleted_task_ids"])) {
+                    if (isset($_POST["deleted_task_types"]) && is_array($_POST["deleted_task_types"]) && !empty($_POST["deleted_task_types"])) {
+                        $PROCESSED["deleted_task_types"] = array_map(
+                            function ($val) {
+                                return clean_input(strtolower($val), array("trim", "striptags"));
+                            },
+                            $_POST["deleted_task_types"]
+                        );
+                    }
+
+                    if (!empty($PROCESSED["deleted_task_ids"]) && !empty($PROCESSED["deleted_task_types"])) {
+                        $ctr = 0;
                         foreach ($_POST["deleted_task_ids"] as $deleted_task_id) {
-                            $deleted_task = Models_Assessments_DeletedTask::fetchRowByID($deleted_task_id);
-                            if (!$deleted_task->fromArray(array("visible" => 0))->update()) {
-                                add_error($translate->_("Unable to hide task(s)."));
-                                break;
+                            $deleted_task = false;
+
+                            if ($PROCESSED["deleted_task_types"][$ctr++] === "task") {
+                                $deleted_task = Models_Assessments_AssessmentTarget::fetchRowByID($deleted_task_id, time());
+                            } else {
+                                $deleted_task = Models_Assessments_Distribution_Delegation::fetchRowByID($deleted_task_id);
+                            }
+
+                            if ($deleted_task) {
+                                $deleted_task->setVisible(0);
+                                if (!$deleted_task->update()) {
+                                    add_error($translate->_("Unable to hide task(s)."));
+                                    break;
+                                }
+                            } else {
+                                add_error($translate->_("Deleted task not found. Unable to hide task(s)."));
                             }
                         }
                     } else {
@@ -95,18 +118,34 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ASSESSMENTS"))) {
                         $PROCESSED["search_value"] = "";
                     }
 
+                    $PROCESSED["schedule_type"] = "all";
+                    if (isset($_GET["schedule_type"]) && $tmp_input = clean_input(strtolower($_GET["schedule_type"]), array("trim", "striptags"))) {
+                        $PROCESSED["schedule_type"] = $tmp_input;
+                    }
+
                     $incomplete_tasks = array();
                     if (!$ERROR) {
-                        $incomplete_tasks = Entrada_Utilities_Assessments_AssessmentTask::getAllTasksForAssociatedLearnersAssociatedFaculty($PROCESSED["task_type"], $PROCESSED["offset"], 100, false, $PROCESSED["search_value"]);
+                        $incomplete_tasks = Entrada_Utilities_Assessments_DeprecatedAssessmentTask::getAllTasksForAssociatedLearnersAssociatedFaculty($PROCESSED["task_type"], $ENTRADA_USER->getActiveOrganisation(), $PROCESSED["offset"], 100, false, $PROCESSED["search_value"], $PROCESSED["schedule_type"]);
                         if ($incomplete_tasks) {
                             foreach ($incomplete_tasks as $key => $incomplete_task) {
                                 $incomplete_tasks[$key]["full_name"] = $incomplete_task["assessor_type"] == "external" ? $incomplete_task["external_full_name"] : $incomplete_task["internal_full_name"];
+
+                                if ($incomplete_task["task_type"] == "task") {
+                                    $ctr = 0;
+                                    $atarget_id_list = array();
+
+                                    while (isset($incomplete_task[$ctr]) && isset($incomplete_task[$ctr]["atarget_id"])) {
+                                        $atarget_id_list[] = $incomplete_task[$ctr++]["atarget_id"];
+                                    }
+
+                                    $incomplete_tasks[$key]["atarget_id"] = implode(",", $atarget_id_list);
+                                }
                             }
                         }
                     }
 
                     if (!$ERROR && is_array($incomplete_tasks) && !empty($incomplete_tasks)) {
-                        echo json_encode(array("status" => "success", "data" => $incomplete_tasks));
+                        echo json_encode(array("status" => "success", "data" => array($incomplete_tasks, null)));
                     } else {
                         echo json_encode(array("status" => "error", "data" => $translate->_("No tasks were found.")));
                     }
@@ -131,18 +170,42 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ASSESSMENTS"))) {
 
                     $upcoming_tasks = array();
                     if (!$ERROR) {
-                        $upcoming_tasks = Models_Assessments_FutureTaskSnapshot::getAllFutureTasksForAssociatedLearnersAssociatedFaculty($PROCESSED["task_type"], $PROCESSED["offset"], 100, false, $PROCESSED["search_value"]);
+                        $upcoming_tasks = Models_Assessments_FutureTaskSnapshot::fetchAllFutureTasksForAssociatedLearnersAssociatedFaculty($PROCESSED["task_type"], $ENTRADA_USER->getActiveOrganisation(), $PROCESSED["offset"], 100, false, $PROCESSED["search_value"]);
+
                         if ($upcoming_tasks) {
-                            $future_task_model = new Models_Assessments_FutureTaskSnapshot();
+                            $upcoming_task_array_list = array();
+                            $serialized_upcoming_task_list = array();
+
                             foreach ($upcoming_tasks as $key => $upcoming_task) {
-                                $upcoming_tasks[$key]["target_name"] = $future_task_model->getTarget($upcoming_task["target_value"], $upcoming_task["target_type"]);
-                                $upcoming_tasks[$key]["full_name"] = $upcoming_task["assessor_type"] == "external" ? $upcoming_task["external_full_name"] : $upcoming_task["internal_full_name"];
+                                $upcoming_task_array = $upcoming_task->toArray();
+
+                                $upcoming_task_array["target_name"] = $upcoming_task->getTarget();
+
+                                $distribution = Models_Assessments_Distribution::fetchRowByID($upcoming_task->getDistributionID());
+                                if ($distribution) {
+                                    $upcoming_task_array["title"] = $distribution->getTitle();
+                                }
+
+                                if ($upcoming_task->getAssessorType() == "external") {
+                                    $external_user = Models_Assessments_Distribution_ExternalAssessor::fetchRowByID($upcoming_task->getAssessorValue());
+                                    if ($external_user) {
+                                        $upcoming_task_array["full_name"] = $external_user->getFirstname() . " " . $external_user->getLastname();
+                                    }
+                                } else {
+                                    $internal_user = Models_User::fetchRowByID($upcoming_task->getAssessorValue());
+                                    if ($internal_user) {
+                                        $upcoming_task_array["full_name"] = $internal_user->getFullname(false);
+                                    }
+                                }
+
+                                $upcoming_task_array_list[] = $upcoming_task_array;
+                                $serialized_upcoming_task_list[] = json_encode(serialize($upcoming_task));
                             }
                         }
                     }
 
                     if (!$ERROR && is_array($upcoming_tasks) && !empty($upcoming_tasks)) {
-                        echo json_encode(array("status" => "success", "data" => $upcoming_tasks));
+                        echo json_encode(array("status" => "success", "data" => array($upcoming_task_array_list, $serialized_upcoming_task_list)));
                     } else {
                         echo json_encode(array("status" => "error", "data" => $translate->_("No tasks were found.")));
                     }
@@ -165,18 +228,23 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ASSESSMENTS"))) {
                         $PROCESSED["search_value"] = "";
                     }
 
+                    $PROCESSED["schedule_type"] = "all";
+                    if (isset($_GET["schedule_type"]) && $tmp_input = clean_input(strtolower($_GET["schedule_type"]), array("trim", "striptags"))) {
+                        $PROCESSED["schedule_type"] = $tmp_input;
+                    }
+
                     $deleted_tasks = array();
                     if (!$ERROR) {
-                        $deleted_tasks = Models_Assessments_DeletedTask::getAllDeletedTasksForAssociatedLearnersAssociatedFaculty($PROCESSED["task_type"], $PROCESSED["offset"], 100, false, $PROCESSED["search_value"]);
+                        $deleted_tasks = Entrada_Utilities_Assessments_DeprecatedAssessmentTask::getAllDeletedTasksForAssociatedLearnersAssociatedFaculty($PROCESSED["task_type"], $ENTRADA_USER->getActiveOrganisation(), $PROCESSED["offset"], 100, false, $PROCESSED["search_value"], null, null, $PROCESSED["schedule_type"]);
                         if ($deleted_tasks) {
                             foreach ($deleted_tasks as $key => $deleted_task) {
-                                $deleted_tasks[$key]["full_name"] = $deleted_task["assessor_type"] == "external" ? $deleted_task["external_full_name"] : $deleted_task["internal_full_name"];
+                                $deleted_tasks[$key]["full_name"] = $deleted_task["assessor_type"] == "external" || $deleted_task["assessor_type"] == "external_assessor_id" ? $deleted_task["external_full_name"] : $deleted_task["internal_full_name"];
                             }
                         }
                     }
 
                     if (!$ERROR && is_array($deleted_tasks) && !empty($deleted_tasks)) {
-                        echo json_encode(array("status" => "success", "data" => $deleted_tasks));
+                        echo json_encode(array("status" => "success", "data" => array($deleted_tasks, null)));
                     } else {
                         echo json_encode(array("status" => "error", "data" => $translate->_("No tasks were found.")));
                     }

@@ -36,13 +36,18 @@ class Views_Assessments_Forms_Controls_FormOptionButtons extends Views_Assessmen
      */
     protected function renderView($options = array()) {
         global $translate;
-        $form_in_use     = $options["form_in_use"];
-        $form_id         = $options["form_id"];
-        $element_count   = @$options["element_count"] ? (int)$options["element_count"] : 0;
-        $referrer_hash   = @$options["referrer_hash"];
-        $items_list_url  = Entrada_Utilities_FormStorageSessionHelper::buildRefURL(ENTRADA_URL."/admin/assessments/items?", $referrer_hash);
-        $rubric_list_url = Entrada_Utilities_FormStorageSessionHelper::buildRefURL(ENTRADA_URL."/admin/assessments/rubrics?", $referrer_hash);
-        $hide_class      = $element_count ? "" : "hide";
+        $form_in_use            = $options["form_in_use"];
+        $blueprint_generated    = @$options["blueprint_generated"];
+        $form_id                = $options["form_id"];
+        $element_count          = @$options["element_count"] ? (int)$options["element_count"] : 0;
+        $referrer_hash          = @$options["referrer_hash"];
+        $items_list_url         = Entrada_Utilities_FormStorageSessionHelper::buildRefURL(ENTRADA_URL."/admin/assessments/items?", $referrer_hash);
+        $rubric_list_url        = Entrada_Utilities_FormStorageSessionHelper::buildRefURL(ENTRADA_URL."/admin/assessments/rubrics?", $referrer_hash);
+        $hide_class             = $element_count ? "" : "hide";
+
+        $pdf_generation_url = array_key_exists("pdf_generation_url", $options)
+            ? $options["pdf_generation_url"]
+            : "?section=edit-form&form_id={$form_id}&generate-pdf=true";
         ?>
         <div class="row-fluid space-below">
 
@@ -54,7 +59,7 @@ class Views_Assessments_Forms_Controls_FormOptionButtons extends Views_Assessmen
 
             <div class="pull-right">
 
-                <a href="?section=edit-form&form_id=<?php echo $form_id; ?>&generate-pdf=true"
+                <a href="<?php echo $pdf_generation_url ?>"
                    name="generate-pdf"
                    class="btn btn-success space-right always-enabled visible-when-form-populated <?php echo $hide_class ?>">
                     <i class="icon-download-alt icon-white"></i> <?php echo $translate->_("Download PDF"); ?>
@@ -62,9 +67,11 @@ class Views_Assessments_Forms_Controls_FormOptionButtons extends Views_Assessmen
 
                 <div class="btn-group visible-when-form-populated <?php echo $hide_class ?>">
                     <button id="preview-form" class="btn"><i class="icon-eye-open"></i> <?php echo $translate->_("Preview Form"); ?></button>
-                    <a id="copy-form-link" href="#copy-form-modal" data-toggle="modal" class="btn">
-                        <i class="icon-share"></i> <?php echo $translate->_("Copy Form"); ?>
-                    </a>
+                    <?php if (!$blueprint_generated): ?>
+                        <a id="copy-form-link" href="#copy-form-modal" data-toggle="modal" class="btn">
+                            <i class="icon-share"></i> <?php echo $translate->_("Copy Form"); ?>
+                        </a>
+                    <?php endif; ?>
                 </div>
 
                 <div class="btn-group <?php echo $form_in_use ? "hide" : ""; ?>">

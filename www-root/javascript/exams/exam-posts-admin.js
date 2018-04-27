@@ -1,8 +1,6 @@
 var dates_times = {};
 var exam_post_ids = [];
 var exceptions = {};
-var current_user;
-var event_id;
 var course_id;
 jQuery(function($) {
     dates_times["exam_start_date"]      = $("#exam_start_date").val();
@@ -17,6 +15,11 @@ jQuery(function($) {
     dates_times["release_end_date"]       = $("#release_end_date").val();
     dates_times["release_end_time"]       = $("#release_end_time").val();
 
+    dates_times["initial_release_start_date"]     = $("#release_start_date").val();
+    dates_times["initial_release_start_time"]     = $("#release_start_time").val();
+    dates_times["initial_release_end_date"]       = $("#release_end_date").val();
+    dates_times["initial_release_end_time"]       = $("#release_end_time").val();
+
     dates_times["initial_exam_start_date"]      = $("#exam_start_date").val();
     dates_times["initial_exam_start_time"]      = $("#exam_start_time").val();
     dates_times["initial_exam_end_date"]        = $("#exam_end_date").val();
@@ -24,16 +27,27 @@ jQuery(function($) {
     dates_times["initial_exam_submission_date"] = $("#exam_submission_date").val();
     dates_times["initial_exam_submission_time"] = $("#exam_submission_time").val();
 
-    dates_times["initial_release_start_date"]     = $("#release_start_date").val();
-    dates_times["initial_release_start_time"]     = $("#release_start_time").val();
-    dates_times["initial_release_end_date"]       = $("#release_end_date").val();
-    dates_times["initial_release_end_time"]       = $("#release_end_time").val();
     dates_times["initial_exam_start_date"]      = $("#exam_start_date").val();
     dates_times["initial_exam_start_time"]      = $("#exam_start_time").val();
     dates_times["initial_exam_end_date"]        = $("#exam_end_date").val();
     dates_times["initial_exam_end_time"]        = $("#exam_end_time").val();
 
+    // Set up some vars...
+    var referrer = $("#referrer").val();
+    var exam_id = $("input#exam-id").val();
+    var event_id = $(".event-id").val();
     var redirect_section = $("#wizard-step-input").val();
+    var post_id = jQuery("#post_id").val() == "" ? null : parseInt(jQuery("#post_id").val());
+    var is_redirect = false;
+    var is_editing = false;
+
+    if (redirect_section > 1) {
+        is_redirect = true;
+    }
+
+    if (post_id != null && post_id > 0) {
+        is_editing = true;
+    }
 
     $(".panel .remove-target-toggle").on("click", function (e) {
         e.preventDefault();
@@ -60,13 +74,10 @@ jQuery(function($) {
         }
     });
 
-    var exception_data_table = $("#exceptions-table table").DataTable();
-
     /**
      *
      * Delete Exam event listener.
      */
-
     $("#delete_exam_posts").on("click", function (e) {
         getCheckedExamsPosts(e);
     });
@@ -80,7 +91,6 @@ jQuery(function($) {
      * Event listeners associated with creating distributions
      *
      */
-
     $("#choose-exam-btn").change(function() {
         var title = $("#choose-exam-btn").text();
         $("#exam-title").val(title);
@@ -108,9 +118,23 @@ jQuery(function($) {
     });
 
     $("#secure_false").change(function() {
-        var secure_false_value = $(this).is(":checked") ;
-        if (secure_false_value == true) {
-            $("#wizard-nav-item-3").removeClass("complete");
+        if ($(this).is(":checked")) {
+            security_options = false;
+            $("#wizard-nav-item-6").removeClass("complete");
+            $(".honor-code-group").hide();
+            $("#wizard-nav-item-6").fadeOut(500);
+        } else {
+            $(".honor-code-group").show();
+        }
+    });
+
+    $("#secure_true").change(function() {
+        if ($(this).is(":checked")) {
+            security_options = true;
+            $(".honor-code-group").show();
+            $("#wizard-nav-item-6").fadeIn(500);
+        } else {
+            $(".honor-code-group").hide();
         }
     });
 
@@ -126,7 +150,7 @@ jQuery(function($) {
         }
         $(".item-body").each(function() {
             var id_others = $(this).attr("id");
-            if (id_others == id_select){
+            if (id_others == id_select) {
                 $("#"+id_select).toggle();
                 $("#resume_password_"+ id_select + ($("#use_resume_password").is(":checked") ? "" : ":not(#resume_password_seb)")).removeAttr("disabled");
                 if (id_select == "rp_now") {
@@ -164,9 +188,13 @@ jQuery(function($) {
      */
     function format_date(date_object) {
         var date_collection = {};
-        date_collection.date_string     = date_object.getFullYear() + "-" + (date_object.getMonth() + 1) + "-" + date_object.getDate();
+        var month = (date_object.getMonth() + 1) < 10 ? "0" + (date_object.getMonth() + 1) : (date_object.getMonth() + 1);
+        var day = date_object.getDate() < 10 ? "0" + date_object.getDate() : date_object.getDate();
+
+        date_collection.date_string     = date_object.getFullYear() + "-" + month + "-" + day;
         date_collection.date_string_us  = (date_object.getMonth() + 1) + "/" + date_object.getDate() + "/" + date_object.getFullYear();
         date_collection.time_string     = (date_object.getHours() < 10 ? "0" + date_object.getHours() : date_object.getHours()) + ":" + (date_object.getMinutes() < 10 ? "0" + date_object.getMinutes() : date_object.getMinutes());
+
         return date_collection;
     }
 
@@ -237,7 +265,7 @@ jQuery(function($) {
     var $secure_key_exists = false;
     var post_id = $("#search-targets-form").find("input[name=\"post_id\"]").val();
 
-    $("#wizard-step-3").on("click", ".delete-item", function(event) {
+    $("#wizard-step-6").on("click", ".delete-item", function(event) {
         var $section = $(this).parents(".item-section");
         deleteButtonState($section);
     });
@@ -245,7 +273,7 @@ jQuery(function($) {
     /**
      * Delete Secure Access Files on click
      */
-    $("#wizard-step-3").on("click", "#delete-secure-file", function(event) {
+    $("#wizard-step-6").on("click", "#delete-secure-file", function(event) {
         event.preventDefault();
         event.stopPropagation();
         /**
@@ -293,25 +321,28 @@ jQuery(function($) {
     /**
      * Delete Secure Access Keys on click
      */
-    $("#wizard-step-3").on("click", "#delete-secure-keys", function(event){
+    $("#wizard-step-6").on("click", "#delete-secure-keys", function(event) {
         event.preventDefault();
         event.stopPropagation();
         /**
          * Delete Secure Keys
          * @type {*|jQuery}
          */
-        var $delete_keys = $(".secure-key-list").find("input[name=\"delete[]\"]:checked").filter(function(){
+        var $delete_keys = $(".secure-key-list").find("input[name=\"delete[]\"]:checked").filter(function() {
             return this.value;
         });
-        var $local_keys = $(".secure-key-list").find("input[name=\"delete[]\"]:checked").filter(function(){
+
+        var $local_keys = $(".secure-key-list").find("input[name=\"delete[]\"]:checked").filter(function() {
             return !this.value;
         });
-        if ($delete_keys.length){
-            $.each($delete_keys, function(){
+
+        if ($delete_keys.length) {
+            $.each($delete_keys, function() {
                 $(".secure-key-list").append("<input type=\"hidden\" name=\"secure_key_delete[]\" value=\"" + $(this).val() + "\" />");
                 $(this).parents("tr").remove();
             });
         }
+
         //Always remove local keys
         if ($local_keys.length) {
             $.each($local_keys, function () {
@@ -319,7 +350,7 @@ jQuery(function($) {
             });
         }
 
-        if (!$(".secure-key-list").find("tbody > tr").length){
+        if (!$(".secure-key-list").find("tbody > tr").length) {
             $(".secure-key-list").html("<div class=\"alert alert-info text-center\" id=\"secure-access-file-empty\"><h3>Please add a secure key for this exam.</h3> <p>You must attach a secure key for each supported version of Safe Exam Browser</p></div>");
         }
     });
@@ -446,7 +477,7 @@ jQuery(function($) {
                     if (jsonResponse.status === "success") {
 
                         $(".secure-file-list-content").html(build_file_list(jsonResponse.data["secure_access_file"]));
-                        if ($("#secure-file-upload-drop")){
+                        if ($("#secure-file-upload-drop")) {
                             $("#secure-file-upload-drop").remove();
                         }
                         $("#secure-file-header-messages").html("<span class=\"text-success\">Successfully updated secure access file!</span>");
@@ -547,516 +578,461 @@ jQuery(function($) {
         return pass;
     }
 
-    /*
-    Exceptions code
+    /**
+     * Audience.
      */
+    // Vars:
+    var audience_list = {};
+    var current_proxy_id;
 
-    // Exception Event Listeners
+    // HTML Components:
+    var audience_table_body = $("#audience-list-body");
+    var user_exception_modal = $("#edit-user-exception");
+    var clear_exception_btn = $("#clear-dropdown-exception");
 
-    $("#wizard-step-4").on("click", ".search-target-input-control[data-filter=\"exception_audience\"]", function() {
-        var selected    = 0;
-        var label       = jQuery(this).data("label");
-        var proxy_id    = jQuery(this).val();
-        var search_filter_item = jQuery(this).closest(".search-filter-item");
+    // Modal inputs:
+    var ex_student_name = $("#exception-student-name");
+    var cb_excluded = $("#excluded");
 
-        setTimeout(function() {
-            if (search_filter_item.hasClass("search-target-selected")) {
-                selected = 1;
-            }
-            manageExceptionAudience(proxy_id, selected, label);
-        }, 100);
-    });
+    var use_exception_start_date = $("#use_exception_start_date");
+    var exception_start_date = $("#exception_start_date");
+    var exception_start_time = $("#exception_start_time");
 
-    $("#wizard-step-4").on("click", ".remove-target-toggle[data-filter=\"exception_audience\"]", function() {
-        var selected    = 0;
-        var proxy_id    = jQuery(this).data("id");
+    var use_exception_end_date = $("#use_exception_end_date");
+    var exception_end_date = $("#exception_end_date");
+    var exception_end_time = $("#exception_end_time");
 
-        manageExceptionAudience(proxy_id, selected, "");
-    });
+    var use_exception_submission_date = $("#use_exception_submission_date");
+    var exception_submission_date = $("#exception_submission_date");
+    var exception_submission_time = $("#exception_submission_time");
 
-    $("#wizard-step-4").on("click", ".edit-exception-data", function(e) {
+    var use_exception_time_factor = $("#use_exception_time_factor");
+    var exception_time_factor = $("#exception_time_factor");
+
+    var use_exception_max_attempts = $("#use_exception_max_attempts");
+    var exception_max_attempts = $("#exception_max_attempts");
+
+    // Event listeners:
+    $("#wizard-step-3").on("click", ".btn-edit-exception", function(e) {
         e.preventDefault();
-        load_exception_user_data($(this));
+        edit_exception($(this).data("proxy-id"));
+        user_exception_modal.modal("show");
     });
 
-    $("#wizard-step-4").on("click", ".delete-exception-data", function(e) {
-        e.preventDefault();
-        var selected    = 0;
-        var proxy_id = $(this).data("proxy_id");
-        manageExceptionAudience(proxy_id, selected, "");
-    });
-
+    // Event listeners:
     $("#cancel-dropdown-exception").on("click", function(e) {
         e.preventDefault();
-        var edit_menu = $("#edit-user-exception");
-
-        edit_menu.modal("hide");
+        user_exception_modal.modal("hide");
     });
 
     $("#update-dropdown-exception").on("click", function(e) {
         e.preventDefault();
-
-        var proxy_id = current_user;
-        update_exception_user_data();
-        manageExceptionAudience(proxy_id, 1, "");
-
-        var edit_menu = $("#edit-user-exception");
-
-        edit_menu.modal("hide");
+        update_exception();
     });
 
-    // Exception Functions
+    $("#clear-dropdown-exception").on("click", function(e) {
+        e.preventDefault();
+        var msg = javascript_translations.clear_exception_message;
 
-    function manageExceptionAudience(proxy_id, selected, label) {
-        var edit_btn            = "<button class=\"edit-exception-data btn btn-default\" data-proxy_id=\"" + proxy_id + "\" data-label=\"" + label + "\"><i class=\"fa fa-gear\"></i></button>";
-        var delete_btn          = "<button class=\"delete-exception-data btn btn-default\" data-proxy_id=\"" + proxy_id + "\" data-label=\"" + label + "\"><i class=\"fa fa-remove\"></i></button>";
-        var btns                = "<div class=\"btn-group\">" + edit_btn + delete_btn + "</div>";
-        var exception_user      = {};
-        var exam_start_date     = null;
-        var exam_end_date       = null;
-        var exam_sub_date       = null;
-        var exception_time_factor = 0;
-        var display_max_attempts = "";
-        var display_start       = "";
-        var display_end         = "";
-        var display_sub         = "";
-
-        if (!exceptions[proxy_id]) {
-            var start_date  = $("#exam_start_date").val();
-            var start_time  = $("#exam_start_time").val();
-            var end_date    = $("#exam_end_date").val();
-            var end_time    = $("#exam_end_time").val();
-            var sub_date    = $("#exam_submission_date").val();
-            var sub_time    = $("#exam_submission_time").val();
-
-            var use_start_date_checked = 0;
-            var use_end_date_checked = 0;
-            var use_sub_date_checked = 0;
-            var use_exception_time_factor_checked = 0;
-            var use_exception_max_attempts = 0;
-
-            if (start_date && start_time) {
-                exam_start_date = manageDate(start_date, start_time);
-            }
-            if (end_date && end_time) {
-                exam_end_date = manageDate(end_date, end_time);
-            }
-            if (sub_date && sub_time) {
-                exam_sub_date = manageDate(sub_date, sub_time);
-            }
-
-            exception_user = {
-                "selected":                     selected,
-                "excluded":                     0,
-                "use_exception_max_attempts":   use_exception_max_attempts,
-                "max_attempts":                 null,
-                "exception_start_date":         exam_start_date,
-                "exception_end_date":           exam_end_date,
-                "exception_submission_date":    exam_sub_date,
-                "use_exception_start_date":     use_start_date_checked,
-                "use_exception_end_date":       use_end_date_checked,
-                "use_exception_submission_date": use_sub_date_checked,
-                "use_exception_time_factor":    use_exception_time_factor_checked,
-                "exception_time_factor":        null,
-                "label":                        label
-            };
-
-            exceptions[proxy_id] = exception_user;
-
-            var rowNode = exception_data_table.row.add([
-                label,
-                exception_user.excluded,
-                null,
-                null,
-                null,
-                null,
-                null,
-                btns
-            ]).draw().node();
-            $( rowNode ).attr("id", "exception_row_" + proxy_id);
-        } else {
-            exceptions[proxy_id].selected = selected;
-
-            if (selected == 0) {
-                var row = exception_data_table.row( "#exception_row_" + proxy_id ).remove().draw();
-                var hidden_input = $("#exception_audience_" + proxy_id);
-                $(hidden_input).remove();
-            } else if (selected == 1) {
-                exception_user = exceptions[proxy_id];
-                exception_data_table.row( "#exception_row_" + proxy_id ).remove();
-
-                var exam_start_date             = exception_user.exception_start_date;
-                var exam_end_date               = exception_user.exception_end_date;
-                var exam_submission_date        = exception_user.exception_submission_date;
-                var exception_time_factor       = exception_user.exception_time_factor;
-                var use_exception_time_factor   = exception_user.use_exception_time_factor;
-                var use_exception_max_attempts  = exception_user.use_exception_max_attempts;
-                var max_attempts                = exception_user.max_attempts;
-
-                var use_exception_start_date            = exception_user.use_exception_start_date;
-                var use_exception_end_date              = exception_user.use_exception_end_date;
-                var use_exception_submission_date       = exception_user.use_exception_submission_date;
-                var use_exception_time_factor_checked   = exception_user.use_exception_time_factor;
-
-                if (typeof use_exception_start_date !== "undefined" && use_exception_start_date == 1) {
-                    if (typeof exam_start_date !== "undefined" && exam_start_date) {
-                        var exception_start_date = format_date(new Date(exception_user.exception_start_date * 1000));
-                        display_start = exception_start_date.date_string_us + " " + exception_start_date.time_string;
-                    }
-                }
-
-                if (typeof use_exception_end_date !== "undefined" && use_exception_end_date == 1) {
-                    if (typeof exam_end_date !== "undefined" && exam_end_date) {
-                        var exception_end_date      = format_date(new Date(exception_user.exception_end_date * 1000));
-                        display_end = exception_end_date.date_string_us + " " + exception_end_date.time_string;
-                    }
-                }
-
-                if (typeof use_exception_submission_date !== "undefined" && use_exception_submission_date == 1) {
-                    if (typeof exam_submission_date !== "undefined" && exam_submission_date) {
-                        var exception_submission_date = format_date(new Date(exception_user.exception_submission_date * 1000));
-                        display_sub = exception_submission_date.date_string_us + " " + exception_submission_date.time_string;
-                    }
-                }
-
-                if (typeof use_exception_max_attempts !== "undefined" && use_exception_max_attempts == 1) {
-                    if (typeof max_attempts !== "undefined" && max_attempts !== null) {
-                        display_max_attempts = max_attempts;
-                    } else {
-                        display_max_attempts = "";
-                    }
-                }
-
-                if (typeof exception_time_factor == "undefined") {
-                    exception_time_factor = "";
-                }
-
-                var add_array = [exception_user.label,
-                    exception_user.excluded,
-                    display_max_attempts,
-                    display_start,
-                    display_end,
-                    display_sub,
-                    exception_time_factor,
-                    btns];
-
-                var rowNode = exception_data_table.row.add(add_array).draw().node();
-
-                $( rowNode ).attr("id", "exception_row_" + proxy_id);
-            }
-        }
-        var exam_exceptions_serialized = JSON.stringify(exceptions);
-        $("#exam_exceptions").val(exam_exceptions_serialized);
-    }
-
-    function load_exception_user_data(element_clicked) {
-        var edit_menu = $("#edit-user-exception");
-        var proxy_id = element_clicked.data("proxy_id");
-        current_user = proxy_id;
-
-        var use_exception_max_attempts      = exceptions[proxy_id].use_exception_max_attempts;
-        var use_exception_start_date        = exceptions[proxy_id].use_exception_start_date;
-        var use_exception_end_date          = exceptions[proxy_id].use_exception_end_date;
-        var use_exception_submission_date   = exceptions[proxy_id].use_exception_submission_date;
-        var use_exception_time_factor       = exceptions[proxy_id].use_exception_time_factor;
-        var exception_time_factor           = exceptions[proxy_id].exception_time_factor;
-        var start_date                      = exceptions[proxy_id].exception_start_date;
-        var end_date                        = exceptions[proxy_id].exception_end_date;
-        var sub_date                        = exceptions[proxy_id].exception_submission_date;
-
-        $("#edit-user-exception h3").text(exceptions[proxy_id].label);
-
-        if (typeof use_exception_max_attempts != "undefined") {
-            if (use_exception_max_attempts == 1) {
-                $("#edit-user-exception input#use_exception_max_attempts").prop("checked", true);
-                if (typeof max_attempts != "undefined" && max_attempts ) {
-                    $("#edit-user-exception input#max_attempts").val(exceptions[proxy_id].max_attempts);
-                } else {
-                    $("#edit-user-exception input#max_attempts").val("");
-                }
-            } else {
-                $("#edit-user-exception input#use_exception_max_attempts").prop("checked", false);
-                $("#edit-user-exception input#max_attempts").val("");
-            }
-        } else {
-            $("#edit-user-exception input#use_exception_max_attempts").prop("checked", false);
-            $("#edit-user-exception input#max_attempts").val("");
-        }
-
-        if (typeof use_exception_start_date != "undefined") {
-            if (typeof start_date != "undefined" && start_date > 0) {
-                var exception_start_date = format_date(new Date(start_date * 1000));
-                $("#exception_start_date").prop("disabled", false).datepicker( "setDate", exception_start_date.date_string ).css("z-index", 9999);
-                $("#exception_start_time").prop("disabled", false).val(exception_start_date.time_string);
-                dates_times.exception_start_date = jQuery("#exception_start_date").val();
-                dates_times.exception_start_time = jQuery("#exception_start_time").val();
-            } else {
-                $("#exception_start_date").val("");
-                $("#exception_start_time").val("");
-            }
-
-            if (use_exception_start_date == 1) {
-                $("#edit-user-exception input#use_exception_start_date").prop("checked", true);
-            } else {
-                $("#edit-user-exception input#use_exception_start_date").prop("checked", false);
-                $("#edit-user-exception input#exception_start_date").prop("disabled", true).val("");
-                $("#edit-user-exception input#exception_start_time").prop("disabled", true).val("");
-            }
-        } else {
-            $("#exception_start_date").val("");
-            $("#exception_start_time").val("");
-        }
-
-        if (typeof use_exception_end_date != "undefined") {
-            if (typeof end_date != "undefined" && end_date > 0) {
-                var exception_end_date = format_date(new Date(end_date * 1000));
-                $("#exception_end_date").prop("disabled", false).datepicker( "setDate", exception_end_date.date_string );
-                $("#exception_end_time").prop("disabled", false).val(exception_end_date.time_string);
-                dates_times.exception_end_date = jQuery("#exception_end_date").val();
-                dates_times.exception_end_time = jQuery("#exception_end_time").val();
-            } else {
-                $("#exception_end_date").val("");
-                $("#exception_end_time").val("");
-            }
-
-            if (use_exception_end_date == 1) {
-                $("#edit-user-exception input#use_exception_end_date").prop("checked", true);
-            } else {
-                $("#edit-user-exception input#use_exception_end_date").prop("checked", false);
-                $("#edit-user-exception input#exception_end_date").prop("disabled", true).val("");
-                $("#edit-user-exception input#exception_end_time").prop("disabled", true).val("");
-            }
-        } else {
-            $("#exception_end_date").val("");
-            $("#exception_end_time").val("");
-        }
-
-        if (typeof use_exception_submission_date != "undefined") {
-            if (typeof sub_date != "undefined" && sub_date > 0) {
-                var exception_submission_date = format_date(new Date(sub_date * 1000));
-                $("#exception_submission_date").prop("disabled", false).datepicker( "setDate", exception_submission_date.date_string );
-                $("#exception_submission_time").prop("disabled", false).val(exception_submission_date.time_string);
-                dates_times.exception_submission_date = jQuery("#exception_submission_date").val();
-                dates_times.exception_submission_time = jQuery("#exception_submission_time").val();
-            } else {
-                $("#exception_submission_date").val("");
-                $("#exception_submission_time").val("");
-            }
-
-            if (use_exception_submission_date == 1) {
-                $("#edit-user-exception input#use_exception_submission_date").prop("checked", true);
-            } else {
-                $("#edit-user-exception input#use_exception_submission_date").prop("checked", false);
-                $("#edit-user-exception input#exception_submission_date").prop("disabled", true).val("");
-                $("#edit-user-exception input#exception_submission_time").prop("disabled", true).val("");
-            }
-        } else {
-            $("#exception_submission_date").val("");
-            $("#exception_submission_time").val("");
-        }
-
-        if (exceptions[proxy_id].excluded == 1) {
-            $("#edit-user-exception input#excluded").prop("checked", "checked");
-        }
-
-        if (typeof use_exception_time_factor != "undefined" && use_exception_time_factor == 1) {
-            $("#edit-user-exception input#use_exception_time_factor").prop("checked", "checked");
-            $("#edit-user-exception input#exception_time_factor").val(exception_time_factor).prop("disabled", false);
-        } else {
-            $("#edit-user-exception input#exception_time_factor").val("").prop("disabled", true);
-        }
-
-        edit_menu.modal("show");
-    }
-
-    function update_exception_user_data() {
-        var proxy_id                    = current_user;
-        var exception_start_date        = $("#edit-user-exception input#exception_start_date");
-        var exception_start_time        = $("#edit-user-exception input#exception_start_time");
-        var exception_end_date          = $("#edit-user-exception input#exception_end_date");
-        var exception_end_time          = $("#edit-user-exception input#exception_end_time");
-        var exception_submission_date   = $("#edit-user-exception input#exception_submission_date");
-        var exception_submission_time   = $("#edit-user-exception input#exception_submission_time");
-        var exception_time_factor       = "";
-        var max_attempts                = $("#edit-user-exception input#max_attempts").val();
-
-        var use_exception_max_attempt_checked = $("#edit-user-exception input#use_exception_max_attempts").prop("checked");
-        var use_exception_max_attempts = 0;
-        if (use_exception_max_attempt_checked) {
-            use_exception_max_attempts = 1;
-        }
-
-        var use_exception_start_date_checked = $("#edit-user-exception input#use_exception_start_date").prop("checked");
-        var use_exception_start_date = 0;
-        if (use_exception_start_date_checked) {
-            use_exception_start_date = 1;
-        }
-
-        var use_exception_end_date_checked = $("#edit-user-exception input#use_exception_end_date").prop("checked");
-        var use_exception_end_date = 0;
-        if (use_exception_end_date_checked) {
-            use_exception_end_date = 1;
-        }
-
-        var use_exception_submission_date_checked = $("#edit-user-exception input#use_exception_submission_date").prop("checked");
-        var use_exception_submission_date = 0;
-        if (use_exception_submission_date_checked) {
-            use_exception_submission_date = 1;
-        }
-
-        var use_exception_time_factor_checked = $("#edit-user-exception input#use_exception_time_factor").prop("checked");
-        var use_exception_time_factor = 0;
-        if (use_exception_time_factor_checked) {
-            use_exception_time_factor = 1;
-            exception_time_factor                 = $("#edit-user-exception input#exception_time_factor").val();
-        }
-
-        var exception_start_unix        = manageDate(exception_start_date.val(), exception_start_time.val());
-        var exception_end_unix          = manageDate(exception_end_date.val(), exception_end_time.val());
-        var exception_submission_unix   = manageDate(exception_submission_date.val(), exception_submission_time.val());
-
-        var excluded = $("#edit-user-exception input#excluded").prop("checked");
-        var excluded_value = 0;
-        if (excluded) {
-            excluded_value = 1;
-        }
-
-        exceptions[proxy_id].excluded                       = excluded_value;
-        exceptions[proxy_id].use_exception_max_attempts     = use_exception_max_attempts;
-        exceptions[proxy_id].max_attempts                   = max_attempts;
-        exceptions[proxy_id].exception_start_date           = exception_start_unix;
-        exceptions[proxy_id].exception_end_date             = exception_end_unix;
-        exceptions[proxy_id].exception_submission_date      = exception_submission_unix;
-        exceptions[proxy_id].use_exception_start_date       = use_exception_start_date;
-        exceptions[proxy_id].use_exception_end_date         = use_exception_end_date;
-        exceptions[proxy_id].use_exception_submission_date  = use_exception_submission_date;
-        exceptions[proxy_id].use_exception_time_factor      = use_exception_time_factor;
-        exceptions[proxy_id].exception_time_factor          = exception_time_factor;
-        exceptions[proxy_id].delete                         = 0;
-
-        var exam_exceptions_serialized = JSON.stringify(exceptions);
-        $("#exam_exceptions").val(exam_exceptions_serialized);
-    }
-
-    //function hides edit menu for exceptions when clicking outside it
-    $(document).mouseup(function (e) {
-        var edit_menu = $("#edit-user-exception");
-        var time_picker = $("#ui-timepicker-div");
-        var date_picker = $("#ui-datepicker-div");
-
-        if (!edit_menu.is(e.target) && edit_menu.has(e.target).length === 0) {
-            if (!time_picker.is(e.target) && time_picker.has(e.target).length === 0) {
-                if (!date_picker.is(e.target) && date_picker.has(e.target).length === 0) {
-                    edit_menu.modal("hide");
-                }
-            }
+        if (confirm(msg)) {
+            remove_exception(current_proxy_id);
         }
     });
 
-    /*
-    end exceptions
+    cb_excluded.on("change", function() {
+        if($(this).is(":checked")) {
+            set_excluded_status(true);
+        } else {
+            set_excluded_status(false);
+        }
+    });
+
+    /**
+     * Removes an exception from the list, and flags it to be deleted in the back end.
+     *
+     * @param proxy_id
      */
+    function remove_exception(proxy_id) {
+        audience_list[proxy_id].excluded = 0;
+        audience_list[proxy_id].selected = 0;
+        audience_list[proxy_id].use_exception_max_attempts = 0;
+        audience_list[proxy_id].use_exception_start_date = 0;
+        audience_list[proxy_id].use_exception_end_date = 0;
+        audience_list[proxy_id].use_exception_time_factor = 0;
+        audience_list[proxy_id].use_exception_submission_date = 0;
+        audience_list[proxy_id].exception_start_date = null;
+        audience_list[proxy_id].exception_end_date = null;
+        audience_list[proxy_id].exception_submission_date = null;
+        audience_list[proxy_id].exception_time_factor = 0;
+        audience_list[proxy_id].max_attempts = 1;
 
-    var post_id = $("input#post_id").val();
-    if (post_id.length > 0) {
+        draw_audience_table(audience_list);
+        user_exception_modal.modal("hide");
+    }
+
+    $("body").on("change", "#choose-event-btn", function () {
+        var event_id = $("input[name=\"target_id\"]").val();
+        populate_audience_table(event_id, "event");
+    });
+
+    /**
+     * Updates an existing exception.
+     *
+     */
+    function update_exception() {
+        // The selected flag is used to let the API know to proccess changes for this record.
+        // If selected is set to zero, this record will no be saved, or deleted if the user is editing a post.
+        audience_list[current_proxy_id].selected = 1;
+
+        // Excluded:
+        audience_list[current_proxy_id].excluded = get_int_value(cb_excluded.is(":checked"));
+
+        // Time factor:
+        audience_list[current_proxy_id].use_exception_time_factor = get_int_value(use_exception_time_factor.is(":checked"));
+        audience_list[current_proxy_id].exception_time_factor = use_exception_time_factor.is(":checked") ? parseInt(exception_time_factor.val()) : 0;
+
+        // Attempts:
+        audience_list[current_proxy_id].use_exception_max_attempts = get_int_value(use_exception_max_attempts.is(":checked"));
+        audience_list[current_proxy_id].max_attempts = use_exception_max_attempts.is(":checked") ? parseInt(exception_max_attempts.val()) : parseInt($("#max_attempts").val());
+
+        // Start Date:
+        audience_list[current_proxy_id].use_exception_start_date = get_int_value(use_exception_start_date.is(":checked"));
+        if (audience_list[current_proxy_id].use_exception_start_date) {
+            audience_list[current_proxy_id].exception_start_date = manageDate(exception_start_date.val(), exception_start_time.val());
+        } else {
+            audience_list[current_proxy_id].exception_start_date = null;
+        }
+
+        // End Date:
+        audience_list[current_proxy_id].use_exception_end_date = get_int_value(use_exception_end_date.is(":checked"));
+        if (audience_list[current_proxy_id].use_exception_end_date) {
+            audience_list[current_proxy_id].exception_end_date = manageDate(exception_end_date.val(), exception_end_time.val());
+        } else {
+            audience_list[current_proxy_id].exception_end_date = null;
+        }
+
+        // Submission Deadline:
+        audience_list[current_proxy_id].use_exception_submission_date = get_int_value(use_exception_submission_date.is(":checked"));
+        if (audience_list[current_proxy_id].use_exception_submission_date) {
+            audience_list[current_proxy_id].exception_submission_date = manageDate(exception_submission_date.val(), exception_submission_time.val());
+        } else {
+            audience_list[current_proxy_id].exception_submission_date = null;
+        }
+
+        // If there are no exceptions, mark this row for exclusion.
+        if (audience_list[current_proxy_id].excluded == 0 &&
+            audience_list[current_proxy_id].use_exception_start_date == 0 &&
+            audience_list[current_proxy_id].use_exception_end_date == 0 &&
+            audience_list[current_proxy_id].use_exception_submission_date == 0 &&
+            audience_list[current_proxy_id].use_exception_time_factor == 0 &&
+            audience_list[current_proxy_id].use_exception_max_attempts == 0) {
+
+            remove_exception(current_proxy_id);
+        } else {
+            draw_audience_table(audience_list);
+            user_exception_modal.modal("hide");
+        }
+    }
+
+    /**
+     * Populates the fields of a modal based on the state of a current audience member.
+     *
+     * @param proxy_id
+     */
+    function edit_exception (proxy_id) {
+        current_proxy_id = proxy_id;
+
+        var audience_member = audience_list[proxy_id];
+
+        ex_student_name.html(audience_member.label);
+        clear_exception_btn.prop("disabled", ! get_bool_value(audience_member.selected));
+
+        // For the date and time fields we will check if the use_date param is true, and if so, we will select
+        // the checkbox, enable the text inputs and set the defaut value to the user's exception date.
+        // If the user doesn't have exception dates set, we will use the exam dates.
+
+        // Start Date:
+        use_exception_start_date.prop("checked", get_bool_value(audience_member.use_exception_start_date));
+        exception_start_date.prop("disabled", ! get_bool_value(audience_member.use_exception_start_date));
+        exception_start_time.prop("disabled", ! get_bool_value(audience_member.use_exception_start_date));
+
+        if (audience_member.exception_start_date != null && audience_member.exception_start_date > 0) {
+            var start_date_obj = format_date(new Date(audience_member.exception_start_date * 1000));
+            exception_start_date.val(start_date_obj.date_string);
+            exception_start_time.val(start_date_obj.time_string);
+        } else {
+            exception_start_date.val($("#exam_start_date").val());
+            exception_start_time.val($("#exam_start_time").val());
+        }
+
+        // End Date:
+        use_exception_end_date.prop("checked", get_bool_value(audience_member.use_exception_end_date));
+        exception_end_date.prop("disabled", ! get_bool_value(audience_member.use_exception_end_date));
+        exception_end_time.prop("disabled", ! get_bool_value(audience_member.use_exception_end_date));
+
+        if (audience_member.exception_end_date != null && audience_member.exception_end_date > 0) {
+            var start_date_obj = format_date(new Date(audience_member.exception_end_date * 1000));
+            exception_end_date.val(start_date_obj.date_string);
+            exception_end_time.val(start_date_obj.time_string);
+        } else {
+            exception_end_date.val($("#exam_end_date").val());
+            exception_end_time.val($("#exam_end_time").val());
+        }
+
+        // Submission Deadline:
+        use_exception_submission_date.prop("checked", get_bool_value(audience_member.use_exception_submission_date));
+        exception_submission_date.prop("disabled", ! get_bool_value(audience_member.use_exception_submission_date));
+        exception_submission_time.prop("disabled", ! get_bool_value(audience_member.use_exception_submission_date));
+
+        if (audience_member.exception_submission_date != null && audience_member.exception_submission_date > 0) {
+            var start_date_obj = format_date(new Date(audience_member.exception_submission_date * 1000));
+            exception_submission_date.val(start_date_obj.date_string);
+            exception_submission_time.val(start_date_obj.time_string);
+        } else {
+            exception_submission_date.val($("#exam_submission_date").val());
+            exception_submission_time.val($("#exam_submission_time").val());
+        }
+
+        // Extra Time:
+        use_exception_time_factor.prop("checked", get_bool_value(audience_member.use_exception_time_factor));
+        exception_time_factor.prop("disabled", ! get_bool_value(audience_member.use_exception_time_factor));
+        exception_time_factor.val(audience_member.exception_time_factor);
+
+        // Attempts:
+        use_exception_max_attempts.prop("checked", get_bool_value(audience_member.use_exception_max_attempts));
+        exception_max_attempts.prop("disabled", ! get_bool_value(audience_member.use_exception_max_attempts));
+        if (audience_member.selected) {
+            exception_max_attempts.val(audience_member.max_attempts);
+        } else {
+            exception_max_attempts.val($("#max_attempts").val());
+        }
+
+        // Exclusion:
+        cb_excluded.prop("checked", get_bool_value(audience_member.excluded));
+        set_excluded_status(get_bool_value(audience_member.excluded));
+    }
+
+    /**
+     * Converts an int to true/false. Useful for handling data from the API.
+     *
+     * @param int_val
+     * @returns {boolean}
+     */
+    function get_bool_value(int_val) {
+        return int_val == 1 ? true : false;
+    }
+
+    /**
+     * Converts a bool to int (0 or 1). Useful for sending data to the API.
+     *
+     * @param bool_val
+     * @returns {number}
+     */
+    function get_int_value(bool_val) {
+        return bool_val === true ? 1 : 0;
+    }
+
+    /**
+     * Enables/disables editing of exceptions based on the value of the "excluded" checkbox.
+     *
+     * @param status
+     */
+    function set_excluded_status(status) {
+        use_exception_start_date.prop("disabled", status);
+        use_exception_end_date.prop("disabled", status);
+        use_exception_submission_date.prop("disabled", status);
+        use_exception_time_factor.prop("disabled", status);
+        use_exception_max_attempts.prop("disabled", status);
+
+        // Enabling...
+        if (status == false) {
+            // We'll only enable the input boxes that have the checkbox checked.
+            if (use_exception_start_date.is(":checked")) {
+                exception_start_date.prop("disabled", false);
+                exception_start_time.prop("disabled", false);
+            }
+
+            if (use_exception_end_date.is(":checked")) {
+                exception_end_date.prop("disabled", false);
+                exception_end_time.prop("disabled", false);
+            }
+
+            if (use_exception_submission_date.is(":checked")) {
+                exception_submission_date.prop("disabled", false);
+                exception_submission_time.prop("disabled", false);
+            }
+
+            if (use_exception_time_factor.is(":checked")) {
+                exception_time_factor.prop("disabled", false);
+            }
+
+            if (use_exception_max_attempts.is(":checked")) {
+                exception_max_attempts.prop("disabled", false);
+            }
+        } else {
+            exception_start_date.prop("disabled", true);
+            exception_start_time.prop("disabled", true);
+
+            exception_end_date.prop("disabled", true);
+            exception_end_time.prop("disabled", true);
+
+            exception_submission_date.prop("disabled", true);
+            exception_submission_time.prop("disabled", true);
+
+            exception_time_factor.prop("disabled", true);
+
+            exception_max_attempts.prop("disabled", true);
+        }
+    }
+
+    // Editing a post?
+    if (post_id != null && post_id > 0) {
+        populate_audience_table(post_id, "post");
+    } else if (event_id != null && event_id > 0) {
+        // Creating a post as an exam resource. The event_id is passed.
+        populate_audience_table(event_id, "event");
+    }
+
+    /**
+     * Calls the API and populates the audience table with the current's audience state.
+     *
+     * @param id
+     * @param type
+     */
+    function populate_audience_table(id, type) {
+        var request_data = "method=get-post-exceptions";
+
+        // Use the right id depending on the type passed.
+        if (type == "post") {
+            request_data += "&post_id=" + id;
+        } else if (type == "event") {
+            request_data += "&event_id=" + id;
+        }
+
+        // Send the request.
         var get_post_exceptions = jQuery.ajax({
             url: "?section=api-exams",
-            data: "method=get-post-exceptions&post_id=" + post_id,
+            data: request_data,
             type: "GET"
         });
 
+        // Process response...
         $.when(get_post_exceptions).done(function (data) {
             var jsonResponse = JSON.parse(data);
 
             if (jsonResponse.status == "success") {
-                /*
-                 Start Exception loading section
-                 */
-
-                //removes any inputs selected previously for other posts
-                $(".exception_audience_search_target_control").remove();
-
-                if (jsonResponse.data.exam_exceptions) {
-                    var exam_exceptions = jsonResponse.data.exam_exceptions;
-                    $.each(exam_exceptions, function (proxy_id, data) {
-                        //build data entry for each user
-                        if (!exceptions[proxy_id]) {
-                            var exception_user = {
-                                "selected":                         1,
-                                "excluded":                         data.excluded,
-                                "use_exception_max_attempts":       data.use_exception_max_attempts,
-                                "max_attempts":                     data.max_attempts,
-                                "exception_start_date":             data.exception_start_date,
-                                "exception_end_date":               data.exception_end_date,
-                                "exception_submission_date":        data.exception_submission_date,
-                                "use_exception_start_date":         data.use_exception_start_date,
-                                "use_exception_end_date":           data.use_exception_end_date,
-                                "use_exception_submission_date":    data.use_exception_submission_date,
-                                "use_exception_time_factor":        data.use_exception_time_factor,
-                                "exception_time_factor":            data.exception_time_factor,
-                                "label":                            data.label
-                            };
-                            exceptions[proxy_id] = exception_user;
-                        } else {
-                            exceptions[proxy_id].excluded                       = data.excluded;
-                            exceptions[proxy_id].use_exception_max_attempts     = data.use_exception_max_attempts;
-                            exceptions[proxy_id].max_attempts                   = data.max_attempts;
-                            exceptions[proxy_id].exception_start_date           = data.exception_start_date;
-                            exceptions[proxy_id].exception_end_date             = data.exception_end_date;
-                            exceptions[proxy_id].exception_submission_date      = data.exception_submission_date;
-                            exceptions[proxy_id].use_exception_start_date       = data.use_exception_start_date;
-                            exceptions[proxy_id].use_exception_end_date         = data.use_exception_end_date;
-                            exceptions[proxy_id].use_exception_submission_date  = data.use_exception_submission_date;
-                            exceptions[proxy_id].use_exception_time_factor      = data.use_exception_time_factor;
-                            exceptions[proxy_id].exception_time_factor          = data.exception_time_factor;
-                            exceptions[proxy_id].label                          = data.label;
-                        }
-
-                        manageExceptionAudience(proxy_id, 1, data.label);
-
-                         $(document.createElement("input")).attr({
-                             "type"  : "hidden",
-                             "class" : "search-target-control exception_audience_search_target_control form-selector",
-                             "name"  : "exception_audience[]",
-                             "id"    : "exception_audience_" + proxy_id,
-                             "value" : proxy_id,
-                             "data-label" : data.label
-                        }).appendTo("#search-targets-form");
-                    });
-                } else {
-                    //clear list from datatable and object
-                    $.each(exceptions, function (proxy_id, data) {
-                        var row = exception_data_table.row("#exception_row_" + proxy_id).remove().draw();
-                    });
-                    exceptions = {};
-                }
-
-                /*
-                 End Exception loading section
-                 */
+                audience_list = jsonResponse.data.exam_exceptions;
+                draw_audience_table(audience_list);
+            } else {
+                alert(javascript_translations.recovering_audience_error_message);
             }
         });
+
     }
 
-    function navItemClick(element_clicked) {
-        if ($(element_clicked).hasClass("complete")) {
-            var next_step = $(element_clicked).data("step");
-            var current_step = $("#wizard-step-input").val();
+    /**
+     * (Re)draws the audience table.
+     *
+     * @param audience_members
+     */
+    function draw_audience_table(audience_members) {
+        var audience_html = "";
 
-            var post_id = jQuery("#post_id").val();
-            if (typeof post_id !== "undefined" || post_id > 0) {
-                if (next_step == 1) {
-                    show_step(next_step);
-                    jQuery(".wizard-previous-step").addClass("hide");
-                } else {
-                    wizard_next_step(next_step);
-                }
-            } else if (next_step > current_step) {
-                wizard_next_step(next_step);
-            } else {
-                show_step(next_step);
+        // We need to display the audience members in alphabetical order, but since audience_members
+        // is an object, and uses proxy_id as "keys", we cannot sort it based on the label property.
+        // The implemented solution was to pass everything to an array, sort it based on
+        // the label (last name, first name) and use the sorted array to assemble the table.
+        var audience_members_sortable = [];
+
+        // Pass everything to the objects array.
+        for (var key in audience_members) {
+            audience_members[key].proxy_id = key; // Well add the proxy_id as a property.
+            audience_members_sortable.push(audience_members[key]);
+        }
+
+        // Sorted based on the "label" (last name, first name).
+        audience_members_sortable.sort(function(a, b) {
+            return a.label.localeCompare(b.label);
+        });
+
+        // Render the ordered array.
+        for (var i = 0; i < audience_members_sortable.length; i++) {
+            var element = audience_members_sortable[i];
+            audience_html += render_audience_row(element.proxy_id, element);
+        }
+
+        audience_table_body.empty();
+        audience_table_body.append(audience_html);
+
+        // Save JSON string to the hidden input.
+        $("#exam_exceptions").val(JSON.stringify(audience_list));
+    }
+
+    /**
+     * Renders a row for the audience table.
+     *
+     * @param proxy_id
+     * @param data
+     * @returns {string}
+     */
+    function render_audience_row(proxy_id, data) {
+        var row = "";
+        var classes = data.selected == 1 ? "has-exception" : "";
+        row += "<tr id=\"audience-row-" + proxy_id + "\" class=\"" + classes + "\">";
+        row += "<td>" + data.label + "</td>";
+
+        // Excluded:
+        var excluded_label  = data.excluded == 1 ? "<label class=\"label label-success\">" + javascript_translations.yes + "</label>" : "<label class=\"label\">" + javascript_translations.no + "</label>";
+        row += "<td>" + excluded_label + "</td>";
+
+        // Start Date Row:
+        if (data.exception_start_date > 0) {
+            var start_date_obj = format_date(new Date(data.exception_start_date * 1000));
+            var label_start_date = start_date_obj.date_string + " " + start_date_obj.time_string;
+        } else {
+            var label_start_date = "";
+        }
+        row += "<td>" + label_start_date + "</td>";
+
+        // End Date Row:
+        if (data.exception_end_date > 0) {
+            var end_date_obj = format_date(new Date(data.exception_end_date * 1000));
+            var label_end_date = end_date_obj.date_string + " " + end_date_obj.time_string;
+        } else {
+            var label_end_date = "";
+        }
+        row += "<td>" + label_end_date + "</td>";
+
+        // Submission Date Row:
+        if (data.exception_submission_date > 0) {
+            var submission_date_obj = format_date(new Date(data.exception_submission_date * 1000));
+            var label_submission_date = submission_date_obj.date_string + " " + submission_date_obj.time_string;
+        } else {
+            var label_submission_date = "";
+        }
+        row += "<td>" + label_submission_date + "</td>";
+
+        // Time factor:
+        var label_time_factor = "";
+        if (data.exception_time_factor > 0) {
+            label_time_factor = data.exception_time_factor + "%";
+        }
+        row += "<td>" + label_time_factor + "</td>";
+
+        // Max attempts:
+        var label_max_attempts = "";
+        if (data.selected) {
+            if (data.max_attempts != parseInt($("#max_attempts").val())) {
+                label_max_attempts = data.max_attempts + "x";
             }
         }
+
+        row += "<td>" + label_max_attempts + "</td>";
+
+        // Edit btn and closing of the row.
+        row += "<td><button class=\"btn btn-default btn-edit-exception\" data-proxy-id=\"" + proxy_id + "\"><span class=\"fa fa-edit\"></span></button></td>";
+        row += "</tr>";
+        return row;
     }
 
     $(".add-on").on("click", function () {
@@ -1065,30 +1041,6 @@ jQuery(function($) {
             $(prev_input).focus();
         }
     });
-
-    enable_wizard_controls();
-
-    $(".wizard-next-step").on("click", function (e) {
-        e.preventDefault();
-        wizard_next_step();
-    });
-
-    $(".wizard-previous-step").on("click", function (e) {
-        e.preventDefault();
-        wizard_previous_step();
-    });
-
-    $(".wizard-nav-item").on("click", function (e) {
-        e.preventDefault();
-        navItemClick($(this));
-    });
-
-    var post_id = jQuery("#post_id").val();
-    if (post_id.length > 0) {
-        $("#wizard-nav-item-" + redirect_section).trigger("click");
-    } else {
-        show_step(redirect_section);
-    }
 
     $("#use_time_limit").click(function() {
         var clicked = $(this);
@@ -1108,17 +1060,23 @@ jQuery(function($) {
         }
     });
 
-    $("#use_exception_time_factor").click(function() {
-        var clicked = $(this);
-        var exception_time_factor = $("#exception_time_factor");
+    use_exception_time_factor.on("click", function() {
+        exception_time_factor.prop("disabled", ! $(this).is(":checked"));
+    });
 
-        if (clicked.prop("checked") == true ) {
-            $(exception_time_factor).prop("checked", true);
-            $(exception_time_factor).prop("disabled", false);
-        } else {
-            $(exception_time_factor).prop("checked", false);
-            $(exception_time_factor).prop("disabled", true);
-        }
+    use_exception_max_attempts.on("click", function() {
+        exception_max_attempts.prop("disabled", ! $(this).is(":checked"));
+    });
+
+    $(".use_date").click(function() {
+        var date_id = $(this).data("date-name");
+        var time_id = $(this).data("time-name");
+
+        $("#" + date_id).attr("disabled", ! $(this).is(":checked"));
+        $("#" + time_id).attr("disabled", ! $(this).is(":checked"));
+
+        // Adds pointer to the calendar icon when hovering the mouse.
+        $($("#" + date_id).next(".add-on")).toggleClass("pointer");
     });
 
     $("#use_re_attempt_threshold").click(function() {
@@ -1133,27 +1091,6 @@ jQuery(function($) {
         } else {
             $(retake_threshold).prop("disabled", true);
             $(retake_threshold_attempts).prop("disabled", true);
-        }
-    });
-
-    $(".use_date").click(function() {
-        var clicked = $(this);
-        var id = clicked.attr("id");
-        var date_id = clicked.data("date-name");
-        var time_id = clicked.data("time-name");
-
-        var calendar_icon = $("#" + date_id).next(".add-on");
-
-        if (clicked.prop("checked") == true ) {
-            $("#" + date_id).val($("#" + date_id).data("default-date")).attr("disabled", false);
-            $("#" + time_id).val($("#" + time_id).data("default-time")).attr("disabled", false);
-            $(calendar_icon).addClass("pointer");
-        } else {
-            $("#" + date_id).data("default-date", $("#" + date_id).val());
-            $("#" + time_id).data("default-time", $("#" + time_id).val());
-            $("#" + date_id).val("").attr("disabled", true);
-            $("#" + time_id).val("").attr("disabled", true);
-            $(calendar_icon).removeClass("pointer");
         }
     });
 
@@ -1203,15 +1140,15 @@ jQuery(function($) {
                     jQuery(".secure-key-list").html(build_key_list(jsonResponse.data["secure_access_keys"], jQuery(".secure-key-list")));
                     $secure_key_exists = true;
                     var secure_key_count = jsonResponse.data.length;
-                    if (secure_key_count > 0){
+                    if (secure_key_count > 0) {
                         secure_key_badge.text(jsonResponse.data.length);
                     }
 
-                } else if (jsonResponse.status === "empty"){
+                } else if (jsonResponse.status === "empty") {
                     $secure_key_exists = false;
                     targetOutput.empty();
                     targetOutput.html("<div class=\"alert alert-info\">" + jsonResponse.data + "</div>");
-                    if (!jQuery("#delete-secure-keys").hasClass("hide")){
+                    if (!jQuery("#delete-secure-keys").hasClass("hide")) {
                         jQuery("#delete-secure-keys").addClass("hide");
                     }
 
@@ -1246,7 +1183,7 @@ jQuery(function($) {
                 if (jsonResponse.status === "success") {
                     targetOutput.html(build_file_list(jsonResponse.data["secure_access_file"]));
 
-                } else if (jsonResponse.status === "empty"){
+                } else if (jsonResponse.status === "empty") {
                     var resource_list_html = "<div class=\"alert alert-info text-center\" id=\"secure-access-file-empty\">";
                         resource_list_html += "<i class=\"fa fa-file-o fa-4x\"></i>";
                         resource_list_html += "<h3>Please upload the SEB file for this exam post by dropping the file in this box or use the Browse button below</h3>";
@@ -1258,7 +1195,7 @@ jQuery(function($) {
                         resource_list_html += "</div>";
                     targetOutput.empty().html(resource_list_html);
 
-                    if (!jQuery("#delete-secure-file").hasClass("hide")){
+                    if (!jQuery("#delete-secure-file").hasClass("hide")) {
                         jQuery("#delete-secure-file").addClass("hide");
                     }
 
@@ -1279,357 +1216,385 @@ jQuery(function($) {
         });
     }
 
-function wizard_next_step (next_step) {
-    for (instance in CKEDITOR.instances) {
-        CKEDITOR.instances[instance].updateElement();
-    }
+    /**
+     * WIZARD CONTROLS
+     */
+    enable_wizard_controls();
 
-    var step;
-    if (typeof next_step !== "undefined" ) {
-        step = next_step - 1;
-        if (step <= 0) {
-            step = 1;
-        }
+    // Shows the right wizard step if the post is being edited and there is a redirect.
+    if (post_id.length > 0 && is_redirect) {
+        update_step(1);
+        wizard_goto_step(redirect_section);
     } else {
-        step = parseInt(jQuery("#wizard-step-input").val());
+        show_step(1);
     }
 
-    var wizard_step_request = jQuery.ajax({
-        url: ENTRADA_URL + "/admin/events?section=api-exams",
-        data: "method=exam-wizard&" + jQuery("#search-targets-form").serialize() + "&step=" + step  + (typeof next_step !== "undefined" ? "&next_step=" + next_step : ""),
-        type: "POST",
-        beforeSend: function () {
-            show_loading_msg();
-        },
-        complete: function () {
-            hide_loading_msg();
-            if (step == 6) {
-                disable_wizard_controls();
-            } else {
-                enable_wizard_controls();
-                if (step == 5) {
-                    jQuery(".wizard-next-step").html("Save Exam Post");
-                } else {
-                    jQuery(".wizard-next-step").html("Next Step");
-                }
-            }
+    /**
+     * Advances to the next step of the wizard.
+     */
+    $(".wizard-next-step").on("click", function (e) {
+        e.preventDefault();
+        var next_step = get_step() + 1;
+        wizard_goto_step(next_step);
+    });
+
+    /**
+     * Goes back to the previous step.
+     */
+    $(".wizard-previous-step").on("click", function (e) {
+        e.preventDefault();
+        var step = get_step();
+        // Step should never be smaller than one.
+        var previous_step = step <= 1 ? 1 : step - 1;
+        wizard_goto_step(previous_step);
+    });
+
+    /**
+     * Goes straight to a completed step of the wizard.
+     */
+    $(".wizard-nav-item").on("click", function (e) {
+        e.preventDefault();
+        var wizard_nav_item = $(this);
+
+        // The user can only move between steps that have been completed.
+        if (wizard_nav_item.hasClass("complete")) {
+            var next_step = wizard_nav_item.data("step");
+            wizard_goto_step(next_step);
         }
     });
 
-    jQuery.when(wizard_step_request).done(function (data) {
-        var jsonResponse = JSON.parse(data);
-        var current_step = jQuery("#wizard-step-input").val();
+    /**
+     * Goes to a specified wizard step, validates and saves data using the API.
+     *
+     * @param next_step
+     */
+    function wizard_goto_step (next_step) {
+        for (instance in CKEDITOR.instances) {
+            CKEDITOR.instances[instance].updateElement();
+        }
 
+        step = get_step();
         remove_errors();
-        if (jsonResponse.status === "success") {
-            jQuery("li[data-step=\""+ current_step +"\"]").addClass("complete");
-            var next_step = parseInt(jsonResponse.data.step);
 
-            switch (next_step) {
-                case 2 :
-                    break;
-                case 3 :
-                    var post_id  = jsonResponse.data.post_id;
-                    get_secure_file(jQuery(".secure-file-list-content"), post_id);
-                    get_secure_keys(jQuery(".secure-key-list-content"), post_id);
-                    break;
-                case 6 :
-                    jQuery("#review-exam-details").empty();
-                    var $exam_detail = "<table class=\"table table-striped table-bordered\">";
-                    jQuery.each(jsonResponse.data.post, function(i, v){
-                        var display = v.display;
-                        $exam_detail += "<tr>";
-                        $exam_detail += "<td>" + v.label + "</td>";
-                        $exam_detail += "<td>" + display + "</td>";
-                        $exam_detail += "</tr>";
-                    });
-                    $exam_detail += "</table>";
-                    jQuery("#review-exam-details").append($exam_detail);
-                    break;
-                case 7 :
-                    var post_id = jsonResponse.data.post_id;
-                    var update_post_row = jQuery("tr.exam-posting[data-post-id=" + post_id + "]");
-                    var form_body = jQuery("form#exam-listing tbody");
-                    var generic_msg = jQuery("form#exam-listing tbody div.display-generic");
-                    var post_row = false;
-                    var dataObject = {
-                        method : "get-exam-post-row",
-                        post_id: post_id
-                    };
-                    get_secure_keys(jQuery(".secure-key-list"), post_id);
+        if (next_step <= step) {
+            // Going back to a previous step.
+            show_step(next_step);
+        } else {
+            // Advancing to one of the following steps.
 
-                    var redirect_secure = false;
-                    var string_mode = "";
+            // Serialize form data.
+            var step_data = "method=exam-wizard&" + jQuery("#search-targets-form").serialize() + "&step=" + step;
+            // Appends the next step to the serialized data.
+            step_data += (typeof next_step !== "undefined" ? "&next_step=" + next_step : "");
 
-                    if (jsonResponse.data.post.mode.value == "create") {
-                        string_mode = "created";
-                        if (jsonResponse.data.post.secure.value == "1") {
-                            redirect_secure = true;
-                            var post_id_redirect = post_id;
-                        }
-                    } else {
-                        string_mode = "edited"
+            // Sends the ajax request for validation/saving depending on the backend rules.
+            var wizard_step_request = jQuery.ajax({
+                url: ENTRADA_URL + "/admin/events?section=api-exams",
+                data: step_data,
+                type: "POST",
+                beforeSend: function () {
+                    show_loading_msg();
+                }
+            });
+
+            // This promise is executed when the request is completed.
+            jQuery.when(wizard_step_request).done(function (data) {
+                hide_loading_msg();
+                var jsonResponse = JSON.parse(data);
+
+                if (jsonResponse.status === "success") {
+                    post_id  = jsonResponse.data.post_id > 0 ? jsonResponse.data.post_id : null;
+
+                    jQuery("li[data-step=\""+ step +"\"]").addClass("complete");
+                    var next_step = parseInt(jsonResponse.data.step);
+                    if(next_step == 5 || next_step == 6) {
+                        // Creates a table with post info for review.
+                        jQuery("#review-exam-details").empty();
+                        var $exam_detail = "<table class=\"table table-striped table-bordered\">";
+                        jQuery.each(jsonResponse.data.post, function(i, v) {
+                            var display = v.display;
+                            $exam_detail += "<tr>";
+                            $exam_detail += "<td>" + v.label + "</td>";
+                            $exam_detail += "<td>" + display + "</td>";
+                            $exam_detail += "</tr>";
+                        });
+                        $exam_detail += "</table>";
+                        jQuery("#review-exam-details").append($exam_detail);
+
                     }
 
-                    jQuery.ajax({
-                        url: API_URL,
-                        data: dataObject,
-                        type: "GET",
-                        success: function (data) {
-                            var jsonResponse = JSON.parse(data);
-                            if (jsonResponse["success"] = "success") {
-                                post_row = jsonResponse["post_view"];
-                            }
+                    // Draws the audience table again.
+                    if (next_step == 3) {
+                        draw_audience_table(audience_list);
+                    }
 
-                            if (update_post_row.length > 0) {
-                                if (jQuery.isEmptyObject(update_post_row)) {
-                                    jQuery(form_body).append(post_row);
-                                } else {
-                                    jQuery(update_post_row).before(post_row).remove();
-                                }
-                            } else {
-                                jQuery(form_body).append(post_row);
-                            }
+                    // Default redirect URL.
+                    if (referrer == "event") {
+                        var redirect_url = ENTRADA_URL + "/admin/events?section=content&id=" + event_id;
+                    } else {
+                        var redirect_url = ENTRADA_URL + "/admin/exams/exams?section=post&id=" + exam_id;
+                    }
 
-                            if (generic_msg.length > 0) {
-                                jQuery(generic_msg).parents("tr").remove();
-                                generic_msg.remove();
-                            }
-
-                            jQuery(".wizard-step-container").addClass("hide");
-
-                            var referrer = $("#referrer").val();
-                            if (referrer == "event") {
-                                var eventID = $("input.event-id").val();
-                                var redirectUrl = ENTRADA_URL + "/admin/events?section=content&id=" + eventID;
-                            } else if (referrer == "exam") {
-                                var examID = $("input#exam-id").val();
-                                var redirectUrl = (!redirect_secure ? ENTRADA_URL + "/admin/exams/exams?section=post&id=" + examID : ENTRADA_URL + "/admin/exams/exams?section=form-post&id=" + examID + "&post_id=" + post_id_redirect + "&target_type=event&redirect_section=3");
-                            }
-
-                            if (!redirect_secure) {
-                                display_success(["The Exam Post has been successfully " + string_mode + ". You will now be redirected in 5 seconds or <a href=" + redirectUrl + "><strong>click here</strong></a> to continue."], "#msgs");
-                            } else {
-                                display_success(["The Exam Post has been successfully created. You will now be redirected the Security Setup step in 5 seconds or <a href=" + redirectUrl + "><strong>click here</strong></a> to continue."], "#msgs");
-                            }
-
-                            setTimeout(function() {
-                                window.location.replace(redirectUrl);
-                            }, 5000);
+                    // Display the correct success message and redirect if needed.
+                    if (next_step == 6 && ! is_editing && security_options) {
+                        // Creating a post with security options. Redirect immediately to the next step.
+                        disable_wizard_controls();
+                        redirect_url = ENTRADA_URL + "/admin/exams/exams?section=form-post&id=" + exam_id + "&post_id=" + post_id + "&target_type=event&redirect_section=6";
+                        if (referrer == "event") {
+                            redirect_url += "&target_id=" + event_id;
                         }
-                    });
-                    break;
-                default :
-                    jQuery(".wizard-next-step").html("Next");
-                    break;
-            }
-            post_id = jQuery("#post_id").val();
+                        window.location.replace(redirect_url);
+                    } else if (next_step == 6 && ! is_editing && ! security_options) {
+                        // Creating a post without security options.
+                        var msg = javascript_translations.exam_post_created_message;
+                        next_step = false;
+                    } else if (next_step == 6 && is_editing && security_options) {
+                        // Editing a post with security options.
+                        // Just go to the next step.
+                    } else if (next_step == 6 && is_editing && ! security_options) {
+                        // Editing a post without security options.
+                        var msg = javascript_translations.exam_post_saved_message;
+                        next_step = false;
+                    } else if (next_step == 7 && is_editing && security_options) {
+                        // Saving/updating security options.
+                        var msg = javascript_translations.exam_post_saved_message;
+                        next_step = false;
+                    }
 
-            if (typeof post_id !== "undefined" || post_id > 0) {
-                jQuery(".wizard-nav-item.active").removeClass("active");
-                jQuery("#wizard-nav-item-" + next_step).addClass("active");
-                jQuery("li[data-step=\""+ current_step +"\"]").addClass("complete");
-            }
+                    // All steps completed, display success message and redirect in 5 secs.
+                    if (next_step === false) {
+                        disable_wizard_controls();
+                        msg += " You will now be redirected in 5 seconds or <a href=\""+ redirect_url + "\"><strong>click here</strong></a> to continue.";
+                        display_success([msg], "#msgs");
 
-            if (next_step > 1) {
-                jQuery(".wizard-previous-step").removeClass("hide");
-            }
+                        setTimeout(function () {
+                            window.location.replace(redirect_url);
+                        }, 5000);
+                    }
 
-            if (jsonResponse.data.hasOwnProperty("previous_step")) {
-                jQuery("#wizard-previous-step-input").val(jsonResponse.data.previous_step);
+                    if (security_options && next_step == 6) {
+                        get_secure_file(jQuery(".secure-file-list-content"), post_id);
+                        get_secure_keys(jQuery(".secure-key-list-content"), post_id);
+                    }
+
+                    if (security_options && (next_step == 7 || next_step == false)) {
+                        get_secure_keys(jQuery(".secure-key-list"), post_id);
+                    }
+
+                    mark_step_as_completed(step);
+                    show_step(next_step);
+                } else {
+                    enable_wizard_controls();
+                    display_error(jsonResponse.data, "#msgs", "prepend");
+                }
+            });
+        }
+
+    }
+
+    /**
+     * Remove error messages from the page.
+     */
+    function remove_errors () {
+        jQuery("#msgs").empty();
+    }
+
+    /**
+     * Mark a step as completed in the wizard navigation tabs.
+     * @param step
+     */
+    function mark_step_as_completed(step) {
+        jQuery("li[data-step=\""+ step +"\"]").addClass("complete");
+    }
+
+    /**
+     * Shows the loading message.
+     */
+    function show_loading_msg () {
+        disable_wizard_controls();
+        jQuery("#wizard-loading-msg").html("Loading Exam Options...");
+        jQuery("#search-targets-form").addClass("hide");
+        jQuery("#wizard-loading").removeClass("hide");
+    }
+
+    /**
+     * Hides the loading message.
+     */
+    function hide_loading_msg () {
+        enable_wizard_controls();
+        jQuery("#wizard-loading").addClass("hide");
+        jQuery("#wizard-loading-msg").html("");
+        jQuery("#search-targets-form").removeClass("hide");
+    }
+
+    /**
+     * Enables the wizzard control buttons (prev/next).
+     */
+    function enable_wizard_controls () {
+        if (jQuery(".wizard-next-step").is(":disabled")) {
+            jQuery(".wizard-next-step").removeAttr("disabled");
+        }
+
+        if (jQuery(".wizard-previous-step").is(":disabled")) {
+            jQuery(".wizard-previous-step").removeAttr("disabled");
+        }
+    }
+
+    /**
+     * Disables the wizzard control buttons (prev/next).
+     */
+    function disable_wizard_controls () {
+        if (!jQuery(".wizard-next-step").is(":disabled")) {
+            jQuery(".wizard-next-step").attr("disabled", "disabled");
+        }
+
+        if (!jQuery(".wizard-previous-step").is(":disabled")) {
+            jQuery(".wizard-previous-step").attr("disabled", "disabled");
+        }
+    }
+
+    /**
+     * Updates the next step message.
+     * @param message
+     */
+    function set_next_step_message(message) {
+        jQuery(".wizard-next-step").html(message);
+    }
+
+    /**
+     * Shows the next navigation step.
+     * If false is passed, will hide all steps and show a blank screen that can be used to display messages.
+     *
+     * @param next_step
+     */
+    function show_step (next_step) {
+
+        if (next_step != false) {
+            update_step(next_step);
+
+            // Toggles the active navigation item for a specified step.
+            jQuery(".wizard-nav-item").removeClass("active");
+            jQuery("#wizard-nav-item-" + next_step).addClass("active");
+
+            // Show or hide the "previous" button.
+            if (next_step <= 1) {
+                jQuery("button.wizard-previous-step").hide();
             } else {
-                jQuery("#wizard-previous-step-input").val("0");
+                jQuery("button.wizard-previous-step").show();
             }
 
-            jQuery("#wizard-step-input").val(next_step);
+            // Show appropriate "next" message according to the user page.
+            if (next_step == 5 && security_options) {
+                set_next_step_message("Save Post and Continue");
+            } else if (next_step == 5 && ! security_options) {
+                set_next_step_message("Save Post")
+            } else if (next_step == 6 && security_options) {
+                set_next_step_message("Save Security Options");
+            } else {
+                set_next_step_message("Next");
+            }
+
             jQuery(".wizard-step").addClass("hide");
             jQuery("#wizard-step-" + next_step).removeClass("hide");
-            toggle_active_nav_item(next_step);
         } else {
-            enable_wizard_controls();
-            display_error(jsonResponse.data, "#msgs", "prepend");
-        }
-    });
-}
-
-function wizard_previous_step () {
-    var step = parseInt(jQuery("#wizard-step-input").val());
-    var previous_step = parseInt(jQuery("#wizard-previous-step-input").val());
-    //jQuery(".wizard-next-step").html("Next");
-    remove_errors();
-
-    if (previous_step !== 0) {
-        var updated_step = previous_step;
-        jQuery("#wizard-step-input").val(updated_step);
-        jQuery(".wizard-step").addClass("hide");
-        jQuery("#wizard-step-" + updated_step).removeClass("hide");
-        jQuery("#wizard-previous-step-input").val("0");
-        toggle_active_nav_item(updated_step);
-    } else {
-        if (step > 1) {
-            if (step == 4) {
-                var secure_false_value = $("#secure_false").is(":checked");
-                if (secure_false_value === true) {
-                    //skip step
-                    var updated_step = step - 2;
-                } else {
-                    var updated_step = step - 1;
-                }
-            } else {
-                var updated_step = step - 1;
-            }
-
-            jQuery("#wizard-step-input").val(updated_step);
             jQuery(".wizard-step").addClass("hide");
-            jQuery("#wizard-step-" + updated_step).removeClass("hide");
-            toggle_active_nav_item(updated_step);
+            jQuery(".wizard-nav-item").removeClass("complete");
         }
+
     }
 
-    if (step == 7) {
-        jQuery(".wizard-next-step").html("Save Exam Post");
-    } else {
-        jQuery(".wizard-next-step").html("Next Step");
+    /**
+     * Updates the current step number.
+     * @param {number} step
+     */
+    function update_step (step) {
+        jQuery("#wizard-step-input").val(step);
     }
 
-    var updated_step = parseInt(jQuery("#wizard-step-input").val());
-    if (updated_step === 1) {
-        jQuery(".wizard-previous-step").addClass("hide");
-    }
-}
-
-function remove_errors () {
-    jQuery("#msgs").empty();
-}
-
-function show_loading_msg () {
-    disable_wizard_controls();
-    jQuery("#wizard-loading-msg").html("Loading Exam Options...");
-    jQuery("#search-targets-form").addClass("hide");
-    jQuery("#wizard-loading").removeClass("hide");
-}
-
-function hide_loading_msg () {
-    enable_wizard_controls();
-    jQuery("#wizard-loading").addClass("hide");
-    jQuery("#wizard-loading-msg").html("");
-    jQuery("#search-targets-form").removeClass("hide");
-}
-
-function enable_wizard_controls () {
-    if (jQuery(".wizard-next-step").is(":disabled")) {
-        jQuery(".wizard-next-step").removeAttr("disabled");
+    /**
+     * Returns the current step number.
+     * @returns {number}
+     */
+    function get_step() {
+        return parseInt(jQuery("#wizard-step-input").val());
     }
 
-    if (jQuery(".wizard-previous-step").is(":disabled")) {
-        jQuery(".wizard-previous-step").removeAttr("disabled");
-    }
-}
+    function remove_filter (filter_type, filter_target) {
+        var remove_filter_request = jQuery.ajax({
+            url: ENTRADA_URL + "/admin/events?section=api-exams",
+            data: "method=remove-filter&filter_type=" + filter_type + "&filter_target=" + filter_target,
+            type: "POST"
+        });
 
-function disable_wizard_controls () {
-    if (!jQuery(".wizard-next-step").is(":disabled")) {
-        jQuery(".wizard-next-step").attr("disabled", "disabled");
-    }
-
-    if (!jQuery(".wizard-previous-step").is(":disabled")) {
-        jQuery(".wizard-previous-step").attr("disabled", "disabled");
-    }
-}
-
-function toggle_active_nav_item (step) {
-    jQuery(".wizard-nav-item").removeClass("active");
-    jQuery("#wizard-nav-item-" + step).addClass("active");
-}
-
-function show_step (next_step) {
-    update_step(next_step);
-    remove_errors();
-    toggle_active_nav_item (next_step);
-
-    jQuery(".wizard-step").addClass("hide");
-    jQuery("#wizard-step-" + next_step).removeClass("hide");
-}
-
-function update_step (step) {
-    jQuery("#wizard-step-input").val(step);
-}
-
-function remove_filter (filter_type, filter_target) {
-    var remove_filter_request = jQuery.ajax({
-        url: ENTRADA_URL + "/admin/events?section=api-exams",
-        data: "method=remove-filter&filter_type=" + filter_type + "&filter_target=" + filter_target,
-        type: "POST"
-    });
-
-    jQuery.when(remove_filter_request).done(function (data) {
-        var jsonResponse = JSON.parse(data);
-        if (jsonResponse.status === "success") {
-            var id_string = "#" + filter_type + "_" + filter_target
-            jQuery(id_string).remove();
-            jQuery("#search-targets-form").submit();
-        }
-    });
-}
-
-function remove_all_filters () {
-    var remove_filter_request = jQuery.ajax({
-        url: ENTRADA_URL + "/admin/events?section=api-exams",
-        data: "method=remove-all-filters",
-        type: "POST"
-    });
-
-    jQuery.when(remove_filter_request).done(function (data) {
-        var jsonResponse = JSON.parse(data);
-        if (jsonResponse.status === "success") {
-            jQuery("#search-targets-form").empty().submit();
-        }
-    });
-}
-
-function getCheckedExamsPosts(e) {
-    e.preventDefault();
-
-    jQuery("#exam-post-delete-dialog #start_delete_exam").show();
-    jQuery("#exam-post-delete-dialog #post-titles").html("");
-    var inputs = jQuery(".delete_exam_post:checkbox:checked");
-    var post_ids = [];
-    jQuery.each(inputs, function(key, value) {
-        var post_id = jQuery(value).data("post-id");
-        var post_title = "<li>" + jQuery(value).data("post-title") + "</li>";
-        post_ids.push(post_id);
-        jQuery("#exam-post-delete-dialog #post-titles").append(post_title);
-    });
-
-    exam_post_ids = post_ids;
-    jQuery("#exam-post-delete-dialog").modal("show");
-}
-
-function deleteSelectedExams(e) {
-    var dataObject = {
-        method : "delete-exam-posts",
-        post_ids: exam_post_ids
-    };
-
-    jQuery.ajax({
-        url: API_URL,
-        data: dataObject,
-        type: "POST",
-        success: function (data) {
+        jQuery.when(remove_filter_request).done(function (data) {
             var jsonResponse = JSON.parse(data);
-            jQuery("#exam-post-delete-dialog #start_delete_exam").hide();
-            var message = jsonResponse.msg;
-            if (jsonResponse.status == "success") {
-                jQuery("#exam-post-delete-dialog #delete_exam_message").addClass("alert-success").html(message);
-                setTimeout(function() {
-                    location.reload();
-                }, 5000);
-            } else if (jsonResponse.status == "warning") {
-                jQuery("#exam-post-delete-dialog #delete_exam_message").addClass("alert-warning").html(message);
-            } else if (jsonResponse.status == "error") {
-                jQuery("#exam-post-delete-dialog #delete_exam_message").addClass("alert-error").html(message);
+            if (jsonResponse.status === "success") {
+                var id_string = "#" + filter_type + "_" + filter_target
+                jQuery(id_string).remove();
+                jQuery("#search-targets-form").submit();
             }
+        });
+    }
 
-            jQuery("#exam-post-delete-dialog #delete_exam_message").show();
-        }
-    });
+    function remove_all_filters () {
+        var remove_filter_request = jQuery.ajax({
+            url: ENTRADA_URL + "/admin/events?section=api-exams",
+            data: "method=remove-all-filters",
+            type: "POST"
+        });
+
+        jQuery.when(remove_filter_request).done(function (data) {
+            var jsonResponse = JSON.parse(data);
+            if (jsonResponse.status === "success") {
+                jQuery("#search-targets-form").empty().submit();
+            }
+        });
+    }
+
+    function getCheckedExamsPosts(e) {
+        e.preventDefault();
+
+        jQuery("#exam-post-delete-dialog #start_delete_exam").show();
+        jQuery("#exam-post-delete-dialog #post-titles").html("");
+        var inputs = jQuery(".delete_exam_post:checkbox:checked");
+        var post_ids = [];
+        jQuery.each(inputs, function(key, value) {
+            var post_id = jQuery(value).data("post-id");
+            var post_title = "<li>" + jQuery(value).data("post-title") + "</li>";
+            post_ids.push(post_id);
+            jQuery("#exam-post-delete-dialog #post-titles").append(post_title);
+        });
+
+        exam_post_ids = post_ids;
+        jQuery("#exam-post-delete-dialog").modal("show");
+    }
+
+    function deleteSelectedExams(e) {
+        var dataObject = {
+            method : "delete-exam-posts",
+            post_ids: exam_post_ids
+        };
+
+        jQuery.ajax({
+            url: API_URL,
+            data: dataObject,
+            type: "POST",
+            success: function (data) {
+                var jsonResponse = JSON.parse(data);
+                jQuery("#exam-post-delete-dialog #start_delete_exam").hide();
+                var message = jsonResponse.msg;
+                if (jsonResponse.status == "success") {
+                    jQuery("#exam-post-delete-dialog #delete_exam_message").addClass("alert-success").html(message);
+                    setTimeout(function() {
+                        location.reload();
+                    }, 5000);
+                } else if (jsonResponse.status == "warning") {
+                    jQuery("#exam-post-delete-dialog #delete_exam_message").addClass("alert-warning").html(message);
+                } else if (jsonResponse.status == "error") {
+                    jQuery("#exam-post-delete-dialog #delete_exam_message").addClass("alert-error").html(message);
+                }
+
+                jQuery("#exam-post-delete-dialog #delete_exam_message").show();
+            }
+        });
 }});

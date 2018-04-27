@@ -55,6 +55,12 @@ class Views_Assessments_Reports_Header extends Views_Assessments_Base
         if (@$options["use_assessments_title"]) {
             $completed_string = $translate->_("Completed Assessments on %s");
         }
+        if (@$options["use_leave_title"]) {
+            $completed_string = $translate->_("Tracked Leave for %s");
+        }
+        if (@$options["use_event_feedback_title"]) {
+            $completed_string = $translate->_("Learning Event Feedback Report");
+        }
         ?>
         <div <?php echo $this->getClassString() ?>>
             <h1 class="space-below medium"><?php echo html_encode(sprintf($completed_string, $options["target_name"])) ?></h1>
@@ -85,6 +91,15 @@ class Views_Assessments_Reports_Header extends Views_Assessments_Base
                             </table>
                         </div>
                     <?php endif;?>
+                </div>
+            <?php endif;
+            if (@$options["subheader_html"] && !empty(@$options["subheader_html"])): ?>
+                <div id="report-subheader-section">
+                    <?php
+                        foreach ($options["subheader_html"] as $subheader_html) {
+                            echo $subheader_html;
+                        }
+                    ?>
                 </div>
             <?php endif; ?>
         </div>

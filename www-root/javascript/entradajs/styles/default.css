@@ -1,0 +1,93 @@
+.ejs * {
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale; }
+
+.ejs *:focus {
+  outline: none; }
+
+.ejs body {
+  background-color: #f4f7fa; }
+
+.ejs section::before {
+  content: "";
+  display: block;
+  height: 30px;
+  margin-top: -30px; }
+
+.ejs ::-moz-selection {
+  background: rgba(2, 142, 212, 0.99);
+  color: white; }
+
+.ejs ::selection {
+  background: rgba(2, 142, 212, 0.99);
+  color: white; }
+
+.ejs ::-moz-selection {
+  background: rgba(2, 142, 212, 0.99);
+  color: white; }
+
+.ejs ::-webkit-input-placeholder {
+  color: #8b959d; }
+
+.ejs ::-moz-placeholder {
+  color: #8b959d; }
+
+.ejs ::-ms-input-placeholder {
+  color: #8b959d; }
+
+.ejs ::-moz-placeholder {
+  color: #8b959d; }
+
+.ejs * {
+  font-size: 18px;
+  line-height: 27px; }
+
+.ejs p,
+.ejs label {
+  color: #37555e; }
+
+.ejs label {
+  display: inline-block;
+  margin-bottom: 5px; }
+
+.ejs ul,
+.ejs ol {
+  padding-left: 20px; }
+
+.ejs li {
+  color: #37555e;
+  margin-bottom: 5px; }
+
+.ejs a {
+  color: #028ed4;
+  text-decoration: none; }
+  .ejs a:hover, .ejs a:focus {
+    color: #057bb6;
+    text-decoration: underline; }
+
+.ejs small {
+  color: #37555e;
+  font-size: 0.9em; }
+
+.ejs code {
+  font-family: "Source Code Pro", monospace;
+  font-size: 0.9em;
+  font-weight: bold;
+  line-height: 1.8em; }
+
+.ejs pre code {
+  font-family: "Source Code Pro", monospace;
+  font-size: 1em;
+  font-weight: normal;
+  line-height: 1em; }
+
+.ejs * {
+  font-family: "Source Sans Pro", sans-serif; }
+
+@media (max-width: 600px) {
+  .ejs * {
+    font-size: 17px;
+    line-height: 26px; } }

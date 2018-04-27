@@ -130,7 +130,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ROTATION_SCHEDULE"))) {
                         data: $("#shift-slot-form").serialize(),
                         type: $("#shift-slot-form").attr("method"),
                         success: function (data) {
-                            var jsonResponse = JSON.parse(data);
+                            var jsonResponse = safeParseJson(data, javascript_translations.default_error);
                             if (jsonResponse.status == "success") {
                                 $.each(jsonResponse.data, function (i, v) {
                                     $(".start-" + v.slot_id).html(v.start_date);
@@ -195,8 +195,8 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ROTATION_SCHEDULE"))) {
                         data: "method=save-slot&" + $("#slot-form").serialize(),
                         type: "POST",
                         success: function (data) {
-                            var jsonResponse = JSON.parse(data);
-                            if (jsonResponse.status = "success") {
+                            var jsonResponse = safeParseJson(data, javascript_translations.default_error);
+                            if (jsonResponse.status == "success") {
 
                                 var delete_col = $(document.createElement("td")).append(
                                     $(document.createElement("input")).attr({
@@ -253,8 +253,8 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ROTATION_SCHEDULE"))) {
                         data: {"method": "get-slot-data", "slot_id": slot_id},
                         type: "GET",
                         success: function (data) {
-                            var jsonResponse = JSON.parse(data);
-                            if (jsonResponse.status = "success") {
+                            var jsonResponse = safeParseJson(data, javascript_translations.default_error);
+                            if (jsonResponse.status == "success") {
                                 $("#slot-id").val(slot_id);
                                 $("#slot-type option[value=" + jsonResponse.data.slot_type_id + "]").prop("selected", "selected");
                                 $("#slot-spaces").val(jsonResponse.data.slot_spaces);
@@ -333,6 +333,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ROTATION_SCHEDULE"))) {
             echo $schedule_view->renderScheduleInformation();
 
             if ($SECTION == "edit") {
+
                 $children = $SCHEDULE->getChildren();
                 if ($children) {
 

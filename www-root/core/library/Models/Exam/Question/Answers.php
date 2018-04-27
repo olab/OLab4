@@ -24,7 +24,8 @@
  */
 
 class Models_Exam_Question_Answers extends Models_Base {
-    protected $qanswer_id, $question_id, $version_id, $answer_text, $answer_rationale, $correct, $weight, $order, $updated_date, $updated_by, $deleted_date;
+    protected $qanswer_id, $question_id, $version_id, $answer_text, $answer_rationale;
+    protected $correct, $weight, $order, $updated_date, $updated_by, $deleted_date, $locked;
 
     protected static $table_name = "exam_question_answers";
     protected static $primary_key = "qanswer_id";
@@ -93,6 +94,14 @@ class Models_Exam_Question_Answers extends Models_Base {
         return $this->deleted_date;
     }
 
+    public function getLocked() {
+        return $this->locked;
+    }
+    
+    public function setLocked($locked) {
+        $this->locked = $locked;
+    }
+
     public function setDeletedDate($deleted_date) {
         $this->deleted_date = $deleted_date;
     }
@@ -111,6 +120,10 @@ class Models_Exam_Question_Answers extends Models_Base {
 
     public function setOrder($order) {
         $this->order = $order;
+    }
+
+    public function setAnswerText($answer_text) {
+        $this->answer_text = $answer_text;
     }
 
     public function getFnbText() {
@@ -161,6 +174,16 @@ class Models_Exam_Question_Answers extends Models_Base {
         return $self->fetchAll(array(
             array("key" => "version_id", "value" => $version_id, "method" => "="),
             array("key" => "correct", "value" => $correct, "method" => "="),
+            array("key" => "deleted_date", "value" => ($deleted_date ? $deleted_date : NULL), "method" => ($deleted_date ? "<=" : "IS"))
+        ));
+    }
+
+    /* @return ArrayObject|Models_Exam_Question_Answers[] */
+    public static function fetchAllLockedByVersionID($version_id, $locked = 1, $deleted_date = NULL) {
+        $self = new self();
+        return $self->fetchAll(array(
+            array("key" => "version_id", "value" => $version_id, "method" => "="),
+            array("key" => "locked", "value" => $locked, "method" => "="),
             array("key" => "deleted_date", "value" => ($deleted_date ? $deleted_date : NULL), "method" => ($deleted_date ? "<=" : "IS"))
         ));
     }

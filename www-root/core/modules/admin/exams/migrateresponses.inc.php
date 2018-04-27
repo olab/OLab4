@@ -117,6 +117,7 @@ if(!defined("PARENT_INCLUDED")) {
                             $correct_order = ord(strtolower($correct_letter)) - ord("a") + 1;
                             foreach ($exam_question_answers as $question_answer) {
                                 $adj_array = array(
+                                    "exam_id" => $exam->getID(),
                                     "exam_element_id" => $exam_element->getID(),
                                     "post_id" => $post->getID(),
                                     "value" => $question_answer->getID(),
@@ -145,7 +146,7 @@ if(!defined("PARENT_INCLUDED")) {
                                 add_notice(sprintf($translate->_("No student ID found for row %d."), $row_num));
                                 continue;
                             }
-                            $student = User::fetchRowByNumber($student_id);
+                            $student = Models_User::fetchRowByNumber($student_id);
                             if (!$student) {
                                 add_notice(sprintf($translate->_("Could not find student with number: %d."), $student_id));
                                 continue;

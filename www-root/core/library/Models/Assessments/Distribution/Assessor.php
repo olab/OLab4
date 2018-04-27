@@ -342,7 +342,7 @@ class Models_Assessments_Distribution_Assessor extends Models_Base {
                             $results = $db->GetAll($query, $prepared_variables);
                             if ($results) {
                                 foreach ($results as $assessor) {
-                                    $assessor_data = array("name" => $assessor["firstname"] . " " . $assessor["lastname"], "proxy_id" => $assessor["id"], "number" => $assessor["number"], "target_record_id" => $assessor["id"], "email" => $assessor["email"], "assessor_value" => $assessor["id"], "assessor_type" => "internal");
+                                    $assessor_data = array("name" => $assessor["firstname"] . " " . $assessor["lastname"], "proxy_id" => $assessor["id"], "number" => $assessor["number"], "target_record_id" => $assessor["id"], "email" => $assessor["email"], "assessor_type" => "internal", "assessor_value" => $assessor["id"]);
                                     $assessment_assessors[] = $assessor_data;
                                 }
                             }
@@ -367,7 +367,7 @@ class Models_Assessments_Distribution_Assessor extends Models_Base {
                     case "external_hash" :
                         $assessor = Models_Assessments_Distribution_ExternalAssessor::fetchRowByID($assessor_record->getAssessorValue());
                         if ($assessor) {
-                            $assessor_data = array("name" => $assessor->getFirstname() . " " . $assessor->getLastname(), "assessor_type" => "external", "assessor_value" => $assessor->getID(), "target_record_id" => $assessor->getID(), "email" => $assessor->getEmail());
+                            $assessor_data = array("name" => $assessor->getFirstname() . " " . $assessor->getLastname(), "target_record_id" => $assessor->getID(), "email" => $assessor->getEmail(), "assessor_type" => "external", "assessor_value" => $assessor->getID());
                             $assessment_assessors[] = $assessor_data;
                         }
                         break;

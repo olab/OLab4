@@ -21,7 +21,7 @@
  */
 
 class Models_Assessments_Rubric extends Models_Base {
-    protected $rubric_id, $one45_element_id, $organisation_id, $rubric_title, $rubric_description, $rubric_item_code, $updated_date, $updated_by, $created_date, $created_by, $deleted_date;
+    protected $rubric_id, $one45_element_id, $organisation_id, $item_group_id, $rubric_title, $rubric_description, $rubric_item_code, $updated_date, $updated_by, $created_date, $created_by, $deleted_date, $rating_scale_id, $attributes;
 
     protected static $table_name = "cbl_assessments_lu_rubrics";
     protected static $default_sort_column = "rubric_title";
@@ -49,12 +49,24 @@ class Models_Assessments_Rubric extends Models_Base {
         return $this->organisation_id;
     }
 
+    public function getItemGroupID() {
+        return $this->item_group_id;
+    }
+
     public function getRubricTitle() {
         return $this->rubric_title;
     }
 
     public function getRubricDescription() {
         return $this->rubric_description;
+    }
+
+    public function getRatingScaleID() {
+        return $this->rating_scale_id;
+ 	}
+
+ 	public function getAttributes() {
+        return $this->attributes;
     }
 
     public function getGroupedItemCode() {
@@ -149,14 +161,6 @@ class Models_Assessments_Rubric extends Models_Base {
                             AND d.`author_type` = 'course_id'
                             AND d.`author_id`  IN (". implode(",", array_keys($filters["course"])) .")";
             }
-
-            if (array_key_exists("curriculum_tag", $filters)) {
-                $query .= " JOIN `cbl_assessment_rubric_items` AS e
-                            ON a.`rubric_id` = e.`rubric_id`
-                            JOIN `cbl_assessment_item_objectives` AS f
-                            ON e.`item_id` = f.`item_id`
-                            AND f.`objective_id` IN (". implode(",", array_keys($filters["curriculum_tag"])) .")";
-            }
         } else {
             if ($ENTRADA_USER->getActiveRole() != "admin") {
                 $query .= " JOIN `cbl_assessment_rubric_authors` AS b
@@ -172,10 +176,15 @@ class Models_Assessments_Rubric extends Models_Base {
             }
         }
 
-        if (isset($item_id) && $item_id) {
-            $query .= " JOIN `cbl_assessment_rubric_items` AS e
-                            ON a.`rubric_id` = e.`rubric_id`
-                            AND e.`item_id` = ".$db->qstr($item_id);
+        $query .= " JOIN `cbl_assessment_rubric_items` AS e
+                    ON a.`rubric_id` = e.`rubric_id`
+                    JOIN `cbl_assessments_lu_items` AS i
+                    ON i.`item_id` = e.`item_id`";
+
+        if (array_key_exists("curriculum_tag", $filters)) {
+            $query .= " JOIN `cbl_assessment_item_objectives` AS f
+                        ON e.`item_id` = f.`item_id`
+                        AND f.`objective_id` IN (". implode(",", array_keys($filters["curriculum_tag"])) .")";
         }
 
         $query .= " WHERE a.`deleted_date` IS NULL
@@ -187,8 +196,13 @@ class Models_Assessments_Rubric extends Models_Base {
                             OR a.`rubric_item_code` LIKE (". $db->qstr("%". $search_value ."%") .")
                         )
                     )
-                    AND a.`organisation_id` = ". $db->qstr($ENTRADA_USER->getActiveOrganisation());
-        
+                    AND a.`organisation_id` = ". $db->qstr($ENTRADA_USER->getActiveOrganisation()) .
+                    " AND i.`item_group_id` IS NULL";
+
+        if (isset($item_id) && $item_id) {
+            $query .= " AND e.`item_id` = ".$db->qstr($item_id) ." AND e.`deleted_date` IS NULL ";
+        }
+
         if ($filters) {
             if (array_key_exists("author", $filters)) {
                 $query .= " AND b.`deleted_date` IS NULL";

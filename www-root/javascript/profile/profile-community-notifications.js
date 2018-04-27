@@ -234,6 +234,7 @@ function get_notifications (notification_index) {
         }
 
         var jsonResponse = JSON.parse(data);
+
         if (jsonResponse.results > 0) {
             if (!reload_notifications) {
                 total_notifications += parseInt(jsonResponse.results);
@@ -300,8 +301,13 @@ function build_notification_row (notification) {
     var notification_event_td        = document.createElement("td");
     var notification_poll_td        = document.createElement("td");
     var notification_members_td        = document.createElement("td");
+    var notification_title_anchor = document.createElement("a");
 
-    jQuery(notification_title_td).html(notification.community_title).addClass("notification-title");
+    var community_url = ENTRADA_URL + '/community' + notification.community_url;
+
+    jQuery(notification_title_anchor).attr({'href': community_url, 'target': '_blank'}).html(notification.community_title);
+
+    jQuery(notification_title_td).append(notification_title_anchor).addClass("notification-title");
 
     jQuery(announcement_checkbox).attr({"type": "checkbox", "data-communityid": notification.community_id, "data-notify-type": "announcement"}).addClass("community");
 
@@ -319,7 +325,7 @@ function build_notification_row (notification) {
 
     jQuery(notification_event_td).append(event_checkbox).addClass("community-notifications");
 
-    jQuery(poll_checkbox).attr({"type": "checkbox", value: 1, "data-communityid": notification.community_id, "data-notify-type": "poll"}).addClass("community");
+    jQuery(poll_checkbox).attr({"type": "checkbox", "data-communityid": notification.community_id, "data-notify-type": "poll"}).addClass("community");
 
     if (parseInt(notification.poll) == 1) {
         jQuery(poll_checkbox).attr({"checked": "true"});
@@ -327,7 +333,7 @@ function build_notification_row (notification) {
 
     jQuery(notification_poll_td).append(poll_checkbox).addClass("community-notifications");
 
-    jQuery(members_checkbox).attr({"type": "checkbox", value: 1, "data-communityid": notification.community_id, "data-notify-type": "members"}).addClass("community");
+    jQuery(members_checkbox).attr({"type": "checkbox", "data-communityid": notification.community_id, "data-notify-type": "members"}).addClass("community");
 
     if (parseInt(notification.member_acl) == 1) {
         if (parseInt(notification.members) == 1) {
@@ -337,7 +343,7 @@ function build_notification_row (notification) {
     } else {
         jQuery(notification_members_td).html("");
     }
-    
+
     jQuery(notification_row).attr("id", "notification-row-"+notification.notification_id);
 
     jQuery(notification_row).append(notification_title_td).append(notification_announcement_td).append(notification_event_td).append(notification_poll_td).append(notification_members_td).addClass("notification-row");

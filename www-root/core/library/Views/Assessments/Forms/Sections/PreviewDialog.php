@@ -36,8 +36,10 @@ class Views_Assessments_Forms_Sections_PreviewDialog extends Views_Assessments_F
      */
     protected function renderView($options = array()) {
         global $translate;
+
+        $class_name = $options["form_id"] ? "form-" . $options["form_id"] . "-preview-dialog-content" : "preview-dialog-content";
         ?>
-        <div class="preview-dialog-content">
+        <div class="<?php echo $class_name; ?>">
             <div id="form-preview-dialog" class="preview-dialog-content-inner">
                 <div class="row-fluid space-below inner-content">
                     <?php if ($options["form_html"]) : ?>

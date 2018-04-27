@@ -36,8 +36,12 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 
 	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] do not have access to this module [".$MODULE."]");
 } else {
-	$ON_CALL_ID = $_GET["rid"];
-	
+    if (isset($_GET["rid"]) && (int) $_GET["rid"]) {
+        $ON_CALL_ID = clean_input($_GET["rid"], "int");
+    } else {
+        $ON_CALL_ID = 0;
+    }
+
 	// This grid should be expanded upon redirecting back to the clinical index.
 	$_SESSION["clinical_expand_grid"] = "on_call_grid";
 	
@@ -172,8 +176,8 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 				default :
 					if(!isset($PROCESSED) || count($PROCESSED) <= 0)
 					{
-						$on_callQuery = "SELECT * FROM `ar_on_call` WHERE `on_call_id` ='$ON_CALL_ID'";						
-						$on_callResult = $db->GetRow($on_callQuery);
+						$on_callQuery = "SELECT * FROM `ar_on_call` WHERE `on_call_id` = ?";
+						$on_callResult = $db->GetRow($on_callQuery, array($ON_CALL_ID));
 					}
 					
 					if($ERROR) {

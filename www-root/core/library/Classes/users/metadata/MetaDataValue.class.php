@@ -148,10 +148,10 @@ class MetaDataValue {
 		$cache = SimpleCache::getCache();
 		$cache->remove("MetaValue", $this->meta_value_id);
 		
-		global $db;
+		global $db, $translate;
 		$query = "UPDATE `meta_values` SET `meta_type_id`=?, `data_value`=?, `value_notes`=?, `effective_date`=?, `expiry_date`=? WHERE `meta_value_id`=?";
 		if(!$db->Execute($query, array($type, $value, $notes, $effective_date, $expiry_date, $this->meta_value_id))) {
-			add_error("Failed to update meta data");
+			add_error($translate->_("metadata_error_update"));
 			application_log("error", "Unable to update a meta_values record. Database said: ".$db->ErrorMsg());
 		}
 	} 
@@ -163,10 +163,10 @@ class MetaDataValue {
 		$cache = SimpleCache::getCache();
 		$cache->remove("MetaValue", $this->meta_value_id);
 		
-		global $db;
+		global $db, $translate;
 		$query="DELETE FROM `meta_values` where `meta_value_id`=?";
 		if(!$db->Execute($query, array($this->meta_value_id))) {
-			add_error("Failed to remove meta data from database.");
+			add_error($translate->_("metadata_error_delete_value"));
 			application_log("error", "Unable to delete a meta_values record. Database said: ".$db->ErrorMsg());
 		} 	
 	} 

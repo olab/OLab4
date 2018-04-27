@@ -39,7 +39,7 @@ if (!defined("PARENT_INCLUDED")) {
 
 	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] do not have access to this module [".$MODULE."]");
 } else {
-	$BREADCRUMB[]	= array("url" => ENTRADA_URL."/clerkship", "title" => "Clerkship");
+	$BREADCRUMB[]	= array("url" => ENTRADA_URL."/clerkship", "title" => $translate->_("Clerkship"));
 	define("IN_CLERKSHIP",	true);
 	
 	if (($router) && ($router->initRoute())) {

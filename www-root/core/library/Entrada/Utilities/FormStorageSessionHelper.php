@@ -30,7 +30,7 @@ class Entrada_Utilities_FormStorageSessionHelper extends Entrada_Base {
     /**
      * Initialize the session's forms_storage array if it isn't already set.
      */
-    static public function configure() {
+    public static function configure() {
         if (!isset($_SESSION[APPLICATION_IDENTIFIER]["forms_storage"])) {
             $_SESSION[APPLICATION_IDENTIFIER]["forms_storage"] = array();
         }
@@ -43,7 +43,7 @@ class Entrada_Utilities_FormStorageSessionHelper extends Entrada_Base {
      * @param string $type
      * @return string md5
      */
-    static public function buildStorageHash($related_id, $type) {
+    public static function buildStorageHash($related_id, $type) {
         $hash_array = array($related_id, $type);
         return md5(serialize($hash_array)); // TODO: Maybe, in the future, we could use "hashids" library to shorten the url
     }
@@ -54,7 +54,7 @@ class Entrada_Utilities_FormStorageSessionHelper extends Entrada_Base {
      * @param string $hash
      * @return array
      */
-    static public function fetch($hash) {
+    public static function fetch($hash) {
         if ($hash) {
             if (isset($_SESSION[APPLICATION_IDENTIFIER]["forms_storage"][$hash])) {
                 return $_SESSION[APPLICATION_IDENTIFIER]["forms_storage"][$hash];
@@ -74,7 +74,7 @@ class Entrada_Utilities_FormStorageSessionHelper extends Entrada_Base {
      * @param null $rubric_id
      * @return string
      */
-    static public function buildRefURL($url, $form_ref = null, $rubric_ref = null, $form_id = null, $rubric_id = null) {
+    public static function buildRefURL($url, $form_ref = null, $rubric_ref = null, $form_id = null, $rubric_id = null) {
         if (!$form_ref && !$rubric_ref && !$form_id && !$rubric_id) {
             return $url;
         }
@@ -98,7 +98,7 @@ class Entrada_Utilities_FormStorageSessionHelper extends Entrada_Base {
      * @param string $url
      * @return string
      */
-    static public function appendFormRefToURI($hash, $url) {
+    public static function appendFormRefToURI($hash, $url) {
         if ($hash) {
             if (strpos($url, "fref=$hash") === false) {
                 $url .= "&fref=$hash";
@@ -114,7 +114,7 @@ class Entrada_Utilities_FormStorageSessionHelper extends Entrada_Base {
      * @param string $url
      * @return string
      */
-    static public function appendRubricRefToURI($hash, $url) {
+    public static function appendRubricRefToURI($hash, $url) {
         if ($hash) {
             if (strpos($url, "rref=$hash") === false) {
                 $url .= "&rref=$hash";
@@ -130,7 +130,7 @@ class Entrada_Utilities_FormStorageSessionHelper extends Entrada_Base {
      * @param string $url
      * @return string
      */
-    static public function appendFormRefToURIByFormID($form_id, $url) {
+    public static function appendFormRefToURIByFormID($form_id, $url) {
         if ($form_id && $url) {
             $hash = self::buildStorageHash($form_id, "form");
             if ($hash) {
@@ -148,7 +148,7 @@ class Entrada_Utilities_FormStorageSessionHelper extends Entrada_Base {
      * @param string $url
      * @return string
      */
-    static public function appendRubricRefToURIByRubricID($rubric_id, $url) {
+    public static function appendRubricRefToURIByRubricID($rubric_id, $url) {
         if ($rubric_id && $url) {
             $hash = self::buildStorageHash($rubric_id, "rubric");
             if ($hash) {
@@ -166,7 +166,7 @@ class Entrada_Utilities_FormStorageSessionHelper extends Entrada_Base {
      *
      * @return null|string
      */
-    static public function getFormRef() {
+    public static function getFormRef() {
         $ref = null;
         if (isset($_POST["fref"]) && $tmp_input = clean_input($_POST["fref"], "alphanumeric")) {
             $ref = $tmp_input;
@@ -182,7 +182,7 @@ class Entrada_Utilities_FormStorageSessionHelper extends Entrada_Base {
      *
      * @return null|string
      */
-    static public function getRubricRef() {
+    public static function getRubricRef() {
         $ref = null;
         if (isset($_POST["rref"]) && $tmp_input = clean_input($_POST["rref"], "alphanumeric")) {
             $ref = $tmp_input;
@@ -198,7 +198,7 @@ class Entrada_Utilities_FormStorageSessionHelper extends Entrada_Base {
      * @param int $id
      * @return string
      */
-    static public function buildFormRef($id) {
+    public static function buildFormRef($id) {
         return self::buildStorageHash($id, "form");
     }
 
@@ -208,7 +208,7 @@ class Entrada_Utilities_FormStorageSessionHelper extends Entrada_Base {
      * @param int $id
      * @return string
      */
-    static public function buildRubricRef($id) {
+    public static function buildRubricRef($id) {
         return self::buildStorageHash($id, "rubric");
     }
 
@@ -219,7 +219,7 @@ class Entrada_Utilities_FormStorageSessionHelper extends Entrada_Base {
      * @param int $item_id
      * @param int $rubric_id
      */
-    static public function cleanup($form_id = null, $item_id = null, $rubric_id = null) {
+    public static function cleanup($form_id = null, $item_id = null, $rubric_id = null) {
         // NOT IMPLEMENTED
         if ($form_id) {
         }
@@ -230,7 +230,7 @@ class Entrada_Utilities_FormStorageSessionHelper extends Entrada_Base {
     }
 
     // Referrer is a form
-    static public function addFormReferrerURL($form_id, $url) {
+    public static function addFormReferrerURL($form_id, $url) {
         $hash = self::buildStorageHash($form_id, "rubric");
         $_SESSION[APPLICATION_IDENTIFIER]["forms_storage"][$hash]["type"] = "form";
         $_SESSION[APPLICATION_IDENTIFIER]["forms_storage"][$hash]["form_id"] = $form_id;
@@ -238,7 +238,16 @@ class Entrada_Utilities_FormStorageSessionHelper extends Entrada_Base {
         return $hash;
     }
 
-    static public function addRubricReferrerData($rubric_id, &$rubric_data, $url) {
+    public static function addFormCourseID($form_id, $course_id) {
+        $hash = self::buildStorageHash($form_id, "rubric");
+
+        $_SESSION[APPLICATION_IDENTIFIER]["forms_storage"][$hash]["type"] = "form";
+        $_SESSION[APPLICATION_IDENTIFIER]["forms_storage"][$hash]["form_id"] = $form_id;
+        $_SESSION[APPLICATION_IDENTIFIER]["forms_storage"][$hash]["course_id"] = $course_id;
+        return $hash;
+    }
+
+    public static function addRubricReferrerData($rubric_id, $rubric_data, $url) {
         $hash = self::buildStorageHash($rubric_id, "form");
 
         $_SESSION[APPLICATION_IDENTIFIER]["forms_storage"][$hash]["type"] = "form";
@@ -248,13 +257,18 @@ class Entrada_Utilities_FormStorageSessionHelper extends Entrada_Base {
         self::addRubricEditURL($rubric_id, $url);
 
         if (!empty($rubric_data)) {
+            self::addRubricRatingScaleID($rubric_id, $rubric_data["rubric"]["rating_scale_id"]);
             self::addRubricWidth($rubric_id, $rubric_data["meta"]["width"]); // Only display rubrics of this width. Ignored when 0.
             self::addRubricTypes($rubric_id, array("scale", "rubric_line")); // Only show scale and rubric_lines.
 
-            $descriptors = null;
-            if (!empty($rubric_data["descriptors"])) {
-                $descriptors = array();
-                foreach ($rubric_data["descriptors"] as $descriptor) {
+            $descriptors = array();
+            if (!empty($rubric_data["rating_scale_descriptors"])) {
+                $descriptor_source = "rating_scale_descriptors";
+            } else {
+                $descriptor_source = "descriptors";
+            }
+            if (!empty($rubric_data[$descriptor_source])) {
+                foreach ($rubric_data[$descriptor_source] as $descriptor) {
                     $descriptors[] = $descriptor["ardescriptor_id"];
                 }
             }
@@ -274,7 +288,7 @@ class Entrada_Utilities_FormStorageSessionHelper extends Entrada_Base {
         return $hash;
     }
 
-    static public function addRubricEditURL($rubric_id, $url) {
+    public static function addRubricEditURL($rubric_id, $url) {
         $hash = self::buildStorageHash($rubric_id, "rubric");
         $_SESSION[APPLICATION_IDENTIFIER]["forms_storage"][$hash]["type"] = "rubric";
         $_SESSION[APPLICATION_IDENTIFIER]["forms_storage"][$hash]["rubric_id"] = $rubric_id;
@@ -282,7 +296,7 @@ class Entrada_Utilities_FormStorageSessionHelper extends Entrada_Base {
         return $hash;
     }
 
-    static public function addRubricWidth($rubric_id, $width) {
+    public static function addRubricWidth($rubric_id, $width) {
         $hash = self::buildStorageHash($rubric_id, "rubric");
         $_SESSION[APPLICATION_IDENTIFIER]["forms_storage"][$hash]["type"] = "rubric";
         $_SESSION[APPLICATION_IDENTIFIER]["forms_storage"][$hash]["rubric_id"] = $rubric_id;
@@ -290,7 +304,7 @@ class Entrada_Utilities_FormStorageSessionHelper extends Entrada_Base {
         return $hash;
     }
 
-    static public function addRubricTypes($rubric_id, $types = array()) {
+    public static function addRubricTypes($rubric_id, $types = array()) {
         $hash = self::buildStorageHash($rubric_id, "rubric");
         $_SESSION[APPLICATION_IDENTIFIER]["forms_storage"][$hash]["type"] = "rubric";
         $_SESSION[APPLICATION_IDENTIFIER]["forms_storage"][$hash]["rubric_id"] = $rubric_id;
@@ -298,7 +312,7 @@ class Entrada_Utilities_FormStorageSessionHelper extends Entrada_Base {
         return $hash;
     }
 
-    static public function addRubricDescriptors($rubric_id, $descriptors) {
+    public static function addRubricDescriptors($rubric_id, $descriptors) {
         $hash = self::buildStorageHash($rubric_id, "rubric");
         $_SESSION[APPLICATION_IDENTIFIER]["forms_storage"][$hash]["type"] = "rubric";
         $_SESSION[APPLICATION_IDENTIFIER]["forms_storage"][$hash]["rubric_id"] = $rubric_id;
@@ -306,11 +320,19 @@ class Entrada_Utilities_FormStorageSessionHelper extends Entrada_Base {
         return $hash;
     }
 
-    static public function addRubricItemIDs($rubric_id, $item_ids) {
+    public static function addRubricItemIDs($rubric_id, $item_ids) {
         $hash = self::buildStorageHash($rubric_id, "rubric");
         $_SESSION[APPLICATION_IDENTIFIER]["forms_storage"][$hash]["type"] = "rubric";
         $_SESSION[APPLICATION_IDENTIFIER]["forms_storage"][$hash]["rubric_id"] = $rubric_id;
         $_SESSION[APPLICATION_IDENTIFIER]["forms_storage"][$hash]["items"] = $item_ids;
+        return $hash;
+    }
+
+    public static function addRubricRatingScaleID($rubric_id, $rating_scale_id) {
+        $hash = self::buildStorageHash($rubric_id, "rubric");
+        $_SESSION[APPLICATION_IDENTIFIER]["forms_storage"][$hash]["type"] = "rubric";
+        $_SESSION[APPLICATION_IDENTIFIER]["forms_storage"][$hash]["rubric_id"] = $rubric_id;
+        $_SESSION[APPLICATION_IDENTIFIER]["forms_storage"][$hash]["rating_scale_id"] = $rating_scale_id;
         return $hash;
     }
 
@@ -323,7 +345,7 @@ class Entrada_Utilities_FormStorageSessionHelper extends Entrada_Base {
      * @param string $rref
      * @return string
      */
-    static public function determineReferrerURI($fref, $rref) {
+    public static function determineReferrerURI($fref, $rref) {
         $rubric_referrer_data = self::fetch($rref);
         $form_referrer_data = self::fetch($fref);
         $url = "";
@@ -345,7 +367,7 @@ class Entrada_Utilities_FormStorageSessionHelper extends Entrada_Base {
      * @param string $rref
      * @return string
      */
-    static public function determineReferrerType($fref, $rref) {
+    public static function determineReferrerType($fref, $rref) {
         if ($rref) {
             return "rubric";
         } else if ($fref) {

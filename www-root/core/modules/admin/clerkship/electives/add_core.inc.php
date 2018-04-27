@@ -86,7 +86,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP")) || (!defined("IN
 						}
 					} else {
 						$ERROR++;
-						$ERRORSTR[] = "We were unable to locate the event location you selected. Please select a valid location or if your desired location is not in the list visit the <a href=\"".ENTRADA_URL."/admin/regionaled/regions\" target=\"_blank\">Manage Regions</a> section and locate the region in that list, click on it, and then select the &quot;Clerkship core rotations can take place in this region&quot; check box.";
+						$ERRORSTR[] = "We were unable to locate the event location you selected. Please select a valid location or if your desired location is not in the list visit the <a href=\"".ENTRADA_URL."/admin/regionaled/regions\" target=\"_blank\">Manage Regions</a> section and locate the region in that list, click on it, and then select the &quot;" . $translate->_("Clerkship") . " core rotations can take place in this region&quot; check box.";
 					}
 				} else {
 					$ERROR++;
@@ -309,7 +309,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP")) || (!defined("IN
 								?>
 								</select>
 								<div class="content-small" style="margin-top: 5px">
-									<strong>Please Note:</strong> If the location is not in this list, visit the <a href="<?php echo ENTRADA_URL; ?>/admin/regionaled/regions" target="_blank" style="font-size: 11px">Manage Regions</a> section and locate the region in that list, click on it, and then select the &quot;Clerkship core rotations can take place in this region&quot; check box.
+									<strong>Please Note:</strong> If the location is not in this list, visit the <a href="<?php echo ENTRADA_URL; ?>/admin/regionaled/regions" target="_blank" style="font-size: 11px">Manage Regions</a> section and locate the region in that list, click on it, and then select the &quot;<?php echo $translate->_("Clerkship"); ?> core rotations can take place in this region&quot; check box.
 								</div>
 							</td>
 						</tr>

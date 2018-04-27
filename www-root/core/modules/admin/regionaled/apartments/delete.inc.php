@@ -167,7 +167,7 @@ if (!defined("IN_APARTMENTS")) {
 										echo "	<td><input type=\"checkbox\" name=\"delete[]\" value=\"".(int) $result["apartment_id"]."\" checked=\"checked\" /></td>\n";
 										echo "	<td><a href=\"".$url."\">".html_encode($result["region_name"])."</a></td>\n";
 										echo "	<td><a href=\"".$url."\">".html_encode($result["apartment_title"])."</a></td>\n";
-										echo "	<td class=\"content-small\">".(($result["available_finish"] > 0) ? date(DEFAULT_DATE_FORMAT, $result["available_finish"]) : "No expiry date")."</td>\n";
+										echo "	<td class=\"content-small\">".(($result["available_finish"] > 0) ? date(DEFAULT_DATETIME_FORMAT, $result["available_finish"]) : "No expiry date")."</td>\n";
 										echo "</tr>\n";
 									}
 									?>

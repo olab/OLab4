@@ -39,7 +39,7 @@ if (!defined("PARENT_INCLUDED")) {
 } else {
 	define("IN_COMMUNITIES", true);
 
-	$BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/communities", "title" => "Manage Communities");
+	$BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/communities", "title" => $translate->_("Manage Communities"));
 
 	if (($router) && ($router->initRoute())) {
 		$PREFERENCES = preferences_load($MODULE);

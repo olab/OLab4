@@ -85,7 +85,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP"))) {
             ?>
             <div class="tab-pane" id="clerk-tabs">
                 <div class="tab-page" id="schedule">
-                    <h3 class="tab">Clerkship Schedule</h3>
+                    <h3 class="tab"><?php echo $translate->_("Clerkship Schedule"); ?></h3>
 
                     <table class="tableList" cellspacing="0" summary="List of Clerkship Services">
                         <colgroup>
@@ -375,7 +375,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP"))) {
                                                 if (in_array($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["sb"], Array("b.`location`", "c.`site_name`", "a.`patient_info`", "e.`rotation_title`", "f.`agerange_id`"))) {
                                                     echo($result["sort_by"] ? $result["sort_by"] : "No " . ucfirst($_GET["sb"]) . " Set");
                                                 } elseif ($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["sb"] == "a.`encounter_date`") {
-                                                    echo date(DEFAULT_DATE_FORMAT, $result["sort_by"]);
+                                                    echo date(DEFAULT_DATETIME_FORMAT, $result["sort_by"]);
                                                 }
                                                 ?>
                                             </a>
@@ -394,9 +394,9 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP"))) {
                         <?php
                     } else {
                         if (array_key_exists($rotation_id, $rotation_names) && $rotation_names[$rotation_id]) {
-                            add_error("No clerkship logbook entries for this rotation [" . $rotation_names[$rotation_id] . "] have been found for this user in the system. You may view all entries for all rotations by clicking <a href=\"" . ENTRADA_URL . "/clerkship/logbook?" . replace_query(array("rotation" => false)) . "\" />here</a>.<br /><br />If you believe you are receiving this message in error please contact <a href=\"mailto:" . html_encode($AGENT_CONTACTS["administrator"]["email"]) . "\">" . html_encode($AGENT_CONTACTS["administrator"]["name"]) . "</a> for assistance.");
+                            add_error("No " . $translate->_("clerkship logbook") . " entries for this rotation [" . $rotation_names[$rotation_id] . "] have been found for this user in the system. You may view all entries for all rotations by clicking <a href=\"" . ENTRADA_URL . "/clerkship/logbook?" . replace_query(array("rotation" => false)) . "\" />here</a>.<br /><br />If you believe you are receiving this message in error please contact <a href=\"mailto:" . html_encode($AGENT_CONTACTS["administrator"]["email"]) . "\">" . html_encode($AGENT_CONTACTS["administrator"]["name"]) . "</a> for assistance.");
                         } else {
-                            add_error("No clerkship logbook entries have been found for this user in the system.<br /><br />If you believe you are receiving this message in error please contact <a href=\"mailto:" . html_encode($AGENT_CONTACTS["administrator"]["email"]) . "\">" . html_encode($AGENT_CONTACTS["administrator"]["name"]) . "</a> for assistance.");
+                            add_error("No " . $translate->_("clerkship logbook") . " entries have been found for this user in the system.<br /><br />If you believe you are receiving this message in error please contact <a href=\"mailto:" . html_encode($AGENT_CONTACTS["administrator"]["email"]) . "\">" . html_encode($AGENT_CONTACTS["administrator"]["name"]) . "</a> for assistance.");
                         }
 
                         echo display_error();
@@ -423,7 +423,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP"))) {
                     </script>
                     <?php
                     } else {
-                        add_notice($student_name . " has no scheduled clerkship rotations / electives in the system at this time.  Click <a href=" . ENTRADA_URL . "/admin/clerkship/electives?section=add_core&ids=" . $PROXY_ID . " class=\"strong-green\">here</a> to add a new core rotation.");
+                        add_notice($student_name . " has no scheduled " . $translate->_("clerkship") . " rotations / electives in the system at this time.  Click <a href=" . ENTRADA_URL . "/admin/clerkship/electives?section=add_core&ids=" . $PROXY_ID . " class=\"strong-green\">here</a> to add a new core rotation.");
 
                         echo display_notice();
                     }

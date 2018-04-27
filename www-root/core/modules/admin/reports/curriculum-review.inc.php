@@ -79,94 +79,71 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_REPORTS"))) {
 		$show_children = false;
 	}
 	?>
-	
+    <style>
+        h1,h2 {
+            page-break-before:	always;
+        }
+    </style>
+	<h1><?php echo $translate->_("Curriculum Review Report"); ?></h1>
+
 	<div class="no-printing">
 		<form action="<?php echo ENTRADA_RELATIVE; ?>/admin/reports?section=<?php echo $SECTION; ?>&step=2" method="post" onsubmit="selIt()" class="form-horizontal">
-			<h2>Reporting Dates</h2>
-			<div class="control-group">
-				<table>
-					<tr>
-						<?php echo generate_calendars("reporting", "Reporting Date", true, true, $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_start"], true, true, $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_finish"]); ?>
-					</tr>
-				</table>
-			</div>
-			<div class="control-group">
-				<label for="organisation_id" class="control-label form-required"><input id="organisation_checkbox" type="checkbox" disabled="disabled" checked="checked"> Organisation:</label>
-				<div class="controls">
-					<select id="organisation_id" name="organisation_id" style="width: 177px" onchange="window.location = '<?php echo ENTRADA_RELATIVE; ?>/admin/reports?section=<?php echo $SECTION; ?>&org_id=' + $F('organisation_id')">
-							<?php
-							$query = "SELECT `organisation_id`, `organisation_title` FROM `".AUTH_DATABASE."`.`organisations`";
-							$results = $db->GetAll($query);
-							$all_organisations = false;
-							if ($results) {
-								$all_organisations = true;
-								foreach ($results as $result) {
-									if ($ENTRADA_ACL->amIAllowed("resourceorganisation".$result["organisation_id"], "read")) {
-										echo "<option value=\"".(int) $result["organisation_id"]."\"".(($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["organisation_id"] == $result["organisation_id"]) ? " selected=\"selected\"" : "").">".html_encode($result["organisation_title"])."</option>\n";
-									} else {
-										$all_organisations = false;
-									}
-								}
-							}
+            <input type="hidden" name="organisation_id" id="organisation_id" value="<?php echo $ENTRADA_USER->getActiveOrganisation(); ?>">
+			<h2><?php echo $translate->_("Report Options"); ?></h2>
 
-							if ($all_organisations) {
-								?>
-								<option value="-1" <?php echo (($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["organisation_id"] == -1) ? " selected=\"selected\"" : ""); ?>>All organisations</option>
-								<?php
-							}
-							?>
-							</select>
-				</div>
-			</div>
+			<?php echo Entrada_Utilities::generate_calendars("reporting", "Reporting Date", true, true, $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_start"], true, true, $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_finish"]); ?>
+
 			<div class="control-group">
-				<label class="form-nrequired control-label">Show child events:</label>
 				<div class="controls">
-					<input type="checkbox" name="show_children" value="true" <?php echo $show_children === true ? "checked=\"checked\"" : ""; ?> />
+					<label class="checkbox">
+                        <input type="checkbox" name="show_children" value="true" <?php echo $show_children === true ? "checked=\"checked\"" : ""; ?> />
+                        Include child Learning Events
+                    </label>
 				</div>
 			</div>
 			<div class="control-group">
 				<label class="form-required control-label">Courses Included</label>
 				<div class="controls">
 					<?php
-							echo "<select class=\"multi-picklist\" id=\"PickList\" name=\"course_ids[]\" multiple=\"multiple\" size=\"5\" style=\"width: 100%; margin-bottom: 5px\">\n";
-									if ((is_array($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["course_ids"])) && (count($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["course_ids"]))) {
-										foreach ($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["course_ids"] as $course_id) {
-											echo "<option value=\"".(int) $course_id."\">".html_encode($course_list[$course_id]["code"] . " - " . $course_list[$course_id]["name"])."</option>\n";
-										}
-									}
-							echo "</select>\n";
-							echo "<div style=\"float: left; display: inline\">\n";
-							echo "	<input type=\"button\" id=\"courses_list_state_btn\" class=\"btn\" value=\"Show List\" onclick=\"toggle_list('courses_list')\" />\n";
-							echo "</div>\n";
-							echo "<div style=\"float: right; display: inline\">\n";
-							echo "	<input type=\"button\" id=\"courses_list_remove_btn\" class=\"btn\" onclick=\"delIt()\" value=\"Remove\" />\n";
-							echo "	<input type=\"button\" id=\"courses_list_add_btn\" class=\"btn\" onclick=\"addIt()\" style=\"display: none\" value=\"Add\" />\n";
-							echo "</div>\n";
-							echo "<div id=\"courses_list\" style=\"clear: both; padding-top: 3px; display: none\">\n";
-							echo "	<h2>Courses List</h2>\n";
-							echo "	<select class=\"multi-picklist\" id=\"SelectList\" name=\"other_courses_list\" multiple=\"multiple\" size=\"15\" style=\"width: 100%\">\n";
-									if ((is_array($course_list)) && (count($course_list))) {
-										foreach ($course_list as $course_id => $course) {
-											if (!in_array($course_id, $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["course_ids"])) {
-												echo "<option value=\"".(int) $course_id."\">".html_encode($course_list[$course_id]["code"] . " - " . $course_list[$course_id]["name"])."</option>\n";
-											}
-										}
-									}
-							echo "	</select>\n";
-							echo "	</div>\n";
-							echo "	<script type=\"text/javascript\">\n";
-							echo "	\$('PickList').observe('keypress', function(event) {\n";
-							echo "		if (event.keyCode == Event.KEY_DELETE) {\n";
-							echo "			delIt();\n";
-							echo "		}\n";
-							echo "	});\n";
-							echo "	\$('SelectList').observe('keypress', function(event) {\n";
-							echo "	    if (event.keyCode == Event.KEY_RETURN) {\n";
-							echo "			addIt();\n";
-							echo "		}\n";
-							echo "	});\n";
-							echo "	</script>\n";
-							?>
+                    echo "<select class=\"multi-picklist\" id=\"PickList\" name=\"course_ids[]\" multiple=\"multiple\" size=\"5\" style=\"width: 100%; margin-bottom: 5px\">\n";
+                            if ((is_array($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["course_ids"])) && (count($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["course_ids"]))) {
+                                foreach ($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["course_ids"] as $course_id) {
+                                    echo "<option value=\"".(int) $course_id."\">".html_encode($course_list[$course_id]["code"] . " - " . $course_list[$course_id]["name"])."</option>\n";
+                                }
+                            }
+                    echo "</select>\n";
+                    echo "<div style=\"float: left; display: inline\">\n";
+                    echo "	<input type=\"button\" id=\"courses_list_state_btn\" class=\"btn\" value=\"Show List\" onclick=\"toggle_list('courses_list')\" />\n";
+                    echo "</div>\n";
+                    echo "<div style=\"float: right; display: inline\">\n";
+                    echo "	<input type=\"button\" id=\"courses_list_remove_btn\" class=\"btn\" onclick=\"delIt()\" value=\"Remove\" />\n";
+                    echo "	<input type=\"button\" id=\"courses_list_add_btn\" class=\"btn\" onclick=\"addIt()\" style=\"display: none\" value=\"Add\" />\n";
+                    echo "</div>\n";
+                    echo "<div id=\"courses_list\" style=\"clear: both; padding-top: 3px; display: none\">\n";
+                    echo "	<h2>Courses List</h2>\n";
+                    echo "	<select class=\"multi-picklist\" id=\"SelectList\" name=\"other_courses_list\" multiple=\"multiple\" size=\"15\" style=\"width: 100%\">\n";
+                            if ((is_array($course_list)) && (count($course_list))) {
+                                foreach ($course_list as $course_id => $course) {
+                                    if (!in_array($course_id, $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["course_ids"])) {
+                                        echo "<option value=\"".(int) $course_id."\">".html_encode($course_list[$course_id]["code"] . " - " . $course_list[$course_id]["name"])."</option>\n";
+                                    }
+                                }
+                            }
+                    echo "	</select>\n";
+                    echo "	</div>\n";
+                    echo "	<script type=\"text/javascript\">\n";
+                    echo "	\$('PickList').observe('keypress', function(event) {\n";
+                    echo "		if (event.keyCode == Event.KEY_DELETE) {\n";
+                    echo "			delIt();\n";
+                    echo "		}\n";
+                    echo "	});\n";
+                    echo "	\$('SelectList').observe('keypress', function(event) {\n";
+                    echo "	    if (event.keyCode == Event.KEY_RETURN) {\n";
+                    echo "			addIt();\n";
+                    echo "		}\n";
+                    echo "	});\n";
+                    echo "	</script>\n";
+                    ?>
 				</div>
 			</div>
 			<div class="row-fluid">
@@ -186,7 +163,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_REPORTS"))) {
 		
 		echo "<h2 style=\"page-break-before: avoid\">Curriculum Review Report</h2>";
 		echo "<div class=\"content-small\" style=\"margin-bottom: 10px\">\n";
-		echo "	<strong>Date Range:</strong> ".date(DEFAULT_DATE_FORMAT, $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_start"])." <strong>to</strong> ".date(DEFAULT_DATE_FORMAT, $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_finish"]).".";
+		echo "	<strong>Date Range:</strong> ".date(DEFAULT_DATETIME_FORMAT, $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_start"])." <strong>to</strong> ".date(DEFAULT_DATETIME_FORMAT, $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_finish"]).".";
 		echo "</div>\n";
 
 		if ($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["organisation_id"] != -1) {

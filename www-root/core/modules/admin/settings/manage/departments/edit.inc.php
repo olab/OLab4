@@ -147,7 +147,38 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_CONFIGURATION")) {
 				$result = $db->GetRow($query);
 				if ($result) {
 					$PROCESSED["country_id"] = $tmp_input;
-				} else {
+
+                    /**
+                     * Optional field "prov_state" / Province or State
+                     */
+                    $PROCESSED["province_id"] = 0;
+                    $PROCESSED["prov_state"] = "";
+
+                    if ((isset($_POST["prov_state"])) && ($tmp_input = clean_input($_POST["prov_state"], array("trim", "notags")))) {
+
+                        if (ctype_digit($tmp_input) && ($tmp_input = (int) $tmp_input)) {
+                            if ($PROCESSED["country_id"]) {
+                                $query = "SELECT * FROM `global_lu_provinces` WHERE `province_id` = " . $db->qstr($tmp_input) . " AND `country_id` = " . $db->qstr($PROCESSED["country_id"]);
+                                $result = $db->GetRow($query);
+                                if (!$result) {
+                                    $ERROR++;
+                                    $ERRORSTR[] = "The province / state you have selected does not appear to exist in our database. Please select a valid province / state.";
+                                } else {
+                                    $PROCESSED["province_id"] = $tmp_input;
+                                    $PROCESSED["prov_state"] = $tmp_input;
+                                }
+                            } else {
+                                $ERROR++;
+                                $ERRORSTR[] = "Please select a country and then a province/state.";
+                            }
+                        } else {
+                            $PROCESSED["prov_state"] = $tmp_input;
+                            $ERROR++;
+                            $ERRORSTR[] = "Province or state format error.";
+                        }
+                    }
+
+                } else {
 					$ERROR++;
 					$ERRORSTR[] = "The selected country does not exist in our countries database. Please select a valid country.";
 
@@ -158,34 +189,11 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_CONFIGURATION")) {
 				$ERRORSTR[] = "You must select a country.";
 			}
 
-			/**
-			 * Required field "prov_state" / Province or State
-			 */
-			if ((isset($_POST["prov_state"])) && ($tmp_input = clean_input($_POST["prov_state"], array("trim", "notags")))) {
-				$PROCESSED["province_id"] = 0;
 
-				if (ctype_digit($tmp_input) && ($tmp_input = (int) $tmp_input)) {
-					if ($PROCESSED["country_id"]) {
-						$query = "SELECT * FROM `global_lu_provinces` WHERE `province_id` = " . $db->qstr($tmp_input) . " AND `country_id` = " . $db->qstr($PROCESSED["country_id"]);
-						$result = $db->GetRow($query);
-						if (!$result) {
-							$ERROR++;
-							$ERRORSTR[] = "The province / state you have selected does not appear to exist in our database. Please selected a valid province / state.";
-						} else {
-							$PROCESSED["province_id"] = $tmp_input;
-						}
-					} else {
-						$ERROR++;
-						$ERRORSTR[] = "Please select a country and then a province/state.";
-					}
-				} else {
-					$ERROR++;
-					$ERRORSTR[] = "Province or state format error.";
-				}				
-			} else {
-				$ERROR++;
-				$ERRORSTR[] = "You must select a province or state.";
-			}
+
+
+
+
 
 			if (!$ERROR) {
 				$PROCESSED["updated_date"] = time();
@@ -253,7 +261,8 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_CONFIGURATION")) {
 			if ($ERROR) {
 				echo display_error();
 			}
-			$ONLOAD[] = "provStateFunction('".$PROCESSED["country_id"]."', '".$PROCESSED["province_id"]."')";
+
+        $ONLOAD[] = "provStateFunction('".$PROCESSED["country_id"]."', '".$PROCESSED["province_id"]."')";
 ?>
 			<form action="<?php echo ENTRADA_URL . "/admin/settings/manage/departments" . "?" . replace_query(array("step" => 2)) . "&org=" . $ORGANISATION_ID; ?>" id ="department_edit_form" method="post">
 				<table style="width: 100%" cellspacing="0" cellpadding="2" border="0" summary="Adding Page">
@@ -392,7 +401,7 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_CONFIGURATION")) {
 	<script type="text/javascript">
 
 		function provStateFunction(country_id, province_id) {
-			var url_country_id = '<?php echo ((!isset($PROCESSED["country_id"]) && defined("DEFAULT_COUNTRY_ID") && DEFAULT_COUNTRY_ID) ? DEFAULT_COUNTRY_ID : 0); ?>';
+            var url_country_id = '<?php echo ((!isset($PROCESSED["country_id"]) && defined("DEFAULT_COUNTRY_ID") && DEFAULT_COUNTRY_ID) ? DEFAULT_COUNTRY_ID : 0); ?>';
 			var url_province_id = '<?php echo ((!isset($PROCESSED["province_id"]) && defined("DEFAULT_PROVINCE_ID") && DEFAULT_PROVINCE_ID) ? DEFAULT_PROVINCE_ID : 0); ?>';
 
 			if (country_id != undefined) {

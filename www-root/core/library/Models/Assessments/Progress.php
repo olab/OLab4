@@ -21,7 +21,7 @@
  */
 
 class Models_Assessments_Progress extends Models_Base {
-    protected $aprogress_id, $one45_formsAttached_id, $adistribution_id, $dassessment_id, $assessor_type, $assessor_value, $adtarget_id, $target_record_id, $target_learning_context_id, $progress_value, $uuid, $created_date, $created_by, $updated_date, $updated_by, $deleted_date;
+    protected $aprogress_id, $one45_formsAttached_id, $adistribution_id, $dassessment_id, $assessor_type, $assessor_value, $adtarget_id, $target_type, $target_record_id, $target_learning_context_id, $progress_value, $progress_time, $uuid, $created_date, $created_by, $updated_date, $updated_by, $deleted_date;
 
     protected static $table_name = "cbl_assessment_progress";
     protected static $primary_key = "aprogress_id";
@@ -67,6 +67,10 @@ class Models_Assessments_Progress extends Models_Base {
         return $this->target_record_id;
     }
 
+    public function getTargetType() {
+        return $this->target_type;
+    }
+
     public function getDAssessmentID() {
         return $this->dassessment_id;
     }
@@ -77,6 +81,10 @@ class Models_Assessments_Progress extends Models_Base {
 
     public function getProgressValue() {
         return $this->progress_value;
+    }
+
+    public function getProgressTime() {
+        return $this->progress_time;
     }
 
     public function getCreatedDate() {
@@ -119,6 +127,13 @@ class Models_Assessments_Progress extends Models_Base {
         ));
     }
     
+    public static function fetchRowByIDIncludeDeleted($aprogress_id) {
+        $self = new self();
+        return $self->fetchRow(array(
+            array("key" => "aprogress_id", "value" => $aprogress_id, "method" => "=")
+        ));
+    }
+
     public static function fetchAllByDistributionID($distribution_id, $deleted_date = NULL) {
         $self = new self();
         return $self->fetchAll(array(
@@ -197,12 +212,17 @@ class Models_Assessments_Progress extends Models_Base {
     public static function fetchAllByAdistributionIDAssessorTypeAssessorValueTargetRecordID($adistribution_id, $assessor_type, $assessor_value, $target_record_id, $progress_value = NULL, $dassessment_id = NULL, $deleted_date = NULL) {
         $self = new self();
         $constraints = array(
-            array("key" => "adistribution_id", "value" => $adistribution_id, "method" => "="),
             array("key" => "assessor_type", "value" => $assessor_type, "method" => "="),
             array("key" => "assessor_value", "value" => $assessor_value, "method" => "="),
             array("key" => "target_record_id", "value" => $target_record_id, "method" => "="),
             array("key" => "deleted_date", "value" => ($deleted_date ? $deleted_date : NULL), "method" => ($deleted_date ? "<=" : "IS"))
         );
+        if ($adistribution_id === null) {
+            $constraints[] = array("key" => "adistribution_id", "value" => null, "method" => "IS");
+
+        } else {
+            $constraints[] = array("key" => "adistribution_id", "value" => $adistribution_id, "method" => "=");
+        }
 
         if (isset($progress_value) && $progress_value) {
             $constraints[] = array("key" => "progress_value", "value" => $progress_value, "method" => "=");
@@ -233,13 +253,15 @@ class Models_Assessments_Progress extends Models_Base {
     public static function fetchRowByAdistributionIDAssessorTypeAssessorValueTargetRecordIDDAssessmentID($adistribution_id, $assessor_type, $assessor_value, $target_record_id, $dassessment_id, $progress_value = NULL, $deleted_date = NULL) {
         $self = new self();
         $constraints = array(
-            array("key" => "adistribution_id", "value" => $adistribution_id, "method" => "="),
             array("key" => "assessor_type", "value" => $assessor_type, "method" => "="),
             array("key" => "assessor_value", "value" => $assessor_value, "method" => "="),
             array("key" => "target_record_id", "value" => $target_record_id, "method" => "="),
             array("key" => "dassessment_id", "value" => $dassessment_id, "method" => "="),
             array("key" => "deleted_date", "value" => ($deleted_date ? $deleted_date : NULL), "method" => ($deleted_date ? "<=" : "IS"))
         );
+        if ($adistribution_id) {
+            $constraints[] = array("key" => "adistribution_id", "value" => $adistribution_id, "method" => "=");
+        }
         if (isset($progress_value) && $progress_value) {
             $constraints[] = array("key" => "progress_value", "value" => $progress_value, "method" => "=");
         }
@@ -351,7 +373,7 @@ class Models_Assessments_Progress extends Models_Base {
         return $self->fetchRow($constraints);
     }
 
-    public static function fetchAllByDassessmentID ($dassessment_id, $progress_value = NULL, $deleted_date = NULL, $sort_order = "ASC") {
+    public static function fetchAllByDassessmentID($dassessment_id, $progress_value = NULL, $deleted_date = NULL, $sort_order = "ASC") {
         $self = new self();
 
         $constraints = array(
@@ -383,6 +405,26 @@ class Models_Assessments_Progress extends Models_Base {
 
         return $self->fetchAll($constraints);
     }
+
+    public static function fetchAllByDassessmentIDAssessorTypeAssessorValueTargetRecordIDTargetType ($dassessment_id, $assessor_type, $assessor_value, $target_record_id, $target_type, $progress_value = NULL, $deleted_date = NULL) {
+        $self = new self();
+
+        $constraints = array(
+            array("key" => "dassessment_id", "value" => $dassessment_id, "method" => "="),
+            array("key" => "assessor_type", "value" => $assessor_type, "method" => "="),
+            array("key" => "assessor_value", "value" => $assessor_value, "method" => "="),
+            array("key" => "target_record_id", "value" => $target_record_id, "method" => "="),
+            array("key" => "target_type", "value" => $target_type, "method" => "="),
+        );
+        if ($progress_value) {
+            $constraints[] = array("key" => "progress_value", "value" => $progress_value, "method" => "=");
+        }
+        if (!$deleted_date) {
+            array("key" => "deleted_date", "value" => null, "method" => "IS");
+        }
+        return $self->fetchAll($constraints);
+    }
+
 
     public static function fetchAllByAdistributionIDAssessorTypeAssessorValue($adistribution_id, $assessor_type, $assessor_value, $progress_value = NULL, $deleted_date = NULL) {
         $self = new self();
@@ -486,7 +528,7 @@ class Models_Assessments_Progress extends Models_Base {
     public static function fetchAllTargetsByID($target_record_id) {
         global $db;
 
-        $query = "  SELECT b.`adistribution_id` FROM `cbl_assessment_progress` AS a
+        $query = "  SELECT b.`adistribution_id`, a.`dassessment_id` FROM `cbl_assessment_progress` AS a
                     JOIN `cbl_assessment_progress_responses` AS b 
                     ON a.`aprogress_id` = b.`aprogress_id` 
                     WHERE a.`target_record_id` = ? 
@@ -495,5 +537,155 @@ class Models_Assessments_Progress extends Models_Base {
                     GROUP BY b.`adistribution_id`";
 
         return $db->GetAll($query, array($target_record_id));
+    }
+
+    public static function fetchAllByDassessmentIDAssessorTypeAssessorValueTargetTypeTargetRecordID($dassessment_id, $assessor_type, $assessor_value, $target_type, $target_record_id, $progress_value = NULL, $deleted_date = NULL) {
+        $self = new self();
+        $constraints = array(
+            array("key" => "dassessment_id", "value" => $dassessment_id, "method" => "="),
+            array("key" => "assessor_type", "value" => $assessor_type, "method" => "="),
+            array("key" => "assessor_value", "value" => $assessor_value, "method" => "="),
+            array("key" => "target_type", "value" => $target_type, "method" => "="),
+            array("key" => "target_record_id", "value" => $target_record_id, "method" => "="),
+            array("key" => "deleted_date", "value" => ($deleted_date ? $deleted_date : NULL), "method" => ($deleted_date ? "<=" : "IS"))
+        );
+        if (isset($progress_value) && $progress_value) {
+            $constraints[] = array("key" => "progress_value", "value" => $progress_value, "method" => "=");
+        }
+        return $self->fetchAll($constraints);
+    }
+
+    /**
+     * Update the completion time for an assessment progress record
+     *
+     * @param $aprogress_id
+     * @param $progress_time
+     * @return mixed
+     */
+    public static function updateProgressTime($aprogress_id, $progress_time) {
+        global $db;
+
+        $query = "UPDATE `cbl_assessment_progress`
+                    SET `progress_time` = ?
+                    WHERE `aprogress_id` = ?";
+
+        return $db->Execute($query, array($progress_time, $aprogress_id));
+    }
+
+    /**
+     * Return the number of assessments in progress for an assessor.
+     *
+     * @param $proxy_id
+     * @return int
+     */
+    public static function fetchAssessmentInProgressCount($proxy_id) {
+        global $db;
+
+        $query = "  SELECT count(*) FROM `cbl_distribution_assessments` AS a
+                    JOIN `cbl_assessment_lu_methods` AS b
+                    ON a.`assessment_method_id` = b.`assessment_method_id`
+                    JOIN `cbl_assessment_progress` AS c
+                    ON a.`dassessment_id` = c.`dassessment_id`
+                    WHERE a.`assessor_value` = ?
+                    AND a.`assessor_type` = 'internal'
+                    AND a.`deleted_date` IS NULL
+                    AND b.`deleted_date` IS NULL
+                    AND c.`deleted_date` IS NULL
+                    AND (
+                      b.`shortname` = 'complete_and_confirm_by_email' 
+                      OR b.`shortname` = 'complete_and_confirm_by_pin' 
+                      OR b.`shortname` = 'send_blank_form' 
+                      OR b.`shortname` = 'double_blind_assessment'
+                      OR b.`shortname` = 'faculty_triggered_assessment'
+                    )
+                    AND c.`progress_value` = 'inprogress'";
+
+        return intval($db->getOne($query, array($proxy_id)));
+    }
+
+    /**
+     * Fetch progress and assessment records, optionally filtered.
+     *
+     * @param null $course_ids
+     * @param null $start_date
+     * @param null $end_date
+     * @param null $target_type
+     * @param null $target_ids
+     * @param null $form_ids
+     * @param null $assessment_type_ids
+     * @return mixed
+     */
+    public function fetchAllCompletedProgressByCourseIDsFormIDsTargetTypeTargetIDs($course_ids = null, $start_date = null, $end_date = null, $target_type = null, $target_ids = null, $form_ids = null, $assessment_type_ids = null) {
+        global $db;
+
+        $query = "  SELECT ap.*, da.* 
+                    FROM `cbl_assessments_lu_forms` AS af
+                    JOIN `cbl_distribution_assessments` AS da
+                    ON da.`form_id` = af.`form_id`
+                    JOIN `cbl_assessment_progress` AS ap
+                    ON ap.`dassessment_id` = da.`dassessment_id`
+                    WHERE ap.`progress_value` = 'complete'
+                    AND ap.`deleted_date` IS NULL";
+
+        $start_date = clean_input($start_date, array("int"));
+        if ($start_date) {
+            $query .= " AND da.`delivery_date` >= " . $db->qstr($start_date);
+        }
+
+        $end_date = clean_input($end_date, array("int"));
+        if ($end_date) {
+            $query .= " AND da.`delivery_date` <= " . $db->qstr($end_date);
+        }
+
+        $courses_string = Entrada_Utilities::sanitizeArrayAndImplode($course_ids, array("int"));
+        if ($courses_string) {
+            $query .= " AND da.`course_id` IN ({$courses_string})";
+        }
+
+        $forms_string = Entrada_Utilities::sanitizeArrayAndImplode($form_ids, array("int"));
+        if ($forms_string) {
+            $query .= " AND da.`form_id` IN ({$forms_string})";
+        }
+
+        $assessment_types_string = Entrada_Utilities::sanitizeArrayAndImplode($assessment_type_ids, array("int"));
+        if ($assessment_types_string) {
+            $query .= " AND da.`assessment_type_id` IN ({$assessment_types_string})";
+        }
+
+        $target_type = clean_input($target_type, array("trim", "striptags"));
+        $target_ids_string = Entrada_Utilities::sanitizeArrayAndImplode($target_ids, array("int"));
+        if ($target_type && $target_ids_string) {
+            $query .= " AND (ap.`target_type` = " . $db->qstr($target_type) . " AND ap.`target_record_id` IN ({$target_ids_string}))";
+        }
+
+        $query .= " GROUP BY ap.`aprogress_id`
+                    ORDER BY da.`delivery_date` DESC";
+
+        return $db->GetAll($query);
+    }
+
+    /**
+     * Fetch all assessments that have been done on a specific form for a user.
+     * @param int $form_id
+     * @param int $target_id
+     * @param int $end_date
+     * @param int $start_date
+     * @return mixed
+     */
+    public function getAssessmentsByFormIDTarget($form_id = 0, $target_id = 0, $start_date = 0, $end_date = 0) {
+        global $db;
+
+        $query = " SELECT a.* FROM `cbl_assessment_progress` as a
+                   JOIN `cbl_distribution_assessments` as b
+                   ON a.`dassessment_id` = b.`dassessment_id`
+                   WHERE b.`form_id` = ?
+                   AND a.`target_type` = 'proxy_id'
+                   AND a.`target_record_id` = ?
+                   AND CASE WHEN b.`encounter_date` IS NOT NULL THEN b.`encounter_date` 
+                   ELSE b.`created_date` 
+                   END BETWEEN ? AND ?";
+
+        $results = $db->GetAll($query, array($form_id, $target_id, $start_date, $end_date));
+        return $results;
     }
 }

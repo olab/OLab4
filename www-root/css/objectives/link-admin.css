@@ -1,0 +1,23 @@
+#event-tag-container .selected-items-list li {
+    cursor: pointer;
+}
+
+#unit-tag-container .selected-items-list li {
+    cursor: pointer;
+}
+
+#course-tag-container .selected-items-list li {
+    cursor: pointer;
+}
+
+#link-objectives li[data-parent="0"] .search-target-label-text {
+    cursor: default;
+}
+
+#linked-objectives li img {
+    cursor: pointer;
+}
+
+#all-linked-objectives li img {
+    cursor: pointer;
+}

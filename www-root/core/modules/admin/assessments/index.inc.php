@@ -36,22 +36,26 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ASSESSMENTS"))) {
 	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] does not have access to this module [".$MODULE."]");
 } else {
     $BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/" . $MODULE, "title" => "Dashboard");
-    $HEAD[] = "<script type=\"text/javascript\">sidebarBegone();</script>";
+    //$HEAD[] = "<script type=\"text/javascript\">sidebarBegone();</script>";
     $JQUERY[] = "<script type=\"text/javascript\" src=\"" . ENTRADA_URL . "/javascript/assessments/dashboard/index.js?release=" . html_encode(APPLICATION_VERSION) . "\"></script>";
-	$HEAD[] = "<link href=\"" . ENTRADA_URL . "/css/assessments/assessment-public-index.css\" rel=\"stylesheet\" type=\"text/css\" media=\"all\" />";
+    $HEAD[] = "<link href=\"" . ENTRADA_URL . "/css/assessments/assessment-public-index.css?release=". html_encode(APPLICATION_VERSION) ."\" rel=\"stylesheet\" type=\"text/css\" media=\"all\" />";
 
     $task_count = array();
     $task_types = array("assessment", "evaluation");
     foreach ($task_types as $task_type) {
-        $task_count["incomplete-" . $task_type] = Entrada_Utilities_Assessments_AssessmentTask::getAllTasksForAssociatedLearnersAssociatedFaculty($task_type, 0, 0, true);
-        $task_count["upcoming-" . $task_type]   = Models_Assessments_FutureTaskSnapshot::getAllFutureTasksForAssociatedLearnersAssociatedFaculty($task_type, 0, 0, true);
-        $task_count["deleted-" . $task_type]    = Models_Assessments_DeletedTask::getAllDeletedTasksForAssociatedLearnersAssociatedFaculty($task_type, 0, 0, true);
+        $task_count["incomplete-" . $task_type] = Entrada_Utilities_Assessments_DeprecatedAssessmentTask::getAllTasksForAssociatedLearnersAssociatedFaculty($task_type, $ENTRADA_USER->getActiveOrganisation(), 0, 0, true);
+        $task_count["upcoming-" . $task_type]   = Models_Assessments_FutureTaskSnapshot::fetchAllFutureTasksForAssociatedLearnersAssociatedFaculty($task_type, $ENTRADA_USER->getActiveOrganisation(), 0, 0, true);
+        $task_count["deleted-" . $task_type]    = Entrada_Utilities_Assessments_DeprecatedAssessmentTask::getAllDeletedTasksForAssociatedLearnersAssociatedFaculty($task_type, $ENTRADA_USER->getActiveOrganisation(),0, 0, true);
     }
 
-    $schedule_data = Models_Schedule::fetchAllScheduleChangesByProxyID($ENTRADA_USER->getProxyID());
+    $schedule_data = Models_Schedule::fetchAllScheduleChangesByProxyIDOrganisationID($ENTRADA_USER->getProxyID(), $ENTRADA_USER->getActiveOrganisation());
     $tracked_vacation = Models_Leave_Tracking::fetchAllByAssociatedLearnerFacultyProxyList(strtotime("today"));
     $assessment_evaluation_tabs = new Views_Assessments_Dashboard_NavigationTabs();
-    $assessment_evaluation_tabs->render(array("active" => "dashboard")); ?>
+    $assessment_evaluation_tabs->render(array(
+        "active" => "dashboard",
+        "group" => $ENTRADA_USER->getActiveGroup(),
+        "role" => $ENTRADA_USER->getActiveRole()
+    )); ?>
 
     <h1><?php echo $translate->_("Assessment & Evaluation"); ?></h1>
     <div class="well">
@@ -59,7 +63,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ASSESSMENTS"))) {
     </div>
     <?php
     $dashboard_task_lists = new Views_Assessments_Dashboard_TaskLists();
-    $dashboard_task_lists->render(array("task_count" => $task_count));
+    $dashboard_task_lists->render(array("task_count" => $task_count, "log_assessment_url" => ENTRADA_URL . "/assessments?section=assessment-log" ));
     ?>
 
     <div id="additional-dashboard-details">

@@ -112,7 +112,7 @@ jQuery(document).ready(function(){
 		}
 	});
 
-	jQuery('.user_remove').live('click',function(){
+	jQuery(document).on('click', '.user_remove', function(){
 		var type = getType(this);
 		var prfx = getPref(this);
 		var id = getId(this);
@@ -134,7 +134,7 @@ jQuery(document).ready(function(){
 		}
 	});
 
-	jQuery('.user_add_btn').live('click',function(){
+	jQuery(document).on('click', '.user_add_btn', function(){
 		var type = getType(this);
 		var prfx = getPref(this);
 		addItem(type,prfx);

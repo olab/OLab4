@@ -86,6 +86,7 @@ class Models_Gradebook_Assessment_Form_Element extends Models_Base {
         $this->weight = $weight;
     }
 
+    /* @return bool|Models_Gradebook_Assessment_Form_Element */
     public static function fetchRowByID($gafelement_id) {
         $self = new self();
         return $self->fetchRow(array(
@@ -93,6 +94,7 @@ class Models_Gradebook_Assessment_Form_Element extends Models_Base {
         ));
     }
 
+    /* @return ArrayObject|Models_Gradebook_Assessment_Form_Element[] */
     public static function fetchAllRecords() {
         $self = new self();
         return $self->fetchAll(array(array("key" => "gafelement_id", "value" => 0, "method" => ">=")));
@@ -100,7 +102,7 @@ class Models_Gradebook_Assessment_Form_Element extends Models_Base {
 
     /**
      * Fetches all records by assessment ID
-     * @return array db results
+     * @return ArrayObject|Models_Gradebook_Assessment_Form_Element[]
      */
     public function fetchAllByAssessmentID() {
         return $this->fetchAll(array(array("key" => "assessment_id", "value" => $this->assessment_id, "method" => "=")));
@@ -118,11 +120,10 @@ class Models_Gradebook_Assessment_Form_Element extends Models_Base {
         // if fields_to_update is not set or not an array, use the standard toArray()
         if (!$fields_to_update || !is_array($fields_to_update)) {
             $update_array = $this->toArray();
-        }
-        else {
+        } else {
             $update_array = array();
 
-            foreach($fields_to_update as $field) {
+            foreach ($fields_to_update as $field) {
                 $update_array[$field] = $this->$field;
             }
         }

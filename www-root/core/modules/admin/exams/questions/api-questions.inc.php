@@ -37,15 +37,32 @@
  */
 require_once("init.inc.php");
 
+function get_question_authors($parent_id, $search_value) {
+    $authors_list = Models_Exam_Question_Authors::fetchAvailableAuthorsByType($parent_id, $search_value);
+    $data = array();
+    if ($authors_list) {
+        foreach($authors_list as $author) {
+            array_push($data, array("target_id" => $author['id'], "target_parent" => $parent_id, "target_label" => $author['fullname']));
+        }
+    }
+    if ($data) {
+        $response = array("status" => "success", "data" => $data);
+    } else {
+        $label = ($parent_id == "proxy_id" ? "individual" : substr($parent_id, 0, -3));
+        $response = array("status" => "error", "data" => ("No " . $label . " instance found."));
+    }
+    return $response;
+}
+
 if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
-	header("Location: ".ENTRADA_URL);
+	header("Location: " . ENTRADA_URL);
 	exit;
-} elseif (!$ENTRADA_ACL->amIAllowed("exam", "read", true)) {
+} elseif (!$ENTRADA_ACL->amIAllowed("examquestionindex", "read", true)) {
 	add_error(sprintf($translate->_("You do not have the permissions required to use this module.<br /><br />If you believe you are receiving this message in error Please contact <a href=\"mailto:%1\$s\">%2\$s</a> for assistance."), html_encode($AGENT_CONTACTS["administrator"]["email"]), html_encode($AGENT_CONTACTS["administrator"]["name"])));
 
 	echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] do not have access to this module [".$MODULE."]");
+	application_log("error", "Group [" . $_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"] . "] and role [" . $_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"] . "] do not have access to this module [" . $MODULE . "]");
 } else {
     ob_clear_open_buffers();
     
@@ -85,10 +102,21 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                         $PROCESSED["filters"] = array();
                         if (isset($_SESSION[APPLICATION_IDENTIFIER]["exams"]["questions"]["selected_filters"])) {
                             $PROCESSED["filters"] = $_SESSION[APPLICATION_IDENTIFIER]["exams"]["questions"]["selected_filters"];
+                        } else if (isset($request['filters']) && is_array($request['filters'])) {
+                            $processed_filters = array();
+                            foreach ($request['filters'] as $filter_item) {
+                                if (array_key_exists($filter_item['name'], $processed_filters)) {
+                                    array_push($processed_filters[$filter_item['name']], $filter_item['value']);
+                                } else {
+                                    $processed_filters[$filter_item['name']] = array();
+                                    array_push($processed_filters[$filter_item['name']], $filter_item['value']);
+                                }
+                            }
+                            $PROCESSED["filters"] = $processed_filters;
                         }
 
                         if (isset($request["search_term"]) && $tmp_input = clean_input(strtolower($request["search_term"]), array("trim", "striptags"))) {
-                            $PROCESSED["search_term"] = "%".$tmp_input."%";
+                            $PROCESSED["search_term"] = "%" . $tmp_input . "%";
                         } else {
                             $PROCESSED["search_term"] = "";
                         }
@@ -251,13 +279,13 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                                         if (isset($question_view) && is_object($question_view)) {
                                             $question_count++;
 
-                                            $question_render_details = $question_view->render($PROCESSED["exam_mode"], NULL, NULL, "details", false, NULL, NULL, NULL, 1, $PROCESSED["active_details"]);
-                                            $question_render_list = $question_view->render($PROCESSED["exam_mode"], NULL, NULL, "list",  false, NULL, NULL, NULL, 1, $PROCESSED["active_details"]);
+                                            $question_render_details    = $question_view->render($PROCESSED["exam_mode"], NULL, NULL, "details", false, NULL, NULL, NULL, 1, $PROCESSED["active_details"]);
+                                            $question_render_list       = $question_view->render($PROCESSED["exam_mode"], NULL, NULL, "list",  false, NULL, NULL, NULL, 1, $PROCESSED["active_details"]);
                                             if ($question_render_list && $question_render_details) {
-                                                $data["html_list"] .= $question_render_list;
-                                                $data["html_details"] .= $question_render_details;
-                                                $return["status_question"] = "success";
-                                                $return["question_data"] = $data;
+                                                $data["html_list"]          .= $question_render_list;
+                                                $data["html_details"]       .= $question_render_details;
+                                                $return["status_question"]  = "success";
+                                                $return["question_data"]    = $data;
                                                 $return[$question_version->getVersionID()]["is_highest_version"] = 1;
                                             } else {
                                                 $return["status_question"] = "error";
@@ -286,7 +314,7 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                              * Breadcrumb section
                              */
                             $path = array();
-                            $folder = Models_Exam_Question_Bank_Folders::fetchRowByID($PROCESSED["folder_id"]);
+                            $folder = Models_Exam_Bank_Folders::fetchRowByID($PROCESSED["folder_id"]);
 
                             if (isset($folder) && is_object($folder)) {
                                 $breadcrumbs_html = $folder->getBreadcrumbsByFolderID();
@@ -295,10 +323,10 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                                     $return["breadcrumb_data"] = $breadcrumbs_html;
                                 } else {
                                     $return["status_breadcrumbs"] = "error";
-                                    $return["status_breadcrumbs_error"] = $translate->_("Error fetching breadcrumbs for this folder(". $PROCESSED["folder_id"].")");
+                                    $return["status_breadcrumbs_error"] = $translate->_("Error fetching breadcrumbs for this folder(" .  $PROCESSED["folder_id"] . ")");
                                 }
                             } else if ($PROCESSED["folder_id"] == 0) {
-                                $index_folder = new Models_Exam_Question_Bank_Folders(array(
+                                $index_folder = new Models_Exam_Bank_Folders(array(
                                     "folder_id" => 0,
                                     "parent_folder_id" => 0,
                                     "folder_title" => "Index",
@@ -333,17 +361,59 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                             /*
                              * Sub folder section
                              */
+                            $restrict_to_folder = false;
+                            $restrict_folder_ids = array();
+                            $restrict_folder_array_children = array();
+                            $access_folder_allowed_array = array();
                             $subfolder_html = "";
-                            $folders = Models_Exam_Question_Bank_Folders::fetchAllByParentID($PROCESSED["folder_id"]);
+
+                            $group = $ENTRADA_USER->getActiveGroup();
+                            if ($group === "student") {
+                                $allowed_folders = Models_Exam_Bank_Folders::fetchAllByTypeAuthor("question", $ENTRADA_USER->getID());
+
+                                if ($allowed_folders && is_array($allowed_folders) && !empty($allowed_folders)) {
+                                    foreach ($allowed_folders as $folder) {
+                                        $restrict_folder_ids[] = (int)$folder->getID();
+                                    }
+                                }
+
+                                if ($restrict_folder_ids && is_array($restrict_folder_ids) && !empty($restrict_folder_ids)) {
+                                    foreach ($restrict_folder_ids as $folder_restricted) {
+                                        if (!in_array($folder_restricted, $restrict_folder_array_children)) {
+                                            $restrict_folder_array_children[(int)$folder_restricted] = (int)$folder_restricted;
+                                        }
+                                        $restrict_folder_array_children = Models_Exam_Bank_Folders::getChildrenFolders($folder_restricted, $restrict_folder_array_children, "question");
+                                    }
+                                }
+                            }
+
+                            $folders = Models_Exam_Bank_Folders::fetchAllByParentID($PROCESSED["folder_id"]);
                             if (isset($folders) && is_array($folders) && !empty($folders)) {
+                                // Provides restrictions for limiting folders students can access
+                                if ($restrict_folder_array_children && is_array($restrict_folder_array_children) && !empty($restrict_folder_array_children)) {
+                                    foreach ($folders as $folder) {
+                                        if ($folder && is_object($folder)) {
+                                            if (in_array($folder->getID(), $restrict_folder_array_children)) {
+                                                $access_folder_allowed_array[] = $folder;
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    if ($group === "student") {
+                                        $access_folder_allowed_array = array();
+                                    } else {
+                                        $access_folder_allowed_array = $folders;
+                                    }
+                                }
+
                                 $subfolder_html .= "<ul id=\"folder_ul\">";
                                 $folder_count = count($folders);
-                                foreach ($folders as $key => $folder) {
+                                foreach ($access_folder_allowed_array as $key => $folder) {
                                     if (isset($folder) && is_object($folder)) {
                                         if ($key === 0 && $PROCESSED["folder_id"] != 0) {
-                                            $subfolder_html .= Views_Exam_Question_Bank_Folder::renderBackNavigation($parent_parent_folder);
+                                            $subfolder_html .= Views_Exam_Bank_Folder::renderBackNavigation($parent_parent_folder);
                                         }
-                                        $folder_view = new Views_Exam_Question_Bank_Folder($folder);
+                                        $folder_view = new Views_Exam_Bank_Folder($folder);
                                         $subfolder_html .= $folder_view->render();
                                         if ($folder_count === $key + 1) {
                                             $subfolder_html .= "</ul>";
@@ -354,7 +424,7 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                                 $return["subfolder_html"] = $subfolder_html;
                             } else {
                                 $subfolder_html .= "<ul>";
-                                $subfolder_html .= Views_Exam_Question_Bank_Folder::renderBackNavigation($parent_parent_folder);
+                                $subfolder_html .= Views_Exam_Bank_Folder::renderBackNavigation($parent_parent_folder);
                                 $subfolder_html .= "</ul>";
                                 $return["status_folder"] = "success";
                                 $return["subfolder_html"] = $subfolder_html;
@@ -376,11 +446,10 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                             }
 
                         } else {
-//                            $return["status_question"] = "error";
-//                            $return["status_question_error"] = $translate->_("Error displaying view for this question.");
-//                            //echo json_encode(array("status" => "error", "data" => array($translate->_("Error displaying view for this question."))));
+                            //$return["status_question"] = "error";
+                            //$return["status_question_error"] = $translate->_("Error displaying view for this question.");
+                            //echo json_encode(array("status" => "error", "data" => array($translate->_("Error displaying view for this question."))));
                         }
-
                         echo json_encode($return);
                     break;
                     case "get-question-details" :
@@ -495,7 +564,7 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                         }
                         
                         if (isset($request["search_value"]) && $tmp_input = clean_input(strtolower($request["search_value"]), array("trim", "striptags"))) {
-                            $PROCESSED["search_value"] = "%".$tmp_input."%";
+                            $PROCESSED["search_value"] = "%" . $tmp_input . "%";
                         }
 
                         if (isset($request["filter_type"]) && $tmp_input = clean_input($request["filter_type"], array("trim", "striptags"))) {
@@ -640,8 +709,92 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                         } else {
                             echo json_encode(array("status" => "error", "data" => $translate->_("No authors were found.")));
                         }
-                    break;
+                        break;
+                    case "get-question-permission-types":
+                        if (isset($request["search_value"]) && $tmp_input = clean_input(strtolower($request["search_value"]), array("trim", "striptags"))) {
+                            $PROCESSED["search_value"] = $tmp_input;
+                        } else {
+                            $PROCESSED["search_value"] = "";
+                        }
+                        if (isset($request["parent_id"]) && $tmp_input = clean_input(strtolower($request["parent_id"]), array("trim"))) {
+                            $PROCESSED["parent_id"] = $tmp_input;
+                        } else {
+                            $PROCESSED["parent_id"] = 0;
+                        }
+                        // Sometimes the advanced search will call the primary function for the second level,
+                        // when parent_id is different from 0 it's because this is happening
+                        if (!in_array($PROCESSED["parent_id"], array('proxy_id', 'organisation_id', 'course_id'), true)) {
+                            $data = array();
+                            $individual_authors_count = count(
+                                Models_Exam_Question_Authors::fetchAvailableAuthorsByType(
+                                    'proxy_id', $PROCESSED["search_value"]
+                                )
+                            );
+                            $organisation_authors_count = count(
+                                Models_Exam_Question_Authors::fetchAvailableAuthorsByType(
+                                    'organisation_id', $PROCESSED["search_value"]
+                                )
+                            );
+                            $course_authors_count = count(
+                                Models_Exam_Question_Authors::fetchAvailableAuthorsByType(
+                                    'course_id', $PROCESSED["search_value"]
+                                )
+                            );
 
+                            if ($individual_authors_count) {
+                                array_push($data,
+                                    array(
+                                        "target_id" => "proxy_id", "target_parent" => "1",
+                                        "target_label" => "Individual", "target_children" => $individual_authors_count,
+                                        "level_selectable" => 0
+                                    )
+                                );
+                            }
+                            if ($organisation_authors_count) {
+                                array_push(
+                                    $data,
+                                    array(
+                                        "target_id" => "organisation_id", "target_parent" => "1",
+                                        "target_label" => "Organisation", "target_children" => $organisation_authors_count,
+                                        "level_selectable" => 0
+                                    )
+                                );
+                            }
+                            if ($course_authors_count) {
+                                array_push(
+                                    $data,
+                                    array(
+                                        "target_id" => "course_id", "target_parent" => "1", "target_label" => "Course",
+                                        "target_children" => $course_authors_count,
+                                        "level_selectable" => 0
+                                    )
+                                );
+                            }
+                            if (!empty($data)) {
+                                echo json_encode(array("status" => "success", "data" => $data, "parent_id" => $PROCESSED["parent_id"], "parent_name" => "Question Permissions", "level_selectable" => 1));
+                            } else {
+                                echo json_encode(array("status" => "error", "data" => $translate->_("No existing question permissions found")));
+                            }
+
+                        } else {
+                            $response = get_question_authors($PROCESSED["parent_id"], $PROCESSED["search_value"]);
+                            echo json_encode($response);
+                        }
+                        break;
+                    case "get-question-permissions":
+                        if (isset($request["search_value"]) && $tmp_input = clean_input(strtolower($request["search_value"]), array("trim", "striptags"))) {
+                            $PROCESSED["search_value"] = $tmp_input;
+                        } else {
+                            $PROCESSED["search_value"] = "";
+                        }
+                        if (isset($request["parent_id"]) && $tmp_input = clean_input(strtolower($request["parent_id"]), array("trim"))) {
+                            $PROCESSED["parent_id"] = $tmp_input;
+                        } else {
+                            $PROCESSED["parent_id"] = "proxy_id";
+                        }
+                        $response = get_question_authors($PROCESSED["parent_id"], $PROCESSED["search_value"]);
+                        echo json_encode($response);
+                        break;
                     case "get-user-exams" :
                         if (isset($request["search_value"]) && $tmp_input = clean_input(strtolower($request["search_value"]), array("trim", "striptags"))) {
                             $PROCESSED["search_value"] = $tmp_input;
@@ -995,7 +1148,7 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                                         $added++;
                                     }
                                 } else {
-                                    application_log("notice", "Question author [".$a->getID()."] is already an active author. API should not have returned this author as an option.");
+                                    application_log("notice", "Question author [" . $a->getID() . "] is already an active author. API should not have returned this author as an option.");
                                 }
                             } else {
                                 $version = Models_Exam_Question_Versions::fetchRowByVersionID($PROCESSED["version_id"]);

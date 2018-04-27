@@ -107,4 +107,30 @@ class Models_Curriculum_Type extends Models_Base {
         return $output;
     }
 
+    public function fetchOrganisationIDByCPeriod($cperiod_id) {
+        global $db;
+
+        $query = "SELECT cto.`organisation_id` FROM `curriculum_type_organisation` AS cto
+                  JOIN `curriculum_periods` AS cp
+                  ON cto.`curriculum_type_id` = cp.`curriculum_type_id`
+                  WHERE cp.`cperiod_id` = ?";
+        $result = $db->GetRow($query, array($cperiod_id));
+
+        return $result["organisation_id"];
+    }
+
+    public function getCourses() {
+        global $db;
+        $query = "SELECT *
+                  FROM `courses`
+                  WHERE `curriculum_type_id` = ?
+                  AND `course_active` = 1
+                  ORDER BY `course_code`, `course_name`";
+        $results = $db->GetAll($query, array($this->getID()));
+        if ($results === false) {
+            throw new Exception($db->ErrorMsg());
+        } else {
+            return array_map(function ($result) { return new Models_Course($result); }, $results);
+        }
+    }
 }

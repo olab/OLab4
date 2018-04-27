@@ -1,21 +1,3 @@
-/**
- * Safely parse JSON and return a default error message (single string) if failure.
- * @param data JSON
- * @param default_message string
- * @returns {Array}
- */
-function safeParseJson(data, default_message) {
-    try {
-        var jsonResponse = JSON.parse(data);
-    }
-    catch (e) {
-        var jsonResponse = [];
-        jsonResponse.status = "error";
-        jsonResponse.data = [default_message];
-    }
-    return jsonResponse;
-}
-
 jQuery(document).ready(function ($) {
 
     $('#delete-tasks-modal').on('hide.bs.modal', function (e) {
@@ -23,6 +5,16 @@ jQuery(document).ready(function ($) {
             location.reload();
         }
     });
+
+    if (typeof active_tab != "undefined") {
+
+        $(".target-status-btn").removeClass("active");
+        $("#targets-"+active_tab+"-btn").addClass("active");
+
+        $(".targets-container").addClass("hide");
+        $("#targets-"+active_tab+"-container").removeClass("hide");
+
+    }
 
     $('#delete-tasks-modal').on('show.bs.modal', function (e) {
         $('#delete-tasks-modal').removeClass("hide");
@@ -77,56 +69,113 @@ jQuery(document).ready(function ($) {
         var url = $("#delete-tasks-modal-form").attr("action");
         var reason_id = $("#delete-tasks-reason").val();
         var reason_notes = $("#delete-tasks-other-reason").val();
-
-        var task_data = [];
-        var count = 0;
-        $("input.delete").each(function (i, v) {
-            if ($(v).is(":checked")) {
-                task_data[count] = {
-                    assessor_type: $(v).data("assessor-type"),
-                    assessor_value: $(v).data("assessor-value"),
-                    target_id: $(v).data("target-id"),
-                    assessment_id: $(v).data("assessment-id"),
-                    delivery_date: $(v).val()
-                };
-                count++;
-            }
-        });
-
         $("#delete-tasks-modal-confirm").attr("disabled", "disabled");
         $("#delete-tasks-close-button").attr("disabled", "disabled");
 
+        var atarget_task_data = [];
+        var non_atarget_task_data = [];
+
+        // Existing tasks can be deleted by their atarget_id, tasks that do not exist will need to be preemptively created and deleted.
+        $("input.delete").each(function (i, v) {
+            if ($(v).is(":checked")) {
+                if ($(v).data("atarget-id")) {
+                    atarget_task_data.push($(v).data("atarget-id"));
+                } else {
+                    non_atarget_task_data.push({
+                        assessor_type: $(v).data("assessor-type"),
+                        assessor_value: $(v).data("assessor-value"),
+                        target_type: $(v).data("target-type"),
+                        target_id: $(v).data("target-id"),
+                        delivery_date: $(v).data("delivery-date"),
+                        form_id: $(v).data("form-id"),
+                        organisation_id: $(v).data("organisation-id"),
+                        feedback_required: $(v).data("feedback-required"),
+                        min_submittable: $(v).data("min-submittable"),
+                        max_submittable: $(v).data("max-submittable"),
+                        start_date: $(v).data("start-date"),
+                        end_date: $(v).data("end-date"),
+                        rotation_start_date: $(v).data("rotation-start-date"),
+                        rotation_end_date: $(v).data("rotation-end-date"),
+                        associated_record_type: $(v).data("associated-record-type"),
+                        associated_record_id: $(v).data("associated-record-id"),
+                        additional_task: $(v).data("additional-task"),
+                        task_type: $(v).data("task-type")
+                    });
+
+                }
+
+            }
+        });
+
+        // Unfortunately the two types of tasks require different API calls, this should be merged into one method that can handle all data.
         $.ajax({
             url: url,
             data: {
-                "method": "delete-tasks",
-                "task_data_array": task_data,
+                "method": "delete-tasks-by-atarget",
+                "task_data_array": atarget_task_data,
                 "reason_id": reason_id,
                 "reason_notes": reason_notes
             },
             type: "POST",
-            success: function (data) {
-                $("#tasks-selected").addClass("hide");
-                $("#no-tasks-selected").addClass("hide");
-                var jsonResponse = JSON.parse(data);
-                if (jsonResponse.status == "success") {
-                    $("#tasks-success").removeClass("hide");
-                    $("#tasks-selected").addClass("hide");
-                    $("#tasks-error").addClass("hide");
-                    $("#delete-tasks-modal-confirm").addClass("hide");
-                    $("#delete-tasks-close-button").removeAttr("disabled");
-                    $("#delete-tasks-details-section").addClass("hide");
-                    $("#delete-tasks-reason-section").addClass("hide");
-                    $("#delete-tasks-close-button").data("successfully-deleted", true);
-                } else {
-                    $("#delete-tasks-modal-confirm").removeAttr("disabled");
-                    $("#delete-tasks-close-button").removeAttr("disabled");
-                    $(jsonResponse.data).each(function (i, v) {
-                        display_error(v, "#tasks-error");
-                    });
-                    $("#tasks-error").removeClass("hide");
-                }
+            success: function (results) {
 
+                if (non_atarget_task_data.length > 0) {
+                    $.ajax({
+                        url: url,
+                        data: {
+                            "method": "delete-tasks-by-future",
+                            "task_data_array": non_atarget_task_data,
+                            "reason_id": reason_id,
+                            "reason_notes": reason_notes,
+                            "location": "progress"
+                        },
+                        type: "POST",
+                        success: function (data) {
+
+                            $("#tasks-selected").addClass("hide");
+                            $("#no-tasks-selected").addClass("hide");
+                            var jsonResponse = JSON.parse(data);
+                            if (jsonResponse.status == "success") {
+                                $("#tasks-success").removeClass("hide");
+                                $("#tasks-selected").addClass("hide");
+                                $("#tasks-error").addClass("hide");
+                                $("#delete-tasks-modal-confirm").addClass("hide");
+                                $("#delete-tasks-close-button").removeAttr("disabled");
+                                $("#delete-tasks-details-section").addClass("hide");
+                                $("#delete-tasks-reason-section").addClass("hide");
+                                $("#delete-tasks-close-button").data("successfully-deleted", true);
+                            } else {
+                                $("#delete-tasks-modal-confirm").removeAttr("disabled");
+                                $("#delete-tasks-close-button").removeAttr("disabled");
+                                $(jsonResponse.data).each(function (i, v) {
+                                    display_error(v, "#tasks-error");
+                                });
+                                $("#tasks-error").removeClass("hide");
+                            }
+                        }
+                    });
+                } else {
+                    $("#tasks-selected").addClass("hide");
+                    $("#no-tasks-selected").addClass("hide");
+                    var jsonResponse = JSON.parse(results);
+                    if (jsonResponse.status == "success") {
+                        $("#tasks-success").removeClass("hide");
+                        $("#tasks-selected").addClass("hide");
+                        $("#tasks-error").addClass("hide");
+                        $("#delete-tasks-modal-confirm").addClass("hide");
+                        $("#delete-tasks-close-button").removeAttr("disabled");
+                        $("#delete-tasks-details-section").addClass("hide");
+                        $("#delete-tasks-reason-section").addClass("hide");
+                        $("#delete-tasks-close-button").data("successfully-deleted", true);
+                    } else {
+                        $("#delete-tasks-modal-confirm").removeAttr("disabled");
+                        $("#delete-tasks-close-button").removeAttr("disabled");
+                        $(jsonResponse.data).each(function (i, v) {
+                            display_error(v, "#tasks-error");
+                        });
+                        $("#tasks-error").removeClass("hide");
+                    }
+                }
             }
         });
     });
@@ -412,25 +461,7 @@ jQuery(document).ready(function ($) {
         return delegations_to_delete;
     }
 
-    function get_delegated_tasks_to_generate() {
-        var delegations_to_generate = [];
-        $(".generate-pdf:checked").each(function() {
-            var assignment_detail = {
-                "target_name"           : $(this).data("target-name"),
-                "target_id"             : $(this).data("target-id"),
-                "assessor_name"         : $(this).data("assessor-name"),
-                "assessor_value"        : $(this).data("assessor-value"),
-                "dassessment_id"        : $(this).data("assessment-id"),
-                "aprogress_id"          : $(this).data("progress-id"),
-                "adistribution_id"      : $(this).data("distribution-id"),
-                "delivery_date"         : $(this).val()
-            };
-            delegations_to_generate.push(assignment_detail);
-        });
-        return delegations_to_generate;
-    }
-
-    $('#delete-delegation-tasks-modal').on('show.bs.modal', function (e) {
+      $('#delete-delegation-tasks-modal').on('show.bs.modal', function (e) {
         $('#delete-tasks-modal').removeClass("hide");
         $("#no-tasks-selected").addClass("hide");
         $("#tasks-selected").addClass("hide");
@@ -506,59 +537,10 @@ jQuery(document).ready(function ($) {
         });
     });
 
-    $("#generate-pdf-btn").on("click", function (e) {
-        if ($("#generate-pdf-btn").data("pdf-unavailable") == "1") {
-            display_error([progress_page_translations.pdf_unavailable], "#assessment-error");
-            e.preventDefault();
-            $("#assessment-error").removeClass("hide");
-        } else {
-            $("#generate-pdf-modal-confirm").attr("disabled", false);
-            $("#generate-pdf-modal").removeClass("hide");
-            $("#generate-pdf-details-section").removeClass("hide");
-            $("#download_option").removeClass("hide");
-            $("#generate-pdf-modal-confirm").removeClass("hide");
-            $("#no-generate-selected").addClass("hide");
-            $("#generate-error").addClass("hide");
-            $("#generate-success").addClass("hide");
-            $("#pdf_individual_option").attr("checked", true);
-
-            var delegations_to_generate = get_delegated_tasks_to_generate();
-            if (delegations_to_generate.length > 0) {
-                var tbody = document.createElement("tbody");
-                $.each(delegations_to_generate, function (i, v) {
-                    var tr = document.createElement("tr");
-                    var delivery_date = new Date(v.delivery_date * 1000);
-                    var formatted_date = delivery_date.getFullYear() + "-" + (("0" + (delivery_date.getMonth() + 1)).slice(-2)) + "-" + ("0" + delivery_date.getDate()).slice(-2);
-                    $(tr).html("<td>" + v.assessor_name + "</td><td>" + v.target_name + "</td><td>" + formatted_date + "</td>");
-                    tbody.appendChild(tr);
-                });
-                $("#generate-pdf-details-table tbody").html("");
-                document.getElementById("generate-pdf-details-table").appendChild(tbody);
-            } else {
-                $("#no-generate-selected").removeClass("hide");
-                $("#generate-pdf-details-section").addClass("hide");
-                $("#download_option").addClass("hide");
-                $("#generate-pdf-modal-confirm").addClass("hide");
-            }
-        }
-    });
-
-    $("#generate-pdf-modal-form").submit(function (e) {
-        $("#generate-pdf-modal").modal("hide");
-        $("#generate-pdf-modal-confirm").attr("disabled", true);
-
-        var task_data = get_delegated_tasks_to_generate();
-        var hidden_task_data = $("<input>").attr("type", "hidden").attr("name", "task_data").val(JSON.stringify(task_data));
-        if ($("#pdf_individual_option").is(':checked')) {
-            var hidden_method = $("<input>").attr("type", "hidden").attr("name", "method").val("generate-pdf-for-tasks");
-        } else {
-            var hidden_method = $("<input>").attr("type", "hidden").attr("name", "method").val("generate-pdf");
-        }
-        $(this).append($(hidden_task_data), $(hidden_method));
-    });
-
-    $(".icon-download-alt").on("click", function (e) {
-        $(this).hasClass("select-all") ? $(this).removeClass("select-all") : $(this).addClass("select-all");
+    $("th .icon-download-alt").on("click", function (e) {
+        $.each($("th .icon-download-alt"), function (i, v) {
+            $(v).hasClass("select-all") ? $(v).removeClass("select-all") : $(v).addClass("select-all");
+        });
 
         $("input[name=\"generate-pdf[]\"]").each(function () {
             if (!$(this).closest(".targets-container").hasClass("hide") && !$(this).closest("tr").hasClass("hide")) {
@@ -567,8 +549,10 @@ jQuery(document).ready(function ($) {
         });
     });
 
-    $(".icon-trash").on("click", function (e) {
-        $(this).hasClass("select-all") ? $(this).removeClass("select-all") : $(this).addClass("select-all");
+    $("th .icon-trash").on("click", function (e) {
+        $.each($("th .icon-trash"), function (i, v) {
+            $(v).hasClass("select-all") ? $(v).removeClass("select-all") : $(v).addClass("select-all");
+        });
 
         $("input[name=\"delete[]\"]").each(function () {
             if (!$(this).closest(".targets-container").hasClass("hide") && !$(this).closest("tr").hasClass("hide")) {
@@ -577,8 +561,10 @@ jQuery(document).ready(function ($) {
         });
     });
 
-    $(".icon-bell").on("click", function (e) {
-        $(this).hasClass("select-all") ? $(this).removeClass("select-all") : $(this).addClass("select-all");
+    $("th .icon-bell").on("click", function (e) {
+        $.each($("th .icon-bell"), function (i, v) {
+            $(v).hasClass("select-all") ? $(v).removeClass("select-all") : $(v).addClass("select-all");
+        });
 
         $("input[name=\"remind[]\"]").each(function () {
             if (!$(this).closest(".targets-container").hasClass("hide") && !$(this).closest("tr").hasClass("hide")) {
@@ -603,5 +589,53 @@ jQuery(document).ready(function ($) {
         $("input[name=\"remind[]\"]").each(function () {
             $(this).prop("checked", false);
         });
+    });
+
+    $("#target-progress-search-input").on("keyup", function () {
+        var search_text = $(this).val().toLowerCase();
+
+        if (search_text.length === 0) {
+            $("#targets-table-container").removeClass("hide");
+            $(".target-block").removeClass("hide");
+            $("#targets-table-container-no-search").addClass("hide");
+        } else {
+            $(".target-block").each(function () {
+                $(this).children().each(function(){
+                    if ($(this).hasClass("target-block-target-details")) {
+                        var oparent = $(this).parent();
+                        var text = $(this).text().toLowerCase();
+                        if (text.indexOf(search_text) >= 0) {
+                            oparent.removeClass("hide").addClass("visible");
+                        } else {
+                            oparent.addClass("hide").removeClass("visible");
+                        }
+                    }
+                });
+            });
+        }
+    });
+
+    $("#event-search-input").on("keyup", function () {
+        var search_text = $(this).val().toLowerCase();
+
+        if (search_text.length === 0) {
+            //$("#targets-table-container").removeClass("hide");
+            $(".event-block").removeClass("hide");
+            //$("#targets-table-container-no-search").addClass("hide");
+        } else {
+            $(".event-block").each(function () {
+                $(this).children().each(function(){
+                    if ($(this).hasClass("event-block-event-details")) {
+                        var oparent = $(this).parent();
+                        var text = $(this).text().toLowerCase();
+                        if (text.indexOf(search_text) >= 0) {
+                            oparent.removeClass("hide").addClass("visible");
+                        } else {
+                            oparent.addClass("hide").removeClass("visible");
+                        }
+                    }
+                });
+            });
+        }
     });
 });

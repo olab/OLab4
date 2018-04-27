@@ -30,8 +30,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 } elseif (!$ENTRADA_ACL->amIAllowed("gradebook", "update", false)) {
 	$ONLOAD[] = "setTimeout('window.location=\\'".ENTRADA_URL."/admin/".$MODULE."\\'', 15000)";
 
-	$ERROR++;
-	$ERRORSTR[] = "Your account does not have the permissions required to use this feature of this module.<br /><br />If you believe you are receiving this message in error please contact <a href=\"mailto:".html_encode($AGENT_CONTACTS["administrator"]["email"])."\">".html_encode($AGENT_CONTACTS["administrator"]["name"])."</a> for assistance.";
+	add_error("Your account does not have the permissions required to use this feature of this module.<br /><br />If you believe you are receiving this message in error please contact <a href=\"mailto:".html_encode($AGENT_CONTACTS["administrator"]["email"])."\">".html_encode($AGENT_CONTACTS["administrator"]["name"])."</a> for assistance.");
 
 	echo display_error();
 
@@ -239,24 +238,21 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 				echo $contents;
 				exit;
 			} else {
-				$ERROR++;
-				$ERRORSTR[] = "In order to view an assessment's grades you must provide some valid assessment identifiers.";
+				add_error("In order to view an assessment's grades you must provide some valid assessment identifiers.");
 
 				echo display_error();
 
 				application_log("notice", "Failed to provide a valid assessment identifiers when attempting to view an assessment's grades.");
 			}
 		} else {
-			$ERROR++;
-			$ERRORSTR[] = "You don't have permission to view this gradebook.";
+            add_error("You don't have permission to view this gradebook.");
 
 			echo display_error();
 
 			application_log("error", "User tried to view gradebook without permission.");
 		}
 	} else {
-		$ERROR++;
-		$ERRORSTR[] = "In order to export a gradebook you must provide a valid course identifier.";
+		add_error("In order to export a gradebook you must provide a valid course identifier.");
 
 		echo display_error();
 

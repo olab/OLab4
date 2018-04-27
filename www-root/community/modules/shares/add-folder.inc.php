@@ -191,6 +191,15 @@ switch($STEP) {
         }        
         
 		/**
+		 * Non-Required field "show_file_versions" / View Method.
+		 */
+		if ((isset($_POST["show_file_versions"])) && clean_input($_POST["show_file_versions"], array("int")) == 1) {
+			$PROCESSED["show_file_versions"] = 1;
+		} else {
+			$PROCESSED["show_file_versions"] = 0;
+		}
+
+		/**
 		 * Email Notificaions.
 		 */
 		if(isset($_POST["admin_notify"]) || isset($_POST["member_notify"])) {
@@ -413,7 +422,7 @@ switch($STEP) {
 										<input id="community-all-checkbox" class="permission-type-checkbox" type="radio" name="permission_acl_style" value="CourseCommunityEnrollment" checked="checked" />
 									</td>
 									<td>
-										<label for="community-all-checkbox" class="content-small">All Community Members</label>
+										<label for="community-all-checkbox" class="content-small"><?php echo $translate->_("All Community Members"); ?></label>
 									</td>
 								</tr>
 							<tr>
@@ -600,7 +609,7 @@ switch($STEP) {
 								<tbody>
 									<tr>
 										<td class="left">
-											<strong>Community Administrators</strong>
+											<strong><?php echo $translate->_("Community Administrators"); ?></strong>
 										</td>
 										<td class="on">
 											<input type="checkbox" id="allow_admin_read" name="allow_admin_read" value="1" checked="checked" onclick="this.checked = true" />
@@ -614,7 +623,7 @@ switch($STEP) {
 									</tr>
 									<tr>
 										<td class="left">
-											<strong>Community Members</strong>
+											<strong><?php echo $translate->_("Community Members"); ?></strong>
 										</td>
 										<td class="on">
 											<input type="checkbox" id="allow_member_read" name="allow_member_read" value="1"<?php echo (((!isset($PROCESSED["allow_member_read"])) || ((isset($PROCESSED["allow_member_read"])) && ($PROCESSED["allow_member_read"] == 1))) ? " checked=\"checked\"" : ""); ?> />
@@ -700,7 +709,44 @@ switch($STEP) {
 							</table>
 						</td>
 					</tr>
-
+					<tr>
+						<tr>
+							<td colspan="3">
+								<h2>Hide File Versions</h2>
+							</td>
+						</tr>
+						<tr>
+							<td colspan="2" style="vertical-align: top;">
+								<label class="form-nrequired">Would you like to hide file versions from students in this folder?</label>
+							</td>
+							<td>
+								<table class="table table-bordered no-thead">
+									<colgroup>
+										<col style="width: 5%" />
+										<col style="width: auto" />
+									</colgroup>
+									<tbody>
+										<tr>
+											<td class="center">
+												<input type="radio" id="show_file_versions_1" name="show_file_versions" value="1" style="vertical-align: middle"<?php echo (((!isset($PROCESSED["show_file_versions"])) || ((isset($PROCESSED["show_file_versions"])) && (!(int) $PROCESSED["show_file_versions"]))) ? " checked=\"checked\"" : ""); ?> />
+											</td>
+											<td>
+												<label for="show_file_versions_1" class="content-small">Allow students to view file versions.</label>
+											</td>
+										</tr>
+										<tr>
+											<td class="center">
+												<input type="radio" id="show_file_versions_0" name="show_file_versions" value="0" style="vertical-align: middle"<?php echo (((isset($PROCESSED["show_file_versions"])) && ((int) $PROCESSED["show_file_versions"])) ? " checked=\"checked\"" : ""); ?> />
+											</td>
+											<td>
+												<label for="show_file_versions_0" class="content-small">Don't allow students to view file versions.</label>
+											</td>
+										</tr>
+									</tbody>
+								</table>
+							</td>
+						</tr>
+					</tr>
 				</tbody>
 			</table>
 

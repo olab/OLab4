@@ -27,7 +27,10 @@
 
 abstract class Views_Base {
 
-    private $generated_view_output = ""; // The rendered view output (used when buffering).
+    private $generated_view_output = "";    // The rendered view output (used when buffering).
+    private $rendering_errors = array();    // A list of strings describing rendering errors
+    private $class_name = "";               // The name of the called class (top level)
+    protected $add_errors = true;           // Allow rendering errors to be added to the rendering_errors array?
 
     /**
      * Sets the options for the class object. For example, $options = array('courses' => '123') sets $this->courses = 123.
@@ -35,6 +38,7 @@ abstract class Views_Base {
      * @param array $options
      */
     public function __construct($options = array()) {
+        $this->class_name = get_called_class();
         // Set any options specified as view properties.
         foreach ($options as $key => $value) {
             if (property_exists($this, $key)) {
@@ -72,6 +76,36 @@ abstract class Views_Base {
     }
 
     /**
+     * When a view fails to render, store the information about the failure in the errors array.
+     *
+     * @param string $string
+     * @param bool $force_add
+     */
+    public function addRenderingError($string, $force_add = false) {
+        if ($this->add_errors || $force_add) {
+            $this->rendering_errors[] = $string;
+        }
+    }
+
+    /**
+     * Check if there are undisplayed rendering errors.
+     *
+     * @return bool
+     */
+    public function hasRenderingErrors() {
+        return !empty($this->rendering_errors);
+    }
+
+    /**
+     * Fetch the rendering error messages.
+     *
+     * @return array
+     */
+    public function getRenderingErrors() {
+        return $this->rendering_errors;
+    }
+
+    /**
      * Check if the options array contains the indexes specified in it, regardless of what they are.
      *
      * @param array $options
@@ -79,18 +113,34 @@ abstract class Views_Base {
      * @return bool
      */
     protected function validateIsSet(&$options, $primitives_list = array()) {
+        global $translate;
         if (empty($primitives_list)) {
+            $this->addRenderingError(sprintf($translate->_("Unable to render %s: all required values were not specified."),"'{$this->class_name}'"));
             return false;
         }
         if (!is_array($options)) {
+            $this->addRenderingError(sprintf($translate->_("Unable to render %s: malformed view options."),"'{$this->class_name}'"));
             return false;
         }
         foreach ($primitives_list as $primitive) {
             if (!array_key_exists($primitive, $options)) {
+                $this->addRenderingError(sprintf($translate->_("Unable to render %s: '%s' was not specified."),"'{$this->class_name}'", $primitive));
                 return false;
             }
         }
         return true;
+    }
+
+    /**
+     * Validate that the items in array_list are arrays (be they emtpy or not).
+     * This is a wrapper for validateArray.
+     *
+     * @param $options
+     * @param $array_list
+     * @return bool
+     */
+    protected function validateIsArray(&$options, $array_list) {
+        return $this->validateArray($options, $array_list);
     }
 
     /**
@@ -101,17 +151,22 @@ abstract class Views_Base {
      * @return bool
      */
     protected function validateArray(&$options, $array_list) {
+        global $translate;
         if (empty($array_list)) {
+            $this->addRenderingError(sprintf($translate->_("Unable to render %s: all required values were not specified."),"'{$this->class_name}'"));
             return false;
         }
         if (!is_array($options)) {
+            $this->addRenderingError(sprintf($translate->_("Unable to render %s: malformed view options."),"'{$this->class_name}'"));
             return false;
         }
         foreach ($array_list as $to_check) {
             if (!array_key_exists($to_check, $options)) {
+                $this->addRenderingError(sprintf($translate->_("Unable to render %s: '%s' does not exist."),"'{$this->class_name}'", $to_check));
                 return false;
             }
             if (!is_array($options[$to_check])) {
+                $this->addRenderingError(sprintf($translate->_("Unable to render %s: '%s' failed validation."),"'{$this->class_name}'", $to_check));
                 return false;
             }
         }
@@ -126,20 +181,27 @@ abstract class Views_Base {
      * @return bool
      */
     protected function validateArrayNotEmpty(&$options, $array_list) {
+        global $translate;
         if (empty($array_list)) {
+            $this->addRenderingError(sprintf($translate->_("Unable to render %s: all required values were not specified."),"'{$this->class_name}'"));
             return false;
         }
         if (!is_array($options)) {
+            $this->addRenderingError(sprintf($translate->_("Unable to render %s: malformed view options."),"'{$this->class_name}'"));
             return false;
         }
         foreach ($array_list as $to_check) {
             if (!isset($options[$to_check])) {
+                $this->addRenderingError(sprintf($translate->_("Unable to render %s: '%s' does not exist."),"'{$this->class_name}'", $to_check));
                 return false;
             }
             if (!is_array($options[$to_check])) {
+                $this->addRenderingError(sprintf($translate->_("Unable to render %s: '%s' failed validation (not an array)."),"'{$this->class_name}'", $to_check));
                 return false;
             }
             if (empty($options[$to_check])) {
+                $this->addRenderingError(sprintf($translate->_("Unable to render %s: '%s' failed validation (array is empty)."),"'{$this->class_name}'", $to_check));
+
                 return false;
             }
         }
@@ -191,6 +253,7 @@ abstract class Views_Base {
             $this->renderView($options); // Execute child-class view sub-type specific code
         } else {
             $this->renderError();
+            $this->rendering_errors = array(); // Once rendered, clear the errors.
         }
     }
 

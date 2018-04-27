@@ -25,11 +25,11 @@
 
 class Models_Community_Notify_Member extends Models_Base {
     protected   $cnmember_id,
-                $proxy_id,
-                $record_id,
-                $community_id,
-                $notify_type,
-                $notify_active;
+        $proxy_id,
+        $record_id,
+        $community_id,
+        $notify_type,
+        $notify_active;
 
     protected static $table_name          = "community_notify_members";
     protected static $primary_key         = "cnmember_id";
@@ -111,8 +111,7 @@ class Models_Community_Notify_Member extends Models_Base {
             $search_sql = " AND  e.`community_title` LIKE (". $db->qstr($search_term) . ")";
         }
 
-
-        $query = "SELECT DISTINCT(a.`community_id`), a.`member_acl`, e.`community_title`, b.`notify_active` AS `announcement`, c.`notify_active` AS `event`, d.`notify_active` AS `poll`, f.`notify_active` AS `members`
+        $query = "SELECT DISTINCT(a.`community_id`), a.`member_acl`, e.`community_title`, e.`community_url`, b.`notify_active` AS `announcement`, c.`notify_active` AS `event`, d.`notify_active` AS `poll`, f.`notify_active` AS `members`
                     FROM `community_members` AS a
                     LEFT JOIN `community_notify_members` AS b
                     ON a.`community_id` = b.`community_id`
@@ -134,6 +133,7 @@ class Models_Community_Notify_Member extends Models_Base {
                     AND f.`notify_type` = 'members'
                     WHERE a.`proxy_id` = ? 
                     AND a.`member_active` = 1 
+                    AND e.`community_active` = 1
                     " . $search_sql . "
                     " . $order_sql . "
                     LIMIT ? , ? ";
@@ -177,6 +177,7 @@ class Models_Community_Notify_Member extends Models_Base {
                     AND f.`notify_type` = 'members'
                     WHERE a.`proxy_id` = ? 
                     AND a.`member_active` = 1 
+                    AND e.`community_active` = 1
                     " . $search_sql;
 
         $results = $db->getRow($query, array($proxy_id));

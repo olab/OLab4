@@ -27,7 +27,7 @@
 class Views_Assessments_Forms_Form extends Views_Assessments_Forms_Base {
 
     protected function validateOptions($options = array()) {
-        if (!$this->validateIsSet($options, array("form_elements", "rubrics", "disabled", "public"))) {
+        if (!$this->validateArray($options, array("elements"))) {
             return false;
         }
         return true;
@@ -38,15 +38,16 @@ class Views_Assessments_Forms_Form extends Views_Assessments_Forms_Base {
 
         $mode = $this->getMode();
 
-        $disabled            = $options["disabled"];
-        $public              = $options["public"];          // Which type of objective set to render
-        $form_elements       = $options["form_elements"];   // All of the form elements to render
-        $rubrics             = $options["rubrics"];         // All of the data for rubrics, grouped accordingly
-        $aprogress_id        = @$options["aprogress_id"];
-        $progress            = @$options["progress"] ? $options["progress"] : array(); // All of the progress for this form (empty array when there is none)
-        $selected_objectives = @$options["objectives"] ? $options["objectives"] : array(); // An array of objective IDs
-        $all_objectives      = @$options["all_objectives"] ? $options["all_objectives"] : array(); // All orginisation specific Objectives objects
-        $referrer_hash       = @$options["referrer_hash"];
+        $form_elements        = $options["elements"];   // All of the form elements to render
+        $rubrics              = array_key_exists("rubrics", $options) ? (is_array($options["rubrics"]) ? $options["rubrics"] : array()) : array(); // All of the data for rubrics, grouped accordingly
+        $disabled             = array_key_exists("disabled", $options) ? $options["disabled"] : true;
+        $public               = array_key_exists("public", $options) ? $options["public"] : true; // Which type of objective set to render
+        $aprogress_id         = array_key_exists("aprogress_id", $options) ? $options["aprogress_id"] : null;
+        $progress             = array_key_exists("progress", $options) ? $options["progress"] : array(); // All of the progress for this form (empty array when there is none)
+        $selected_objectives  = array_key_exists("objectives", $options) ? $options["objectives"] : array(); // An array of objective IDs
+        $all_objectives       = array_key_exists("all_objectives", $options) ? $options["all_objectives"] : array(); // All organisation specific Objectives objects
+        $referrer_hash        = array_key_exists("referrer_hash", $options) ? $options["referrer_hash"] : null;
+        $mutators             = Entrada_Utilities::arrayValueOrDefault($options, "form_mutators", array());
 
         if (!is_array($progress)) {
             $progress = array();
@@ -72,14 +73,16 @@ class Views_Assessments_Forms_Form extends Views_Assessments_Forms_Base {
                         }
 
                         $rubric_view = new Views_Assessments_Forms_Rubric(array("mode" => $mode));
-                        $rubric_view->render(array(
+                        $rubric_view->render(
+                            array(
                                 "afelement_id" => $afelement_id,
                                 "rubric_id" => $rubric_id,
                                 "rubric_data" => $rubrics[$rubric_id],
                                 "progress" => $progress,
                                 "aprogress_id" => $aprogress_id,
                                 "disabled" => $disabled,
-                                "referrer_hash" => $referrer_hash
+                                "referrer_hash" => $referrer_hash,
+                                "mutators" => $mutators
                             )
                         );
                     }
@@ -88,14 +91,23 @@ class Views_Assessments_Forms_Form extends Views_Assessments_Forms_Base {
 
                     /* Render single form item */
 
+                    // Get the attributes
+                    $attributes = Entrada_Utilities::arrayValueOrDefault($form_element["item"], "attributes");
+                    if ($attributes) {
+                        $attributes = json_decode($attributes, true);
+                    }
+
                     // Item header controls
                     $form_controls_view = new Views_Assessments_Forms_Controls_ElementHeaderControls(array("mode" => $mode));
-                    $item_header_html = $form_controls_view->render(array(
+                    $item_header_html = $form_controls_view->render(
+                        array(
+                            "form_id" => $form_element["element"]["form_id"],
                             "afelement_id" => $afelement_id,
                             "element_id" => $form_element["item"]["item_id"],
                             "itemtype_shortname" => $form_element["item"]["shortname"],
                             "referrer_hash" => $referrer_hash,
-                            "deleted_date" => $form_element["item"]["deleted_date"]
+                            "deleted_date" => $form_element["item"]["deleted_date"],
+                            "attributes" => $attributes
                         ),
                         false // Do not echo (this item header HTML is passed along to the item)
                     );
@@ -111,7 +123,8 @@ class Views_Assessments_Forms_Form extends Views_Assessments_Forms_Base {
                         "tags" => $form_element["tags"],
                         "disabled" => $disabled,
                         "header_html" => $item_header_html,
-                        "referrer_hash" => $referrer_hash
+                        "referrer_hash" => $referrer_hash,
+                        "mutators" => $mutators
                     );
                     $item_view = new Views_Assessments_Forms_Item(array("mode" => $mode));
                     $item_view->render($item_options);
@@ -141,6 +154,7 @@ class Views_Assessments_Forms_Form extends Views_Assessments_Forms_Base {
                                 "objective_id" => $form_element["element"]["element_id"],
                                 "objectives" => $selected_objectives,
                                 "aprogress_id" => $aprogress_id,
+                                "organisation_id" => $form_element["element"]["organisation_id"]
                             )
                         );
 

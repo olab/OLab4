@@ -16,8 +16,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_MANAGE_USER_DATA"))) {
 	header("Location: ".ENTRADA_URL);
 	exit;
 } elseif (!$ENTRADA_ACL->amIAllowed("user", "update", false)) {
-	$ERROR++;
-	$ERRORSTR[]	= "Your account does not have the permissions required to use this feature of this module.<br /><br />If you believe you are receiving this message in error please contact <a href=\"mailto:".html_encode($AGENT_CONTACTS["administrator"]["email"])."\">".html_encode($AGENT_CONTACTS["administrator"]["name"])."</a> for assistance.";
+	add_error($translate->_("module_no_permission") . str_ireplace(array("%admin_email%","%admin_name%"), array(html_encode($AGENT_CONTACTS["administrator"]["email"]),html_encode($AGENT_CONTACTS["administrator"]["name"])), $translate->_("module_assistance")));
 
 	echo display_error();
 
@@ -30,7 +29,7 @@ require_once("Classes/organisations/Organisations.class.php");
 $SCRIPT[] = "<script type=\"text/javascript\" src=\"".ENTRADA_URL."/javascript/meta_data.js\"></script>";
 $ONLOAD[] = "api_url = \"".ENTRADA_URL."/admin/users/metadata?section=api-metadata\";page_init();";
 ?>
-<h1><?php echo $translate->translate("Manage User Meta Data"); ?></h1>
+<h1><?php echo $translate->_("metadata_heading_manage"); ?></h1>
 
 <form method="post" id="table_selector">
 	<input type="hidden" name="request" value="categories" />
@@ -42,13 +41,13 @@ $ONLOAD[] = "api_url = \"".ENTRADA_URL."/admin/users/metadata?section=api-metada
 		</colgroup>
 		<tfoot>
 			<tr>
-				<td style="padding-top: 25px;" colspan="3"><input class="btn" type="submit" name="show_table" id="show_table_btn" value="Show Table"/></td>
+				<td style="padding-top: 25px;" colspan="3"><input class="btn btn-info btn-small" type="submit" name="show_table" id="show_table_btn" value="<?php echo $translate->_("metadata_show"); ?>"/></td>
 			</tr>
 		</tfoot>
 		<tbody>
 		<tr>
 			<td>&nbsp;</td>
-			<td><label for="associated_organisation_id" class="form-required"><?php echo $translate->translate("Organisation"); ?></label></td>
+			<td><label for="associated_organisation_id" class="form-required"><?php echo $translate->_("Organisation"); ?></label></td>
 			<td>
 				<select id="associated_organisation_id" name="associated_organisation_id" style="width: 203px">
 					<?php
@@ -59,7 +58,7 @@ $ONLOAD[] = "api_url = \"".ENTRADA_URL."/admin/users/metadata?section=api-metada
 							
 							if ($ENTRADA_ACL->amIAllowed('resourceorganisation'.$organisation_id, 'create')) { 
 								$organisation_title = $organisation->getTitle();
-								echo build_option($organisation_id, html_encode($organisation_title), ($ORGANISATION_ID == $organisation_id) );
+								echo build_option($organisation_id, html_encode($organisation_title), ($ENTRADA_USER->getActiveOrganisation() == $organisation_id) );
 							}
 						}
 					}
@@ -69,10 +68,11 @@ $ONLOAD[] = "api_url = \"".ENTRADA_URL."/admin/users/metadata?section=api-metada
 		</tr>
 		<tr>
 			<td>&nbsp;</td>
-			<td><label for="associated_group" class="form-required"><?php echo $translate->translate("Group"); ?></label></td>
+			<td><label for="associated_group" class="form-required"><?php echo $translate->_("metadata_group"); ?></label></td>
 			<td><select id="associated_group" name="associated_group">
 			<?php 
-			foreach (array_keys($SYSTEM_GROUPS) as $group) {
+			$groups = array_keys($SYSTEM_GROUPS) ; arsort($groups);
+			foreach ($groups as $group) {
 				echo build_option($group, ucwords($group));
 			}
 			?>
@@ -80,12 +80,12 @@ $ONLOAD[] = "api_url = \"".ENTRADA_URL."/admin/users/metadata?section=api-metada
 		</tr>
 		<tr>
 			<td>&nbsp;</td>
-			<td><label for="associated_role" class="form-required"><?php echo $translate->translate("Role"); ?></label></td>
+			<td><label for="associated_role" class="form-required"><?php echo $translate->_("metadata_role"); ?></label></td>
 			<td><select id="associated_role" name="associated_role"></select></td>
 		</tr>
 		<tr>
 			<td>&nbsp;</td>
-			<td><label for="associated_cat_id" class="form-required"><?php echo $translate->translate("Category"); ?></label></td>
+			<td><label for="associated_cat_id" class="form-required"><?php echo $translate->_("metadata_category"); ?></label></td>
 			<td id="assoc_cat_holder"></td>
 		</tr>
 		</tbody>
@@ -97,6 +97,7 @@ $ONLOAD[] = "api_url = \"".ENTRADA_URL."/admin/users/metadata?section=api-metada
 
 <script type="text/javascript">
 var user_groups = [];
+
 <?php
 function ucwords_alt($str, $key) {
 	return ucwords($str);
@@ -107,6 +108,11 @@ foreach ($SYSTEM_GROUPS as $group=>$roles) {
 	echo "user_groups[\"".$group."\"] = [\"".implode("\",\"",$roles)."\",\"All\"];";
 }
 ?>
+
+function loadpage() {
+	$('table_selector').action = '<?php echo ENTRADA_URL?>/admin/users/meta_data?section=load';
+	$('table_selector').submit();
+}
 
 /**
  * Sets up resources needed by the page
@@ -121,7 +127,7 @@ function page_init() {
 		fadeDuration:	0.30
 	});
 	display_error = ErrorHandler(errModal);
-	
+
 	var loadingModal = new Control.Modal('loadingModal', {
 		overlayOpacity:	0.75,
 		closeOnClick:	false,
@@ -129,7 +135,6 @@ function page_init() {
 		fade:			true,
 		fadeDuration:	0.30
 	});
-	
 	
 	document.observe('MetaData:onBeforeUpdate', function () {loadingModal.open();});
 	document.observe('MetaData:onAfterUpdate', function () {loadingModal.close();});

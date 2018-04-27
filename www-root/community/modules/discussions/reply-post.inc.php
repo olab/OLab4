@@ -148,7 +148,7 @@ if ($RECORD_ID) {
 										case 0 :
 											if (($file_filesize = (int) trim($_FILES["uploaded_file"]["size"][$tmp_file_id])) <= $VALID_MAX_FILESIZE) {
 												$file_info["file_version"]        = 1;
-												$file_info["file_mimetype"]        = strtolower(trim($_FILES["uploaded_file"]["type"][$tmp_file_id]));
+												$file_info["file_mimetype"]        = mime_content_type($_FILES["uploaded_file"]["tmp_name"][$tmp_file_id]);
 												$file_info["file_filesize"]        = $file_filesize;
 												$file_info["file_filename"]        = useable_filename(trim($file_name));
 
@@ -357,7 +357,7 @@ if ($RECORD_ID) {
 										<td style="border-bottom: none; border-right: none"><span class="content-small">By:</span>  <?php if(defined('COMMUNITY_DISCUSSIONS_ANON') && COMMUNITY_DISCUSSIONS_ANON && !$COMMUNITY_ADMIN && isset($topic_record["anonymous"]) && $topic_record["anonymous"]){?><span style="font-size: 10px">Anonymous</span><?php } else {?><a href="<?php echo ENTRADA_URL."/people?profile=".html_encode($topic_record["poster_username"]); ?>" style="font-size: 10px"><?php echo html_encode($topic_record["poster_fullname"]); ?></a><?php } ?></td>
 										<td style="border-bottom: none; text-align: left">
 											<div>
-												<span class="content-small"><strong>Posted:</strong> <?php echo date(DEFAULT_DATE_FORMAT, $topic_record["updated_date"]); ?></span>
+												<span class="content-small"><strong>Posted:</strong> <?php echo date(DEFAULT_DATETIME_FORMAT, $topic_record["updated_date"]); ?></span>
 											</div>
 										</td>
 									</tr>
@@ -427,7 +427,7 @@ if ($RECORD_ID) {
 												<input type="checkbox" name="anonymous" <?php echo (isset($PROCESSED["anonymous"]) && $PROCESSED["anonymous"] ? "checked=\"checked\"" : ""); ?> value="1"/>
 											</td>
 											<td>
-												<span class="file-checkbox-text">Hide my name from other community members.</span>
+												<span class="file-checkbox-text"><?php echo $translate->_("Hide my name from other community members."); ?></span>
 											</td>
 										</tr>
 								<?php

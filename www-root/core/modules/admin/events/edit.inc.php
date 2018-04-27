@@ -45,9 +45,12 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
         $tables["audience"]      = "draft_audience";
         $tables["contacts"]      = "draft_contacts";
         $tables["event_types"]   = "draft_eventtypes";
+        $tables["primary_key"]   = "devent_id";
+        $tables["parent"]        = "draft_parent_id";
 
         $devent_id               = (int) $_GET["id"];
         $where_query             = "WHERE `devent_id` = ".$db->qstr($devent_id);
+        $event_model = new Models_Event_Draft_Event();
     } else {
         $is_draft                = false;
 
@@ -55,7 +58,10 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
         $tables["audience"]      = "event_audience";
         $tables["contacts"]      = "event_contacts";
         $tables["event_types"]   = "event_eventtypes";
+        $tables["primary_key"]   = "event_id";
+        $tables["parent"]        = "parent_id";
         $where_query             = "WHERE `event_id` = ".$db->qstr($EVENT_ID);
+        $event_model = new Models_Event();
     }
 
     if ($EVENT_ID) {
@@ -85,6 +91,8 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
             } else {
                 $recurring_events = false;
             }
+
+            if ($event_info["organisation_id"] == $ENTRADA_USER->getActiveOrganisation()) {
 
             if (!$ENTRADA_ACL->amIAllowed(new EventResource($event_info["event_id"], $event_info["course_id"], $event_info["organisation_id"]), "update")) {
                 application_log("error", "A program coordinator attempted to edit an event [".$EVENT_ID."] that they were not the coordinator for.");
@@ -188,6 +196,17 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                         }
 
                         /**
+                         * Non-required field "cunit_id" / Curriculum Unit
+                         */
+                        if ((isset($_POST["cunit_id"])) && ($cunit_id = clean_input($_POST["cunit_id"], array("int", "trim")))) {
+                            $PROCESSED["cunit_id"] = $cunit_id;
+                            $course_unit = Models_Course_Unit::fetchRowByID($cunit_id);
+                        } else {
+                            $PROCESSED["cunit_id"] = null;
+                            $course_unit = null;
+                        }
+
+                        /**
                         * Non-required field "room_id" / Event Location
                          */
 
@@ -219,7 +238,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                                         $eventtype_title = $db->GetOne($query);
                                         if ($eventtype_title) {
                                             if (isset($eventtype_durations[$order])) {
-                                                $duration = clean_input($eventtype_durations[$order], array("trim", "int"));
+                                                $duration = clean_input($eventtype_durations[$order], array("trim", "float"));
 
                                                 if ($duration <= 0) {
                                                     add_error("The duration of <strong>".html_encode($eventtype_title)."</strong> (".numeric_suffix(($order + 1))." <strong>" . $translate->_("Event Type") . "</strong> entry) must be greater than zero.");
@@ -711,7 +730,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                                 foreach ($current_event_types AS $current_event_type) {
                                     $current_et[] = array(
                                         (int)$current_event_type["eventtype_id"],
-                                        (int)$current_event_type["duration"],
+                                        (float)$current_event_type["duration"],
                                         $current_event_type["eventtype_title"]
                                     );
                                 }
@@ -751,7 +770,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                                     foreach ($event_type_remove AS $event_type) {
                                         $query = "  DELETE FROM `" . $tables["event_types"] . "` " . $where_query . "
                                                     AND `eventtype_id` = " . $db->qstr($event_type[0]) . "
-                                                    AND `duration` = " . $db->qstr($event_type[1]) . "
+                                                    AND ROUND(`duration`, 3) = ROUND(" . $db->qstr($event_type[1]) . ", 3)
                                                     ORDER BY `eeventtype_id` DESC
                                                     LIMIT 1";
                                         if (!$db->Execute($query)) {
@@ -1277,6 +1296,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                                         }
                                         if (in_array("event_location", $_POST["update_recurring_fields"])) {
                                             $PROCESSED_RECURRING_EVENT["event_location"] = $PROCESSED["event_location"];
+                                            $PROCESSED_RECURRING_EVENT["room_id"] = $PROCESSED["room_id"];
                                         }
                                         
                                         if (in_array("attendance_required", $_POST["update_recurring_fields"])) {
@@ -1313,7 +1333,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                                                 $event_type_add     = array();
 
                                                 foreach ($current_event_types AS $current_event_type) {
-                                                    $current_et[] = array((int)$current_event_type["eventtype_id"], (int)$current_event_type["duration"], $current_event_type["eventtype_title"]);
+                                                    $current_et[] = array((int)$current_event_type["eventtype_id"], (float)$current_event_type["duration"], $current_event_type["eventtype_title"]);
                                                 }
 
                                                 //need to check which arrays are set before comparing.
@@ -1961,7 +1981,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                                                 }
                                             }
 
-                                                if (!has_error() && @array_intersect($_POST["update_recurring_fields"], array("event_title", "event_location", "course", "audience_visible", "attendance_required", "time_release", "event_types"))) {
+                                            if (!has_error() && @array_intersect($_POST["update_recurring_fields"], array("event_title", "event_location", "course", "audience_visible", "attendance_required", "time_release", "event_types"))) {
                                                 //checks if the description, objectives, or message has changed before saving.
                                                 $changed_course_id = false;
                                                 $changed_course_id = md5_change_value($recurring_event["event_id"], "event_id", "course_id", $PROCESSED_RECURRING_EVENT["course_id"], "events");
@@ -1969,8 +1989,10 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                                                 $changed_event_title = false;
                                                 $changed_event_title = md5_change_value($recurring_event["event_id"], "event_id", "event_title", $PROCESSED_RECURRING_EVENT["event_title"], "events");
 
+                                                // event location can be in one of two fields, 'event_location' or 'room_id'
                                                 $changed_event_location = false;
-                                                $changed_event_location = md5_change_value($recurring_event["event_id"], "event_id", "room_id", $PROCESSED_RECURRING_EVENT["room_id"], "events");
+                                                $changed_event_location = md5_change_value($recurring_event["event_id"], "event_id", "event_location", $PROCESSED_RECURRING_EVENT["event_location"], "events") ||
+                                                                          md5_change_value($recurring_event["event_id"], "event_id", "room_id", $PROCESSED_RECURRING_EVENT["room_id"], "events");
 
                                                 $changed_audience_visible = false;
                                                 $changed_audience_visible = md5_change_value($recurring_event["event_id"], "event_id", "audience_visible", $PROCESSED_RECURRING_EVENT["audience_visible"], "events");
@@ -1984,8 +2006,8 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                                                 $changed_release_until = false;
                                                 $changed_release_until = md5_change_value($recurring_event["event_id"], "event_id", "release_until", $PROCESSED_RECURRING_EVENT["release_until"], "events");
 
-                                                    $changed_event_duration = false;
-                                                    $changed_event_duration = md5_change_value($recurring_event["event_id"], "event_id", "event_duration", $PROCESSED_RECURRING_EVENT["event_duration"], "events");
+                                                $changed_event_duration = false;
+                                                $changed_event_duration = md5_change_value($recurring_event["event_id"], "event_id", "event_duration", $PROCESSED_RECURRING_EVENT["event_duration"], "events");
 
                                                 if (!$db->AutoExecute("`events`", $PROCESSED_RECURRING_EVENT, "UPDATE", "`event_id` = ".$db->qstr($recurring_event["event_id"]))) {
                                                     add_error("There was an error while trying to save changes to the selected <strong>Recurring Event</strong>.<br /><br />The system administrator was informed of this error; please try again later.");
@@ -2013,12 +2035,12 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                                                         }
                                                     }
                                                         
-                                                        if ($changed_event_duration) {
-                                                            $insert_value = "Event Duration";
-                                                            if (!in_array($insert_value, $recurring_stats)) {
-                                                                $recurring_stats[] = $insert_value;
-                                                            }
+                                                    if ($changed_event_duration) {
+                                                        $insert_value = "Event Duration";
+                                                        if (!in_array($insert_value, $recurring_stats)) {
+                                                            $recurring_stats[] = $insert_value;
                                                         }
+                                                    }
 
                                                     if ($changed_audience_visible) {
                                                         $insert_value = "Audience Display";
@@ -2129,6 +2151,16 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                     case 1 :
                     default :
                         $PROCESSED    = $event_info;
+
+                        if (isset($PROCESSED["event_location"]) && $PROCESSED["event_location"]) {
+                            $PROCESSED["site_id"] = "";
+                            $PROCESSED["room_id"] = null;
+                        }
+                        if (isset($PROCESSED["cunit_id"]) && $PROCESSED["cunit_id"]) {
+                            $course_unit = Models_Course_Unit::fetchRowByID($PROCESSED["cunit_id"]);
+                        } else {
+                            $course_unit = null;
+                        }
 
                         /**
                          * Add existing event type segments to the processed array.
@@ -2382,87 +2414,159 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
 
                             <?php echo Entrada_Utilities::generate_calendars("event", $translate->_("Event Date & Time"), true, true, ((isset($PROCESSED["event_start"])) ? $PROCESSED["event_start"] : 0)); ?>
 
+                            <?php if ((!isset($is_draft) || !$is_draft) && Entrada_Settings::read("curriculum_weeks_enabled")) : ?>
+                                <div class="control-group">
+                                    <label for="course_unit" class="control-label form-nrequired"><?php echo $translate->_("Course Unit"); ?>:</label>
+                                    <div class="controls">
+                                        <select name="cunit_id" id="course_unit">
+                                            <option value=""<?php echo !$course_unit ? " selected=\"selected\"" : ""; ?>>
+                                                - <?php echo $translate->_("Select a Course Unit"); ?> -
+                                            </option>
+                                            <?php if ($course_unit): ?>
+                                                <option value="<?php echo $course_unit->getID(); ?>" selected="selected">
+                                                    <?php echo $course_unit->getUnitText(); ?>
+                                                </option>
+                                            <?php endif; ?>
+                                        </select>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+
                             <?php
-                            $event_buildings = events_fetch_all_buildings();
-
-                            if ($event_buildings) {
-                                ?>
-                            <div class="control-group">
-                                <label for="building_id" class="control-label form-nrequired"><? echo $translate->_("Event Location Building"); ?></label>
-                                <div class="controls">
-                                    <select onchange="loadRooms()" id="building_id" name="building_id">
-
-                                            <?php
-                                                foreach ($event_buildings as $building) {
-                                                    echo "<option value=\"" . $building['building_id'] . "\">(" . $building['building_code'] . ") " . $building['building_name'] . "</option>\n";
-                                                }
-                                            ?>
-
-                                        <option value=""><?php echo $translate->_("Other location"); ?></option>
-                                    </select>
-                                </div>
-
-                            </div>
-
-                            <div id="roomlocation" style="<?php echo (isset($PROCESSED["room_id"]) && $PROCESSED["room_id"] != "" ? "" : "display:none;") ?>" class="control-group">
-                                <?php
-
-                                    $event_rooms = events_fetch_all_locations();
-
-                                    if ($event_rooms) {
-                                ?>
-                                <label for="room_id" class="control-label form-nrequired"><?php echo $translate->_("Event Location Room"); ?>:</label>
-                                <div class="controls">
-                                    <select id="room_id" name="room_id">
-                                            <option value="-1"><?php echo $translate->_("Select room"); ?></option>
-                                    </select>
-                                </div>
-                                <?php
+                            $sites = Models_Location_Site::fetchAllSitesHavingBuildingsAndRooms($ENTRADA_USER->getActiveOrganisation());
+                            $site_id = 0;
+                            $buildings = [];
+                            $building_id = 0;
+                            $rooms = [];
+                            $room_id = (isset($PROCESSED["room_id"]) && $PROCESSED["room_id"] != "") ? $PROCESSED["room_id"] : 0;
+                            if ($room_id) {
+                                $room = Models_Location_Room::fetchRowByID($room_id);
+                                if ($room) {
+                                    $building = $room->getBuilding();
+                                    if ($building) {
+                                        $building_id = $building->getID();
+                                        $rooms = Models_Location_Room::fetchAllByBuildingId($building_id);
+                                        $site = $building->getSite();
+                                        if ($site) {
+                                            $site_id = $site->getID();
+                                            $buildings = Models_Location_Building::fetchAllBySiteID($site_id);
+                                        }
                                     }
+                                }
+                            }
+                            $show_other = true;
+                            if (!empty($sites)) {
+                                if (!(isset($PROCESSED["site_id"]) && $PROCESSED["site_id"] == "")) {
+                                    $show_other = false;
+                                }
                                 ?>
-                            </div>
-                        <?php
-                        }
-                        ?>
+                                <div class="control-group">
+                                    <label for="site_id" class="control-label form-nrequired"><?php echo $translate->_("Event Site"); ?></label>
+                                    <div class="controls">
+                                        <select onchange="loadBuildings()" id="site_id" name="site_id" class="input-xlarge">
+                                            <option value="-1"><?php echo $translate->_("Select Site"); ?></option>
+                                            <?php
+                                            foreach ($sites as $site) {
+                                                $selected = ($site_id && $site_id == $site->getID() ? "selected" : "");
+                                                echo "<option value=\"" . $site->getID() . "\"" . $selected . " >(" . $site->getSiteCode() . ") " . $site->getSiteName() . "</option>\n";
+                                            }
+                                            ?>
+                                            <option value="" <?php echo (isset($PROCESSED["site_id"]) && $PROCESSED["site_id"] == "" ? "selected" : ""); ?>><?php echo $translate->_("Other location"); ?></option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div id="buildinglocation" style="<?php echo (isset($PROCESSED["room_id"]) && $PROCESSED["room_id"] != "" ? "" : "display:none;") ?>" class="control-group">
+                                    <label for="building_id" class="control-label form-nrequired"><?php echo $translate->_("Event Building"); ?></label>
+                                    <div class="controls">
+                                        <select onchange="loadRooms()" id="building_id" name="building_id" class="input-xlarge">
+                                            <option value="-1"><?php echo $translate->_("Select Building"); ?></option>
+                                            <?php
+                                            foreach ($buildings as $building) {
+                                                $selected = ($building_id && $building_id == $building->getID() ? "selected" : "");
+                                                echo "<option value=\"" . $building->getID() . "\"" . $selected . " >(" . $building->getBuildingCode() . ") " . $building->getBuildingName() . "</option>\n";
+                                            }
+                                            ?>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div id="roomlocation" style="<?php echo (isset($PROCESSED["room_id"]) && $PROCESSED["room_id"] != "" ? "" : "display:none;") ?>" class="control-group">
+                                    <label for="room_id" class="control-label form-nrequired"><?php echo $translate->_("Event Room"); ?>:</label>
+                                    <div class="controls">
+                                        <select id="room_id" name="room_id" class="input-xlarge">
+                                            <option value="-1"><?php echo $translate->_("Select room"); ?></option>
+                                            <?php
+                                            foreach ($rooms as $room) {
+                                                $selected = ($room_id && $room_id == $room->getID() ? "selected" : "");
+                                                echo "<option value=\"" . $room->getID() . "\"" . $selected . " >(" . $room->getRoomNumber() . ") " . $room->getRoomName() . "</option>\n";
+                                            }
+                                            ?>
+                                        </select>
+                                    </div>
+                                </div>
+                            <?php
+                            }
+                            ?>
 
-                            <div class="control-group" id="otherlocation">
+                            <div class="control-group" id="otherlocation" style="<?php echo ($show_other ? "" : "display:none;") ?>">
                                 <label for="event_location" class="control-label form-nrequired"><?php echo $translate->_("Event Location"); ?>:</label>
-
                                 <div class="controls">
                                     <input value="<?php echo (isset($PROCESSED["event_location"]) && $PROCESSED["event_location"] != "" ? $PROCESSED["event_location"] : "") ?>" type="text" id="event_location" name="event_location"/>
                                 </div>
                             </div>
 
                             <script>
-                                jQuery(document).ready(function(){
-                                    <?php
-                                    if(isset($PROCESSED["room_id"])) {
-                                        echo "room_id = ".$PROCESSED["room_id"].";";
-                                    } else {
-                                        echo "room_id = 0;";
+                                function loadBuildings () {
+                                    var site = jQuery("#site_id").val();
+                                    switch (site) {
+                                        case "":
+                                            jQuery("#room_id").html('<option value="-1"><?php echo $translate->_("Select room"); ?></option>');
+                                            jQuery("#otherlocation").show();
+                                            jQuery("#roomlocation").hide();
+                                            jQuery("#buildinglocation").hide();
+                                            break;
+                                        case "-1":
+                                            jQuery("#room_id").html('<option value="-1"><?php echo $translate->_("Select room"); ?></option>');
+                                            jQuery("#otherlocation").hide();
+                                            jQuery("#roomlocation").hide();
+                                            jQuery("#buildinglocation").hide();
+                                            break;
+                                        default:
+                                            jQuery.post('<?php echo ENTRADA_URL."/api/api-location-management.inc.php"; ?>',
+                                                {
+                                                    method: "get-buildings-by-site",
+                                                    site_id: site
+                                                }, function(data) {
+                                                    jsonResponse = jQuery.parseJSON(data);
+                                                    if (jsonResponse.status === "success") {
+                                                        jQuery("#otherlocation").hide();
+                                                        jQuery("#roomlocation").hide();
+                                                        jQuery("#buildinglocation").show();
+                                                        jQuery("#event_location").val("");
+                                                        jQuery("#building_id").html('<option value="-1"><?php echo $translate->_("Select Building"); ?></option>');
+                                                        jQuery.each(jsonResponse.data, function(key, value) {
+                                                            jQuery("#building_id").append("<option value=\""+value.building_id+"\">"+value.building_name+"</option>");
+                                                        });
+                                                        jQuery("#building_id").find("option[value=\""+building_id+"\"]").attr("selected","selected");
+                                                    } else {
+                                                        jQuery("#room_id").html('<option value="-1"><?php echo $translate->_("Select room"); ?></option>');
+                                                        jQuery("#otherlocation").show();
+                                                        jQuery("#roomlocation").hide();
+                                                    }
+                                                });
+                                            break;
                                     }
-                                    ?>
-                                    jQuery.post('<?php echo ENTRADA_URL."/api/api-location-management.inc.php"; ?>',
-                                        {
-                                            method: "get-room-building-id",
-                                            room_id: room_id
-                                        }, function(data) {
-                                            jsonResponse = jQuery.parseJSON(data);
-                                            if (jsonResponse.status == "success") {
-                                                jQuery("#building_id").find("option[value=\""+jsonResponse.data[0]+"\"]").attr("selected","selected");
-                                                loadRooms(room_id);
-                                            } else {
-                                                jQuery("#building_id").find("option[value=\"\"]").attr("selected","selected");
-                                            }
-                                        });
-                                });
-
+                                }
                                 function loadRooms (room_id) {
                                     var building = jQuery("#building_id").val();
                                     switch (building) {
                                         case "":
                                             jQuery("#room_id").html('<option value="-1"><?php echo $translate->_("Select room"); ?></option>');
                                             jQuery("#otherlocation").show();
+                                            jQuery("#roomlocation").hide();
+                                            break;
+                                        case "-1":
+                                            jQuery("#room_id").html('<option value="-1"><?php echo $translate->_("Select room"); ?></option>');
+                                            jQuery("#otherlocation").hide();
                                             jQuery("#roomlocation").hide();
                                             break;
                                         default:
@@ -2566,7 +2670,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                                     <input type="button" class="btn" id="add_associated_faculty" value="Add" />
                                     <script type="text/javascript">
                                         jQuery(function(){
-                                            jQuery("#faculty_list img.list-cancel-image").live("click", function(){
+                                            jQuery(document).on("click", "#faculty_list img.list-cancel-image", function(){
                                                 var proxy_id = jQuery(this).attr("rel");
                                                 if ($("faculty_"+proxy_id)) {
                                                     var associated_faculty = jQuery("#associated_faculty").val().split(",");
@@ -2755,50 +2859,49 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                             ?>
 
                             <div class="control-group">
-                                <?php if (!$is_draft) { ?>
-                                    <tbody>
-                                    <tr>
-                                        <td>&nbsp;</td>
-                                        <td colspan="2">
-                                            <div id="related_events">
-                                                <?php
-                                                if (!(int) $PROCESSED["parent_id"]) {
-                                                    require_once("modules/admin/events/api-related-events.inc.php");
-                                                } else {
-                                                    $query = "SELECT * FROM `".$tables["events"]."` WHERE `event_id` = ".$db->qstr($PROCESSED["parent_id"]);
-                                                    $related_event = $db->GetRow($query);
-                                                    if ($related_event) {
-                                                        ?>
-                                                        <div style="margin-top: 15px;">
-                                                            <div style="width: 21%; position: relative; float: left;">
-                                                                <span class="form-nrequired">Parent Event</span>
-                                                            </div>
-                                                            <div style="width: 72%; float: left;" id="related_events_list">
-                                                                <ul class="menu">
-                                                                    <li class="community" id="related_event_<?php echo $related_event["event_id"]; ?>" style="margin-bottom: 5px; width: 550px; height: 1.5em;">
-                                                                        <a href="<?php echo ENTRADA_URL; ?>/admin/events?id=<?php echo $related_event["event_id"] ?>&section=edit">
-                                                                            <div style="width: 300px; position: relative; float:left; margin-left: 15px;">
-                                                                                <?php echo $related_event["event_title"]; ?>
-                                                                            </div>
-                                                                            <div style="float: left;">
-                                                                                <?php
-                                                                                echo date(DEFAULT_DATE_FORMAT, $related_event["event_start"]);
-                                                                                ?>
-                                                                            </div>
-                                                                        </a>
-                                                                    </li>
-                                                                </ul>
-                                                            </div>
+                                <tbody>
+                                <tr>
+                                    <td>&nbsp;</td>
+                                    <td colspan="2">
+                                        <div id="related_events">
+                                            <?php
+                                            if ((!$is_draft && !(int) $PROCESSED["parent_id"]) || ($is_draft && !(int) $PROCESSED["draft_parent_id"])) {
+                                                require_once("modules/admin/events/api-related-events.inc.php");
+                                            } else {
+                                                $query = "SELECT * FROM `".$tables["events"]."` 
+                                                          WHERE " . (!$is_draft ? "`event_id` = " . $db->qstr($PROCESSED["parent_id"]) : "`devent_id` = " . $db->qstr($PROCESSED["draft_parent_id"]));
+                                                $related_event = $db->GetRow($query);
+                                                if ($related_event) {
+                                                    ?>
+                                                    <div style="margin-top: 15px;">
+                                                        <div style="width: 21%; position: relative; float: left;">
+                                                            <span class="form-nrequired">Parent Event</span>
                                                         </div>
-                                                        <?php
-                                                    }
+                                                        <div style="width: 72%; float: left;" id="related_events_list">
+                                                            <ul class="menu">
+                                                                <li class="community" id="related_event_<?php echo $related_event[$tables["primary_key"]]; ?>" style="margin-bottom: 5px; width: 550px; height: 1.5em;">
+                                                                    <a href="<?php echo ENTRADA_URL  . "/admin/events?section=edit&" . ($is_draft ? "mode=draft&" : "") . "id=" . $related_event[$tables["primary_key"]]; ?>">
+                                                                        <div style="width: 300px; position: relative; float:left; margin-left: 15px;">
+                                                                            <?php echo $related_event["event_title"]; ?>
+                                                                        </div>
+                                                                        <div style="float: left;">
+                                                                            <?php
+                                                                            echo date(DEFAULT_DATE_FORMAT, $related_event["event_start"]);
+                                                                            ?>
+                                                                        </div>
+                                                                    </a>
+                                                                </li>
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                    <?php
                                                 }
-                                                ?>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    </tbody>
-                                <?php } ?>
+                                            }
+                                            ?>
+                                        </div>
+                                    </td>
+                                </tr>
+                                </tbody>
                             </div>
                             <h2>Time Release Options</h2>
 
@@ -2840,7 +2943,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                                 $sidebar_html .= "      <li><label for=\"cascade_associated_faculty\" class=\"checkbox\"><input type=\"checkbox\" value=\"associated_faculty\" id=\"cascade_associated_faculty\" onclick=\"toggleRecurringEventField(this.checked, jQuery(this).val())\" class=\"update-recurring-checkbox\" name=\"update_recurring_fields[]\" /> Associated Faculty</label></li>\n";
                                 $sidebar_html .= "      <li><label for=\"cascade_audience_visible\" class=\"checkbox\"><input type=\"checkbox\" value=\"audience_visible\" id=\"cascade_audience_visible\" onclick=\"toggleRecurringEventField(this.checked, jQuery(this).val())\" class=\"update-recurring-checkbox\" name=\"update_recurring_fields[]\" /> Audience Display</label></li>\n";
                                 $sidebar_html .= "      <li><label for=\"cascade_associated_learners\" class=\"checkbox\"><input type=\"checkbox\" value=\"associated_learners\" id=\"cascade_associated_learners\" onclick=\"toggleRecurringEventField(this.checked, jQuery(this).val())\" class=\"update-recurring-checkbox\" name=\"update_recurring_fields[]\" /> Associated Learners</label></li>\n";
-                            $sidebar_html .= "      <li><label for=\"cascade_attendance_required\" class=\"checkbox\"><input type=\"checkbox\" value=\"attendance_required\" id=\"cascade_attendance_required\" onclick=\"toggleRecurringEventField(this.checked, jQuery(this).val())\" class=\"update-recurring-checkbox\" name=\"update_recurring_fields[]\" /> Event Attendance</label></li>\n";
+                                $sidebar_html .= "      <li><label for=\"cascade_attendance_required\" class=\"checkbox\"><input type=\"checkbox\" value=\"attendance_required\" id=\"cascade_attendance_required\" onclick=\"toggleRecurringEventField(this.checked, jQuery(this).val())\" class=\"update-recurring-checkbox\" name=\"update_recurring_fields[]\" /> Event Attendance</label></li>\n";
                                 $sidebar_html .= "      <li><label for=\"cascade_time_release\" class=\"checkbox\"><input type=\"checkbox\" value=\"time_release\" id=\"cascade_time_release\" onclick=\"toggleRecurringEventField(this.checked, jQuery(this).val())\" class=\"update-recurring-checkbox\" name=\"update_recurring_fields[]\" /> Time Release</label></li>\n";
                                 $sidebar_html .= "  </ul>\n";
                                 $sidebar_html .= "</div>\n";
@@ -2910,7 +3013,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                                                     <strong class="space-right">
                                                         <?php echo html_encode($recurring_event["event_title"]); ?>
                                                     </strong>
-                                                    [<span class="content-small"><?php echo html_encode(date(DEFAULT_DATE_FORMAT, $recurring_event["event_start"])); ?></span>]
+                                                    [<span class="content-small"><?php echo html_encode(date(DEFAULT_DATETIME_FORMAT, $recurring_event["event_start"])); ?></span>]
                                                 </label>
                                             </div>
                                             <?php
@@ -3011,11 +3114,12 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
 
                                 $("#editEventForm").on("change", ".search-target-input-control", function () {
                                     if ($(this).is(":checked")) {
+                                        var default_duration = <?php echo (defined("LEARNING_EVENT_DEFAULT_DURATION") ? LEARNING_EVENT_DEFAULT_DURATION : 60); ?>;
                                         var li = $(document.createElement("li")).attr({id: "type_" + this.value}).html($(this).attr("data-label"));
                                         var a = $(document.createElement("a")).attr({href: "#", onclick: "$(this).up().remove(); cleanupList(); return false;"}).addClass("remove");
                                         var img = $(document.createElement("img")).attr({src: ENTRADA_URL + "/images/action-delete.gif"});
                                         var span = $(document.createElement("span")).addClass("duration_segment_container").html("Duration: ");
-                                        var input = $(document.createElement("input")).attr({type: "text", name: "duration_segment[]", onchange: "cleanupList();", value: "60"}).addClass("input-mini duration_segment");
+                                        var input = $(document.createElement("input")).attr({type: "text", name: "duration_segment[]", onchange: "cleanupList();", value: default_duration}).addClass("input-mini duration_segment");
 
                                         a.append(img);
                                         span.append(input).append(" minutes");
@@ -3303,6 +3407,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                                     parameters: {
                                         "ajax" : 1,
                                         "course_id" : $("course_id").value,
+                                        "draft_id" : <?php echo (isset($devent_id) ? $devent_id : "null"); ?>,
                                         "event_id" : "<?php echo $EVENT_ID; ?>",
                                         "remove_id" : event_id,
                                         "related_event_ids_clean" : $F("related_event_ids_clean")
@@ -3323,6 +3428,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                                     parameters: {
                                         "ajax" : 1,
                                         "course_id" : $("course_id").value,
+                                        "draft_id" : <?php echo (isset($devent_id) ? $devent_id : "null"); ?>,
                                         "event_id" : "<?php echo $EVENT_ID; ?>",
                                         "add_id" : event_id,
                                         "related_event_ids_clean" : $F("related_event_ids_clean")
@@ -3338,8 +3444,9 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
 
                             var events_updater = null;
                             function generateEventAutocomplete() {
+                                var draft_id = <?php echo (isset($draft) ? $draft->getID() : "null"); ?>;
                                 events_updater = new Ajax.Autocompleter("related_event_title", "events_autocomplete",
-                                    "<?php echo ENTRADA_URL; ?>/admin/events?section=api-events-by-title&parent_id=" + $("parent_id").value + "&course_id=" + $("course_id").options[$("course_id").selectedIndex].value,
+                                    "<?php echo ENTRADA_URL; ?>/admin/events?section=api-events-by-title&parent_id=" + $("parent_id").value + "&course_id=" + $("course_id").options[$("course_id").selectedIndex].value + "&draft_id=" + draft_id,
                                     {
                                         frequency: 0.2,
                                         minChars: 1,
@@ -3411,6 +3518,11 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                         <?php
                         break;
                 }
+            }
+            } else {
+                add_error("In order to edit this event your active organisation must match that of the event. Please switch your organisation via the organisation switcher sidebar.");
+
+                echo display_error();
             }
         } else {
             add_error("In order to edit a event you must provide a valid event identifier. The provided ID does not exist in this system.");

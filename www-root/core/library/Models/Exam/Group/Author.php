@@ -131,15 +131,15 @@ class Models_Exam_Group_Author extends Models_Base {
         return $this->group;
     }
 
-    /* @return bool|Models_Exam_Group */
+    /* @return bool|Models_Exam_Group_Author */
     public static function fetchRowByID($egauthor_id) {
         $self = new self();
         return $self->fetchRow(array(
             array("key" => "egauthor_id", "value" => $egauthor_id, "method" => "=")
         ));
     }
-
-    /* @return bool|Models_Exam_Group */
+    
+    /* @return bool|Models_Exam_Group_Author */
     public static function fetchRowByGroupIDAuthorIDAuthorType($group_id, $author_id, $author_type = "proxy_id") {
         $self = new self();
         return $self->fetchRow(array(
@@ -149,7 +149,7 @@ class Models_Exam_Group_Author extends Models_Base {
         ));
     }
 
-    /* @return ArrayObject|Models_Exam_Group[] */
+    /* @return ArrayObject|Models_Exam_Group_Author[] */
     public static function fetchAllByAuthorIDAuthorType($author_id, $author_type = "proxy_id", $search_value = null, $deleted_date = null) {
         if (!is_null($search_value)){
             global $db;
@@ -182,7 +182,7 @@ class Models_Exam_Group_Author extends Models_Base {
         }
     }
 
-    /* @return ArrayObject|Models_Exam_Group[] */
+    /* @return ArrayObject|Models_Exam_Group_Author[] */
     public static function fetchAllRecords($group_id = NULL) {
         $constraints = array(
             array("key" => "egauthor_id", "value" => 0, "method" => ">="),
@@ -259,7 +259,7 @@ class Models_Exam_Group_Author extends Models_Base {
         return $db->GetAll($query);
     }
 
-    /* @return ArrayObject|Models_Exam_Group[] */
+    /* @return ArrayObject|Models_Exam_Group_Author[] */
     public static function fetchAllByGroupID($group_id, $deleted_date = NULL) {
         $self = new self();
         return $self->fetchAll(array(

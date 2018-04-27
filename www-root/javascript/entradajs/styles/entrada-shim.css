@@ -1,0 +1,367 @@
+/** HTML Elements **/
+.ejs button {
+    font-family:initial;
+    font-size: initial;
+    font-weight: initial;
+    line-height: initial;
+    cursor: initial;
+    -webkit-appearance: initial;
+    margin: initial;
+    vertical-align: initial;
+}
+
+.ejs img {
+    max-width: initial;
+    width: initial;
+    height: initial;
+    vertical-align: initial;
+    border: initial;
+    -ms-interpolation-mode: initial;
+}
+
+.ejs input {
+    font-family:initial;
+    font-size: initial;
+    font-weight: initial;
+    line-height: initial;
+    margin: initial;
+    vertical-align: initial;
+}
+
+.ejs input[type="checkbox"],
+.ejs input[type="radio"] {
+    float: initial;
+    width: initial;
+    margin: initial;
+    line-height: initial;
+    cursor: initial;
+}
+
+.ejs textarea,
+.ejs input[type="text"],
+.ejs input[type="password"],
+.ejs input[type="datetime"],
+.ejs input[type="datetime-local"],
+.ejs input[type="date"],
+.ejs input[type="month"],
+.ejs input[type="time"],
+.ejs input[type="week"],
+.ejs input[type="number"],
+.ejs input[type="email"],
+.ejs input[type="url"],
+.ejs input[type="search"],
+.ejs input[type="tel"],
+.ejs input[type="color"] {
+    background-color: initial;
+    border: initial;
+    color: initial;
+    padding: initial;
+    font-family: initial;
+    font-size: initial;
+    min-height: initial;
+    -webkit-box-shadow: initial;
+    -moz-box-shadow: initial;
+    box-shadow: initial;
+    -webkit-transition: initial;
+    -moz-transition: initial;
+    -o-transition: initial;
+    transition: initial;
+}
+
+.ejs select,
+.ejs textarea,
+.ejs input[type="text"],
+.ejs input[type="password"],
+.ejs input[type="datetime"],
+.ejs input[type="datetime-local"],
+.ejs input[type="date"],
+.ejs input[type="month"],
+.ejs input[type="time"],
+.ejs input[type="week"],
+.ejs input[type="number"],
+.ejs input[type="email"],
+.ejs input[type="url"],
+.ejs input[type="search"],
+.ejs input[type="tel"],
+.ejs input[type="color"] {
+    display: initial;
+    height: initial;
+    width: initial;
+    padding: initial;
+    margin-bottom: initial;
+    font-size: initial;
+    font-weight: initial;
+    line-height: initial;
+    color: initial;
+    -webkit-border-radius: initial;
+    -moz-border-radius: initial;
+    border-radius: initial;
+    vertical-align: initial;
+}
+
+.ejs input[disabled],
+.ejs select[disabled],
+.ejs textarea[disabled],
+.ejs input[readonly],
+.ejs select[readonly],
+.ejs textarea[readonly] {
+    cursor: initial;
+    background-color: initial;
+}
+
+.ejs label {
+    display:initial;
+    font-size: initial;
+    font-weight: initial;
+    line-height: initial;
+    margin-bottom: initial;
+    cursor: initial;
+}
+
+.ejs ol,
+.ejs ul {
+    padding:initial;
+    margin:initial;
+}
+
+.ejs p {
+    margin:initial;
+}
+
+.ejs pre {
+    padding: initial;
+    font-size: initial;
+    line-height: initial;
+    color: initial;
+    background-color: initial;
+    -webkit-border-radius: initial;
+    -moz-border-radius: initial;
+    border-radius: initial;
+
+    display: initial;
+    margin: initial;
+
+    word-break: initial;
+    word-wrap: initial;
+    white-space: initial;
+    border: initial;
+}
+
+.ejs code,
+.ejs pre {
+    padding: initial;
+    font-family: initial;
+    font-size: initial;
+    color: initial;
+    -webkit-border-radius: initial;
+    -moz-border-radius: initial;
+    border-radius: initial;
+}
+
+.ejs textarea {
+    margin: initial;
+    height: initial;
+}
+
+/** Alert **/
+.ejs .alert {
+    background:initial;
+    border:initial;
+    color:initial;
+    padding:initial;
+    margin:initial;
+    text-shadow:initial;
+}
+
+.ejs .alert .alert-info,
+.ejs .alert .alert-success,
+.ejs .alert .alert-danger {
+    background:initial;
+    border:initial;
+    color:initial;
+}
+
+/** Badge **/
+.ejs .badge {
+    text-shadow:initial;
+    vertical-align:initial;
+    white-space:initial;
+    padding:initial;
+    border-radius:initial;
+    -webkit-border-radius:initial;
+    -moz-border-radius:initial;
+    display: initial;
+    font-size: initial;
+    font-weight: initial;
+    line-height: initial;
+    color: initial;
+    background-color: initial;
+}
+
+.ejs .badge.badge-default,
+.ejs .badge.badge-primary,
+.ejs .badge.badge-info,
+.ejs .badge.badge-success,
+.ejs .badge.badge-danger {
+    background-color:initial;
+}
+
+/** Brand **/
+.ejs .brand {
+    display: initial;
+    width: initial;
+    height: initial;
+}
+
+/** Breadcrumb **/
+.ejs .breadcrumb {
+    margin: initial;
+    background: initial;
+    border: initial;
+    color: initial;
+    font-family: initial;
+    font-size: initial;
+    -webkit-border-radius: initial;
+    -moz-border-radius: initial;
+    border-radius: initial;
+    padding: initial;
+    list-style: initial;
+    background-color: initial;
+}
+
+/** Button **/
+.ejs .btn {
+    padding: initial;
+    font-family: initial;
+    font-size: initial;
+    line-height: initial;
+    color: initial;
+    text-shadow: initial;
+    background-color: initial;
+    background-image: initial;
+    filter: initial;
+    border: initial;
+    -webkit-border-radius: initial;
+    -moz-border-radius: initial;
+    border-radius: initial;
+    -webkit-box-shadow: initial;
+    -moz-box-shadow: initial;
+    box-shadow: initial;
+    -webkit-transition: initial;
+    -moz-transition: initial;
+    -o-transition: initial;
+    transition: initial;
+
+    display: initial;
+    margin-bottom: initial;
+    text-align: initial;
+    vertical-align: initial;
+    cursor: initial;
+    background-repeat: initial;
+    border-color: initial;
+    border: initial;
+    border-bottom-color: initial;
+}
+
+.ejs .btn-default,
+.ejs .btn-primary,
+.ejs .btn-success,
+.ejs .btn-info,
+.ejs .btn-danger,
+.ejs .btn-disabled {
+    color: initial;
+    text-shadow: initial;
+    background-color: initial;
+    background-image: initial;
+    background-repeat: initial;
+    border-color: initial;
+    border:initial;
+    filter: initial;
+}
+
+/** ButtonGroup **/
+.ejs .btn-group {
+    position: initial;
+    display: initial;
+    font-size: initial;
+    vertical-align: initial;
+    white-space: initial;
+}
+
+/** Checkbox/Radio **/
+.ejs .checkbox,
+.ejs .radio {
+    min-height: initial;
+    padding-left: initial;
+}
+
+/** Row **/
+.ejs .row {
+    margin-left: initial;
+}
+
+/** Table **/
+.ejs .table {
+    width: initial;
+    margin-bottom: initial;
+}
+
+/** Tooltip **/
+.ejs .tooltip {
+    position: initial;
+    z-index: initial;
+    display: initial;
+    visibility: initial;
+    font-size: initial;
+    line-height: initial;
+    opacity: initial;
+    filter: initial;
+}
+
+.ejs .tooltip.top {
+    margin-top: initial;
+    padding: initial;
+}
+
+.ejs .tooltip.right {
+    margin-left: initial;
+    padding: initial;
+}
+
+.ejs .tooltip.bottom {
+    margin-top: initial;
+    padding: initial;
+}
+
+.ejs .tooltip.left {
+    margin-left: initial;
+    padding: initial;
+}
+
+.ejs .tooltip-inner {
+    max-width: initial;
+    padding: initial;
+    color: initial;
+    text-align: initial;
+    text-decoration: initial;
+    background-color: initial;
+    -webkit-border-radius: initial;
+    -moz-border-radius: initial;
+    border-radius: initial;
+}
+
+/** Well **/
+.ejs .well {
+    background-color: initial;
+    border: initial;
+    margin: initial;
+    padding: initial;
+    -webkit-box-shadow: initial;
+    -moz-box-shadow: initial;
+    box-shadow: initial;
+    min-height: initial;
+    border: initial;
+    -webkit-border-radius: initial;
+    -moz-border-radius: initial;
+    border-radius: initial;
+}

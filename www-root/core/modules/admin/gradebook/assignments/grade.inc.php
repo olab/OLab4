@@ -100,7 +100,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 									$VALID_MAX_FILESIZE		= 31457280; // 30MB
 									if (($file_filesize = (int)trim($_FILES["assignment_archive"]["size"])) <= $VALID_MAX_FILESIZE) {
 											$PROCESSED["file_version"] = 1;
-											$PROCESSED["file_mimetype"] = strtolower(trim($_FILES["assignment_archive"]["type"]));
+											$PROCESSED["file_mimetype"] = mime_content_type($_FILES["assignment_archive"]["tmp_name"]);
 											$PROCESSED["file_filesize"] = $file_filesize;
 											$PROCESSED["file_filename"] = useable_filename(trim($_FILES["assignment_archive"]["name"]));
 

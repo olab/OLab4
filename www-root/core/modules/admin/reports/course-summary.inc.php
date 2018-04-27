@@ -74,61 +74,19 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_REPORTS"))) {
 		$event_title_search = clean_input($_POST["event_title_search"], "notags");
 	}
 	?>
-	<style type="text/css">
-	h1 {
-		page-break-before:	always;
-		border-bottom:		2px #CCCCCC solid;
-		font-size:			24px;
-	}
-	
-	h2 {
-		font-weight:		normal;
-		border:				0px;
-		font-size:			18px;
-	}
-	
-	div.top-link {
-		float: right;
-	}
-	</style>	
-	<div class="no-printing">
-		<h2>Reporting Dates</h2>
-		<form action="<?php echo ENTRADA_RELATIVE; ?>/admin/reports?section=<?php echo $SECTION; ?>&step=2" method="post" onsubmit="selIt()" class="form-horizontal">
-			<div class="control-group">
-				<table>
-					<tr>
-						<?php echo generate_calendars("reporting", "Reporting Date", true, true, $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_start"], true, true, $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_finish"]); ?>
-					</tr>
-				</table>
-			</div>
-			<div class="control-group">
-				<label for="organisation_id" class=" control-label form-required"><input id="organisation_checkbox" type="checkbox" disabled="disabled" checked="checked"> Organisation:</label>
-				<div class="controls">
-					<select id="organisation_id" name="organisation_id" style="width: 177px" onchange="window.location = '<?php echo ENTRADA_RELATIVE; ?>/admin/reports?section=<?php echo $SECTION; ?>&org_id=' + $F('organisation_id')">
-							<?php
-							$query = "SELECT `organisation_id`, `organisation_title` FROM `".AUTH_DATABASE."`.`organisations`";
-							$results = $db->GetAll($query);
-							$all_organisations = false;
-							if ($results) {
-								$all_organisations = true;
-								foreach ($results as $result) {
-									if ($ENTRADA_ACL->amIAllowed("resourceorganisation".$result["organisation_id"], "read")) {
-										echo "<option value=\"".(int) $result["organisation_id"]."\"".(($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["organisation_id"] == $result["organisation_id"]) ? " selected=\"selected\"" : "").">".html_encode($result["organisation_title"])."</option>\n";
-									} else {
-										$all_organisations = false;
-									}
-								}
-							}
+    <style>
+        h1,h2 {
+            page-break-before:	always;
+        }
+    </style>
+    <h1><?php echo $translate->_("Course Summary Report"); ?></h1>
 
-							if ($all_organisations) {
-								?>
-								<option value="-1" <?php echo (($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["organisation_id"] == -1) ? " selected=\"selected\"" : ""); ?>>All organisations</option>
-								<?php
-							}
-							?>
-					</select>
-				</div>
-			</div>
+	<div class="no-printing">
+		<h2><?php echo $translate->_("Report Options"); ?></h2>
+
+		<form action="<?php echo ENTRADA_RELATIVE; ?>/admin/reports?section=<?php echo $SECTION; ?>&step=2" method="post" onsubmit="selIt()" class="form-horizontal">
+            <input type="hidden" name="organisation_id" id="organisation_id" value="<?php echo $ENTRADA_USER->getActiveOrganisation(); ?>">
+			<?php echo Entrada_Utilities::generate_calendars("reporting", "Reporting Date", true, true, $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_start"], true, true, $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_finish"]); ?>
 			<div class="control-group">
 				<label class="control-label form-required">Courses Included:</label>
 				<div class="controls">
@@ -190,7 +148,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_REPORTS"))) {
 		
 		echo "<h2 style=\"page-break-before: avoid\">Course Summary</h2>";
 		echo "<div class=\"content-small\" style=\"margin-bottom: 10px\">\n";
-		echo "	<strong>Date Range:</strong> ".date(DEFAULT_DATE_FORMAT, $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_start"])." <strong>to</strong> ".date(DEFAULT_DATE_FORMAT, $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_finish"]).".";
+		echo "	<strong>Date Range:</strong> ".date(DEFAULT_DATETIME_FORMAT, $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_start"])." <strong>to</strong> ".date(DEFAULT_DATETIME_FORMAT, $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_finish"]).".";
 		echo "</div>\n";
 
 		if ($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["organisation_id"] != -1) {

@@ -332,7 +332,7 @@ if ($user_proxy_id) {
                     if (isset($event["last_visited"]) && ((int) $event["last_visited"]) && ((int) $event["last_visited"] < (int) $event["updated_date"])) {
                         $cal_type = 2;
 
-                        $cal_updated = date(DEFAULT_DATE_FORMAT, $event["updated_date"]);
+                        $cal_updated = date(DEFAULT_DATETIME_FORMAT, $event["updated_date"]);
                     }
 
                     if ($event["custom_time"] == "1") {

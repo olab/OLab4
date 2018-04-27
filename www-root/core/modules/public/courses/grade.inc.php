@@ -131,7 +131,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
     <?php
     if ($assessment["form_id"]) {
         // Mark assignment
-        $mark_assignment_modal->setHeaderContent('<div class="pull-left selector-documents"></div>');
+        $mark_assignment_modal->setHeaderContent('<div class="selector-documents form-horizontal"></div>');
         $mark_assignment_modal->setBody('
 					<div class="loading"><img src="'.ENTRADA_URL.'/images/loading.gif" alt="Loading..." /></div>
 			      	<div class="container-fluid">

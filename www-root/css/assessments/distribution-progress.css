@@ -1,3 +1,7 @@
+.distribution-progress-row {
+    height: 90px;
+}
+
 .faded {
     opacity: 0.25;
 }
@@ -8,9 +12,9 @@
 
 #delete-tasks-reason, #delete-tasks-other-reason {
     min-height: 30px;
-    padding:3px;
-    margin:0;
-    display:block;
+    padding: 3px;
+    margin: 0;
+    display: block;
     width: 98%;
 }
 
@@ -27,14 +31,49 @@
     color: #858B93;
 }
 
-.icon-download-alt:hover{
+th .icon-download-alt:hover {
     cursor: pointer;
 }
 
-.icon-trash:hover{
+th .icon-trash:hover {
     cursor: pointer;
 }
 
-.icon-bell:hover{
+th .icon-bell:hover {
     cursor: pointer;
+}
+
+th .task-deleted {
+    display: inline-block;
+}
+
+.assessment-distribution-progress-table {
+    border-radius:0;
+    height:100%;
+    box-shadow: 0 2px 2px 0 #888888;
+}
+
+.table-header-assessor-row {
+    color: #f4f4f4;
+    background-color: #00a8bc;
+}
+
+.table-header-assessor-row th:first-child {
+    padding: 10px;
+}
+
+.table-header-assessor-row a {
+    color: #96d2ff;
+}
+
+.assessment-distribution-progress-table thead th {
+    padding: 5px
+}
+
+.target-block.deleted td {
+    background-color: #e7e7e7 !important;
+}
+
+#event-search-input {
+    width: 190px;
 }

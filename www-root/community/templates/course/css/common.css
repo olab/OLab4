@@ -691,3 +691,8 @@ div.hero-unit.tight p {
 #tweets .panel-body {
     padding: 0;
 }
+
+.modal-lg {
+    width: 800px;
+    margin-left: -420px;
+}

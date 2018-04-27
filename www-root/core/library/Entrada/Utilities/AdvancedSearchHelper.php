@@ -62,6 +62,24 @@ class Entrada_Utilities_AdvancedSearchHelper extends Entrada_Base {
     }
 
     /**
+     * Remove a single filter if it is set in the session.
+     * 
+     * @param $module
+     * @param $submodule
+     * @param $filter_type
+     * @param $filter_target
+     */
+    public static function removeSessionFilter($module, $submodule, $filter_type, $filter_target) {
+        unset($_SESSION[APPLICATION_IDENTIFIER][$module][$submodule]["selected_filters"][$filter_type][$filter_target]);
+        if (empty($_SESSION[APPLICATION_IDENTIFIER][$module][$submodule]["selected_filters"][$filter_type])) {
+            unset($_SESSION[APPLICATION_IDENTIFIER][$module][$submodule]["selected_filters"][$filter_type]);
+            if (empty($_SESSION[APPLICATION_IDENTIFIER][$module][$submodule]["selected_filters"])) {
+                unset($_SESSION[APPLICATION_IDENTIFIER][$module][$submodule]["selected_filters"]);
+            }
+        }
+    }
+
+    /**
      * Find the comparison_item by fieldname inside of the advanced search datasource.
      * Valid fieldnames are "target_id" and "target_label", but the logic can apply to any indecies.
      *
@@ -92,33 +110,43 @@ class Entrada_Utilities_AdvancedSearchHelper extends Entrada_Base {
      * @param $target_id_index
      * @param $target_label_index
      * @param array $additional_properties
+     * @param array $default_properties
      * @return array
      */
-    public static function buildSearchSource($records, $target_id_index, $target_label_index, $additional_properties = array()) {
-        if (empty($records)) {
-            return array();
-        }
+    public static function buildSearchSource($records, $target_id_index, $target_label_index, $additional_properties = array(), $default_properties = array()) {
 
         $search_datasource = array();
-        foreach ($records as $record) {
-            if (is_object($record)) {
-                $record = $record->toArray();
-            }
-            if (!is_array($record)) {
-                continue; // skip if we failed to make or receive an array as input
-            }
-            $search_item = array();
-            $search_item["target_id"] = @$record[$target_id_index];
-            $search_item["target_label"] = @$record[$target_label_index];
 
-            // Add additional properties (but don't overwrite target_id or target_label)
-            foreach ($additional_properties as $additional_property) {
-                if ($additional_property != "target_id" && $additional_property != "target_label") {
-                    $search_item[$additional_property] = @$record[$additional_property];
-                }
-            }
-            $search_datasource[] = $search_item;
+        // Build the data source using the default properties, if any
+        if (is_array($default_properties) && !empty($default_properties)) {
+            $search_datasource = $default_properties;
         }
+
+        // If records are given, use them to populate the rest of the datasource
+        if (is_array($records) && !empty($records)) {
+            foreach ($records as $record) {
+                if (is_object($record)) {
+                    $record = $record->toArray();
+                }
+                if (!is_array($record)) {
+                    continue; // skip if we failed to make or receive an array as input
+                }
+                $search_item = array();
+                $search_item["target_id"] = array_key_exists($target_id_index, $record) ? $record[$target_id_index] : null;
+                $search_item["target_label"] = array_key_exists($target_label_index, $record) ? $record[$target_label_index] : "";
+
+                // Add additional properties (but don't overwrite target_id or target_label)
+                foreach ($additional_properties as $additional_property) {
+                    if ($additional_property != "target_id" && $additional_property != "target_label") {
+                        if (array_key_exists($additional_property, $record)) {
+                            $search_item[$additional_property] = $record[$additional_property];
+                        }
+                    }
+                }
+                $search_datasource[] = $search_item;
+            }
+        }
+
         return $search_datasource;
     }
 }

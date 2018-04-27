@@ -385,7 +385,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP")) || (!defined("IN
 						if ($db->AutoExecute(CLERKSHIP_DATABASE.".events", $EVENT, "UPDATE", "`event_id` = ".$db->qstr($EVENT_ID))) {
 							$url = ENTRADA_URL."/admin/clerkship";
 
-							$msg	= "You will now be redirected to the clerkship index; this will happen <strong>automatically</strong> in 5 seconds or <a href=\"".$url."\" style=\"font-weight: bold\">click here</a> to continue.";
+							$msg	= "You will now be redirected to the " . $translate->_("clerkship index") . "; this will happen <strong>automatically</strong> in 5 seconds or <a href=\"".$url."\" style=\"font-weight: bold\">click here</a> to continue.";
 
 
 							$ELECTIVE = $PROCESSED;
@@ -403,7 +403,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP")) || (!defined("IN
 											$international_msg .= $CLERKSHIP_INTERNATIONAL_LINK."\n\n";
 
 											$message  = "Attention ".$AGENT_CONTACTS["agent-clerkship-international"]["name"].",\n\n";
-											$message .= "An international clerkship elective has been approved by Queen's University please review this:\n";
+											$message .= "An international " . $translate->_("clerkship elective") . " has been approved by Queen's University please review this:\n";
 											$message .= "=======================================================\n\n";
 											$message .= "Approved At:\t\t".date("r", time())."\n";
 											$message .= "Approved By:\t\t".$_SESSION["details"]["firstname"]." ".$_SESSION["details"]["lastname"]."\n";
@@ -437,12 +437,12 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP")) || (!defined("IN
 											$mail->clearReplyTo();
 										}
 
-										$msg	= "You have approved this elective.  An email will be sent to the student informing them of this.<br /><br /> You will now be redirected to the clerkship index; this will happen <strong>automatically</strong> in 5 seconds or <a href=\"".$url."\" style=\"font-weight: bold\">click here</a> to continue.";
+										$msg	= "You have approved this elective.  An email will be sent to the student informing them of this.<br /><br /> You will now be redirected to the " . $translate->_("clerkship index") . "; this will happen <strong>automatically</strong> in 5 seconds or <a href=\"".$url."\" style=\"font-weight: bold\">click here</a> to continue.";
 
 										$student_email = get_account_data("email", $event_info["etype_id"]);
 
 										$message  = "Attention ".$student_name.",\n\n";
-										$message .= "A Clerkship elective has been approved by the undergraduate office:\n";
+										$message .= "A " . $translate->_("Clerkship elective") . " has been approved by the undergraduate office:\n";
 										$message .= "=======================================================\n\n";
 										$message .= "Approved At:\t\t".date("r", time())."\n";
 										$message .= "Approved By:\t\t".$_SESSION["details"]["firstname"]." ".$_SESSION["details"]["lastname"]." [".$_SESSION["details"]["username"]."]\n";
@@ -477,7 +477,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP")) || (!defined("IN
 										$mail->clearReplyTo();
 
 										$message  = "Attention ".(isset($PROCESSED["preceptor_prefix"]) && $PROCESSED["preceptor_prefix"] != "" ? $PROCESSED["preceptor_prefix"] . " " : "").(isset($PROCESSED["preceptor_first_name"]) && $PROCESSED["preceptor_first_name"] != "" ? $PROCESSED["preceptor_first_name"] . " " : "") . $PROCESSED["preceptor_last_name"].",\n\n";
-										$message .= "A Clerkship elective has been approved by Queen's University please review this:\n";
+										$message .= "A " . $translate->_("Clerkship elective") . " has been approved by Queen's University please review this:\n";
 										$message .= "=======================================================\n\n";
 										$message .= "Approved At:\t\t".date("r", time())."\n";
 										$message .= "Approved By:\t\t".$_SESSION["details"]["firstname"]." ".$_SESSION["details"]["lastname"]."\n";
@@ -514,12 +514,12 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP")) || (!defined("IN
 										$mail->clearRecipients();
 										$mail->clearReplyTo();
 									} else if ($PROCESSED["event_status"] == "trash") {
-										$msg	= "You have rejected this elective.  An email will be sent to the student informing them of this.<br /><br /> You will now be redirected to the clerkship index; this will happen <strong>automatically</strong> in 5 seconds or <a href=\"".$url."\" style=\"font-weight: bold\">click here</a> to continue.";
+										$msg	= "You have rejected this elective.  An email will be sent to the student informing them of this.<br /><br /> You will now be redirected to the " . $translate->_("clerkship index") . "; this will happen <strong>automatically</strong> in 5 seconds or <a href=\"".$url."\" style=\"font-weight: bold\">click here</a> to continue.";
 
 										$student_email = get_account_data("email", $event_info["etype_id"]);
 
 										$message  = "Attention ".$student_name.",\n\n";
-										$message .= "A Clerkship elective has been rejected by the undergraduate office:\n";
+										$message .= "A " . $translate->_("Clerkship elective") . " has been rejected by the undergraduate office:\n";
 										$message .= "=======================================================\n\n";
 										$message .= "Rejected At:\t\t".date("r", time())."\n";
 										$message .= "Rejected By:\t\t".$_SESSION["details"]["firstname"]." ".$_SESSION["details"]["lastname"]." [".$_SESSION["details"]["username"]."]\n";
@@ -844,7 +844,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP")) || (!defined("IN
                                 echo "<tr>\n";
                                 echo "  <td>&nbsp;</td>\n";
                                 echo "  <td>".($statistic["action"] == "create" ? "Created " : "Edited ")." by</td>";
-                                echo "  <td> ".get_account_data("wholename", $statistic["proxy_id"]). " on " .(date(DEFAULT_DATE_FORMAT, $statistic["timestamp"]))."</td>";
+                                echo "  <td> ".get_account_data("wholename", $statistic["proxy_id"]). " on " .(date(DEFAULT_DATETIME_FORMAT, $statistic["timestamp"]))."</td>";
                                 echo "</tr>\n";
                             }
                             ?>
@@ -1227,7 +1227,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP")) || (!defined("IN
 									}
 								} else {
 									$ERROR++;
-									$ERRORSTR[] = "We were unable to locate the event location you selected. Please select a valid location or if your desired location is not in the list visit the <a href=\"".ENTRADA_URL."/admin/regionaled/regions\" target=\"_blank\">Manage Regions</a> section and locate the region in that list, click on it, and then select the &quot;Clerkship core rotations can take place in this region&quot; check box.";
+									$ERRORSTR[] = "We were unable to locate the event location you selected. Please select a valid location or if your desired location is not in the list visit the <a href=\"".ENTRADA_URL."/admin/regionaled/regions\" target=\"_blank\">Manage Regions</a> section and locate the region in that list, click on it, and then select the &quot;" .$translate->_("Clerkship core rotations") . " can take place in this region&quot; check box.";
 								}
 							} else {
 								$ERROR++;
@@ -1450,7 +1450,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP")) || (!defined("IN
 								<select id="rotation" name="rotation_id" style="width: 75%" value="<?php echo html_decode($PROCESSED["event_title"]); ?>">
 								<option value="">-- Select Rotation --</option>
 								<?php
-									$query = "SELECT * FROM `".CLERKSHIP_DATABASE."`.`global_lu_rotations` WHERE `rotation_id` NOT IN (10, 11)";
+									$query = "SELECT * FROM `".CLERKSHIP_DATABASE."`.`global_lu_rotations` ORDER BY `rotation_title` ASC";
 									$rotations = $db->GetAll($query);
 									if ($rotations) {
 										foreach ($rotations as $rotation) {

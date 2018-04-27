@@ -97,6 +97,28 @@ class Models_Course_Group_Audience extends Models_Base {
         return $self->fetchAll($constrains);
     }
 
+    public static function fetchAllByCGroupIDActive($cgroup_id, $active = 1) {
+        global $db;
+        $course_group_audience = array();
+
+        $query = "SELECT cga.* 
+                  FROM `course_group_audience` AS cga
+                  JOIN " . AUTH_DATABASE . ".`user_access` AS ua
+                  ON cga.`proxy_id` = ua.`user_id`
+                  WHERE cga.`cgroup_id` = ?
+                  AND cga.`active` = ?
+                  AND ua.`account_active` = ?";
+
+        $results = $db->GetAll($query, array($cgroup_id, $active, ($active ? "true" : "false")));
+        if ($results) {
+            foreach ($results as $result) {
+                $course_group_audience[] = new self($result);
+            }
+        }
+
+        return $course_group_audience;
+    }
+
     public static function fetchAllByCGroupIDProxyID($cgroup_id, $proxy_id) {
         $self = new self();
         return $self->fetchAll(array(
@@ -192,7 +214,7 @@ class Models_Course_Group_Audience extends Models_Base {
                     ON a.`id` = b.`user_id`
                     JOIN `group_members` c
                     ON a.`id` = c.`proxy_id`
-                    AND c.`group_id` IN(?)
+                    AND c.`group_id` IN (".implode(", ", $groups).")
                     AND c.`member_active` = '1'
                     WHERE b.`app_id` IN (?)					
                     AND b.`account_active` = 'true'
@@ -202,7 +224,7 @@ class Models_Course_Group_Audience extends Models_Base {
                     AND (c.`finish_date` = '0' OR c.`finish_date` > ?)											
                     GROUP BY a.`id` ".$query_ordered;
 
-        $results = $db->GetAll($query, array($groups, AUTH_APP_IDS_STRING, time(), time(), time(), time()));
+        $results = $db->GetAll($query, array(AUTH_APP_IDS_STRING, time(), time(), time(), time()));
 
         if ($results) {
             return $results;
@@ -214,7 +236,7 @@ class Models_Course_Group_Audience extends Models_Base {
     public function getExportGroupAudienceByGroupID($group_id) {
         global $db;
 
-        $query = "SELECT a.*, CONCAT_WS(', ', b.`lastname`, b.`firstname`) AS `fullname` FROM `course_group_audience` AS a
+        $query = "SELECT a.*, CONCAT_WS(', ', b.`lastname`, b.`firstname`) AS `fullname`, b.`number` FROM `course_group_audience` AS a
 						JOIN `".AUTH_DATABASE."`.`user_data` AS b
 						ON a.`proxy_id` = b.`id`
 						WHERE a.`cgroup_id` = ?
@@ -226,6 +248,42 @@ class Models_Course_Group_Audience extends Models_Base {
         }
         return false;
 
+    }
+
+    public function getAllByGroupIDs($group_ids = Array()) {
+        global $db;
+
+        $query = "SELECT * FROM `course_group_audience` a
+                    JOIN `course_groups` b
+                    ON a.cgroup_id = b.cgroup_id
+                    WHERE a.cgroup_id IN (".implode(", ", $group_ids).")
+                    ORDER BY b.group_name ASC";
+
+        $results = $db->getAll($query);
+
+        if ($results) {
+            return $results;
+        }
+
+        return false;
+    }
+
+    public function getAllByGroupID($group_id) {
+        global $db;
+
+        $query = "SELECT * FROM `course_group_audience` a
+                    JOIN `course_groups` b
+                    ON a.cgroup_id = b.cgroup_id
+                    WHERE a.cgroup_id = ?
+                    ORDER BY b.group_name ASC";
+
+        $results = $db->getAll($query, [$group_id]);
+
+        if ($results) {
+            return $results;
+        }
+
+        return false;
     }
 
 }

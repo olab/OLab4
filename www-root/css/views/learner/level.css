@@ -1,0 +1,57 @@
+.learner-level {
+    font-family: "Lucida Grande", Geneva, Verdana, Arial, Helvetica, sans-serif;
+    width: 50%;
+    float: left;
+    margin: 0;
+    padding: 5px;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+}
+
+.learner-level-wrapper {
+    border: 1px solid #d9dee2;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.learner-level-header {
+    overflow: hidden;
+    width: 100%;
+    display: block;
+    background-color: #ecf0f3;
+}
+
+.level-actions {
+    padding: 10px;
+}
+
+.level-actions a {
+    display: inline-block;
+}
+
+.learner-level-data-container {
+    padding: 15px;
+    white-space: nowrap;
+}
+
+.learner-level-data-container.active {
+    background-color: #f4f7fa;
+}
+
+.learner-level-data-container span {
+    display: block;
+    width: 100%;
+    height: 20px;
+}
+
+span.learner-level-start-date, span.learner-level-finish-date, span.learner-level-delimiter {
+    display: inline;
+    float: left;
+    width: auto;
+}
+
+.padded {
+    padding-left: 5px;
+    padding-right: 5px;
+}

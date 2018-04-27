@@ -240,7 +240,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
 						$row[$key] = date("Y-m-d", $event["event_start"]);
 						break;
 					case "event_start_time":
-						$row[key] = date("H:i", $event["event_start"]);
+						$row[$key] = date("H:i", $event["event_start"]);
 						break;
 					case "event_type_durations":
 						$row[$key] = implode("; ", $event_type_durations);
@@ -305,9 +305,11 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
 							foreach ($objs as $o) {
 								$free_text_objectives[] = $o["objective_details"];
 							}
-						}
-						
-						$row[$key] = implode("; ", $free_text_objectives);
+                            $row[$key] = implode("; ", $free_text_objectives);
+						} else {
+						    $row[$key] = html_encode(trim(strip_selected_tags($event["event_objectives"], array("font"))));
+                        }
+
 						break;
 					case "clinical_presentations":
 						$clinical_presentation_objectives = array();
@@ -419,8 +421,8 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
 						}
 						$row[$key] = implode("; ", $hot_topics);
 						break;
-					case "parent_id":
-						if (is_null($event[$key]) || $event[$key] == 0) {
+					case "parent_event":
+						if (is_null($event["parent_id"]) || $event["parent_id"] == 0) {
 							$row[$key] = 1;
 						} else {
 							$row[$key] = 0;

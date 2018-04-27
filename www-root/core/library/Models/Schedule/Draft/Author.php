@@ -22,7 +22,7 @@
 
 class Models_Schedule_Draft_Author extends Models_Base {
 
-    protected $cbl_schedule_draft_author_id, $cbl_schedule_draft_id, $proxy_id, $created_date, $created_by;
+    protected $cbl_schedule_draft_author_id, $cbl_schedule_draft_id, $created_date, $created_by, $author_type, $author_value;
 
     protected static $table_name       = "cbl_schedule_draft_authors";
     protected static $primary_key      = "cbl_schedule_draft_author_id";
@@ -36,12 +36,28 @@ class Models_Schedule_Draft_Author extends Models_Base {
         return $this->cbl_schedule_draft_id;
     }
 
-    public function getProxyID() {
-        return $this->proxy_id;
+    public function getAuthorType() {
+        return $this->author_type;
+    }
+
+    public function setAuthorType($author_type) {
+        $this->author_type = $author_type;
+    }
+
+    public function getAuthorValue() {
+        return $this->author_value;
+    }
+
+    public function setAuthorValue($author_value) {
+        $this->author_value = $author_value;
     }
 
     public function getUser() {
-        return User::fetchRowByID($this->proxy_id);
+        if ($this->author_type == "proxy_id") {
+            return User::fetchRowByID($this->author_value);
+        } else {
+            return false;
+        }
     }
 
     public function getCreatedDate() {
@@ -59,10 +75,19 @@ class Models_Schedule_Draft_Author extends Models_Base {
         ));
     }
 
-    public static function fetchAllByProxyID($proxy_id) {
+    public static function fetchAllByProxyID($author_value) {
         $self = new self();
         return $self->fetchAll(array(
-            array("key" => "proxy_id", "value" => $proxy_id, "method" => "=")
+            array("key" => "author_value", "value" => $author_value, "method" => "="),
+            array("key" => "author_type", "value" => "proxy_id", "method" => "=")
+        ));
+    }
+
+    public static function fetchAllByAuthorTypeAuthorValue($author_type, $author_value) {
+        $self = new self();
+        return $self->fetchAll(array(
+            array("key" => "author_type", "value" => $author_type, "method" => "="),
+            array("key" => "author_value", "value" => $author_value, "method" => "=")
         ));
     }
 
@@ -73,10 +98,19 @@ class Models_Schedule_Draft_Author extends Models_Base {
         ));
     }
 
-    public static function isAuthor($draft_id, $proxy_id) {
+    public static function fetchRowByDraftIDAuthorTypeAuthorValue($draft_id, $author_type, $author_value) {
+        $self = new self();
+        return $self->fetchRow(array(
+            array("key" => "cbl_schedule_draft_id", "value" => $draft_id, "method" => "="),
+            array("key" => "author_type", "value" => $author_type, "method" => "="),
+            array("key" => "author_value", "value" => $author_value, "method" => "=")
+        ));
+    }
+
+    public static function isAuthor($draft_id, $author_value, $author_type = 'proxy_id') {
         global $db;
-        $query = "SELECT * FROM `cbl_schedule_draft_authors` WHERE `cbl_schedule_draft_id` = ? AND `proxy_id` = ?";
-        $result = $db->getRow($query, array($draft_id, $proxy_id));
+        $query = "SELECT * FROM `cbl_schedule_draft_authors` WHERE `cbl_schedule_draft_id` = ? AND `author_value` = ? AND `author_type` = ?";
+        $result = $db->getRow($query, array($draft_id, $author_value, $author_type));
         if ($result) {
             return true;
         } else {
@@ -98,7 +132,7 @@ class Models_Schedule_Draft_Author extends Models_Base {
     public function delete() {
         global $db;
 
-        $query = "DELETE FROM `".static::$table_name."` WHERE `proxy_id` = ".$db->qstr($this->proxy_id)." AND `cbl_schedule_draft_id` = ".$db->qstr($this->cbl_schedule_draft_id)."";
+        $query = "DELETE FROM `".static::$table_name."` WHERE `author_value` = ".$db->qstr($this->author_value)." AND `cbl_schedule_draft_id` = ".$db->qstr($this->cbl_schedule_draft_id)." AND `author_type` = 'proxy_id'";
         if ($db->Execute($query)) {
             return true;
         } else {

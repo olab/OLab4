@@ -20,7 +20,7 @@
  * @author Organisation: University of Calgary
  * @author Unit: School of Medicine
  * @author Developer: Doug Hall <hall@ucalgary.ca>
- * @copyright Copyright 2011 University of Calgary. All Rights Reserved.
+ * @copyright Copyright 2017 University of Calgary. All Rights Reserved.
  *
 */
 
@@ -30,163 +30,154 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GROUPS"))) {
 	header("Location: ".ENTRADA_URL);
 	exit;
 } elseif (!$ENTRADA_ACL->amIAllowed('group', 'create', false)) {
-	$ONLOAD[]	= "setTimeout('window.location=\\'".ENTRADA_URL."/admin/".$MODULE."\\'', 15000)";
+	$ONLOAD[]	= "setTimeout('window.location=\\'".ENTRADA_URL."/admin/".$MODULE."\\'', 5000)";
 
-	add_error("Your account does not have the permissions required to use this feature of this module.<br /><br />If you believe you are receiving this message in error please contact <a href=\"mailto:".html_encode($AGENT_CONTACTS["administrator"]["email"])."\">".html_encode($AGENT_CONTACTS["administrator"]["name"])."</a> for assistance.");
+    add_error(sprintf($translate->_("You do not have the permissions required to use this module.<br /><br />If you believe you are receiving this message in error please contact <a href=\"mailto:%s\"> %s </a> for assistance."), html_encode($AGENT_CONTACTS["administrator"]["email"]), html_encode($AGENT_CONTACTS["administrator"]["name"])));
 
 	echo display_error();
 
 	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] does not have access to this module [".$MODULE."]");
 } else {
-	ini_set('auto_detect_line_endings',true);
+	ini_set("auto_detect_line_endings", true);
 
 	$HEAD[] = "<script type=\"text/javascript\" >var ENTRADA_URL = '". ENTRADA_URL ."';</script>";
     $HEAD[] = "<script type=\"text/javascript\" src=\"".ENTRADA_URL."/javascript/AutoCompleteList.js?release=".html_encode(APPLICATION_VERSION)."\"></script>";
     $HEAD[] = "<script type=\"text/javascript\" src=\"".  ENTRADA_URL ."/javascript/jquery/jquery.advancedsearch.js\"></script>";
     $HEAD[] = "<link rel=\"stylesheet\" type=\"text/css\" href=\"".  ENTRADA_URL ."/css/jquery/jquery.advancedsearch.css\" />";
 
-	echo "<script language=\"text/javascript\">var DELETE_IMAGE_URL = '".ENTRADA_URL."/images/action-delete.gif';</script>";
+	$url = ENTRADA_URL. "/admin/$MODULE";
 
-	$BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/groups?".replace_query(array("section" => "add")), "title" => $translate->_("Adding Cohort"));
+	$BREADCRUMB[] = array("url" => "${url}?".replace_query(array("section" => "add")), "title" => $translate->_("Adding Cohort"));
 
-	$group_type = "individual";
-	$group_populate = "group_number";
-	$group_active = "true";
-	$number_of_groups ="";
-	$populate = 0;
+    $group_type = false;
 	$GROUP_IDS = array();
     $PROCESSED = array();
-
-	echo "<h1>" . $translate->_("Add Cohort") . "</h1>\n";
 
 	// Error Checking
 	switch ($STEP) {
 		case 2 :
-			/**
-			 * Get the active organisation_id and add it to the PROCESSED array.
-			 */
-			$PROCESSED["organisation_id"] = $ENTRADA_USER->getActiveOrganisation();
-
-			/**
-			 * Required field "group_name" / Cohort Name.
-			 */
-			if ((isset($_POST["group_name"])) && ($group_name = clean_input($_POST["group_name"], array("notags", "trim")))) {
-				$PROCESSED["group_name"] = $group_name;
-			} else {
-				add_error("The <strong>Cohort Name</strong> field is required.");
-			}
-
-			/**
-			 * Required field "group_type" / Cohort Type.
-			 */
-			if ((isset($_POST["group_type"])) && ($group_type = clean_input($_POST["group_type"], array("trim"))) && in_array($group_type, array("course_list", "cohort"))) {
-				$PROCESSED["group_type"] = $group_type;
-			} else {
-				add_error("The <strong>Cohort Type</strong> field is required.");
-			}
-
-			/**
-			 * Required field "course_id" / Course ID (when group_type == course_list)
-			 */
-			if (isset($PROCESSED["group_type"]) && $PROCESSED["group_type"] == 'course_list') {
-				if (isset($_POST["course_id"]) && $course_id = clean_input($_POST["course_id"], array("int"))) {
-					$PROCESSED["group_value"] = $course_id;
-				} else {
-					add_error("The <strong>Course</strong> field is required for course lists.");
-				}
-			} else {
-				$PROCESSED["group_value"] = false;
-			}
-
 			if (isset($_POST["post_action"])) {
 				switch ($_POST["post_action"]) {
 					case "content" :
-						$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["post_action"] = "content";
-					break;
+						$_SESSION[APPLICATION_IDENTIFIER][$MODULE]["post_action"] = "content";
+						break;
 					case "new" :
-						$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["post_action"] = "new";
-					break;
+						$_SESSION[APPLICATION_IDENTIFIER][$MODULE]["post_action"] = "new";
+						break;
 					case "index" :
 					default :
-						$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["post_action"] = "index";
-					break;
+						$_SESSION[APPLICATION_IDENTIFIER][$MODULE]["post_action"] = "index";
+						break;
 				}
 			} else {
-				$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["post_action"] = "content";
+				$_SESSION[APPLICATION_IDENTIFIER][$MODULE]["post_action"] = "content";
 			}
+				
+			/**
+			 * Get the active organisation_id and add it to the PROCESSED array.
+			 */
+			$PROCESSED["group_name"] = "";
+			$PROCESSED["group_type"] = "";
+			$PROCESSED["organisation_id"] = $ENTRADA_USER->getActiveOrganisation();
+			$PROCESSED["entrada_only"] = 1;
+			$PROCESSED["created_date"] = time();
+			$PROCESSED["created_by"] = $ENTRADA_USER->getID();
+			$PROCESSED["updated_date"] = $PROCESSED["created_date"];
+			$PROCESSED["updated_by"] = $PROCESSED["created_by"];
 
-			$proxy_ids = array();
+            /**
+             * Required field "group_name" / Cohort Name.
+             */
+            if ((isset($_POST["group_name"])) && ($group_name = clean_input($_POST["group_name"], array("notags", "trim")))) {
+                $PROCESSED["group_name"] = $group_name;
+            } else {
+                add_error($translate->_("The <strong>Cohort Name</strong> field is required."));
+            }
 
-			if (isset($_POST["students"]) && $_POST["students"]) {
-				foreach ($_POST["students"] as $proxy_id) {
-					if ($tmp_input = clean_input($proxy_id, array("trim", "int"))) {
-						$proxy_ids[] = $tmp_input;
-					}
-				}
-			}
+            /**
+             * Required field "group_type" / Cohort Type.
+             */
+            if ((isset($_POST["group_type"])) && ($group_type = clean_input($_POST["group_type"], array("trim"))) && in_array($group_type, array("course_list", "cohort"))) {
+                $PROCESSED["group_type"] = $group_type;
+            } else {
+                add_error($translate->_("The <strong>Cohort Type</strong> field is required."));
+            }
 
-            $PROCESSED["entrada_only"] = 1;
-            $PROCESSED["created_date"] = time();
-            $PROCESSED["created_by"] = $ENTRADA_USER->getID();
-			$PROCESSED["updated_date"] = time();
-			$PROCESSED["updated_by"] = $ENTRADA_USER->getID();
+            /**
+             * Required field "course_id" / Course ID (when group_type == course_list)
+             */
+            if (isset($PROCESSED["group_type"]) && $PROCESSED["group_type"] == "course_list") {
+                if (isset($_POST["course_id"]) && $course_id = clean_input($_POST["course_id"], array("int"))) {
+                    $PROCESSED["group_value"] = $course_id;
+                } else {
+                    add_error($translate->_("The <strong>Course</strong> field is required for course lists."));
+                }
+            } else {
+                $PROCESSED["group_value"] = NULL;
+            }
 
-			if (!$ERROR) { 
-                $query = "SELECT a.`group_id`
-                         FROM `groups` AS a
-                         JOIN `group_organisations` AS b
-                         ON a.`group_id` = b.`group_id`
-                         AND b.`organisation_id` = ".$db->qstr($PROCESSED["organisation_id"])."
-                         WHERE a.`group_name` = ".$db->qstr($PROCESSED["group_name"]);
-				$result = $db->GetRow($query);
-				if ($result) {
-					add_error("Lucky you, the <strong>cohort name</strong> you are trying to create already exists.");
-				} else {
-					if (!$db->AutoExecute("groups", $PROCESSED, "INSERT")) {
-						add_error("There was an error while trying to add the <strong>Cohort</strong> ".$PROCESSED["group_name"].".<br /><br />The system administrator was informed of this error; please try again later.");
-						application_log("error", "Unable to insert a new cohort ".$PROCESSED["group_name"].". Database said: ".$db->ErrorMsg());
-					}
+            if (!$ERROR) {
+                if (Models_Group::fetchRowByName($PROCESSED["group_name"], $PROCESSED["organisation_id"])) {
+                    add_error(sprintf($translate->_("The cohort name <strong>[%s]</strong> you are trying to create already exists."), $PROCESSED["group_name"]));
+                } else {
+                    $group = new Models_Group($PROCESSED);
+                    if ($group->insert()) {
+                        $entry = array("group_id" => $group->getID(), "organisation_id" => $PROCESSED["organisation_id"], "created_date" => $PROCESSED["created_date"], "created_by" => $PROCESSED["created_by"], "updated_date" => $PROCESSED["updated_date"], "updated_by" => $PROCESSED["updated_by"]);
+                        if ($db->AutoExecute("group_organisations", $entry, "INSERT")) {
+                            add_success(sprintf($translate->_("You have successfully added new group[cohort] <strong>%s</strong> to the system.<br />"), $PROCESSED["group_name"]));
+                        } else {
+                            add_error(sprintf($translate->_("There was an error while trying to add the <strong>Group</strong> %s. <br /><br />The system administrator was informed of this error; please try again later."), $PROCESSED["group_name"]));
+                            application_log("error", "Unable to insert a new group organisation for group_id [" . $this->group_id . "[. Database said: " . $db->ErrorMsg());
+                        }
 
-					$GROUP_ID = $db->Insert_Id();
-					$PROCESSED["group_id"] = $GROUP_ID;
-					if (!$db->AutoExecute("group_organisations", $PROCESSED, "INSERT")) {
-						add_error("There was an error while trying to add the <strong>Cohort</strong> ".$PROCESSED["group_name"].".<br /><br />The system administrator was informed of this error; please try again later.");
-						application_log("error", "Unable to insert a new group organisation for group_id [".$GROUP_ID."[. Database said: ".$db->ErrorMsg());
-					} else {
-						if (!empty($proxy_ids)) {
-							foreach ($proxy_ids as $proxy_id) {
-								$PROCESSED["proxy_id"] = $proxy_id;
-								if (!$db->AutoExecute("group_members", $PROCESSED, "INSERT")) {
-									add_error("Failed to insert this learner into the group. Please contact a system administrator if this problem persists.");
-									application_log("error", "Error while inserting learner into database. Database server said: " . $db->ErrorMsg());
-								}
-							}
-						}
-					}
-				}
+                        if (isset($_POST["students"]) && $_POST["students"]) {
+                            foreach ($_POST["students"] as $proxy_id) {
+                                if ($tmp_input = clean_input($proxy_id, array("trim", "int"))) {
+                                    $proxy_ids[] = $tmp_input;
+                                }
+                            }
+                        }
 
-				switch ($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["post_action"]) {
-					case "new" :
-						$url = ENTRADA_URL."/admin/groups?section=add";
-						$msg = "You will now be redirected to add another group; this will happen <strong>automatically</strong> in 5 seconds or <a href=\"".$url."\" style=\"font-weight: bold\">click here</a> to continue.";
-					break;
-					case "index" :
-					default :
-						$url = ENTRADA_URL."/admin/groups";
-						$msg = "You will now be redirected to the group index; this will happen <strong>automatically</strong> in 5 seconds or <a href=\"".$url."\" style=\"font-weight: bold\">click here</a> to continue.";
-					break;
-				}
+                        if ($proxy_ids) {
+                            $count = $group->addMembers($proxy_ids);
+                            if ($count === false) {
+                                add_error($translate->_("Failed to insert this learner into the group. Please contact a system administrator if this problem persists."));
+                            } else {
+                                add_success(sprintf($translate->_("Added <strong>%d</strong> members to Group <strong>%s</strong>."), $count, $PROCESSED["group_name"]));
+                            }
+                        }
+                    } else {
+                        add_error(sprintf($translate->_("There was an error while trying to add the <strong>Group</strong> %s.<br /> The system administrator was informed of this error; please try again later."), $PROCESSED["group_name"]));
+                        break;
+                    }
 
-				add_success("You have successfully added <strong>".html_encode($PROCESSED["event_title"])."</strong> to the system.<br /><br />".$msg);
-				$ONLOAD[] = "setTimeout('window.location=\\'".$url."\\'', 5000)";
+                    $GROUP_ID = $group->getID();
 
-				application_log("success", "Added new cohort group [".$GROUP_ID." / ".$PROCESSED["group_name"]."] to org_id [".$PROCESSED["organisation_id"]."] the system.");
-			}
+                    switch ($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["post_action"]) {
+                        case "new" :
+                            $url .= "?section=add";
+                            $msg = sprintf($translate->_("You will now be redirected to add another group ; this will happen <strong>automatically</strong> in 5 seconds or <a href=\"%s\" style=\"font-weight: bold\">click here</a> to continue."), $url);
+                            break;
+                        case "content" :
+                            $url .= "?section=edit&ids=$GROUP_ID";
+                            $msg = sprintf($translate->_("You will now be redirected to edit the group ; this will happen <strong>automatically</strong> in 5 seconds or <a href=\"%s\" style=\"font-weight: bold\">click here</a> to continue."), $url);
+                            break;
+                        case "index" :
+                        default :
+                            $msg = sprintf($translate->_("You will now be redirected to the group index ; this will happen <strong>automatically</strong> in 5 seconds or <a href=\"%s\" style=\"font-weight: bold\">click here</a> to continue."), $url);
+                            break;
+                    }
 
-			if ($ERROR) {
-				$STEP = 1;
-			}
-		break;
+                    $ONLOAD[] = "setTimeout('window.location=\\'${url}\\'', 5000)";
+                    add_notice($msg);
+                    application_log("success", "Added new cohort group [" . $GROUP_ID . "] \"" . $PROCESSED["group_name"] . "\" to org_id [" . $PROCESSED["organisation_id"] . "] the system.");
+                }
+            }
+
+            if ($ERROR) {
+                $STEP = 1;
+            }
+            break;
 		case 1 :
 		default :
 			continue;
@@ -194,140 +185,102 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GROUPS"))) {
 	}
 
 	// Display Content
+
+	echo "<h1>" . $translate->_("Add Cohort") . "</h1>\n";
+
 	switch ($STEP) {
 		case 2 :
 			display_status_messages();
 		break;
 		case 1 :
 		default :
-			$HEAD[] = "<script type=\"text/javascript\" src=\"".ENTRADA_URL."/javascript/elementresizer.js\"></script>\n";
+			$HEAD[] = "<script type=\"text/javascript\" src=\"${url}/javascript/elementresizer.js\"></script>\n";
 
 			if ($ERROR) {
 				echo display_error();
 			}
+
+			$post_action = isset($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["post_action"])?$_SESSION[APPLICATION_IDENTIFIER][$MODULE]["post_action"]:"index";
 			?>
 
-			<form id="frmSubmit" class="form-horizontal" action="<?php echo ENTRADA_URL; ?>/admin/groups?section=add&amp;step=2" method="post">
-				<table style="width: 100%" cellspacing="0" cellpadding="2" border="0" summary="Adding Cohort">
-					<colgroup>
-						<col style="width: 3%" />
-						<col style="width: 20%" />
-						<col style="width: 77%" />
-					</colgroup>
-					<tfoot>
-						<tr>
-							<td colspan="3" style="padding-top: 25px">
-								<table style="width: 100%" cellspacing="0" cellpadding="0" border="0">
-									<tr>
-										<td style="width: 25%; text-align: left">
-											<input type="button" class="btn" value="Cancel" onclick="window.location='<?php echo ENTRADA_URL; ?>/admin/groups'" />
-										</td>
-										<td style="width: 75%; text-align: right; vertical-align: middle">
-											<span class="content-small">After saving:</span>
-											<select id="post_action" name="post_action">
-												<option value="new"<?php echo (($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["post_action"] == "new") ? " selected=\"selected\"" : ""); ?>>Add another group</option>
-												<option value="index"<?php echo (($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["post_action"] == "index") ? " selected=\"selected\"" : ""); ?>>Return to group list</option>
-											</select>
-											<input type="submit" class="btn btn-primary" value="Proceed" />
-										</td>
-									</tr>
-								</table>
-							</td>
-						</tr>
-					</tfoot>
-					<tr>
-						<td colspan="3"><h2><?php echo $translate->_("Cohort Details"); ?></h2></td>
-					</tr>
-					<tr class="prefixR">
-						<td></td>
-						<td><label for="group_name" class="form-required"><?php echo $translate->_("Cohort Name"); ?></label></td>
-						<td><input type="text" id="group_name" name="group_name" value="<?php echo html_encode($PROCESSED["group_name"]); ?>" maxlength="255" style="width: 45%" /></td>
-					</tr>
-					<tr>
-						<td colspan="3">&nbsp;</td>
-					</tr>
-					<tr>
-						<td>&nbsp;</td>
-						<td><label for="group_type" class="form-required"><?php echo $translate->_("Cohort Type"); ?></label></td>
-						<td>
+           <form id="frmSubmit" class="form-horizontal" action="<?php echo $url; ?>?section=add&amp;step=2" method="post">
+				<div class="row-fluid"><h2><?php echo $translate->_("Cohort Details"); ?></h2></div>
+				
+                <div class="control-group">
+                    <label class="form-required control-label" for="group_name"><?php echo $translate->_("Cohort Name"); ?></label>
+                    <div class="controls">
+                        <input type="text" id="group_name" name="group_name" value="<?php echo html_encode($PROCESSED["group_name"]); ?>" maxlength="55" />
+                    </div>
+                </div>
+                <!--- End control-group ---->
+				
+                <div class="control-group">
+                    <label class="form-required control-label" for="group_type"><?php echo $translate->_("Cohort Type"); ?></label>
+                    <div class="controls">
 							<select id="group_type" name="group_type" style="width: 250px">
-								<option value="0">-- Select a cohort type --</option>
-								<option value="course_list"<?php echo ($PROCESSED["group_type"] == "course_list" ? " selected=\"selected\"" : ""); ?>>Course list</option>
-								<option value="cohort"<?php echo ($PROCESSED["group_type"] == "cohort" ? " selected=\"selected\"" : ""); ?>>Cohort</option>
+							<option value="0"><?php echo $translate->_("-- Select a cohort type --"); ?></option>
+                            <option value="cohort"<?php echo ($PROCESSED["group_type"] == "cohort" ? " selected=\"selected\"" : "") . ">" . $translate->_("Cohort"); ?></option>
+							<option value="course_list"<?php echo ($PROCESSED["group_type"] == "course_list" ? " selected=\"selected\"" : "") . ">" . $translate->_("Course List"); ?></option>
 							</select>
-						</td>
-					</tr>
-					<tr id="course_select_row"<?php echo $PROCESSED["group_type"] == 'course_list'?'':' style="display:none;"';?>>
-						<td>&nbsp;</td>
-						<td><label for="group_type" class="form-required">Course</label></td>
-						<td>
-							<select id="course_id" name="course_id" style="width: 250px">
-							<option value="0">-- Select a course --</option>
-							<?php
-							$courses = courses_fetch_courses(true);
-							if ($courses) {
-								foreach ($courses as $course){
-									?><option value="<?php echo $course["course_id"];?>"<?php echo $PROCESSED["group_value"] == $course["course_id"]?' selected="selected"':'';?>><?php echo $course["course_code"]." : ".$course["course_name"];?></option><?php
-								}
-							} ?>
-							</select>
-						</td>
-					</tr>
-					<tr>
-						<td colspan="3">&nbsp;</td>
-					</tr>
-					<tr>
-						<td colspan="3">
-							<br />
-							<div id="additions">
-								<h2 style="margin-top: 10px"><?php echo $translate->_("Add Learners"); ?></h2>
-								<table style="margin-top: 1px; width: 100%" cellspacing="0" cellpadding="2" border="0" summary="<?php echo $translate->_("Add Learner"); ?>">
-									<colgroup>
-										<col style="width: 45%" />
-										<col style="width: 10%" />
-										<col style="width: 45%" />
-									</colgroup>
-									<tbody>
-										<tr>
-											<td colspan="3" style="vertical-align: top">
-												If you would like to add users that already exist in the system to this group yourself, you can do so by clicking the checkbox beside their name from the list below.
-												Once you have reviewed the list at the bottom and are ready, click the <strong>Proceed</strong> button at the bottom to complete the process.
-											</td>
-										</tr>
-										<tr>
-											<td colspan="2"></td>
-											<td>
-												<div id="group_name_title"></div>
-											</td>
-										</tr>
-										<tr>
-											<td colspan="2" style="vertical-align: top">
-												<div class="member-add-type" id="existing-member-add-type">
-													<label for="choose-members-btn" class="control-label"><?php echo $translate->_("Select Learners"); ?></label>
-													<div class="controls">
-														<button id="choose-members-btn" class="btn btn-search-filter" style="min-width: 220px; text-align: left;"><?php echo $translate->_("Browse All Learners"); ?> <i class="icon-chevron-down btn-icon pull-right"></i></button>
-													</div>
-												</div>
-											</td>
-										</tr>
-									</tbody>
-								</table>
-							</div>
-						</td>
-					</tr>
-				</table>
-			</form>
+                    </div>
+                </div>
+                <!--- End control-group ---->
+				
+                <div id="course_select_row" class="control-group"<?php echo ($PROCESSED["group_type"] == "course_list" ? "" : " style=\"display:none;\""); ?>>
+                    <label class="form-required control-label" for="group_type"><?php echo $translate->_("Course"); ?></label>
+                    <div class="controls">
+                        <select id="course_id" name="course_id" style="width: 250px">
+                        <option value="0"><?php echo $translate->_("-- Select a course --"); ?></option>
+                        <?php
+                        $courses = courses_fetch_courses(true);
+                        if ($courses) {
+                            foreach ($courses as $course) {
+                                ?>
+                                <option value="<?php echo $course["course_id"];?>"<?php echo (isset($PROCESSED["group_value"]) && $PROCESSED["group_value"] == $course["course_id"])?' selected="selected"':'';?>><?php echo $course["course_code"]." : ".$course["course_name"];?></option>
+                                <?php
+                            }
+                        }
+                        ?>
+                        </select>
+                    </div>
+                </div>
+                <!--- End control-group ---->
+				
+               <div id="additions">
+					<div class="row-fluid"><h2><?php echo $translate->_("Add Learners"); ?></h2></div>
 
-			<script>
+					<div class="control-group member-add-type" id="existing-member-add-type">
+						<label class="control-label" for="choose-members-btn"><?php echo $translate->_("Select Learners"); ?></label>
+                        <div class="controls">
+                            <button id="choose-members-btn" class="btn btn-search-filter" style="min-width: 220px; text-align: left;"><?php echo $translate->_("Browse All Learners"); ?> <i class="icon-chevron-down btn-icon pull-right"></i></button>
+                        </div>
+                    </div>
+	                <!--- End control-group ---->				
+				</div>
+
+               <div class="row-fluid">
+					<input type="button" class="btn" value="<?php echo $DEFAULT_TEXT_LABELS["btn_cancel"]; ?>" onclick="window.location='<?php echo $url; ?>'" />
+					<div class="pull-right">
+						<span class="content-small"><?php echo $translate->_("After saving"); ?></span>
+						<select id="post_action" name="post_action">
+							<option value="content"<?php echo ($post_action == "content" ? " selected=\"selected\"" : ""); ?>><?php echo $translate->_("Edit Cohort"); ?></option>
+							<option value="new"<?php echo ($post_action == "new" ? " selected=\"selected\"" : ""); ?>><?php echo $translate->_("Add another cohort"); ?></option>
+							<option value="index"<?php echo ($post_action == "index" ? " selected=\"selected\"" : ""); ?>><?php echo $translate->_("Return to group list"); ?></option>
+						</select>
+						<input type="submit" class="btn btn-primary" value="<?php echo $translate->_("Proceed"); ?>" />
+					</div>
+               </div>
+           </form>
+
+			<script type="text/javascript">
 				jQuery(document).ready(function () {
-					jQuery("#group_type").change(function () {
-						if (jQuery(this).val() == "course_list") {
-							jQuery("#course_select_row").show();
-						} else {
-							jQuery("#course_select_row").hide();
-						}
-					});
-
+				    jQuery("#group_type").change(function() {
+                        if (jQuery(this).val() == "course_list") {
+                            jQuery("#course_select_row").show();
+                        } else {
+                            jQuery("#course_select_row").hide();
+                        }
+                    });
 
                     jQuery("#choose-members-btn").advancedSearch({
                         api_url: "<?php echo ENTRADA_URL . "/admin/" . $MODULE . "?section=api-members"; ?>",

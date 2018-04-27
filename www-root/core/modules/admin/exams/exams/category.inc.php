@@ -136,9 +136,9 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS") && !defined("IN_EXAMS
                                                 <li id="tags-list-<?php echo $tag->getID();?>" class="selected-list-item" data-id="<?php echo $tag->getID();?>" data-parent="" data-filter="tags">
                                                     <?php echo $tag->getName();?>
                                                     <span class="pull-right selected-item-container">
-                                                    <span class="selected-item-label"><?php echo $translate->_("Curriculum Tag Set"); ?></span>
-                                                    <span class="remove-list-item">×</span>
-                                                </span>
+                                                        <span class="selected-item-label"><?php echo $translate->_("Curriculum Tag Set"); ?></span>
+                                                        <span class="remove-list-item">×</span>
+                                                    </span>
                                                 </li>
                                             </ul>
                                         </div>
@@ -189,7 +189,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS") && !defined("IN_EXAMS
                             $checked = isset($_POST["post_ids"]) && in_array($post->getID(), $_POST["post_ids"]);
                             echo "<label class=\"checkbox\">\n";
                             echo "<input type=\"checkbox\" name=\"post_ids[]\" value=\"" . $post->getID() . "\" " . ($checked ? "checked" : "") . " />\n";
-                            echo html_encode($post->getTitle()) . "(" . date("m/d/y", $post->getStartDate()) . ")\n";
+                            echo html_encode($post->getTitle()) . " (" . date("m/d/y", $post->getStartDate()) . ")\n";
                             echo "</label>\n";
                             echo "<br />\n";
                         }
@@ -870,12 +870,12 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS") && !defined("IN_EXAMS
                             api_url: API_URL,
                             resource_url: ENTRADA_URL,
                             filter_component_label: "<?php echo $translate->_("Curriculum Tag Set"); ?>",
+                            select_all_enabled: true,
                             filters: {
                                 tags: {
                                     label: "<?php echo $translate->_("Curriculum Tags"); ?>",
                                     data_source: "get-category-report-sets",
                                     mode: "checkbox",
-                                    select_all_enabled: true,
                                     api_params: {
                                         exam_id: function () {
                                             var exam_id = $("input[name=\"exam_id\"]");
@@ -898,6 +898,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS") && !defined("IN_EXAMS
                         $("#learners-btn").advancedSearch({
                             api_url: API_URL,
                             resource_url: ENTRADA_URL,
+                            select_all_enabled: true,
                             filters: {
                                 learners: {
                                     label: "<?php echo $translate->_("Learners"); ?>",

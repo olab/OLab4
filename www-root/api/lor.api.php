@@ -89,17 +89,11 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                                 "active"    => "1"
                             );
 
-                            $lo_file = new Models_LearningObject($lo_file_data);
+                            $lo_file = new Models_LearningObject_Files($lo_file_data);
                             if ($lo_file->insert()) {
-                                if (!is_dir(LOR_STORAGE_PATH . "/" . $ENTRADA_USER->getActiveID())) {
-                                    mkdir(LOR_STORAGE_PATH . "/" . $ENTRADA_USER->getActiveID());
-                                }
-
-                                if (move_uploaded_file($_FILES["upload"]["tmp_name"][$i], LOR_STORAGE_PATH . "/" . $ENTRADA_USER->getActiveID() . "/" . $lo_file->getLoFileID())) {
-                                    add_success("Successfully uploaded <strong>" . $_FILES["upload"]["name"][$i] ."</strong>!");
-                                } else {
-                                    add_error("Failed to upload <strong>" . $_FILES["upload"]["name"][$i] ."</strong>!");
-                                }
+                                $stream = fopen("lor/" . $ENTRADA_USER->getActiveID() . "/" . $lo_file->getLoFileID(), 'r+');
+                                $filesystem->writeStream($_FILES["upload"]["tmp_name"][$i], $stream);
+                                fclose($stream);
                             }
                                 
                             $i++;
@@ -117,6 +111,55 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                     }
                     
                 break;
+
+                case "upload-learning-module" :
+                    if (isset($_FILES["upload"]) && is_array($_FILES["upload"])) {
+                        $i = 0;
+                        foreach($_FILES["upload"]["name"] as $file) {
+                            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                            $mime_type = finfo_file($finfo, $_FILES["upload"]["tmp_name"][$i]);
+                            finfo_close($finfo);
+
+                            $lo_file_data = array(
+                                "filename"  => clean_input($_FILES["upload"]["name"][$i], array("trim", "striptags")),
+                                "filesize"  => clean_input($_FILES["upload"]["size"][$i], array("trim", "striptags")),
+                                "mime_type" => $mime_type,
+                                "proxy_id"  => clean_input($ENTRADA_USER->getActiveID(), "int"),
+                                "public"    => "0",
+                                "updated_date" => time(),
+                                "updated_by"   => clean_input($ENTRADA_USER->getActiveID(), "int"),
+                                "active"    => "1"
+                            );
+
+                            $lo_file = new Models_LearningObject_Files($lo_file_data);
+                            if ($lo_file->insert()) {
+                                if (!is_dir(LOR_STORAGE_PATH . "/" . $ENTRADA_USER->getActiveID())) {
+                                    mkdir(LOR_STORAGE_PATH . "/" . $ENTRADA_USER->getActiveID());
+                                }
+
+                                if (move_uploaded_file($_FILES["upload"]["tmp_name"][$i], LOR_STORAGE_PATH . "/" . $ENTRADA_USER->getActiveID() . "/" . $lo_file->getLoFileID())) {
+                                    add_success("Successfully uploaded <strong>" . $_FILES["upload"]["name"][$i] ."</strong>!");
+                                    $_SESSION["file-id"] = $lo_file->getLoFileID();
+                                } else {
+                                    add_error("Failed to upload <strong>" . $_FILES["upload"]["name"][$i] ."</strong>!");
+                                }
+                            }
+
+                            $i++;
+                        }
+                    }
+
+                    if (!$ERROR) {
+                        echo json_encode(array("status" => "success", "data" => $SUCCESSSTR));
+                    } else {
+                        if (isset($invalid_files) && !empty($invalid_files)) {
+                            echo json_encode(array("status" => "error", "data" => array("invalid_files" => $invalid_files)));
+                        } else {
+                            echo json_encode(array("status" => "error", "data" => $ERRORSTR));
+                        }
+                    }
+
+                    break;
             }
         break;
         case "GET" :
@@ -128,7 +171,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                     }
                     
                     if ($lo_file_id) {
-                        $lo_file = Models_LearningObject::fetchRowByID($tmp_input);
+                        $lo_file = Models_LearningObject_Files::fetchRowByID($tmp_input);
                         if ($lo_file) {
                             
                             $tags = Models_LearningObject_Tag::fetchAllRecordsByFileID($lo_file_id);
@@ -175,7 +218,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                         $image_types = array("image/jpeg", "image/png", "image/gif");
                         $lo_files = array();
                         foreach ($image_types as $image_type) {
-                            $files = Models_LearningObject::fetchAllRecordsByProxyID($PROCESSED["proxy_id"], $image_type);
+                            $files = Models_LearningObject_Files::fetchAllRecordsByProxyID($PROCESSED["proxy_id"], $image_type);
                             if ($files) {
                                 foreach($files as $file) {
                                     $lo_files[] = $file;
@@ -183,7 +226,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                             }
                         }
                     } else {
-                        $lo_files = Models_LearningObject::fetchAllRecordsByProxyID($PROCESSED["proxy_id"]);
+                        $lo_files = Models_LearningObject_Files::fetchAllRecordsByProxyID($PROCESSED["proxy_id"]);
                     }
                     
                     if ($lo_files) {
@@ -228,7 +271,42 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                     $output["iTotalDisplayRecords"] = $count;
                     $output["sEcho"] = clean_input($_GET["sEcho"], "int");
                     echo json_encode($output);
-                    
+                break;
+                case "get-lor-active-resources":
+                    // Returns the active learning objects resources
+                    // - Method: GET
+                    // - Expected params:
+                    //   method: get-lor-active-resources
+                    // - Expected response: json
+                    // - Expected response body:
+                    //   {
+                    //      "status": "success",
+                    //      "data": [
+                    //          {
+                    //              learning_object_id: <lor_id>,
+                    //              title: <lor_title>,
+                    //              description: <lor_description>,
+                    //              primary_usage: <lor_primary_usage>,
+                    //              url: <lor_url>,
+                    //              screenshot_filename: <lor_screenshot_filename>,
+                    //              updated_date: <lor_updated_date>,
+                    //              object_type: <lor_object_type>
+                    //          },
+                    //      ]
+                    //    }
+                    $learning_object = new Models_LearningObject();
+                    $active_learning_objects = $learning_object->fetchActiveResources();
+
+                    $response = array();
+                    if($active_learning_objects){
+                        $response["status"] = "success";
+                        $response["data"] = $active_learning_objects;
+                        echo json_encode($response);
+                    }else{
+                        $response["status"] = "empty";
+                        $response["data"] = "There's no learning object created yet";
+                        echo json_encode($response);
+                    }
                 break;
                 default :
                 break;

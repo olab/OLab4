@@ -41,6 +41,7 @@ if(!defined("PARENT_INCLUDED")) {
     $SUBMODULE_TEXT = $MODULE_TEXT[$SUBMODULE];
 
     $BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/assessments/rubrics", "title" => $translate->_("Grouped Items"));
+    //$HEAD[] = "<script type=\"text/javascript\">sidebarBegone();</script>";
 
     if (($router) && ($router->initRoute())) {
         $module_file = $router->getRoute();

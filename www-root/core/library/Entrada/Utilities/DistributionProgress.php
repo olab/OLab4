@@ -1,3 +1,4 @@
+
 <?php
 
 /**
@@ -41,6 +42,7 @@ class Entrada_Utilities_DistributionProgress extends Entrada_Utilities_Assessmen
         global $ENTRADA_TEMPLATE, $db;
         $target_details = array();
 
+        $schedule_class = new Entrada_CBME_RotationSchedule();
         $distribution = Models_Assessments_Distribution::fetchRowByID($adistribution_id);
         if ($distribution) {
 
@@ -63,11 +65,11 @@ class Entrada_Utilities_DistributionProgress extends Entrada_Utilities_Assessmen
                             $assessors = $distribution->getAssessors(null, false, false, true);
                             $release_date = (is_null($distribution->getReleaseDate()) ? 0 : (int)$distribution->getReleaseDate());
                             foreach ($blocks as $block) {
-                                $delivery_date = $this->calculateDateByOffset($distribution_schedule->getDeliveryPeriod(), $distribution_schedule->getPeriodOffset(), $block->getStartDate(), $block->getEndDate());
+                                $delivery_date = $schedule_class->calculateDateByOffset($distribution_schedule->getDeliveryPeriod(), $distribution_schedule->getPeriodOffset(), $block->getStartDate(), $block->getEndDate());
                                 if ($release_date <= $delivery_date) {
                                     if ($assessors) {
                                         $distribution_target_records = Models_Assessments_Distribution_Target::fetchAllByDistributionID($distribution->getID());
-                                        $learner_blocks = $this->fetchLearnerBlocks($block->getID());
+                                        $learner_blocks = $schedule_class->fetchLearnerBlocks($block->getID());
                                         if ($learner_blocks) {
                                             foreach ($assessors as $assessor) {
                                                 switch ($distribution->getAssessorOption()) {
@@ -81,7 +83,7 @@ class Entrada_Utilities_DistributionProgress extends Entrada_Utilities_Assessmen
                                                                             foreach ($learner_blocks as $learner_block) {
                                                                                 if ($learner_block["audience_value"] == $assessor["assessor_value"]) {
                                                                                     if ($distribution_target_records) {
-                                                                                        $block_rotations = $this->fetchBlockRotations($block->getID(), $distribution_target_record->getTargetScope());
+                                                                                        $block_rotations = $schedule_class->fetchBlockRotations($block->getID(), $distribution_target_record->getTargetScope());
                                                                                         if ($block_rotations) {
                                                                                             $schedule_array = array(
                                                                                                 "parent_schedule" => $schedule->getID(),
@@ -113,7 +115,7 @@ class Entrada_Utilities_DistributionProgress extends Entrada_Utilities_Assessmen
                                                                                 if ($learner_block["audience_value"] == $assessor["assessor_value"]) {
                                                                                     if ($distribution_target_records) {
                                                                                         foreach ($distribution_target_records as $distribution_target_record) {
-                                                                                            $block_rotations = $this->fetchBlockRotations($block->getID(), $distribution_target_record->getTargetScope());
+                                                                                            $block_rotations = $schedule_class->fetchBlockRotations($block->getID(), $distribution_target_record->getTargetScope());
                                                                                             if ($block_rotations) {
                                                                                                 $schedule_array = array(
                                                                                                     "parent_schedule" => $schedule->getID(),
@@ -145,7 +147,7 @@ class Entrada_Utilities_DistributionProgress extends Entrada_Utilities_Assessmen
                                                                 case "proxy_id":
                                                                     foreach ($learner_blocks as $learner_block) {
                                                                         if ($learner_block["audience_value"] == $assessor["assessor_value"]) {
-                                                                            $block_rotations = $this->fetchBlockRotations($block->getID(), $distribution_target_record->getTargetScope());
+                                                                            $block_rotations = $schedule_class->fetchBlockRotations($block->getID(), $distribution_target_record->getTargetScope());
                                                                             if ($block_rotations) {
                                                                                 $schedule_array = array(
                                                                                     "parent_schedule" => $schedule->getID(),
@@ -175,7 +177,7 @@ class Entrada_Utilities_DistributionProgress extends Entrada_Utilities_Assessmen
                                                                 case "self":
                                                                     foreach ($learner_blocks as $learner_block) {
                                                                         if ($learner_block["audience_value"] == $assessor["assessor_value"]) {
-                                                                            $block_rotations = $this->fetchBlockRotations($block->getID(), $distribution_target_record->getTargetScope());
+                                                                            $block_rotations = $schedule_class->fetchBlockRotations($block->getID(), $distribution_target_record->getTargetScope());
                                                                             if ($block_rotations) {
                                                                                 $schedule_array = array(
                                                                                     "parent_schedule" => $schedule->getID(),
@@ -218,7 +220,7 @@ class Entrada_Utilities_DistributionProgress extends Entrada_Utilities_Assessmen
                                                                         case "internal_learners" :
                                                                         case "external_learners" :
                                                                         case "all_learners" :
-                                                                            $block_rotations = $this->fetchBlockRotations($block->getID(), $distribution_target_record->getTargetScope());
+                                                                            $block_rotations = $schedule_class->fetchBlockRotations($block->getID(), $distribution_target_record->getTargetScope());
                                                                             if ($block_rotations) {
                                                                                 $schedule_array = array(
                                                                                     "parent_schedule" => $schedule->getID(),
@@ -260,7 +262,7 @@ class Entrada_Utilities_DistributionProgress extends Entrada_Utilities_Assessmen
                                                                     break;
 
                                                                 case "proxy_id":
-                                                                    $block_rotations = $this->fetchBlockRotations($block->getID(), $distribution_target_record->getTargetScope());
+                                                                    $block_rotations = $schedule_class->fetchBlockRotations($block->getID(), $distribution_target_record->getTargetScope());
                                                                     if ($block_rotations) {
                                                                         $schedule_array = array(
                                                                             "parent_schedule" => $schedule->getID(),
@@ -288,7 +290,7 @@ class Entrada_Utilities_DistributionProgress extends Entrada_Utilities_Assessmen
                                                                     break;
 
                                                                 case "self":
-                                                                    $block_rotations = $this->fetchBlockRotations($block->getID(), $distribution_target_record->getTargetScope());
+                                                                    $block_rotations = $schedule_class->fetchBlockRotations($block->getID(), $distribution_target_record->getTargetScope());
                                                                     if ($block_rotations) {
                                                                         $schedule_array = array(
                                                                             "parent_schedule" => $schedule->getID(),
@@ -345,13 +347,13 @@ class Entrada_Utilities_DistributionProgress extends Entrada_Utilities_Assessmen
                                     switch ($distribution->getAssessorOption()) {
 
                                         case "learner":
-                                            $rotations = $this->fetchRotations($schedule->getID(), $distribution_target->getTargetScope());
+                                            $rotations = $schedule_class->fetchRotations($schedule->getID(), $distribution_target->getTargetScope());
                                             if ($rotations) {
-                                                $rotation_dates = $this->getRotationDates($rotations, $distribution->getOrganisationID());
+                                                $rotation_dates = $schedule_class->getRotationDates($rotations, $distribution->getOrganisationID());
                                                 if ($rotation_dates["unique_rotation_dates"]) {
                                                     foreach ($rotation_dates["unique_rotation_dates"] as $unique_rotation_date) {
 
-                                                        $delivery_date = $this->calculateDateByOffset($distribution_schedule->getDeliveryPeriod(), $distribution_schedule->getPeriodOffset(), $unique_rotation_date[0], $unique_rotation_date[1]);
+                                                        $delivery_date = $schedule_class->calculateDateByOffset($distribution_schedule->getDeliveryPeriod(), $distribution_schedule->getPeriodOffset(), $unique_rotation_date[0], $unique_rotation_date[1]);
                                                         switch ($distribution_target->getTargetType()) {
 
                                                             case "schedule_id":
@@ -362,7 +364,7 @@ class Entrada_Utilities_DistributionProgress extends Entrada_Utilities_Assessmen
                                                                         $schedule_array = array(
                                                                             "parent_schedule" => $schedule->getID(),
                                                                         );
-                                                                        $delivery_date = $this->calculateDateByOffset($distribution_schedule->getDeliveryPeriod(), $distribution_schedule->getPeriodOffset(), $unique_rotation_date[0], $unique_rotation_date[1]);
+                                                                        $delivery_date = $schedule_class->calculateDateByOffset($distribution_schedule->getDeliveryPeriod(), $distribution_schedule->getPeriodOffset(), $unique_rotation_date[0], $unique_rotation_date[1]);
                                                                         if ($release_date <= $delivery_date) {
                                                                             foreach ($rotation_dates["all_rotation_dates"] as $proxy_id => $user_rotation_dates) {
                                                                                 foreach ($user_rotation_dates as $user_end_date => $user_rotation_date) {
@@ -401,7 +403,7 @@ class Entrada_Utilities_DistributionProgress extends Entrada_Utilities_Assessmen
                                                                                 if ($assessor["assessor_value"] == $proxy_id) {
                                                                                     foreach ($user_rotation_dates as $user_end_date => $user_rotation_date) {
                                                                                         if ($unique_rotation_date[0] == $user_rotation_date[0] && $unique_rotation_date[1] == $user_rotation_date[1]) {
-                                                                                            $delivery_date = $this->calculateDateByOffset($distribution_schedule->getDeliveryPeriod(), $distribution_schedule->getPeriodOffset(), $user_rotation_date[0], $user_rotation_date[1]);
+                                                                                            $delivery_date = $schedule_class->calculateDateByOffset($distribution_schedule->getDeliveryPeriod(), $distribution_schedule->getPeriodOffset(), $user_rotation_date[0], $user_rotation_date[1]);
                                                                                             if ($release_date <= $delivery_date) {
                                                                                                 $child_schedules = Models_Schedule::fetchAllByParentAndDateRange($distribution->getOrganisationID(), $schedule->getID(), $user_rotation_date[0], $user_rotation_date[1]);
                                                                                                 if ($child_schedules) {
@@ -483,15 +485,15 @@ class Entrada_Utilities_DistributionProgress extends Entrada_Utilities_Assessmen
                                                                                 if ($distribution_assessor_record->getAssessorType() == "schedule_id") {
                                                                                     // Schedule based assessors must be fetched manually.
                                                                                     //$assessors = $this->getScheduleAssessors($distribution->getID(), $distribution_assessor_record);
-                                                                                    $rotations = $this->fetchRotations($schedule->getID(), $distribution_assessor_record->getAssessorScope());
+                                                                                    $rotations = $schedule_class->fetchRotations($schedule->getID(), $distribution_assessor_record->getAssessorScope());
                                                                                     if ($rotations) {
-                                                                                        $rotation_dates = $this->getRotationDates($rotations, $distribution->getOrganisationID());
+                                                                                        $rotation_dates = $schedule_class->getRotationDates($rotations, $distribution->getOrganisationID());
                                                                                         if ($rotation_dates["all_rotation_dates"]) {
                                                                                             foreach ($assessors as $distribution_assessor) {
                                                                                                 foreach ($rotation_dates["all_rotation_dates"] as $proxy_id => $assessor_rotation_dates) {
                                                                                                     if ($distribution_assessor["assessor_value"] == $proxy_id) {
                                                                                                         foreach ($assessor_rotation_dates as $assessor_rotation_date) {
-                                                                                                            $delivery_date = $this->calculateDateByOffset($distribution_schedule->getDeliveryPeriod(), $distribution_schedule->getPeriodOffset(), $assessor_rotation_date[0], $assessor_rotation_date[1]);
+                                                                                                            $delivery_date = $schedule_class->calculateDateByOffset($distribution_schedule->getDeliveryPeriod(), $distribution_schedule->getPeriodOffset(), $assessor_rotation_date[0], $assessor_rotation_date[1]);
                                                                                                             if ($release_date <= $delivery_date) {
                                                                                                                 $child_schedules = Models_Schedule::fetchAllByParentAndDateRange($distribution->getOrganisationID(), $schedule->getID(), $assessor_rotation_date[0], $assessor_rotation_date[1]);
                                                                                                                 if ($child_schedules) {
@@ -576,8 +578,8 @@ class Entrada_Utilities_DistributionProgress extends Entrada_Utilities_Assessmen
 
                                         case "individual_users":
                                         case "faculty":
-                                            $rotations = $this->fetchRotations($schedule->getID(), $distribution_target->getTargetScope());
-                                            $rotation_dates = $this->getRotationDates($rotations, $distribution->getOrganisationID());
+                                            $rotations = $schedule_class->fetchRotations($schedule->getID(), $distribution_target->getTargetScope());
+                                            $rotation_dates = $schedule_class->getRotationDates($rotations, $distribution->getOrganisationID());
                                             if ($rotation_dates["unique_rotation_dates"]) {
 
                                                 switch ($distribution_target->getTargetType()) {
@@ -587,15 +589,15 @@ class Entrada_Utilities_DistributionProgress extends Entrada_Utilities_Assessmen
                                                             case "internal_learners" :
                                                             case "external_learners" :
                                                             case "all_learners" :
-                                                                $rotations = $this->fetchRotations($schedule->getID(), $distribution_target->getTargetScope());
+                                                                $rotations = $schedule_class->fetchRotations($schedule->getID(), $distribution_target->getTargetScope());
                                                                 if ($rotations) {
-                                                                    $rotation_dates = $this->getRotationDates($rotations, $distribution->getOrganisationID());
+                                                                    $rotation_dates = $schedule_class->getRotationDates($rotations, $distribution->getOrganisationID());
                                                                     if ($rotation_dates["unique_rotation_dates"]) {
                                                                         $schedule_array = array(
                                                                             "parent_schedule" => $schedule->getID()
                                                                         );
                                                                         foreach ($rotation_dates["unique_rotation_dates"] as $unique_rotation_date) {
-                                                                            $delivery_date = $this->calculateDateByOffset($distribution_schedule->getDeliveryPeriod(), $distribution_schedule->getPeriodOffset(), $unique_rotation_date[0], $unique_rotation_date[1]);
+                                                                            $delivery_date = $schedule_class->calculateDateByOffset($distribution_schedule->getDeliveryPeriod(), $distribution_schedule->getPeriodOffset(), $unique_rotation_date[0], $unique_rotation_date[1]);
                                                                             if ($release_date <= $delivery_date) {
                                                                                 foreach ($rotation_dates["all_rotation_dates"] as $proxy_id => $user_rotation_dates) {
                                                                                     foreach ($user_rotation_dates as $user_end_date => $user_rotation_date) {
@@ -630,11 +632,11 @@ class Entrada_Utilities_DistributionProgress extends Entrada_Utilities_Assessmen
 
                                                             case "self":
                                                                 if ($rotations) {
-                                                                    $rotation_dates = $this->getRotationDates($rotations, $distribution->getOrganisationID());
+                                                                    $rotation_dates = $schedule_class->getRotationDates($rotations, $distribution->getOrganisationID());
                                                                     if ($rotation_dates["all_rotation_dates"]) {
                                                                         foreach ($rotation_dates["all_rotation_dates"] as $proxy_id => $assessor_rotation_dates) {
                                                                             foreach ($assessor_rotation_dates as $assessor_rotation_date) {
-                                                                                $delivery_date = $this->calculateDateByOffset($distribution_schedule->getDeliveryPeriod(), $distribution_schedule->getPeriodOffset(), $assessor_rotation_date[0], $assessor_rotation_date[1]);
+                                                                                $delivery_date = $schedule_class->calculateDateByOffset($distribution_schedule->getDeliveryPeriod(), $distribution_schedule->getPeriodOffset(), $assessor_rotation_date[0], $assessor_rotation_date[1]);
                                                                                 if ($release_date <= $delivery_date) {
                                                                                     $schedule_array = array(
                                                                                         "parent_schedule" => $schedule->getID(),
@@ -793,12 +795,12 @@ class Entrada_Utilities_DistributionProgress extends Entrada_Utilities_Assessmen
                             if ($distribution_targets) {
                                 foreach ($distribution_targets as $distribution_target) {
                                     if ($distribution_target->getTargetType() == "schedule_id" && $distribution_target->getTargetScope() != "self") {
-                                        $rotations = $this->fetchRotations($schedule->getID(), $distribution_target->getTargetScope());
+                                        $rotations = $schedule_class->fetchRotations($schedule->getID(), $distribution_target->getTargetScope());
                                         if ($rotations) {
-                                            $rotation_dates = $this->getRotationDates($rotations, $distribution->getOrganisationID());
+                                            $rotation_dates = $schedule_class->getRotationDates($rotations, $distribution->getOrganisationID());
                                             if ($rotation_dates["unique_rotation_dates"]) {
                                                 foreach ($rotation_dates["unique_rotation_dates"] as $proxy_id => $unique_rotation_date) {
-                                                    $delivery_date = $this->calculateDateByFrequency($distribution_schedule->getFrequency(), $unique_rotation_date[0]);
+                                                    $delivery_date = $schedule_class->calculateDateByFrequency($distribution_schedule->getFrequency(), $unique_rotation_date[0]);
                                                     if ($release_date <= $delivery_date) {
                                                         while ($delivery_date <= time() && $delivery_date <= $unique_rotation_date[1]) {
                                                             if ($assessors) {
@@ -837,15 +839,15 @@ class Entrada_Utilities_DistributionProgress extends Entrada_Utilities_Assessmen
                                             if ($distribution_assessor_records) {
                                                 foreach ($distribution_assessor_records as $distribution_assessor_record) {
                                                     if ($distribution_assessor_record["assessor_type"] == "schedule_id") {
-                                                        $rotations = $this->fetchRotations($schedule->getID(), $distribution_assessor_record->getAssessorScope());
+                                                        $rotations = $schedule_class->fetchRotations($schedule->getID(), $distribution_assessor_record->getAssessorScope());
                                                         if ($rotations) {
-                                                            $rotation_dates = $this->getRotationDates($rotations, $distribution->getOrganisationID());
+                                                            $rotation_dates = $schedule_class->getRotationDates($rotations, $distribution->getOrganisationID());
                                                             if ($rotation_dates["all_rotation_dates"]) {
                                                                 foreach ($assessors as $assessor) {
                                                                     foreach ($rotation_dates["all_rotation_dates"] as $proxy_id => $assessor_rotation_dates) {
                                                                         if ($assessor["assessor_value"] == $proxy_id) {
                                                                             foreach ($assessor_rotation_dates as $assessor_rotation_date) {
-                                                                                $delivery_date = $this->calculateDateByFrequency($distribution_schedule->getFrequency(), $assessor_rotation_date[0]);
+                                                                                $delivery_date = $schedule_class->calculateDateByFrequency($distribution_schedule->getFrequency(), $assessor_rotation_date[0]);
                                                                                 if ($release_date <= $delivery_date) {
                                                                                     $schedule_array = array(
                                                                                         "parent_schedule" => $schedule->getID()
@@ -1066,16 +1068,10 @@ class Entrada_Utilities_DistributionProgress extends Entrada_Utilities_Assessmen
                     // the task should only be added for that specific assessor (similar to an additional task as seen below this loop).
                     if ($target["unique_to_assessor"] == false || ($target["assessor_value"] && $target["assessor_value"] == $assessor["assessor_value"])) {
 
-                        $target_group = false;
-                        $active = true;
-                        $deleted_task = Models_Assessments_DeletedTask::fetchRowByADistributionIDAssessorTypeAssessorValueTargetIDDeliveryDate($distribution->getID(), $assessor["assessor_type"], $assessor["proxy_id"], $target["target_value"], $target["delivery_date"]);
-                        if ($deleted_task) {
-                            $active = false;
-                        }
-
                         // If a date range is set, restrict which targets are added to the details array.
-                        if (((!$date_range_start && !$date_range_end) || ($target["delivery_date"] >= $date_range_start && $target["delivery_date"] <= $date_range_end)) && $active) {
+                        if (((!$date_range_start && !$date_range_end) || ($target["delivery_date"] >= $date_range_start && $target["delivery_date"] <= $date_range_end))) {
 
+                            $distribution_assessment_record = null;
                             // Attempt to fetch a matching assessment task.
                             if ($target["start_date"]) {
                                 $distribution_assessment_record = Models_Assessments_Assessor::fetchRowByAssessorTypeAssessorValueStartDateEndDate($assessor["assessor_type"], $assessor["proxy_id"], $distribution->getID(), $target["start_date"], $target["end_date"]);
@@ -1085,136 +1081,146 @@ class Entrada_Utilities_DistributionProgress extends Entrada_Utilities_Assessmen
                                 $distribution_assessment_record = Models_Assessments_Assessor::fetchRowByADistributionIDAssessorTypeAssessorValueDeliveryDate($distribution_id, $assessor["assessor_type"], $assessor["proxy_id"], $target["delivery_date"]);
                             }
 
-                            if (!$distribution_assessment_record || $distribution_assessment_record->getDeletedDate() == null) {
-                                if ($distribution_assessment_record) {
-                                    $progress = Models_Assessments_Progress::fetchRowByAdistributionIDAssessorTypeAssessorValueTargetRecordIDDAssessmentID($distribution_id, $internal_external, $assessor["proxy_id"], $target["target_value"], $distribution_assessment_record->getID());
-                                    if ($progress) {
-                                        $progress_status = $progress->getProgressValue();
+                            $active = true;
+                            if ($distribution_assessment_record) {
+                                $task = Models_Assessments_AssessmentTarget::fetchRowByDAssessmentIDTargetTypeTargetValue($distribution_assessment_record->getID(), $target["target_type"], $target["target_value"]);
+                                if (!$task) {
+                                    $active = false;
+                                }
+                            }
+
+                            if ($active) {
+                                if (!$distribution_assessment_record || $distribution_assessment_record->getDeletedDate() == null) {
+                                    if ($distribution_assessment_record) {
+                                        $progress = Models_Assessments_Progress::fetchRowByAdistributionIDAssessorTypeAssessorValueTargetRecordIDDAssessmentID($distribution_id, $internal_external, $assessor["proxy_id"], $target["target_value"], $distribution_assessment_record->getID());
+                                        if ($progress) {
+                                            $progress_status = $progress->getProgressValue();
+                                        } else {
+                                            $progress_status = "pending";
+                                        }
                                     } else {
                                         $progress_status = "pending";
                                     }
-                                } else {
-                                    $progress_status = "pending";
-                                }
 
-                                // Name/title fetching logic.
-                                switch ($target["target_type"]) {
-                                    case "proxy_id":
-                                        $member_details = Models_User::fetchRowByID($target["target_value"]);
-                                        if ($member_details) {
-                                            $prefix = $member_details->getPrefix();
-                                            $target_name = (($prefix) ? $prefix . " " : "") . $member_details->getFirstname() . " " . $member_details->getLastname();
+                                    // Name/title fetching logic.
+                                    switch ($target["target_type"]) {
+                                        case "proxy_id":
+                                            $member_details = Models_User::fetchRowByID($target["target_value"]);
+                                            if ($member_details) {
+                                                $prefix = $member_details->getPrefix();
+                                                $target_name = (($prefix) ? $prefix . " " : "") . $member_details->getFirstname() . " " . $member_details->getLastname();
 
-                                            // Check to see if the target has any user access record as faculty for the organisation. If so, this must take precedence to ensure we do not display an anonymous evaluation.
-                                            $access = Models_User_Access::fetchAllByUserIDOrganisationID($member_details->getID(), $distribution->getOrganisationID());
-                                            if ($access) {
-                                                $faculty = false;
-                                                foreach ($access as $group) {
-                                                    if ($group->getGroup() == "faculty") {
-                                                        $faculty = true;
+                                                // Check to see if the target has any user access record as faculty for the organisation. If so, this must take precedence to ensure we do not display an anonymous evaluation.
+                                                $access = Models_User_Access::fetchAllByUserIDOrganisationID($member_details->getID(), $distribution->getOrganisationID());
+                                                if ($access) {
+                                                    $faculty = false;
+                                                    foreach ($access as $group) {
+                                                        if ($group->getGroup() == "faculty") {
+                                                            $faculty = true;
+                                                        }
+                                                        $target_group = $group->getGroup();
                                                     }
-                                                    $target_group = $group->getGroup();
+                                                    if ($faculty) {
+                                                        $target_group = "faculty";
+                                                    }
                                                 }
-                                                if ($faculty) {
-                                                    $target_group = "faculty";
-                                                }
+                                            } else {
+                                                $target_name = "N/A";
                                             }
-                                        } else {
+                                            break;
+                                        case "schedule_id":
+                                            $schedule = Models_Schedule::fetchRowByID($target["target_value"]);
+                                            $target_group = "schedule";
+                                            if ($schedule) {
+                                                $target_name = $schedule->getTitle();
+                                            } else {
+                                                $target_name = "N/A";
+                                            }
+                                            break;
+                                        case "course_id":
+                                            $course = Models_Course::fetchRowByID($target["target_value"]);
+                                            $target_group = "course";
+                                            if ($course) {
+                                                $target_name = $course->getCourseName() . " (" . $course->getCourseCode() . ")";
+                                            } else {
+                                                $target_name = "N/A";
+                                            }
+                                            break;
+                                        default:
                                             $target_name = "N/A";
-                                        }
-                                        break;
-                                    case "schedule_id":
-                                        $schedule = Models_Schedule::fetchRowByID($target["target_value"]);
-                                        $target_group = "schedule";
-                                        if ($schedule) {
-                                            $target_name = $schedule->getTitle();
-                                        } else {
-                                            $target_name = "N/A";
-                                        }
-                                        break;
-                                    case "course_id":
-                                        $course = Models_Course::fetchRowByID($target["target_value"]);
-                                        $target_group = "course";
-                                        if ($course) {
-                                            $target_name = $course->getCourseName() . " (" . $course->getCourseCode() . ")";
-                                        } else {
-                                            $target_name = "N/A";
-                                        }
-                                        break;
-                                    default:
-                                        $target_name = "N/A";
-                                        break;
-                                }
-                                $details["distribution_target_type"] = $target["target_type"];
+                                            break;
+                                    }
+                                    $details["distribution_target_type"] = $target["target_type"];
 
-                                // Build assessor
-                                if (!array_key_exists($assessor["proxy_id"], $details[$progress_status][$assessor["assessor_type"]])) {
-                                    $details[$progress_status][$assessor["assessor_type"]][$assessor["proxy_id"]] = array(
-                                        "assessor_value" => $assessor["proxy_id"],
-                                        "assessor_type" => $assessor["assessor_type"],
-                                        "assessor_email" => $assessor_email,
-                                        "assessor_name" => $assessor_name,
-                                        "targets" => array()
-                                    );
-                                }
+                                    // Build assessor
+                                    if (!array_key_exists($assessor["proxy_id"], $details[$progress_status][$assessor["assessor_type"]])) {
+                                        $details[$progress_status][$assessor["assessor_type"]][$assessor["proxy_id"]] = array(
+                                            "assessor_value" => $assessor["proxy_id"],
+                                            "assessor_type" => $assessor["assessor_type"],
+                                            "assessor_email" => $assessor_email,
+                                            "assessor_name" => $assessor_name,
+                                            "targets" => array()
+                                        );
+                                    }
 
-                                $parent_schedule = false;
-                                $child_schedules = false;
-                                if ($target["associated_schedules"]) {
-                                    $parent_schedule = Models_Schedule::fetchRowByID($target["associated_schedules"]["parent_schedule"]);
-                                    if (array_key_exists("child_schedules", $target["associated_schedules"])) {
-                                        $child_schedules = array();
-                                        foreach ($target["associated_schedules"]["child_schedules"] as $child_schedule_id) {
-                                            $child_schedule = Models_Schedule::fetchRowByID($child_schedule_id);
-                                            if ($child_schedule) {
-                                                $child_schedules[] = $child_schedule->toArray();
+                                    $parent_schedule = false;
+                                    $child_schedules = false;
+                                    if ($target["associated_schedules"]) {
+                                        $parent_schedule = Models_Schedule::fetchRowByID($target["associated_schedules"]["parent_schedule"]);
+                                        if (array_key_exists("child_schedules", $target["associated_schedules"])) {
+                                            $child_schedules = array();
+                                            foreach ($target["associated_schedules"]["child_schedules"] as $child_schedule_id) {
+                                                $child_schedule = Models_Schedule::fetchRowByID($child_schedule_id);
+                                                if ($child_schedule) {
+                                                    $child_schedules[] = $child_schedule->toArray();
+                                                }
                                             }
                                         }
                                     }
-                                }
 
-                                $duplicate = false;
-                                // TODO is there a graceful way of indexing this array?
-                                // Ensure the target was not added previously.
-                                if (array_key_exists("targets", $details[$progress_status][$assessor["assessor_type"]][$assessor["proxy_id"]])) {
-                                    foreach ($details[$progress_status][$assessor["assessor_type"]][$assessor["proxy_id"]]["targets"] as $previous_target) {
-                                        if ($previous_target["target_id"] == $target["target_value"] &&
-                                            $previous_target["target_type"] == $target["target_type"] &&
-                                            $previous_target["delivery_date"] == $target["delivery_date"]
-                                        ) {
-                                            $duplicate = true;
+                                    $duplicate = false;
+                                    // TODO is there a graceful way of indexing this array?
+                                    // Ensure the target was not added previously.
+                                    if (array_key_exists("targets", $details[$progress_status][$assessor["assessor_type"]][$assessor["proxy_id"]])) {
+                                        foreach ($details[$progress_status][$assessor["assessor_type"]][$assessor["proxy_id"]]["targets"] as $previous_target) {
+                                            if ($previous_target["target_id"] == $target["target_value"] &&
+                                                $previous_target["target_type"] == $target["target_type"] &&
+                                                $previous_target["delivery_date"] == $target["delivery_date"]
+                                            ) {
+                                                $duplicate = true;
+                                            }
                                         }
                                     }
+
+                                    if (!$duplicate) {
+                                        // Add target to assessor.
+                                        $details[$progress_status][$assessor["assessor_type"]][$assessor["proxy_id"]]["targets"][] = array(
+                                            "target_name" => $target_name,
+                                            "target_id" => $target["target_value"],
+                                            "target_type" => $target["target_type"],
+                                            "target_group" => $target_group,
+                                            "dassessment_id" => ($distribution_assessment_record ? $distribution_assessment_record->getID() : false),
+                                            "external_hash" => ($assessor["assessor_type"] == "external" && $distribution_assessment_record ? $distribution_assessment_record->getExternalHash() : false),
+                                            "aprogress_id" => ((isset($progress) && $progress) ? $progress->getID() : false),
+                                            "parent_schedule" => ($parent_schedule ? $parent_schedule->toArray() : false),
+                                            "child_schedules" => ($child_schedules ? $child_schedules : false),
+                                            "delivery_date" => $target["delivery_date"]
+                                        );
+                                    }
+
+                                    // Sort targets by delivery date.
+                                    usort($details[$progress_status][$assessor["assessor_type"]][$assessor["proxy_id"]]["targets"], function ($a, $b) {
+                                        return $a["delivery_date"] - $b["delivery_date"];
+                                    });
+
+                                    /*
+                                    // Sort assessors alphabetically.
+                                    usort($details[$progress_status][$assessor["assessor_type"]][$assessor["proxy_id"]], function ($a, $b) {
+                                        return $a["assessor_name"] - $b["assessor_name"];
+                                    });
+                                    */
+
                                 }
-
-                                if (!$duplicate) {
-                                    // Add target to assessor.
-                                    $details[$progress_status][$assessor["assessor_type"]][$assessor["proxy_id"]]["targets"][] = array(
-                                        "target_name" => $target_name,
-                                        "target_id" => $target["target_value"],
-                                        "target_type" => $target["target_type"],
-                                        "target_group" => $target_group,
-                                        "dassessment_id" => ($distribution_assessment_record ? $distribution_assessment_record->getID() : false),
-                                        "external_hash" => ($assessor["assessor_type"] == "external" && $distribution_assessment_record ? $distribution_assessment_record->getExternalHash() : false),
-                                        "aprogress_id" => ((isset($progress) && $progress) ? $progress->getID() : false),
-                                        "parent_schedule" => ($parent_schedule ? $parent_schedule->toArray() : false),
-                                        "child_schedules" => ($child_schedules ? $child_schedules : false),
-                                        "delivery_date" => $target["delivery_date"]
-                                    );
-                                }
-
-                                // Sort targets by delivery date.
-                                usort($details[$progress_status][$assessor["assessor_type"]][$assessor["proxy_id"]]["targets"], function ($a, $b) {
-                                    return $a["delivery_date"] - $b["delivery_date"];
-                                });
-
-                                /*
-                                // Sort assessors alphabetically.
-                                usort($details[$progress_status][$assessor["assessor_type"]][$assessor["proxy_id"]], function ($a, $b) {
-                                    return $a["assessor_name"] - $b["assessor_name"];
-                                });
-                                */
-
                             }
                         }
                     }
@@ -1226,14 +1232,7 @@ class Entrada_Utilities_DistributionProgress extends Entrada_Utilities_Assessmen
         $additional_tasks = Models_Assessments_AdditionalTask::fetchAllByADistributionID($distribution->getID());
         if ($additional_tasks) {
             foreach ($additional_tasks as $task) {
-
-                $active = true;
-                $deleted_task = Models_Assessments_DeletedTask::fetchRowByADistributionIDAssessorTypeAssessorValueTargetIDDeliveryDate($distribution->getID(), $task->getAssessorType(), $task->getAssessorValue(), $task->getTargetID(), $task->getDeliveryDate());
-                if ($deleted_task) {
-                    $active = false;
-                }
-
-                if (((!$date_range_start && !$date_range_end) || ($task->getDeliveryDate() >= $date_range_start && $task->getDeliveryDate() <= $date_range_end)) && $active) {
+                if (((!$date_range_start && !$date_range_end) || ($task->getDeliveryDate() >= $date_range_start && $task->getDeliveryDate() <= $date_range_end))) {
 
                     $assessor_name = "N/A";
                     $assessor_email = false;
@@ -1282,56 +1281,67 @@ class Entrada_Utilities_DistributionProgress extends Entrada_Utilities_Assessmen
 
                     if (!$distribution_assessment_record || $distribution_assessment_record->getDeletedDate() == null) {
 
+                        $active = true;
                         if ($distribution_assessment_record) {
-                            $progress = Models_Assessments_Progress::fetchRowByAdistributionIDAssessorTypeAssessorValueTargetRecordIDDAssessmentID($distribution_id, $internal_external, $task->getAssessorValue(), $task->getTargetID(), $distribution_assessment_record->getID());
-                            if ($progress) {
-                                $progress_status = $progress->getProgressValue();
+                            $task = Models_Assessments_AssessmentTarget::fetchRowByDAssessmentIDTargetTypeTargetValue($distribution_assessment_record->getID(), $task->getTargetType(), $task->getTargetID());
+                            if (!$task) {
+                                $active = false;
+                            }
+                        }
+
+                        if ($active) {
+
+                            if ($distribution_assessment_record) {
+                                $progress = Models_Assessments_Progress::fetchRowByAdistributionIDAssessorTypeAssessorValueTargetRecordIDDAssessmentID($distribution_id, $internal_external, $task->getAssessorValue(), $task->getTargetID(), $distribution_assessment_record->getID());
+                                if ($progress) {
+                                    $progress_status = $progress->getProgressValue();
+                                } else {
+                                    $progress_status = "pending";
+                                }
                             } else {
                                 $progress_status = "pending";
                             }
-                        } else {
-                            $progress_status = "pending";
-                        }
 
-                        // Build additional assessor.
-                        if (!array_key_exists($task->getAssessorValue(), $details[$progress_status][$task->getAssessorType()])) {
-                            $details[$progress_status][$task->getAssessorType()][$task->getAssessorValue()] = array(
-                                "assessor_value" => $task->getAssessorValue(),
-                                "assessor_type" => $internal_external,
-                                "assessor_email" => $assessor_email,
-                                "assessor_name" => $assessor_name,
-                                "targets" => array()
+                            // Build additional assessor.
+                            if (!array_key_exists($task->getAssessorValue(), $details[$progress_status][$task->getAssessorType()])) {
+                                $details[$progress_status][$task->getAssessorType()][$task->getAssessorValue()] = array(
+                                    "assessor_value" => $task->getAssessorValue(),
+                                    "assessor_type" => $internal_external,
+                                    "assessor_email" => $assessor_email,
+                                    "assessor_name" => $assessor_name,
+                                    "targets" => array()
+                                );
+                            }
+
+                            // Ensure there is actually an assessment (meaning the assessment task CRON job has been run for the assessment for this task) before providing the view with the assessment ID to navigate to.
+                            $assessment = Models_Assessments_Assessor::fetchRowByADistributionIDAssessorTypeAssessorValueDeliveryDate($distribution_id, $internal_external, $task->getAssessorValue(), $task->getDeliveryDate());
+
+                            // Add additional target to assessor.
+                            $details[$progress_status][$task->getAssessorType()][$task->getAssessorValue()]["targets"][] = array(
+                                "target_name" => $target_name,
+                                "target_id" => $task->getTargetID(),
+                                "target_type" => "proxy_id",
+                                "target_group" => $target_group,
+                                "dassessment_id" => ($assessment ? $assessment->getID() : 0),
+                                "external_hash" => ($task->getAssessorType() == "external" && $assessment ? $assessment->getExternalHash() : false),
+                                "aprogress_id" => ((isset($progress) && $progress) ? $progress->getID() : 0),
+                                "parent_schedule" => array("title" => "Additional Task" . (!$assessment ? " - Unavailable until midnight" : "")),
+                                "child_schedules" => false,
+                                "delivery_date" => $task->getDeliveryDate()
                             );
+
+                            // Sort targets by delivery date.
+                            usort($details[$progress_status][$task->getAssessorType()][$task->getAssessorValue()]["targets"], function ($a, $b) {
+                                return $a["delivery_date"] - $b["delivery_date"];
+                            });
+
+                            /*
+                            // Sort assessors alphabetically.
+                            usort($details[$progress_status][$task->getAssessorType()][$task->getAssessorValue()], function ($a, $b) {
+                                return $a["assessor_name"] - $b["assessor_name"];
+                            });
+                            */
                         }
-
-                        // Ensure there is actually an assessment (meaning the assessment task CRON job has been run for the assessment for this task) before providing the view with the assessment ID to navigate to.
-                        $assessment = Models_Assessments_Assessor::fetchRowByADistributionIDAssessorTypeAssessorValueDeliveryDate($distribution_id, $internal_external, $task->getAssessorValue(), $task->getDeliveryDate());
-
-                        // Add additional target to assessor.
-                        $details[$progress_status][$task->getAssessorType()][$task->getAssessorValue()]["targets"][] = array(
-                            "target_name" => $target_name,
-                            "target_id" => $task->getTargetID(),
-                            "target_type" => "proxy_id",
-                            "target_group" => $target_group,
-                            "dassessment_id" => ($assessment ? $assessment->getID() : 0),
-                            "external_hash" => ($task->getAssessorType() == "external" && $assessment ? $assessment->getExternalHash() : false),
-                            "aprogress_id" => ((isset($progress) && $progress) ? $progress->getID() : 0),
-                            "parent_schedule" => array("title" => "Additional Task" . (!$assessment ? " - Unavailable until midnight" : "")),
-                            "child_schedules" => false,
-                            "delivery_date" => $task->getDeliveryDate()
-                        );
-
-                        // Sort targets by delivery date.
-                        usort($details[$progress_status][$task->getAssessorType()][$task->getAssessorValue()]["targets"], function ($a, $b) {
-                            return $a["delivery_date"] - $b["delivery_date"];
-                        });
-
-                        /*
-                        // Sort assessors alphabetically.
-                        usort($details[$progress_status][$task->getAssessorType()][$task->getAssessorValue()], function ($a, $b) {
-                            return $a["assessor_name"] - $b["assessor_name"];
-                        });
-                        */
                     }
                 }
             }

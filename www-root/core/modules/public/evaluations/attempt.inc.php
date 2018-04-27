@@ -562,7 +562,7 @@ if ($RECORD_ID) {
 							case 1 :
 							default :
 								if ($evaluation_record["evaluation_finish"] < time() && $evaluation_record["min_submittable"] > $evaluation_record["completed_attempts"]) {
-									add_notice("This evaluation has not been completed and was marked as to be completed by ".date(DEFAULT_DATE_FORMAT, $evaluation_record["evaluation_finish"]).". Please complete this evaluation now to continue using ".APPLICATION_NAME.".");
+									add_notice("This evaluation has not been completed and was marked as to be completed by ".date(DEFAULT_DATETIME_FORMAT, $evaluation_record["evaluation_finish"]).". Please complete this evaluation now to continue using ".APPLICATION_NAME.".");
 								}
                                 if (isset($evaluation_record["identify_comments"]) && $evaluation_record["identify_comments"]) {
                                    add_notice("This evaluation is set to indicate your name on comments. Please be aware that the comment portion of the results will not be totally anonymous to reviewers, while the individual multiple choice and Grouped Item answers you select will still be unidentified.");
@@ -710,7 +710,7 @@ if ($RECORD_ID) {
 											echo "</select>";
 											echo "</div>";
 										} elseif ($PROCESSED["target_shortname"] == "rotation_core" || $PROCESSED["target_shortname"] == "rotation_elective" || $PROCESSED["target_shortname"] == "preceptor") {
-											echo "<div class=\"content-small\">Please choose a clerkship service to evaluate: \n";
+											echo "<div class=\"content-small\">Please choose a " . $translate->_("clerkship") . " service to evaluate: \n";
 											echo "<input type=\"hidden\" id=\"evaluation_target\" name=\"evaluation_target\" value=\"".$evaluation_targets[0]["etarget_id"]."\" />";
 											echo "<select id=\"event_id\" name=\"event_id\"".($PROCESSED["target_shortname"] == "preceptor" ? " onchange=\"loadPreceptors(this.options[this.selectedIndex].value)\"" : "").">";
 											echo "<option value=\"0\">-- Select an event --</option>\n";
@@ -721,11 +721,11 @@ if ($RECORD_ID) {
 											if ($PROCESSED["target_shortname"] == "preceptor") {
 												echo "<div id=\"preceptor_select\">\n";
 												if (isset($PROCESSED_CLERKSHIP_EVENT["event_id"]) && $PROCESSED_CLERKSHIP_EVENT["event_id"]) {
-                                                    echo "<br /><div class=\"content-small\">Please choose a clerkship preceptor to evaluate: \n";
+                                                    echo "<br /><div class=\"content-small\">Please choose a " . $translate->_("clerkship preceptor") . " to evaluate: \n";
 													echo Classes_Evaluation::getPreceptorSelect($RECORD_ID, $PROCESSED_CLERKSHIP_EVENT["event_id"], $ENTRADA_USER->getID(), (isset($PROCESSED_CLERKSHIP_EVENT["preceptor_proxy_id"]) && $PROCESSED_CLERKSHIP_EVENT["preceptor_proxy_id"] ? $PROCESSED_CLERKSHIP_EVENT["preceptor_proxy_id"] : 0));
                                                     echo "</div>\n";
 												} else {
-													echo display_notice("Please select a <strong>Clerkship Service</strong> to evaluate a <strong>Preceptor</strong> for.");
+													echo display_notice("Please select a <strong>" . $translate->_("Clerkship") . " Service</strong> to evaluate a <strong>Preceptor</strong> for.");
 												}
 												echo "</div>\n";
 											} 
@@ -982,7 +982,7 @@ if ($RECORD_ID) {
 				}
 			} else {
 				$NOTICE++;
-				$NOTICESTR[] = "You cannot attempt this evaluation until <strong>".date(DEFAULT_DATE_FORMAT, $evaluation_record["release_date"])."</strong>.<br /><br />Please contact a teacher if you require further assistance.";
+				$NOTICESTR[] = "You cannot attempt this evaluation until <strong>".date(DEFAULT_DATETIME_FORMAT, $evaluation_record["release_date"])."</strong>.<br /><br />Please contact a teacher if you require further assistance.";
 	
 				echo display_notice();
 	

@@ -65,86 +65,36 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_USERS"))) {
                 session_destroy();
 
                 session_start();
-                $ENTRADA_USER = User::get($PROXY_ID);
-                $_SESSION["previous_session"] = $previous_session;
-                $_SESSION["first_session_id"] = $first_session_id;
 
                 /**
-                 * Swap out the admin's data for the requested user's
+                 * We need to use the full Entrada login process to get a token for this user from the API. Otherwise API calls will fail later
                  */
-                $_SESSION["isAuthorized"] = true;
+                $auth = new Entrada_Auth(AUTH_PRODUCTION);
+                $auth->setAppAuth(AUTH_APP_ID, AUTH_USERNAME, AUTH_PASSWORD);
+
+                /**
+                 * We use the SSO authentication method, because it allows us to log in any user
+                 */
+                $method = "sso";
+
+                $auth_result = $auth->authenticate($user_data["username"], $user_data["password"], $method);
+                if (!empty($auth_result["response"]["status"]) && $auth_result["response"]["status"] == "success" && !empty($auth_result["response"]["token"])) {
+                    $auth_result = Entrada_Auth::login($auth_result["response"]["token"]);
+                }
+
+                if (empty($auth_result["status"]) || ($auth_result["status"] != "success")) {
+                    header("Location: ".ENTRADA_URL."/admin/users");
+                    exit;
+                }
+
+                $_SESSION["previous_session"] = $previous_session;
+                $_SESSION["first_session_id"] = $first_session_id;
                 $_SESSION["auth"]["method"] = $previous_session["auth"]["method"];
-                $_SESSION["details"] = array();
-                $_SESSION["details"]["app_id"] = (int) AUTH_APP_ID;
-                $_SESSION["details"]["id"] = $user_data["id"];
-                $_SESSION["details"]["access_id"] = $user_access["id"];
-                $_SESSION["details"]["username"] = $user_data["username"];
-                $_SESSION["details"]["prefix"] = $user_data["prefix"];
-                $_SESSION["details"]["firstname"] = $user_data["firstname"];
-                $_SESSION["details"]["lastname"] = $user_data["lastname"];
-                $_SESSION["details"]["email"] = $user_data["email"];
-                $_SESSION["details"]["email_alt"] = $user_data["email_alt"];
-                $_SESSION["details"]["email_updated"] = (int) $user_data["email_updated"];
-                $_SESSION["details"]["google_id"] = $user_data["google_id"];
-                $_SESSION["details"]["telephone"] = $user_data["telephone"];
-                $_SESSION["details"]["role"] = $user_access["role"];
-                $_SESSION["details"]["group"] = $user_access["group"];
-                $_SESSION["details"]["organisation_id"] = $user_access["organization_id"];
-                $_SESSION["details"]["expires"] = $user_access["access_expires"];
-                $_SESSION["details"]["lastlogin"] = $user_access["last_login"];
-                $_SESSION["details"]["privacy_level"] = $user_data["privacy_level"];
-                $_SESSION["details"]["notifications"] = $user_data["notifications"];
-                $_SESSION["details"]["private_hash"] = $user_access["private_hash"];
-                $_SESSION["details"]["allow_podcasting"] = false;
 
-                if (isset($ENTRADA_CACHE) && !DEVELOPMENT_MODE) {
-                    if (!($ENTRADA_CACHE->test("acl_"  . AUTH_APP_ID . "_" . $ENTRADA_USER->getID()))) {
-                        $ENTRADA_ACL = new Entrada_Acl($_SESSION["details"]);
-                        $ENTRADA_CACHE->save($ENTRADA_ACL, "acl_" . AUTH_APP_ID . "_" . $ENTRADA_USER->getID());
-                    } else {
-                        $ENTRADA_ACL = $ENTRADA_CACHE->load("acl_" . AUTH_APP_ID . "_" . $ENTRADA_USER->getID());
-                    }
-                } else {
-                    $ENTRADA_ACL = new Entrada_Acl($_SESSION["details"]);
-                }
-
-                $extras = unserialize(base64_decode($user_access["extras"]));
-                if (isset($extras["allow_podcasting"])) {
-                    if ((int) trim($extras["allow_podcasting"])) {
-                        $_SESSION["details"]["allow_podcasting"] = (int) trim($extras["allow_podcasting"]);
-                    } elseif (trim(strtolower($extras["allow_podcasting"])) == "all") {
-                        $_SESSION["details"]["allow_podcasting"] = "all";
-                    }
-                }
                 /**
                  * Save the user login information to the statistics table.
                  */
                 add_statistic("users", "login_as", "proxy_id", $_SESSION["details"]["id"], $_SESSION["first_session_id"]);
-
-                /**
-                 * Any custom session information that needs to be set on a per-group basis.
-                 */
-                switch ($ENTRADA_USER->getActiveGroup()) {
-                    case "student" :
-                        if (!$ENTRADA_USER->getGradYear()) {
-                            $_SESSION["details"]["grad_year"] = fetch_first_year();
-                        } else {
-                            $_SESSION["details"]["grad_year"] = $ENTRADA_USER->getGradYear();
-                        }
-                    break;
-                    case "medtech" :
-                        /**
-                         * If you're in MEdTech, always assign a graduating year,
-                         * because we normally see more than normal users.
-                         */
-                        $_SESSION["details"]["grad_year"] = fetch_first_year();
-                    break;
-                    case "staff" :
-                    case "faculty" :
-                    default :
-                        continue;
-                    break;
-                }
 
                 /**
                  * Set the active organisation profile for the user.

@@ -64,7 +64,8 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 	if ($course_id) {
 		$qu_arr[1] = "	LEFT JOIN `course_objectives` b
 						ON a.`objective_id` = b.`objective_id`
-						AND b.`course_id` = ".$db->qstr($course_id);
+						AND b.`course_id` = ".$db->qstr($course_id) . "
+						AND (b.`objective_start` IS NULL OR b.`objective_start` >= UNIX_TIMESTAMP() AND (b.`objective_finish` IS NULL OR b.`objective_finish` < UNIX_TIMESTAMP()) AND `active` = 1)";
 	} elseif ($event_id) {
 		$qu_arr[1] = "	LEFT JOIN `event_objectives` b
 						ON a.`objective_id` = b.`objective_id`

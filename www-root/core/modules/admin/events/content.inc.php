@@ -23,29 +23,29 @@
  * @author Developer: Matt Simpson <matt.simpson@queensu.ca>
  * @copyright Copyright 2010 Queen's University. All Rights Reserved.
  *
-*/
+ */
 
 if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
-	exit;
+    exit;
 } elseif ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
-	header("Location: ".ENTRADA_URL);
-	exit;
+    header("Location: ".ENTRADA_URL);
+    exit;
 } elseif (!$ENTRADA_ACL->amIAllowed("eventcontent", "update", false)) {
-	$ONLOAD[] = "setTimeout('window.location=\\'".ENTRADA_URL."/admin/".$MODULE."\\'', 15000)";
+    $ONLOAD[] = "setTimeout('window.location=\\'".ENTRADA_URL."/admin/".$MODULE."\\'', 15000)";
 
-	add_error("Your account does not have the permissions required to use this feature of this module.<br /><br />If you believe you are receiving this message in error please contact <a href=\"mailto:".html_encode($AGENT_CONTACTS["administrator"]["email"])."\">".html_encode($AGENT_CONTACTS["administrator"]["name"])."</a> for assistance.");
+    add_error("Your account does not have the permissions required to use this feature of this module.<br /><br />If you believe you are receiving this message in error please contact <a href=\"mailto:".html_encode($AGENT_CONTACTS["administrator"]["email"])."\">".html_encode($AGENT_CONTACTS["administrator"]["name"])."</a> for assistance.");
 
-	echo display_error();
+    echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] does not have access to this module [".$MODULE."]");
+    application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] does not have access to this module [".$MODULE."]");
 } else {
-	$HEAD[] = "<script src=\"".ENTRADA_URL."/javascript/eventtypes_list.js?release=".html_encode(APPLICATION_VERSION)."\"></script>";
-	?>
-	<script type="text/javascript">
-		var EVENT_LIST_STATIC_TOTAL_DURATION = true;
-	</script>
-	<?php
-	if ($EVENT_ID) {
+    $HEAD[] = "<script src=\"".ENTRADA_URL."/javascript/eventtypes_list.js?release=".html_encode(APPLICATION_VERSION)."\"></script>";
+    ?>
+    <script type="text/javascript">
+        var EVENT_LIST_STATIC_TOTAL_DURATION = true;
+    </script>
+    <?php
+    if ($EVENT_ID) {
         $event = Models_Event::get($EVENT_ID);
         $course_id = $event->getCourseID();
 
@@ -53,7 +53,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
         $POST_TEXT = $EXAM_TEXT["exams"]["posting"];
         $DEFAULT_LABELS = $translate->_("default");
         $attached_exams = $event->getAttachedExams();
-        
+
         $HEAD[] = "<script>var SITE_URL = '".ENTRADA_URL."';</script>";
         $HEAD[] = "<script type=\"text/javascript\" >var ENTRADA_URL = '". ENTRADA_URL ."';</script>\n";
         $HEAD[]	= "<script src=\"".ENTRADA_RELATIVE."/javascript/objectives.js?release=".html_encode(APPLICATION_VERSION)."\"></script>";
@@ -69,8 +69,9 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
         $HEAD[] = "<link rel=\"stylesheet\" type=\"text/css\" href=\"".  ENTRADA_URL ."/css/jquery/jquery.timepicker.css?release=".html_encode(APPLICATION_VERSION)."\" />";
         $HEAD[] = "<link rel=\"stylesheet\" type=\"text/css\" href=\"".  ENTRADA_URL ."/css/jquery/jquery.inputselector.css?release=".html_encode(APPLICATION_VERSION)."\" />";
 
-		$event_info = Models_Event::fetchEventById($EVENT_ID);
-		if ($event_info) {
+        $event_info = Models_Event::fetchEventById($EVENT_ID);
+        if ($event_info) {
+            $event = new Models_Event($event_info);
             if ($event_info["recurring_id"]) {
                 $recurring_event_array  = Models_Event::getRecurringEventIds($EVENT_ID);
                 $recurring_events       = $recurring_event_array["recurring_events"];
@@ -83,91 +84,102 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
             }
 
             $PROCESSED["keywords_hidden"] = $event_info["keywords_hidden"];
-			$PROCESSED["keywords_release_date"] = $event_info["keywords_release_date"];
-			$PROCESSED["objectives_release_date"] = $event_info["objectives_release_date"];
-			$COURSE_ID = $event_info["course_id"];
+            $PROCESSED["keywords_release_date"] = $event_info["keywords_release_date"];
+            $PROCESSED["objectives_release_date"] = $event_info["objectives_release_date"];
+            $COURSE_ID = $event_info["course_id"];
 
-			if (!$ENTRADA_ACL->amIAllowed(new EventContentResource($event_info["event_id"], $event_info["course_id"], $event_info["organisation_id"]), "update")) {
-				application_log("error", "Someone attempted to modify content for an event [".$EVENT_ID."] that they were not the coordinator for.");
+            if (!$ENTRADA_ACL->amIAllowed(new EventContentResource($event_info["event_id"], $event_info["course_id"], $event_info["organisation_id"]), "update")) {
+                application_log("error", "Someone attempted to modify content for an event [".$EVENT_ID."] that they were not the coordinator for.");
 
-				header("Location: ".ENTRADA_URL."/admin/".$MODULE);
-				exit;
-			} else {
-				$BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/events?".replace_query(array("section" => "content", "id" => $EVENT_ID)), "title" => "Event Content");
+                header("Location: ".ENTRADA_URL."/admin/".$MODULE);
+                exit;
+            } else {
+                $BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/events?".replace_query(array("section" => "content", "id" => $EVENT_ID)), "title" => "Event Content");
 
-				$HEAD[]	= "<script src=\"".ENTRADA_RELATIVE."/javascript/picklist.js?release=".html_encode(APPLICATION_VERSION)."\"></script>\n";
+                $HEAD[]	= "<script src=\"".ENTRADA_RELATIVE."/javascript/picklist.js?release=".html_encode(APPLICATION_VERSION)."\"></script>\n";
 
-				/**
-				 * Load the rich text editor.
-				 */
-				load_rte("events");
+                /**
+                 * Load the rich text editor.
+                 */
+                load_rte("events");
 
-				/**
-				 * Fetch event content history
-				 */
-				$history = $db->GetRow("SELECT * FROM `event_history` WHERE `event_id`  = ".$db->qstr($EVENT_ID));
+                /**
+                 * Fetch event content history
+                 */
+                $history = $db->GetRow("SELECT * FROM `event_history` WHERE `event_id`  = ".$db->qstr($EVENT_ID));
 
-				if (!$history) { // Create the first history record of the event's creation when another user updates the event
-					if (count($_POST) && ($ENTRADA_USER->getID() != $event_info["updated_by"])) {	// Ignore starting history when it's the sole author initially adding content.
-						history_log($EVENT_ID, 'created this learning event.', $event_info["updated_by"], $event_info["updated_date"]);
-					}
-				}
+                if (!$history) { // Create the first history record of the event's creation when another user updates the event
+                    if (count($_POST) && ($ENTRADA_USER->getID() != $event_info["updated_by"])) {	// Ignore starting history when it's the sole author initially adding content.
+                        history_log($EVENT_ID, 'created this learning event.', $event_info["updated_by"], $event_info["updated_date"]);
+                    }
+                }
 
-				if (($event_info["release_date"]) && ($event_info["release_date"] > time())) {
-					add_notice("This event is not yet visible to students due to Time Release Options set by an administrator. The release date is set to ".date("r", $event_info["release_date"]));
-				}
+                if (($event_info["release_date"]) && ($event_info["release_date"] > time())) {
+                    add_notice("This event is not yet visible to students due to Time Release Options set by an administrator. The release date is set to ".date("r", $event_info["release_date"]));
+                }
 
-				if (($event_info["release_until"]) && ($event_info["release_until"] < time())) {
-					add_notice("This event is no longer visible to students due to Time Release Options set by an administrator. The expiry date was set to ".date("r", $event_info["release_until"]));
-				}
+                if (($event_info["release_until"]) && ($event_info["release_until"] < time())) {
+                    add_notice("This event is no longer visible to students due to Time Release Options set by an administrator. The expiry date was set to ".date("r", $event_info["release_until"]));
+                }
 
-				/**
-				 * Fetch the event audience information.
-				 */
-				$event_audience_type		= "";
-				$associated_grad_year		= "";
-				$associated_group_ids		= array();
-				$associated_proxy_ids		= array();
-				$associated_organisation	= "";
+                /**
+                 * Fetch the event audience information.
+                 */
+                $event_audience_type		= "";
+                $associated_grad_year		= "";
+                $associated_group_ids		= array();
+                $associated_proxy_ids		= array();
+                $associated_organisation	= "";
 
-				$query		= "SELECT * FROM `event_audience` WHERE `event_id` = ".$db->qstr($EVENT_ID);
-				$results	= $db->GetAll($query);
-				if ($results) {
-					$event_audience_type = $results[0]["audience_type"];
+                $query		= "SELECT * FROM `event_audience` WHERE `event_id` = ".$db->qstr($EVENT_ID);
+                $results	= $db->GetAll($query);
+                if ($results) {
+                    $event_audience_type = $results[0]["audience_type"];
 
-					foreach ($results as $result) {
-						if ($result["audience_type"] == $event_audience_type) {
-							switch ($result["audience_type"]) {
-								case "grad_year" :
-									$associated_grad_year = clean_input($result["audience_value"], "alphanumeric");
-								break;
-								case "group_id" :
-									$associated_group_ids[] = (int) $result["audience_value"];
-								break;
-								case "proxy_id" :
-									$associated_proxy_ids[] = (int) $result["audience_value"];
-								break;
-								case "organisation_id" :
-									$query = "SELECT `organisation_title` FROM `".AUTH_DATABASE."`.`organisations` WHERE `organisation_id` = ".$db->qstr($result["audience_value"]);
-									$associated_organisation = $db->GetOne($query);
-								break;
-							}
-						}
-					}
-				}
+                    foreach ($results as $result) {
+                        if ($result["audience_type"] == $event_audience_type) {
+                            switch ($result["audience_type"]) {
+                                case "grad_year" :
+                                    $associated_grad_year = clean_input($result["audience_value"], "alphanumeric");
+                                    break;
+                                case "group_id" :
+                                    $associated_group_ids[] = (int) $result["audience_value"];
+                                    break;
+                                case "proxy_id" :
+                                    $associated_proxy_ids[] = (int) $result["audience_value"];
+                                    break;
+                                case "organisation_id" :
+                                    $query = "SELECT `organisation_title` FROM `".AUTH_DATABASE."`.`organisations` WHERE `organisation_id` = ".$db->qstr($result["audience_value"]);
+                                    $associated_organisation = $db->GetOne($query);
+                                    break;
+                            }
+                        }
+                    }
+                }
 
-				/**
-				 * Fetch the Clinical Presentation details.
-				 */
-				$clinical_presentations_list = array();
-				$clinical_presentations = array();
+                /**
+                 * Fetch the Clinical Presentation details.
+                 */
+                $clinical_presentations_list = array();
+                $clinical_presentations = array();
 
-				$results = fetch_clinical_presentations(0, array(), $event_info["course_id"]);
-				if ($results) {
-					foreach ($results as $result) {
-						$clinical_presentations_list[$result["objective_id"]] = $result["objective_name"];
-					}
-				}
+                $results = fetch_clinical_presentations(0, array(), $event_info["course_id"]);
+                if ($results) {
+                    foreach ($results as $result) {
+                        $clinical_presentations_list[$result["objective_id"]] = $result["objective_name"];
+                    }
+                }
+
+                $medbiq_resources = Models_Event_Medbiq_Resource::fetchAllRecordsByEventId($EVENT_ID);
+                $medbiq_ids = [];
+
+                if ($medbiq_resources) {
+                    foreach ($medbiq_resources as $resource) {
+                        if (!in_array($resource->getResourceID(), $medbiq_ids)) {
+                            $medbiq_ids[] = $resource->getResourceID();
+                        }
+                    }
+                }
 
                 if (((isset($_POST["clinical_presentations"])) && (is_array($_POST["clinical_presentations"])) && (count($_POST["clinical_presentations"])))) {
                     foreach ($_POST["clinical_presentations"] as $objective_id) {
@@ -195,43 +207,64 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                 }
 
                 /**
-				 * Fetch the Curriculum Objective details.
-				 */
-				list($curriculum_objectives_list,$top_level_id) = courses_fetch_objectives($event_info["organisation_id"],array($event_info["course_id"]),-1, 1, false, false, $EVENT_ID, true);
+                 * Fetch the Curriculum Objective details.
+                 */
+                list($curriculum_objectives_list,$top_level_id) = courses_fetch_objectives($event_info["organisation_id"],array($event_info["course_id"]),-1, 1, false, false, $EVENT_ID, true);
 
                 $curriculum_objectives = array();
 
-				if (isset($_POST["checked_objectives"]) && ($checked_objectives = $_POST["checked_objectives"]) && (is_array($checked_objectives))) {
-					foreach ($checked_objectives as $objective_id) { // => $status
-						if ($objective_id = (int) $objective_id) {
-							if (isset($_POST["objective_text"][$objective_id]) && ($tmp_input = clean_input($_POST["objective_text"][$objective_id], array("notags")))) {
-								$objective_text = $tmp_input;
-							} else {
-								$objective_text = false;
-							}
+                if (isset($_POST["checked_objectives"]) && ($checked_objectives = $_POST["checked_objectives"]) && (is_array($checked_objectives))) {
+                    foreach ($checked_objectives as $objective_id) { // => $status
+                        if ($objective_id = (int) $objective_id) {
+                            if (isset($_POST["objective_text"][$objective_id]) && ($tmp_input = clean_input($_POST["objective_text"][$objective_id], array("notags")))) {
+                                $objective_text = $tmp_input;
+                            } else {
+                                $objective_text = false;
+                            }
 
-							$curriculum_objectives[$objective_id] = $objective_text;
-						}
-					}
+                            $curriculum_objectives[$objective_id] = $objective_text;
+                        }
+                    }
 
-					history_log($EVENT_ID, "updated clinical objectives.");
-				}
+                    history_log($EVENT_ID, "updated clinical objectives.");
+                } else if (isset($_POST["event_tag"]) && is_array($_POST["event_tag"])) {
+                    $checked_objectives = array_filter(array_map(function ($objective_id) { return (int) $objective_id; }, $_POST["event_tag"]));
+                    foreach ($checked_objectives as $objective_id) { // => $status
+                        if ($objective_id = (int) $objective_id) {
+                            if (isset($_POST["objective_text"][$objective_id]) && ($tmp_input = clean_input($_POST["objective_text"][$objective_id], array("notags")))) {
+                                $objective_text = $tmp_input;
+                            } else {
+                                $objective_text = false;
+                            }
 
-				$query = "SELECT `objective_id` FROM `event_objectives` WHERE `event_id` = ".$db->qstr($EVENT_ID)." AND `objective_type` = 'course'";
-				$results = $db->GetAll($query);
-				if ($results) {
-					foreach ($results as $result) {
-						$curriculum_objectives_list["objectives"][$result["objective_id"]]["event_objective"] = true;
-					}
-				}
+                            $curriculum_objectives[$objective_id] = $objective_text;
+                        }
+                    }
 
-				/**
-				 * Fetch the event type information.
-				 */
-				$event_eventtypes_list	= array();
-				$event_eventtypes		= array();
+                    history_log($EVENT_ID, "updated clinical objectives.");
+                }
 
-				$query		= "	SELECT a.* FROM `events_lu_eventtypes` AS a
+                if ($curriculum_objectives) {
+                    $linked_objectives = Controllers_LinkedObjectives::processLinkedObjectives();
+                }
+
+                list($version_cperiod_id, $version_id) = Controllers_VersionSelect::processVersionSelect();
+
+                $query = "SELECT `objective_id` FROM `event_objectives` WHERE `event_id` = ".$db->qstr($EVENT_ID)." AND `objective_type` = 'course'";
+                $results = $db->GetAll($query);
+                if ($results) {
+                    foreach ($results as $result) {
+                        $curriculum_objectives_list["objectives"][$result["objective_id"]]["event_objective"] = true;
+                    }
+                }
+
+                /**
+                 * Fetch the event type information.
+                 */
+                $event_eventtypes_list	= array();
+                $event_eventtypes		= array();
+
+                $query		= "	SELECT a.* FROM `events_lu_eventtypes` AS a
 								LEFT JOIN `eventtype_organisation` AS c
 								ON a.`eventtype_id` = c.`eventtype_id`
 								LEFT JOIN `".AUTH_DATABASE."`.`organisations` AS b
@@ -239,70 +272,70 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
 								WHERE b.`organisation_id` = ".$db->qstr($ENTRADA_USER->getActiveOrganisation())."
 								AND a.`eventtype_active` = '1'
 								ORDER BY a.`eventtype_title`";
-				$results	= $db->GetAll($query);
-				if ($results) {
-					foreach ($results as $result) {
-						$event_eventtypes_list[] = array("id" => $result["eventtype_id"], "title" => $result["eventtype_title"], "description" => $result["eventtype_description"]);
-					}
-				}
+                $results	= $db->GetAll($query);
+                if ($results) {
+                    foreach ($results as $result) {
+                        $event_eventtypes_list[] = array("id" => $result["eventtype_id"], "title" => $result["eventtype_title"], "description" => $result["eventtype_description"]);
+                    }
+                }
 
-				$query		= "SELECT a.*, b.`eventtype_title` FROM `event_eventtypes` AS a LEFT JOIN `events_lu_eventtypes` AS b ON a.`eventtype_id` = b.`eventtype_id` WHERE a.`event_id` = ".$db->qstr($EVENT_ID)." ORDER BY `eeventtype_id` ASC";
-				$results	= $db->GetAll($query);
-				$initial_duration = 0;
-				if ($results) {
-					foreach ($results as $result) {
-						$initial_duration += $result["duration"];
-						$event_eventtypes[] = $result;
-					}
-				}
-				?>
-				<script type="text/javascript" charset="utf-8">
-					var INITIAL_EVENT_DURATION = <?php echo $initial_duration; ?>
-				</script>
-				<?php
-				if (isset($_POST["eventtype_duration_order"])) {
-					$old_event_eventtypes = $event_eventtypes;
-					$event_eventtypes = array();
-					$eventtype_durations = $_POST["duration_segment"];
+                $query		= "SELECT a.*, b.`eventtype_title` FROM `event_eventtypes` AS a LEFT JOIN `events_lu_eventtypes` AS b ON a.`eventtype_id` = b.`eventtype_id` WHERE a.`event_id` = ".$db->qstr($EVENT_ID)." ORDER BY `eeventtype_id` ASC";
+                $results	= $db->GetAll($query);
+                $initial_duration = 0;
+                if ($results) {
+                    foreach ($results as $result) {
+                        $initial_duration += $result["duration"];
+                        $event_eventtypes[] = $result;
+                    }
+                }
+                ?>
+                <script type="text/javascript" charset="utf-8">
+                    var INITIAL_EVENT_DURATION = <?php echo $initial_duration; ?>
+                </script>
+                <?php
+                if (isset($_POST["eventtype_duration_order"])) {
+                    $old_event_eventtypes = $event_eventtypes;
+                    $event_eventtypes = array();
+                    $eventtype_durations = $_POST["duration_segment"];
 
-					$event_types = explode(",", trim($_POST["eventtype_duration_order"]));
+                    $event_types = explode(",", trim($_POST["eventtype_duration_order"]));
 
-					if (is_array($event_types) && count($event_types)) {
-						foreach ($event_types as $order => $eventtype_id) {
-							if (($eventtype_id = clean_input($eventtype_id, array("trim", "int"))) && ($duration = clean_input($eventtype_durations[$order], array("trim", "int")))) {
-								if (!($duration >= LEARNING_EVENT_MIN_DURATION)) {
-									add_error("Event type <strong>durations</strong> may not be less than ".LEARNING_EVENT_MIN_DURATION." minutes.");
-								}
+                    if (is_array($event_types) && count($event_types)) {
+                        foreach ($event_types as $order => $eventtype_id) {
+                            if (($eventtype_id = clean_input($eventtype_id, array("trim", "int"))) && ($duration = clean_input($eventtype_durations[$order], array("trim", "float")))) {
+                                if (!($duration >= LEARNING_EVENT_MIN_DURATION)) {
+                                    add_error("Event type <strong>durations</strong> may not be less than ".LEARNING_EVENT_MIN_DURATION." minutes.");
+                                }
 
-								$query	= "SELECT `eventtype_title` FROM `events_lu_eventtypes` WHERE `eventtype_id` = ".$db->qstr($eventtype_id);
-								$result	= $db->GetRow($query);
-								if ($result) {
-									$event_eventtypes[] = array("eventtype_id"=>$eventtype_id, "duration"=>$duration, "eventtype_title"=>$result["eventtype_title"]);
-								}
-							}
-						}
+                                $query	= "SELECT `eventtype_title` FROM `events_lu_eventtypes` WHERE `eventtype_id` = ".$db->qstr($eventtype_id);
+                                $result	= $db->GetRow($query);
+                                if ($result) {
+                                    $event_eventtypes[] = array("eventtype_id"=>$eventtype_id, "duration"=>$duration, "eventtype_title"=>$result["eventtype_title"]);
+                                }
+                            }
+                        }
 
-						$event_duration	= 0;
-						$old_event_duration = 0;
-						foreach ($event_eventtypes as $event_type) {
-							$event_duration += $event_type["duration"];
-						}
+                        $event_duration	= 0;
+                        $old_event_duration = 0;
+                        foreach ($event_eventtypes as $event_type) {
+                            $event_duration += $event_type["duration"];
+                        }
 
-						foreach($old_event_eventtypes as $event_type) {
-							$old_event_duration += $event_type["duration"];
-						}
+                        foreach($old_event_eventtypes as $event_type) {
+                            $old_event_duration += $event_type["duration"];
+                        }
 
-						if ($old_event_duration != $event_duration) {
-							add_error("The modified <strong>" . $translate->_("Event Types") . "</strong> duration specified is different than the existing one, please ensure the event's duration remains the same.");
-						}
-					} else {
-						add_error("At least one event type in the <strong>" . $translate->_("Event Types") . "</strong> field is required.");
-					}
-				}
+                        if ($old_event_duration != $event_duration) {
+                            add_error("The modified <strong>" . $translate->_("Event Types") . "</strong> duration specified is different than the existing one, please ensure the event's duration remains the same.");
+                        }
+                    } else {
+                        add_error("At least one event type in the <strong>" . $translate->_("Event Types") . "</strong> field is required.");
+                    }
+                }
 
-				if (isset($_POST["type"])) {
-					switch ($_POST["type"]) {
-						case "content" :
+                if (isset($_POST["type"])) {
+                    switch ($_POST["type"]) {
+                        case "content" :
                             /**
                              * Event keywords hidden from students
                              */
@@ -310,7 +343,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                             if (isset($_POST["keywords_hidden"]) && $tmp_input = clean_input($_POST["keywords_hidden"], array("int"))) {
                                 $PROCESSED["keywords_hidden"] = (int) $tmp_input;
                             }
-                            
+
                             /**
                              * Event keyword release date
                              */
@@ -318,7 +351,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                                 switch ($tmp_input) {
                                     case "now" :
                                         $PROCESSED["keywords_release_date"] = 0;
-                                    break;
+                                        break;
                                     case "delay" :
                                         $PROCESSED["delay_release_keywords"] = true;
                                         $release_date = Entrada_Utilities::validate_calendar("Delay release until", "delay_release_keywords_option", true, true);
@@ -326,21 +359,21 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                                         if (!$ERROR) {
                                             $PROCESSED["keywords_release_date"] = (int) $release_date;
                                         }
-                                    break;
+                                        break;
                                     case "never" :
                                         $PROCESSED["keywords_release_date"] = null;
-                                    break;
+                                        break;
                                 }
                             }
 
                             /**
-                            * Event objective release date
-                            */
+                             * Event objective release date
+                             */
                             if (isset($_POST["objectives_release_date"]) && $tmp_input = clean_input($_POST["objectives_release_date"], array("notags", "nows"))) {
                                 switch ($tmp_input) {
                                     case "now" :
                                         $PROCESSED["objectives_release_date"] = 0;
-                                    break;
+                                        break;
                                     case "delay" :
                                         $PROCESSED["delay_release"] = true;
                                         $release_date = Entrada_Utilities::validate_calendar("Delay release until", "delay_release_option", true, true);
@@ -348,10 +381,10 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                                         if (!$ERROR) {
                                             $PROCESSED["objectives_release_date"] = (int) $release_date;
                                         }
-                                    break;
+                                        break;
                                     case "never" :
                                         $PROCESSED["objectives_release_date"] = null;
-                                    break;
+                                        break;
                                 }
                             }
 
@@ -361,7 +394,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                                 /**
                                  * Event Description
                                  */
-                                
+
                                 $changed = false;
                                 $changed = md5_change_value($EVENT_ID, 'event_id', 'event_description', $_POST["event_description"], 'events');
 
@@ -394,14 +427,14 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                                 /**
                                  * Required Preparation
                                  */
-                                
+
                                 $changed = false;
                                 $changed = md5_change_value($EVENT_ID, 'event_id', 'event_message', $_POST["event_message"], 'events');
-                                
+
                                 if ($changed) {
                                     $history_updates[] = "Event Preparation";
                                 }
-                                if ((isset($_POST["event_message"])) && (clean_input($_POST["event_message"], array("notags", "nows")))) {
+                                if ((isset($_POST["event_message"])) && (clean_input($_POST["event_message"], array("allowedtags", "nows")))) {
                                     $event_message = clean_input($_POST["event_message"], array("allowedtags"));
                                 } else {
                                     $event_message = "";
@@ -441,6 +474,75 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                                     add_error("There was an error while trying to update the selected <strong>" . $translate->_("Event Types") . "</strong> for this event.<br /><br />The system administrator was informed of this error; please try again later.");
                                     application_log("error", "Unable to delete any eventtype records while editing an event. Database said: ".$db->ErrorMsg());
                                 }
+
+                                /**
+                                 * Medbiq Resources.
+                                 */
+                                if (isset($_POST["medbiq_resources"]) && (is_array($_POST["medbiq_resources"]))) {
+                                    $medbiq_resources_set = $_POST["medbiq_resources"];
+                                } else {
+                                    $medbiq_resources_set = [];
+                                }
+
+
+                                foreach ($medbiq_resources_set as $resource_id) {
+                                    if (!in_array($resource_id, $medbiq_ids)) {
+                                        if ($tmp_input = clean_input($resource_id, array("trim", "int"))) {
+                                            $PROCESSED_MEDBIQ["event_id"] = $EVENT_ID;
+                                            $PROCESSED_MEDBIQ["resource_id"] = $tmp_input;
+                                            $PROCESSED_MEDBIQ["updated_date"] = time();
+                                            $PROCESSED_MEDBIQ["updated_by"] = $ENTRADA_USER->getID();
+                                            $PROCESSED_MEDBIQ["created_date"] = time();
+                                            $PROCESSED_MEDBIQ["created_by"] = $ENTRADA_USER->getID();
+                                            $medbiq = new Models_Event_Medbiq_Resource($PROCESSED_MEDBIQ);
+                                            if (!$medbiq->insert()) {
+                                                add_error($translate->_("There was an error when trying to insert a Medbiq Resource into the system. System administrators have been informed of this error; please try again later."));
+                                                application_log("error", "Unable to insert a new Medbiq Resource to the database when editing event content. Database said: " . $db->ErrorMsg());
+                                            }
+                                        }
+                                    }
+                                }
+
+                                $medbiq_remove_set  = array_diff($medbiq_ids, $medbiq_resources_set);
+                                if ($medbiq_remove_set && is_array($medbiq_remove_set) && !empty($medbiq_remove_set)) {
+                                    foreach ($medbiq_remove_set as $set) {
+                                        $medbiq_set = Models_Event_Medbiq_Resource::fetchRowByEventIDResourceID($EVENT_ID, $set);
+                                        if ($medbiq_set && is_object($medbiq_set)) {
+                                            $medbiq_set->setDeletedDate(time());
+                                            $medbiq_set->setUpdatedDate(time());
+                                            $medbiq_set->setUpdatedBy($ENTRADA_USER->getID());
+                                            if (!$medbiq_set->update()) {
+                                                add_error($translate->_("There was an error when trying to update a Medbiq Resource into the system."));
+                                                application_log("error", "Unable to update Medbiq Resource to the database when editing event content. Database said: " . $db->ErrorMsg());
+                                            }
+                                        }
+                                    }
+                                }
+
+                                // Delete what is linked to the event_objectives before deleting the event_objectives
+                                // so that we are not left with orphaned records.
+                                $query = sprintf(
+                                    "SELECT * FROM `event_objectives` WHERE `event_id` = %s AND `objective_type` = 'course'",
+                                    $db->qstr($EVENT_ID)
+                                );
+                                $results = $db->GetAll($query);
+
+                                $db_curriculum_objectives = array();
+
+                                if ($results) {
+                                    foreach ($results as $result) {
+                                        // Needed to change the format of the data
+                                        $db_curriculum_objectives["objectives"][$result["objective_id"]]["event_objective"] = true;
+                                    }
+                                }
+
+                                $curriculumLinkedObjectives = new Entrada_Curriculum_Linked_Objectives();
+                                $curriculumLinkedObjectives
+                                    ->setVersionId($version_id)
+                                    ->setTargetObjectiveIds(array())
+                                    ->setContext($event->getContext())
+                                    ->setObjectives($db_curriculum_objectives)
+                                    ->delete();
 
                                 /**
                                  * Update Clinical Presentations.
@@ -495,11 +597,23 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                                     }
                                 }
 
+                                /**
+                                 * Update linked objectives
+                                 */
+                                if (isset($linked_objectives)) {
+                                    try {
+                                        $event->updateLinkedObjectives($curriculum_objectives, $linked_objectives, $version_id);
+                                    } catch (Exception $e) {
+                                        add_error("There was an error while trying to update the linked objectives. Please contact <a href=\"mailto:".html_encode($AGENT_CONTACTS["administrator"]["email"])."\">".html_encode($AGENT_CONTACTS["administrator"]["name"])."</a> for assistance.");
+                                        application_log("error", "Unable to update linked objectives in event ".$EVENT_ID.": ".$e->getMessage());
+                                    }
+                                }
+
                                 // Update MeSH keywords
                                 if (isset($_POST["delete_keywords"])) {
-                                    if (trim($_POST["delete_keywords"][0]) !== ""){                                                                        
+                                    if (trim($_POST["delete_keywords"][0]) !== ""){
                                         $lis = explode(",", $_POST["delete_keywords"][0]);
-                                        $count = count($lis);                                                                 
+                                        $count = count($lis);
 
                                         if ($count > 0){
                                             // Removed the keywords in the delete array.
@@ -522,7 +636,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                                 if (isset($_POST["add_keywords"][0])) {
                                     if (trim($_POST["add_keywords"][0]) !== "") {
                                         $lis = explode(",", $_POST["add_keywords"][0]);
-                                        $count = count($lis);                                                                 
+                                        $count = count($lis);
 
                                         if ($count > 0) {
                                             // Add the keywords n the add array.
@@ -538,7 +652,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                                                 $history_updates[] = 'Event Keywords Added';
                                             }
                                         }
-                                    }                                                                                                                             
+                                    }
                                 }
 
                                 /**
@@ -547,13 +661,13 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
 
                                 $query = "SELECT `topic_id`, `topic_coverage`, `etopic_id` FROM `event_topics` WHERE `event_id` = ".$db->qstr($EVENT_ID);
                                 $current_hot_topics_results = $db->GetAll($query);
-                                
-                                if (isset($current_hot_topics_results) && is_array($current_hot_topics_results)) {                                    
+
+                                if (isset($current_hot_topics_results) && is_array($current_hot_topics_results)) {
                                     foreach ($current_hot_topics_results as $current_hot_topics_result) {
                                         $current_hot_topics[$current_hot_topics_result['topic_id']] = $current_hot_topics_result['topic_coverage'];
                                     }
                                 }
-                                
+
                                 $hot_topic_update = false;
                                 if ((isset($_POST["event_topic"])) && (is_array($_POST["event_topic"])) && (count($_POST["event_topic"]))) {
                                     if (isset($current_hot_topics) && is_array($current_hot_topics)) {
@@ -563,7 +677,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                                         //no current record so insert all
                                         $add_topics_array = $_POST["event_topic"];
                                     }
-                                    
+
                                     if (isset($add_topics_array) && is_array($add_topics_array) && (count($add_topics_array))) {
                                         foreach ($add_topics_array as $topic_id => $value) {
                                             if ($topic_id = clean_input($topic_id, array("trim", "int"))) {
@@ -653,6 +767,21 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                                                     $PROCESSED_RECURRING_EVENT["mapped_objectives"][] = $result;
                                                 }
                                             }
+                                            // collect linked objectives
+                                            $PROCESSED_RECURRING_EVENT["linked_objectives"] = array();
+                                            $query = "SELECT `event_id`, `linked_objective_id` FROM `event_linked_objectives` WHERE `event_id` = ".$db->qstr($EVENT_ID);
+                                            $results = $db->GetAll($query);
+                                            if ($results) {
+                                                foreach ($results as $result) {
+                                                    $PROCESSED_RECURRING_EVENT["linked_objectives"][] = $result;
+                                                }
+                                            }
+                                            // collect objectives_release_date
+                                            $query = "SELECT `objectives_release_date` FROM `events` WHERE `event_id` = ".$db->qstr($EVENT_ID);
+                                            $results = $db->GetOne($query);
+                                            if ($results) {
+                                                $PROCESSED_RECURRING_EVENT["objectives_release_date"] = $results;
+                                            }
                                         }
 
                                         if (isset($_POST["update_recurring_fields"]) && in_array("mesh_keywords", $_POST["update_recurring_fields"])) {
@@ -702,7 +831,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
 
                                         foreach ($updating_recurring_events as $order => $recurring_event) {
                                             $recurring_history_updates = array();
-                                            
+
                                             if (isset($PROCESSED_RECURRING_EVENT["mapped_objectives"])) {
                                                 $query = "DELETE FROM `event_objectives` WHERE `event_id` = ".$db->qstr($recurring_event["event_id"]);
                                                 if ($db->Execute($query)) {
@@ -718,9 +847,35 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                                                             }
                                                         }
                                                     }
+                                                    // remove existing and update with current linked objectives
+                                                    $query = "DELETE FROM `event_linked_objectives` WHERE `event_id` = ".$db->qstr($recurring_event["event_id"]);
+                                                    if ($db->Execute($query)) {
+                                                        if (is_array($PROCESSED_RECURRING_EVENT["linked_objectives"]) && !empty($PROCESSED_RECURRING_EVENT["linked_objectives"])) {
+                                                            foreach($PROCESSED_RECURRING_EVENT["linked_objectives"] as $event_linked_objective) {
+                                                                $event_linked_objective_data = $event_linked_objective;
+                                                                $event_linked_objective_data["event_id"] = $recurring_event["event_id"];
+                                                                $event_linked_objective_data["updated_date"] = time();
+                                                                $event_linked_objective_data["updated_by"] = $ENTRADA_USER->GetID();
+                                                                if (!$db->AutoExecute("`event_linked_objectives`", $event_linked_objective_data, "INSERT")) {
+                                                                    add_error("There was an error while trying to save the selected <strong>" . $translate->_("Event Linked Objective") . "</strong> for a recurring event.<br /><br />The system administrator was informed of this error; please try again later.");
+                                                                    application_log("error", "Unable to insert a new event_linked_objectives record while editing a recurring event. Database said: ".$db->ErrorMsg());
+                                                                }
+                                                            }
+                                                        }
+                                                    } else {
+                                                        application_log("error", "Unable to delete any event_linked_objectives records while editing an event. Database said: ".$db->ErrorMsg());
+                                                    }
                                                 } else {
                                                     add_error("There was an error while trying to update the selected <strong>" . $translate->_("Event Objectives") . "</strong> for a recurring event.<br /><br />The system administrator was informed of this error; please try again later.");
                                                     application_log("error", "Unable to delete any event_objectives records while editing an event. Database said: ".$db->ErrorMsg());
+                                                }
+
+                                                // update objectives release date
+                                                if (isset($PROCESSED_RECURRING_EVENT["objectives_release_date"])) {
+                                                    if (!$db->AutoExecute("events", array("objectives_release_date" => $PROCESSED_RECURRING_EVENT["objectives_release_date"]), "UPDATE", "`event_id` = " . $db->qstr($recurring_event["event_id"]))) {
+                                                        add_error("There was an error while trying to save the selected <strong>" . $translate->_("Objectives Release Date") . "</strong> for a recurring event.<br /><br />The system administrator was informed of this error; please try again later.");
+                                                        application_log("error", "Unable to update objectives_release_date record while editing a recurring event. Database said: " . $db->ErrorMsg());
+                                                    }
                                                 }
                                             }
 
@@ -750,7 +905,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                                                         }
                                                     }
                                                 }
-                                                
+
                                                 if (!$remove_keywords_string || $deleted_keywords_query) {
                                                     if (@count($PROCESSED_RECURRING_EVENT["mesh_keywords"])) {
                                                         $added_mesh_keywords = 0;
@@ -760,7 +915,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                                                                         WHERE `event_id` = " . $db->qstr($recurring_event["event_id"]) . "
                                                                         AND `keyword_id` = " . $db->qstr($mesh_keyword['keyword_id']);
                                                             $existing_keywords = $db->GetAll($query);
-                                                            
+
                                                             if (!$existing_keywords) {
                                                                 $mesh_keyword_data = $mesh_keyword;
                                                                 $mesh_keyword_data["updated_date"] = time();
@@ -791,9 +946,9 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                                                 //select current topics
                                                 $query = "SELECT `topic_id`, `topic_coverage`, `etopic_id` FROM `event_topics` WHERE `event_id` = ".$db->qstr($recurring_event["event_id"]);
                                                 $current_hot_topics_results = $db->GetAll($query);
-                                                
+
                                                 $current_hot_topics = array();
-                                                if (isset($current_hot_topics_results) && is_array($current_hot_topics_results)) {                                    
+                                                if (isset($current_hot_topics_results) && is_array($current_hot_topics_results)) {
                                                     foreach ($current_hot_topics_results as $current_hot_topics_result) {
                                                         $current_hot_topics[$current_hot_topics_result['topic_id']] = $current_hot_topics_result['topic_coverage'];
                                                     }
@@ -844,7 +999,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                                                     }
                                                 }
                                             }
-                                            
+
                                             if (!has_error() && @array_intersect($_POST["update_recurring_fields"], array("mesh_keywords", "event_description", "event_message", "event_objectives"))) {
 
                                                 //checks if the description, objectives, or message has changed before saving.
@@ -856,7 +1011,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
 
                                                 $changed_event_message = false;
                                                 $changed_event_message = md5_change_value($recurring_event["event_id"], 'event_id', 'event_message', $PROCESSED_RECURRING_EVENT["event_message"], 'events');
-                                                
+
                                                 if (!$db->AutoExecute("`events`", $PROCESSED_RECURRING_EVENT, "UPDATE", "`event_id` = ".$db->qstr($recurring_event["event_id"]))) {
                                                     add_error("There was an error while trying to save changes to the selected <strong>Recurring Event</strong>.<br /><br />The system administrator was informed of this error; please try again later.");
                                                     application_log("error", "Unable to update an event record while editing a recurring event. Database said: ".$db->ErrorMsg());
@@ -907,33 +1062,33 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                                     }
                                 }
                             }
-						break;
-						case "files" :
-									history_log($EVENT_ID, "deleted ". count($FILE_IDS) ." resource file".(count($FILE_IDS)>1?"s":""), $PROXY_ID);
-						    break;
-						case "links" :
-									history_log($EVENT_ID, "deleted ". count($LINK_IDS) ." resource file".(count($LINK_IDS)>1?"s":""), $PROXY_ID);
-						    break;
-						case "quizzes" :
-									history_log($EVENT_ID, "deleted ". count($QUIZ_IDS) ." quiz".(count($QUIZ_IDS)>1?"es":""), $PROXY_ID);
-						    break;
+                            break;
+                        case "files" :
+                            history_log($EVENT_ID, "deleted ". count($FILE_IDS) ." resource file".(count($FILE_IDS)>1?"s":""), $PROXY_ID);
+                            break;
+                        case "links" :
+                            history_log($EVENT_ID, "deleted ". count($LINK_IDS) ." resource file".(count($LINK_IDS)>1?"s":""), $PROXY_ID);
+                            break;
+                        case "quizzes" :
+                            history_log($EVENT_ID, "deleted ". count($QUIZ_IDS) ." quiz".(count($QUIZ_IDS)>1?"es":""), $PROXY_ID);
+                            break;
                         case "lti" :
                             continue;
-                        break;
-						default :
-							continue;
-						break;
-					}
-				}
+                            break;
+                        default :
+                            continue;
+                            break;
+                    }
+                }
                 ?>
                 <style>
-                textarea.expandable {
-                    width: 90%;
-                }
-                
-                .datepicker, .timepicker {
-                    z-index: 1151 !important;
-                }
+                    textarea.expandable {
+                        width: 90%;
+                    }
+
+                    .datepicker, .timepicker {
+                        z-index: 1151 !important;
+                    }
                 </style>
                 <a id="false-link" href="#placeholder"></a>
                 <div id="placeholder" style="display: none"></div>
@@ -941,7 +1096,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                 $HEAD[] = "<script src=\"".ENTRADA_RELATIVE."/javascript/jquery/jquery.dataTables.min.js?release=".html_encode(APPLICATION_VERSION)."\"></script>";
                 ?>
                 <script>
-                jQuery(document).ready(function () {
+                    jQuery(document).ready(function () {
 //                    jQuery("#delay_release_keywords_option_date").css("margin", "0");
 //                    jQuery("#delay_release_keywords").is(":checked") ? jQuery("#delay_release_keywords_controls").show() : jQuery("#delay_release_keywords_controls").hide();
 //                    jQuery("#delay_release_keywords").on("click", function() {
@@ -950,127 +1105,128 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
 
 //                    jQuery("#delay_release_option_date").css("margin", "0");
 
-                    jQuery(".remove-hottopic").on("click", function(e) {
-                        jQuery("#topic_"+jQuery(this).attr("data-id")+"_major").removeAttr("checked");
-                        jQuery("#topic_"+jQuery(this).attr("data-id")+"_minor").removeAttr("checked");
-                        e.preventDefault();
+                        jQuery(".remove-hottopic").on("click", function(e) {
+                            jQuery("#topic_"+jQuery(this).attr("data-id")+"_major").removeAttr("checked");
+                            jQuery("#topic_"+jQuery(this).attr("data-id")+"_minor").removeAttr("checked");
+                            e.preventDefault();
+                        });
                     });
-                });
 
-                var ajax_url = '';
-                var modalDialog;
-                document.observe('dom:loaded', function() {
-                    modalDialog = new Control.Modal($('false-link'), {
-                        position:		'center',
-                        overlayOpacity:	0.75,
-                        closeOnClick:	'overlay',
-                        className:		'modal',
-                        fade:			true,
-                        fadeDuration:	0.30,
-                        beforeOpen: function(request) {
-                            eval($('scripts-on-open').innerHTML);
-                        },
-                        afterClose: function() {
-                            if (uploaded == true) {
-                                location.reload();
-                            }
-
-                            maxSteps = 3;
-                        }
-                    });
-                });
-
-                function openDialog (url) {
-                    if (url) {
-                        ajax_url = url;
-                        new Ajax.Request(ajax_url, {
-                            method: 'get',
-                            onComplete: function(transport) {
-                                modalDialog.container.update(transport.responseText);
-                                modalDialog.open();
-                                var windowHeight = jQuery(window).outerHeight();
-                                var modalHeight = jQuery("#placeholder.modal").outerHeight();
-                                if (modalHeight >= windowHeight) {
-                                    jQuery(document).scrollTop(0);
+                    var ajax_url = '';
+                    var modalDialog;
+                    document.observe('dom:loaded', function() {
+                        modalDialog = new Control.Modal($('false-link'), {
+                            position:		'center',
+                            overlayOpacity:	0.75,
+                            closeOnClick:	'overlay',
+                            className:		'modal',
+                            fade:			true,
+                            fadeDuration:	0.30,
+                            beforeOpen: function(request) {
+                                eval($('scripts-on-open').innerHTML);
+                            },
+                            afterClose: function() {
+                                if (uploaded == true) {
+                                    location.reload();
                                 }
+
+                                maxSteps = 3;
                             }
                         });
-                    } else {
-                        $('scripts-on-open').update();
-                        modalDialog.open();
-                    }
-                }
+                    });
 
-                function confirmFileDelete() {
-                    ask_user = confirm("Press OK to confirm that you would like to delete the selected file or files from this event, otherwise press Cancel.");
-                    
-                    if (ask_user == true) {
-                        $('file-listing').submit();
-                    } else {
-                        return false;
-                    }
-                }
-
-                function confirmLinkDelete() {
-                    ask_user = confirm("Press OK to confirm that you would like to delete the selected link or links from this event, otherwise press Cancel.");
-
-                    if (ask_user == true) {
-                        $('link-listing').submit();
-                    } else {
-                        return false;
-                    }
-                }
-
-                function confirmQuizDelete() {
-                    ask_user = confirm("Press OK to confirm that you would like to detach the selected quiz or quizzes from this event, otherwise press Cancel.");
-
-                    if (ask_user == true) {
-                        $('quiz-listing').submit();
-                    } else {
-                        return false;
-                    }
-                }
-
-                function confirmLTIDelete() {
-                    ask_user = confirm("Press OK to confirm that you would like to delete the selected LTI Provider or LTI Providers from this event, otherwise press Cancel.");
-
-                    if (ask_user == true) {
-                        $('lti-listing').submit();
-                    } else {
-                        return false;
-                    }
-                }
-
-                function updateEdChecks(obj) {
-                    return true;
-                }
-                var text = new Array();
-
-                function objectiveClick(element, id, default_text) {
-                    if (element.checked) {
-                        var textarea = document.createElement('textarea');
-                        textarea.name = 'objective_text['+id+']';
-                        textarea.id = 'objective_text_'+id;
-                        if (text[id] != null) {
-                            textarea.innerHTML = text[id];
+                    function openDialog (url) {
+                        if (url) {
+                            ajax_url = url;
+                            new Ajax.Request(ajax_url, {
+                                method: 'get',
+                                onComplete: function(transport) {
+                                    modalDialog.container.update(transport.responseText);
+                                    modalDialog.open();
+                                    var windowHeight = jQuery(window).outerHeight();
+                                    var modalHeight = jQuery("#placeholder.modal").outerHeight();
+                                    if (modalHeight >= windowHeight) {
+                                        jQuery(document).scrollTop(0);
+                                    }
+                                }
+                            });
                         } else {
-                            textarea.innerHTML = default_text;
-                        }
-                        textarea.className = "expandable objective";
-                        $('objective_'+id+"_append").insert({after: textarea});
-                        setTimeout('jQuery("#objective_text_'+id+'").textareaAutoSize();', 100);
-                    } else {
-                        if ($('objective_text_'+id)) {
-                            text[id] = $('objective_text_'+id).value;
-                            $('objective_text_'+id).remove();
+                            $('scripts-on-open').update();
+                            modalDialog.open();
                         }
                     }
-                }
+
+                    function confirmFileDelete() {
+                        ask_user = confirm("Press OK to confirm that you would like to delete the selected file or files from this event, otherwise press Cancel.");
+
+                        if (ask_user == true) {
+                            $('file-listing').submit();
+                        } else {
+                            return false;
+                        }
+                    }
+
+                    function confirmLinkDelete() {
+                        ask_user = confirm("Press OK to confirm that you would like to delete the selected link or links from this event, otherwise press Cancel.");
+
+                        if (ask_user == true) {
+                            $('link-listing').submit();
+                        } else {
+                            return false;
+                        }
+                    }
+
+                    function confirmQuizDelete() {
+                        ask_user = confirm("Press OK to confirm that you would like to detach the selected quiz or quizzes from this event, otherwise press Cancel.");
+
+                        if (ask_user == true) {
+                            $('quiz-listing').submit();
+                        } else {
+                            return false;
+                        }
+                    }
+
+                    function confirmLTIDelete() {
+                        ask_user = confirm("Press OK to confirm that you would like to delete the selected LTI Provider or LTI Providers from this event, otherwise press Cancel.");
+
+                        if (ask_user == true) {
+                            $('lti-listing').submit();
+                        } else {
+                            return false;
+                        }
+                    }
+
+                    function updateEdChecks(obj) {
+                        return true;
+                    }
+                    var text = new Array();
+
+                    function objectiveClick(element, id, default_text) {
+                        if (element.checked) {
+                            var textarea = document.createElement('textarea');
+                            textarea.name = 'objective_text['+id+']';
+                            textarea.id = 'objective_text_'+id;
+                            if (text[id] != null) {
+                                textarea.innerHTML = text[id];
+                            } else {
+                                textarea.innerHTML = default_text;
+                            }
+                            textarea.className = "expandable objective";
+                            $('objective_'+id+"_append").insert({after: textarea});
+                            setTimeout('jQuery("#objective_text_'+id+'").textareaAutoSize();', 100);
+                        } else {
+                            if ($('objective_text_'+id)) {
+                                text[id] = $('objective_text_'+id).value;
+                                $('objective_text_'+id).remove();
+                            }
+                        }
+                    }
                 </script>
                 <?php
                 events_subnavigation($event_info,'content');
 
-                echo "<div class=\"content-small\">".fetch_course_path($event_info["course_id"])."</div>\n";
+                echo "<div class=\"content-small\">".fetch_course_path($event_info["course_id"], $event_info["cunit_id"])."</div>\n";
+                echo "<a name=\"event-details-section-anchor\"></a>";
                 echo "<h1 id=\"page-top\" class=\"event-title\">".html_encode($event_info["event_title"])."</h1>\n";
 
                 if ($SUCCESS) {
@@ -1088,7 +1244,6 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                 ?>
                 <form id="content_form" class="form-horizontal" action="<?php echo ENTRADA_URL; ?>/admin/events?<?php echo replace_query(); ?>" method="post">
                     <input type="hidden" name="type" value="content" />
-                    <a name="event-details-section"></a>
                     <div id="event-details-section">
                         <table class="table" summary="Learning Event Setup">
                             <colgroup>
@@ -1096,31 +1251,31 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                                 <col style="width: 80%" />
                             </colgroup>
                             <tfoot>
-                                <tr>
-                                    <td colspan="2" class="borderless">
-                                        <input type="submit" class="btn btn-primary pull-right" value="Save" />
-                                    </td>
-                                </tr>
+                            <tr>
+                                <td colspan="2" class="borderless">
+                                    <input type="submit" class="btn btn-primary pull-right" value="Save" />
+                                </td>
+                            </tr>
                             </tfoot>
                             <tbody>
-                                <tr>
-                                    <td>Event Date &amp; Time</td>
-                                    <td><?php echo date(DEFAULT_DATE_FORMAT, $event_info["event_start"]); ?></td>
-                                </tr>
-                                <tr>
-                                    <td>Event Duration</td>
-                                    <td><?php echo (($event_info["event_duration"]) ? $event_info["event_duration"]." minutes" : "To Be Announced"); ?></td>
-                                </tr>
-                                <tr>
-                                    <td>Event Location</td>
-                                    <?php
-
-                                    ?>
-                                    <td><?php echo (($event_info["event_location"]) ? $event_info["event_location"] : "To Be Announced"); ?></td>
-                                </tr>
+                            <tr>
+                                <td>Event Date &amp; Time</td>
+                                <td><?php echo date(DEFAULT_DATETIME_FORMAT, $event_info["event_start"]); ?></td>
+                            </tr>
+                            <tr>
+                                <td>Event Duration</td>
+                                <td><?php echo (($event_info["event_duration"]) ? $event_info["event_duration"]." minutes" : "To Be Announced"); ?></td>
+                            </tr>
+                            <tr>
+                                <td>Event Location</td>
                                 <?php
-                                if ($event_audience_type == "grad_year") {
-                                    $query		= "	SELECT a.`event_id`, a.`event_title`, b.`audience_value` AS `event_grad_year`
+
+                                ?>
+                                <td><?php echo (($event_info["event_location"]) ? $event_info["event_location"] : "To Be Announced"); ?></td>
+                            </tr>
+                            <?php
+                            if ($event_audience_type == "grad_year") {
+                                $query		= "	SELECT a.`event_id`, a.`event_title`, b.`audience_value` AS `event_grad_year`
                                                     FROM `events` AS a
                                                     LEFT JOIN `event_audience` AS b
                                                     ON b.`event_id` = a.`event_id`
@@ -1132,40 +1287,40 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                                                     AND b.`audience_type` = 'grad_year'
                                                     AND b.`audience_value` = ".$db->qstr((int) $associated_grad_year)."
                                                     ORDER BY a.`event_title` ASC";
-                                    $results	= $db->GetAll($query);
-                                    if ($results) {
-                                        echo "<tr>\n";
-                                        echo "	<td colspan=\"2\">&nbsp;</td>\n";
-                                        echo "</tr>\n";
-                                        echo "<tr>\n";
-                                        echo "	<td style=\"vertical-align: top\">Overlapping Event".((count($results) != 1) ? "s" : "")."</td>\n";
-                                        echo "	<td>\n";
-                                        foreach ($results as $result) {
-                                            echo "	<a href=\"".ENTRADA_URL."/admin/events?id=".$result["event_id"]."&section=content\">".html_encode($result["event_title"])."</a><br />\n";
-                                        }
-                                        echo "	</td>\n";
-                                        echo "</tr>\n";
+                                $results	= $db->GetAll($query);
+                                if ($results) {
+                                    echo "<tr>\n";
+                                    echo "	<td colspan=\"2\">&nbsp;</td>\n";
+                                    echo "</tr>\n";
+                                    echo "<tr>\n";
+                                    echo "	<td style=\"vertical-align: top\">Overlapping Event".((count($results) != 1) ? "s" : "")."</td>\n";
+                                    echo "	<td>\n";
+                                    foreach ($results as $result) {
+                                        echo "	<a href=\"".ENTRADA_URL."/admin/events?id=".$result["event_id"]."&section=content\">".html_encode($result["event_title"])."</a><br />\n";
                                     }
+                                    echo "	</td>\n";
+                                    echo "</tr>\n";
                                 }
-                                ?>
-                                <tr>
-                                    <td colspan="2">&nbsp;</td>
-                                </tr>
-                                <tr>
-                                    <td style="vertical-align: top">Associated Faculty</td>
-                                    <td>
-                                        <?php
-                                        $query		= "	SELECT a.`proxy_id`, CONCAT_WS(' ', b.`firstname`, b.`lastname`) AS `fullname`, a.`contact_role`, b.`email`
+                            }
+                            ?>
+                            <tr>
+                                <td colspan="2">&nbsp;</td>
+                            </tr>
+                            <tr>
+                                <td style="vertical-align: top">Associated Faculty</td>
+                                <td>
+                                    <?php
+                                    $query		= "	SELECT a.`proxy_id`, CONCAT_WS(' ', b.`firstname`, b.`lastname`) AS `fullname`, a.`contact_role`, b.`email`
                                                         FROM `event_contacts` AS a
                                                         LEFT JOIN `".AUTH_DATABASE."`.`user_data` AS b
                                                         ON b.`id` = a.`proxy_id`
                                                         WHERE a.`event_id` = ".$db->qstr($event_info["event_id"])."
                                                         AND b.`id` IS NOT NULL
                                                         ORDER BY a.`contact_order` ASC";
-                                        $results	= $db->GetAll($query);
-                                        if ($results) {
-                                            foreach ($results as $key => $result) {
-                                                switch ($result["contact_role"]) {
+                                    $results	= $db->GetAll($query);
+                                    if ($results) {
+                                        foreach ($results as $key => $result) {
+                                            switch ($result["contact_role"]) {
                                                 case "ta":
                                                     $display_contact_role = "Teacher's Assistant";
                                                     break;
@@ -1175,91 +1330,104 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                                                 default:
                                                     $display_contact_role = html_encode(ucwords($result["contact_role"]));
                                                     break;
-                                                }
-                                                echo "<a href=\"mailto:".html_encode($result["email"])."\">".html_encode($result["fullname"])."</a> - ".$display_contact_role."<br />\n";
                                             }
-                                        } else {
-                                            echo "To Be Announced";
+                                            echo "<a href=\"mailto:".html_encode($result["email"])."\">".html_encode($result["fullname"])."</a> - ".$display_contact_role."<br />\n";
                                         }
+                                    } else {
+                                        echo "To Be Announced";
+                                    }
+                                    ?>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="2">&nbsp;</td>
+                            </tr>
+                            <tr>
+                                <td class="borderless" style="vertical-align: top"><label for="eventtype_ids" class="form-required"><?php echo $translate->_("Event Types"); ?></label></td>
+                                <td id="event-type-search-container" class="borderless">
+                                    <script>
+                                        var event_types = [];
+                                    </script>
+
+                                    <?php
+                                    if ((is_array($event_eventtypes_list)) && (count($event_eventtypes_list))) {
+                                    foreach ($event_eventtypes_list as $eventtype) {
+                                        $description = nl2br($eventtype["description"]);
+                                        $description = str_replace(array("\r\n", "\n\r", "\n", "\r"), "", $description);
                                         ?>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td colspan="2">&nbsp;</td>
-                                </tr>
-                                <tr>
-                                    <td class="borderless" style="vertical-align: top"><label for="eventtype_ids" class="form-required"><?php echo $translate->_("Event Types"); ?></label></td>
-                                    <td id="event-type-search-container" class="borderless">
+
                                         <script>
-                                            var event_types = [];
+                                            var event_type = [];
+                                            event_type["target_id"] = "<?php echo (int) $eventtype["id"]; ?>";
+                                            event_type["target_label"] = "<?php echo html_encode($eventtype["title"]); ?>";
+                                            event_type["description"] = "<?php echo addslashes($description); ?>";
+                                            event_types.push(event_type);
                                         </script>
 
+                                    <?php
+                                    }
+                                    ?>
+
+                                        <button id="eventtype_ids" class="btn btn-search-filter" style="min-width: 220px; text-align: left;"><?php echo $translate->_("Browse Event Types"); ?><i class="icon-chevron-down btn-icon pull-right"></i></button>
+
                                         <?php
-                                        if ((is_array($event_eventtypes_list)) && (count($event_eventtypes_list))) {
-                                            foreach ($event_eventtypes_list as $eventtype) {
-                                                $description = nl2br($eventtype["description"]);
-                                                $description = str_replace(array("\r\n", "\n\r", "\n", "\r"), "", $description);
-                                                ?>
+                                    } else {
+                                        echo display_error("No Event Types were found. You will need to add at least one Event Type before continuing.");
+                                    }
+                                    ?>
 
-                                                <script>
-                                                    var event_type = [];
-                                                    event_type["target_id"] = "<?php echo (int) $eventtype["id"]; ?>";
-                                                    event_type["target_label"] = "<?php echo html_encode($eventtype["title"]); ?>";
-                                                    event_type["description"] = "<?php echo addslashes($description); ?>";
-                                                    event_types.push(event_type);
-                                                </script>
-
-                                                <?php
-                                            }
-                                            ?>
-
-                                            <button id="eventtype_ids" class="btn btn-search-filter" style="min-width: 220px; text-align: left;"><?php echo $translate->_("Browse Event Types"); ?><i class="icon-chevron-down btn-icon pull-right"></i></button>
-
-                                            <?php
-                                        } else {
-                                            echo display_error("No Event Types were found. You will need to add at least one Event Type before continuing.");
-                                        }
-                                        ?>
-
-                                        <div id="duration_notice" class="content-small">Use the list above to select the different components of this event. When you select one, it will appear here and you can change the order and duration.</div>
-                                        <?php
-                                        echo "<ol id=\"duration_container\" class=\"sortableList\" style=\"display: none\">\n";
-                                        if (is_array($event_eventtypes)) {
-                                            foreach ($event_eventtypes as $eventtype) {
-                                                echo "<li id=\"type_".(int) $eventtype["eventtype_id"]."\" class=\"\">".html_encode($eventtype["eventtype_title"])."
+                                    <div id="duration_notice" class="content-small">Use the list above to select the different components of this event. When you select one, it will appear here and you can change the order and duration.</div>
+                                    <?php
+                                    echo "<ol id=\"duration_container\" class=\"sortableList\" style=\"display: none\">\n";
+                                    if (is_array($event_eventtypes)) {
+                                        foreach ($event_eventtypes as $eventtype) {
+                                            echo "<li id=\"type_".(int) $eventtype["eventtype_id"]."\" class=\"\">".html_encode($eventtype["eventtype_title"])."
                                                     <a href=\"#\" onclick=\"$(this).up().remove(); cleanupList(); return false;\" class=\"remove\">
                                                         <img src=\"".ENTRADA_RELATIVE."/images/action-delete.gif\">
                                                     </a>
                                                     <span class=\"duration_segment_container\">
-                                                        Duration: <input type=\"text\" class=\"input-mini duration_segment\" name=\"duration_segment[]\" onchange=\"cleanupList();\" value=\"".(int) $eventtype["duration"]."\"> minutes
+                                                        Duration: <input type=\"text\" class=\"input-mini duration_segment\" name=\"duration_segment[]\" onchange=\"cleanupList();\" value=\"".(float) $eventtype["duration"]."\"> minutes
                                                     </span>
                                                 </li>";
-                                            }
-                                        echo "</ol>";
                                         }
-                                        ?>
-                                        <div id="total_duration" class="content-small">Total time: 0 minutes.</div>
-                                        <input id="eventtype_duration_order" name="eventtype_duration_order" style="display: none;" />
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td colspan="2" class="borderless">
-                                        <label for="event_description" class="form-nrequired">Event Description</label>
-                                        <textarea id="event_description" name="event_description" style="width: 100%; height: 100px" cols="70" rows="10"><?php echo html_encode(trim(strip_selected_tags($event_info["event_description"], array("font")))); ?></textarea>
-                                    </td>
-                                </tr>
+                                        echo "</ol>";
+                                    }
+                                    ?>
+                                    <div id="total_duration" class="content-small">Total time: 0 minutes.</div>
+                                    <input id="eventtype_duration_order" name="eventtype_duration_order" style="display: none;" />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="borderless" style="vertical-align: top"><label for="medbiq_resources" class=""><?php echo $translate->_("Medbiq Resources"); ?></label></td>
+                                <td id="medbiq-resources-container" class="borderless">
+                                    <button id="medbiq_resources" class="btn btn-search-filter" style="min-width: 220px; text-align: left;"><?php echo $translate->_("Browse Medbiq Resources"); ?><i class="icon-chevron-down btn-icon pull-right"></i></button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="2" class="borderless">
+                                    <label for="event_description" class="form-nrequired">Event Description</label>
+                                    <textarea id="event_description" name="event_description" style="width: 100%; height: 100px" cols="70" rows="10"><?php echo html_encode(trim(strip_selected_tags($event_info["event_description"], array("font")))); ?></textarea>
+                                </td>
+                            </tr>
 
-                                <tr>
-                                    <td colspan="2" class="borderless">
-                                        <label for="event_message" class="form-nrequired">Required Preparation</label>
-                                        <textarea id="event_message" name="event_message" style="width: 100%; height: 100px" cols="70" rows="10"><?php echo html_encode(trim(strip_selected_tags($event_info["event_message"], array("font")))); ?></textarea>
-                                    </td>
-                                </tr>
+                            <tr>
+                                <td colspan="2" class="borderless">
+                                    <label for="event_message" class="form-nrequired">Required Preparation</label>
+                                    <textarea id="event_message" name="event_message" style="width: 100%; height: 100px" cols="70" rows="10"><?php echo html_encode(trim(strip_selected_tags($event_info["event_message"], array("font")))); ?></textarea>
+                                </td>
+                            </tr>
                             </tbody>
                         </table>
                     </div>
 
                     <?php
+                    $medbiq_resources = Models_Event_Medbiq_Resource::fetchAllRecordsByEventId($EVENT_ID);
+                    foreach($medbiq_resources as $resource) {
+                        $target = Models_Medbiq_Resource::fetchRowByID($resource->getResourceID());
+                        if ($target) {
+                            echo "<input type=\"hidden\" name=\"medbiq_resources[]\" value=\"" . $resource->getResourceID() . "\" id=\"medbiq_resources_" . $resource->getResourceID() . "\" data-id=\"" . $resource->getResourceID() . "\" data-label=\"" . $target->getResource() . "\" data-filter=\"as_groups\" class=\"search-target-control medbiq_resources_search_target_control\" />";
+                        }
+                    }
                     /**
                      * Test to see if the MeSH tables have been loaded or not,
                      * since this is an optional Entrada feature.
@@ -1311,8 +1479,8 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                                         <div class="row-fluid space-below">
                                             <a href="javascript:void(0)" class="keyword-toggle btn btn-success btn-small pull-right" keyword-toggle="show" id="toggle_sets">
                                                 <i class="icon-plus-sign icon-white"></i>
-                                                 Show Keyword Search
-                                             </a>
+                                                Show Keyword Search
+                                            </a>
                                         </div>
                                     </ul>
                                 </div>
@@ -1348,7 +1516,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                     }
                     ?>
 
-                    <a name="event-objectives-section"></a>
+                    <a name="event-objectives-section-anchor"></a>
                     <h1 class="collapsable" title="<?php echo $translate->_("Event Objectives Section"); ?>"><?php echo $translate->_("Event Objectives"); ?></h1>
                     <div id="event-objectives-section">
                         <div class="row-fluid space-below">
@@ -1379,7 +1547,65 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                         </div>
 
                         <?php
-                        $query = "	SELECT a.* FROM `global_lu_objectives` a
+                        if (defined("EVENT_ADMIN_TAG_QUICK_SEARCH") && EVENT_ADMIN_TAG_QUICK_SEARCH) {
+                            $objectives = $event->getObjectives();
+                            $allowed_tag_set_ids = Models_Objective_LinkedTagSet::fetchAllowedTagSetIDs("event", $ENTRADA_USER->getActiveOrganisation());
+
+                            $tag_quick_search = new Zend_View();
+                            $tag_quick_search->setScriptPath(dirname(dirname(dirname(dirname(__FILE__)))) . "/includes/views/");
+                            $tag_quick_search->id ="event-tag";
+                            $tag_quick_search->container_id = "event-tag-container";
+                            $tag_quick_search->form_id = "content_form";
+                            $tag_quick_search->admin = true;
+                            $tag_quick_search->objectives = $objectives;
+                            $tag_quick_search->translate = $translate;
+                            $tag_quick_search->title = $translate->_("Event Tags");
+                            $tag_quick_search->filter_label = $translate->_("Curriculum Tags");
+                            $tag_quick_search->allowed_tag_set_ids = array_keys($allowed_tag_set_ids);
+                            echo $tag_quick_search->render("tag-quick-search.inc.php");
+
+                            if (defined("EVENT_OBJECTIVES_SHOW_LINKS") && EVENT_OBJECTIVES_SHOW_LINKS) {
+                                $map_version = $event->getCurriculumMapVersion();
+                                if (!isset($version_id)) {
+                                    $version_id = $map_version ? $map_version->getID() : null;
+                                }
+                                if (!isset($linked_objectives)) {
+                                    $linked_objectives = $event->getLinkedObjectives($version_id, $objectives);
+                                }
+                                $allowed_linked_objective_ids = $event->getAllowedLinkedObjectiveIDs();
+                                $cperiod_id = $event->getCperiodID();
+
+                                $HEAD[] = "<script src=\"".ENTRADA_RELATIVE."/javascript/objective-link-admin.js?release=".html_encode(APPLICATION_VERSION)."\"></script>";
+                                $HEAD[] = "<link href=\"".ENTRADA_RELATIVE."/css/objectives/link-admin.css?release=".html_encode(APPLICATION_VERSION)."\" rel=\"stylesheet\" media=\"all\"></link>";
+
+                                $link_objectives = new Zend_View();
+                                $link_objectives->setScriptPath(dirname(dirname(dirname(dirname(__FILE__)))) . "/includes/views/");
+                                $link_objectives->translate = $translate;
+                                $link_objectives->version_id = $version_id;
+                                $link_objectives->event_id = $event->getID();
+                                $link_objectives->cperiod_id = $cperiod_id;
+                                $link_objectives->linked_objectives = $linked_objectives;
+                                $link_objectives->allowed_tag_set_ids = $allowed_tag_set_ids;
+                                $link_objectives->allowed_objective_ids = $allowed_linked_objective_ids;
+                                $link_objectives->list_container = "#event-tag-container";
+                                echo $link_objectives->render("link-objectives.inc.php");
+
+                                $remove_objective = new Zend_View();
+                                $remove_objective->setScriptPath(dirname(dirname(dirname(dirname(__FILE__)))) . "/includes/views/");
+                                $remove_objective->translate = $translate;
+                                $remove_objective->event_id = $event->getID();
+                                $remove_objective->cperiod_id = $cperiod_id;
+                                $remove_objective->list_container = "#event-tag-container";
+                                echo $remove_objective->render("remove-objective.inc.php");
+                            }
+                            ?>
+                            <div style="clear:both;"></div>
+                            <div class="pull-right">
+                                <input type="submit" value="Save" class="btn btn-primary" />
+                            </div>
+                            <?php
+                        } else {
+                            $query = "	SELECT a.* FROM `global_lu_objectives` a
                                     JOIN `objective_audience` b
                                     ON a.`objective_id` = b.`objective_id`
                                     AND b.`organisation_id` = ".$db->qstr($ENTRADA_USER->getActiveOrganisation())."
@@ -1392,50 +1618,50 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                                         )
                                     AND a.`objective_parent` = '0'
                                     AND a.`objective_active` = '1'";
-                        $objectives = $db->GetAll($query);
+                            $objectives = $db->GetAll($query);
 
-                        if ($objectives) {
-                            $objective_name = $translate->_("events_filter_controls");
-                            $hierarchical_name = $objective_name["co"]["global_lu_objectives_name"];
-                            ?>
-                            <style type="text/css">
-                                .mapped-objective{
-                                    padding-left: 30px!important;
-                                }
-                            </style>
-                            <div class="objectives half left">
-                                <h3><?php echo $translate->_("Curriculum Tag Sets"); ?></h3>
-                                <ul class="tl-objective-list" id="objective_list_0">
-                                <?php
-                                foreach($objectives as $objective) {
-                                    ?>
-                                    <li class = "objective-container objective-set"
-                                        id = "objective_<?php echo $objective["objective_id"]; ?>"
-                                        data-list="<?php echo $objective["objective_name"] == $hierarchical_name?'hierarchical':'flat'; ?>"
-                                        data-id="<?php echo $objective["objective_id"]; ?>">
-                                        <?php $title = ($objective["objective_code"]?$objective["objective_code"].': '.$objective["objective_name"]:$objective["objective_name"]); ?>
-                                        <div 	class="objective-title"
-                                                id="objective_title_<?php echo $objective["objective_id"]; ?>"
-                                                data-title="<?php echo $title;?>"
-                                                data-id = "<?php echo $objective["objective_id"]; ?>"
-                                                data-code = "<?php echo $objective["objective_code"]; ?>"
-                                                data-name = "<?php echo $objective["objective_name"]; ?>"
-                                                data-description = "<?php echo $objective["objective_description"]; ?>">
-                                            <h4><?php echo $title; ?></h4>
-                                        </div>
-                                        <div class="objective-controls" id="objective_controls_<?php echo $objective["objective_id"];?>">
-                                        </div>
-                                        <div class="objective-children" id="children_<?php echo $objective["objective_id"]; ?>">
-                                            <ul class="objective-list" id="objective_list_<?php echo $objective["objective_id"]; ?>"></ul>
-                                        </div>
-                                    </li>
-                                    <?php
-                                }
+                            if ($objectives) {
+                                $objective_name = $translate->_("events_filter_controls");
+                                $hierarchical_name = $objective_name["co"]["global_lu_objectives_name"];
                                 ?>
-                                </ul>
-                            </div>
-                            <?php
-                            $query = "	SELECT a.*, COALESCE(b.`objective_details`,a.`objective_description`) AS `objective_description`, COALESCE(b.`objective_type`,c.`objective_type`) AS `objective_type`,
+                                <style type="text/css">
+                                    .mapped-objective{
+                                        padding-left: 30px!important;
+                                    }
+                                </style>
+                                <div class="objectives half left">
+                                    <h3><?php echo $translate->_("Curriculum Tag Sets"); ?></h3>
+                                    <ul class="tl-objective-list" id="objective_list_0">
+                                        <?php
+                                        foreach($objectives as $objective) {
+                                            ?>
+                                            <li class = "objective-container objective-set"
+                                                id = "objective_<?php echo $objective["objective_id"]; ?>"
+                                                data-list="<?php echo $objective["objective_name"] == $hierarchical_name?'hierarchical':'flat'; ?>"
+                                                data-id="<?php echo $objective["objective_id"]; ?>">
+                                                <?php $title = ($objective["objective_code"]?$objective["objective_code"].': '.$objective["objective_name"]:$objective["objective_name"]); ?>
+                                                <div 	class="objective-title"
+                                                        id="objective_title_<?php echo $objective["objective_id"]; ?>"
+                                                        data-title="<?php echo $title;?>"
+                                                        data-id = "<?php echo $objective["objective_id"]; ?>"
+                                                        data-code = "<?php echo $objective["objective_code"]; ?>"
+                                                        data-name = "<?php echo $objective["objective_name"]; ?>"
+                                                        data-description = "<?php echo $objective["objective_description"]; ?>">
+                                                    <h4><?php echo $title; ?></h4>
+                                                </div>
+                                                <div class="objective-controls" id="objective_controls_<?php echo $objective["objective_id"];?>">
+                                                </div>
+                                                <div class="objective-children" id="children_<?php echo $objective["objective_id"]; ?>">
+                                                    <ul class="objective-list" id="objective_list_<?php echo $objective["objective_id"]; ?>"></ul>
+                                                </div>
+                                            </li>
+                                            <?php
+                                        }
+                                        ?>
+                                    </ul>
+                                </div>
+                                <?php
+                                $query = "	SELECT a.*, COALESCE(b.`objective_details`,a.`objective_description`) AS `objective_description`, COALESCE(b.`objective_type`,c.`objective_type`) AS `objective_type`,
                                     b.`importance`,c.`objective_details`, COALESCE(c.`eobjective_id`,0) AS `mapped`,
                                     COALESCE(b.`cobjective_id`,0) AS `mapped_to_course`
                                     FROM `global_lu_objectives` a
@@ -1450,21 +1676,29 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                                     AND (c.`event_id` = ".$db->qstr($EVENT_ID)." OR b.`course_id` = ".$db->qstr($COURSE_ID).")
                                     GROUP BY a.`objective_id`
                                     ORDER BY a.`objective_id` ASC";
-                            $mapped_objectives = $db->GetAll($query);
-                            $primary = false;
-                            $secondary = false;
-                            $tertiary = false;
-                            $hierarchical_objectives = array();
-                            $flat_objectives = array();
-                            $explicit_event_objectives = false;//array();
-                            $mapped_event_objectives = array();
-                            if ($mapped_objectives) {
-                                foreach ($mapped_objectives as $objective) {
-                                    //if its mapped to the event, but not the course, then it belongs in the event objective list
-                                    //echo $objective["objective_name"].' is '.$objective["mapped"].' and '.$objective["mapped_to_course"]."<br/>";
-                                    if ($objective["mapped"] && !$objective["mapped_to_course"]) {
-                                        if (!event_objective_parent_mapped_course($objective["objective_id"],$EVENT_ID)) {
-                                            $explicit_event_objectives[] = $objective;
+                                $mapped_objectives = $db->GetAll($query);
+                                $primary = false;
+                                $secondary = false;
+                                $tertiary = false;
+                                $hierarchical_objectives = array();
+                                $flat_objectives = array();
+                                $explicit_event_objectives = false;//array();
+                                $mapped_event_objectives = array();
+                                if ($mapped_objectives) {
+                                    foreach ($mapped_objectives as $objective) {
+                                        //if its mapped to the event, but not the course, then it belongs in the event objective list
+                                        //echo $objective["objective_name"].' is '.$objective["mapped"].' and '.$objective["mapped_to_course"]."<br/>";
+                                        if ($objective["mapped"] && !$objective["mapped_to_course"]) {
+                                            if (!event_objective_parent_mapped_course($objective["objective_id"],$EVENT_ID)) {
+                                                $explicit_event_objectives[] = $objective;
+                                            } else {
+                                                if ($objective["objective_type"] == "course") {
+                                                    //$objective_id = $objective["objective_id"];
+                                                    $hierarchical_objectives[] = $objective;
+                                                } else {
+                                                    $flat_objectives[] = $objective;
+                                                }
+                                            }
                                         } else {
                                             if ($objective["objective_type"] == "course") {
                                                 //$objective_id = $objective["objective_id"];
@@ -1473,151 +1707,144 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                                                 $flat_objectives[] = $objective;
                                             }
                                         }
-                                    } else {
-                                        if ($objective["objective_type"] == "course") {
-                                            //$objective_id = $objective["objective_id"];
-                                            $hierarchical_objectives[] = $objective;
-                                        } else {
-                                            $flat_objectives[] = $objective;
+
+                                        if ($objective["mapped"]) {
+                                            $mapped_event_objectives[] = $objective;
                                         }
                                     }
+                                }
+                                ?>
 
-                                    if ($objective["mapped"]) {
-                                        $mapped_event_objectives[] = $objective;
+                                <div class="mapped_objectives right droppable" id="mapped_objectives" data-resource-type="event" data-resource-id="<?php echo $EVENT_ID;?>">
+                                    <h2><?php echo $translate->_("Mapped Objectives"); ?></h2>
+
+                                    <div class="row-fluid space-below">
+                                        <a href="javascript:void(0)" class="mapping-toggle btn btn-success btn-small pull-right" data-toggle="show" id="toggle_sets"><i class="icon-plus-sign icon-white"></i> <?php echo $translate->_("Map Additional Objectives"); ?></a>
+                                    </div>
+                                    <?php
+                                    if ($hierarchical_objectives) {
+                                        // function loads bottom leaves and displays them
+                                        event_objectives_display_leafs($hierarchical_objectives, $COURSE_ID, $EVENT_ID);
                                     }
-                                }
-                            }
-                            ?>
-
-                            <div class="mapped_objectives right droppable" id="mapped_objectives" data-resource-type="event" data-resource-id="<?php echo $EVENT_ID;?>">
-                                <h2><?php echo $translate->_("Mapped Objectives"); ?></h2>
-
-                                <div class="row-fluid space-below">
-                                    <a href="javascript:void(0)" class="mapping-toggle btn btn-success btn-small pull-right" data-toggle="show" id="toggle_sets"><i class="icon-plus-sign icon-white"></i> <?php echo $translate->_("Map Additional Objectives"); ?></a>
-                                </div>
-                                <?php
-                                if ($hierarchical_objectives) {
-                                    // function loads bottom leaves and displays them
-                                    event_objectives_display_leafs($hierarchical_objectives, $COURSE_ID, $EVENT_ID);
-                                }
-                                if ($flat_objectives) {
-                                    ?>
-                                    <div id="clinical-list-wrapper">
-                                        <a name="clinical-objective-list"></a>
-                                        <h3 id="flat-toggle"  title="<?php echo $translate->_("Clinical Objective List"); ?>" class="collapsable <?php echo empty($objective_name["cp"]["global_lu_objectives_name"]) ? "collapsed" : ""; ?> list-heading"><?php echo $objective_name["cp"]["global_lu_objectives_name"] ? $objective_name["cp"]["global_lu_objectives_name"] : "Other " . $translate->_("Objectives"); ?></h3>
-                                        <div id="clinical-objective-list">
-                                            <ul class="objective-list mapped-list" id="mapped_flat_objectives" data-importance="flat">
-                                                <?php
-                                                foreach ($flat_objectives as $objective) {
-                                                    $title = ($objective["objective_code"]?$objective["objective_code"].': '.$objective["objective_name"]:$objective["objective_name"]);
-                                                    ?>
-                                                    <li class = "mapped-objective"
-                                                        id = "mapped_objective_<?php echo $objective["objective_id"]; ?>"
-                                                        data-id = "<?php echo $objective["objective_id"]; ?>"
-                                                        data-title="<?php echo $title;?>"
-                                                        data-description="<?php echo htmlentities($objective["objective_description"]);?>">
-                                                        <strong><?php echo $title; ?></strong>
-                                                        <div class="objective-description">
-                                                            <?php
-                                                            $set = fetch_objective_set_for_objective_id($objective["objective_id"]);
-                                                            if ($set) {
-                                                                echo "From the " . $translate->_("Curriculum Tag Set") . ": <strong>".$set["objective_name"]."</strong><br/>";
-                                                            }
-
-                                                            echo $objective["objective_description"];
-                                                            ?>
-                                                        </div>
-
-                                                        <div class="event-objective-controls">
-                                                            <input type="checkbox" class="checked-mapped" id="check_mapped_<?php echo $objective['objective_id'];?>" value="<?php echo $objective['objective_id'];?>" <?php echo $objective["mapped"]?' checked="checked"':''; ?>/>
-                                                        </div>
-                                                    </li>
+                                    if ($flat_objectives) {
+                                        ?>
+                                        <div id="clinical-list-wrapper">
+                                            <a name="clinical-objective-list"></a>
+                                            <h3 id="flat-toggle"  title="<?php echo $translate->_("Clinical Objective List"); ?>" class="collapsable <?php echo empty($objective_name["cp"]["global_lu_objectives_name"]) ? "collapsed" : ""; ?> list-heading"><?php echo $objective_name["cp"]["global_lu_objectives_name"] ? $objective_name["cp"]["global_lu_objectives_name"] : "Other " . $translate->_("Objectives"); ?></h3>
+                                            <div id="clinical-objective-list">
+                                                <ul class="objective-list mapped-list" id="mapped_flat_objectives" data-importance="flat">
                                                     <?php
+                                                    foreach ($flat_objectives as $objective) {
+                                                        $title = ($objective["objective_code"]?$objective["objective_code"].': '.$objective["objective_name"]:$objective["objective_name"]);
+                                                        ?>
+                                                        <li class = "mapped-objective"
+                                                            id = "mapped_objective_<?php echo $objective["objective_id"]; ?>"
+                                                            data-id = "<?php echo $objective["objective_id"]; ?>"
+                                                            data-title="<?php echo $title;?>"
+                                                            data-description="<?php echo htmlentities($objective["objective_description"]);?>">
+                                                            <strong><?php echo $title; ?></strong>
+                                                            <div class="objective-description">
+                                                                <?php
+                                                                $set = fetch_objective_set_for_objective_id($objective["objective_id"]);
+                                                                if ($set) {
+                                                                    echo "From the " . $translate->_("Curriculum Tag Set") . ": <strong>".$set["objective_name"]."</strong><br/>";
+                                                                }
+
+                                                                echo $objective["objective_description"];
+                                                                ?>
+                                                            </div>
+
+                                                            <div class="event-objective-controls">
+                                                                <input type="checkbox" class="checked-mapped" id="check_mapped_<?php echo $objective['objective_id'];?>" value="<?php echo $objective['objective_id'];?>" <?php echo $objective["mapped"]?' checked="checked"':''; ?>/>
+                                                            </div>
+                                                        </li>
+                                                        <?php
+                                                    }
+                                                    ?>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                        <?php
+                                    }
+                                    ?>
+                                    <div id="event-list-wrapper" <?php echo ($explicit_event_objectives)?'':' style="display:none;"';?>>
+                                        <a name="event-objective-list"></a>
+                                        <h2 id="event-toggle" title="<?php echo $translate->_("Event Objective List"); ?>" class="collapsable collapsed list-heading"><?php echo $translate->_("Event Specific Objectives"); ?></h2>
+                                        <div id="event-objective-list">
+                                            <ul class="objective-list mapped-list" id="mapped_event_objectives" data-importance="event">
+                                                <?php
+                                                if ($explicit_event_objectives) {
+                                                    foreach ($explicit_event_objectives as $objective) {
+                                                        $title = ($objective["objective_code"] ? $objective["objective_code"] . ': ' . $objective["objective_name"] : $objective["objective_name"]);
+                                                        ?>
+                                                        <li class = "mapped-objective"
+                                                            id = "mapped_objective_<?php echo $objective["objective_id"]; ?>"
+                                                            data-id = "<?php echo $objective["objective_id"]; ?>"
+                                                            data-title="<?php echo $title;?>"
+                                                            data-description="<?php echo htmlentities($objective["objective_description"]);?>"
+                                                            data-mapped="<?php echo $objective["mapped_to_course"]?1:0;?>">
+                                                            <strong><?php echo $title; ?></strong>
+                                                            <div class="objective-description">
+                                                                <?php
+                                                                $set = fetch_objective_set_for_objective_id($objective["objective_id"]);
+                                                                if ($set) {
+                                                                    echo "From the " . $translate->_("Curriculum Tag Set") . ": <strong>".$set["objective_name"]."</strong><br/>";
+                                                                }
+
+                                                                echo $objective["objective_description"];
+                                                                ?>
+                                                            </div>
+
+                                                            <div class="event-objective-controls">
+                                                                <img 	src="<?php echo ENTRADA_RELATIVE;?>/images/action-delete.gif"
+                                                                        class="objective-remove list-cancel-image"
+                                                                        id="objective_remove_<?php echo $objective["objective_id"];?>"
+                                                                        data-id="<?php echo $objective["objective_id"];?>">
+                                                            </div>
+                                                        </li>
+                                                        <?php
+                                                    }
                                                 }
                                                 ?>
                                             </ul>
                                         </div>
                                     </div>
-                                    <?php
-                                }
-                                ?>
-                                <div id="event-list-wrapper" <?php echo ($explicit_event_objectives)?'':' style="display:none;"';?>>
-                                    <a name="event-objective-list"></a>
-                                    <h2 id="event-toggle" title="<?php echo $translate->_("Event Objective List"); ?>" class="collapsable collapsed list-heading"><?php echo $translate->_("Event Specific Objectives"); ?></h2>
-                                    <div id="event-objective-list">
-                                        <ul class="objective-list mapped-list" id="mapped_event_objectives" data-importance="event">
-                                            <?php
-                                            if ($explicit_event_objectives) {
-                                                foreach ($explicit_event_objectives as $objective) {
+                                    <select id="checked_objectives_select" name="checked_objectives[]" multiple="multiple" style="display:none;">
+                                        <?php
+                                        if ($mapped_event_objectives) {
+                                            foreach ($mapped_event_objectives as $objective) {
+                                                if ($objective["objective_type"] == "course") {
                                                     $title = ($objective["objective_code"] ? $objective["objective_code"] . ': ' . $objective["objective_name"] : $objective["objective_name"]);
                                                     ?>
-                                                    <li class = "mapped-objective"
-                                                        id = "mapped_objective_<?php echo $objective["objective_id"]; ?>"
-                                                        data-id = "<?php echo $objective["objective_id"]; ?>"
-                                                        data-title="<?php echo $title;?>"
-                                                        data-description="<?php echo htmlentities($objective["objective_description"]);?>"
-                                                        data-mapped="<?php echo $objective["mapped_to_course"]?1:0;?>">
-                                                        <strong><?php echo $title; ?></strong>
-                                                        <div class="objective-description">
-                                                            <?php
-                                                            $set = fetch_objective_set_for_objective_id($objective["objective_id"]);
-                                                            if ($set) {
-                                                                echo "From the " . $translate->_("Curriculum Tag Set") . ": <strong>".$set["objective_name"]."</strong><br/>";
-                                                            }
-
-                                                            echo $objective["objective_description"];
-                                                            ?>
-                                                        </div>
-
-                                                        <div class="event-objective-controls">
-                                                            <img 	src="<?php echo ENTRADA_RELATIVE;?>/images/action-delete.gif"
-                                                                    class="objective-remove list-cancel-image"
-                                                                    id="objective_remove_<?php echo $objective["objective_id"];?>"
-                                                                    data-id="<?php echo $objective["objective_id"];?>">
-                                                        </div>
-                                                    </li>
+                                                    <option value = "<?php echo $objective["objective_id"]; ?>" selected="selected"><?php echo $title; ?></option>
                                                     <?php
                                                 }
                                             }
-                                            ?>
-                                        </ul>
-                                    </div>
+                                        }
+                                        ?>
+                                    </select>
+                                    <select id="clinical_objectives_select" name="clinical_presentations[]" multiple="multiple" style="display:none;">
+                                        <?php
+                                        if ($mapped_event_objectives) {
+                                            foreach($mapped_event_objectives as $objective){
+                                                if($objective["objective_type"] == "event") {
+                                                    $title = ($objective["objective_code"]?$objective["objective_code"].': '.$objective["objective_name"]:$objective["objective_name"]);
+                                                    ?>
+                                                    <option value = "<?php echo $objective["objective_id"]; ?>" selected="selected"><?php echo $title; ?></option>
+                                                    <?php
+                                                }
+                                            }
+                                        }
+                                        ?>
+                                    </select>
                                 </div>
-                                <select id="checked_objectives_select" name="checked_objectives[]" multiple="multiple" style="display:none;">
-                                    <?php
-                                    if ($mapped_event_objectives) {
-                                        foreach ($mapped_event_objectives as $objective) {
-                                            if ($objective["objective_type"] == "course") {
-                                                $title = ($objective["objective_code"] ? $objective["objective_code"] . ': ' . $objective["objective_name"] : $objective["objective_name"]);
-                                                ?>
-                                                <option value = "<?php echo $objective["objective_id"]; ?>" selected="selected"><?php echo $title; ?></option>
-                                                <?php
-                                            }
-                                        }
-                                    }
-                                    ?>
-                                </select>
-                                <select id="clinical_objectives_select" name="clinical_presentations[]" multiple="multiple" style="display:none;">
-                                    <?php
-                                    if ($mapped_event_objectives) {
-                                        foreach($mapped_event_objectives as $objective){
-                                            if($objective["objective_type"] == "event") {
-                                                $title = ($objective["objective_code"]?$objective["objective_code"].': '.$objective["objective_name"]:$objective["objective_name"]);
-                                                ?>
-                                                <option value = "<?php echo $objective["objective_id"]; ?>" selected="selected"><?php echo $title; ?></option>
-                                                <?php
-                                            }
-                                        }
-                                    }
-                                    ?>
-                                </select>
-                            </div>
-                            <div class="clearfix"></div>
+                                <div class="clearfix"></div>
 
-                            <div class="pull-right">
-                                <input type="submit" class="btn btn-primary" value="Save" />
-                            </div>
-                            <?php
+                                <div class="pull-right">
+                                    <input type="submit" class="btn btn-primary" value="Save" />
+                                </div>
+                                <?php
+                            }
                         }
 
                         $query = "	SELECT a.`topic_id`,a.`topic_name`, e.`topic_coverage`,e.`topic_time`
@@ -1636,7 +1863,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                         $topic_results = $db->GetAll($query);
                         if ($topic_results) {
                             ?>
-                        <div style="clear:both;"></div>
+                            <div style="clear:both;"></div>
                             <a name="event-topics-section"></a>
                             <h2 class="collapsable collapsed" title="Event Topics Section">Event Topics</h2>
                             <div id="event-topics-section">
@@ -1757,15 +1984,15 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                                     <span class="span1">
                                         &nbsp;
                                     </span>
-                                    <span class="span1">
+                                        <span class="span1">
                                         <input type="checkbox" id="recurring_event_<?php echo $recurring_event["event_id"] ?>" class="recurring_events" onclick="jQuery('#recurring_events_count').html(jQuery('.recurring_events:checked').length)" name="recurring_event_ids[]" value="<?php echo $recurring_event["event_id"]; ?>"<?php echo (!isset($_POST["recurring_event_ids"]) || in_array($recurring_event["event_id"], $_POST["recurring_event_ids"]) ? " checked=\"checked\"" : ""); ?> />
                                     </span>
-                                    <label class="span10" for="recurring_event_<?php echo $recurring_event["event_id"] ?>">
-                                        <strong class="space-right">
-                                            <?php echo html_encode($recurring_event["event_title"]); ?>
-                                        </strong>
-                                        [<span class="content-small"><?php echo html_encode(date(DEFAULT_DATE_FORMAT, $recurring_event["event_start"])); ?></span>]
-                                    </label>
+                                        <label class="span10" for="recurring_event_<?php echo $recurring_event["event_id"] ?>">
+                                            <strong class="space-right">
+                                                <?php echo html_encode($recurring_event["event_title"]); ?>
+                                            </strong>
+                                            [<span class="content-small"><?php echo html_encode(date(DEFAULT_DATETIME_FORMAT, $recurring_event["event_start"])); ?></span>]
+                                        </label>
                                     </div>
                                     <?php
                                 }
@@ -1779,162 +2006,202 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                     }
                     ?>
                 </form>
-                <a name="event-resources-section" id="event-resources-section"></a>
+                <a name="event-resources-section-anchor" id="event-resources-section"></a>
                 <h1 class="space-above large">Event Resources</h1>
                 <div id="event-resources-delete-confirmation"></div>
                 <div id="event-resources-container-loading" class="hide">
                     <img src="<?php echo ENTRADA_URL ."/images/loading.gif" ?>" />
                     <p id="event_resources_loading_msg">Loading Event Resources...</p>
                 </div>
+                <?php
+                $quick_add_resource_view = new Zend_View();
+                $quick_add_resource_view->setScriptPath(dirname(__FILE__)."/views/");
+                $quick_add_resource_view->event_id = $EVENT_ID;
+                $quick_add_resource_view->is_recurring_event = $re_bool;
+                $quick_add_resource_view->recurring_event_ids = $re_ids;
+                echo $quick_add_resource_view->render("quick-add-resource.view.php");
+                ?>
                 <div id="event-resources-container">
-                    <div class="row">
-                        <a  href="#" id="event-resource-toggle" class="btn pull-right">Add a Resource</a>
+                    <div class="row text-center">
+                        <a  href="#" id="event-resource-toggle" class="btn btn-success">Add a Resource</a>
                     </div>
                     <div id="event-resources-msgs"></div>
                 </div>
-                    <?php
-                    $attached_gradebook_assessment = Models_Assessment_AssessmentEvent::fetchRowByEventID($EVENT_ID);
-                    if ($attached_gradebook_assessment) {
-                        $assessment = $attached_gradebook_assessment->getAssessment();
-                        if ($assessment) { ?>
-                            <div class="space-below">
-                                <h3>Attached Gradebook Assessments</h3>
-                                <table class="tableList" cellspacing="0" summary="List of Attached LTI Providers">
-                                    <colgroup>
-                                        <col class="modified wide"/>
-                                        <col class="title" />
-                                        <col class="title" />
-                                        <col class="date" />
-                                        <col class="date" />
-                                    </colgroup>
-                                    <thead>
-                                        <tr>
-                                            <td class="modified">&nbsp;</td>
-                                            <td class="title sortedASC"><div class="noLink">Assessment Name</div></td>
-                                            <td class="title">Assessment Type</td>
-                                            <td class="date-small">Assessment Points</td>
-                                            <td class="date-small">Assessment Weight</td>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td></td>
-                                            <td><a href="<?php echo ENTRADA_URL; ?>/admin/gradebook/assessments/?section=grade&id=<?php echo $assessment->getCourseID(); ?>&assessment_id=<?php echo $assessment->getAssessmentID(); ?>"><strong><?php echo $assessment->getName(); ?></strong></a></td>
-                                            <td><?php echo $assessment->getType(); ?></td>
-                                            <td><?php echo $assessment->getNumericGradePointsTotal(); ?></td>
-                                            <td><?php echo $assessment->getGradeWeighting(); ?>%</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
+                <?php
+                $attached_gradebook_assessment = Models_Assessment_Event::fetchRowByEventID($EVENT_ID);
+                if ($attached_gradebook_assessment) {
+                    $assessment = $attached_gradebook_assessment->getAssessment();
+                    if ($assessment) { ?>
+                        <div class="space-below">
+                            <h3>Attached Gradebook Assessments</h3>
+                            <table class="tableList" cellspacing="0" summary="List of Attached LTI Providers">
+                                <colgroup>
+                                    <col class="modified wide"/>
+                                    <col class="title" />
+                                    <col class="title" />
+                                    <col class="date" />
+                                    <col class="date" />
+                                </colgroup>
+                                <thead>
+                                <tr>
+                                    <td class="modified">&nbsp;</td>
+                                    <td class="title sortedASC"><div class="noLink">Assessment Name</div></td>
+                                    <td class="title">Assessment Type</td>
+                                    <td class="date-small">Assessment Points</td>
+                                    <td class="date-small">Assessment Weight</td>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr>
+                                    <td></td>
+                                    <td><a href="<?php echo ENTRADA_URL; ?>/admin/gradebook/assessments/?section=grade&id=<?php echo $assessment->getCourseID(); ?>&assessment_id=<?php echo $assessment->getAssessmentID(); ?>"><strong><?php echo $assessment->getName(); ?></strong></a></td>
+                                    <td><?php echo $assessment->getType(); ?></td>
+                                    <td><?php echo $assessment->getNumericGradePointsTotal(); ?></td>
+                                    <td><?php echo $assessment->getGradeWeighting(); ?>%</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
                         <?php
-                        }
                     }
-                    ?>
+                }
+                ?>
 
-                <div id="delete-event-resource-modal" class="modal scrollable fade hide" style="max-height: 314px;">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span></button>
-                                <h4 class="modal-title">Delete Event Resource</h4>
-                            </div>
-                            <div class="modal-body">
-                                <div id="delete-event-resource-msgs"></div>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-default pull-left" data-dismiss="modal">Close</button>
-                                <button id="delete-event-resource" type="button" class="btn btn-danger">Delete Resource</button>
+                <div class="responsive-modal">
+                    <div id="delete-event-resource-modal" class="modal fade hide">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span></button>
+                                    <h4 class="modal-title">Delete Event Resource</h4>
+                                </div>
+                                <div class="modal-body">
+                                    <div id="delete-event-resource-msgs"></div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-default pull-left" data-dismiss="modal">Close</button>
+                                    <button id="delete-event-resource" type="button" class="btn btn-danger">Delete Resource</button>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div id="event-resource-view-modal" class="modal fade hide">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span></button>
-                                <h4 id="event-resource-view-modal-heading" class="modal-title"></h4>
-                            </div>
-                            <div class="modal-body">
-                                <div id="event-resource-view-msgs"></div>
-                                <table id="resource-views-table" class="table table-striped table-bordered datatable">
-                                    <thead>
+                <div class="responsive-modal">
+                    <div id="event-resource-view-modal" class="modal fade hide">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span></button>
+                                    <h4 id="event-resource-view-modal-heading" class="modal-title"></h4>
+                                </div>
+                                <div class="modal-body">
+                                    <div id="event-resource-view-msgs"></div>
+                                    <table id="resource-views-table" class="table table-striped table-bordered datatable">
+                                        <thead>
                                         <tr>
                                             <th width="40%">Name</th>
                                             <th width="15%">Views</th>
                                             <th width="45%">Last Viewed</th>
                                         </tr>
-                                    </thead>
-                                    <tbody>
+                                        </thead>
+                                        <tbody>
 
-                                    </tbody>
-                                </table>
-                                <div id="event-resources-views-loading" class="hide">
-                                    <p id="event_resources_views-loading_msg" class="muted text-center">
-                                        <i class="fa fa-circle-o-notch fa-spin fa-fw"></i>
-                                        <span class="sr-only">Loading...</span> Loading resource views...
-                                    </p>
+                                        </tbody>
+                                    </table>
+                                    <div id="event-resources-views-loading" class="hide">
+                                        <p id="event_resources_views-loading_msg" class="muted text-center">
+                                            <i class="fa fa-circle-o-notch fa-spin fa-fw"></i>
+                                            <span class="sr-only">Loading...</span> Loading resource views...
+                                        </p>
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-default pull-right" data-dismiss="modal">Close</button>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-default pull-right" data-dismiss="modal">Close</button>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div id="event-resource-modal" class="modal scrollable fade hide">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span></button>
-                                <h4 id="event_resource_modal_title" class="modal-title">Add Event Resource</h4>
-                            </div>
-                            <div class="modal-body">
-                                <form class="form-horizontal" action="<?php echo ENTRADA_URL . "/admin/events?section=api-resource-wizard" ?>" method="post" id="event_resource_form" enctype="multipart/form-data">
-                                    <input id="event_id" type="hidden" name="event_id" value="<?php echo $EVENT_ID; ?>" />
-                                    <input id="re_bool" type="hidden" name="re_bool" value="<?php echo $re_bool; ?>" />
-                                    <input id="re_ids" type="hidden" name="re_ids" value="<?php echo htmlentities(json_encode($re_ids)); ?>" />
-                                    <input id="event_resource_entity_id" type="hidden" name="event_resource_entity_id" value="" />
-                                    <input id="resource_id" type="hidden" name="resource_id" value="" />
-                                    <input id="resource_step" type="hidden" name="step" value="1" />
-                                    <input id="resource_substep" type="hidden" name="resource_substep" value="1" />
-                                    <input id="resource_next_step" type="hidden" name="next_step" value="0" />
-                                    <input id="resource_previous_step" type="hidden" name="previous_step" value="0" />
-                                    <input id="event_resource_type_value" type="hidden" name="event_resource_type_value" value="11" />
-                                    <input id="event_resource_required_value" type="hidden" name="event_resource_required_value" value="no" />
-                                    <input id="event_resource_timeframe_value" type="hidden" name="event_resource_timeframe_value" value="none" />
-                                    <input id="event_resource_release_value" type="hidden" name="event_resource_release_value" value="no" />
-                                    <input id="event_resource_release_start_value" type="hidden" name="event_resource_release_start_value" value="" />
-                                    <input id="event_resource_release_start_time_value" type="hidden" name="event_resource_release_start_time_value" value="" />
-                                    <input id="event_resource_release_finish_value" type="hidden" name="event_resource_release_finish_value" value="" />
-                                    <input id="event_resource_release_finish_time_value" type="hidden" name="event_resource_release_finish_time_value" value="" />
-                                    <input id="event_resource_attach_file" type="hidden" name="event_resource_attach_file" value="no" />
-                                    <input id="upload" type="hidden" name="upload" value="upload" />
-                                    <input id="" type="hidden" name="method" value="add" />
-                                    <div id="event-resource-msgs"></div>
-                                    <div id="event-resource-step"></div>
-                                </form>
-                                <div id="event_resource_loading">
-                                    <img src="<?php echo ENTRADA_URL ."/images/loading.gif" ?>" />
-                                    <p id="event_resource_loading_msg"></p>
+                <div class="responsive-modal">
+                    <div id="event-resource-modal" class="modal modal-lg fade hide">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span></button>
+                                    <h4 id="event_resource_modal_title" class="modal-title">Add Event Resource</h4>
                                 </div>
-                                <div id="event_resource_drop_overlay" class="hide">
-                                    <div id="event_resource_drop_box"></div>
-                                    <p id="event_resource_loading_msg">Drop the selected file anywhere to upload.</p>
+                                <div class="modal-body">
+                                    <form class="form-horizontal" action="<?php echo ENTRADA_URL . "/admin/events?section=api-resource-wizard" ?>" method="post" id="event_resource_form" enctype="multipart/form-data">
+                                        <input id="event_id" type="hidden" name="event_id" value="<?php echo $EVENT_ID; ?>" />
+                                        <input id="re_bool" type="hidden" name="re_bool" value="<?php echo $re_bool; ?>" />
+                                        <input id="re_ids" type="hidden" name="re_ids" value="<?php echo htmlentities(json_encode($re_ids)); ?>" />
+                                        <input id="event_resource_entity_id" type="hidden" name="event_resource_entity_id" value="" />
+                                        <input id="resource_id" type="hidden" name="resource_id" value="" />
+                                        <input id="resource_step" type="hidden" name="step" value="1" />
+                                        <input id="resource_substep" type="hidden" name="resource_substep" value="1" />
+                                        <input id="resource_next_step" type="hidden" name="next_step" value="0" />
+                                        <input id="resource_previous_step" type="hidden" name="previous_step" value="0" />
+                                        <input id="event_resource_type_value" type="hidden" name="event_resource_type_value" value="11" />
+                                        <input id="event_resource_required_value" type="hidden" name="event_resource_required_value" value="no" />
+                                        <input id="event_resource_timeframe_value" type="hidden" name="event_resource_timeframe_value" value="none" />
+                                        <input id="event_resource_release_value" type="hidden" name="event_resource_release_value" value="no" />
+                                        <input id="event_resource_release_start_value" type="hidden" name="event_resource_release_start_value" value="" />
+                                        <input id="event_resource_release_start_time_value" type="hidden" name="event_resource_release_start_time_value" value="" />
+                                        <input id="event_resource_release_finish_value" type="hidden" name="event_resource_release_finish_value" value="" />
+                                        <input id="event_resource_release_finish_time_value" type="hidden" name="event_resource_release_finish_time_value" value="" />
+                                        <input id="event_resource_attach_file" type="hidden" name="event_resource_attach_file" value="no" />
+                                        <input id="upload" type="hidden" name="upload" value="upload" />
+                                        <input id="" type="hidden" name="method" value="add" />
+                                        <div id="event-resource-msgs"></div>
+                                        <div id="event-resource-step"></div>
+
+                                        <div id="event-resource-step-exam" hidden="true">
+                                            <h3>Select Exam</h3>
+                                            <button id="choose-exam-btn" class="btn btn-search-filter" style="min-width: 220px; text-align: left;"><?php echo $translate->_("Browse Exams"); ?><i class="icon-chevron-down btn-icon pull-right"></i></button>
+                                        </div>
+
+                                    </form>
+                                    <div id="event_resource_loading">
+                                        <img src="<?php echo ENTRADA_URL ."/images/loading.gif" ?>" />
+                                        <p id="event_resource_loading_msg"></p>
+                                    </div>
+                                    <div id="event_resource_drop_overlay" class="hide">
+                                        <div id="event_resource_drop_box"></div>
+                                        <p id="event_resource_loading_msg">Drop the selected file anywhere to upload.</p>
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-default pull-left" data-dismiss="modal">Close</button>
-                                <button id="event-resource-previous" type="button" class="btn btn-default hide">Previous Step</button>
-                                <button id="event-resource-next" type="button" class="btn btn-primary">Next Step</button>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-default pull-left" data-dismiss="modal">Close</button>
+                                    <button id="event-resource-previous" type="button" class="btn btn-default hide">Previous Step</button>
+                                    <button id="event-resource-next" type="button" class="btn btn-primary">Next Step</button>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <script type="text/javascript">
+                    var API_URL = "<?php echo ENTRADA_URL . "/admin/" . $MODULE . "?section=api-resource-wizard"; ?>";
+
                     jQuery(document).ready(function ($) {
+                        $("#choose-exam-btn").advancedSearch({
+                            api_url: API_URL,
+                            resource_url: ENTRADA_URL,
+                            filters: {
+                                exams: {
+                                    mode: "radio",
+                                    label: "Exams & Folders",
+                                    data_source: "get-exams-by-folder",
+                                    secondary_data_source: "get-exams-by-folder"
+                                }
+                            },
+                            control_class: "exam-id",
+                            no_results_text: "<?php echo $translate->_("No Event Types found matching the search criteria"); ?>",
+                            parent_form: $("#content_form"),
+                            width: 300,
+                            modal: true,
+                        });
+
                         $("#eventtype_ids").advancedSearch({
                             resource_url: ENTRADA_URL,
                             filters: {
@@ -1949,6 +2216,24 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                             parent_form: $("#content_form"),
                             width: 300
                         });
+
+                        $("#medbiq_resources").advancedSearch({
+                            api_url: "<?php echo ENTRADA_URL . "/admin/" . $MODULE . "?section=api-events"; ?>",
+                            resource_url: ENTRADA_URL,
+                            filters: {
+                                medbiq_resources: {
+                                    label: "<?php echo $translate->_("Medbiq Resources"); ?>",
+                                    data_source: "get-medbiq-resources",
+                                }
+                            },
+                            no_results_text: "<?php echo $translate->_("No Medbiq Resources found"); ?>",
+                            parent_form: $("#content_form"),
+                            build_selected_filters: false,
+                            width: 300
+                        });
+
+                        var medbiq_settings = $("#medbiq_resources").data("settings");
+                        medbiq_settings.build_list();
 
                         var popover_options = {
                             animation: false,
@@ -2030,7 +2315,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                                 $("#duration_container").append(li);
 
                                 cleanupList();
-                                
+
                                 $("#" + $(this).attr("data-filter") + "_" + $(this).val()).remove();
                             }
                         });
@@ -2046,25 +2331,25 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                  * Sidebar item that will provide the links to the different sections within this page.
                  */
                 $sidebar_html  = "<ul class=\"menu\">\n";
-                $sidebar_html .= "	<li class=\"link\"><a href=\"#event-details-section\" onclick=\"$('event-details-section').scrollTo(); return false;\" title=\"Event Setup\">" . $translate->_("Event Setup") . "</a></li>\n";
-                $sidebar_html .= "	<li class=\"link\"><a href=\"#event-objectives-section\" onclick=\"$('event-objectives-section').scrollTo(); return false;\" title=\"" . $translate->_("Event Objectives") . "\">" . $translate->_("Event Objectives") . "</a></li>\n";
-                $sidebar_html .= "	<li class=\"link\"><a href=\"#event-resources-section\" onclick=\"$('event-resources-section').scrollTo(); return false;\" title=\"Event Resources\">Event Resources</a></li>\n";
+                $sidebar_html .= "	<li class=\"link\"><a href=\"#event-details-section-anchor\" onclick=\"$('event-details-section-anchor').scrollTo(); return false;\" title=\"Event Setup\">" . $translate->_("Event Setup") . "</a></li>\n";
+                $sidebar_html .= "	<li class=\"link\"><a href=\"#event-objectives-section-anchor\" onclick=\"$('event-objectives-section-anchor').scrollTo(); return false;\" title=\"" . $translate->_("Event Objectives") . "\">" . $translate->_("Event Objectives") . "</a></li>\n";
+                $sidebar_html .= "	<li class=\"link\"><a href=\"#event-resources-section-anchor\" onclick=\"$('event-resources-section-anchor').scrollTo(); return false;\" title=\"Event Resources\">Event Resources</a></li>\n";
                 $sidebar_html .= "</ul>\n";
 
                 new_sidebar_item("Page Anchors", $sidebar_html, "page-anchors", "open", "1.9");
-			}
-		} else {
-			add_error("In order to edit a event you must provide a valid event identifier. The provided ID does not exist in this system.");
+            }
+        } else {
+            add_error("In order to edit a event you must provide a valid event identifier. The provided ID does not exist in this system.");
 
-			echo display_error();
+            echo display_error();
 
-			application_log("notice", "Failed to provide a valid event identifier when attempting to edit a event.");
-		}
-	} else {
-		add_error("In order to edit a event you must provide the events identifier.");
+            application_log("notice", "Failed to provide a valid event identifier when attempting to edit a event.");
+        }
+    } else {
+        add_error("In order to edit a event you must provide the events identifier.");
 
-		echo display_error();
+        echo display_error();
 
-		application_log("notice", "Failed to provide event identifier when attempting to edit a event.");
-	}
+        application_log("notice", "Failed to provide event identifier when attempting to edit a event.");
+    }
 }

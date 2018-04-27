@@ -56,7 +56,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ROTATION_SCHEDULE"))) {
     $JQUERY[] = "<script type=\"text/javascript\" src=\"" . ENTRADA_URL . "/javascript/jquery/jquery.timepicker.js?release=" . html_encode(APPLICATION_VERSION) . "\"></script>";
 
     $curriculum_types = Models_Curriculum_Type::fetchAllByOrg($ENTRADA_USER->getActiveOrganisation());
-    $curriculum_periods = false;
+    $curriculum_periods = array();
     if ($curriculum_types) {
         foreach ($curriculum_types as $curriculum_type) {
             $periods = Models_Curriculum_Period::fetchAllByCurriculumType($curriculum_type->getID());
@@ -77,9 +77,9 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ROTATION_SCHEDULE"))) {
     <?php Views_Schedule_UserInterfaces::renderScheduleNavTabs($SECTION); ?>
     <div class="row-fluid">
         <input type="text" id="leave-search" placeholder="<?php echo $translate->_("Search"); ?>" class="input-large search-icon">
-        <a href="#new-leave" data-toggle="modal" class="btn btn-success space-left new-leave-btn"><i class="icon-plus-sign icon-white"></i><?php echo $translate->_(" New Leave"); ?></a>
+        <a href="#new-leave" data-toggle="modal" class="btn btn-success space-left new-leave-btn"><i class="icon-plus-sign icon-white"></i>&nbsp;<?php echo $translate->_("New Leave"); ?></a>
         <div class="control-group pull-right">
-            <label for="learner-curriculum-period-select"><?php echo $translate->_("Curriculum Period: "); ?></label>
+            <label for="learner-curriculum-period-select"><?php echo $translate->_("Curriculum Period"); ?>: </label>
             <select id="learner-curriculum-period-select">
                 <option value="0"><?php echo $translate->_("All"); ?></option>
                 <?php foreach ($curriculum_periods as $curriculum_period): ?>
@@ -105,21 +105,32 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ROTATION_SCHEDULE"))) {
                 $user = Models_User::fetchRowByID($vacation->getProxyID());
                 if ($user) {
                     $tracked_leave = Models_Leave_Tracking::fetchAllByProxyID($vacation->getProxyID());
-                    $total_days = Models_Leave_Tracking::fetchLeaveDayTotalByProxyID($vacation->getProxyID());
+                    $selected_cperiod = Models_Curriculum_Period::fetchRowByID($cperiod_id_preference);
                     $user_start_dates = array();
                     $user_end_dates = array();
+                    $total_days_array = array();
+                    $total_days_array[] = Models_Leave_Tracking::fetchLeaveDayTotalByProxyID($vacation->getProxyID());
+                    $total_days = 0;
 
                     foreach ($tracked_leave as $leave) {
                         $user_start_dates[] = date("Y-m-d", $leave->getStartDate());
                         $user_end_dates[] = date("Y-m-d", $leave->getEndDate());
                     }
 
+                    foreach($curriculum_periods as $cperiod) {
+                        $total_days = Models_Leave_Tracking::fetchLeaveDayTotalByProxyIDDateRange($vacation->getProxyID(), $cperiod->getStartDate(), $cperiod->getFinishDate());
+                        if (!$total_days) {
+                            $total_days = 0;
+                        }
+                        array_push($total_days_array, $total_days);
+                    }
+
                     $url = ENTRADA_URL . "/admin/" . $MODULE . "/" . $SUBMODULE . "?section=user&proxy_id=" . $vacation->getProxyID();
                     ?>
-                    <tr data-start-dates="<?php echo implode(",", $user_start_dates); ?>" data-end-dates="<?php echo implode(",", $user_end_dates); ?>">
-                        <td><a href="<?php echo $url; ?>"><?php echo $user->getFirstname(); ?></a></td>
-                        <td><a href="<?php echo $url; ?>"><?php echo $user->getLastname(); ?></a></td>
-                        <td><a href="<?php echo $url; ?>"><?php echo $total_days ? $total_days : $translate->_("Please update."); ?></a></td>
+                    <tr data-start-dates="<?php echo implode(",", $user_start_dates); ?>" data-end-dates="<?php echo implode(",", $user_end_dates); ?>" data-total-days="<?php echo implode(",", $total_days_array); ?>">
+                        <td><a href="<?php echo $url; ?>"><?php echo html_encode($user->getFirstname()); ?></a></td>
+                        <td><a href="<?php echo $url; ?>"><?php echo html_encode($user->getLastname()); ?></a></td>
+                        <td><a class="total-days-count" href="<?php echo $url; ?>"><?php echo $total_days ? $total_days : $translate->_("Please update."); ?></a></td>
                     </tr>
                     <?php
                 }

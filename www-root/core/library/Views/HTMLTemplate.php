@@ -28,7 +28,6 @@
  */
 
 class Views_HTMLTemplate extends Views_Base {
-
     protected $base_template_path = ENTRADA_ABSOLUTE;
     protected $template_path = "";
     protected $template_error = "Unknown error";
@@ -49,6 +48,7 @@ class Views_HTMLTemplate extends Views_Base {
      */
     protected function generateOutput($options = array()) {
         $error = true;
+
         if ($this->base_template_path.$this->template_path) {
             if (file_exists($this->base_template_path.$this->template_path)) {
                 if ($this->validateOptions($options)) {
@@ -69,6 +69,7 @@ class Views_HTMLTemplate extends Views_Base {
 
             // Generate the HTML from the tpl file
             ob_start();
+
             $this->renderView($options);
             $output = ob_get_contents();
             ob_end_clean();
@@ -107,6 +108,7 @@ class Views_HTMLTemplate extends Views_Base {
      */
     protected function renderView($options = array()) {
         global $translate; // Needed for scope; the included template file may make use of it.
+
         extract($options);
         include($this->base_template_path.$this->template_path);
     }

@@ -26,14 +26,13 @@
 class Views_Assessments_Forms_Objectives_PublicObjectiveSelector extends Views_Assessments_Forms_Base {
 
     protected function validateOptions($options = array()) {
-        return $this->validateIsSet($options, array("objective_id"));
+        return $this->validateIsSet($options, array("objective_id", "organisation_id"));
     }
 
     protected function renderView($options = array()) {
         global $translate;
-        global $ENTRADA_USER; // ADRIAN-TODO: Remove this once objective set refactor is complete.
 
-        $organisation_id = $ENTRADA_USER->getActiveOrganisation();
+        $organisation_id = $options["organisation_id"];
 
         $specified_objective_id = $options["objective_id"];
         $afelement_id = @$options["afelement_id"];

@@ -209,7 +209,7 @@ if ($community_record) {
 				echo "	<td class=\"status\"><img src=\"".(((int) $result["timestamp"]) ? (((int) $result["timestamp"] < (time() - 600)) ? "../images/list-status-away.gif" : "../images/list-status-online.gif") : "../images/list-status-offline.gif")."\"></td>\n";
 				echo "	<td class=\"fullname\"><a href=\"".$url."\" title=\"Name: ".html_encode($result["fullname"])."\">".html_encode($result["fullname"])."</a></td>\n";
 				echo "	<td class=\"membership\"><a href=\"".$url."\" title=\"Community Role\">".($result["member_acl"] ? "Administrator" : "Member")."</a></td>\n";
-				echo "	<td class=\"date\"><a href=\"".$url."\" title=\"Date Joined\">".date(DEFAULT_DATE_FORMAT, $result["member_joined"])."</a></td>\n";
+				echo "	<td class=\"date\"><a href=\"".$url."\" title=\"Date Joined\">".date(DEFAULT_DATETIME_FORMAT, $result["member_joined"])."</a></td>\n";
 				echo "</tr>\n";
 			}
 			?>

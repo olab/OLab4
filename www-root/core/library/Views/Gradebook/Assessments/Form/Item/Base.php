@@ -66,12 +66,10 @@ class Views_Gradebook_Assessments_Form_Item_Base extends Views_Gradebook_Base {
 
 			$html = array();
 
-			$html[] = '<td rowspan="'.$rowspan.'" class="cell-weight control-group">';
-			$html[] = '		<label for="weight-'.html_encode($item['afelement_id']).'" class="label-weight">';
-			$html[] = '			<span class="label-text '.$class.'">'.$translate->_("Weight:").'</span>';
-	        $html[] = '	  		'.$this->renderWeightInput($item);
-	        $html[] = '  	</label>';
-	        $html[] = '</td>';
+			$html[] = '<label for="weight-'.html_encode($item['afelement_id']).'" class="label-weight">';
+			$html[] = '    <span class="label-text '.$class.'">'.$translate->_("Weight:").'</span>';
+	        $html[] = '    '.$this->renderWeightInput($item);
+	        $html[] = '</label>';
 
 	        return implode("\n", $html);
 		}
@@ -86,8 +84,7 @@ class Views_Gradebook_Assessments_Form_Item_Base extends Views_Gradebook_Base {
 		if ($this->edit_weights) {
 			$html = array();
 
-			$html[] = '<input type="text" class="item-control input-weight pull-left" name="item-weights['.html_encode($item['afelement_id']).']" id="weight-'.$item['afelement_id'].'" data-item-id="'.html_encode($item['element_id']).'" value="'.html_encode($item['weight']).'">';
-			$html[] = '<span class="pull-left weight-percentage-symbol">%</span>';
+			$html[] = '<div class="input-append"><input type="text" class="item-control input-weight pull-left" name="item-weights['.html_encode($item['afelement_id']).']" id="weight-'.$item['afelement_id'].'" data-item-id="'.html_encode($item['element_id']).'" value="'.html_encode($item['weight']).'"><span class="add-on">%</span></div>';
 
 			$html = implode("\n", $html);
 		}
@@ -136,7 +133,7 @@ class Views_Gradebook_Assessments_Form_Item_Base extends Views_Gradebook_Base {
 		if (is_array($curriculum_tags) && $curriculum_tags) {
 			$i = 0;
 
-			$html[] = '<span style="margin: 0px 8px;">';
+			$html[] = '<span>';
 			foreach ($curriculum_tags as $val) {
 
 				if (isset($val['id']) && $val['id']) {

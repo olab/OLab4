@@ -17,3 +17,8 @@
 59 23 * * * php ENTRADA_ABSOLUTE/cron/check_grade_thresholds.php > /dev/null 2>&1
 30 3 * * * php ENTRADA_ABSOLUTE/cron/queue-distribution-assessments.php > /dev/null 2>&1
 */15 * * * * php ENTRADA_ABSOLUTE/cron/register-rp-now-users.php 1 > /dev/null 2>&1
+0 7 * * * php ENTRADA_ABSOLUTE/cron/event-file-parse.php > /dev/null 2>&1
+0 * * * * php ENTRADA_ABSOLUTE/cron/publish-form-blueprints.php > /dev/null 2>&1
+*/30 * * * * php ENTRADA_ABSOLUTE/cron/assessment-statistics.php >/dev/null 2>&1
+*/10 * * * * php ENTRADA_ABSOLUTE/cron/queue-assessment-notifications.php > /dev/null 2>&1
+45 3 * * * php ENTRADA_ABSOLUTE/cron/generate-assessment-tasks-snapshot.php > /dev/null 2>&1

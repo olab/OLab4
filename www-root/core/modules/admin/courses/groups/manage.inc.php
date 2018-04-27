@@ -241,7 +241,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSE_GROUPS"))) {
 			$BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/courses/groups?section=manage&id=".$COURSE_ID, "title" => "Manage Course Groups");
 
 			courses_subnavigation($course_details,"groups");
-			$curriculum_periods = Models_Curriculum_Period::fetchRowByCurriculumTypeIDCourseID($course_details['curriculum_type_id'], $course_details['course_id']);
+			$curriculum_periods = Models_Curriculum_Period::fetchAllByCurriculumTypeIDCourseID($course_details['curriculum_type_id'], $course_details['course_id']);
 
             // determine the current curriculum period to use
             if ($group->getCPeriodID()) {

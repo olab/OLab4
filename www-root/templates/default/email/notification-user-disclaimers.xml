@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates>
+    <template lang="en">
+        <subject>User Disclaimer has been declined</subject>
+        <body>
+The %DISCLAIMER_TITLE% disclaimer has been declined by
+
+    %USER_FULLNAME%
+    %USER_EMAIL%
+
+If you require any assistance with this system, please do not hesitate to contact us.
+
+Sincerely,
+%CREATOR_NAME%
+%CREATOR_EMAIL%
+        </body>
+    </template>
+</templates>

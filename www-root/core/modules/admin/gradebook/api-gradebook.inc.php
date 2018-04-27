@@ -45,7 +45,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
     application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] do not have access to this module [".$MODULE."]");
 } else {
     ob_clear_open_buffers();
-    $request_method = strtoupper(clean_input($_SERVER['REQUEST_METHOD'], "alpha"));
+    $request_method = strtoupper(clean_input($_SERVER["REQUEST_METHOD"], "alpha"));
     $request = ${"_" . $request_method};
 
     if (isset($request["method"]) && $tmp_input = clean_input($request["method"], array("trim", "striptags"))) {
@@ -109,7 +109,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 
                         $gradebook_object = new Models_Course();
 
-                        if ($ENTRADA_ACL->amIAllowed('course', 'update', false)) {
+                        if ($ENTRADA_ACL->amIAllowed("course", "update", false)) {
                             $gradebooks = $gradebook_object->fetchCourseForContact($ENTRADA_USER->getActiveOrganisation(),$PROCESSED["sort_column"],$PROCESSED["sort_direction"],
                                 $PROCESSED["limit"], $PROCESSED["offset"], $PROCESSED["search_term"]);
                             $total_gradebooks = $gradebook_object->fetchTotalCountCourseForContact($ENTRADA_USER->getActiveOrganisation(), $PROCESSED["search_term"]);

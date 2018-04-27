@@ -38,9 +38,17 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 } else {
 
 	$HEAD[] = "<script type=\"text/javascript\">var SITE_URL = '".ENTRADA_URL."';</script>";
+    $HEAD[] = "<script>var org_id = '" . $ENTRADA_USER->getActiveOrganisation() . "';</script>";
+    $HEAD[] = "<script>var DELETE_IMAGE_URL = '" . ENTRADA_URL . "/images/action-delete.gif';</script>";
+    $HEAD[] = "<script>var API_URL = \"" . ENTRADA_URL . "/admin/" . $MODULE . "/" . $SUBMODULE . "?section=api-assessments" . "\";</script>";
+    $HEAD[] = "<script>var assessment_id = 0;</script>";
 	if ($COURSE_ID) {
 		$HEAD[] = "<script type=\"text/javascript\">var COURSE_ID = '".$COURSE_ID."';</script>";
 	}
+    $HEAD[] = "<script>var exam_already_attached = \"" . $translate->_("The exam post you selected is already attached to the assessment.") . "\";</script>";
+    $HEAD[] = "<script>var select_exam_post = \"" . $translate->_("Please select an exam post to attach to this assessment. If you no longer wish to attach an exam post to this assessment, click close.") . "\";</script>";
+    $HEAD[] = "<script>var search_exam_post = \"" . $translate->_("To search for exam titles with posts, begin typing the title of the exam you wish to find in the search box.") . "\";</script>";
+    
 	$HEAD[] = "<script type=\"text/javascript\">var DELETE_IMAGE_URL = '".ENTRADA_URL."/images/action-delete.gif';</script>";
 	$HEAD[] = "<script type=\"text/javascript\" src=\"".ENTRADA_URL."/javascript/picklist.js\"></script>\n";
 	$HEAD[]	= "<script type=\"text/javascript\" src=\"".ENTRADA_URL."/javascript/objectives.js?release=".html_encode(APPLICATION_VERSION)."\"></script>";
@@ -49,7 +57,10 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 	$HEAD[]	= "<script type=\"text/javascript\" src=\"".ENTRADA_URL."/javascript/assessments/forms/view.js?release=".html_encode(APPLICATION_VERSION)."\"></script>";
 	$HEAD[] = "<script type=\"text/javascript\" src=\"" . ENTRADA_URL . "/javascript/jquery/jquery.advancedsearch.js\"></script>";
 	$HEAD[] = "<link rel=\"stylesheet\" type=\"text/css\" href=\"" . ENTRADA_URL . "/css/jquery/jquery.advancedsearch.css\" />";
-	$HEAD[] = "<link rel=\"stylesheet\" type=\"text/css\" href=\"" . ENTRADA_URL . "/css/assessments/assessments.css?release=".html_encode(APPLICATION_VERSION)."\" />";
+    $HEAD[] = "<link rel=\"stylesheet\" type=\"text/css\" href=\"" . ENTRADA_URL . "/css/assessments/assessments.css?release=" . html_encode(APPLICATION_VERSION) . "\" />";
+    $HEAD[] = "<link rel=\"stylesheet\" type=\"text/css\" href=\"" . ENTRADA_URL . "/css/assessments/items.css?release=" . html_encode(APPLICATION_VERSION) . "\" />";
+    $HEAD[] = "<link rel=\"stylesheet\" type=\"text/css\" href=\"" . ENTRADA_URL . "/css/assessments/rubrics.css?release=" . html_encode(APPLICATION_VERSION) . "\" />";
+    $HEAD[] = "<link rel=\"stylesheet\" type=\"text/css\" href=\"" . ENTRADA_URL . "/css/assessments/assessment-form.css?release=" . html_encode(APPLICATION_VERSION) . "\" />";
 
 	if (isset($_POST["mode"]) && $_POST["mode"] == "ajax") {
 
@@ -101,7 +112,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 		$course = Models_Course::fetchRowByID($COURSE_ID);
 
 		// Load the Preference from the 'courses' Module, in order to get and set the selected_curriculum_period setting
-		$PREFERENCES = preferences_load('courses');
+		$PREFERENCES = preferences_load("courses");
 
 		if (isset($_GET["cperiod_id"]) && $cperiod_id = clean_input($_GET["cperiod_id"], array("int", "trim"))) {
 
@@ -181,7 +192,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 						}
 					}
 
-					if((isset($_POST["name"])) && ($name = clean_input($_POST["name"], array("notags", "trim")))) {
+					if ((isset($_POST["name"])) && ($name = clean_input($_POST["name"], array("notags", "trim")))) {
 						$PROCESSED["name"] = $name;
 					} else {
 						add_error("You must supply a valid <strong>Name</strong> for this assessment.");
@@ -190,19 +201,25 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 					$PROCESSED["cperiod_id"] = $cperiod_id;
 					$PROCESSED["cohort"]=0;
 
-					if((isset($_POST["grade_weighting"])) && ($_POST["grade_weighting"] !== NULL)) {
+					if ((isset($_POST["grade_weighting"])) && ($_POST["grade_weighting"] !== NULL)) {
 						$PROCESSED["grade_weighting"] = clean_input($_POST["grade_weighting"], "float");
 					} else {
 						add_error("You must supply a <strong>Grade Weighting</strong> for this assessment.");
 					}
+                    
+                    if (isset($_POST["scoring_method"]) && $tmp_input = clean_input($_POST["scoring_method"], array("notags", "int"))) {
+                        $PROCESSED["scoring_method"] = $tmp_input;
+                    } else {
+                        $PROCESSED["scoring_method"] = 1;
+                    }
 
-					if((isset($_POST["description"])) && ($description = clean_input($_POST["description"], array("notags", "trim")))) {
+					if ((isset($_POST["description"])) && ($description = clean_input($_POST["description"], array("trim", "html")))) {
 						$PROCESSED["description"] = $description;
 					} else {
 						$PROCESSED["description"] = "";
 					}
 
-					if((isset($_POST["type"])) && ($type = clean_input($_POST["type"], array("trim")))) {
+					if ((isset($_POST["type"])) && ($type = clean_input($_POST["type"], array("trim")))) {
 						if((@in_array($type, $ASSESSMENT_TYPES))) {
 							$PROCESSED["type"] = $type;
 						} else {
@@ -212,7 +229,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 						add_error("You must pick a valid <strong>Type</strong> for this assessment.");
 					}
 
-					if((isset($_POST["marking_scheme_id"])) && ($marking_scheme_id = clean_input($_POST["marking_scheme_id"], array("trim","int")))) {
+					if ((isset($_POST["marking_scheme_id"])) && ($marking_scheme_id = clean_input($_POST["marking_scheme_id"], array("trim","int")))) {
 						if (@in_array($marking_scheme_id, $MARKING_SCHEME_IDS)) {
 							$PROCESSED["marking_scheme_id"] = $marking_scheme_id;
 						} else {
@@ -309,19 +326,35 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 							}
 						}
 					}
-					// Sometimes requried field "number grade points total". Specifies what a numeric marking scheme assessment is "out of".
-					// Only required when marking scheme is numeric, ID 3, hardcoded.
-					if ((isset($_POST["numeric_grade_points_total"])) && ($points_total = clean_input($_POST["numeric_grade_points_total"], array("notags", "trim")))) {
-						$PROCESSED["numeric_grade_points_total"] = $points_total;
-					} else {
-						$PROCESSED["numeric_grade_points_total"] = "";
-						if(isset($PROCESSED["marking_scheme_id"])) {
-							// Numberic marking scheme, hardcoded, lame
-							if($PROCESSED["marking_scheme_id"] == 3) {
-								add_error("The <strong>Maximum Points</strong> field is a required field when using the <strong>Numeric</strong> marking scheme.");
-							}
-						}
-					}
+
+                    $PROCESSED["exam_post_ids"] = array();
+                    if (isset($_POST["exam_post_ids"]) && is_array($_POST["exam_post_ids"]) && !empty($_POST["exam_post_ids"])) {
+                        foreach ($_POST["exam_post_ids"] as $id) {
+                            $PROCESSED["exam_post_ids"][] = (int)$id;
+                        }
+                    }
+					
+					// Sometimes required field "number grade points total". Specifies what a numeric marking scheme assessment is "out of".
+					// Only required when marking scheme is numeric
+                    $marking_scheme = Models_Gradebook_Assessment_Marking_Scheme::fetchRowByID($PROCESSED["marking_scheme_id"]);
+
+                    if ((isset($_POST["numeric_grade_points_total"])) && ($points_total = clean_input($_POST["numeric_grade_points_total"], array("notags", "trim"))) &&
+                        isset($marking_scheme) && $marking_scheme->getHandler() == "Numeric"
+                    ) {
+                        $PROCESSED["numeric_grade_points_total"] = $points_total;
+                    } else {
+                        $PROCESSED["numeric_grade_points_total"] = "";
+                        if (isset($marking_scheme)) {
+                            if ($marking_scheme->getHandler() == "Numeric" && !is_array($PROCESSED["exam_post_ids"]) && !empty($PROCESSED["exam_post_ids"])) {
+                                add_error("The <strong>Maximum Points</strong> field is a required field when using the <strong>Numeric</strong> marking scheme.");
+                            } else if ($marking_scheme->getHandler() == "Boolean" || $marking_scheme->getHandler() == "IncompleteComplete") {
+                                $PROCESSED["numeric_grade_points_total"] = 1;
+                            } else if ($marking_scheme->getHandler() == "Percentage") {
+                                $PROCESSED["numeric_grade_points_total"] = 100;
+                            }
+                        }
+                    }
+
 					if (isset($_POST["post_action"])) {
 						if(@in_array($_POST["post_action"], array("new", "index", "parent", "grade"))) {
 							$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["post_action"] = $_POST["post_action"];
@@ -347,7 +380,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
                     }
 
                     if (isset($PROCESSED["notify_threshold"]) && $PROCESSED["notify_threshold"]) {
-                        if ((isset($_POST["grade_threshold"])) && ($_POST["grade_threshold"] !== NULL) && ($tmp = clean_input($_POST["grade_threshold"], "float"))) {
+                        if (isset($_POST["grade_threshold"]) && $_POST["grade_threshold"] !== NULL && ($tmp = clean_input($_POST["grade_threshold"], "float"))) {
                             $PROCESSED["grade_threshold"] = $tmp;
                         } else {
                             add_error("You must supply a valid <strong>Grade Threshold</strong> for this assessment.");
@@ -409,17 +442,27 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 							$PROCESSED["item-scores"][clean_input($iresponse_id, array("trim", "int"))] = $sanitized_score;
 						}
 					}
-					
+
+					// Sanitize eportfolio id
+					// ToDo: normalize the naming convention?
+					if ((isset($_POST["eportfolio_id"])) && ($eportfolio_id = clean_input($_POST["eportfolio_id"], array("trim", "int")))) {
+						$PROCESSED["portfolio_id"] = $eportfolio_id;
+					}
+
 					// Sanitize form id
 					if ((isset($_POST["form_id"])) && ($form_id = clean_input($_POST["form_id"], array("trim", "int")))) {
 						$PROCESSED["form_id"] = $form_id;
 					}
 
 					// Sanitize group ids
-					if (isset($_POST["as_groups"])) {
-						foreach($_POST["as_groups"] as $group) {
-							$PROCESSED["groups"][] = clean_input($group, array("trim", "int"));
-						}
+					if (isset($_POST["as_groups"]) && $PROCESSED["group_assessment"]) {
+                        foreach($_POST["as_groups"] as $group) {
+                            $tmp_input = clean_input($group, array("trim", "int"));
+                            $course_group = Models_Course_Group::fetchRowByID($tmp_input);
+                            if ($course_group) {
+                                $PROCESSED["groups"][] = $course_group->toArray();
+                            }
+                        }
 					}
 
 					if ($PROCESSED["group_assessment"]) {
@@ -429,7 +472,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 					}
 
 					if (!$ERROR) {
-						$PROCESSED["order"]			= Models_Gradebook_Assessment::fetchNextOrder($COURSE_ID, $PROCESSED["cohort"]);
+						$PROCESSED["order"]			= Models_Gradebook_Assessment::fetchNextOrder($COURSE_ID);
 						$PROCESSED["created_date"]	= time();
 						$PROCESSED["created_by"]	= $ENTRADA_USER->getID();
 						$PROCESSED["updated_date"]	= time();
@@ -441,6 +484,51 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 
 						if ($assessment->insert()) {
 							$ASSESSMENT_ID = $assessment->getAssessmentID();
+
+                            $add_posts     = $PROCESSED["exam_post_ids"];
+                            if (isset($add_posts) && is_array($add_posts) && !empty($add_posts)) {
+                                foreach ($add_posts as $post_id) {
+                                    $object = Models_Exam_Post::fetchRowByID($post_id);
+                                    $object->setGradeBook($assessment->getID());
+                                    $object->setUpdatedDate(time());
+                                    $object->setUpdatedBy($ENTRADA_USER->getID());
+
+                                    if (!$object->update()) {
+                                        application_log("error", "An error occurred while attempting to update assessment learning event: " . $assessment->getID() . " DB said: " . $db->ErrorMsg());
+                                    } else {
+                                        $exam_id = $object->getExamID();
+
+                                        $exam_elements = Models_Exam_Exam_Element::fetchAllByExamIDElementType($exam_id, "question");
+
+                                        if (isset($exam_elements) && is_array($exam_elements) && !empty($exam_elements)) {
+                                            $question_count = 0;
+                                            foreach ($exam_elements as $element) {
+                                                if ($element && is_object($element)) {
+                                                    $question = $element->getQuestionVersion();
+                                                    $type = $question->getQuestionType()->getShortname();
+                                                    if ($type != "text") {
+                                                        $question_count++;
+                                                    }
+                                                }
+                                            }
+
+                                            $assessment->setNumericGradePointsTotal($question_count);
+                                            if ($assessment->update()) {
+                                                add_success("Updated assessment successfully.");
+                                                display_success();
+                                            }
+                                        }
+
+                                        $submissions = Models_Exam_Progress::fetchAllByPostIDProgressValue($object->getID(), "submitted");
+                                        if ($submissions && is_array($submissions)) {
+                                            foreach ($submissions as $submission) {
+                                                $submission_view = new Views_Exam_Progress($submission);
+                                                $submission_view->updateGradeBook();
+                                            }
+                                        }
+                                    }
+                                }
+                            }
 
 							if ($ASSESSMENT_ID) {
 								application_log("success", "Successfully added assessment ID [".$ASSESSMENT_ID."]");
@@ -484,7 +572,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 									"active" => 1
 								);
 
-								$assessment_event = new Models_Assessment_AssessmentEvent($assessment_event_array);
+								$assessment_event = new Models_Assessment_Event($assessment_event_array);
 
 								if (!$assessment_event->insert()) {
 									application_log("error", "Unable insert the attached learning event.Database said: ".$db->ErrorMsg());
@@ -544,9 +632,9 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 							}
 
 							// Weights
-							if (isset($PROCESSED['item-weights'])) {
+							if (isset($PROCESSED["item-weights"])) {
 
-								$model_form_element = new Models_Gradebook_Assessment_Form_Element(array('assessment_id' => $ASSESSMENT_ID));
+								$model_form_element = new Models_Gradebook_Assessment_Form_Element(array("assessment_id" => $ASSESSMENT_ID));
 								$current_weights = $model_form_element->fetchAllByAssessmentID();
 
 								// Get array of current weights already stored
@@ -559,8 +647,8 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 								}
 
 								// update form weights
-								foreach($PROCESSED['item-weights'] as $afelement_id => $weight) {
-									$item_weight = new Models_Gradebook_Assessment_Form_Element(array('assessment_id' => $ASSESSMENT_ID, 'afelement_id' => $afelement_id, 'weight' => $weight));
+								foreach($PROCESSED["item-weights"] as $afelement_id => $weight) {
+									$item_weight = new Models_Gradebook_Assessment_Form_Element(array("assessment_id" => $ASSESSMENT_ID, "afelement_id" => $afelement_id, "weight" => $weight));
 
 									// If weight is already stored in db, update that value, otherwise create new entry
 									$gafelement_id = array_search($item_weight->getAfelementID(), $current_weight_ids);
@@ -576,9 +664,9 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 							}
 
 							// Scores
-							if (isset($PROCESSED['item-scores'])) {
+							if (isset($PROCESSED["item-scores"])) {
 
-								$model_item_response = new Models_Gradebook_Assessment_Item_Response(array('assessment_id' => $ASSESSMENT_ID));
+								$model_item_response = new Models_Gradebook_Assessment_Item_Response(array("assessment_id" => $ASSESSMENT_ID));
 								$current_scores = $model_item_response->fetchAllByAssessmentID();
 
 								// Get array of current weights already stored
@@ -591,9 +679,9 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 								}
 
 								// update form scores
-								foreach($PROCESSED['item-scores'] as $iresponse_id => $score) {
+								foreach($PROCESSED["item-scores"] as $iresponse_id => $score) {
 
-									$item_score = new Models_Gradebook_Assessment_Item_Response(array('assessment_id' => $ASSESSMENT_ID, 'iresponse_id' => $iresponse_id, 'score' => $score));
+									$item_score = new Models_Gradebook_Assessment_Item_Response(array("assessment_id" => $ASSESSMENT_ID, "iresponse_id" => $iresponse_id, "score" => $score));
 
 									// If score is already stored in db, update that value, otherwise create new entry
 									$gairesponse_id = array_search($item_score->getIresponseID(), $current_score_ids);
@@ -610,13 +698,13 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 
 							if (isset($PROCESSED["groups"]) && is_array($PROCESSED["groups"])) {
 								// Add new groups
-								foreach($PROCESSED["groups"] as $cgroup_id) {
-									$group = new Models_Assessment_Group(array("assessment_id" => $ASSESSMENT_ID, "cgroup_id" => $cgroup_id));
-									$insert_new_group = $group->insert();
-								}
+                                foreach($PROCESSED["groups"] as $group_array) {
+                                    $group = new Models_Assessment_Group(array("assessment_id" => $ASSESSMENT_ID, "cgroup_id" => $group_array["cgroup_id"]));
+                                    $insert_new_group = $group->insert();
+                                }
 							}
 
-							switch($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["post_action"]) {
+							switch ($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["post_action"]) {
 								case "grade" :
 									$url = ENTRADA_URL."/admin/gradebook/assessments?".replace_query(array("step" => false, "section" => "grade", "assessment_id" => $ASSESSMENT_ID));
 									$msg = "You will now be redirected to the <strong>Grade Assessment</strong> page for \"<strong>".$PROCESSED["name"] . "</strong>\"; this will happen <strong>automatically</strong> in 5 seconds or <a href=\"".$url."\" style=\"font-weight: bold\">click here</a> to continue.";
@@ -658,13 +746,13 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 			// Display Content
 			switch ($STEP) {
 				case 2 :
-					if ($SUCCESS) {
+						if (has_success()) {
 						echo display_success();
 					}
-					if ($NOTICE) {
+						if (has_notice()) {
 						echo display_notice();
 					}
-					if ($ERROR) {
+						if (has_error()) {
 						echo display_error();
 					}
 				break;
@@ -781,7 +869,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 								<tr>
 									<td>&nbsp;</td>
 									<td style="vertical-align: top"><label for="description" class="form-nrequired">Assessment Description:</label></td>
-									<td><textarea id="description" name="description" class="expandable span11"><?php echo html_encode($PROCESSED["description"]); ?></textarea></td>
+									<td><textarea id="description" name="description" class="span11"><?php echo html_encode($PROCESSED["description"]); ?></textarea></td>
 								</tr>
 								<tr>
 									<td colspan="3">&nbsp;</td>
@@ -892,8 +980,57 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 								</tbody>
 								<tbody>
 								<tr>
-									<td colspan="3">&nbsp;</td>
+                                            <td colspan="3">
+                                                <label class="checkbox form-nrequired" for="show_exm_option">
+                                                    <input type="checkbox" id="show_exm_option" name="show_exm_option" value="1" <?php echo ($display_exam) ? " checked=\"checked\"" : "" ?>>Link existing online exams to this assessment.
+                                                </label>
+                                            </td>
+                                        </tr>
+                                        <tr id="exam_posts" <?php echo($display_exam === 1 ? "" : " class=\"hide\""); ?>>
+                                            <td></td>
+                                            <td valign="top">
+                                                <label class="form-nrequired">
+                                                    <?php echo $translate->_("Exam Posts"); ?>
+                                                </label>
+                                            </td>
+                                            <td>
+                                                <a href="#exam-post-modal" class="btn btn-primary space-below" role="button"
+                                                    data-toggle="modal" id="attach-exam-button"><i
+                                                        class="fa fa-plus icon-white"></i> <?php echo $translate->_("Attach Exam Posts"); ?>
+                                                </a>
+                                                <ul id="attached-post-list">
+                                                    <li>
+                                                        <div class="well well-small content-small"
+                                                             id="no-exam-post">
+                                                            <?php echo $translate->_("There are currently no exam posts attached to this assessment. To attach an exam posts to this assessment, use the attach exam posts button."); ?>
+                                                        </div>
+                                                    </li>
+                                                </ul>
+                                            </td>
+                                        </tr>
+                                        <tr id="exam_scoring_method_row" <?php echo($display_exam === 1 ? "" : " class=\"hide\""); ?>>
+                                            <?php
+                                            $scoring_options = Models_Gradebook_Assessment_LuMeta_Scoring::fetchAllRecords();
+                                            ?>
+                                            <td></td>
+                                            <td><label for="scoring_method" class="form-required"><?php echo $translate->_("Exam Scoring Method"); ?>:</label></td>
+                                            <td>
+                                                <select id="scoring_method" name="scoring_method" class="span8">
+                                                    <option value="0">-- <?php echo $translate->_("Select Exam Scoring Method"); ?> --</option>
+                                                    <?php
+                                                    if ($scoring_options && is_array($scoring_options) && !empty($scoring_options)) {
+                                                        foreach ($scoring_options as $option) {
+                                                            if ($option && is_object($option)) {
+                                                                echo "<option value=\"" . $option->getID() . "\"" . (($PROCESSED["scoring_method"] == $option->getID()) ? " selected=\"selected\"" : "") . ">" . $option->getTitle() . "</option>";
+                                                            }
+                                                        }
+                                                    }
+                                                    ?>
+                                                </select>
+                                            </td>
 								</tr>
+                                    </tbody>
+                                    <tbody>
 								<tr>
 									<td></td>
 									<td><label for="assessment_characteristic" class="form-required">Characteristic:</label></td>
@@ -1033,10 +1170,56 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 							}
 							?>
 
+							<?php
+							if ( $COURSE_ID && $cperiod_id ) {
+								$course_audience = new Models_Course_Audience();
+								$audience = $course_audience->fetchAllByCourseIDCperiodID($COURSE_ID, $cperiod_id);
+							}
+							?>
+
+							function getAssessmentEportfolios() {
+								//  No need for this to be a search; we'll just get a list
+								cperiod_id = jQuery("#selector-select-period").val();
+								if ( 'undefined' == typeof(cperiod_id) ) {
+									cperiod_id = CPERIOD_ID;
+								}
+								jQuery.ajax({
+									url: "<?php echo ENTRADA_URL; ?>/admin/assessments/eportfolios/",
+									data: "section=api-eportfolios&method=get-eportfolios&course_id=" + course_id + "&cperiod_id=" + cperiod_id,
+									//dataType: 'JSON',
+									type: "GET",
+									beforeSend: function () {
+										jQuery("#assessment-eportfolio-search-list").empty();
+										jQuery("#assessment-eportfolio-loading").removeClass("hide");
+									},
+									success: function(data) {
+										console.log(data);
+										jQuery("#assessment-eportfolio-loading").addClass("hide");
+										var response = JSON.parse(data);
+
+										var autoSelect = false;
+										if (1 == response.data.length ) {
+											autoSelect = true;
+										}
+
+										if (response.data) {
+											jQuery.each(response.data, function (key, assessmentEportfolio) {
+												buildAssessmentEportfolioList(assessmentEportfolio, autoSelect);
+											});
+										} else {
+											//display_notice(response.data, "#assessment-eportfolio-search-msgs", "append");
+										}
+									},
+									error: function () {
+										jQuery("#assessment-eportfolio-loading").addClass("hide");
+									}
+								});
+							}
+
 							function getAssessmentFormsByTitle (title) {
 									cperiod_id = jQuery("#selector-select-period").val();
 								jQuery.ajax({
-									url: "<?php echo ENTRADA_URL; ?>/admin/assessments/forms/",
+									url: "<?php echo ENTRADA_URL; ?>/admin/gradebook/assessments",
 									data: "section=api-forms&method=get-forms&search_term=" + title + "&date_format=list",
 									type: "GET",
 									beforeSend: function () {
@@ -1063,16 +1246,15 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 							}
 
 							jQuery(document).ready(function($){
-								if (jQuery("input[name='show_learner_option']:checked").val() == 1) {
-									jQuery('#gradebook_release_options').show();
-								}
-								else if (jQuery("input[name='show_learner_option']:checked").val() == 0) {
-									jQuery('#gradebook_release_options').hide();
+								if (jQuery("input[name=\"show_learner_option\"]:checked").val() == 1) {
+									jQuery("#gradebook_release_options").show();
+								} else if (jQuery("input[name=\"show_learner_option\"]:checked").val() == 0) {
+									jQuery("#gradebook_release_options").hide();
 								}
 
                                 // Custom rounding function
                                 function roundDecimal(value, decimals) {
-                                    return Number(Math.round(value + 'e' + decimals) + 'e-' + decimals);
+                                    return Number(Math.round(value + "e" + decimals) + "e-" + decimals);
                                 }
 								// Get total weight
 								function getTotalWeight() {
@@ -1081,7 +1263,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 
                 					weights.map(function() {
                 						totalWeight += parseFloat($(this).val() || 0)
-                					})
+                					});
 
                                     return roundDecimal(totalWeight, 4);
             					}
@@ -1117,8 +1299,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
                         							$(".alert-score").removeClass("hide");
                         						}
                         					});
-                    					}
-                    					else {
+                    					} else {
                     						// Make all weights red if they don't add up to 100, and prevent submission
                     						e.preventDefault();
                     						$(".cell-weight").addClass("error");
@@ -1134,22 +1315,76 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
                     				});
             					}
 
+            					// Attach assessment ePortfolio
+								$(".btn-attach-assessment-eportfolio").on("click", function(e) {
+									var assessmentId = <?php echo $ASSESSMENT_ID;?>
+									// there should only be one active child
+									var chosenEportfolio = $("#assessment-eportfolio-search-list").children(".active");
+									if (0 == chosenEportfolio.length ) {
+										alert("<?php echo $translate->_("Please select an ePortfolio"); ?>");
+									} else {
+										var eportfolio_id = parseInt(chosenEportfolio.data('portfolio-id'));
+										var eportfolio_name = chosenEportfolio.data('portfolio-name');
+
+										// set eportfolio id value
+										$("#eportfolio-id").val(eportfolio_id);
+
+										// Close modal and hide attach button
+										$("#modal-attach-assessment-eportfolio").modal("hide");
+										$('#btn-attach-assessment-eportfolio-modal').hide();
+										$('#btn-remove-assessment-eportfolio').show();
+
+										$('#eportfolio').html("<h3>"+eportfolio_name+"</h3>");
+									}
+								});
+
+								$('#btn-remove-assessment-eportfolio').on('click', function(e) {
+									e.preventDefault();
+
+									$("#eportfolio-id").val('');
+									$('#eportfolio').html('');
+
+									$('#btn-remove-assessment-eportfolio').hide();
+									$('#btn-attach-assessment-eportfolio-modal').show();
+
+									// ToDo: need to make an ajax call to remove previously attached
+									// Not sure this is necessary... it isn't attached to anything until saved, right?
+									/*
+									$.post(ENTRADA_URL + "/admin/gradebook/assessments", {
+										section: "api-forms",
+										method: "remove-portfolio-from-assessment",
+										assessment_id: ASSESSMENT_ID
+									}).done(function(e) {});
+									*/
+								});
+
 								// Attach assessment form
 								$(".btn-attach-assessment-form").on("click", function(e) {
                                 	var chosenForm = $("#assessment-form-search-list").children(".active");
 
                                 	if (chosenForm) {
-                                		var formId = chosenForm.attr('data-id');
+                                		var formId = chosenForm.attr("data-id");
                                 		formId = parseInt(formId);
 
                                 		// checks if the id is higher than zero after parsing it as integer
                                 		if (formId > 0) {
                             				// load html from api
-                            				$('#form').load(ENTRADA_URL + "/admin/assessments/forms?section=api-forms&method=get-rendered-form&form_id=" + formId + "&edit_weights=true&edit_scores=true&edit_comments=false", function(html) {
-                            					var $this = $(this);
 
-                            					$('.datepicker', $this).datepicker({
-                            						dateFormat: 'yy-mm-dd'
+                            				$('#form').load(ENTRADA_URL + "/admin/gradebook/assessments?section=api-forms&method=get-rendered-form&form_id=" + formId + "&edit_weights=true&edit_scores=true&edit_comments=false", function(html) {
+                                                $('#assessment-form table td:has(.table-internal)').css('padding', '0');
+
+                                                $('.match-height').matchHeight({
+                                                    byRow: true,
+                                                    property: 'height',
+                                                    target: null,
+                                                    remove: false
+                                                });
+
+                            				    var $this = $(this);
+
+
+                            					$(".datepicker", $this).datepicker({
+                            						dateFormat: "yy-mm-dd"
                             					});
 
                             					// set form id value
@@ -1157,53 +1392,53 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 
                             					// Add new total weight and show floating weight bar
                             					$("#weight-total-number").text(getTotalWeight()).removeClass("hide");
-                            					$('#weight-total').removeClass("hide");
+                            					$("#weight-total").removeClass("hide");
 
                             					// Close modal and hide attach button
                                 				$("#modal-attach-assessment-form").modal("hide");
-                                				$('#btn-attach-assessment-form-modal').hide();
-                                				$('#btn-remove-assessment-form').show();
+                                				$("#btn-attach-assessment-form-modal").hide();
+                                				$("#btn-remove-assessment-form").show();
 
                                 				// Add submit handler for checking weights and scores
-                                				submitCheckScores()
+                                				submitCheckScores();
 
                                 				// Hide weight errors upon change/input
-                                				updateTotalWeight()
+                                				updateTotalWeight();
 
                                 				// Hide score errors upon change/input
-                                				removeScoreErrorsOnInput()
+                                				removeScoreErrorsOnInput();
                             				});
                                 		}
                                 	}
                                 });
 
-								$('#btn-remove-assessment-form').on('click', function(e) {
+								$("#btn-remove-assessment-form").on("click", function(e) {
 									e.preventDefault();
                             		
-									$.post(ENTRADA_URL + "/admin/assessments/forms", {
-                        				section: 'api-forms',
-                        				method: 'remove-form-from-assessment',
-                        				assessment_id: <?php echo $ASSESSMENT_ID; ?>
+									$.post(ENTRADA_URL + "/admin/gradebook/assessments", {
+                        				section: "api-forms",
+                        				method: "remove-form-from-assessment",
+                        				assessment_id: ASSESSMENT_ID
                         			})
                         			.done(function(e) {
                         				// remove form from page
-                        				$('#form').empty();
+                        				$("#form").empty();
 
                         				// show and hide the right buttons
-                        				$('#btn-attach-assessment-form-modal').show();
-                        				$('#btn-remove-assessment-form').hide();
+                        				$("#btn-attach-assessment-form-modal").show();
+                        				$("#btn-remove-assessment-form").hide();
 
                         				// remove submit handler
                         				$("#assessment-form").off("submit");
 
                         				// Remove floating weight total, and any alerts
-                        				$('#weight-total, .alert-score, .alert-weight').addClass("hide");
+                        				$("#weight-total, .alert-score, .alert-weight").addClass("hide");
                         			})
 								});
 
 								// Enable datepicker
-								$('.datepicker').datepicker({
-									dateFormat: 'yy-mm-dd',
+								$(".datepicker").datepicker({
+									dateFormat: "yy-mm-dd",
 								});
 
 								$("#modal-attach-assessment-form").on("hide", function () {
@@ -1225,7 +1460,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 								<?php if ($ERROR && isset($assessment_options_selected) && $assessment_options_selected) { ?>
 								var selected_options;
 								selected_options = JSON.parse("<?php echo json_encode($assessment_options_selected); ?>");
-								fetchOptions(jQuery('#assessment_characteristic'), selected_options);
+								fetchOptions(jQuery("#assessment_characteristic"), selected_options);
 								<?php } ?>
 
 							});
@@ -1245,7 +1480,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 
 								jQuery(remove_icon_span).attr({id: "remove-attched-assessment-event"}).addClass("btn btn-danger");
 								jQuery(event_remove_icon).addClass("icon-remove icon-white");
-								jQuery(remove_icon_span).append(event_remove_icon).append('&nbsp;<?php echo $translate->_('Remove Event') ?>');
+								jQuery(remove_icon_span).append(event_remove_icon).append("&nbsp;<?php echo $translate->_("Remove Event") ?>");
 								jQuery(remove_icon_div).append(remove_icon_span).attr({id: "remove-attched-assessment-event-div"});
 								jQuery(event_h3).addClass("event-text").text(event_title).html();
 								jQuery(event_span).addClass("event-text").addClass("muted").text(event_date).html();
@@ -1257,7 +1492,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 							}
 						</script>
 
-						<h2 title="Assessment Event Section" class="collapsable expanded"><?php echo $translate->_('Assessment Event') ?></h2>
+						<h2 title="Assessment Event Section" class="collapsable expanded"><?php echo $translate->_("Assessment Event") ?></h2>
 						<div id="assessment-event-section">
 
 							<a id="attach-event-button" href="#event-modal" class="btn btn-primary space-below" role="button" data-toggle="modal">
@@ -1271,15 +1506,15 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 						</div>
 						<div class="clearfix"></div>
 
-                        <h2 class="subheading" title="Assessment Graders Section" class="collapsable expanded"><?php echo $translate->_('Assessment Graders') ?></h2>
+                        <h2 class="subheading" title="Assessment Graders Section" class="collapsable expanded"><?php echo $translate->_("Assessment Graders") ?></h2>
                         <div id="assessment-graders-section">
                             <!-- Graders section -->
                             <script type="text/javascript">
-                                var ENTRADA_URL = '<?php echo ENTRADA_URL; ?>';
-                                var COURSE_ID = '<?php echo $COURSE_ID; ?>';
-                                var CPERIOD_ID = '<?php echo $cperiod_id; ?>';
-                                var ASSIGN_TO_GRADER_TEXT = '<?php echo $translate->_("Assign to Grader"); ?>';
-                                var ASSESSMENT_ID = '0';
+                                var ENTRADA_URL = "<?php echo ENTRADA_URL; ?>";
+                                var COURSE_ID = "<?php echo $COURSE_ID; ?>";
+                                var CPERIOD_ID = "<?php echo $cperiod_id; ?>";
+                                var ASSIGN_TO_GRADER_TEXT = "<?php echo $translate->_("Assign to Grader"); ?>";
+                                var ASSESSMENT_ID = "0";
                             </script>
                             <?php
                             $HEAD[] = "<script type=\"text/javascript\" src=\"".ENTRADA_URL."/javascript/gradebook/graders.js\"></script>\n";
@@ -1332,27 +1567,49 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
                                             if (isset($PROCESSED["graders"]) && is_array($PROCESSED["graders"])) {
                                                 foreach ($PROCESSED["graders"] as $grader) {
                                                     $grader_user = Models_User::fetchRowByID($grader);
-                                                    ?>
-                                                    <tr>
-                                                        <td>
-                                                            <label for="grader_<?php echo $grader; ?>"><input id="grader_<?php echo $grader; ?>" name="chk_graders[]" value="<?php echo $grader; ?>" type="checkbox" data-name="<?php echo $grader_user->getFullname();?>" > <?php echo $grader_user->getFullname();?></label>
-                                                            <input type="hidden" name="graders[]" value="<?php echo $grader; ?>">
-                                                        </td>
-                                                        <td id="td-graders-to-learner-<?php echo $grader; ?>" class="td-graders-to-learner">
-                                                            <?php
-                                                            if (isset($PROCESSED["g_assignment_".$grader]) && is_array($PROCESSED["g_assignment_".$grader])) {
-                                                                foreach ($PROCESSED["g_assignment_".$grader] as $learner) {
-                                                                    $learner_user = Models_User::fetchRowByID($learner); ?>
-                                                                    <div style="margin-bottom: 10px;" data-id="<?php echo $learner; ?>" data-name="<?php echo $learner_user->getFullname();?>">
-                                                                        <?php echo $learner_user->getFullname();?><img id="remove-learner-<?php echo $learner; ?>" src="/images/action-delete.gif" class="remove-learner pull-right" style="cursor: pointer;" data-id="<?php echo $learner; ?>" data-grader="<?php echo $grader; ?>">
-                                                                    </div>
-                                                                    <?php
+                                                    if ($grader_user) {
+                                                        ?>
+                                                        <tr>
+                                                            <td>
+                                                                <label for="grader_<?php echo $grader; ?>"><input
+                                                                        id="grader_<?php echo $grader; ?>"
+                                                                        name="chk_graders[]"
+                                                                        value="<?php echo $grader; ?>" type="checkbox"
+                                                                        data-name="<?php echo $grader_user->getFullname(); ?>"> <?php echo $grader_user->getFullname(); ?>
+                                                                </label>
+                                                                <input type="hidden" name="graders[]"
+                                                                       value="<?php echo $grader; ?>">
+                                                            </td>
+                                                            <td id="td-graders-to-learner-<?php echo $grader; ?>"
+                                                                class="td-graders-to-learner">
+                                                                <?php
+                                                                if (isset($PROCESSED["g_assignment_" . $grader]) && is_array($PROCESSED["g_assignment_" . $grader])) {
+                                                                    foreach ($PROCESSED["g_assignment_" . $grader] as $learner) {
+                                                                        $learner_user = Models_User::fetchRowByID($learner);
+                                                                        if ($learner_user) { ?>
+                                                                            <div style="margin-bottom: 10px;"
+                                                                                 data-id="<?php echo $learner; ?>"
+                                                                                 data-name="<?php echo $learner_user->getFullname(); ?>">
+                                                                                <?php echo $learner_user->getFullname(); ?>
+                                                                                <img
+                                                                                    id="remove-learner-<?php echo $learner; ?>"
+                                                                                    src="/images/action-delete.gif"
+                                                                                    class="remove-learner pull-right"
+                                                                                    style="cursor: pointer;"
+                                                                                    data-id="<?php echo $learner; ?>"
+                                                                                    data-grader="<?php echo $grader; ?>">
+                                                                            </div>
+                                                                            <?php
+                                                                        }
+                                                                    }
+                                                                } else {
+                                                                    echo "<i>No learners assigned</i>";
                                                                 }
-                                                            } else { echo "<i>No learners assigned</i>"; }
-                                                            ?>
-                                                        </td>
-                                                    </tr>
-                                                    <?php
+                                                                ?>
+                                                            </td>
+                                                        </tr>
+                                                        <?php
+                                                    }
                                                 }
                                             }
                                             ?>
@@ -1376,9 +1633,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
                                         <table id="table-groups-no-grader" class="table table-bordered table-striped">
                                             <thead>
                                             <tr>
-                                                <th><label for="all-groups">
-                                                    <input id="all-groups" value="1" type="checkbox"> Group</label>
-                                                </th>
+                                                <th><label class="checkbox no-margin" for="all-groups"><input id="all-groups" value="1" type="checkbox">Group</label></th>
                                                 <th>Assign Group</th>
                                             </tr>
                                             </thead>
@@ -1393,7 +1648,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
                                         <table id="table-learners-no-grader" class="table table-bordered table-striped">
                                             <thead>
                                             <tr>
-                                                <th><label for="all-learners"><input id="all-learners" value="1" type="checkbox"> Learner</label></th>
+                                                <th><label class="checkbox no-margin" for="all-learners"><input id="all-learners" value="1" type="checkbox">Learner</label></th>
                                                 <th>Assign Grader</th>
                                             </tr>
                                             </thead>
@@ -1470,6 +1725,36 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
                             <div class="gap30"></div>
                         </div>
 
+
+						<?php if (Entrada_Settings::fetchValueByShortname("eportfolio_can_attach_to_gradebook_assessment", $ENTRADA_USER->getActiveOrganisation())) : ?>
+						<!-- begin ePortfolio -->
+						<input id="eportfolio-id" name="eportfolio_id" value="<?php echo $eportfolio_id; ?>" type="hidden" />
+
+						<h2 title="ePortfolio Section" class="collapsable expanded"><?php echo $translate->_('Assessment ePortfolio') ?></h2>
+						<div id="assessment-eportfolio-section">
+
+							<a href="#modal-attach-assessment-eportfolio" id="btn-attach-assessment-eportfolio-modal" data-toggle="modal" role="button" class="btn btn-primary" <?php if ($eportfolio_id): ?>style="display:none;"<?php endif; ?>>
+								<i class="icon-plus icon-white"></i> <?php echo $translate->_('Attach ePortfolio'); ?>
+							</a>
+
+						</div>
+
+						<div id="eportfolio" class="eportfolio-container">
+							<?php if ($eportfolio_id) {
+								$eportfolio = Models_Eportfolio::fetchRow($eportfolio_id);
+								if ($eportfolio) {
+									echo "<h3>" . $eportfolio->getPortfolioName() . "</h3>";
+								}
+							} ?>
+						</div>
+
+						<a href="#" id="btn-remove-assessment-eportfolio" role="button" class="btn btn-danger" <?php if (!$eportfolio_id): ?>style="display:none;"<?php endif; ?>>
+							<i class="icon-remove icon-white"></i> <?php echo $translate->_('Remove ePortfolio'); ?>
+						</a>
+
+						<!-- finish ePortfolio -->
+						<?php endif; ?>
+
                         <h2 title="Assessment Form Section" class="collapsable expanded"><?php echo $translate->_('Assessment Form') ?></h2>
                         <div id="assessment-form-section">
                             <?php
@@ -1490,16 +1775,16 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 
                             <input id="form-id" name="form_id" value="" type="hidden" />
 
-                            <a href="#modal-attach-assessment-form" id="btn-attach-assessment-form-modal" data-toggle="modal" role="button" class="btn btn-primary" <?php if ($assessment_details['form_id']): ?>style="display:none;"<?php endif; ?>>
-                                <i class="icon-plus icon-white"></i> <?php echo $translate->_('Attach Assessment Form'); ?>
+                            <a href="#modal-attach-assessment-form" id="btn-attach-assessment-form-modal" data-toggle="modal" role="button" class="btn btn-primary" <?php if ($assessment_details["form_id"]): ?>style="display:none;"<?php endif; ?>>
+                                <i class="icon-plus icon-white"></i> <?php echo $translate->_("Attach Assessment Form"); ?>
                             </a>
 
                             <div id="form" class="form-container">
-                                <?php if ($assessment_details['form_id']) {
-                                    $form_model = new Models_Assessments_Form(array('form_id' => $assessment_details['form_id']));
-                                    $results = $form_model->getCompleteFormData($assessment_details['assessment_id']);
+                                <?php if ($assessment_details["form_id"]) {
+                                    $form_model = new Models_Assessments_Form(array("form_id" => $assessment_details["form_id"]));
+                                    $results = $form_model->getCompleteFormData($assessment_details["assessment_id"]);
 
-                                    $form = new Views_Gradebook_Assessments_Form(array('data' => $results));
+                                    $form = new Views_Gradebook_Assessments_Form(array("data" => $results));
                                     $form->render();
                                 } ?>
                             </div>
@@ -1509,8 +1794,8 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
                             $score_alert->render();
                             ?>
 
-                            <a href="#" id="btn-remove-assessment-form" role="button" class="btn btn-danger" <?php if (!$assessment_details['form_id']): ?>style="display:none;"<?php endif; ?>>
-                                <i class="icon-remove icon-white"></i> <?php echo $translate->_('Remove Form'); ?>
+                            <a href="#" id="btn-remove-assessment-form" role="button" class="btn btn-danger" <?php if (!$assessment_details["form_id"]): ?>style="display:none;"<?php endif; ?>>
+                                <i class="icon-remove icon-white"></i> <?php echo $translate->_("Remove Form"); ?>
                             </a>
                         </div>
                         <div id="weight-total" class="weight-total-bar hide"><?php echo $translate->_("Total Weight:"); ?> <span id="weight-total-number"></span>%</div>
@@ -1552,10 +1837,10 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 											?>
 											<li class = "objective-container objective-set assessment-objective"
 												id = "objective_<?php echo $objective["objective_id"]; ?>"
-												data-list="<?php echo $objective["objective_name"] == $hierarchical_name?'hierarchical':'flat'; ?>"
+												data-list="<?php echo $objective["objective_name"] == $hierarchical_name ? "hierarchical" : "flat"; ?>"
 												data-id="<?php echo $objective["objective_id"]; ?>">
 												<?php
-												$title = ($objective["objective_code"]?$objective["objective_code"].': '.$objective["objective_name"]:$objective["objective_name"]);
+												$title = ($objective["objective_code"] ? $objective["objective_code"] . ": " . $objective["objective_name"] : $objective["objective_name"]);
 												?>
 												<div class="objective-title"
 													 id="objective_title_<?php echo $objective["objective_id"]; ?>"
@@ -1635,7 +1920,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
                                                     <?php
                                                     if ($flat_objectives) {
                                                         foreach ($flat_objectives as $objective) {
-                                                            $title = ($objective["objective_code"]?$objective["objective_code"].': '.$objective["objective_name"]:$objective["objective_name"]);
+                                                            $title = ($objective["objective_code"] ? $objective["objective_code"] . ": " . $objective["objective_name"] : $objective["objective_name"]);
                                                             ?>
                                                             <li class = "mapped-objective"
                                                                 id = "mapped_objective_<?php echo $objective["objective_id"]; ?>"
@@ -1647,7 +1932,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
                                                                     <?php
                                                                     $set = fetch_objective_set_for_objective_id($objective["objective_id"]);
                                                                     if ($set) {
-                                                                        echo "Curriculum Tag Set: <strong>".$set["objective_name"]."</strong><br/>";
+                                                                        echo "Curriculum Tag Set: <strong>" . $set["objective_name"] . "</strong><br/>";
                                                                     }
 
                                                                     echo $objective["objective_description"];
@@ -1655,7 +1940,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
                                                                 </div>
 
                                                                 <div class="assessment-objective-controls">
-                                                                    <input type="checkbox" class="checked-mapped" id="check_mapped_<?php echo $objective['objective_id'];?>" value="<?php echo $objective['objective_id'];?>" <?php echo $objective["mapped"]?' checked="checked"':''; ?>/>
+                                                                    <input type="checkbox" class="checked-mapped" id="check_mapped_<?php echo $objective["objective_id"];?>" value="<?php echo $objective["objective_id"];?>" <?php echo $objective["mapped"] ? " checked=\"checked\"" : ""; ?>/>
                                                                 </div>
                                                             </li>
                                                         <?php
@@ -1677,20 +1962,20 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
                                                 <?php
                                                 if ($explicit_assessment_objectives) {
                                                     foreach($explicit_assessment_objectives as $objective) {
-                                                        $title = ($objective["objective_code"]?$objective["objective_code"].': '.$objective["objective_name"]:$objective["objective_name"]);
+                                                        $title = ($objective["objective_code"] ? $objective["objective_code"] . ": " . $objective["objective_name"] : $objective["objective_name"]);
                                                         ?>
                                                         <li class = "mapped-objective"
                                                             id = "mapped_objective_<?php echo $objective["objective_id"]; ?>"
                                                             data-id = "<?php echo $objective["objective_id"]; ?>"
                                                             data-title="<?php echo $title;?>"
                                                             data-description="<?php echo htmlentities($objective["objective_description"]);?>"
-                                                            data-mapped="<?php echo $objective["mapped_to_course"]?1:0;?>">
+                                                            data-mapped="<?php echo $objective["mapped_to_course"] ? 1 : 0;?>">
                                                             <strong><?php echo $title; ?></strong>
                                                             <div class="objective-description">
                                                                 <?php
                                                                 $set = fetch_objective_set_for_objective_id($objective["objective_id"]);
                                                                 if ($set) {
-                                                                    echo "Curriculum Tag Set: <strong>".$set["objective_name"]."</strong><br/>";
+                                                                    echo "Curriculum Tag Set: <strong>" . $set["objective_name"] . "</strong><br/>";
                                                                 }
 
                                                                 echo $objective["objective_description"];
@@ -1716,7 +2001,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
                                         if ($mapped_assessment_objectives) {
                                             foreach ($mapped_assessment_objectives as $objective) {
                                                 if (in_array($objective["objective_type"], array("curricular_objective","course"))) {
-                                                    $title = ($objective["objective_code"]?$objective["objective_code"].': '.$objective["objective_name"]:$objective["objective_name"]);
+                                                    $title = ($objective["objective_code"] ? $objective["objective_code"] . ": " . $objective["objective_name"] : $objective["objective_name"]);
                                                     ?>
                                                     <option value="<?php echo $objective["objective_id"]; ?>" selected="selected"><?php echo $title; ?></option>
                                                     <?php
@@ -1730,7 +2015,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
                                         if ($mapped_assessment_objectives) {
                                             foreach ($mapped_assessment_objectives as $objective) {
                                                 if (in_array($objective["objective_type"], array("clinical_presentation","event"))) {
-                                                    $title = ($objective["objective_code"]?$objective["objective_code"].': '.$objective["objective_name"]:$objective["objective_name"]);
+                                                    $title = ($objective["objective_code"] ? $objective["objective_code"] . ": " . $objective["objective_name"] : $objective["objective_name"]);
                                                     ?>
                                                     <option value = "<?php echo $objective["objective_id"]; ?>" selected="selected"><?php echo $title; ?></option>
                                                     <?php
@@ -1772,8 +2057,8 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
                             <input type="hidden" id="assessment-event" name="event_id" value="<?php echo $event->getID(); ?>" data-title="<?php echo $event->getEventTitle(); ?>" data-date="<?php echo date("D M d/y g:ia", $event->getEventStart()) ?>" />
                             <?php
                         }
-                        if (isset($PROCESSED["groups"]) && is_array($PROCESSED["groups"]) && count($PROCESSED["groups"])) {
-							foreach($PROCESSED["groups"] as $group) {
+                        if (isset($PROCESSED["groups"]) && is_array($PROCESSED["groups"]) && count($PROCESSED["groups"]) && $PROCESSED["group_assessment"]) {
+                            foreach($PROCESSED["groups"] as $group) {
 								?>
 								<input type="hidden" name="as_groups[]" value="<?php echo $group["cgroup_id"]; ?>" id="as_groups_<?php echo $group["cgroup_id"]; ?>"  data-id="<?php echo $group["cgroup_id"]; ?>" data-label="<?php echo $group["group_name"]; ?>" data-filter="as_groups" class="search-target-control as_groups_search_target_control">
 								<?php
@@ -1791,7 +2076,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 						?>
 
 					</form>
-                    <div id="event-modal" class="modal hide fade">
+                    <div id="event-modal" class="modal scrollable fade hide">
                         <div class="modal-dialog">
                             <div class="modal-content">
                                 <div class="modal-header">
@@ -1814,13 +2099,50 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
                                     </div>
                                     <div id="loading" class="hide"><img src="<?php echo ENTRADA_URL ?>/images/loading.gif" /></div>
                                 </div>
-                                <div id="event-modal-footer">
-                                    <a href="#" class="btn" id="close-event-modal">Close</a>
-                                    <a href="#" id="attach-learning-event" class="btn btn-primary pull-right">Attach Learning Event</a>
+                                <div class="modal-footer">
+							        <button type="button" class="btn btn-default pull-left" data-dismiss="modal">Close</button>
+									<button id="attach-learning-event" type="button" class="btn btn-primary">Attach Learning Event</button>
                                 </div>
                             </div>
                         </div>
                     </div>
+                    
+                        <div id="exam-post-modal" class="modal hide fade">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                                        <h3 id="exam-modal-title">
+                                            <?php echo $translate->_("Search exam titles with posts to attach to this assessment"); ?>
+                                        </h3>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div id="title-search">
+                                            <input type="text" placeholder="Search exam by title" id="exam-post-title-search"/>
+                                            <div id="exam-search-msgs">
+                                                <div class="alert alert-block">
+                                                    <ul>
+                                                        <li>
+                                                            <?php echo $translate->_("To search for exam titles with posts, begin typing the title of the exam you wish to find in the search box."); ?>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                            <div id="exam-search-wrap">
+                                                <ul id="exam-search-list"></ul>
+                                            </div>
+                                        </div>
+                                        <div id="loading-exam-post" class="hide">
+                                            <img src="<?php echo ENTRADA_URL ?>/images/loading.gif"/>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" id="close-exam-post-modal" class="btn btn-default pull-left" data-dismiss="modal">Close</button>
+                                        <button id="attach-exam-posts" type="button" class="btn btn-primary"><?php echo $translate->_("Attach Exam Posts"); ?></button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
                     <!-- Quizzes modal -->
                     <div id="quiz-modal" class="modal hide fade">
@@ -1854,6 +2176,39 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
                         </div>
                     </div>
                     <!-- End Quizzes modal -->
+
+					<!-- begin ePortfolio modal -->
+					<?php
+					$modal_attach_assessment_eportfolio = new Views_Gradebook_Modal(array(
+						"id" => "modal-attach-assessment-eportfolio",
+						"title" => $translate->_("Select an ePortfolio to attach to this assessment"),
+						"dismiss_button" => array(
+							"text" => $translate->_("Close"),
+							"class" => "pull-left"
+						),
+						"success_button" => array(
+							"text" => $translate->_("Attach Selected ePortfolio"),
+							"class" => "btn-primary btn-attach-assessment-eportfolio"
+						)
+					));
+
+					$modal_attach_assessment_eportfolio->setBody('
+						<div id="title-search">								
+							<div id="assessment-eportfolio-search-wrap">
+								<ul id="assessment-eportfolio-search-list"></ul>
+							</div>
+						</div>
+						<div id="assessment-eportfolio-loading" class="hide">
+							<img src="'.ENTRADA_URL.'/images/loading.gif" />
+						</div>
+					');
+
+
+					$modal_attach_assessment_eportfolio->render();
+
+					?>
+
+					<!-- finish ePortfolio modal -->
 
 					<?php
 					$modal_attach_assessment = new Views_Gradebook_Modal(array(

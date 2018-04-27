@@ -52,13 +52,15 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ROTATION_SCHEDULE"))) {
         $SCHEDULE = new Models_Schedule();
         $SCHEDULE->fromArray(array("draft_id" => $parent_schedule->getDraftID()));
     }
+    $is_admin = Entrada_Utilities::isCurrentUserSuperAdmin(array(array("resource" => "assessmentreportadmin")));
+    $is_author = Entrada_Utilities_ScheduleAuthor::isAuthor(
+        $ENTRADA_USER->getActiveId(),
+        $ENTRADA_USER->getActiveOrganisation(),
+        $SCHEDULE->getCourseID(),
+        $SCHEDULE->getDraftID()
+    );
 
-    $is_author = false;
-    if (Models_Schedule_Draft_Author::isAuthor($SCHEDULE->getDraftID(), $ENTRADA_USER->getActiveID())) {
-        $is_author = true;
-    }
-
-    if ($is_author) {
+    if ($is_author || $is_admin) {
         require_once("form-schedule.inc.php");
     } else {
         echo display_error($translate->_("You are attempting to edit a schedule that you do not have access to. Please contact the program assistant responsible for this rotational schedule to be added as an author."));

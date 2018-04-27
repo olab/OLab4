@@ -70,7 +70,7 @@ if (!defined("PARENT_INCLUDED")) {
     }
 
     $event = Models_Event::get($EVENT_ID);
-	$assessments = Models_Assessment_AssessmentEvent::fetchAllAssessmentByEventID($EVENT_ID);
+	$assessments = Models_Assessment_Event::fetchAllAssessmentByEventID($EVENT_ID);
 
 	/**
 	 * Check for groups which have access to the administrative side of this module
@@ -142,9 +142,11 @@ if (!defined("PARENT_INCLUDED")) {
 		$HEAD[] = "<script type=\"text/javascript\" src=\"".ENTRADA_RELATIVE."/javascript/windows/window.js?release=".html_encode(APPLICATION_VERSION)."\"></script>";
 		$HEAD[] = "<link href=\"".ENTRADA_RELATIVE."/css/windows/default.css\" rel=\"stylesheet\" type=\"text/css\" />";
 		$HEAD[] = "<link href=\"".ENTRADA_RELATIVE."/css/windows/medtech.css\" rel=\"stylesheet\" type=\"text/css\" />";
+		$HEAD[] = "<script>var SITE_URL = '".ENTRADA_URL."';</script>";
 
 		?>
 		<script type="text/javascript">
+            EVENT_ID = <?php echo $EVENT_ID . ";"; ?>
 			function beginQuiz(id) {
 				Dialog.confirm('Do you really wish to begin your attempt of this quiz? The timer will begin immediately if this quiz has a time-limit, and you will only have until that timer expires to answer the questions before the quiz is closed to you.',
 					{
@@ -217,7 +219,7 @@ if (!defined("PARENT_INCLUDED")) {
 
 					$include_details			= true;
 					$include_audience			= true;
-					$include_objectives			= false;
+					$include_objectives			= true;
 					$include_resources			= true;
 					$include_comments			= true;
 
@@ -323,7 +325,8 @@ if (!defined("PARENT_INCLUDED")) {
 					</div>
 
                     <div class="clearfix"></div>
-					<div class="content-small"><?php echo fetch_course_path($event_info["course_id"]); ?></div>
+					<div class="content-small"><?php echo fetch_course_path($event_info["course_id"], $event_info["cunit_id"]); ?></div>
+					<a name="event-details-section-anchor"></a><!--nus310517-->
 					<h1 id="page-top" class="event-title"><?php echo html_encode($event_info["event_title"]); ?></h1>
 
                     <script type="text/javascript">
@@ -372,7 +375,6 @@ if (!defined("PARENT_INCLUDED")) {
                             modalDialog.close();
                         }
                     </script>
-
                     <?php
                     /*
                      * This feature provides the ability for the Learning Event page to be designed differently
@@ -413,7 +415,7 @@ if (!defined("PARENT_INCLUDED")) {
                     ?>
                     <div>
                         <?php
-                        echo "<a name=\"event-comments-section\"></a>\n";
+                        echo "<a name=\"event-comments-section-anchor\"></a>\n";
                         echo "<h2 title=\"Event Comments Section\">Discussions &amp; Comments</h2>\n";
                         echo "<div id=\"event-comments-section\" class=\"section-holder\">\n";
                         if (defined("NOTIFICATIONS_ACTIVE") && NOTIFICATIONS_ACTIVE) {
@@ -482,7 +484,7 @@ if (!defined("PARENT_INCLUDED")) {
                                 echo "<blockquote id=\"event_comment_" . (int) $result["ediscussion_id"]."\">\n";
                                 echo " " . html_encode($result["discussion_title"]) . "<br />";
                                 echo "	<div class=\"discussion-comment\" id=\"discussion_comment_".$result["ediscussion_id"]."\">".nl2br(html_encode($result["discussion_comment"]))."</div>\n";
-                                echo "	<small><strong>".get_account_data("firstlast", $result["proxy_id"])."</strong>, ".date(DEFAULT_DATE_FORMAT, $result["updated_date"])." ".($editable ? " ( <span id=\"edit_mode_" . (int) $result["ediscussion_id"] . "\">edit</span> )" : "") . "</small>\n";
+                                echo "	<small><strong>".get_account_data("firstlast", $result["proxy_id"])."</strong>, ".date(DEFAULT_DATETIME_FORMAT, $result["updated_date"])." ".($editable ? " ( <span id=\"edit_mode_" . (int) $result["ediscussion_id"] . "\">edit</span> )" : "") . "</small>\n";
                                 echo "</blockquote>\n";
 
                                 $i++;
@@ -515,23 +517,23 @@ if (!defined("PARENT_INCLUDED")) {
 					 */
 					$sidebar_html  = "<ul class=\"menu\">\n";
 					if ($include_details) {
-						$sidebar_html .= "	<li class=\"link\"><a href=\"#event-details-section\" onclick=\"$('event-details-section').scrollTo(); return false;\" title=\"Event Details\">Event Details</a></li>\n";
+						$sidebar_html .= "	<li class=\"link\"><a href=\"#event-details-section-anchor\" onclick=\"$('event-details-section-anchor').scrollTo(); return false;\" title=\"Event Details\">Event Details</a></li>\n";
 					}
 
                     if (isset($include_keywords) && $include_keywords) {
-                        $sidebar_html .= "  <li class=\"link\"><a href=\"#event-keywords-section\" onclick=\"$('event-keywords-section').scrollTo(); return false;\" title=\"Event Keywords\">Event Keywords</a></li>\n";
+                        $sidebar_html .= "  <li class=\"link\"><a href=\"#event-keywords-section-anchor\" onclick=\"$('event-keywords-section-anchor').scrollTo(); return false;\" title=\"Event Keywords\">Event Keywords</a></li>\n";
                     }
 
 					if ($include_objectives) {
-						$sidebar_html .= "	<li class=\"link\"><a href=\"#event-objectives-section\" onclick=\"$('event-objectives-section').scrollTo(); return false;\" title=\"" . $translate->_("Event Objectives") . "\">" . $translate->_("Event Objectives") . "</a></li>\n";
+						$sidebar_html .= "	<li class=\"link\"><a href=\"#event-objectives-section-anchor\" onclick=\"$('event-objectives-section-anchor').scrollTo(); return false;\" title=\"" . $translate->_("Event Objectives") . "\">" . $translate->_("Event Objectives") . "</a></li>\n";
 					}
 
 					if ($include_resources) {
-						$sidebar_html .= "	<li class=\"link\"><a href=\"#event-resources-section\" onclick=\"$('event-resources-section').scrollTo(); return false;\" title=\"Event Resources\">Event Resources</a></li>\n";
+						$sidebar_html .= "	<li class=\"link\"><a href=\"#event-resources-section-anchor\" onclick=\"$('event-resources-section-anchor').scrollTo(); return false;\" title=\"Event Resources\">Event Resources</a></li>\n";
 					}
 
 					if ($include_comments) {
-						$sidebar_html .= "	<li class=\"link\"><a href=\"#event-comments-section\" onclick=\"$('event-comments-section').scrollTo(); return false;\" title=\"Event Discussions &amp; Comments\">Event Comments</a></li>\n";
+						$sidebar_html .= "	<li class=\"link\"><a href=\"#event-comments-section-anchor\" onclick=\"$('event-comments-section-anchor').scrollTo(); return false;\" title=\"Event Discussions &amp; Comments\">Event Comments</a></li>\n";
 					}
 					$sidebar_html .= "</ul>\n";
 
@@ -641,7 +643,7 @@ if (!defined("PARENT_INCLUDED")) {
                         }
 
                         echo "<tr id=\"event-".$result["event_id"]."\" class=\"event".(($is_modified) ? " modified" : "")."\">\n";
-                        echo "	<td><a href=\"".$url."\">".date(DEFAULT_DATE_FORMAT, $result["event_start"])."</a></td>\n";
+                        echo "	<td><a href=\"".$url."\">".date(DEFAULT_DATETIME_FORMAT, $result["event_start"])."</a></td>\n";
                         echo "	<td><a href=\"".$url."\">".html_encode($result["course_code"])."</a></td>\n";
                         echo "	<td><a href=\"".$url."\">".html_encode($result["event_title"])."</a></td>\n";
                         echo "</tr>\n";
@@ -669,7 +671,7 @@ if (!defined("PARENT_INCLUDED")) {
 				<?php
 				switch ($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["dtype"]) {
 					case "day" :
-						echo "that take place on <strong>".date(DEFAULT_DATE_FORMAT, $learning_events["duration_start"])."</strong>";
+						echo "that take place on <strong>".date(DEFAULT_DATETIME_FORMAT, $learning_events["duration_start"])."</strong>";
 					break;
 					case "month" :
 						echo "that take place during <strong>".date("F", $learning_events["duration_start"])."</strong> of <strong>".date("Y", $learning_events["duration_start"])."</strong>";
@@ -679,7 +681,7 @@ if (!defined("PARENT_INCLUDED")) {
 					break;
 					default :
 					case "week" :
-						echo "from <strong>".date(DEFAULT_DATE_FORMAT, $learning_events["duration_start"])."</strong> to <strong>".date(DEFAULT_DATE_FORMAT, $learning_events["duration_end"])."</strong>";
+						echo "from <strong>".date(DEFAULT_DATETIME_FORMAT, $learning_events["duration_start"])."</strong> to <strong>".date(DEFAULT_DATETIME_FORMAT, $learning_events["duration_end"])."</strong>";
 					break;
 				}
 				echo (($filters_applied) ? " that also match the supplied &quot;Show Only&quot; restrictions" : "") ?>.

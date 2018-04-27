@@ -71,24 +71,9 @@ if ($RECORD_ID) {
 											$PROCESSED["file_version"] = 1;
 										}
 
-                                            $finfo = new finfo(FILEINFO_MIME);
-                                            $type = $finfo->file($_FILES["uploaded_file"]["tmp_name"]);
-                                            $type_array = explode(";", $type);
-                                            $mimetype = $type_array[0];
-										$PROCESSED["file_mimetype"]		= strtolower(trim($_FILES["uploaded_file"]["type"]));
-                                            switch($PROCESSED["file_mimetype"]) {
-                                                case "application/x-forcedownload":
-                                                case "application/octet-stream":
-                                                case "\"application/octet-stream\"":
-                                                case "application/download":
-                                                case "application/force-download":
-                                                    $PROCESSED["file_mimetype"] = $mimetype;
-                                                    break;
-                                            }
-                                            
-                                            
-										$PROCESSED["file_filesize"]		= $file_filesize;
-										$PROCESSED["file_filename"]		= useable_filename(trim($_FILES["uploaded_file"]["name"]));
+										$PROCESSED["file_mimetype"] = mime_content_type($_FILES["uploaded_file"]["tmp_name"]);
+										$PROCESSED["file_filesize"]	= $file_filesize;
+										$PROCESSED["file_filename"]	= useable_filename(trim($_FILES["uploaded_file"]["name"]));
 
 										if ((!defined("COMMUNITY_STORAGE_DOCUMENTS")) || (!@is_dir(COMMUNITY_STORAGE_DOCUMENTS)) || (!@is_writable(COMMUNITY_STORAGE_DOCUMENTS))) {
 											$ERROR++;
@@ -256,7 +241,7 @@ if ($RECORD_ID) {
 			}
 		} else {
 			$NOTICE++;
-			$NOTICESTR[] = "The file that you are trying to add a revision to was deactivated <strong>".date(DEFAULT_DATE_FORMAT, $file_record["updated_date"])."</strong> by <strong>".html_encode(get_account_data("firstlast", $file_record["updated_by"]))."</strong>.<br /><br />If there has been a mistake or you have questions relating to this issue please contact the MEdTech Unit directly.";
+			$NOTICESTR[] = "The file that you are trying to add a revision to was deactivated <strong>".date(DEFAULT_DATETIME_FORMAT, $file_record["updated_date"])."</strong> by <strong>".html_encode(get_account_data("firstlast", $file_record["updated_by"]))."</strong>.<br /><br />If there has been a mistake or you have questions relating to this issue please contact the MEdTech Unit directly.";
 
 			echo display_notice();
 

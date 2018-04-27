@@ -125,11 +125,11 @@ if ($EVENT_ID) {
 						</tr>
 						<tr>
 							<td>Rotation Starts:</td>
-							<td><?php echo date(DEFAULT_DATE_FORMAT, $result["event_start"]); ?></td>
+							<td><?php echo date(DEFAULT_DATETIME_FORMAT, $result["event_start"]); ?></td>
 						</tr>
 						<tr>
 							<td>Rotation Ends:</td>
-							<td><?php echo date(DEFAULT_DATE_FORMAT, $result["event_finish"]); ?></td>
+							<td><?php echo date(DEFAULT_DATETIME_FORMAT, $result["event_finish"]); ?></td>
 						</tr>
 					</tbody>
 					</table>
@@ -230,7 +230,7 @@ if ($EVENT_ID) {
 				$ONLOAD[]	= "setTimeout('window.location=\'".ENTRADA_URL."/".$MODULE."\'', 10000)";
 				
 				$ERROR++;
-				$ERRORSTR[] = "The apartment details that you are trying to load are currently notavailable.<br /><br />You will be returned to the Clerkship tab in 10 seconds, or <a href=\"".ENTRADA_URL."/".$MODULE."\">click here</a> to continue immediately.";
+				$ERRORSTR[] = "The apartment details that you are trying to load are currently notavailable.<br /><br />You will be returned to the " . $translate->_("Clerkship") . " tab in 10 seconds, or <a href=\"".ENTRADA_URL."/".$MODULE."\">click here</a> to continue immediately.";
 		
 				echo display_error($ERRORSTR);
 			
@@ -252,7 +252,7 @@ if ($EVENT_ID) {
 	$ONLOAD[]	= "setTimeout('window.location=\'".ENTRADA_URL."/".$MODULE."\'', 10000)";
 
 	$ERROR++;
-	$ERRORSTR[] = "The apartment details that you are trying to load are currently notavailable.<br /><br />You will be returned to the Clerkship tab in 10 seconds, or <a href=\"".ENTRADA_URL."/".$MODULE."\"></a> to continue immediately.";
+	$ERRORSTR[] = "The apartment details that you are trying to load are currently notavailable.<br /><br />You will be returned to the " . $translate->_("Clerkship") . " tab in 10 seconds, or <a href=\"".ENTRADA_URL."/".$MODULE."\"></a> to continue immediately.";
 
 	echo display_error($ERRORSTR);
 

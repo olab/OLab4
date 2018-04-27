@@ -486,7 +486,7 @@ if (($LOGGED_IN) && (!$COMMUNITY_MEMBER)) {
 							});
 						}
 						</script>
-						<h1>Add Community Page</h1>
+						<h1><?php echo $translate->_("Add Community Page"); ?></h1>
 						<form action="<?php echo ENTRADA_URL."/community".$community_details["community_url"].":pages"."?".replace_query(array("action" => "add", "step" => 2)); ?>" method="post" enctype="multipart/form-data">
 							<table summary="Adding Page">
 								<colgroup>
@@ -650,7 +650,7 @@ if (($LOGGED_IN) && (!$COMMUNITY_MEMBER)) {
 													<tbody>
 														<tr>
 															<td>
-																<strong>Community Administrators</strong>
+																<strong><?php echo $translate->_("Community Administrators"); ?></strong>
 															</td>
 															<td class="on">
 																<input type="checkbox" id="allow_admin_view" name="allow_admin_view" value="1" checked="checked" onclick="this.checked = true" />
@@ -661,7 +661,7 @@ if (($LOGGED_IN) && (!$COMMUNITY_MEMBER)) {
 														</tr>
 														<tr>
 															<td>
-																<strong>Community Members</strong>
+																<strong><?php echo $translate->_("Community Members"); ?></strong>
 															</td>
 															<td class="on">
 																<input type="checkbox" id="allow_member_view" name="allow_member_view" value="1"<?php echo (((!isset($PROCESSED["allow_member_view"])) || ((isset($PROCESSED["allow_member_view"])) && ($PROCESSED["allow_member_view"] == 1))) ? " checked=\"checked\"" : ""); ?> /></td>
@@ -750,7 +750,7 @@ if (($LOGGED_IN) && (!$COMMUNITY_MEMBER)) {
 													<tbody>
 														<tr>
 															<td>
-																<strong>Community Administrators</strong>
+																<strong><?php echo $translate->_("Community Administrators"); ?></strong>
 															</td>
 															<td class="on">
 																<input type="checkbox" id="allow_admin_view" name="allow_admin_view" value="1" checked="checked" onclick="this.checked = true" />
@@ -758,7 +758,7 @@ if (($LOGGED_IN) && (!$COMMUNITY_MEMBER)) {
 														</tr>
 														<tr>
 															<td>
-																<strong>Community Members</strong>
+																<strong><?php echo $translate->_("Community Members"); ?></strong>
 															</td>
 															<td class="on">
 																<input type="checkbox" id="allow_member_view" name="allow_member_view" value="1"<?php echo (((!isset($PROCESSED["allow_member_view"])) || ((isset($PROCESSED["allow_member_view"])) && ($PROCESSED["allow_member_view"] == 1))) ? " checked=\"checked\"" : ""); ?> />

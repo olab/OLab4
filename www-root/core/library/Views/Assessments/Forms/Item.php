@@ -34,10 +34,21 @@ class Views_Assessments_Forms_Item extends Views_Assessments_Forms_Base {
     }
 
     protected function renderView($options = array()) {
+        $mode                    = $this->getMode();
+        $rendered_html           = null;
+        $render_item             = true;
+        $item_data               = Entrada_Utilities::arrayValueArrayOrEmpty($options, "item", array());
+        $afelement_id            = Entrada_Utilities::arrayValueOrDefault($options, "afelement_id");
+        $specified_mutators      = Entrada_Utilities::arrayValueOrDefault($options, "mutators", array()); // Mutators we apply to relevant items
+        $mutator_list            = Entrada_Assessments_Forms::buildItemMutatorList($item_data);
 
-        $mode = $this->getMode();
-
-        $afelement_id = @$options["afelement_id"];
+        /**
+         * Apply form-scope mutators:
+         * Item-scope mutators can be applied on a per-item basis, as the options are passed to each view independently.
+         */
+        if (Entrada_Utilities::inBothArrays("invisible", $specified_mutators, $mutator_list)) {
+            $render_item = false; // Don't render invisible items (if the mutator is present)
+        }
 
         switch ($options["itemtype_shortname"]) {
 
@@ -93,21 +104,25 @@ class Views_Assessments_Forms_Item extends Views_Assessments_Forms_Base {
                 break;
         }
 
-        if ($afelement_id) {
-            // Wrap in an afelement ID container div
-            echo "<div class='form-item' data-afelement-id='$afelement_id'>";
+        // If we have a valid object, render the view item.
+        if ($render_item && $view_item) {
+            $rendered_html = $view_item->render($options, false);
         }
 
-        // Render the view item
-        if ($view_item) {
-            $view_item->render($options);
-        }
+        if ($render_item && $rendered_html) {
 
-        if ($afelement_id) {
-            // Wrap in an afelement ID container div
-            echo "</div>";
-        }
+            if ($afelement_id) {
+                // Wrap the rendered html in an afelement ID container div if we have an ID for it.
+                echo "<div class=\"form-item\" data-afelement-id=\"$afelement_id\">";
+            }
 
+            // Output the rendered HTML
+            echo $rendered_html;
+
+            if ($afelement_id) {
+                echo "</div>";
+            }
+        }
     }
 
     /**

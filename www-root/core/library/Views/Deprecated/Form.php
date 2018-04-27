@@ -105,7 +105,7 @@ class Views_Deprecated_Form extends Views_Deprecated_Base {
                             $html[] = "</table></div></div>";
                         } else {
                             $html[] = "<div class=\"form-text-container\">";
-                            $html[] =    "<p>". $element_text ."</p>";
+                            $html[] =    $element_text;
                             $html[] = "</div>";
                         }
                     break;

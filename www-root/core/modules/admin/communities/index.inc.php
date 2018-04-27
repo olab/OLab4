@@ -115,7 +115,7 @@ if (!defined("IN_COMMUNITIES")) {
 	}
 
 	?>
-	<h1>Manage Communities</h1>
+	<h1><?php echo $translate->_("Manage Communities"); ?></h1>
 	<?php
 	/**
 	 * Update requested order to sort by.
@@ -260,12 +260,12 @@ if (!defined("IN_COMMUNITIES")) {
 	$scheduler_communities["communities"] = $db->GetAll($query_communities);
 	?>
 
-	<h2>Community Search</h2>
+	<h2><?php echo $translate->_("Community Search"); ?></h2>
 	<div class="well">
 		<form action="<?php echo ENTRADA_URL; ?>/admin/communities" method="get" class="form-horizontal">
 			<input type="hidden" name="type" value="search" />
 			<div class="control-group">
-				<label for="q" class="form-required control-label">Community Search:</label>
+				<label for="q" class="form-required control-label"><?php echo $translate->_("Community Search"); ?>:</label>
 				<div class="controls">
 					<input type="text" id="q" name="q" value="<?php echo html_encode($search_query); ?>" />
 					<input type="submit" class="btn btn-primary" value="Search" />
@@ -277,7 +277,7 @@ if (!defined("IN_COMMUNITIES")) {
 					}
 					?>
 					<div class="content-small" style="margin-top: 10px">
-						<strong>Note:</strong> You can search for community title, or Category title.
+                        <?php echo $translate->_("<strong>Note:</strong> You can search for community title, or Category title."); ?>
 					</div>
 				</div>
 			</div>
@@ -325,6 +325,7 @@ if (!defined("IN_COMMUNITIES")) {
 			<?php endif; ?>
 			<tbody>
 			<?php
+
 			foreach ($scheduler_communities["communities"] as $result) {
 				$url = ENTRADA_URL."/communities?section=modify&community=".$result["community_id"];
 
@@ -332,10 +333,26 @@ if (!defined("IN_COMMUNITIES")) {
 				echo "	<td class=\"modified\"><input type=\"checkbox\" name=\"checked[]\" value=\"".$result["community_id"]."\" /></td>\n";
 				echo "	<td class=\"title\"><a href=\"".$url."\">".html_encode($result["community_title"])."</a></td>\n";
 				echo "	<td class=\"title\"><a href=\"".$url."\">".html_encode($result["category_title"])."</a></td>\n";
-				echo "	<td class=\"date\"><a href=\"".$url."\">".date(DEFAULT_DATE_FORMAT, $result["community_opened"])."</a></td>\n";
-				echo "	<td class=\"attachment\"><a href=\"".ENTRADA_URL."/communities?section=members&community=".$result["community_id"]."\"><img src=\"".ENTRADA_URL."/images/headshot-male.gif\" width=\"16\" height=\"16\" alt=\"Manage Community Members\" title=\"Manage Community Members\" border=\"0\" /></a></td>\n";
-				echo "	<td class=\"attachment\"><a href=\"".ENTRADA_URL."/communities?section=modify&community=".$result["community_id"]."\"><img src=\"".ENTRADA_URL."/images/action-edit.gif\" width=\"16\" height=\"16\" alt=\"Manage Community\" title=\"Manage Community\" border=\"0\" /></a></td>\n";
-				echo "</tr>\n";
+				echo "	<td class=\"date\"><a href=\"".$url."\">".date(DEFAULT_DATETIME_FORMAT, $result["community_opened"])."</a></td>\n";
+				echo "  <td class=\"attachment\">";
+
+                echo "<div class=\"btn-group\">
+                      <button class=\"btn btn-small dropdown-toggle\" data-toggle=\"dropdown\">
+                        <i class=\"fa fa-cog\" aria-hidden=\"true\"></i>
+                      </button>
+                      <ul class=\"dropdown-menu toggle-left\">
+                        <li><a href=\"".ENTRADA_URL."/communities?section=members&community=".$result["community_id"]."\" title=\"Manage Community Members\">Manage Community Members</a></li>
+                        <li><a href=\"".ENTRADA_URL."/communities?section=modify&community=".$result["community_id"]."\" title=\"Manage Community\">Manage Community</a></li>";
+
+                        $community_member = Models_Community_Member::fetchRowByProxyIDCommunityID($ENTRADA_USER->getID(), $result["community_id"]);
+                        if ($community_member && $community_member->getMemberActive() && $community_member->getMemberACL()) {
+                            echo "<li><a href=\"".ENTRADA_URL."/community/" . $result['community_shortname'] . ":pages\" title=\"Manage Pages\">Manage Pages</a></li>";
+                        }
+
+                echo "  </ul></div>";
+
+				echo "  </td>";
+                echo "</tr>\n";
 			}
 			?>
 			</tbody>
@@ -348,12 +365,12 @@ if (!defined("IN_COMMUNITIES")) {
 		?>
 		<div style="overflow:hidden;">
 			<ul class="page-action" style="float: right;">
-				<li><a href="<?php echo ENTRADA_URL; ?>/communities?section=create">Add New Community</a></li>
+				<li><a href="<?php echo ENTRADA_URL; ?>/communities?section=create"><?php echo $translate->_("Add New Community"); ?></a></li>
 			</ul>
 		</div>
 		<div class="display-notice">
-			<h3>No Available communities</h3>
-			There are currently no available communities in the system. To begin click the <strong>Add New Community</strong> link above.
+			<h3><?php echo $translate->_("No Available communities"); ?></h3>
+            <?php echo $translate->_("There are currently no available communities in the system. To begin click the <strong>Add New Community</strong> link above."); ?>
 		</div>
 		<?php
 	}

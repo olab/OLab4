@@ -144,6 +144,36 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_CONFIGURATION")) {
 				$result = $db->GetRow($query);
 				if ($result) {
 					$PROCESSED["country_id"] = $tmp_input;
+
+                    $PROCESSED["province_id"] = 0;
+                    $PROCESSED["prov_state"] = "";
+
+                    /**
+                     * Optional field "prov_state" / Province or State
+                     */
+                    if ((isset($_POST["prov_state"])) && ($tmp_input = clean_input($_POST["prov_state"], array("trim", "notags")))) {
+
+                        if (ctype_digit($tmp_input) && ($tmp_input = (int) $tmp_input)) {
+                            if ($PROCESSED["country_id"]) {
+                                $query = "SELECT * FROM `global_lu_provinces` WHERE `province_id` = " . $db->qstr($tmp_input) . " AND `country_id` = " . $db->qstr($PROCESSED["country_id"]);
+                                $result = $db->GetRow($query);
+                                if (!$result) {
+                                    $ERROR++;
+                                    $ERRORSTR[] = "The province / state you have selected does not appear to exist in our database. Please select a valid province / state.";
+                                } else {
+                                    $PROCESSED["province_id"] = $tmp_input;
+                                    $PROCESSED["prov_state"] = $tmp_input;
+                                }
+                            } else {
+                                $ERROR++;
+                                $ERRORSTR[] = "Please select a country and then a province/state.";
+                            }
+                        } else {
+                            $ERROR++;
+                            $ERRORSTR[] = "Province or state format error.";
+                        }
+                    }
+
 				} else {
 					$ERROR++;
 					$ERRORSTR[] = "The selected country does not exist in our countries database. Please select a valid country.";
@@ -155,34 +185,6 @@ if (!defined("PARENT_INCLUDED") || !defined("IN_CONFIGURATION")) {
 				$ERRORSTR[] = "You must select a country.";
 			}
 
-			/**
-			 * Required field "prov_state" / Province or State
-			 */
-			if ((isset($_POST["prov_state"])) && ($tmp_input = clean_input($_POST["prov_state"], array("trim", "notags")))) {
-				$PROCESSED["province_id"] = 0;
-				
-				if (ctype_digit($tmp_input) && ($tmp_input = (int) $tmp_input)) {
-					if ($PROCESSED["country_id"]) {
-						$query = "SELECT * FROM `global_lu_provinces` WHERE `province_id` = " . $db->qstr($tmp_input) . " AND `country_id` = " . $db->qstr($PROCESSED["country_id"]);
-						$result = $db->GetRow($query);
-						if (!$result) {
-							$ERROR++;
-							$ERRORSTR[] = "The province / state you have selected does not appear to exist in our database. Please selected a valid province / state.";
-						} else {
-							$PROCESSED["province_id"] = $tmp_input;
-						}
-					} else {
-						$ERROR++;
-						$ERRORSTR[] = "Please select a country and then a province/state.";
-					}
-				} else {
-					$ERROR++;
-					$ERRORSTR[] = "Province or state format error.";
-				}
-			} else {
-				$ERROR++;
-				$ERRORSTR[] = "You must select a province or state.";
-			}
 
 			if (!$ERROR) {
 				$PROCESSED["updated_date"] = time();

@@ -36,4 +36,17 @@ class Models_Objective_Organisation extends Models_Base {
     public function getOrganisationID () {
         return $this->organisation_id;
     }
+
+    public function delete () {
+        global $db;
+        $sql = "DELETE FROM `" . static::$table_name . "`
+                WHERE `" . static::$primary_key . "` = " . $db->qstr($this->getID());
+
+        if ($db->Execute($sql)) {
+            return true;
+        } else {
+            application_log("error", "Error deleting  ".get_called_class()." id[" . $this->getID() . "]. DB Said: " . $db->ErrorMsg());
+            return false;
+        }
+    }
 }

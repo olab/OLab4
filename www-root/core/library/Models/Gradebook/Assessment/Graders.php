@@ -206,7 +206,7 @@ class Models_Gradebook_Assessment_Graders extends Models_Base
         /**
          * If it's a self assessment, check if proxy_id = current Entrada user id
          */
-        if($assessment->getSeflAssessment()) {
+        if($assessment->getSelfAssessment()) {
             return $proxy_id === $ENTRADA_USER->getActiveId();
         }
 

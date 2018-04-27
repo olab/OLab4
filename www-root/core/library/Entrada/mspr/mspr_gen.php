@@ -6,6 +6,7 @@ define("MAX_RESEARCH", 6);
 define("MAX_OBSERVERSHIPS", 8);
 
 function generateMSPRHTML(MSPR $mspr,$timestamp = null) {
+    global $translate;
 	if (!$timestamp) {
 		$timestamp = time();
 	}
@@ -24,7 +25,7 @@ function generateMSPRHTML(MSPR $mspr,$timestamp = null) {
 		
 			<meta name="author" content="Associate Dean, Undergraduate Medical Education, Queen's University">
 			<meta name="copyright" content="<?php echo COPYRIGHT_STRING; ?>">
-			<meta name="docnumber" content="Generated: <?php echo date(DEFAULT_DATE_FORMAT, $timestamp) ?>">
+			<meta name="docnumber" content="Generated: <?php echo date(DEFAULT_DATETIME_FORMAT, $timestamp) ?>">
 			<meta name="generator" content="Entrada MSPR Generator">
 			<meta name="keywords" content="Class of <?php echo $year; ?>, Undergraduate, Education, Dean's Letter, MSPR, Medical School Performance Report">
 			<meta name="subject" content="Medical School Performance Report">
@@ -47,7 +48,7 @@ function generateMSPRHTML(MSPR $mspr,$timestamp = null) {
 			$component = $mspr["Clerkship Core Completed"];
 			if ($component && $component->count() > 0) { 
 				?>
-				<h3><u>Clerkship Rotations Completed Satisfactorily to Date</u></h3>
+				<h3><u><?php echo $translate->_("Clerkship"); ?> Rotations Completed Satisfactorily to Date</u></h3>
 				<table width="100%" border=0 cellpadding=5 cellspacing=0>
 				<?php
 				foreach ($component as $entity) {
@@ -67,7 +68,7 @@ function generateMSPRHTML(MSPR $mspr,$timestamp = null) {
 			$component = $mspr["Clerkship Core Pending"];
 			if ($component && $component->count() > 0) { 
 				?>
-				<h3><u>Clerkship Rotations Pending</u></h3>
+				<h3><u><?php echo $translate->_("Clerkship"); ?> Rotations Pending</u></h3>
 				<table width="100%" border=0 cellpadding=5 cellspacing=0>
 				<?php
 				foreach ($component as $entity) {
@@ -87,7 +88,7 @@ function generateMSPRHTML(MSPR $mspr,$timestamp = null) {
 			$component = $mspr["Clerkship Electives Completed"];
 			if ($component && $component->count() > 0) { 
 				?>
-				<h3><u>Clerkship Electives Completed Satisfactorily to Date</u></h3>
+				<h3><u><?php echo $translate->_("Clerkship"); ?> Electives Completed Satisfactorily to Date</u></h3>
 				<table width="100%" border=0 cellpadding=5 cellspacing=0>
 				<?php
 				foreach ($component as $entity) {

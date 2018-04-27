@@ -243,15 +243,15 @@ if ($RECORD_ID) {
 				 * If there is time release properties, display them to the browsing users.
 				 */
 				if (($release_date = (int) $file_record["release_date"]) && ($release_date > time())) {
-					add_notice("This file will not be accessible to others until <strong>".date(DEFAULT_DATE_FORMAT, $release_date)."</strong>.");
+					add_notice("This file will not be accessible to others until <strong>".date(DEFAULT_DATETIME_FORMAT, $release_date)."</strong>.");
 				} elseif ($release_until = (int) $file_record["release_until"]) {
 					if ($release_until > time()) {
-						add_notice("This file will be accessible until <strong>".date(DEFAULT_DATE_FORMAT, $release_until)."</strong>.");
+						add_notice("This file will be accessible until <strong>".date(DEFAULT_DATETIME_FORMAT, $release_until)."</strong>.");
 					} else {
 						/**
 						 * Only administrators or people who wrote the post will get this.
 						 */
-						add_notice("This file was only accessible until <strong>".date(DEFAULT_DATE_FORMAT, $release_until)."</strong> by others.");
+						add_notice("This file was only accessible until <strong>".date(DEFAULT_DATETIME_FORMAT, $release_until)."</strong> by others.");
 					}
 				}
 
@@ -314,7 +314,7 @@ if ($RECORD_ID) {
 							echo 				((shares_file_version_module_access($results[0]["csfversion_id"], "delete-revision")) ? " (<a class=\"action\" href=\"javascript:revisionDelete('".$results[0]["csfversion_id"]."')\" style=\"font-size: 10px; font-weight: normal\">delete</a>)" : "");
 						}
 						echo "					<br />\n";
-						echo "					Uploaded ".date(DEFAULT_DATE_FORMAT, $results[0]["updated_date"])." by <a href=\"".ENTRADA_URL."/people?profile=".html_encode($results[0]["uploader_username"])."\" style=\"font-size: 10px; font-weight: normal\">".html_encode($results[0]["uploader"])."</a>.<br />";
+						echo "					Uploaded ".date(DEFAULT_DATETIME_FORMAT, $results[0]["updated_date"])." by <a href=\"".ENTRADA_URL."/people?profile=".html_encode($results[0]["uploader_username"])."\" style=\"font-size: 10px; font-weight: normal\">".html_encode($results[0]["uploader"])."</a>.<br />";
 						echo "				</div>\n";
 						echo "			</div>\n";
 						echo "		</td>\n";
@@ -335,7 +335,7 @@ if ($RECORD_ID) {
 									echo "			<a href=\"".COMMUNITY_URL.$COMMUNITY_URL.":".$PAGE_URL."?section=view-file&amp;id=".$RECORD_ID."&amp;download=".$result["file_version"]."\" style=\"vertical-align: middle\"".(((int) $file_record["access_method"]) ? " target=\"_blank\"" : "")."><span id=\"file-version-".$result["csfversion_id"]."-title\">".html_encode($result["file_filename"])." (v".$result["file_version"].")</span></a> <span class=\"content-small\" style=\"vertical-align: middle\">".readable_size($result["file_filesize"])."</span>\n";
 									echo 			((shares_file_version_module_access($result["csfversion_id"], "delete-revision")) ? " (<a class=\"action\" href=\"javascript:revisionDelete('".$result["csfversion_id"]."')\">delete</a>)" : "");
 									echo "			<div class=\"content-small\">\n";
-									echo "			Uploaded ".date(DEFAULT_DATE_FORMAT, $result["updated_date"])." by <a href=\"".ENTRADA_URL."/people?profile=".html_encode($result["uploader_username"])."\" style=\"font-size: 10px; font-weight: normal\">".html_encode($result["uploader"])."</a>.\n";
+									echo "			Uploaded ".date(DEFAULT_DATETIME_FORMAT, $result["updated_date"])." by <a href=\"".ENTRADA_URL."/people?profile=".html_encode($result["uploader_username"])."\" style=\"font-size: 10px; font-weight: normal\">".html_encode($result["uploader"])."</a>.\n";
 									echo "			</div>\n";
 									echo "		</td>";
 									echo "</tr>\n";
@@ -394,7 +394,7 @@ if ($RECORD_ID) {
 								</td>
 								<td style="border-bottom: none">
 									<div style="float: left">
-										<span class="content-small"><strong>Commented:</strong> <?php echo date(DEFAULT_DATE_FORMAT, $result["updated_date"]); ?></span>
+										<span class="content-small"><strong>Commented:</strong> <?php echo date(DEFAULT_DATETIME_FORMAT, $result["updated_date"]); ?></span>
 									</div>
 									<div style="float: right">
 									<?php
@@ -413,7 +413,7 @@ if ($RECORD_ID) {
 
 									if ($result["release_date"] != $result["updated_date"]) {
 										echo "<div class=\"content-small\" style=\"margin-top: 15px\">\n";
-										echo "	<strong>Last updated:</strong> ".date(DEFAULT_DATE_FORMAT, $result["updated_date"])." by ".(($result["proxy_id"] == $result["updated_by"]) ? html_encode($result["commenter_fullname"]) : html_encode(get_account_data("firstlast", $result["updated_by"]))).".";
+										echo "	<strong>Last updated:</strong> ".date(DEFAULT_DATETIME_FORMAT, $result["updated_date"])." by ".(($result["proxy_id"] == $result["updated_by"]) ? html_encode($result["commenter_fullname"]) : html_encode(get_account_data("firstlast", $result["updated_by"]))).".";
 										echo "</div>\n";
 									}
 								?>

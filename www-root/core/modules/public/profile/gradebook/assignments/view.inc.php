@@ -202,7 +202,7 @@ if ($RECORD_ID) {
                                                         ?>
                                                     </td>
                                                     <td><?php echo readable_size($result["file_filesize"]); ?></td>
-                                                    <td><?php echo  date(DEFAULT_DATE_FORMAT, $result["updated_date"]); ?></td>
+                                                    <td><?php echo  date(DEFAULT_DATETIME_FORMAT, $result["updated_date"]); ?></td>
                                                     <td><?php
                                                         if (!isset($assignment["anonymous_marking"]) || !$assignment["anonymous_marking"] || $result["proxy_id"] == $ENTRADA_USER->getID()) {
                                                             echo html_encode($result["uploader"]);
@@ -272,7 +272,7 @@ if ($RECORD_ID) {
                                                          ?>
                                                     </td>
                                                     <td><?php echo readable_size($result["file_filesize"]); ?></td>
-                                                    <td><?php echo  date(DEFAULT_DATE_FORMAT, $result["updated_date"]); ?></td>
+                                                    <td><?php echo  date(DEFAULT_DATETIME_FORMAT, $result["updated_date"]); ?></td>
                                                     <td><?php
                                                         if (!isset($assignment["anonymous_marking"]) || !$assignment["anonymous_marking"] || $result["proxy_id"] == $ENTRADA_USER->getID()) {
                                                             echo html_encode($result["uploader"]);
@@ -358,13 +358,13 @@ if ($RECORD_ID) {
                                                         <img src="<?php echo ENTRADA_URL?>/api/photo.api.php/<?php echo $result["proxy_id"]; ?>" class="img-polaroid">
                                                     </div>
                                                     <div class="middle-comments">
-                                                        <a href="<?php echo ENTRADA_URL . "/people?profile=" . html_encode($result["commenter_username"]); ?>" style="font-size: 10px"><?php echo html_encode($result["commenter_fullname"]); ?></a><br /> <?php echo date(DEFAULT_DATE_FORMAT, $result["updated_date"]); ?>
+                                                        <a href="<?php echo ENTRADA_URL . "/people?profile=" . html_encode($result["commenter_username"]); ?>" style="font-size: 10px"><?php echo html_encode($result["commenter_fullname"]); ?></a><br /> <?php echo date(DEFAULT_DATETIME_FORMAT, $result["updated_date"]); ?>
                                                     </div>
                                                 <?php
                                             } else {
                                                 ?>
                                                 <td>
-                                                    <span style="font-size: 10px">Anonymous Commenter <br/> <?php echo date(DEFAULT_DATE_FORMAT, $result["updated_date"]); ?></span>
+                                                    <span style="font-size: 10px">Anonymous Commenter <br/> <?php echo date(DEFAULT_DATETIME_FORMAT, $result["updated_date"]); ?></span>
                                                 <?php
                                             }
                                             ?>
@@ -386,7 +386,7 @@ if ($RECORD_ID) {
 
                                                 if ($result["release_date"] != $result["updated_date"]) {
                                                     echo "<div class=\"content-small\" style=\"margin-top: 15px\">\n";
-                                                    echo "	<strong>Last updated:</strong> ".date(DEFAULT_DATE_FORMAT, $result["updated_date"])." by ".(($result["proxy_id"] == $result["updated_by"]) ? html_encode($result["commenter_fullname"]) : html_encode(get_account_data("firstlast", $result["updated_by"]))).".";
+                                                    echo "	<strong>Last updated:</strong> ".date(DEFAULT_DATETIME_FORMAT, $result["updated_date"])." by ".(($result["proxy_id"] == $result["updated_by"]) ? html_encode($result["commenter_fullname"]) : html_encode(get_account_data("firstlast", $result["updated_by"]))).".";
                                                     echo "</div>\n";
                                                 }
                                             ?>

@@ -33,8 +33,13 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ASSESSMENTS"))) {
 
     application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] does not have access to this module [".$MODULE."]");
 } else {
+
+    $MODULE_TEXT = $translate->_($MODULE);
+    $SUBMODULE_TEXT = $MODULE_TEXT[$SUBMODULE];
+
     $BREADCRUMB[] = array("url" => "", "title" => $translate->_("Rotation Evaluations"));
     $HEAD[] = "<script type=\"text/javascript\">var ENTRADA_URL = '" . ENTRADA_URL . "';</script>";
+    $HEAD[] = "<script type=\"text/javascript\" src=\"" . ENTRADA_URL . "/javascript/assessments/reports/rotation-evaluation.js?release=" . html_encode(APPLICATION_VERSION) . "\"></script>";
     $JQUERY[] = "<script type=\"text/javascript\" src=\"" . ENTRADA_URL . "/javascript/assessments/evaluation-reports.js?release=" . html_encode(APPLICATION_VERSION) . "\"></script>";
     $HEAD[] = "<script type=\"text/javascript\" src=\"".  ENTRADA_URL ."/javascript/jquery/jquery.advancedsearch.js?release=" . html_encode(APPLICATION_VERSION) . "\"></script>";
     $HEAD[] = "<script type=\"text/javascript\" src=\"" . ENTRADA_URL . "/javascript/jquery/jquery.timepicker.js?release=" . html_encode(APPLICATION_VERSION) . "\"></script>";
@@ -56,67 +61,6 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ASSESSMENTS"))) {
         $end_date = null;
     }
     ?>
-    <script type="text/javascript">
-        jQuery(function($) {
-            $(".datepicker").datepicker({
-                dateFormat: "yy-mm-dd",
-                minDate: "",
-                maxDate: ""
-            });
-
-            $(".add-on").on("click", function () {
-                if ($(this).siblings("input").is(":enabled")) {
-                    $(this).siblings("input").focus();
-                }
-            });
-
-            $("#select-course-btn").advancedSearch({
-                api_url : "<?php echo ENTRADA_URL . "/admin/assessments?section=api-evaluation-reports"; ?>",
-                resource_url: ENTRADA_URL,
-                filters : {
-                    course : {
-                        label : "<?php echo $translate->_("Course"); ?>",
-                        data_source : "get-user-courses",
-                        mode: "radio"
-                    }
-                },
-                no_results_text: "<?php echo $translate->_("No course found matching the search criteria."); ?>",
-                parent_form: $("#evaluation-form"),
-                control_class: "course-selector",
-                width: 350
-            });
-
-            $("#choose-evaluation-btn").advancedSearch({
-                api_url : "<?php echo ENTRADA_URL . "/admin/assessments?section=api-evaluation-reports"; ?>",
-                resource_url: ENTRADA_URL,
-                filters : {
-                    target : {
-                        label : "<?php echo $translate->_("Rotations"); ?>",
-                        data_source : "get-user-rotations"
-                    }
-                },
-                no_results_text: "<?php echo $translate->_("No rotations found matching the search criteria."); ?>",
-                parent_form: $("#evaluation-form"),
-                width: 350
-            });
-
-            $("#choose-form-btn").advancedSearch({
-                api_url : "<?php echo ENTRADA_URL . "/admin/assessments?section=api-evaluation-reports"; ?>",
-                resource_url: ENTRADA_URL,
-                filters: {
-                    form: {
-                        label: "<?php echo $translate->_("Forms"); ?>",
-                        data_source: "get-user-forms",
-                        mode: "radio"
-                    }
-                },
-                no_results_text: "<?php echo $translate->_("No forms found matching the search criteria."); ?>",
-                parent_form: $("#evaluation-form"),
-                control_class: "form-selector",
-                width: 300
-            });
-        });
-    </script>
     <h1><?php echo $translate->_("Rotation Evaluations"); ?></h1>
     <div id="msgs"></div>
     <form class="form-horizontal" id="evaluation-form">
@@ -152,10 +96,36 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ASSESSMENTS"))) {
                 <a href="#" id="choose-form-btn" class="btn" type="button"><?php echo $translate->_("Browse Forms "); ?><i class="icon-chevron-down"></i></a>
             </div>
         </div>
-        <div class="control-group hide" id="additional-comments">
-            <label class="control-label" for="include-comments"><?php echo $translate->_("Include Comments:"); ?></label>
+        <!--
+        <div class="control-group hide" id="report-type-div">
+            <label class="control-label"><?php echo $translate->_("Report Type:"); ?></label>
             <div class="controls">
-                <input type="checkbox" id="include-comments" checked>
+                <div class="radio">
+                    <input type="radio" name="report-type" value="aggregated-report" id="aggregated-report" checked><label for="aggregated-report"><?php echo $translate->_("Aggregated"); ?></label>
+                </div>
+                <div class="radio">
+                    <input type="radio" name="report-type" value="comparative-report" id="comparative-report"><label for="comparative-report"><?php echo $translate->_("Comparative"); ?></label>
+                </div>
+            </div>
+        </div>-->
+        <div class="hide" id="additional-comments">
+            <div class="control-group">
+                <label class="control-label" for="include-comments"><?php echo $translate->_("Include Comments:"); ?></label>
+                <div class="controls">
+                    <input type="checkbox" id="include-comments" checked>
+                </div>
+            </div>
+            <div class="control-group" id="commenter-id-controls">
+                <label class="control-label" for="include-commenter-id" data-toggle="tooltip" title="<?php echo $translate->_("This option will include a set of characters unique to each assessor alongside each comment."); ?>"><?php echo $translate->_("Unique Commenter ID:"); ?> <i class="icon-question-sign"></i></label>
+                <div class="controls">
+                    <input type="checkbox" id="include-commenter-id"/>
+                </div>
+            </div>
+            <div class="control-group" id="commenter-name-controls">
+                <label class="control-label" for="include-commenter-name" data-toggle="tooltip"><?php echo $translate->_("Include Commenter Name:"); ?></label>
+                <div class="controls">
+                    <input type="checkbox" id="include-commenter-name"/>
+                </div>
             </div>
         </div>
         <div class="control-group hide" id="additional-description">
@@ -167,7 +137,22 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_ASSESSMENTS"))) {
                 <textarea id="description-text" class="expandable hide"></textarea>
             </div>
         </div>
+        <div class=hide" id="additional-statistics">
+            <div class="control-group">
+                <label class="control-label" for="include-statistics" data-toggle="tooltip" title="<?php echo $translate->_("This will include an automatically calculated average, weighted in ascending order. Descriptors such as 'N/A' are excluded."); ?>"><?php echo $translate->_("Include Average:"); ?> <i class="icon-question-sign"></i></label>
+                <div class="controls">
+                    <input type="checkbox" id="include-statistics">
+                </div>
+            </div>
+            <div id="include-positivity-controls" class="control-group hide">
+                <label class="control-label" for="include-positivity" data-toggle="tooltip" title="<?php echo $SUBMODULE_TEXT["positive_negative_tooltip"]; ?>""><?php echo $translate->_("Include Aggregate Scoring:"); ?> <i class="icon-question-sign"></i></label>
+                <div class="controls">
+                    <input type="checkbox" id="include-positivity">
+                </div>
+            </div>
+        </div>
         <input type="button" class="btn btn-primary hide pull-right" id="generate-report" value="<?php echo $translate->_("Generate Report"); ?>" />
+        <input type="button" class="btn btn-primary hide pull-right" id="generate-csv" value="<?php echo $translate->_("Generate CSV"); ?>" />
         <input type="hidden" name="current-page" id="current-page" value="rotations"/>
     </form>
     <?php

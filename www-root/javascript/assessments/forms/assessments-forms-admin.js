@@ -4,9 +4,26 @@ var total_forms = 0;
 var show_loading_message = true;
 
 jQuery(function($) {
+    var course_related = $("#form-type").find(':selected').data('course-related');
+    if (course_related == "1") {
+        $("#user-course-controls").removeClass("hide");
+    }
+
+    $("#form-type").on("change", function () {
+        if ($("#user-course-controls").length > 0) {
+            var course_related = $("#form-type").find(':selected').data('course-related');
+            if (course_related == "1") {
+                $("#user-course-controls").removeClass("hide");
+            } else {
+                $("#user-course-controls").addClass("hide");
+            }
+        }
+    });
+
     $(".move").on("click", function(e){
         e.preventDefault();
     });
+
     $("a.update-form-on-click").on("click", function(e) {
         e.preventDefault();
         var link = $(this).attr("href");
@@ -262,9 +279,7 @@ jQuery(function($) {
 
                         )
                     )
-                )
-
-                form_item.append(item_container.append(item_table.append(type_row.append(type_cell))));
+                );
 
                 var textarea_row = $(document.createElement("tr"));
                 var textarea_cell = $(document.createElement("td")).attr("style", "padding:0px 10px;");
@@ -272,7 +287,20 @@ jQuery(function($) {
                 var textarea_container = $(document.createElement("div")).addClass("row-fluid space-above space-below");
                 var textarea = $(document.createElement("textarea")).attr({"id": "element-" + jsonResponse.data.afelement_id, "name" : "element["+jsonResponse.data.afelement_id+"]"});
 
-                form_item.append(item_table.append(textarea_row.append(textarea_cell.append(textarea_container.append(textarea)))));
+                form_item.append(
+                    item_container.append(
+                        item_table.append(
+                            type_row.append(type_cell)
+                        ),
+                        item_table.append(
+                            textarea_row.append(
+                                textarea_cell.append(
+                                    textarea_container.append(textarea)
+                                )
+                            )
+                        )
+                    )
+                );
 
                 $("#form-items").append(form_item);
 
@@ -349,7 +377,6 @@ jQuery(function($) {
         }
     });
 
-    var contentInner = $("div.preview-dialog-content-inner", previewLightbox);
     previewLightbox.dialog("option", "title", "<h1>Form Preview</h1>");
 
     $("a.ui-dialog-titlebar-close", previewLightbox).addClass("glyphicon");
@@ -466,6 +493,50 @@ jQuery(function($) {
         }
     });
 
+    $(".rubric-table").sortable({
+        handle: "a.move-rubric-item",
+        placeholder: "sortable-placeholder",
+        helper: "clone",
+        axis: 'y',
+        containment: "document",
+        start: function(event, ui){
+            var placeholder_item = ui.item.html();
+            ui.placeholder.html(placeholder_item);
+            ui.item.startHtml = ui.item.html();
+            ui.item.removeClass("ui-draggable");
+            ui.item.addClass("ind-drag drag");
+        },
+        stop: function( event, ui ) {
+            var order_array = new Array();
+            var count = 0;
+            ui.item.html(ui.item.startHtml);
+            ui.item.addClass("ui-draggable");
+            ui.item.removeClass("ind-drag drag");
+            $(this).find(".sortable-rubric-item").each(function(i, v) {
+                if (typeof $(v).data("aritem-id") != "undefined") {
+                    order_array[count] = $(v).data("aritem-id");
+                    count++;
+                }
+            });
+
+            if (order_array.length > 0) {
+                $.ajax({
+                    url: ENTRADA_URL + '/admin/assessments/rubrics?section=api-rubric',
+                    type: "POST",
+                    data: {
+                        "method" : "update-rubric-item-order",
+                        "rubric_id" : $(this).find(".rubric-title").first().data("rubric-id"),
+                        "order_array" : order_array
+                    },
+                    success : function(data) {
+                        var jsonResponse = JSON.parse(data);
+                        jQuery.animatedNotice(jsonResponse.data, jsonResponse.status, {"resourceUrl": ENTRADA_URL})
+                    }
+                });
+            }
+        }
+    });
+
     $('#delete-form-modal').on('show.bs.modal', function (e) {
         $('#delete-forms-modal').removeClass("hide");
         $("#msgs").html("");
@@ -517,6 +588,7 @@ jQuery(function($) {
                         display_success([data.msg], "#msgs")
                     });
                     jQuery("#load-forms").html("Showing " + (parseInt(jQuery("#load-forms").html().split(" ")[1]) - data.form_ids.length) + " of " + (parseInt(jQuery("#load-forms").html().split(" ")[3]) - data.form_ids.length) + " total forms");
+                    window.location.reload();
                 } else if(data.status == "error") {
                     display_error([data.msg], "#msgs");
                 }
@@ -701,6 +773,11 @@ function build_form_row (form) {
     }
 
     // Append new element from template to the table.
+    if (form.category == "cbme_form") {
+        form_url = ENTRADA_URL + "/admin/assessments/cbmeforms?section=edit-form&cbme_form_id=" + form.form_id;
+    } else {
+        form_url = ENTRADA_URL + "/admin/assessments/forms?section=edit-form&form_id=" + form.form_id;
+    }
     jQuery("<tr/>").loadTemplate(
         "#form-search-result-row-template", {
             tpl_form_link_id: "form_title_link_" + form.form_id,
@@ -708,7 +785,7 @@ function build_form_row (form) {
             tpl_form_title: form.title,
             tpl_form_created: form.created_date,
             tpl_form_item_count: form.item_count,
-            tpl_form_url: ENTRADA_URL + "/admin/assessments/forms?section=edit-form&form_id=" + form.form_id,
+            tpl_form_url: form_url,
             tpl_url_target: target_string })
         .appendTo("#forms-table")
         .addClass("form-row");
@@ -788,7 +865,7 @@ function build_item_additional_details (item_id) {
                         break;
                 }
 
-                jQuery(item_comments_li).html("<span>Comments</span> are " + comment_type + " for this item");
+                jQuery(item_comments_li).html("<span>Comments</span> are " + comment_type + " for this item").addClass("pull-left");
                 jQuery(item_date_li).html("<span>Item created on</span>: " + jsonResponse.data.created_date).addClass("pull-right");
                 
                 jQuery(item_ul).append(item_comments_li).append(item_date_li);
@@ -840,6 +917,7 @@ jQuery(document).ready(function ($) {
 
     $("#form-preview-dialog input[name^=\"item-\"]").on("change", function () {
         var comment_type = $(this).closest("div").data("comment-type");
+        enable_item_comment_box($(this).data("item-id"));
         if (comment_type == "flagged") {
             var item_name = "item-" + $(this).data("item-id");
             var flag_selected = false;
@@ -859,6 +937,7 @@ jQuery(document).ready(function ($) {
 
     $("#form-preview-dialog select[name^=\"item-\"]").on("change", function () {
         var comment_type = $(this).closest("div").data("comment-type");
+        enable_item_comment_box($(this).data("item-id"));
         if (comment_type == "flagged") {
             var item_name = "item-" + $(this).data("item-id");
             var flag_selected = false;
@@ -876,9 +955,9 @@ jQuery(document).ready(function ($) {
 
     $("#form-preview-dialog input[name^=\"rubric-item-\"]").on("change", function () {
         var comment_type = $(this).closest("tbody").data("comment-type");
-        console.log(comment_type);
-        if (comment_type == "flagged") {
             var item_id = $(this).data("item-id");
+        enable_item_comment_box(item_id);
+        if (comment_type == "flagged") {
             var rubric_id = $(this).closest(".rubric-container").closest("div").data("item-id");
             var item_name = "rubric-item-" + rubric_id + "-" + item_id;
             var flag_selected = false;
@@ -897,12 +976,25 @@ jQuery(document).ready(function ($) {
     });
 
     function toggle_comments(item_name, flag_selected) {
+        var header = "#form-preview-dialog #" + item_name + "-comments-header";
+        var comment_block = "#form-preview-dialog #" + item_name + "-comments-block";
+
         if (flag_selected == true) {
-            $("#form-preview-dialog #" + item_name + "-comments-header").removeClass("hide");
-            $("#form-preview-dialog #" + item_name + "-comments-block").removeClass("hide");
+            $(comment_block).prev().children().each(function (i, v) {
+                if (i > 0) {
+                    $(v).attr("rowspan", 1);
+                }
+            });
+            $(header).removeClass("hide");
+            $(comment_block).removeClass("hide");
         } else {
-            $("#form-preview-dialog #" + item_name + "-comments-header").addClass("hide");
-            $("#form-preview-dialog #" + item_name + "-comments-block").addClass("hide");
+            $(comment_block).prev().children().each(function (i, v) {
+                if (i > 0) {
+                    $(v).attr("rowspan", 2);
+                }
+            });
+            $(header).addClass("hide");
+            $(comment_block).addClass("hide");
         }
     }
 
@@ -1089,6 +1181,99 @@ jQuery(document).ready(function ($) {
             objective_item.append(objective_a);
             $("#objective-list-" + afelement_id).append(objective_item);
         });
+    }
+
+    $(document).on("click", "#publish-button", function(e) {
+        e.preventDefault();
+        var form_id = $("#form-id").val();
+
+        var publish_request = $.ajax({
+            url: ENTRADA_URL + "/admin/assessments/forms?section=api-forms",
+            data: {
+                "method" : "publish-form",
+                "form_id" : form_id
+            },
+            type: "POST"
+        });
+
+        $("#form-page-loading-overlay").show();
+        $.when(publish_request).done(function (response) {
+            var jsonResponse = safeParseJson(response);
+            if (jsonResponse.status === "success") {
+                // Show success message
+                display_success(Array(jsonResponse.message), "#form-information-error-msg");
+                // Repopulate the objective list
+                $("#mapped-epas-list").find("li").remove();
+                $.each(jsonResponse.data, function(index, objective) {
+                    var li = jQuery(document.createElement("li"));
+                    li.html('<b>' + objective.objective_code + "</b> - " + objective.objective_name);
+                    $("#mapped-epas-list").append(li);
+                });
+                $("#mapped-epas-div").removeClass("hide");
+                $("#form-page-loading-overlay").hide();
+                $('html, body').animate({
+                    scrollTop: $("#form-information-error-msg").offset().top
+                }, 1000);
+            } else {
+                // Display any errors returned from the API in the modal and re-enable the button
+                display_error(Array(jsonResponse.data), "#form-information-error-msg");
+                $("#form-page-loading-overlay").hide();
+            }
+        });
+    });
+
+    $(".move-rubric-item").on("click", function(e) {
+        e.preventDefault();
+    });
+
+    $("#form-items").sortable({
+        handle: "#move-form-item",
+        placeholder: "sortable-placeholder",
+        helper: "clone",
+        axis: 'y',
+        start: function(event, ui) {
+            placeholder_item = ui.item.html();
+            ui.placeholder.html(placeholder_item);
+            ui.item.startHtml = ui.item.html();
+            ui.item.removeClass("ui-draggable");
+            ui.item.addClass("ind-drag drag");
+        },
+        stop: function( event, ui ) {
+            var order_array = [];
+            var count = 0;
+            ui.item.html(ui.item.startHtml);
+            ui.item.addClass("ui-draggable");
+            ui.item.removeClass("ind-drag drag");
+            $("#form-items > .form-item").each(function(i, v) {
+                if (typeof $(v).data("afelement-id") != "undefined") {
+                    order_array[count] = $(v).data("afelement-id");
+                    count++;
+                }
+            });
+            if (order_array.length > 0) {
+                $.ajax({
+                    url: API_URL,
+                    type: "POST",
+                    data: {
+                        "method" : "update-form-item-order",
+                        "rubric_id" : $(".rubric-item").data("rubric-id"),
+                        "order_array" : order_array
+                    },
+                    success : function(data) {
+                        var jsonResponse = safeParseJson(data, "Invalid Json");
+                        if (jsonResponse.status && jsonResponse.data) {
+                            jQuery.animatedNotice(jsonResponse.data, jsonResponse.status, {"resourceUrl": ENTRADA_URL})
+                        }
+                    }
+                });
+            }
+        }
+    });
+
+    function enable_item_comment_box(item_id) {
+        var comment_selector = "#form-preview-dialog #item-" + item_id + "-comments";
+        $(comment_selector).removeProp("disabled");
+        $(comment_selector).removeAttr("placeholder");
     }
 
 });

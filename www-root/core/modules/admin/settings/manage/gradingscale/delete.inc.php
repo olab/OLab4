@@ -33,10 +33,11 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CONFIGURATION"))) {
 
     application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] do not have access to this module [".$MODULE."]");
 } else {
-
     $BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/settings/manage/gradingscale?org=".$ORGANISATION_ID."&section=delete&id=".$RECORD_ID, "title" => "Delete Grading Scales");
 
     echo "<h1>".$translate->_("Delete Grading Scale")."</h1>";
+
+    $grading_scales = array();
 
     if (isset($_POST["remove-ids"])) {
         foreach ($_POST["remove-ids"] as $grading_scale_id) {

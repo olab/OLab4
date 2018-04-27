@@ -162,24 +162,24 @@ if (isset($_POST["auth_app_id"]) && isset($_POST["auth_username"]) && isset($_PO
 		} else {
 			$ERROR++;
 
-			echo "\t\t<status>".encrypt_data("failed", $auth_password)."</status>\n";
-			echo "\t\t<message>".encrypt_data("A problem occurred during the authentication process and we were unable to complete the request. A system administrator has been notified of the error, please try again later.", $auth_password)."</message>\n";
+			echo "\t\t<status>".encrypt("failed", $auth_password)."</status>\n";
+			echo "\t\t<message>".encrypt("A problem occurred during the authentication process and we were unable to complete the request. A system administrator has been notified of the error, please try again later.", $auth_password)."</message>\n";
 
 			application_log("auth_error", "The IP address [".$_SERVER["REMOTE_ADDR"]."] or the server URL [".$_SERVER["HTTP_REFERER"]."] that was provided does not match the values specified for this application ID.");
 		}
 	} else {
 		$ERROR++;
 
-		echo "\t\t<status>".encrypt_data("failed", $auth_password)."</status>\n";
-		echo "\t\t<message>".encrypt_data("A problem occurred during the authentication process and we were unable to complete the request. A system administrator has been notified of the error, please try again later.", $auth_password)."</message>\n";
+		echo "\t\t<status>".encrypt("failed", $auth_password)."</status>\n";
+		echo "\t\t<message>".encrypt("A problem occurred during the authentication process and we were unable to complete the request. A system administrator has been notified of the error, please try again later.", $auth_password)."</message>\n";
 
 		application_log("auth_error", "There was a problem with the application login information (i.e. auth_app_id, auth_username or auth_password) that was provided.");
 	}
 } else {
 	$ERROR++;
 
-	echo "\t\t<status>".encrypt_data("failed", $auth_password)."</status>\n";
-	echo "\t\t<message>".encrypt_data("A problem occurred during the authentication process and we were unable to complete the request. A system administrator has been notified of the error, please try again later.", $auth_password)."</message>\n";
+	echo "\t\t<status>".encrypt("failed", $auth_password)."</status>\n";
+	echo "\t\t<message>".encrypt("A problem occurred during the authentication process and we were unable to complete the request. A system administrator has been notified of the error, please try again later.", $auth_password)."</message>\n";
 
 	application_log("auth_error", "The application login information (i.e. auth_app_id, auth_username or auth_password) was missing from the request.");
 }
@@ -205,14 +205,14 @@ if (!$ERROR) {
 		if (empty($user_username) || empty($user_password)) {
 			$ERROR++;
 
-			echo "\t\t<status>".encrypt_data("failed", $auth_password)."</status>\n";
-			echo "\t\t<message>".encrypt_data("Either the username or password you have provided is empty.", $auth_password)."</message>\n";
+			echo "\t\t<status>".encrypt("failed", $auth_password)."</status>\n";
+			echo "\t\t<message>".encrypt("Either the username or password you have provided is empty.", $auth_password)."</message>\n";
 		}
 	} else {
 		$ERROR++;
 
-		echo "\t\t<status>".encrypt_data("failed", $auth_password)."</status>\n";
-		echo "\t\t<message>".encrypt_data("A problem occurred during the authentication process and we were unable to complete the request. A system administrator has been notified of the error, please try again later.", $auth_password)."</message>\n";
+		echo "\t\t<status>".encrypt("failed", $auth_password)."</status>\n";
+		echo "\t\t<message>".encrypt("A problem occurred during the authentication process and we were unable to complete the request. A system administrator has been notified of the error, please try again later.", $auth_password)."</message>\n";
 
 		application_log("auth_error", "The user login information (i.e. username or password) was missing from the request.");
 	}
@@ -345,8 +345,8 @@ if (!$ERROR) {
 				} else {
 					$ERROR++;
 
-					echo "\t\t<status>".encrypt_data("failed", $auth_password)."</status>\n";
-					echo "\t\t<message>".encrypt_data("A problem occurred during the authentication process and we were unable to complete the request. A system administrator has been notified of the error, please try again later.", $auth_password)."</message>\n";
+					echo "\t\t<status>".encrypt("failed", $auth_password)."</status>\n";
+					echo "\t\t<message>".encrypt("A problem occurred during the authentication process and we were unable to complete the request. A system administrator has been notified of the error, please try again later.", $auth_password)."</message>\n";
 
 					application_log("auth_error", "Unable to establish a connection to the LDAP server [".LDAP_HOST."] to authenticate username [".$user_username."].");
 				}
@@ -354,8 +354,8 @@ if (!$ERROR) {
 			default :
 				$ERROR++;
 
-				echo "\t\t<status>".encrypt_data("failed", $auth_password)."</status>\n";
-				echo "\t\t<message>".encrypt_data("A problem occurred during the authentication process and we were unable to complete the request. A system administrator has been notified of the error, please try again later.", $auth_password)."</message>\n";
+				echo "\t\t<status>".encrypt("failed", $auth_password)."</status>\n";
+				echo "\t\t<message>".encrypt("A problem occurred during the authentication process and we were unable to complete the request. A system administrator has been notified of the error, please try again later.", $auth_password)."</message>\n";
 
 				application_log("auth_error", "The requested authentication method [".$auth_method."] was invalid.");
 			break;
@@ -377,8 +377,8 @@ if (!$ERROR) {
 		if (!$ERROR) {
 			$ERROR++;
 
-			echo "\t\t<status>".encrypt_data("failed", $auth_password)."</status>\n";
-			echo "\t\t<message>".encrypt_data("The username or password you have provided is incorrect.", $auth_password)."</message>\n";
+			echo "\t\t<status>".encrypt("failed", $auth_password)."</status>\n";
+			echo "\t\t<message>".encrypt("The username or password you have provided is incorrect.", $auth_password)."</message>\n";
 		}
 	}
 }
@@ -403,8 +403,8 @@ if (!$ERROR) {
 	} else {
 		$ERROR++;
 
-		echo "\t\t<status>".encrypt_data("failed", $auth_password)."</status>\n";
-		echo "\t\t<message>".encrypt_data("Your account is not currently set up for access to this application. Please contact a system administrator if you require further assistance.", $auth_password)."</message>\n";
+		echo "\t\t<status>".encrypt("failed", $auth_password)."</status>\n";
+		echo "\t\t<message>".encrypt("Your account is not currently set up for access to this application. Please contact a system administrator if you require further assistance.", $auth_password)."</message>\n";
 
 		application_log("auth_notice", "Username [".$user_username."] attempted to log into application_id [".$auth_app_id."], and their account has not yet been provisioned.");
 	}
@@ -419,9 +419,9 @@ if (!$ERROR) {
 			/**
 			 * Output a successfully authenticated message.
 			 */
-			echo "\t\t<status>".encrypt_data("success", $auth_password)."</status>\n";
-			echo "\t\t<message>".encrypt_data("You were successfully authenticated into this application.", $auth_password)."</message>\n";
-            echo "\t\t<method>".encrypt_data($authenticated_by_method, $auth_password)."</method>\n";
+			echo "\t\t<status>".encrypt("success", $auth_password)."</status>\n";
+			echo "\t\t<message>".encrypt("You were successfully authenticated into this application.", $auth_password)."</message>\n";
+            echo "\t\t<method>".encrypt($authenticated_by_method, $auth_password)."</method>\n";
 
 			if ((isset($_POST["requested_info"])) && ($REQUESTED_INFO = @unserialize(base64_decode($_POST["requested_info"]))) && (is_array($REQUESTED_INFO)) && (count($REQUESTED_INFO) > 0)) {
 				$APPLICATION_SPECIFIC	= unserialize(base64_decode($user_access["extras"]));
@@ -431,104 +431,107 @@ if (!$ERROR) {
 					$type = explode("-", $value);
 					switch ($type[0]) {
 						case "id" :
-							echo "\t\t<".$value.">".encrypt_data($user_data["id"], $auth_password)."</".$value.">\n";
+							echo "\t\t<".$value.">".encrypt($user_data["id"], $auth_password)."</".$value.">\n";
 						break;
 						case "number" :
-							echo "\t\t<".$value.">".encrypt_data($user_data["number"], $auth_password)."</".$value.">\n";
+							echo "\t\t<".$value.">".encrypt($user_data["number"], $auth_password)."</".$value.">\n";
 						break;
 						case "prefix" :
-							echo "\t\t<".$value.">".encrypt_data($user_data["prefix"], $auth_password)."</".$value.">\n";
+							echo "\t\t<".$value.">".encrypt($user_data["prefix"], $auth_password)."</".$value.">\n";
 						break;
 						case "firstname" :
-							echo "\t\t<".$value.">".encrypt_data($user_data["firstname"], $auth_password)."</".$value.">\n";
+							echo "\t\t<".$value.">".encrypt($user_data["firstname"], $auth_password)."</".$value.">\n";
 						break;
 						case "lastname" :
-							echo "\t\t<".$value.">".encrypt_data($user_data["lastname"], $auth_password)."</".$value.">\n";
+							echo "\t\t<".$value.">".encrypt($user_data["lastname"], $auth_password)."</".$value.">\n";
 						break;
 						case "organisation_id":
-							echo "\t\t<".$value.">".encrypt_data($user_data["organisation_id"], $auth_password)."</".$value.">\n";
+							echo "\t\t<".$value.">".encrypt($user_data["organisation_id"], $auth_password)."</".$value.">\n";
 						break;
 						case "acl" :
 							// @todo: insert ACL generation code here.
-							echo "\t\t<".$value.">".encrypt_data($user_data["organisation_id"], $auth_password)."</".$value.">\n";
+							echo "\t\t<".$value.">".encrypt($user_data["organisation_id"], $auth_password)."</".$value.">\n";
 						break;
 						case "department" :
-							echo "\t\t<".$value.">".encrypt_data($user_data["department"], $auth_password)."</".$value.">\n";
+							echo "\t\t<".$value.">".encrypt($user_data["department"], $auth_password)."</".$value.">\n";
 						break;
 						case "email" :
-							echo "\t\t<".$value.">".encrypt_data($user_data["email"], $auth_password)."</".$value.">\n";
+							echo "\t\t<".$value.">".encrypt($user_data["email"], $auth_password)."</".$value.">\n";
 						break;
 						case "email_alt" :
-							echo "\t\t<".$value.">".encrypt_data($user_data["email_alt"], $auth_password)."</".$value.">\n";
+							echo "\t\t<".$value.">".encrypt($user_data["email_alt"], $auth_password)."</".$value.">\n";
 						break;
 						case "email_updated" :
-							echo "\t\t<".$value.">".encrypt_data($user_data["email_updated"], $auth_password)."</".$value.">\n";
+							echo "\t\t<".$value.">".encrypt($user_data["email_updated"], $auth_password)."</".$value.">\n";
 						break;
 						case "google_id" :
-							echo "\t\t<".$value.">".encrypt_data($user_data["google_id"], $auth_password)."</".$value.">\n";
+							echo "\t\t<".$value.">".encrypt($user_data["google_id"], $auth_password)."</".$value.">\n";
 						break;
 						case "telephone" :
-							echo "\t\t<".$value.">".encrypt_data($user_data["telephone"], $auth_password)."</".$value.">\n";
+							echo "\t\t<".$value.">".encrypt($user_data["telephone"], $auth_password)."</".$value.">\n";
 						break;
 						case "fax" :
-							echo "\t\t<".$value.">".encrypt_data($user_data["fax"], $auth_password)."</".$value.">\n";
+							echo "\t\t<".$value.">".encrypt($user_data["fax"], $auth_password)."</".$value.">\n";
 						break;
 						case "address" :
-							echo "\t\t<".$value.">".encrypt_data($user_data["address"], $auth_password)."</".$value.">\n";
+							echo "\t\t<".$value.">".encrypt($user_data["address"], $auth_password)."</".$value.">\n";
 						break;
 						case "city" :
-							echo "\t\t<".$value.">".encrypt_data($user_data["city"], $auth_password)."</".$value.">\n";
+							echo "\t\t<".$value.">".encrypt($user_data["city"], $auth_password)."</".$value.">\n";
 						break;
 						case "province" :
-							echo "\t\t<".$value.">".encrypt_data($user_data["province"], $auth_password)."</".$value.">\n";
+							echo "\t\t<".$value.">".encrypt($user_data["province"], $auth_password)."</".$value.">\n";
 						break;
 						case "postcode" :
-							echo "\t\t<".$value.">".encrypt_data($user_data["postcode"], $auth_password)."</".$value.">\n";
+							echo "\t\t<".$value.">".encrypt($user_data["postcode"], $auth_password)."</".$value.">\n";
 						break;
 						case "country" :
-							echo "\t\t<".$value.">".encrypt_data($user_data["country"], $auth_password)."</".$value.">\n";
+							echo "\t\t<".$value.">".encrypt($user_data["country"], $auth_password)."</".$value.">\n";
 						break;
 						case "privacy_level" :
-							echo "\t\t<".$value.">".encrypt_data($user_data["privacy_level"], $auth_password)."</".$value.">\n";
+							echo "\t\t<".$value.">".encrypt($user_data["privacy_level"], $auth_password)."</".$value.">\n";
 						break;
 						case "copyright" :
-							echo "\t\t<".$value.">".encrypt_data($user_data["copyright"], $auth_password)."</".$value.">\n";
+							echo "\t\t<".$value.">".encrypt($user_data["copyright"], $auth_password)."</".$value.">\n";
 						break;
 						case "notifications" :
-							echo "\t\t<".$value.">".encrypt_data($user_data["notifications"], $auth_password)."</".$value.">\n";
+							echo "\t\t<".$value.">".encrypt($user_data["notifications"], $auth_password)."</".$value.">\n";
 						break;
 						case "access_id" :
-							echo "\t\t<".$value.">".encrypt_data($user_access["id"], $auth_password)."</".$value.">\n";
+							echo "\t\t<".$value.">".encrypt($user_access["id"], $auth_password)."</".$value.">\n";
 						break;
 						case "access_starts" :
-							echo "\t\t<".$value.">".encrypt_data($user_access["access_starts"], $auth_password)."</".$value.">\n";
+							echo "\t\t<".$value.">".encrypt($user_access["access_starts"], $auth_password)."</".$value.">\n";
 						break;
 						case "access_expires" :
-							echo "\t\t<".$value.">".encrypt_data($user_access["access_expires"], $auth_password)."</".$value.">\n";
+							echo "\t\t<".$value.">".encrypt($user_access["access_expires"], $auth_password)."</".$value.">\n";
 						break;
 						case "last_login" :
-							echo "\t\t<".$value.">".encrypt_data($user_access["last_login"], $auth_password)."</".$value.">\n";
+							echo "\t\t<".$value.">".encrypt($user_access["last_login"], $auth_password)."</".$value.">\n";
 						break;
 						case "last_ip" :
-							echo "\t\t<".$value.">".encrypt_data($user_access["last_ip"], $auth_password)."</".$value.">\n";
+							echo "\t\t<".$value.">".encrypt($user_access["last_ip"], $auth_password)."</".$value.">\n";
 						break;
 						case "role" :
-							echo "\t\t<".$value.">".encrypt_data($user_access["role"], $auth_password)."</".$value.">\n";
+							echo "\t\t<".$value.">".encrypt($user_access["role"], $auth_password)."</".$value.">\n";
 						break;
 						case "group" :
-							echo "\t\t<".$value.">".encrypt_data($user_access["group"], $auth_password)."</".$value.">\n";
+							echo "\t\t<".$value.">".encrypt($user_access["group"], $auth_password)."</".$value.">\n";
 						break;
 						case "grad_year" :
-							echo "\t\t<".$value.">".encrypt_data($user_data["grad_year"], $auth_password)."</".$value.">\n";
+							echo "\t\t<".$value.">".encrypt($user_data["grad_year"], $auth_password)."</".$value.">\n";
 						break;
 						case "private_hash" :
-							echo "\t\t<".$value.">".encrypt_data($user_access["private_hash"], $auth_password)."</".$value.">\n";
+							echo "\t\t<".$value.">".encrypt($user_access["private_hash"], $auth_password)."</".$value.">\n";
 						break;
 						case "private" :
 							if ($type[1]) {
-								echo "\t\t<private-".$type[1].">".(($APPLICATION_SPECIFIC[$type[1]]) ? encrypt_data($APPLICATION_SPECIFIC[$type[1]], $auth_password) : "")."</private-".$type[1].">\n";
+								echo "\t\t<private-".$type[1].">".(($APPLICATION_SPECIFIC[$type[1]]) ? encrypt($APPLICATION_SPECIFIC[$type[1]], $auth_password) : "")."</private-".$type[1].">\n";
 							}
 						break;
+						case "pin" :
+							echo "\t\t<".$value.">".encrypt($user_data["pin"], $auth_password)."</".$value.">\n";
+							break;
 						default :
 							continue;
 						break;
@@ -558,8 +561,8 @@ if (!$ERROR) {
 		default :
 			$ERROR++;
 
-			echo "\t\t<status>".encrypt_data("failed", $auth_password)."</status>\n";
-			echo "\t\t<message>".encrypt_data("A problem occurred during the authentication process and we were unable to complete the request. A system administrator has been notified of the error, please try again later.", $auth_password)."</message>\n";
+			echo "\t\t<status>".encrypt("failed", $auth_password)."</status>\n";
+			echo "\t\t<message>".encrypt("A problem occurred during the authentication process and we were unable to complete the request. A system administrator has been notified of the error, please try again later.", $auth_password)."</message>\n";
 
 			application_log("auth_error", "An unrecognized authentication action [".$auth_action."] was used against the authentication system.");
 		break;

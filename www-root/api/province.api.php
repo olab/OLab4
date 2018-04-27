@@ -51,7 +51,7 @@ if ((isset($_SESSION["isAuthorized"])) && ((bool) $_SESSION["isAuthorized"])) {
 		$results = Models_Province::fetchAllByCountryID($countries_id);
 		if ($results) {
 			$output .= "<select id=\"prov_state\" name=\"prov_state\" class=\"input-large\">\n";
-			$output .=  "<option value=\"0\"".((!$province_id) ? " selected=\"selected\"" : "").">-- Select Province / State --</option>\n";
+			$output .=  "<option value=\"0\"".((!$province_id) ? " selected=\"selected\"" : "").">-- " . $translate->_("Select Province / State") . " --</option>\n";
 			foreach($results as $result_object) {
 				$result = $result_object->toArray();
 				$output .=  "<option value=\"".clean_input($result["province_id"], array("notags", "specialchars"))."\"".(($province_id == $result["province_id"]) ? " selected=\"selected\"" : ($province == clean_input($result["province"], array("notags", "specialchars")) ? " selected=\"selected\"" : "")).">".clean_input($result["province"], array("notags", "specialchars"))."</option>\n";
@@ -65,7 +65,7 @@ if ((isset($_SESSION["isAuthorized"])) && ((bool) $_SESSION["isAuthorized"])) {
 	}
 
 	$output .= "<input type=\"hidden\" id=\"prov_state\" name=\"prov_state\" value=\"0\" />\n";
-	$output .= "<span style=\"line-height:30px;\">Please select a <strong>Country</strong> first.\n";
-    echo $output;
+	$output .= "<span style=\"line-height:30px;\">" . $translate->_("Please select a <b>Country</b> from above first.") . "</span>";
+
+	echo $output;
 }
-?>

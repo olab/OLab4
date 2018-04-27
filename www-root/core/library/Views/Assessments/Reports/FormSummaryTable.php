@@ -22,18 +22,10 @@
  * @copyright Copyright 2016 Queen's University. All Rights Reserved.
  *
  */
-class Views_Assessments_Reports_FormSummaryTable extends Views_Assessments_Base
-{
+class Views_Assessments_Reports_FormSummaryTable extends Views_HTML {
 
     protected function validateOptions($options = array()) {
-
-        if (!isset($options["completed_tasks"])) {
-            return false;
-        }
-        if (!isset($options["target_role"])) {
-            return false;
-        }
-        return true;
+        return $this->validateIsSet($options, array("completed_tasks", "target_role"));
     }
 
     /**
@@ -54,13 +46,11 @@ class Views_Assessments_Reports_FormSummaryTable extends Views_Assessments_Base
         $render_table = ($tasks && !empty($tasks));
         $start_date = is_null($report_start_date) ? "" : "&start-date=" . date("Y-m-d", $report_start_date);
         $end_date = is_null($report_end_date) ? "" : "&end-date=" . date("Y-m-d", $report_end_date);
-
-        // Render the view
         ?>
         <div <?php echo $this->getClassString() ?>>
             <?php if ($render_table): ?>
-                <label for="assessment-reports-group-by-distribution" class="checkbox pull-right clearfix">
-                    <input type="checkbox" id="assessment-reports-group-by-distribution" <?php echo $group_by_distribution ? "checked" : "" ?>> <?php echo $translate->_("Group by distribution");?>
+                <label for="assessment-reports-group-by-distribution" class="checkbox pull-right clearfix <?php echo $target_role == "target" ? " hide" : "" ?>"<?php echo $target_role == "target" ? " disabled" : "" ?>>
+                    <input type="checkbox" id="assessment-reports-group-by-distribution" <?php echo $group_by_distribution || $target_role == "target" ? "checked" : "" ?>> <?php echo $translate->_("Group by distribution");?>
                 </label>
             <?php endif; ?>
 
@@ -115,17 +105,20 @@ class Views_Assessments_Reports_FormSummaryTable extends Views_Assessments_Base
                                             <li>
                                                 <a href="<?php echo ENTRADA_URL . "/assessments/reports/report?section=report&target_id={$form_summary["target_record_id"]}&form_id={$form_summary["form_id"]}&role={$target_role}&adistribution_id={$distribution_id}&strip=1&cperiod_id={$form_summary["cperiod_id"]}{$start_date}{$end_date}" ?>"><?php echo $translate->_("Generate Report (Without Comments)"); ?></a>
                                             </li>
-                                            <li>
-                                                <a href="<?php echo ENTRADA_URL . "/admin/assessments/forms?section=edit-form&id={$form_summary["form_id"]}" ?>"  target="_blank"><?php echo $translate->_("View This Form"); ?></a>
-                                            </li>
-                                            <li>
-                                                <a href="<?php echo ENTRADA_URL . "/assessments/reports/?section=list&target_id={$form_summary["target_record_id"]}&form_id={$form_summary["form_id"]}&role={$target_role}&adistribution_id={$distribution_id}&cperiod_id={$form_summary["cperiod_id"]}{$start_date}{$end_date}" ?>"  target="_blank"><?php echo $translate->_("View Assessments"); ?></a>
-                                            </li>
-                                            <?php if ($group_by_distribution): ?>
-                                            <li>
-                                                <a href="<?php echo ENTRADA_URL . "/admin/assessments/distributions?section=progress&adistribution_id=$distribution_id"?>" target="_blank"><?php echo $translate->_("View Distribution Progress"); ?></a>
-                                            </li>
-                                            <?php endif; ?>
+                                            <?php if ($options["target_role"] != "target"): ?>
+                                                <li>
+                                                    <a href="<?php echo ENTRADA_URL . "/admin/assessments/forms?section=edit-form&id={$form_summary["form_id"]}" ?>" target="_blank"><?php echo $translate->_("View This Form"); ?></a>
+                                                </li>
+                                                <li>
+                                                    <a href="<?php echo ENTRADA_URL . "/assessments/reports/?section=list&target_id={$form_summary["target_record_id"]}&form_id={$form_summary["form_id"]}&role={$target_role}&adistribution_id={$distribution_id}&cperiod_id={$form_summary["cperiod_id"]}{$start_date}{$end_date}" ?>" target="_blank"><?php echo $translate->_("View Assessments"); ?></a>
+                                                </li>
+                                                <?php if ($group_by_distribution): ?>
+                                                    <li>
+                                                        <a href="<?php echo ENTRADA_URL . "/admin/assessments/distributions?section=progress&adistribution_id=$distribution_id" ?>" target="_blank"><?php echo $translate->_("View Distribution Progress"); ?></a>
+                                                    </li>
+                                                <?php endif;
+                                            endif;
+                                            ?>
                                         </ul>
                                     </div>
                                 </td>
@@ -134,7 +127,7 @@ class Views_Assessments_Reports_FormSummaryTable extends Views_Assessments_Base
                     <?php else: ?>
                         <tr>
                             <td class="form-search-message text-center" colspan="4">
-                                <?php echo $translate->_("There are no completed forms for this learner."); ?>
+                                <?php echo $translate->_("There are no completed forms."); ?>
                             </td>
                         </tr>
                     <?php endif; ?>

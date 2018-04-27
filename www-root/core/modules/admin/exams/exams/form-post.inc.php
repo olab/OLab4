@@ -38,8 +38,20 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
 } else {
     ?>
     <?php
+    // JS translation strings.
+    Entrada_Utilities::addJavascriptTranslation($translate->_("Yes"), 'yes');
+    Entrada_Utilities::addJavascriptTranslation($translate->_("No"), 'no');
+
+    Entrada_Utilities::addJavascriptTranslation($translate->_("Are you sure you want to remove this exception?"), 'clear_exception_message');
+    Entrada_Utilities::addJavascriptTranslation($translate->_("There was an error while recovering the exam audience. Please contact the administrator."), 'recovering_audience_error_message');
+    Entrada_Utilities::addJavascriptTranslation($translate->_("1The Exam Post has been successfully created."), 'exam_post_created_message');
+    Entrada_Utilities::addJavascriptTranslation($translate->_("The exam post has been successfully saved."), 'exam_post_saved_message');
+    Entrada_Utilities::addJavascriptTranslation($translate->_("Yes"), 'yes');
+
     $HEAD[] = "<script type=\"text/javascript\">var org_id = '".$ENTRADA_USER->getActiveOrganisation()."';</script>";
     $HEAD[] = "<script type=\"text/javascript\">var ENTRADA_URL = \"". ENTRADA_URL ."\";</script>";
+    $HEAD[] = "<script type=\"text/javascript\">var DEFAULT_DATETIME_FORMAT = \"". DEFAULT_DATETIME_FORMAT ."\";</script>";
+
     $HEAD[] = "<script type=\"text/javascript\" src=\"".ENTRADA_URL."/javascript/jquery/jquery.dataTables.min-1.10.1.js?release=".html_encode(APPLICATION_VERSION).""."\"></script>";
     $HEAD[] = "<script type=\"text/javascript\" src=\"".  ENTRADA_URL ."/javascript/jquery/jquery.advancedsearch.js?release=".html_encode(APPLICATION_VERSION)."\"></script>";
     $HEAD[] = "<script type=\"text/javascript\" src=\"".  ENTRADA_URL ."/javascript/jquery/jquery.timepicker.js?release=".html_encode(APPLICATION_VERSION)."\"></script>";
@@ -48,6 +60,8 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
     $HEAD[]	= "<script type=\"text/javascript\" src=\"".ENTRADA_URL."/javascript/wizard.js?release=".html_encode(APPLICATION_VERSION)."\"></script>\n";
     $HEAD[] = "<script type=\"text/javascript\">var API_URL = \"". ENTRADA_URL."/admin/" . $MODULE . "/" . $SUBMODULE . "?section=api-exams" ."\";</script>";
     $HEAD[]	= "<script type=\"text/javascript\" src=\"".ENTRADA_URL."/javascript/exams/exam-posts-admin.js?release=".html_encode(APPLICATION_VERSION)."\"></script>\n";
+    $HEAD[]	= "<script type=\"text/javascript\" src=\"".ENTRADA_URL."/javascript/jquery/jquery.moment.min.js\"></script>\n";
+
     load_rte("post", array('autogrow' => true));
 
     $HEAD[] = "<link rel=\"stylesheet\" type=\"text/css\" href=\"".  ENTRADA_URL ."/css/jquery/jquery.advancedsearch.css?release=".html_encode(APPLICATION_VERSION)."\" />";
@@ -86,13 +100,13 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
     if (isset($_GET["post_id"]) && $tmp_input = clean_input($_GET["post_id"], "int")) {
         $POST_ID = $tmp_input;
     }
+
+    $redirect_section = 1;
+
     if (isset($_GET["redirect_section"]) && ($tmp_input = clean_input($_GET["redirect_section"], "int")) && isset($POST_ID)) {
-        if ((1 <= $tmp_input) && ($tmp_input <= 6)) {
+        if ($tmp_input >= 1 && $tmp_input <= 6) {
             $redirect_section = $tmp_input;
         }
-    }
-    if (!isset($redirect_section)) {
-        $redirect_section = 1;
     }
 
     $SECTION_TEXT = $SUBMODULE_TEXT[$SECTION];
@@ -110,6 +124,10 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
     // Fetch the post data (and set the mode appropriately if unset or set improperly).
     // This data is also used to populate the first step of the form.
     $allow_access = false;
+
+    /* Honor Code use and default text */
+    $honorcode_text          = $ENTRADA_SETTINGS->fetchByShortname("honorcode_text", $ENTRADA_USER->getOrganisationId());
+    $honorcode_use_exam      = $ENTRADA_SETTINGS->fetchByShortname("honorcode_use_exam", $ENTRADA_USER->getOrganisationId());
 
     if (!$POST_ID) {
         //The post has not been created yet
@@ -166,7 +184,6 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
 
         $update_questions_available = array();
 
-
         if ($exam) {
             $exam_elements = $exam->getExamElements();
             if ($exam_elements && is_array($exam_elements)) {
@@ -208,11 +225,6 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
                 }
             }
         }
-
-
-
-
-
     } else {
         //The post exists
         $post = Models_Exam_Post::fetchRowByID($POST_ID);
@@ -229,7 +241,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
             $exam = $post->getExam();
             $event = $post->getEvent();
 
-            if (!$post->getSecure() && $redirect_section == 3) {
+            if (!$post->getSecure() && $redirect_section == 6) {
                 $redirect_section = 1;
             }
 
@@ -292,8 +304,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
             <div class="wizard-body" id="post-editor-body">
                 <div class="wizard-step-container">
                     <ul class="wizard-steps">
-                        <li id="wizard-nav-item-1" class="wizard-nav-item<?php echo $step_status; ?>"
-                            data-step="1">
+                        <li id="wizard-nav-item-1" class="wizard-nav-item<?php echo $step_status; ?>" data-step="1">
                             <a href="#">
                                 <span class="step-number">1</span>
                                 <span class="step-label"><?php echo $POST_TEXT["steps"]["1"]; ?></span>
@@ -305,7 +316,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
                                 <span class="step-label"><?php echo $POST_TEXT["steps"]["2"]; ?></span>
                             </a>
                         </li>
-                        <li id="wizard-nav-item-3" class="wizard-nav-item<?php echo ($post && $post->getSecure() === "1") ? $step_status: ""; ?>" data-step="3">
+                        <li id="wizard-nav-item-3" class="wizard-nav-item<?php echo $step_status; ?>" data-step="3">
                             <a href="#">
                                 <span class="step-number">3</span>
                                 <span class="step-label"><?php echo $POST_TEXT["steps"]["3"]; ?></span>
@@ -323,7 +334,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
                                 <span class="step-label"><?php echo $POST_TEXT["steps"]["5"]; ?></span>
                             </a>
                         </li>
-                        <li id="wizard-nav-item-6" class="wizard-nav-item<?php echo $step_status; ?>" data-step="6">
+                        <li id="wizard-nav-item-6" class="wizard-nav-item<?php echo ($post && $post->getSecure() === "1") ? $step_status: ""; ?>" <?php echo (!$post || !$post->getSecure()) ? "style=\"display: none;\"" : ""; ?> data-step="6">
                             <a href="#">
                                 <span class="step-number">6</span>
                                 <span class="step-label"><?php echo $POST_TEXT["steps"]["6"]; ?></span>
@@ -343,7 +354,6 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
                     <form class="wizard-data-form form-horizontal" id="search-targets-form" autocomplete="off">
                         <input id="wizard-step-input" type="hidden" name="wizard_step" value="<?php echo $redirect_section ?>"/>
                         <input id="wizard-editor-mode" type="hidden" name="mode" value="<?php echo $mode ?>"/>
-                        <input id="wizard-previous-step-input" type="hidden" name="previous_wizard_step" value="<?php echo ($redirect_section - 1); ?>"/>
                         <div id="wizard-step-1" class="wizard-step hide">
                             <div class="distribution-instruction"></div>
                             <?php if (!$PROCESSED["id"]) { ?>
@@ -375,7 +385,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
                                         <button id="choose-event-btn" class="btn btn-search-filter">
                                             <?php if ($post) { ?>
                                                 <span class="selected-label space-right">
-                                                    <?php echo date(DEFAULT_DATE_FORMAT, $post->getEvent()->getEventStart()); ?> - <?php echo $post->getEvent()->getEventTitle(); ?>
+                                                    <?php echo date(DEFAULT_DATETIME_FORMAT, $post->getEvent()->getEventStart()); ?> - <?php echo $post->getEvent()->getEventTitle(); ?>
                                                 </span>
                                             <?php } else { ?>
                                                 <?php echo $translate->_("Browse Events"); ?>
@@ -474,7 +484,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
                                             <input id="exam_end_time" type="text" class="input-mini timepicker"
                                                    value="<?php echo (!$post || $post->getUseExamEndDate() !== "1") ? "" : $end_time; ?>"
                                                    name="exam_end_time"<?php echo (!$post || $post->getUseExamEndDate() !== "1") ? " disabled=\"disabled\"" : ""; ?>
-                                                   data-default-time="<?php echo $end_time; ?>"/>
+                                                   data-default-time="<?php echo $end_time; ?>"/>z
                                             <span class="add-on pointer">
                                                 <i class="icon-time"></i>
                                             </span>
@@ -623,6 +633,34 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
                                     </label>
                                 </div>
                             </div>
+                            <?php
+                            if ($honorcode_use_exam && $honorcode_text) {
+                            ?>
+                            <div class="control-group honor-code-group<?php echo ($post && $post->getSecure() == "1") ? "" : " hide"; ?>">
+                                <label for="use_honor_code" class="control-label">
+                                    <?php echo $translate->_("Use Honor Code"); ?>
+                                </label>
+                                <div class="controls">
+                                    <label class="checkbox">
+                                        <input id="use_honor_code" type="checkbox" name="use_honor_code" value="1"<?php echo ($post && $post->getUseHonorCode() == "1") ? " checked=\"checked\"" : ""; ?>/>
+                                        <?php echo $translate->_("If checked, this will display the honor code before starting a secure exam and require the learner check a box to acknowledge that they agree to the honor code."); ?>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="control-group honor-code-group<?php echo ($post && $post->getSecure() == "1") ? "" : " hide"; ?>">
+                                <label for="honor-code" class="control-label">
+                                    <?php echo $translate->_("Honor Code"); ?>
+                                </label>
+                                <div class="controls">
+                                    <textarea id="honor-code" name="honor_code">
+                                        <?php echo ($post && $post->getHonorCode() != null) ? $post->getHonorCode() : $honorcode_text->getValue(); ?>
+                                    </textarea>
+                                </div>
+                            </div>
+                            <?php
+                            }
+                            ?>
+
                             <div class="control-group">
                                 <label for="mark_faculty_review" class="control-label">
                                     <?php echo $POST_TEXT["fac_feedback_title"]; ?>
@@ -645,228 +683,46 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
                                     </label>
                                 </div>
                             </div>
-                        <div class="control-group">
-                            <label for="use_self_timer" class="control-label">
-                                <?php echo $POST_TEXT["use_self_timer_title"]; ?>
-                            </label>
-                            <div class="controls">
-                                <label class="checkbox">
-                                    <input id="use_self_timer" type="checkbox" name="use_self_timer" value="1"<?php echo ($post && $post->getUseSelfTimer() == "1") ? " checked=\"checked\"" : ""; ?>/>
-                                    <?php echo $POST_TEXT["use_self_timer_text"]; ?>
+                            <div class="control-group">
+                                <label for="use_self_timer" class="control-label">
+                                    <?php echo $POST_TEXT["use_self_timer_title"]; ?>
                                 </label>
+                                <div class="controls">
+                                    <label class="checkbox">
+                                        <input id="use_self_timer" type="checkbox" name="use_self_timer" value="1"<?php echo ($post && $post->getUseSelfTimer() == "1") ? " checked=\"checked\"" : ""; ?>/>
+                                        <?php echo $POST_TEXT["use_self_timer_text"]; ?>
+                                    </label>
+                                </div>
                             </div>
                         </div>
-                        </div>
+                        
                         <div id="wizard-step-3" class="wizard-step hide">
-                            <div class="distribution-instruction"></div>
-                            <?php if ($post) { ?>
-                                <div class="item-container" data-post="<?php echo ($post) ? $post->getID() : ""; ?>">
-                                    <div class="item-header" id="basic-header">
-                                        <input type="radio" name="secure_mode" id="secure_mode_basic_password" value="basic"<?php echo (($post && $post->getSecureMode() == "basic") ? " checked=\"checked\"" : ""); ?> />
-                                        <label for="secure_mode_basic_password" class="bold">
-                                            <?php echo $translate->_("Basic Password"); ?>
-                                        </label>
-                                    </div>
-                                    <div class="item-body hide" id="basic">
-                                        <div class="control-group space-above">
-                                            <label for="resume_password_basic" class="control-label form-required">
-                                                <?php echo $translate->_("Exam Begin Password"); ?>
-                                            </label>
-                                            <div class="controls">
-                                                <div class="input-append space-right" id="password_basic">
-                                                    <input id="resume_password_basic" type="text" class="resume_password" name="resume_password_basic" size="25"
-                                                           maxlength="20" placeholder="Please enter or generate a password"
-                                                           value="<?php echo ($post) ? $post->getResumePassword() : ""; ?>"/>
-                                                    <button class="btn generate-resume-password-btn" id="basic" data-name="basic" type="button">
-                                                        <?php echo $POST_TEXT["resume_password"]; ?>
-                                                    </button>
-                                                </div>
-                                                <small class="help-block">
-                                                    <?php echo $POST_TEXT["use_resume_password_text"]; ?>
-                                                </small>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="item-header" id="seb-header">
-                                        <input type="radio" name="secure_mode" id="secure_mode_seb_password" value="seb" <?php echo ($post && $post->getSecureMode() == "seb") ? " checked=\"checked\"" : ""; ?>/>
-                                        <label for="secure_mode_seb_password" class="bold">
-                                            <?php echo $POST_TEXT["secure_exam_config"]; ?>
-                                        </label>
-                                        <span id="secure-file-header-messages"></span>
-                                        <div class="pull-right"></div>
-                                    </div>
-                                    <div class="item-body hide" id="seb">
-                                        <div class="item-section secure-password">
-                                            <div class="control-group space-above" id="secure-password-header">
-                                                <label class="control-label" for="use_resume_password"><?php echo $POST_TEXT["use_resume_password"]; ?></label>
-                                                <div class="controls">
-                                                    <div class="input-append space-right">
-                                                        <input id="use_resume_password" type="checkbox" name="use_resume_password"<?php echo ($post && $post->getUseResumePassword() == "1") ? " checked=\"checked\"" : ""; ?> />
-                                                        <?php echo $POST_TEXT["use_resume_password_text"]; ?>
-                                                    </div>
-                                                    <div class="input-append space-right">
-                                                        <input id="resume_password_seb" type="text" class="resume_password" name="resume_password_seb" size="25"
-                                                               maxlength="20" placeholder="Please enter or generate a password"
-                                                               value="<?php echo ($post) ? $post->getResumePassword() : ""; ?>"/>
-                                                        <button class="btn generate-resume-password-btn" id="seb" type="button">
-                                                            <?php echo $POST_TEXT["resume_password"]; ?>
-                                                        </button>
-                                                    </div>
-                                                    <small class="help-block">
-                                                        <?php echo $POST_TEXT["use_resume_password_text"]; ?>
-                                                    </small>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="item-section secure-file"
-                                             data-post-id="<?php echo ($post) ? $post->getID() : ""; ?>">
-                                            <div class="item-section-header">
-                                                <?php echo $POST_TEXT["seb_file"]; ?>
-                                                <div class="pull-right">
-                                                    <div class="btn-group">
-                                                        <button type="button" class="btn delete-item disabled"
-                                                                id="delete-secure-file" data-post=""
-                                                                title="Delete SEB file(s)"><i class="icon-minus-sign"></i>
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="item-section-body show-less secure-file-list upload" id="">
-                                                <div class="secure-file-list-content"></div>
-                                            </div>
-                                        </div>
-                                        <div class="item-section secure-keys">
-                                            <div class="item-section-header" id="secure-key-header">
-                                                <?php echo $POST_TEXT["secure_keys"]; ?>
-                                                <span class="badge badge-success secure-key-badge"></span>
-                                                <div class="pull-right">
-                                                    <div class="btn-group">
-                                                        <button type="button" class="btn delete-item disabled"
-                                                                id="delete-secure-keys" data-post=""
-                                                                title="Delete Browser Exam Key(s)"><i
-                                                                class="icon-minus-sign"></i></button>
-                                                        <button type="button" class="btn add-item" id="add-secure-key"
-                                                                data-post="" title="Add Secure Key(s)"><i
-                                                                class="icon-plus-sign"></i></button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="item-section-body show-less secure-key-list"></div>
-                                        </div>
-                                    </div>
-                                    <div class="item-header" id="rpnow-header">
-                                        <input type="radio" name="secure_mode" id="secure_mode_rpnow_password" value="rp_now" <?php echo ($post && $post->getSecureMode() == "rp_now") ? " checked=\"checked\"" : ""; ?>/>
-                                        <label for="secure_mode_rpnow_password" class="bold">
-                                            <?php echo $translate->_("RP-Now by Software Secure"); ?>
-                                        </label>
 
-                                    </div>
-                                    <div class="item-body hide" id="rp_now">
-                                        <div class="control-group space-above">
-                                            <label for="resume_password_rp_now" class="control-label">
-                                                <?php echo $translate->_("Exam Password"); ?>
-                                            </label>
-                                            <div class="controls">
-                                                <div class="input-append space-right" id="password_rpnow">
-                                                    <input id="resume_password_rp_now" class="resume_password" type="text" name="resume_password_rp_now" size="25"
-                                                           maxlength="20" placeholder="Please enter or generate a password"
-                                                           value="<?php echo ($post) ? $post->getResumePassword() : ""; ?>"/>
-                                                    <button class="btn generate-resume-password-btn" id="rpnow" data-name="rpnow" type="button">
-                                                        <?php echo $POST_TEXT["resume_password"]; ?>
-                                                    </button>
-                                                </div>
-                                                <small class="help-block">
-                                                    <?php echo $POST_TEXT["use_resume_password_text"]; ?>
-                                                </small>
-                                            </div>
-                                        </div>
-                                        <div class="control-group">
-                                            <label for="exam_url" class="control-label form-required">
-                                                <?php echo $POST_TEXT["exam_url"]; ?>
-                                            </label>
-                                            <div class="controls">
-                                                <input id="exam_url" type="text" name="exam_url" value="<?php echo ($secure_post ?  $secure_post->getExamUrl() : ENTRADA_URL . "/exams?section=post&id=" . $post->getID()); ?>"/>
-                                            </div>
-                                        </div>
-                                        <div class="control-group" id="exam-sponsor-search-controls">
-                                            <label for="exam_sponsor" class="control-label form-required space-right">
-                                                <?php echo $POST_TEXT["exam_sponsor"]; ?>
-                                            </label>
-                                            <button id="choose-exam-sponsor-btn" class="btn btn-search-filter">
-                                                    <span class="selected-label">
-                                                        <?php echo ($secure_post && Models_User::fetchRowByID($secure_post->getExamSponsor()) ? Models_User::fetchRowByID($secure_post->getExamSponsor())->getFullname(false) : $translate->_("Browse Director")); ?>
-                                                    </span>
-                                                <i class="icon-chevron-down btn-icon pull-right"></i>
-                                            </button>
-                                        </div>
-                                        <div class="control-group">
-                                            <label for="rpnow_reviewed_exam" class="control-label">
-                                                <?php echo $POST_TEXT["rpnow_reviewed_exam"]; ?>
-                                            </label>
-                                            <div class="controls">
-                                                <label class="checkbox">
-                                                    <input id="rpnow_reviewed_exam" type="checkbox" name="rpnow_reviewed_exam" value="1"<?php echo (($secure_post && $secure_post->getRpnowReviewedExam() == "1") || !$secure_post) ? " checked=\"checked\"" : ""; ?>/>
-                                                </label>
-                                            </div>
-                                        </div>
-                                        <div class="control-group hide" id="reviewer_notes">
-                                            <label for="rpnow_reviewer_notes" class="control-label form-required">
-                                                <?php echo $POST_TEXT["rpnow_reviewer_notes"]; ?>
-                                            </label>
-                                            <div class="controls">
-                                                <textarea id="rpnow_reviewer_notes" name="rpnow_reviewer_notes">
-                                                    <?php echo ($secure_post) ? $secure_post->getRpnowReviewerNotes() : ""; ?>
-                                                </textarea>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            <?php } else { ?>
-                                <div class="alert alert-warning">
-                                    <h2 class="text-center">
-                                        <?php echo $POST_TEXT["secure_warning_1"]; ?>
-                                    </h2>
-                                    <p class="text-center">
-                                        <?php echo $POST_TEXT["secure_warning_2"]; ?>
-                                    </p>
-                                </div>
-                            <?php } ?>
+                            <div class="alert alert-info">
+                                <?php echo $translate->_("Use this screen to set accommodations or exemptions for any learner eligible to take this exam. Click the pencil icon in the Edit column to begin."); ?>
+                            </div>
+
+                            <div class="distribution-instruction"></div>
+
+                            <table class="table table-striped table-bordered grading-table" id="audience-list-table">
+                                <thead>
+                                <tr>
+                                    <th><?php echo $POST_TEXT["learner_name"]; ?></th>
+                                    <th><?php echo $POST_TEXT["excluded"]; ?></th>
+                                    <th><?php echo $POST_TEXT["exception_start_date"]; ?></th>
+                                    <th><?php echo $POST_TEXT["exception_end_date"]; ?></th>
+                                    <th><?php echo $POST_TEXT["exception_submission_date"]; ?></th>
+                                    <th><?php echo $POST_TEXT["exception_time_factor"]; ?></th>
+                                    <th><?php echo $POST_TEXT["max_attempts"]; ?></th>
+                                    <th><?php echo $DEFAULT_LABELS["btn_edit"] ?></th>
+                                </tr>
+                                </thead>
+                                <tbody id="audience-list-body">
+                                </tbody>
+                            </table>
+
                         </div>
                         <div id="wizard-step-4" class="wizard-step hide">
-                            <div class="distribution-instruction"></div>
-                            <div class="control-group">
-                                <label for="exceptions-btn" class="control-label form-required">
-                                    <?php echo $POST_TEXT["browse_audience"] ?>
-                                </label>
-                                <div class="controls entrada-search-widget" id="exceptions-btn-advancedsearch">
-                                    <button id="exceptions-btn" class="btn btn-search-filter" type="button">
-                                        <?php echo $POST_TEXT["browse_audience"] ?>
-                                        <i class="icon-chevron-down btn-icon pull-right"></i>
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="exceptions-table-wrapper space-below" id="exceptions-table">
-                                <h2><?php echo $POST_TEXT["exception_list"]; ?></h2>
-                                <table class="table table-striped table-bordered grading-table">
-                                    <thead>
-                                    <tr>
-                                        <th><?php echo $POST_TEXT["learner_name"]; ?></th>
-                                        <th><?php echo $POST_TEXT["excluded"]; ?></th>
-                                        <th><?php echo $POST_TEXT["max_attempts"]; ?></th>
-                                        <th><?php echo $POST_TEXT["exception_start_date"]; ?></th>
-                                        <th><?php echo $POST_TEXT["exception_end_date"]; ?></th>
-                                        <th><?php echo $POST_TEXT["exception_submission_date"]; ?></th>
-                                        <th><?php echo $POST_TEXT["exception_time_factor"]; ?></th>
-                                        <th><?php echo $DEFAULT_LABELS["btn_edit"] ?></th>
-                                    </tr>
-                                    </thead>
-                                    <tbody>
-
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                        <div id="wizard-step-5" class="wizard-step hide">
                             <div class="distribution-instruction"></div>
                             <div class="control-group">
                                 <label for="release_score" class="control-label form-nrequired">
@@ -998,25 +854,201 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
                                     </small>
                                 </div>
                             </div>
+                            <div class="control-group">
+                                <label for="add_to_grade_book_btn" class="control-label form-required">
+                                    <?php echo $translate->_("Attach GradeBook to Post"); ?>
+                                </label>
+                                <div class="controls entrada-search-widget">
+                                    <button id="add_to_grade_book_btn" class="btn btn-search-filter" type="button">
+                                        <?php echo ($post && $post->getGradeBookAssessment()) ? $post->getGradeBookAssessment()->getName() : $translate->_("GradeBook"); ?>
+                                        <i class="icon-chevron-down btn-icon pull-right"></i>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
-                        <div id="wizard-step-6" class="wizard-step hide">
+                        <div id="wizard-step-5" class="wizard-step hide">
                             <div class="distribution-instruction"></div>
                             <h4><?php echo $POST_TEXT["exam_post_review"]; ?></h4>
                             <div id="review-exam-details"></div>
+                        </div>
+                        <div id="wizard-step-6" class="wizard-step hide">
+                            <div class="distribution-instruction"></div>
+                            <?php if ($post) { ?>
+                                <div class="item-container" id="security-settings" data-post="<?php echo ($post) ? $post->getID() : ""; ?>">
+                                    <div class="item-header" id="basic-header">
+                                        <input type="radio" name="secure_mode" id="secure_mode_basic_password" value="basic"<?php echo (($post && $post->getSecureMode() == "basic") ? " checked=\"checked\"" : ""); ?> />
+                                        <label for="secure_mode_basic_password" class="bold">
+                                            <?php echo $translate->_("Basic Password"); ?>
+                                        </label>
+                                    </div>
+                                    <div class="item-body hide" id="basic">
+                                        <div class="control-group space-above">
+                                            <label for="resume_password_basic" class="control-label form-required">
+                                                <?php echo $translate->_("Exam Begin Password"); ?>
+                                            </label>
+                                            <div class="controls">
+                                                <div class="input-append space-right" id="password_basic">
+                                                    <input id="resume_password_basic" type="text" class="resume_password" name="resume_password_basic" size="25"
+                                                           maxlength="20" placeholder="Please enter or generate a password"
+                                                           value="<?php echo ($post) ? $post->getResumePassword() : ""; ?>"/>
+                                                    <button class="btn generate-resume-password-btn" id="basic" data-name="basic" type="button">
+                                                        <?php echo $POST_TEXT["resume_password"]; ?>
+                                                    </button>
+                                                </div>
+                                                <small class="help-block">
+                                                    <?php echo $POST_TEXT["use_resume_password_text"]; ?>
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="item-header" id="seb-header">
+                                        <input type="radio" name="secure_mode" id="secure_mode_seb_password" value="seb" <?php echo ($post && $post->getSecureMode() == "seb") ? " checked=\"checked\"" : ""; ?>/>
+                                        <label for="secure_mode_seb_password" class="bold">
+                                            <?php echo $POST_TEXT["secure_exam_config"]; ?>
+                                        </label>
+                                        <span id="secure-file-header-messages"></span>
+                                        <div class="pull-right"></div>
+                                    </div>
+                                    <div class="item-body hide" id="seb">
+                                        <div class="item-section secure-password">
+                                            <div class="control-group space-above" id="secure-password-header">
+                                                <label class="control-label" for="use_resume_password"><?php echo $POST_TEXT["use_resume_password"]; ?></label>
+                                                <div class="controls">
+                                                    <div class="input-append space-right">
+                                                        <input id="use_resume_password" type="checkbox" name="use_resume_password"<?php echo ($post && $post->getUseResumePassword() == "1") ? " checked=\"checked\"" : ""; ?> />
+                                                        <?php echo $POST_TEXT["use_resume_password_text"]; ?>
+                                                    </div>
+                                                    <div class="input-append space-right">
+                                                        <input id="resume_password_seb" type="text" class="resume_password" name="resume_password_seb" size="25"
+                                                               maxlength="20" placeholder="Please enter or generate a password"
+                                                               value="<?php echo ($post) ? $post->getResumePassword() : ""; ?>"/>
+                                                        <button class="btn generate-resume-password-btn" id="seb" type="button">
+                                                            <?php echo $POST_TEXT["resume_password"]; ?>
+                                                        </button>
+                                                    </div>
+                                                    <small class="help-block">
+                                                        <?php echo $POST_TEXT["use_resume_password_text"]; ?>
+                                                    </small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="item-section secure-file"
+                                             data-post-id="<?php echo ($post) ? $post->getID() : ""; ?>">
+                                            <div class="item-section-header">
+                                                <?php echo $POST_TEXT["seb_file"]; ?>
+                                                <div class="pull-right">
+                                                    <div class="btn-group">
+                                                        <button type="button" class="btn delete-item disabled"
+                                                                id="delete-secure-file" data-post=""
+                                                                title="Delete SEB file(s)"><i class="icon-minus-sign"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="item-section-body show-less secure-file-list upload" id="">
+                                                <div class="secure-file-list-content"></div>
+                                            </div>
+                                        </div>
+                                        <div class="item-section secure-keys">
+                                            <div class="item-section-header" id="secure-key-header">
+                                                <?php echo $POST_TEXT["secure_keys"]; ?>
+                                                <span class="badge badge-success secure-key-badge"></span>
+                                                <div class="pull-right">
+                                                    <div class="btn-group">
+                                                        <button type="button" class="btn delete-item disabled"
+                                                                id="delete-secure-keys" data-post=""
+                                                                title="Delete Browser Exam Key(s)"><i
+                                                                    class="icon-minus-sign"></i></button>
+                                                        <button type="button" class="btn add-item" id="add-secure-key"
+                                                                data-post="" title="Add Secure Key(s)"><i
+                                                                    class="icon-plus-sign"></i></button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="item-section-body show-less secure-key-list"></div>
+                                        </div>
+                                    </div>
+                                    <div class="item-header" id="rpnow-header">
+                                        <input type="radio" name="secure_mode" id="secure_mode_rpnow_password" value="rp_now" <?php echo ($post && $post->getSecureMode() == "rp_now") ? " checked=\"checked\"" : ""; ?>/>
+                                        <label for="secure_mode_rpnow_password" class="bold">
+                                            <?php echo $translate->_("RP-Now by Software Secure"); ?>
+                                        </label>
+
+                                    </div>
+                                    <div class="item-body hide" id="rp_now">
+                                        <div class="control-group space-above">
+                                            <label for="resume_password_rp_now" class="control-label">
+                                                <?php echo $translate->_("Exam Password"); ?>
+                                            </label>
+                                            <div class="controls">
+                                                <div class="input-append space-right" id="password_rpnow">
+                                                    <input id="resume_password_rp_now" class="resume_password" type="text" name="resume_password_rp_now" size="25"
+                                                           maxlength="20" placeholder="Please enter or generate a password"
+                                                           value="<?php echo ($post) ? $post->getResumePassword() : ""; ?>"/>
+                                                    <button class="btn generate-resume-password-btn" id="rpnow" data-name="rpnow" type="button">
+                                                        <?php echo $POST_TEXT["resume_password"]; ?>
+                                                    </button>
+                                                </div>
+                                                <small class="help-block">
+                                                    <?php echo $POST_TEXT["use_resume_password_text"]; ?>
+                                                </small>
+                                            </div>
+                                        </div>
+                                        <div class="control-group">
+                                            <label for="exam_url" class="control-label form-required">
+                                                <?php echo $POST_TEXT["exam_url"]; ?>
+                                            </label>
+                                            <div class="controls">
+                                                <input id="exam_url" type="text" name="exam_url" value="<?php echo ($secure_post ?  $secure_post->getExamUrl() : ENTRADA_URL . "/exams?section=post&id=" . $post->getID()); ?>"/>
+                                            </div>
+                                        </div>
+                                        <div class="control-group" id="exam-sponsor-search-controls">
+                                            <label for="exam_sponsor" class="control-label form-required space-right">
+                                                <?php echo $POST_TEXT["exam_sponsor"]; ?>
+                                            </label>
+                                            <button id="choose-exam-sponsor-btn" class="btn btn-search-filter">
+                                                    <span class="selected-label">
+                                                        <?php echo ($secure_post && Models_User::fetchRowByID($secure_post->getExamSponsor()) ? Models_User::fetchRowByID($secure_post->getExamSponsor())->getFullname(false) : $translate->_("Browse Director")); ?>
+                                                    </span>
+                                                <i class="icon-chevron-down btn-icon pull-right"></i>
+                                            </button>
+                                        </div>
+                                        <div class="control-group">
+                                            <label for="rpnow_reviewed_exam" class="control-label">
+                                                <?php echo $POST_TEXT["rpnow_reviewed_exam"]; ?>
+                                            </label>
+                                            <div class="controls">
+                                                <label class="checkbox">
+                                                    <input id="rpnow_reviewed_exam" type="checkbox" name="rpnow_reviewed_exam" value="1"<?php echo (($secure_post && $secure_post->getRpnowReviewedExam() == "1") || !$secure_post) ? " checked=\"checked\"" : ""; ?>/>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="control-group hide" id="reviewer_notes">
+                                            <label for="rpnow_reviewer_notes" class="control-label form-required">
+                                                <?php echo $POST_TEXT["rpnow_reviewer_notes"]; ?>
+                                            </label>
+                                            <div class="controls">
+                                                <textarea id="rpnow_reviewer_notes" name="rpnow_reviewer_notes">
+                                                    <?php echo ($secure_post) ? $secure_post->getRpnowReviewerNotes() : ""; ?>
+                                                </textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php } ?>
                         </div>
 
                         <div class="wizard-footer">
                             <div class="row-fluid">
                                 <button class="wizard-previous-step btn btn-default <?php echo ($redirect_section != 1 ? "" : "hide") ?>">
-                                    <?php echo $translate->_("Previous Step"); ?>
+                                    <?php echo $translate->_("Previous"); ?>
                                 </button>
                                 <button class="wizard-next-step btn btn-primary">
-                                    <?php echo $translate->_("Next Step"); ?>
+                                    <?php echo $translate->_("Next"); ?>
                                 </button>
                             </div>
                         </div>
                         <!--- @todo hidden_inputs -->
-
 
                         <div id="selected_list_container">
                             <input type="hidden" name="referrer" value="<?php echo $referrer; ?>" id="referrer"/>
@@ -1043,6 +1075,15 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
                                        data-filter="course"
                                        class="event-id search-target-control course_search_target_control"/>
                             <?php } ?>
+                            <?php if ($post) { ?>
+                                <?php if ($post->getGradeBookAssessment()) { ?>
+                                    <input type="hidden" name="grade_book"
+                                           value="<?php echo $post->getGradeBookAssessment()->getID(); ?>"
+                                           id="grade_book_<?php echo $post->getGradeBookAssessment()->getID(); ?>"
+                                           data-label="<?php echo $post->getGradeBookAssessment()->getName(); ?>"
+                                           class="search-target-control grade_book_search_target_control grade-book-selector">
+                                <?php } ?>
+                            <?php } ?>
                             <?php if ($secure_post) { ?>
                                 <?php if ($exam_sponsor = Models_User::fetchRowByID($secure_post->getExamSponsor())) { ?>
                                     <input type="hidden" name="exam_sponsor"
@@ -1053,9 +1094,11 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
                                 <?php } ?>
                             <?php } ?>
                         </div>
-                        <!--            <div class="dropdown-menu toggle-left hide" id="edit-user-exception">-->
+                        <!-- <div class="dropdown-menu toggle-left hide" id="edit-user-exception"> -->
                         <div class="modal hide fade" id="edit-user-exception">
-                            <h3 class="title"></h3>
+                            <div class="control-group">
+                                <h3 class="title" id="exception-student-name">Student Name</h3>
+                            </div>
                             <div class="control-group">
                                 <label for="excluded" class="control-label form-nrequired">
                                     <?php echo $POST_TEXT["excluded"]; ?>
@@ -1177,22 +1220,32 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
                                     <div class="input-append space-right">
                                         <input id="use_exception_max_attempts" name="use_exception_max_attempts" type="checkbox" value="1"/>
                                     </div>
-                                    <input id="max_attempts" type="text"/>
+                                    <input id="exception_max_attempts" type="text"/>
                                 </div>
                             </div>
                             <div class="row-fluid">
-                                <button id="cancel-dropdown-exception" class="btn btn-default pull-left">
+                                <button id="cancel-dropdown-exception" class="btn btn-default">
                                     <?php echo $DEFAULT_LABELS["btn_cancel"]; ?>
                                 </button>
-                                <button id="update-dropdown-exception" class="btn btn-primary pull-right">
-                                    <?php echo $DEFAULT_LABELS["btn_update"]; ?>
-                                </button>
+
+                                <div class="pull-right">
+                                    <button id="clear-dropdown-exception" class="btn btn-warning" disabled>
+                                        <?php echo $translate->_("Clear"); ?>
+                                    </button>
+
+                                    <button id="update-dropdown-exception" class="btn btn-primary">
+                                        <?php echo $DEFAULT_LABELS["btn_update"]; ?>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </form>
                 </div>
             </div>
+
             <script type="text/javascript">
+                var security_options = <?php echo $post && $post->getSecure() ? 'true' : 'false'; ?>;
+
                 jQuery(function ($) {
                     /**
                      * Instantiate datepickers
@@ -1206,32 +1259,18 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
                         resource_url: ENTRADA_URL,
                         build_selected_filters: false,
                         filters: {
+                            courses: {
+                                mode: "radio",
+                                label: "Courses",
+                                data_source: "get-user-events",
+                                secondary_data_source: "get-user-events",
+                                selector_control_name: "target_id"
+                            }
                         },
                         control_class: "choose-event-selector event-id",
                         no_results_text: "<?php echo $translate->_("No events found"); ?>",
                         parent_form: $("#search-targets-form"),
                         width: 500
-                    });
-
-                    jQuery.getJSON(API_URL, {method: "get-user-events"} , function (json) {
-                        var course = [];
-                        jQuery.each(json.data, function (key, value) {
-                            course[key] = {
-                                label: value.target_label,
-                                mode: "radio",
-                                api_params: {
-                                    context: "",
-                                    previous_context: "course_id",
-                                    next_context: "course_id",
-                                    current_context: "course_id",
-                                    parent_id: value.target_id
-                                },
-                                data_source: "get-user-events",
-                                secondary_data_source: "get-user-events",
-                                selector_control_name: "target_id"
-                            }
-                        });
-                        jQuery("#choose-event-btn").data("settings").filters = course;
                     });
 
                     $("body").on("click", "#choose-event-btn", function (e) {
@@ -1305,11 +1344,38 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
                                 }
                             }
                         },
+                        build_selected_filters: false,
                         control_class: "exception-selector",
                         no_results_text: "<?php echo $POST_TEXT["no_users_exam"];?>",
                         selected_list_container: $("#selected_list_container"),
                         parent_form: $("#post-wizard-form"),
                         width: 500,
+                        modal: false
+                    });
+
+                    $("#add_to_grade_book_btn").advancedSearch({
+                        api_url: API_URL,
+                        resource_url: ENTRADA_URL,
+                        filters: {
+                            grade_book: {
+                                label: "<?php echo $translate->_("GradeBook"); ?>",
+                                data_source: "get-exam-grade-books-by-event",
+                                mode: "radio",
+                                selector_control_name: "grade_book",
+                                api_params: {
+                                    event_id: function () {
+                                        var event_id = $("input[name=\"target_id\"]");
+                                        return event_id.val();
+                                    }
+                                }
+                            }
+                        },
+                        control_class: "grade-book-selector",
+                        no_results_text: "<?php echo $translate->_("No Grade Books found to attach."); ?>",
+                        selected_list_container: $("#selected_list_container"),
+                        results_parent: $("#post-wizard-form"),
+                        parent_form: $("#search-targets-form"),
+                        width: 300,
                         modal: false
                     });
 
@@ -1352,6 +1418,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
                     $("body").on("change", "#choose-exam-sponsor-btn", function () {
                         ($("input[name=\"exam_sponsor\"]").length > 1 ? $("input[name=\"exam_sponsor\"]")[0].remove() : false);
                     });
+
                 });
             </script>
 

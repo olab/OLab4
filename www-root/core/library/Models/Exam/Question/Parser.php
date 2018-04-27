@@ -27,15 +27,30 @@ class Models_Exam_Question_Parser {
     protected static $types = array(
         "mc_h", "mc_h_m", "mc_v", "mc_v_m", "short", "essay", "text", "fnb", "match"
     );
-    
+
     protected static function isBlank($line) {
         return 0 === strlen(trim(preg_replace("/[\\x00-\\x1F\x80-\\xFF]/", "", $line)));
     }
-    
+
+    /**
+     * Optionally runs html_encode over $str, based on the presence of html_encode_exam_import_questions setting
+     *
+     * @param string $str
+     * @return string
+     */
+    protected static function htmlEncode($str) {
+        $settings = new Entrada_Settings();
+        if ($settings->read("exams_html_encode_import_questions")) {
+            return html_encode($str);
+        } else {
+            return clean_input($str, 'html');
+        }
+    }
+
     /**
      * Parses the question text in the default import format and returns an
      * array of questions.
-     * 
+     *
      * @param string $question_text
      * @return mixed
      */
@@ -57,7 +72,7 @@ class Models_Exam_Question_Parser {
                         // This must start a question stem.
                         $matches = array();
                         if (preg_match($question_stem_regex, $line, $matches)) {
-                            $current_question = array("stem" => html_encode(trim($matches[1])), "choices" => array());
+                            $current_question = array("stem" => static::htmlEncode(trim($matches[1])), "choices" => array());
                             $state = "stem";
                         } else {
                             add_error("Error on line $line_num, first line of a new question must begin a question stem.");
@@ -71,7 +86,7 @@ class Models_Exam_Question_Parser {
                         $i--;
                         $state = "attributes";
                     } else {
-                        $current_question["stem"] .= "<br />".html_encode($line);
+                        $current_question["stem"] .= "<br />".static::htmlEncode($line);
                     }
                     break;
                 case "attributes":
@@ -87,7 +102,7 @@ class Models_Exam_Question_Parser {
                             add_error("Error on line $line_num, answer choice ".strtoupper($letter)." defined multiple times.");
                             return false;
                         }
-                        $current_question["choices"][$letter] = html_encode(trim($matches[2]));
+                        $current_question["choices"][$letter] = static::htmlEncode(trim($matches[2]));
                     } else if (preg_match($attribute_regex, $line, $matches)) {
                         $key = strtolower($matches[1]);
                         $value = trim($matches[2]);
@@ -98,7 +113,7 @@ class Models_Exam_Question_Parser {
                                 $current_question["attributes"][$key] = (array)$current_question["attributes"][$key];
                                 $current_question["attributes"][$key][] = $value;
                             } else {
-                                add_error("Error on line $line_num, attribute \"".html_encode($key)."\" defined multiple times.");
+                                add_error("Error on line $line_num, attribute \"".static::htmlEncode($key)."\" defined multiple times.");
                                 return false;
                             }
                         } else {
@@ -116,18 +131,18 @@ class Models_Exam_Question_Parser {
         }
         return $output;
     }
-    
+
     /**
      * Parses a series of questions stored in the ExamSoft export format. Returns
      * exam info and an array of questions on success, or false on failure.
-     * 
+     *
      * @param string $question_text
      * @return mixed
      */
     public static function parseExamsoft($question_text) {
         $output = array();
         $lines = explode("\n", $question_text);
-        
+
         // Get the exam information
         if (count($lines) < 9) {
             add_error("Fewer lines than expected in input. Must have at least 9 lines.");
@@ -166,9 +181,10 @@ class Models_Exam_Question_Parser {
         } else {
             $output["exam"]["total_points"] = (float)$matches[1];
         }
-        
+
         // Get the questions
         $state = "item_info";
+        $next_state = null;
         $current_choice_letter = "";
         $current_question = null;
         $question_num_regex = "/^Question #: (\d+)$/";
@@ -246,7 +262,7 @@ class Models_Exam_Question_Parser {
                             add_error("Answer choice ".strtoupper($current_choice_letter)." defined multiple times on line $line_num.");
                             return false;
                         }
-                        $current_question["choices"][$current_choice_letter] = html_encode($choice);
+                        $current_question["choices"][$current_choice_letter] = static::htmlEncode($choice);
                         if ($correct) {
                             if (isset($current_question["attributes"]["answer"])) {
                                 $current_question["attributes"]["type"] = "mc_v_m";
@@ -264,9 +280,9 @@ class Models_Exam_Question_Parser {
                         $state = "rationale";
                         $current_choice_letter = "";
                     } else if (preg_match($attachment_regex, $line, $matches)) {
-                        add_notice("Skipping attachment '".html_encode($matches[1])."' on line $line_num.");
+                        add_notice("Skipping attachment '".static::htmlEncode($matches[1])."' on line $line_num.");
                     } else if ($current_choice_letter) {
-                        $current_question["choices"][$current_choice_letter] .= "<br />".html_encode($line);
+                        $current_question["choices"][$current_choice_letter] .= "<br />".static::htmlEncode($line);
                     } else {
                         add_notice("Line $line_num not in the required format, skipping question #".$current_question["num"].".");
                         $current_question = null;
@@ -319,12 +335,16 @@ class Models_Exam_Question_Parser {
                 case "item_category_name":
                     if (preg_match($item_creator_regex, $line, $matches)) {
                         $author_email = $matches[1];
-                        $author = User::fetchRowByEmail($author_email);
-                        if ($author) {
-                            $current_question["author_name"] = $author->getFullname(false);
-                            $current_question["author_id"] = $author->getProxyID();
+                        if ($author_email) {
+                            $author = Models_User::fetchRowByEmail($author_email);
+                            if ($author) {
+                                $current_question["author_name"] = $author->getFullname(false);
+                                $current_question["author_id"] = $author->getProxyID();
+                            }
+                            $state = "wait_for_separator";
+                        } else {
+                            $state = "item_category_path";
                         }
-                        $state = "wait_for_separator";
                     } else {
                         $state = "item_category_path";
                     }
@@ -359,7 +379,7 @@ class Models_Exam_Question_Parser {
         if (null !== $current_question) {
             $output["questions"][] = $current_question;
         }
-        
+
         if (count($output["questions"]) !== $output["exam"]["num_questions"]) {
             add_notice("Parsed only ".count($output["questions"])." of expected ".$output["exam"]["num_questions"]." questions.");
         }
@@ -367,14 +387,14 @@ class Models_Exam_Question_Parser {
         if ($total_parsed_points !== $output["exam"]["total_points"]) {
             add_notice("Parsed only ".$total_parsed_points." points worth of questions, expected ".$output["exam"]["total_points"]." total points.");
         }
-        
+
         return $output;
     }
-    
+
     public static function parseExamsoftImages($text) {
         $output = array();
         $lines = explode("\n", $text);
-        
+
         $image_regex = '/<img src="([^"]+)"[^>]*width="(\d+)"[^>]*height="(\d+)"[^>]*>/';
         $question_id_regex = '/^ID: (<[^>]*>)+(\d+)$/';
         $question_version_regex = '|^/ (\d+)(<[^>]*>)+$|';
@@ -403,10 +423,10 @@ class Models_Exam_Question_Parser {
                 }
             }
         }
-        
+
         return $output;
     }
-    
+
     /**
      * Validates the question's fields based on its type. If the question is
      * not found to be valid, add an error.
@@ -416,6 +436,7 @@ class Models_Exam_Question_Parser {
      * specific errors to the user.
      */
     public static function validate(&$question, $num, $default_folder_id) {
+        global $ENTRADA_USER;
         if (!is_array($question)) {
             return false;
         }
@@ -425,12 +446,12 @@ class Models_Exam_Question_Parser {
             add_error("Question $num does not include required question stem text.");
             $error = true;
         }
-        
+
         // Make sure the "type" of question is set and is in the whitelist.
         if (!isset($question["attributes"]["type"])) {
             $question["attributes"]["type"] = "mc_v";
         } else if (!in_array(strtolower($question["attributes"]["type"]), static::$types)) {
-            add_error("Question $num is of an unsupported type \"".html_encode($question["attributes"]["type"])."\".");
+            add_error("Question $num is of an unsupported type \"".static::htmlEncode($question["attributes"]["type"])."\".");
             $error = true;
         }
 
@@ -446,10 +467,19 @@ class Models_Exam_Question_Parser {
         }
         // Make sure answers are provided for multiple choice questions.
         if (in_array($question["attributes"]["type"], array("mc_v", "mc_v_m", "mc_h", "mc_h_m"))) {
-            if (is_array($question["attributes"]["answer"])) {
-                $question["attributes"]["answer"] = array_map("trim", array_map("strtolower", $question["attributes"]["answer"]));
-            } else {
-                $question["attributes"]["answer"] = trim(strtolower($question["attributes"]["answer"]));
+            if (isset($question["attributes"]["answer"])) {
+                if (!is_array($question["attributes"]["answer"])) {
+                    $question["attributes"]["answer"] = array_map(
+                        'trim',
+                        explode(',', $question["attributes"]["answer"])
+                    );
+                }
+            }
+            if (isset($question["attributes"]["locked"])) {
+                $question["attributes"]["locked"] = array_map(
+                    'trim',
+                    explode(',', $question["attributes"]["locked"])
+                );
             }
             if (0 === count($question["choices"])) {
                 add_error("Question $num is a multiple choice question and must provide answer choices.");
@@ -457,19 +487,16 @@ class Models_Exam_Question_Parser {
             } else if (!isset($question["attributes"]["answer"])) {
                 add_error("Question $num is missing a required \"answer\" option.");
                 $error = true;
-            } else if (in_array($question["attributes"]["type"], array("mc_v", "mc_h")) && is_array($question["attributes"]["answer"])) {
+            } else if (in_array($question["attributes"]["type"], array("mc_v", "mc_h")) && count($question["attributes"]["answer"]) > 1) {
                 add_error("Question $num cannot have multiple correct answer choices.");
                 $error = true;
             } else if ("mc_h" === $question["attributes"]["type"] && 5 < count($question["choices"])) {
                 add_error("Question $num has more than the maximum of 5 answers allowed for a horizontal multiple choice question.");
                 $error = true;
-            } else if (!is_array($question["attributes"]["answer"]) && !isset($question["choices"][$question["attributes"]["answer"]])) {
-                add_error("Question $num has an \"answer\" option that does not match any answer choices.");
-                $error = true;
             } else if (is_array($question["attributes"]["answer"])) {
                 foreach ($question["attributes"]["answer"] as $answer) {
                     if (!isset($question["choices"][$answer])) {
-                        add_error("Question $num has an \"answer\" option that does not match any answer choices.");
+                        add_error("Question $num has an \"answer\" option that does not match any answer choices: '$answer'.");
                         $error = true;
                     }
                 }
@@ -478,6 +505,12 @@ class Models_Exam_Question_Parser {
         // Make sure fill in the blank questions do not have more answers than blanks. Also
         // make sure there is at least one blank.
         if ("fnb" === $question["attributes"]["type"]) {
+            if (!is_array($question["attributes"]["answer"])) {
+                $question["attributes"]["answer"] = array_map(
+                    'trim',
+                    explode(',', $question["attributes"]["answer"])
+                );
+            }
             // Build an array of unique, trimmed, non-blank correct answers for each blank
             $answers = array();
             foreach ((array)$question["attributes"]["answer"] as $answer) {
@@ -538,9 +571,34 @@ class Models_Exam_Question_Parser {
             if (0 < count($folder_hierarchy) && "" === $folder_hierarchy[0]) {
                 unset($folder_hierarchy[0]);
             }
+
+            $folder_array = array();
+            if ($ENTRADA_USER->getActiveGroup() === "medtech") {
+                $folders = Models_Exam_Bank_Folders::fetchAllByType("question", $ENTRADA_USER->getActiveOrganisation());
+                if ($folders && is_array($folders) && !empty($folders)) {
+                    foreach ($folders as $folder) {
+                        if (!in_array($folder->getID(), $folder_array)) {
+                            $folder_array[$folder->getID()] = $folder->getID();
+                        }
+                    }
+                }
+            } else {
+                $folders = Models_Exam_Bank_Folders::fetchAllByTypeAuthor("question", $ENTRADA_USER->getID());
+                if ($folders && is_array($folders) && !empty($folders)) {
+                    foreach ($folders as $folder) {
+                        if ($folder && is_object($folder)) {
+                            if (!in_array($folder->getID(), $folder_array)) {
+                                $folder_array[$folder->getID()] = $folder->getID();
+                            }
+                            $folder_array = Models_Exam_Bank_Folders::getChildrenFolders($folder->getID(), $folder_array, "question");
+                        }
+                    }
+                }
+            }
+
             $folder_id = 0;
             foreach ($folder_hierarchy as $folder_name) {
-                $folders = Models_Exam_Question_Bank_Folders::fetchAllByParentID($folder_id);
+                $folders = Models_Exam_Bank_Folders::fetchAllByParentID($folder_id);
                 $found = false;
                 foreach ($folders as $folder) {
                     if ($folder->getFolderTitle() === $folder_name) {
@@ -549,7 +607,12 @@ class Models_Exam_Question_Parser {
                     }
                 }
                 if (!$found) {
-                    add_error("Question $num: could not find folder \"".html_encode($question["attributes"]["folder"])."\".");
+                    add_error("Question $num: could not find folder \"".static::htmlEncode($question["attributes"]["folder"])."\".");
+                    return false;
+                }
+
+                if (!in_array($folder_id, $folder_array)) {
+                    add_error("Question $num: Folder:  \"".html_encode($question["attributes"]["folder"])."\". is not a folder you have permission to, please make sure you specify a folder you have permission to.");
                     return false;
                 }
             }
@@ -561,10 +624,31 @@ class Models_Exam_Question_Parser {
         } else {
             $question["folder_id"] = $default_folder_id;
         }
+
+
+        // Verify if the questions has curriculum tags ids set and if they exist
+        if (isset($question["attributes"]["curriculum_tags"])) {
+            //Break down the string ids into an array
+            $curriculum_tags_ids = array_map(
+                'trim',
+                explode(',', $question["attributes"]["curriculum_tags"])
+            );
+            //Verify if curriculum tags exists
+            foreach ($curriculum_tags_ids as $curriculum_tag_id) {
+                $objective_obj = Models_Objective::fetchRow($curriculum_tag_id);
+                if (!$objective_obj) {
+                    add_error("Question $num: There's no curriculum tag with id #$curriculum_tag_id");
+                    $error = true;
+                    break;
+                }
+            }
+            $question["attributes"]["curriculum_tags"] = $curriculum_tags_ids;
+        }
+
         // Everything checks out.
         return !$error;
     }
-    
+
     /**
      * Imports a question
      * @param type $question_input
@@ -656,14 +740,33 @@ class Models_Exam_Question_Parser {
             case "mc_h":
             case "mc_h_m":
                 $order = 0;
+                $locked_answers = array();
+                if (isset($question_input["attributes"]["locked"]) && !is_array($question_input["attributes"]["locked"])) {
+                    $locked_answers = array_map(
+                        'trim',
+                        explode(',', $question_input["attributes"]["locked"])
+                    );
+                } else if (is_array($question_input["attributes"]["locked"])) {
+                    $locked_answers = $question_input["attributes"]["locked"];
+                }
+                $correct_answers = array();
+                if (isset($question_input["attributes"]["answer"]) && !is_array($question_input["attributes"]["answer"])) {
+                    $correct_answers = array_map(
+                        'trim',
+                        explode(',', $question_input["attributes"]["answer"])
+                    );
+                } else if (is_array($question_input["attributes"]["answer"])) {
+                    $correct_answers = $question_input["attributes"]["answer"];
+                }
                 foreach ($question_input["choices"] as $letter => $answer_choice) {
                     $order++;
                     $question_answer = new Models_Exam_Question_Answers(array(
                         "question_id" => $question->getID(),
                         "version_id" => $question_version->getID(),
                         "answer_text" => $answer_choice,
-                        "correct" => (in_array($letter, (array)$question_input["attributes"]["answer"]) ? 1 : 0),
-                        "order" => $order
+                        "correct" => (in_array($letter, $correct_answers) ? 1 : 0),
+                        "order" => $order,
+                        "locked" => (in_array($letter, $locked_answers) ? 1 : 0)
                     ));
                     if (!$question_answer->insert()) {
                         add_error("Question $num: Error inserting multiple choice answer into database. Please try again later.");
@@ -769,7 +872,7 @@ class Models_Exam_Question_Parser {
                 // Do nothing, no extra details to add.
                 break;
         }
-        
+
         // Add the question author.
         if (isset($question_input["author_id"])) {
             $author_id = $question_input["author_id"];
@@ -787,7 +890,7 @@ class Models_Exam_Question_Parser {
         if (!$question_author->insert()) {
             add_error("Question $num: Error inserting question author into database. Please try again later.");
         }
-        
+
         // Add the question objectives
         if (isset($question_input["objectives"])) {
             foreach ($question_input["objectives"] as $objective_set_name => $objectives) {
@@ -888,8 +991,35 @@ class Models_Exam_Question_Parser {
                     }
                 }
             }
+        }else if (isset($question_input["attributes"]["curriculum_tags"])) {
+            if (!is_array($question_input["attributes"]["curriculum_tags"])) {
+                $question_input["attributes"]["curriculum_tags"] = array_map(
+                    'trim',
+                    explode(',', $question["attributes"]["curriculum_tags"])
+                );
+            }
+            //Verify if curriculum tags exists
+            foreach ($question_input["attributes"]["curriculum_tags"] as $curriculum_tag_id) {
+                $objective = Models_Objective::fetchRow($curriculum_tag_id);
+                $question_objective_exists = Models_Exam_Question_Objectives::fetchRowByQuestionIdObjectiveId($question->getID(), $objective->getID());
+                if (!$question_objective_exists && !is_object($question_objective_exists)) {
+                    // add new objective
+                    $question_objective = new Models_Exam_Question_Objectives(array(
+                        "question_id"   => $question->getID(),
+                        "objective_id"  => $objective->getID(),
+                        "created_date"  => time(),
+                        "created_by"    => $ENTRADA_USER->getProxyID(),
+                        "updated_date"  => time(),
+                        "updated_by"    => $ENTRADA_USER->getProxyID()
+                    ));
+                    if (!$question_objective->insert()) {
+                        add_error("Question $num: Error adding an curriculum tag #$curriculum_tag_id to the question. Please try again later.");
+                        $db->FailTrans();
+                    }
+                }
+            }
         }
-        
+
         $db->CompleteTrans();
         return $question_version->getID();
     }

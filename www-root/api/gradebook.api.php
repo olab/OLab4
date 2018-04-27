@@ -257,4 +257,11 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 		}
 	}
 
+    // Store log for this api call at any change of assessment grades
+    $action_value = "-";
+    if ($grade["value"]) {
+        $action_value = $grade["value"];
+    }
+
+    Models_Statistic::addStatistic("assessment_grades", strtolower($mode), "value", $action_value, $PROXY_ID);
 }

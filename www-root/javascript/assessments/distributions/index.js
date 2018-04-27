@@ -1,7 +1,10 @@
 var timeout;
 
 jQuery(function($) {
-    $(".release-date-tooltip").tooltip({placement: "bottom"});
+    $("#distribution-data-form").tooltip({
+        selector: '[data-toggle="tooltip"]',
+        placement: "top"
+    });
 
     $("#wizard-step-input").val("1");
     
@@ -47,10 +50,27 @@ jQuery(function($) {
             timeout = window.setTimeout(get_distributions, 700, false);
         }
     });
-    
+
     $(".datepicker").datepicker({
         dateFormat: "yy-mm-dd"
     });
+
+    if ($("#distribution_delivery_date").length && $("#expiry-date").length) {
+        $("#distribution_delivery_date").datepicker({
+            dateFormat: "yy-mm-dd",
+            onSelect: function (date_text, inst) {
+                if ($("#expiry-date").length) {
+                    $("#expiry-date").datepicker(
+                        "option", "minDate", $("#distribution_delivery_date").datepicker("getDate")
+                    );
+                }
+            }
+        });
+        $("#expiry-date").datepicker({
+            dateFormat: "yy-mm-dd",
+            minDate: $("#distribution_delivery_date").datepicker("getDate")
+        });
+    }
 
     $(".timepicker").timepicker({
         minutes: {
@@ -112,12 +132,19 @@ jQuery(function($) {
                 $("#rotation-schedule-delivery-offset").addClass("hide");
                 $("#distribution-delegator-options").addClass("hide");
                 $("#distribution-delegator-options input[type='radio']").prop("checked", false);
+                $("#selected-delegation-option").val("");
+                $("input[name=\"distribution_delegator_timeframe\"]").removeAttr("checked");
+                // Date range distributions do expiry via a date picker rather than offset.
+                resetExpiryControls("date", true);
             break;
             case "rotation_schedule" :
                 showScheduleOptions();
                 $("#distribution-specific-date-options").addClass("hide");
                 $("#distribution-delegator-options").addClass("hide");
                 $("#distribution-delegator-options input[type='radio']").prop("checked", false);
+                $("#selected-delegation-option").val("");
+                $("input[name=\"distribution_delegator_timeframe\"]").removeAttr("checked");
+                resetExpiryControls("offset", true);
             break;
             case "delegation" :
                 $("#distribution-delegator-options").removeClass("hide");
@@ -126,6 +153,7 @@ jQuery(function($) {
                 $("#rs-rotation-schedule-options").addClass("hide");
                 $("#distribution-rotation-delivery-options").addClass("hide");
                 $("#rotation-schedule-delivery-offset").addClass("hide");
+                resetExpiryControls("offset", true);
             break;
             case "eventtype" :
                 $("#distribution-eventtype-options").removeClass("hide");
@@ -134,6 +162,9 @@ jQuery(function($) {
                 $("#rs-rotation-schedule-options").addClass("hide");
                 $("#distribution-rotation-delivery-options").addClass("hide");
                 $("#rotation-schedule-delivery-offset").addClass("hide");
+                $("#selected-delegation-option").val("");
+                $("input[name=\"distribution_delegator_timeframe\"]").removeAttr("checked");
+                resetExpiryControls("offset", true);
             break;
         }
 
@@ -142,6 +173,9 @@ jQuery(function($) {
             var settings = $("#rs-choose-rotation-btn").data("settings");
             settings.filters["rs_schedule"].api_params.cperiod_id = selected_option;
         }
+        
+        reset_wizard_step_3(null);
+        reset_wizard_step_4(null);
     });
 
     $("input[name=\"distribution_delegator_timeframe\"]").on("change", function () {
@@ -199,6 +233,12 @@ jQuery(function($) {
         faculty_settings.filters["target_faculty"].api_params.course_id = selected_option;
         var approver_settings = $("#distribution-approver-results").data("settings");
         approver_settings.filters["distribution_approvers"].api_params.course_id = selected_option;
+        var targets_btn_settings = $("#choose-targets-btn").data("settings");
+        targets_btn_settings.filters["target_individual"].api_params.course_id = selected_option;
+        targets_btn_settings.filters["target_cgroup"].api_params.course_id = selected_option;
+        var assessors_btn_settings = $("#choose-assessors-btn").data("settings");
+        assessors_btn_settings.filters["assessor_individual"].api_params.course_id = selected_option;
+        assessors_btn_settings.filters["assessor_cgroup"].api_params.course_id = selected_option;
 
         if (($("input[name='distribution_method']").length > 0 && $("input[name='distribution_method']").val() == "rotation_schedule") || ($("#delegator_timeframe_rotation_schedule").length > 0 && $("#delegator_timeframe_rotation_schedule").attr("checked") == "checked")) {
             if (selected_option !== "0") {
@@ -262,7 +302,25 @@ jQuery(function($) {
         }
     });
 
-    $("input[name=\"distribution_assessor_option\"]").on("change", function () {
+    $("input[name=\"expiry_option\"]").on("change", function () {
+        if ($("#expiry-option").attr("checked") == "checked") {
+            $("#expiry-control").css("display", "inline-block");
+            $("#expiry-notification-option-controls").removeClass("hide");
+        } else {
+            $("#expiry-control").css("display", "none");
+            $("#expiry-notification-option-controls").addClass("hide");
+        }
+    });
+
+    $("input[name=\"expiry_notification_option\"]").on("change", function () {
+        if ($("#expiry-notification-option").attr("checked") == "checked") {
+            $("#expiry-notification-control").css("display", "inline-block");
+        } else {
+            $("#expiry-notification-control").css("display", "none");
+        }
+    });
+
+    $("#content").on("change", 'input[name="distribution_assessor_option"]', function () {
         var selected_option = $(this).val();
         var selected_target_option = $("input[name=\"distribution_target_option\"]:checked").val();
         var settings = jQuery("#choose-method-btn").data("settings");
@@ -270,7 +328,9 @@ jQuery(function($) {
         var delegation_date_range = $("#delegator_timeframe_date_range").attr("checked") == "checked";
         $(".assessor-option").addClass("hide");
         $("#distribution-feedback-options").addClass("hide");
-        $("#distribution-approver-option").addClass("hide");
+        $("#select-approvers").addClass("hide");
+        $("#feedback-required").removeAttr("checked");
+        $("#approver-required").removeAttr("checked");
 
         switch (selected_option) {
             case "grouped_users" :
@@ -281,7 +341,6 @@ jQuery(function($) {
                 if (selected_method == "date_range" || (selected_method == "delegation" && delegation_date_range)) {
                     if (selected_target_option === "grouped_users" || selected_target_option === "individual_users") {
                         $("#distribution-feedback-options").removeClass("hide");
-                        $("#distribution-approver-option").removeClass("hide");
                     }
                 }
                 break;
@@ -290,11 +349,9 @@ jQuery(function($) {
                 if (selected_method == "date_range" || (selected_method == "delegation" && delegation_date_range)) {
                     if (selected_target_option === "grouped_users" || selected_target_option === "individual_users") {
                         $("#distribution-feedback-options").removeClass("hide");
-                        $("#distribution-approver-option").removeClass("hide");
                     }
                 } else if (selected_target_option === "grouped_users") {
                     $("#distribution-feedback-options").removeClass("hide");
-                    $("#distribution-approver-option").removeClass("hide");
                 }
                 break;
         }
@@ -308,39 +365,100 @@ jQuery(function($) {
         var delegation_date_range = $("#delegator_timeframe_date_range").attr("checked") == "checked";
         $(".target-option").addClass("hide");
         $("#distribution-feedback-options").addClass("hide");
-        $("#distribution-approver-option").addClass("hide");
+        $("#select-approvers").addClass("hide");
+        $("#feedback-required").removeAttr("checked");
+        $("#approver-required").removeAttr("checked");
+        $("#select-target-options").addClass("hide");
+        $("#non-cbme-targets-btn").attr("checked", "checked");
+
         switch (selected_option) {
             case "grouped_users" :
                 $("#select-targets-grouped").removeClass("hide");
+                if (cbme == true) {
+                    $("#select-target-options").removeClass("hide");
+                }
                 if (selected_method == "date_range" || (selected_method == "delegation" && delegation_date_range)) {
                     if (selected_assessor_option === "faculty" || selected_assessor_option === "individual_users") {
                         $("#distribution-feedback-options").removeClass("hide");
-                        $("#distribution-approver-option").removeClass("hide");
                     }
                 } else if (selected_assessor_option === "faculty") {
                     $("#distribution-feedback-options").removeClass("hide");
-                    $("#distribution-approver-option").removeClass("hide");
                 }
-            break;
+
+                if ($("#assessment_type").val() == "assessment") {
+                    $("#select-targets-grouped").removeClass("hide");
+                } else {
+                    $("#select-targets-grouped").addClass("hide");
+                }
+                break;
             case "faculty" :
+                if ($("#assessment_type").val() == "assessment") {
+                    $("#distribution-assessor-faculty").parent().removeClass("hide");
+                    $("#distribution-assessor-internal").parent().addClass("hide");
+                    $("#distribution-assessor-external").parent().removeClass("hide");
+
+                    $("#select-assessors-grouped").addClass("hide");
+                } else {
+                    $("#distribution-assessor-faculty").parent().addClass("hide");
+                    $("#distribution-assessor-internal").parent().removeClass("hide");
+                    $("#distribution-assessor-external").parent().addClass("hide");
+                }
+
                 $("#select-targets-faculty").removeClass("hide");
-            break;
+                break;
             case "course" :
                 $("#select-targets-course").removeClass("hide");
-            break;
+                break;
             case "individual_users" :
                 $("#select-targets-individual").removeClass("hide");
                 if (selected_method == "date_range" || (selected_method == "delegation" && delegation_date_range)) {
                     if (selected_assessor_option === "faculty" || selected_assessor_option === "individual_users") {
                         $("#distribution-feedback-options").removeClass("hide");
-                        $("#distribution-approver-option").removeClass("hide");
                     }
                 }
-            break;
+
+                if ($("#assessment_type").val() == "assessment") {
+                    $("#distribution-assessor-faculty").parent().removeClass("hide");
+                    $("#distribution-assessor-internal").parent().addClass("hide");
+                    $("#distribution-assessor-external").parent().removeClass("hide");
+
+                    $("#select-assessors-faculty").addClass("hide");
+                    $("#select-assessors-grouped").addClass("hide");
+                } else {
+                    $("#distribution-assessor-faculty").parent().addClass("hide");
+                    $("#distribution-assessor-internal").parent().removeClass("hide");
+                    $("#distribution-assessor-external").parent().addClass("hide");
+                }
+                break;
+            case "external" :
+                if ($("#assessment_type").val() == "assessment") {
+                    $("#distribution-assessor-faculty").parent().removeClass("hide");
+                    $("#distribution-assessor-internal").parent().addClass("hide");
+                    $("#distribution-assessor-external").parent().removeClass("hide");
+
+                    $("#select-assessors-grouped").addClass("hide");
+                } else {
+                    $("#distribution-assessor-faculty").parent().addClass("hide");
+                    $("#distribution-assessor-internal").parent().removeClass("hide");
+                    $("#distribution-assessor-external").parent().addClass("hide");
+                }
+
+                $("#select-targets-external").removeClass("hide");
+                break;
+        }
+
+        var distribution_target_option_selected = $("input[name=\"distribution_target_option\"]:checked").attr("id");
+        if ($("#" + distribution_target_option_selected).parent().hasClass("hide")) {
+            $("#" + distribution_target_option_selected).removeAttr("checked");
+        }
+
+        var distribution_assessor_option_selected = $("input[name=\"distribution_assessor_option\"]:checked").attr("id");
+        if ($("#" + distribution_assessor_option_selected).parent().hasClass("hide")) {
+            $("#" + distribution_assessor_option_selected).removeAttr("checked");
         }
     });
 
-    $("input[name=\"attempts_scope\"]").on("change", function () {
+    $("#content").on("change", 'input[name="attempts_scope"]', function () {
         var selected_option = $(this).val();
         switch (selected_option) {
             case "targets" :
@@ -576,6 +694,10 @@ jQuery(function($) {
                         jQuery("#rs-rotation-schedule-options").removeClass("hide");
                         settings.filters["rs_schedule"].api_params.course_id = selected_option;
                         faculty_settings.filters["target_faculty"].api_params.course_id = selected_option;
+                        var targets_btn_settings = $("#choose-targets-btn").data("settings");
+                        targets_btn_settings.filters["target_cgroup"].api_params.course_id = selected_option;
+                        var assessors_btn_settings = $("#choose-assessors-btn").data("settings");
+                        assessors_btn_settings.filters["assessor_cgroup"].api_params.course_id = selected_option;
                     } else {
                         jQuery("#rs-rotation-schedule-options").addClass("hide");
                     }
@@ -616,12 +738,30 @@ jQuery(function($) {
                 if (jsonResponse.data.feedback_required == "1") {
                     jQuery("#feedback-required").attr("checked", "checked");
                 }
+                if (jsonResponse.data.distribution_method == "eventtype") {
+                    $("#select-target-options").addClass("hide");
+                }
+                switch (jsonResponse.data.target_option) {
+                    case "all" :
+                        jQuery("#all-targets-btn").attr("checked", "checked");
+                        break;
+                    case "non_cbme" :
+                        jQuery("#non-cbme-targets-btn").attr("checked", "checked");
+                        break;
+                    case "only_cbme":
+                        jQuery("#cbme-targets-btn").attr("checked", "checked");
+                        break;
+                }
 
                 switch (timeframe) {
                     case "date_range" :
                         $("#distribution_start_date").datepicker("setDate", new Date(jsonResponse.data.range_start_date * 1000));
                         $("#distribution_end_date").datepicker("setDate", new Date(jsonResponse.data.range_end_date * 1000));
                         $("#distribution_delivery_date").datepicker("setDate", jsonResponse.data.delivery_date);
+                        resetExpiryControls("date", true);
+                        if (jsonResponse.data.expiry_date) {
+                            $("#expiry-date").datepicker("setDate", jsonResponse.data.expiry_date);
+                        }
 
                         var start_date = new Date(jsonResponse.data.range_start_date * 1000);
                         var start_hours = (start_date.getHours() < 10 ? "0" + start_date.getHours() : start_date.getHours());
@@ -688,6 +828,16 @@ jQuery(function($) {
                                     "value": value.assessor_value,
                                     "data-label": value.assessor_name
                                 }).appendTo("#distribution-data-form");
+                            } else if (value.assessor_type == "cgroup_id") {
+                                jQuery("#choose-assessors-btn").html('<span class="selected-filter-label">Course Group</span>' + value.assessor_name + '&nbsp;<i class="icon-chevron-down pull-right btn-icon"></i></button>');
+                                var learner_cgroup_assessor_element = jQuery(document.createElement("input")).attr({
+                                    "type": "hidden",
+                                    "class": "search-target-control assessor_cgroup_search_target_control assessor-audience-selector",
+                                    "name": "assessor_cgroup_id",
+                                    "id": "assessor_cgroup_" + value.assessor_value,
+                                    "value": value.assessor_value,
+                                    "data-label": value.assessor_name
+                                }).appendTo("#distribution-data-form");
                             }
                         });
                         var previous_settings = $("#choose-assessors-faculty-btn").data("settings");
@@ -696,11 +846,15 @@ jQuery(function($) {
                         jQuery("#select-targets-grouped").addClass("hide");
                         jQuery("#select-targets-faculty").addClass("hide");
                         jQuery("#select-targets-course").addClass("hide");
+                        jQuery("#select-target-options").addClass("hide");
                         if (jsonResponse.data.target_type == "self") {
                             jQuery("#distribution-target-self").attr("checked", "checked");
                         } else if (jsonResponse.data.target_role == "learner") {
                             jQuery("#distribution-target-internal").attr("checked", "checked");
                             jQuery("#select-targets-grouped").removeClass("hide");
+                            if (cbme == true) {
+                                jQuery("#select-target-options").removeClass("hide");
+                            }
                             jQuery.each(jsonResponse.data.selected_internal_targets, function (key, value) {
                                 if (value.target_type == "course_id") {
                                     jQuery("#choose-targets-btn").html('<span class="selected-filter-label">Course Audience</span>' + value.target_name + '&nbsp;<i class="icon-chevron-down pull-right btn-icon"></i>');
@@ -722,27 +876,75 @@ jQuery(function($) {
                                         "value": value.target_id,
                                         "data-label": value.target_name
                                     }).appendTo("#distribution-data-form");
+                                } else if (value.target_type == "cgroup_id") {
+                                    jQuery("#choose-targets-btn").html('<span class="selected-filter-label">Course Group</span>' + value.target_name + '&nbsp;<i class="icon-chevron-down pull-right btn-icon"></i>');
+                                    var learner_cgroup_target_element = jQuery(document.createElement("input")).attr({
+                                        "type": "hidden",
+                                        "class": "search-target-control target_cgroup_search_target_control target-audience-selector",
+                                        "name": "target_cgroup_id",
+                                        "id": "target_cgroup_" + value.target_id,
+                                        "value": value.target_id,
+                                        "data-label": value.target_name
+                                    }).appendTo("#distribution-data-form");
+                                } else if (value.target_type == "proxy_id"){
+                                    var learner_individual_target_element = jQuery(document.createElement("input")).attr({
+                                        "type": "hidden",
+                                        "class": "search-target-control target_individual_search_target_control target-audience-selector",
+                                        "name": "target_individual[]",
+                                        "id": "target_individual_" + value.target_id,
+                                        "value": value.target_id,
+                                        "data-label": value.target_name
+                                    }).appendTo("#distribution-data-form");
+
+                                    if (jsonResponse.data.selected_internal_targets.length - 1 == key) {
+                                        var previous_settings = $("#choose-targets-btn").data("settings");
+                                        previous_settings.build_list();
+                                    }
                                 }
                             });
                         } else if (jsonResponse.data.target_role == "faculty") {
-                            jQuery("#distribution-target-faculty").attr("checked", "checked");
-                            jQuery("#select-targets-faculty").removeClass("hide");
+                            var rebuild_proxy_id = false;
+                            var rebuild_external_hash = false;
+
                             jQuery.each(jsonResponse.data.selected_internal_targets, function (key, value) {
                                 if (value.target_type == "proxy_id") {
                                     var faculty_element = jQuery(document.createElement("input")).attr({
-                                        "type"  : "hidden",
-                                        "class" : "search-target-control target_faculty_search_target_control",
-                                        "name"  : "target_faculty[]",
-                                        "id"    : "target_faculty_" + value.target_id,
-                                        "value" : value.target_id,
-                                        "data-label" : value.target_name
+                                        "type": "hidden",
+                                        "class": "search-target-control target_faculty_search_target_control",
+                                        "name": "target_faculty[]",
+                                        "id": "target_faculty_" + value.target_id,
+                                        "value": value.target_id,
+                                        "data-label": value.target_name
                                     }).appendTo("#distribution-data-form");
+                                    rebuild_proxy_id = true;
+                                } else if (value.target_type == "external_hash") {
+                                    var learner_external_target_element = jQuery(document.createElement("input")).attr({
+                                        "type": "hidden",
+                                        "class": "search-target-control target_external_search_target_control",
+                                        "name": "target_external[]",
+                                        "id": "target_external_" + value.target_id,
+                                        "value": value.target_id,
+                                        "data-label": value.target_name
+                                    }).appendTo("#distribution-data-form");
+                                    rebuild_external_hash = true;
                                 }
                             });
-                            var previous_settings = $("#choose-targets-faculty-btn").data("settings");
-                            previous_settings.build_list();
+
+                            if (rebuild_proxy_id) {
+                                jQuery("#distribution-target-faculty").attr("checked", "checked");
+                                jQuery("#select-targets-faculty").removeClass("hide");
+
+                                var previous_settings = $("#choose-targets-faculty-btn").data("settings");
+                                previous_settings.build_list();
+                            } else if (rebuild_external_hash) {
+                                jQuery("#distribution-target-external").attr("checked", "checked");
+                                jQuery("#select-targets-external").removeClass("hide");
+
+                                var previous_settings = $("#choose-target-external-btn").data("settings");
+                                previous_settings.build_list();
+                            }
                         } else if (jsonResponse.data.target_type == "proxy_id" && jsonResponse.data.target_role == "any") {
-                            jQuery("#distribution-target-external").attr("checked", "checked");
+                            jQuery("#distribution-target-individual-users").attr("checked", "checked");
                             jQuery("#select-targets-individual").removeClass("hide");
                             jQuery.each(jsonResponse.data.selected_internal_targets, function (key, value) {
                                 build_selected_target_item(value.target_id, value.target_name, value.group + " / " + value.role);
@@ -783,6 +985,7 @@ jQuery(function($) {
                             jQuery('#rotation-release-control').css("display", "inline-block");
                             jQuery("input[name=\"rotation_release_date\"]").val(jsonResponse.data.release_date);
                         }
+
                         var assessor_option;
                         if (typeof jsonResponse.data.assessor_option != "undefined") {
                             assessor_option = jsonResponse.data.assessor_option;
@@ -889,6 +1092,9 @@ jQuery(function($) {
                         } else if (jsonResponse.data.target_role == "learner") {
                             jQuery("#distribution-rs-target-learner").attr("checked", "checked");
                             jQuery("#rs-target-learner-options").removeClass("hide");
+                            if (cbme == true) {
+                                jQuery("#select-target-options").removeClass("hide");
+                            }
 
                             if (typeof jsonResponse.data.all_learner_target_mode != "undefined" && jsonResponse.data.all_learner_target_mode) {
                                 jQuery("#distribution-rs-target-all").attr("checked", "checked");
@@ -940,11 +1146,12 @@ jQuery(function($) {
                             var previous_settings = $("#choose-targets-rs-additional-learners").data("settings");
                             previous_settings.build_list();
                         } else if (jsonResponse.data.target_role == "faculty") {
-                            jQuery("#distribution-rs-target-faculty").attr("checked", "checked");
-                            jQuery("#rs-target-faculty-options").removeClass("hide");
+                            var rebuild_proxy_id = false;
+                            var rebuild_external_hash = false;
+
                             jQuery.each(jsonResponse.data.selected_internal_targets, function (key, value) {
                                 if (value.target_type == "proxy_id") {
-                                    var learner_element = jQuery(document.createElement("input")).attr({
+                                    var faculty_element = jQuery(document.createElement("input")).attr({
                                         "type"  : "hidden",
                                         "class" : "search-target-control additional_target_faculty_search_target_control",
                                         "name"  : "additional_target_faculty[]",
@@ -952,11 +1159,33 @@ jQuery(function($) {
                                         "value" : value.target_id,
                                         "data-label" : value.target_name
                                     }).appendTo("#distribution-data-form");
+                                    rebuild_proxy_id = true;
+                                } else if (value.target_type == "external_hash") {
+                                    var faculty_external_element = jQuery(document.createElement("input")).attr({
+                                        "type": "hidden",
+                                        "class": "search-target-control rs_target_external_search_target_control",
+                                        "name": "rs_target_external[]",
+                                        "id": "rs_target_external_" + value.target_id,
+                                        "value": value.target_id,
+                                        "data-label": value.target_name
+                                    }).appendTo("#distribution-data-form");
+                                    rebuild_external_hash = true;
                                 }
                             });
 
-                            var previous_settings = $("#choose-targets-rs-faculty").data("settings");
-                            previous_settings.build_list();
+                            if (rebuild_proxy_id) {
+                                jQuery("#distribution-rs-target-faculty").attr("checked", "checked");
+                                jQuery("#rs-target-faculty-options").removeClass("hide");
+
+                                var previous_settings = $("#choose-targets-rs-faculty").data("settings");
+                                previous_settings.build_list();
+                            } else if (rebuild_external_hash) {
+                                jQuery("#distribution-rs-target-external").attr("checked", "checked");
+                                jQuery("#rs-target-external-options").removeClass("hide");
+
+                                var previous_settings = $("#choose-targets-rs-external").data("settings");
+                                previous_settings.build_list();
+                            }
                         } else if (jsonResponse.data.target_type == "schedule_id") {
                             jQuery("#distribution-rs-target-block").attr("checked", "checked");
                         }
@@ -1051,7 +1280,6 @@ jQuery(function($) {
                             break;
                         }
                         break;
-
                 }
 
                 //jQuery("#rs-choose-rotation-btn").trigger("change"); // update API params
@@ -1062,6 +1290,10 @@ jQuery(function($) {
                 faculty_settings.filters["target_faculty"].api_params.course_id = jsonResponse.data.course_id;
                 var approver_settings = jQuery("#distribution-approver-results").data("settings");
                 approver_settings.filters["distribution_approvers"].api_params.course_id = jsonResponse.data.course_id;
+                var targets_btn_settings = jQuery("#choose-targets-btn").data("settings");
+                targets_btn_settings.filters["target_individual"].api_params.course_id = jsonResponse.data.course_id;
+                var assessors_btn_settings = jQuery("#choose-assessors-btn").data("settings");
+                assessors_btn_settings.filters["assessor_individual"].api_params.course_id = jsonResponse.data.course_id;
 
                 if (parseInt(jsonResponse.data.submittable_by_target) == 1) {
                     jQuery("#attempts-scope-targets").attr("checked", "checked");
@@ -1097,6 +1329,16 @@ jQuery(function($) {
                     jQuery("#max_overall_attempts").val(jsonResponse.data.max_overall_attempts);
                 }
 
+                if (timeframe == "date_range" && $("#assessment_type").val() == "assessment") {
+                    jQuery("#exclude_self_assessment_options").removeClass("hide");
+                    if (jsonResponse.data.exclude_self_assessments == 1) {
+                        jQuery("#exclude_self_assessments").attr("checked", "checked");
+                    }
+                } else {
+                    jQuery("#exclude_self_assessment_options").addClass("hide");
+                    jQuery("#exclude_self_assessments").attr("checked", false);
+                }
+
                 if (typeof jsonResponse.data.distribution_results_user != "undefined" && jsonResponse.data.distribution_results_user.length > 0) {
                     toggleReviewControls(true);
                     // jQuery("#reviewer-release-options").show(); // not supported yet
@@ -1116,7 +1358,7 @@ jQuery(function($) {
                     previous_settings.build_list();
                 }
 
-                jQuery("#distribution-approver-option").removeClass("hide");
+                jQuery("#accordion-approver-container").removeClass("hide");
 
                 if (typeof jsonResponse.data.distribution_approvers != "undefined" && jsonResponse.data.distribution_approvers.length > 0) {
                     jQuery("#approver-required").attr("checked", "checked");
@@ -1162,7 +1404,104 @@ jQuery(function($) {
                     jQuery("#flagging_notifications").val(jsonResponse.data.flagging_notifications);
                 }
 
+                if (jsonResponse.data.expiry_offset !== null) {
+                    if (timeframe != "date_range") {
+                        jQuery("input[name=\"expiry_option\"]").prop("checked", true);
+                        jQuery('#expiry-control').css("display", "inline-block");
+                        jQuery("input[name=\"expiry_days\"]").val(jsonResponse.data.expiry_days);
+                        jQuery("input[name=\"expiry_hours\"]").val(jsonResponse.data.expiry_hours);
+                        jQuery("#expiry-notification-option-controls").removeClass("hide");
+                    }
+
+                    if (jsonResponse.data.expiry_notification_offset !== null) {
+                        jQuery("input[name=\"expiry_notification_option\"]").prop("checked", true);
+                        jQuery('#expiry-notification-control').css("display", "inline-block");
+                        jQuery("input[name=\"expiry_notification_days\"]").val(jsonResponse.data.expiry_notification_days);
+                        jQuery("input[name=\"expiry_notification_hours\"]").val(jsonResponse.data.expiry_notification_hours);
+                    }
+                }
+
                 reset_wizard_step_2_visibility(timeframe);
+
+                /**
+                 * Target task release
+                 **/
+                if (jsonResponse.data.distribution_target_task_release) {
+                    $("input[name=target-task-release-option]").each(function (i, v) {
+                        if ($(v).val() == jsonResponse.data.distribution_target_task_release) {
+                            $(v).attr("checked", true);
+                        } else {
+                            $(v).attr("checked", false);
+                        }
+                    });
+                    if (jsonResponse.data.distribution_target_task_release_threshold_option) {
+                        $("input[name=target-task-release-threshold-option]").each(function (i, v) {
+                            if ($(v).val() == jsonResponse.data.distribution_target_task_release_threshold_option) {
+                                $(v).attr("checked", true);
+                            } else {
+                                $(v).attr("checked", false);
+                            }
+                        });
+                        if ($("input[name=target-task-release-option]:checked").val() == "threshold") {
+                            if ($("#assessment_type").val() == "assessment") {
+                                $("#target-task-release-threshold-controls").removeClass("hide");
+                            }
+                            if (jsonResponse.data.distribution_target_task_release_threshold_percentage) {
+                                $("#target-task-release-threshold-option-unique-percentage").val(jsonResponse.data.distribution_target_task_release_threshold_percentage);
+                            }
+                        } else {
+                            $("#target-task-release-threshold-controls").addClass("hide");
+                        }
+                    }
+                } else {
+                    update_target_release_controls("task");
+                }
+
+                /**
+                 * Target report release
+                 **/
+                if (jsonResponse.data.distribution_target_report_release) {
+                    $("input[name=target-report-release-option]").each(function (i, v) {
+                        if ($(v).val() == jsonResponse.data.distribution_target_report_release) {
+                            $(v).attr("checked", true);
+                        } else {
+                            $(v).attr("checked", false);
+                        }
+                    });
+                    if (jsonResponse.data.distribution_target_report_release_threshold_option) {
+                        $("input[name=target-report-release-threshold-option]").each(function (i, v) {
+                            if ($(v).val() == jsonResponse.data.distribution_target_report_release_threshold_option) {
+                                $(v).attr("checked", true);
+                            } else {
+                                $(v).attr("checked", false);
+                            }
+                        });
+                        if ($("input[name=target-report-release-option]:checked").val() == "threshold") {
+                            if ($("#assessment_type").val() == "assessment") {
+                                $("#target-report-release-threshold-controls").removeClass("hide");
+                            }
+                            if (jsonResponse.data.distribution_target_report_release_threshold_percentage) {
+                                $("#target-report-release-threshold-option-unique-percentage").val(jsonResponse.data.distribution_target_report_release_threshold_percentage);
+                            }
+                        } else {
+                            $("#target-report-release-threshold-controls").addClass("hide");
+                        }
+                    }
+                    if (jsonResponse.data.distribution_target_report_comment_options) {
+                        if ($("#assessment_type").val() == "assessment") {
+                            $("#accordion-target-report-container").removeClass("hide");
+                        }
+                        $("input[name=target-report-comments-option]").each(function (i, v) {
+                            if ($(v).val() == jsonResponse.data.distribution_target_report_comment_options) {
+                                $(v).attr("checked", true);
+                            } else {
+                                $(v).attr("checked", false);
+                            }
+                        });
+                    }
+                } else {
+                    update_target_release_controls("report");
+                }
             }
         });
     }
@@ -1321,69 +1660,112 @@ jQuery(function($) {
             }
         }
     });
-    
-    $("input[name=\"distribution_rs_assessor_option\"]").on("change", function () {
+
+    $("#content").on("change", 'input[name="distribution_rs_assessor_option"]', function () {
         var selected_option = $(this).val();
         var selected_target_option = $("input[name=\"distribution_rs_target_option\"]:checked").val();
 
-        // reset the form to prevent validation inconsistencies
-        reset_wizard_step_4(null);
         $(this).attr("checked", "checked");
-
         $(".rs-assessor-option").addClass("hide");
         $(".rs-assessor-sub-option").addClass("hide");
+
         switch (selected_option) {
             case "learner" :
                 $("#rs-assessor-learner-options").removeClass("hide");
                 $("#distribution-feedback-options").addClass("hide");
-                $("#distribution-approver-option").addClass("hide");
-            break;
+                $("#feedback-required").removeAttr("checked");
+                break;
             case "faculty" :
                 $("#rs-assessor-faculty-options").removeClass("hide");
                 if (selected_target_option === "learner") {
                     $("#distribution-feedback-options").removeClass("hide");
-                    $("#distribution-approver-option").removeClass("hide");
                 }
             break;
             case "individual_users" :
                 $("#rs-select-assessors-individual").removeClass("hide");
                 if (selected_target_option === "learner") {
                     $("#distribution-feedback-options").removeClass("hide");
-                    $("#distribution-approver-option").removeClass("hide");
                 }
             break;
         }
     });
-    
+
     $("input[name=\"distribution_rs_target_option\"]").on("change", function () {
         var selected_option = $(this).val();
         var selected_assessor_option = $("input[name=\"distribution_rs_assessor_option\"]:checked").val();
         var selected_attempts_scope_option = $("input[name=\"attempts_scope\"]:checked");
 
-        reset_wizard_step_3(null);
-        $(this).attr("checked", "checked"); // reset the form to prevent validation inconsistencies
+        $(this).attr("checked", "checked");
         $(selected_attempts_scope_option).attr("checked", "checked");
 
         $(".rs-target-option").addClass("hide");
         $('#rotation_schedule_target_options').removeClass("hide");
+        $("#select-target-options").addClass("hide");
+        $("#non-cbme-targets-btn").attr("checked", "checked");
         switch (selected_option) {
             case "learner" :
                 $("#rs-target-learner-options").removeClass("hide");
+                if (cbme == true) {
+                    $("#select-target-options").removeClass("hide");
+                }
                 if (selected_assessor_option === "faculty") {
                     $("#distribution-feedback-options").removeClass("hide");
-                    $("#distribution-approver-option").removeClass("hide");
                 }
-            break;
+                break;
             case "faculty" :
-                $("#rs-target-faculty-options").removeClass("hide");
-            break;
+            case "block" :
+            case "external" :
+                if ($("#assessment_type").val() == "assessment") {
+                    $("#distribution-rs-assessor-learner").parent().addClass("hide");
+                    $("#distribution-rs-assessor-faculty").parent().removeClass("hide");
+                    $("#distribution-rs-assessor-external").parent().removeClass("hide");
+
+                    var distribution_rs_assessor_learner_option_selected = $("input[name=\"distribution_rs_assessor_learner_option\"]:checked").attr("id");
+                    $("#" + distribution_rs_assessor_learner_option_selected).removeAttr("checked");
+                    $("#rs-assessor-learner-service").addClass("hide");
+                    $("#rs-assessor-learner-options").addClass("hide");
+                    $("#rs-additional-learners").addClass("hide");
+                    $("#rs-individual-learners").addClass("hide");
+                    $("#rs-target-faculty-options").addClass("hide");
+                    $("#rs-assessor-learner-individual").addClass("hide");
+                    $("#distribution-rs-onservice").removeAttr("checked");
+                    $("#distribution-rs-offservice").removeAttr("checked");
+                    $("#rs-additional-learners").removeAttr("checked");
+                } else {
+                    $("#distribution-rs-assessor-learner").parent().removeClass("hide");
+                    $("#distribution-rs-assessor-faculty").parent().addClass("hide");
+                    $("#distribution-rs-assessor-external").parent().addClass("hide");
+
+                    $("#rs-assessor-faculty-options").addClass("hide");
+                    $("#rs-select-assessors-individual").addClass("hide");
+                    $("#rs-assessor-list-internal").addClass("hide");
+                }
+
+                if ($("#assessment_type").val() == "evaluation") {
+                    if (selected_option == "faculty") {
+                        $("#rs-target-faculty-options").removeClass("hide");
+                    } else if (selected_option == "external") {
+                        $("#rs-target-external-options").removeClass("hide");
+                    }
+                }
+                break;
             case "generic" :
                 $("#rs-target-generic-options").removeClass("hide");
-            break;
+                break;
+        }
+
+        var distribution_rs_target_option_selected = $("input[name=\"distribution_rs_target_option\"]:checked").attr("id");
+        if ($("#" + distribution_rs_target_option_selected).parent().hasClass("hide")) {
+            $("#" + distribution_rs_target_option_selected).removeAttr("checked");
+        }
+
+        var distribution_rs_assessor_option_selected = $("input[name=\"distribution_rs_assessor_option\"]:checked").attr("id");
+        if ($("#" + distribution_rs_assessor_option_selected).parent().hasClass("hide")) {
+            $("#" + distribution_rs_assessor_option_selected).removeAttr("checked");
         }
     });
-    
-    $("input[name=\"distribution_rs_assessor_learner_option\"]").on("change", function () {
+
+    $("#content").on("change", 'input[name="distribution_rs_assessor_learner_option"]', function () {
         var selected_option = $(this).val();
         var additional_learners_checked = $("#distribution-rs-additional-learners").attr("checked");
         $(".rs-assessor-learner-sub-option").addClass("hide");
@@ -1440,6 +1822,56 @@ jQuery(function($) {
             $("#rs-target-individual-learners").removeClass("hide");
         } else {
             $("#rs-target-individual-learners").addClass("hide");
+        }
+    });
+
+    $("input[name=\"distribution_eventtype_target_option\"]").on("change", function () {
+        var selected_option = $(this).val();
+        var selected_attempts_scope_option = $("input[name=\"attempts_scope\"]:checked");
+
+        reset_wizard_step_3(null);
+        $(this).attr("checked", "checked"); // reset the form to prevent validation inconsistencies
+        $(selected_attempts_scope_option).attr("checked", "checked");
+        $("#non-cbme-targets-btn").attr("checked", "checked");
+
+        if (selected_option == "faculty") {
+            if ($("#assessment_type").val() == "assessment") {
+                $("#distribution-eventtype-assessor-learner").parent().addClass("hide");
+                $("#distribution-eventtype-assessor-faculty").parent().removeClass("hide");
+                $("#distribution-eventtype-assessor-external").parent().removeClass("hide");
+
+                var distribution_eventtype_learners_selected = $("input[name=\"distribution_eventtype_learners\"]:checked").attr("id");
+                $("#" + distribution_eventtype_learners_selected).removeAttr("checked");
+                $("#eventtype-assessor-learner-options").addClass("hide");
+            } else {
+                $("#distribution-eventtype-assessor-learner").parent().removeClass("hide");
+                $("#distribution-eventtype-assessor-faculty").parent().removeClass("hide");
+                $("#distribution-eventtype-assessor-external").parent().removeClass("hide");
+            }
+        } else if (selected_option == "event") {
+            if ($("#assessment_type").val() == "assessment") {
+                $("#distribution-eventtype-assessor-learner").parent().addClass("hide");
+                $("#distribution-eventtype-assessor-faculty").parent().addClass("hide");
+                $("#distribution-eventtype-assessor-external").parent().removeClass("hide");
+
+                var distribution_eventtype_learners_selected = $("input[name=\"distribution_eventtype_learners\"]:checked").attr("id");
+                $("#" + distribution_eventtype_learners_selected).removeAttr("checked");
+                $("#eventtype-assessor-learner-options").addClass("hide");
+            } else {
+                $("#distribution-eventtype-assessor-learner").parent().removeClass("hide");
+                $("#distribution-eventtype-assessor-faculty").parent().removeClass("hide");
+                $("#distribution-eventtype-assessor-external").parent().removeClass("hide");
+            }
+        }
+
+        var distribution_eventtype_target_option_selected = $("input[name=\"distribution_eventtype_target_option\"]:checked").attr("id");
+        if ($("#" + distribution_eventtype_target_option_selected).parent().hasClass("hide")) {
+            $("#" + distribution_eventtype_target_option_selected).removeAttr("checked");
+        }
+
+        var distribution_eventtype_assessor_option_selected = $("input[name=\"distribution_eventtype_assessor_option\"]:checked").attr("id");
+        if ($("#" + distribution_eventtype_assessor_option_selected).parent().hasClass("hide")) {
+            $("#" + distribution_eventtype_assessor_option_selected).removeAttr("checked");
         }
     });
 
@@ -1702,19 +2134,19 @@ jQuery(function($) {
         };
     }
 
-    $("#external-assessors-search").on("click", function () {
+    $("#content").on("click", '#external-assessors-search', function () {
         if ($("#external-assessors-search").val()) {
             $("#autocomplete-list-container .ui-autocomplete").css("display", "block");
         }
     });
 
-    $("#rs-external-assessors-search").on("click", function () {
+    $("#content").on("click", '#rs-external-assessors-search', function () {
         if ($("#rs-external-assessors-search").val()) {
             $("#rs-autocomplete-list-container .ui-autocomplete").css("display", "block");
         }
     });
 
-    $("#eventtype-external-assessors-search").on("click", function () {
+    $("#content").on("click", '#eventtype-external-assessors-search', function () {
         if ($("#eventtype-external-assessors-search").val()) {
             $("#eventtype-autocomplete-list-container .ui-autocomplete").css("display", "block");
             build_external_eventtype_assessors_button();
@@ -1749,6 +2181,7 @@ jQuery(function($) {
             } else {
                 $("#rs-rotation-schedule-options").addClass("hide");
             }
+            $("#select-target-options").addClass("hide");
         }
     });
 
@@ -1768,7 +2201,7 @@ jQuery(function($) {
         build_author_autocomplete();
     });
 
-    $("input[name=\"distribution_eventtype_assessor_option\"]").on("change", function () {
+    $(document).on("change", 'input[name="distribution_eventtype_assessor_option"]', function () {
         $(".eventtype-assessor-option").addClass("hide");
         var selected_option = $(this).val();
         switch (selected_option) {
@@ -1876,6 +2309,11 @@ jQuery(function($) {
 
     // If the form is up, then populate it, either with the distribution data, or just fill in the read-only author
     if ($("#editor-load-distribution-flag").length) {
+
+        if ($("#editor-load-distribution-flag").data("adistribution-id") == 0) {
+            update_target_release_controls(null);
+        }
+
         // Fetch the current user id
         var get_current_id_request = jQuery.ajax({
             url: "?section=api-distributions",
@@ -1943,8 +2381,6 @@ jQuery(function($) {
             }
         });
     });
-
-
 
     $(".choose-associated-faculty-btn").on("click", function (e) {
         e.preventDefault();
@@ -2027,6 +2463,815 @@ jQuery(function($) {
                 }
             });
         }
+    });
+
+    var automatically_triggered = false;
+    $("#assessment_type").on("change", function () {
+        if (!automatically_triggered) {
+            reset_wizard_step_3(null);
+            reset_wizard_step_4(null);
+            update_target_release_controls(null);
+        }
+
+        reset_assessor_target_controls();
+        change_assessment_evaluation_text($(this).val());
+        automatically_triggered = false;
+    });
+
+    function reset_assessor_target_controls () {
+        if($("#assessment_type").val() == "evaluation") {
+            $("#distribution-rs-target-self").parent().addClass("hide");
+            $("#distribution-rs-target-learner").parent().addClass("hide");
+            $("#distribution-rs-target-faculty").parent().removeClass("hide");
+            $("#distribution-rs-target-block").parent().removeClass("hide");
+            $("#distribution-rs-target-external").parent().removeClass("hide");
+
+            $("#distribution-eventtype-target-eventtype").parent().addClass("hide");
+            $("#distribution-eventtype-target-faculty").parent().removeClass("hide");
+            $("#distribution-eventtype-target-event").parent().removeClass("hide");
+
+            $("#distribution-target-self").parent().addClass("hide");
+            $("#distribution-target-faculty").parent().removeClass("hide");
+            $("#distribution-target-internal").parent().addClass("hide");
+            $("#distribution-target-course").parent().removeClass("hide");
+            $("#distribution-target-individual-users").parent().removeClass("hide");
+            $("#distribution-target-external").parent().removeClass("hide");
+            $("#select-target-options").addClass("hide");
+        } else {
+            $("#distribution-rs-target-self").parent().removeClass("hide");
+            $("#distribution-rs-target-learner").parent().removeClass("hide");
+            $("#distribution-rs-target-faculty").parent().addClass("hide");
+            $("#distribution-rs-target-block").parent().addClass("hide");
+            $("#distribution-rs-target-external").parent().addClass("hide");
+
+            $("#distribution-eventtype-target-eventtype").parent().removeClass("hide");
+            $("#distribution-eventtype-target-faculty").parent().addClass("hide");
+            $("#distribution-eventtype-target-event").parent().addClass("hide");
+
+            $("#distribution-target-self").parent().removeClass("hide");
+            $("#distribution-target-faculty").parent().addClass("hide");
+            $("#distribution-target-internal").parent().removeClass("hide");
+            $("#distribution-target-course").parent().addClass("hide");
+            $("#distribution-target-individual-users").parent().addClass("hide");
+            $("#distribution-target-external").parent().addClass("hide");
+        }
+    }
+
+    function update_target_release_controls(control_set) {
+
+        var update_task = false;
+        var update_report = false;
+        if (control_set == null) {
+            update_task = true;
+            update_report = true;
+        } else if (control_set == "task") {
+            update_task = true;
+        } else if (control_set == "report") {
+            update_report = true;
+        }
+
+        if ($("#assessment_type").val() == "evaluation") {
+            if (update_task) {
+                $("#accordion-target-release-container").removeClass("hide");
+                // Hide identifiable task options.
+                $("#target-task-release-controls").addClass("hide");
+            }
+
+            if (update_report) {
+                $("#accordion-target-release-container").removeClass("hide");
+                // Hide identifiable task options.
+                $("#target-task-release-controls").addClass("hide");
+                // No extended reporting options.
+                $("#accordion-target-report-container").addClass("hide");
+            }
+
+            if (update_task) {
+                /**
+                 * Set default release options for evaluations (never release, never report).
+                 */
+                // Task release
+                $("input[name=target-task-release-option]").each(function (i, v) {
+                    $(v).attr("checked", false);
+                });
+                $("#target-task-release-never").attr("checked", true);
+                $("input[name=target-task-release-threshold-option]").each(function (i, v) {
+                    $(v).attr("checked", false);
+                });
+            }
+
+            if (update_report) {
+                // Report release
+                $("input[name=target-report-release-option]").each(function (i, v) {
+                    $(v).attr("checked", false);
+                });
+                $("#target-report-release-never").attr("checked", true);
+                $("input[name=target-report-release-threshold-option]").each(function (i, v) {
+                    $(v).attr("checked", false);
+                });
+
+                // Reporting options
+
+                // Default comments to anonymous.
+                $("input[name=target-report-comments-option]").each(function (i, v) {
+                    $(v).attr("checked", false);
+                });
+                $("#target-report-comments-anonymous").attr("checked", true);
+            }
+
+        } else {
+
+            if (update_task) {
+                /**
+                 * Set default release options for assessments (immediately release, never report).
+                 */
+                $("#accordion-target-release-container").removeClass("hide");
+                $("#target-task-release-controls").removeClass("hide");
+            }
+
+            if (update_task) {
+                // Task release
+                $("input[name=target-task-release-option]").each(function (i, v) {
+                    $(v).attr("checked", false);
+                });
+                $("#target-task-release-always").attr("checked", true);
+                $("input[name=target-task-release-threshold-option]").each(function (i, v) {
+                    $(v).attr("checked", false);
+                });
+                $("#target-task-release-threshold-controls").addClass("hide");
+            }
+
+            if (update_report) {
+                // Report release
+                $("input[name=target-report-release-option]").each(function (i, v) {
+                    $(v).attr("checked", false);
+                });
+                $("#target-report-release-never").attr("checked", true);
+                $("input[name=target-report-release-threshold-option]").each(function (i, v) {
+                    $(v).attr("checked", false);
+                });
+                $("#target-report-release-threshold-controls").addClass("hide");
+
+                // Reporting options
+                $("#accordion-target-report-container").removeClass("hide");
+
+                // Default comments to anonymous.
+                $("input[name=target-report-comments-option]").each(function (i, v) {
+                    $(v).attr("checked", false);
+                });
+                $("#target-report-comments-anonymous").attr("checked", true);
+            }
+        }
+    }
+
+    $("#content").on("click", "#change-task-type", function () {
+        if (distribution_id) {
+            var update_distribution_task_type = jQuery.ajax({
+                url: "?section=api-distributions",
+                data: "method=change-distribution-task-type&adistribution_id=" + distribution_id,
+                type: "POST"
+            });
+
+            jQuery.when(update_distribution_task_type).done(function (data) {
+                var jsonResponse = JSON.parse(data);
+                if (jsonResponse.status == "success") {
+                    location.reload();
+                } else {
+                    display_error(jsonResponse.data, "#msgs", "prepend");
+                }
+            });
+        } else {
+            display_error(["No distribution id set."], "#msgs", "prepend");
+        }
+    });
+
+    $("#content").on("change", 'input[data-filter="target_individual"]', function() {
+        $("#choose-targets-btn").html("Browse Targets <i class=\"icon-chevron-down pull-right btn-icon\"></i>");
+        $(".target_cohort_search_target_control").remove();
+        $(".target_course_audience_search_target_control").remove();
+    });
+
+    $("#content").on("change", 'input[data-filter="target_cohort"]', function() {
+        $(".target_individual_target_item").remove();
+        $(".target_individual_search_target_control").remove();
+    });
+
+    $("#content").on("change", 'input[data-filter="target_course_audience"]', function() {
+        $(".target_individual_target_item").remove();
+        $(".target_individual_search_target_control").remove();
+    });
+
+    $("#content").on("change", 'input[data-filter="assessor_individual"]', function() {
+        var assessors_btn_text = $("#assessment_type").val() == "assessment" ? "Assessors" : "Evaluators";
+        $("#choose-assessors-btn").html("Browse " + assessors_btn_text + " <i class=\"icon-chevron-down pull-right btn-icon\"></i>");
+        $(".assessor_cohort_search_target_control").remove();
+        $(".assessor_course_audience_search_target_control").remove();
+    });
+
+    $("#content").on("change", 'input[data-filter="assessor_cohort"]', function() {
+        $(".assessor_individual_target_item").remove();
+        $(".assessor_individual_search_target_control").remove();
+    });
+
+    $("#content").on("change", 'input[data-filter="assessor_course_audience"]', function() {
+        $(".assessor_individual_target_item").remove();
+        $(".assessor_individual_search_target_control").remove();
+    });
+
+    $("input[name=target-task-release-option]").on("change", function () {
+        if ($("input[name=target-task-release-option]:checked").val() == "threshold") {
+            $("#target-task-release-threshold-controls").removeClass("hide");
+        } else {
+            $("#target-task-release-threshold-controls").addClass("hide");
+
+            $("input[name=target-task-release-threshold-option]").each(function (i, v) {
+                $(v).attr("checked", false);
+            });
+        }
+    });
+
+    $("input[name=target-report-release-option]").on("change", function () {
+        if ($("input[name=target-report-release-option]:checked").val() == "threshold") {
+
+            $("#target-report-release-threshold-controls").removeClass("hide");
+
+            if ($("#assessment_type").val() == "assessment") {
+                $("#accordion-target-report-container").removeClass("hide");
+            }
+
+            if (!$("input[name=target-report-comments-option]:checked").val()) {
+                // Default to anonymous comments.
+                $("#target-report-comments-anonymous").attr("checked", true);
+            }
+        } else if ($("input[name=target-report-release-option]:checked").val() == "always") {
+
+            $("#target-report-release-threshold-controls").addClass("hide");
+
+            if ($("#assessment_type").val() == "assessment") {
+                $("#accordion-target-report-container").removeClass("hide");
+            }
+
+            if (!$("input[name=target-report-comments-option]:checked").val()) {
+                // Default to anonymous comments.
+                $("#target-report-comments-anonymous").attr("checked", true);
+            }
+
+            $("input[name=target-report-release-threshold-option]").each(function (i, v) {
+                $(v).attr("checked", false);
+            });
+        } else {
+
+            $("#target-report-release-threshold-controls").addClass("hide");
+
+            if ($("#assessment_type").val() == "assessment") {
+                $("#accordion-target-report-container").addClass("hide");
+            }
+
+            $("input[name=target-report-release-threshold-option]").each(function (i, v) {
+                $(v).attr("checked", false);
+            });
+        }
+    });
+
+    function change_assessment_evaluation_text (task_type) {
+        if (task_type == "assessment") {
+            var distribution_eventtype_learners_attended = $("#distribution-eventtype-learners-attended").parent().html();
+            if (distribution_eventtype_learners_attended) {
+                $("#distribution-eventtype-learners-attended").parent().html(distribution_eventtype_learners_attended.replace("evaluation", "assessment"));
+            }
+
+            var distribution_eventtype_learners = $("#distribution-eventtype-learners").parent().html();
+            if (distribution_eventtype_learners) {
+                $("#distribution-eventtype-learners").parent().html(distribution_eventtype_learners.replace("evaluation", "assessment"));
+            }
+
+            var eventtype_target_options = $("#eventtype-target-options div label:first").html();
+            if (eventtype_target_options) {
+                $("#eventtype-target-options div label:first").html(eventtype_target_options.replace("Evaluations", "Assessments"));
+            }
+
+            var specific_dates_target_options = $("#specific_dates_target_options div label:first").html();
+            if (specific_dates_target_options) {
+                $("#specific_dates_target_options div label:first").html(specific_dates_target_options.replace("Evaluations", "Assessments"));
+            }
+
+            var rotation_schedule_target_options = $("#rotation_schedule_target_options div label:first").html();
+            if (rotation_schedule_target_options) {
+                $("#rotation_schedule_target_options div label:first").html(rotation_schedule_target_options.replace("Evaluations", "Assessments"));
+            }
+
+            var assessment_mandatory_label = $('label[for="assessment-mandatory"]:first').html();
+            if (assessment_mandatory_label) {
+                $('label[for="assessment-mandatory"]:first').html(assessment_mandatory_label.replace("Evaluation", "Assessment"));
+            }
+
+            var assessment_mandatory = $("#assessment-mandatory").parent().html();
+            if (assessment_mandatory) {
+                $("#assessment-mandatory").parent().html(assessment_mandatory.replace("evaluators", "assessors").replace("this evaluation", "this assessment"));
+            }
+
+            var attempts_scope_targets = $("#attempts-scope-targets").parent().html();
+            if (attempts_scope_targets) {
+                $("#attempts-scope-targets").parent().html(attempts_scope_targets.replace("Evaluators", "Assessors").replace("evaluate", "assess"));
+            }
+
+            var attempts_scope_overall = $("#attempts-scope-overall").parent().html();
+            if (attempts_scope_overall) {
+                $("#attempts-scope-overall").parent().html(attempts_scope_overall.replace("Evaluators", "Assessors"));
+            }
+
+            var wizard_nav_item_4 = $("#wizard-nav-item-4 a").html();
+            if (wizard_nav_item_4) {
+                $("#wizard-nav-item-4 a").html(wizard_nav_item_4.replace("Evaluators", "Assessors"));
+            }
+
+            var distribution_target_self = $("#distribution-target-self").html();
+            if (distribution_target_self) {
+                $("#distribution-target-self").html(distribution_target_self.replace("evaluators", "assessors").replace("evaluation", "assessment"));
+            }
+
+            var distribution_rs_target_self = $("#distribution-rs-target-self").html();
+            if (distribution_rs_target_self) {
+                $("#distribution-rs-target-self").html(distribution_rs_target_self.replace("evaluators", "assessors").replace("evaluation", "assessment"));
+            }
+
+            var repeat_targets = $("#repeat-targets").html();
+            if (repeat_targets) {
+                $("#repeat-targets").html(repeat_targets.replace("Evaluators", "Assessors"));
+            }
+
+            var eventtype_assessor_options = $("#eventtype-assessor-options div label:first").html();
+            if (eventtype_assessor_options) {
+                $("#eventtype-assessor-options div label:first").html(eventtype_assessor_options.replace("Evaluator", "Assessor"));
+            }
+
+            var distribution_eventtype_assessor_learner = $("#distribution-eventtype-assessor-learner").parent().html();
+            if (distribution_eventtype_assessor_learner) {
+                $("#distribution-eventtype-assessor-learner").parent().html(distribution_eventtype_assessor_learner.replace("evaluators", "assessors"));
+            }
+
+            var distribution_eventtype_assessor_faculty = $("#distribution-eventtype-assessor-faculty").parent().html();
+            if (distribution_eventtype_assessor_faculty) {
+                $("#distribution-eventtype-assessor-faculty").parent().html(distribution_eventtype_assessor_faculty.replace("evaluators", "assessors"));
+            }
+
+            var distribution_eventtype_assessor_external = $("#distribution-eventtype-assessor-external").html();
+            if (distribution_eventtype_assessor_external) {
+                $("#distribution-eventtype-assessor-external").html(distribution_eventtype_assessor_external.replace("evaluators", "assessors"));
+            }
+
+            var eventtype_select_assessors_individual = $("#eventtype-select-assessors-individual div label:first").html();
+            if (eventtype_select_assessors_individual) {
+                $("#eventtype-select-assessors-individual div label:first").html(eventtype_select_assessors_individual.replace("Evaluators", "Assessors"));
+            }
+
+            var eventtype_external_assessors_search = $("#eventtype-external-assessors-search").attr("placeholder");
+            if (eventtype_external_assessors_search) {
+                $("#eventtype-external-assessors-search").attr("placeholder", eventtype_external_assessors_search.replace("evaluators", "assessors"));
+            }
+
+            var eventtype_selected_assessors_list_heading = $("#eventtype-selected-assessors-list-heading").html();
+            if (eventtype_selected_assessors_list_heading) {
+                $("#eventtype-selected-assessors-list-heading").html(eventtype_selected_assessors_list_heading.replace("Evaluators", "Assessors"));
+            }
+
+            var eventtype_add_external_user_btn = $("#eventtype-add-external-user-btn").html();
+            if (eventtype_add_external_user_btn) {
+                $("#eventtype-add-external-user-btn").html(eventtype_add_external_user_btn.replace("Evaluator", "Assessor"));
+            }
+
+            var rotation_schedule_assessor_options = $("#rotation_schedule_assessor_options div label:first").html();
+            if (rotation_schedule_assessor_options) {
+                $("#rotation_schedule_assessor_options div label:first").html(rotation_schedule_assessor_options.replace("Evaluator", "Assessor"));
+            }
+
+            var distribution_rs_assessor_learner = $("#distribution-rs-assessor-learner").parent().html();
+            $("#distribution-rs-assessor-learner").parent().html(distribution_rs_assessor_learner.replace("evaluators", "assessors"));
+
+            var distribution_rs_assessor_faculty = $("#distribution-rs-assessor-faculty").parent().html();
+            if (distribution_rs_assessor_faculty) {
+                $("#distribution-rs-assessor-faculty").parent().html(distribution_rs_assessor_faculty.replace("evaluators", "assessors"));
+            }
+
+            var distribution_rs_assessor_faculty = $("#distribution-rs-assessor-faculty").parent().html().replace("evaluators", "assessors");
+            if (distribution_rs_assessor_faculty) {
+                $("#distribution-rs-assessor-faculty").parent().html(distribution_rs_assessor_faculty.replace("evaluators", "assessors"));
+            }
+
+            var rs_select_assessors_individual = $("#rs-select-assessors-individual div label:first").html();
+            if (rs_select_assessors_individual) {
+                $("#rs-select-assessors-individual div label:first").html(rs_select_assessors_individual.replace("Evaluators", "Assessors"));
+            }
+
+            var rs_external_assessors_search = $("#rs-external-assessors-search").attr("placeholder");
+            if (rs_external_assessors_search) {
+                $("#rs-external-assessors-search").attr("placeholder", rs_external_assessors_search.replace("evaluators", "assessors"));
+            }
+
+            var rs_selected_assessors_list_heading = $("#rs-selected-assessors-list-heading").html();
+            if (rs_selected_assessors_list_heading) {
+                $("#rs-selected-assessors-list-heading").html(rs_selected_assessors_list_heading.replace("Evaluators", "Assessors"));
+            }
+
+            var rs_add_external_user_btn = $("#rs-add-external-user-btn").html();
+            if (rs_add_external_user_btn) {
+                $("#rs-add-external-user-btn").html(rs_add_external_user_btn.replace("Evaluator", "Assessor"));
+            }
+
+            var specific_dates_assessor_options = $("#specific_dates_assessor_options div label:first").html();
+            if (specific_dates_assessor_options) {
+                $("#specific_dates_assessor_options div label:first").html(specific_dates_assessor_options.replace("Evaluator", "Assessor"));
+            }
+
+            var distribution_assessor_external = $("#distribution-assessor-external").parent().html();
+            if (distribution_assessor_external) {
+                $("#distribution-assessor-external").parent().html(distribution_assessor_external.replace("evaluators", "assessors"));
+            }
+
+            var select_assessors_grouped = $("#select-assessors-grouped label:first").html();
+            if (select_assessors_grouped) {
+                $("#select-assessors-grouped label:first").html(select_assessors_grouped.replace("Evaluators", "Assessors"));
+            }
+
+            var choose_assessors_btn_default_text = $("#choose-assessors-btn-default-text").val();
+            if (choose_assessors_btn_default_text) {
+                $("#choose-assessors-btn-default-text").val(choose_assessors_btn_default_text.replace("Evaluators", "Assessors"));
+            }
+
+            var choose_assessors_btn = $("#choose-assessors-btn").html();
+            if (choose_assessors_btn) {
+                $("#choose-assessors-btn").html(choose_assessors_btn.replace("Evaluators", "Assessors"));
+            }
+
+            var select_assessors_faculty = $("#select-assessors-faculty label:first").html();
+            if (select_assessors_faculty) {
+                $("#select-assessors-faculty label:first").html(select_assessors_faculty.replace("Evaluators", "Assessors"));
+            }
+
+            var select_assessors_individual = $("#select-assessors-individual div label:first").html();
+            if (select_assessors_individual) {
+                $("#select-assessors-individual div label:first").html(select_assessors_individual.replace("Evaluators", "Assessors"));
+            }
+
+            var external_assessors_search = $("#external-assessors-search").attr("placeholder");
+            if (external_assessors_search) {
+                $("#external-assessors-search").attr("placeholder", external_assessors_search.replace("evaluators", "assessors"));
+            }
+
+            var external_assessors_search_html = $("#external-assessors-search").html();
+            if (external_assessors_search_html) {
+                $("#external-assessors-search").html(external_assessors_search_html.replace("Evaluators", "Assessors"));
+            }
+
+            var add_external_user_btn = $("#add-external-user-btn").html();
+            if (add_external_user_btn) {
+                $("#add-external-user-btn").html(add_external_user_btn.replace("Evaluator", "Assessor"));
+            }
+        } else {
+            var distribution_eventtype_learners_attended = $("#distribution-eventtype-learners-attended").parent().html();
+            if (distribution_eventtype_learners_attended) {
+                $("#distribution-eventtype-learners-attended").parent().html(distribution_eventtype_learners_attended.replace("assessment", "evaluation"));
+            }
+
+            var distribution_eventtype_learners = $("#distribution-eventtype-learners").parent().html();
+            if (distribution_eventtype_learners) {
+                $("#distribution-eventtype-learners").parent().html(distribution_eventtype_learners.replace("assessment", "evaluation"));
+            }
+
+            var eventtype_target_options = $("#eventtype-target-options div label:first").html();
+            if (eventtype_target_options) {
+                $("#eventtype-target-options div label:first").html(eventtype_target_options.replace("Assessments", "Evaluations"));
+            }
+
+            var specific_dates_target_options = $("#specific_dates_target_options div label:first").html();
+            if (specific_dates_target_options) {
+                $("#specific_dates_target_options div label:first").html(specific_dates_target_options.replace("Assessments", "Evaluations"));
+            }
+
+            var rotation_schedule_target_options = $("#rotation_schedule_target_options div label:first").html();
+            if (rotation_schedule_target_options) {
+                $("#rotation_schedule_target_options div label:first").html(rotation_schedule_target_options.replace("Assessments", "Evaluations"));
+            }
+
+            var assessment_mandatory_label = $('label[for="assessment-mandatory"]:first').html();
+            if (assessment_mandatory_label) {
+                $('label[for="assessment-mandatory"]:first').html(assessment_mandatory_label.replace("Assessment", "Evaluation"));
+            }
+
+            var assessment_mandatory = $("#assessment-mandatory").parent().html();
+            if (assessment_mandatory) {
+                $("#assessment-mandatory").parent().html(assessment_mandatory.replace("assessors", "evaluators").replace("this assessment", "this evaluation"));
+            }
+
+            var attempts_scope_targets = $("#attempts-scope-targets").parent().html();
+            if (attempts_scope_targets) {
+                $("#attempts-scope-targets").parent().html(attempts_scope_targets.replace("Assessors", "Evaluators").replace("assess", "evaluate"));
+            }
+
+            var attempts_scope_overall = $("#attempts-scope-overall").parent().html();
+            if (attempts_scope_overall) {
+                $("#attempts-scope-overall").parent().html(attempts_scope_overall.replace("Assessors", "Evaluators"));
+            }
+
+            var wizard_nav_item_4 = $("#wizard-nav-item-4 a").html();
+            if (wizard_nav_item_4) {
+                $("#wizard-nav-item-4 a").html(wizard_nav_item_4.replace("Assessors", "Evaluators"));
+            }
+
+            var distribution_target_self = $("#distribution-target-self").html();
+            if (distribution_target_self) {
+                $("#distribution-target-self").html(distribution_target_self.replace("assessors", "evaluators").replace("assessment", "evaluation"));
+            }
+
+            var distribution_rs_target_self = $("#distribution-rs-target-self").html();
+            if (distribution_rs_target_self) {
+                $("#distribution-rs-target-self").html(distribution_rs_target_self.replace("assessors", "evaluators").replace("assessment", "evaluation"));
+            }
+
+            var repeat_targets = $("#repeat-targets").html();
+            if (repeat_targets) {
+                $("#repeat-targets").html(repeat_targets.replace("Assessors", "Evaluators"));
+            }
+
+            var eventtype_assessor_options = $("#eventtype-assessor-options div label:first").html();
+            if (eventtype_assessor_options) {
+                $("#eventtype-assessor-options div label:first").html(eventtype_assessor_options.replace("Assessor", "Evaluator"));
+            }
+
+            var distribution_eventtype_assessor_learner = $("#distribution-eventtype-assessor-learner").parent().html();
+            if (distribution_eventtype_assessor_learner) {
+                $("#distribution-eventtype-assessor-learner").parent().html(distribution_eventtype_assessor_learner.replace("assessors", "evaluators"));
+            }
+
+            var distribution_eventtype_assessor_faculty = $("#distribution-eventtype-assessor-faculty").parent().html();
+            if (distribution_eventtype_assessor_faculty) {
+                $("#distribution-eventtype-assessor-faculty").parent().html(distribution_eventtype_assessor_faculty.replace("assessors", "evaluators"));
+            }
+
+            var distribution_eventtype_assessor_external = $("#distribution-eventtype-assessor-external").html();
+            if (distribution_eventtype_assessor_external) {
+                $("#distribution-eventtype-assessor-external").html(distribution_eventtype_assessor_external.replace("assessors", "evaluators"));
+            }
+
+            var eventtype_select_assessors_individual = $("#eventtype-select-assessors-individual div label:first").html();
+            if (eventtype_select_assessors_individual) {
+                $("#eventtype-select-assessors-individual div label:first").html(eventtype_select_assessors_individual.replace("Assessors", "Evaluators"));
+            }
+
+            var eventtype_external_assessors_search = $("#eventtype-external-assessors-search").attr("placeholder");
+            if (eventtype_external_assessors_search) {
+                $("#eventtype-external-assessors-search").attr("placeholder", eventtype_external_assessors_search.replace("assessors", "evaluators"));
+            }
+
+            var eventtype_selected_assessors_list_heading = $("#eventtype-selected-assessors-list-heading").html();
+            if (eventtype_selected_assessors_list_heading) {
+                $("#eventtype-selected-assessors-list-heading").html(eventtype_selected_assessors_list_heading.replace("Assessors", "Evaluators"));
+            }
+
+            var eventtype_add_external_user_btn = $("#eventtype-add-external-user-btn").html();
+            if (eventtype_add_external_user_btn) {
+                $("#eventtype-add-external-user-btn").html(eventtype_add_external_user_btn.replace("Assessor", "Evaluator"));
+            }
+
+            var rotation_schedule_assessor_options = $("#rotation_schedule_assessor_options div label:first").html();
+            if (rotation_schedule_assessor_options) {
+                $("#rotation_schedule_assessor_options div label:first").html(rotation_schedule_assessor_options.replace("Assessor", "Evaluator"));
+            }
+
+            var distribution_rs_assessor_learner = $("#distribution-rs-assessor-learner").parent().html();
+            $("#distribution-rs-assessor-learner").parent().html(distribution_rs_assessor_learner.replace("assessors", "evaluators"));
+
+            var distribution_rs_assessor_faculty = $("#distribution-rs-assessor-faculty").parent().html();
+            if (distribution_rs_assessor_faculty) {
+                $("#distribution-rs-assessor-faculty").parent().html(distribution_rs_assessor_faculty.replace("assessors", "evaluators"));
+            }
+
+            var distribution_rs_assessor_faculty = $("#distribution-rs-assessor-faculty").parent().html().replace("assessors", "evaluators");
+            if (distribution_rs_assessor_faculty) {
+                $("#distribution-rs-assessor-faculty").parent().html(distribution_rs_assessor_faculty.replace("assessors", "evaluators"));
+            }
+
+            var rs_select_assessors_individual = $("#rs-select-assessors-individual div label:first").html();
+            if (rs_select_assessors_individual) {
+                $("#rs-select-assessors-individual div label:first").html(rs_select_assessors_individual.replace("Assessors", "Evaluators"));
+            }
+
+            var rs_external_assessors_search = $("#rs-external-assessors-search").attr("placeholder");
+            if (rs_external_assessors_search) {
+                $("#rs-external-assessors-search").attr("placeholder", rs_external_assessors_search.replace("assessors", "evaluators"));
+            }
+
+            var rs_selected_assessors_list_heading = $("#rs-selected-assessors-list-heading").html();
+            if (rs_selected_assessors_list_heading) {
+                $("#rs-selected-assessors-list-heading").html(rs_selected_assessors_list_heading.replace("Assessors", "Evaluators"));
+            }
+
+            var rs_add_external_user_btn = $("#rs-add-external-user-btn").html();
+            if (rs_add_external_user_btn) {
+                $("#rs-add-external-user-btn").html(rs_add_external_user_btn.replace("Assessor", "Evaluator"));
+            }
+
+            var specific_dates_assessor_options = $("#specific_dates_assessor_options div label:first").html();
+            if (specific_dates_assessor_options) {
+                $("#specific_dates_assessor_options div label:first").html(specific_dates_assessor_options.replace("Assessor", "Evaluator"));
+            }
+
+            var distribution_assessor_external = $("#distribution-assessor-external").parent().html();
+            if (distribution_assessor_external) {
+                $("#distribution-assessor-external").parent().html(distribution_assessor_external.replace("assessors", "evaluators"));
+            }
+
+            var select_assessors_grouped = $("#select-assessors-grouped label:first").html();
+            if (select_assessors_grouped) {
+                $("#select-assessors-grouped label:first").html(select_assessors_grouped.replace("Assessors", "Evaluators"));
+            }
+
+            var choose_assessors_btn_default_text = $("#choose-assessors-btn-default-text").val();
+            if (choose_assessors_btn_default_text) {
+                $("#choose-assessors-btn-default-text").val(choose_assessors_btn_default_text.replace("Assessors", "Evaluators"));
+            }
+
+            var choose_assessors_btn = $("#choose-assessors-btn").html();
+            if (choose_assessors_btn) {
+                $("#choose-assessors-btn").html(choose_assessors_btn.replace("Assessors", "Evaluators"));
+            }
+
+            var select_assessors_faculty = $("#select-assessors-faculty label:first").html();
+            if (select_assessors_faculty) {
+                $("#select-assessors-faculty label:first").html(select_assessors_faculty.replace("Assessors", "Evaluators"));
+            }
+
+            var select_assessors_individual = $("#select-assessors-individual div label:first").html();
+            if (select_assessors_individual) {
+                $("#select-assessors-individual div label:first").html(select_assessors_individual.replace("Assessors", "Evaluators"));
+            }
+
+            var external_assessors_search = $("#external-assessors-search").attr("placeholder");
+            if (external_assessors_search) {
+                $("#external-assessors-search").attr("placeholder", external_assessors_search.replace("assessors", "evaluators"));
+            }
+
+            var external_assessors_search_html = $("#external-assessors-search").html();
+            if (external_assessors_search_html) {
+                $("#external-assessors-search").html(external_assessors_search_html.replace("Assessors", "Evaluators"));
+            }
+
+            var add_external_user_btn = $("#add-external-user-btn").html();
+            if (add_external_user_btn) {
+                $("#add-external-user-btn").html(add_external_user_btn.replace("Assessor", "Evaluator"));
+            }
+        }
+    }
+
+    function resetExpiryControls(control_to_display = false, clear_values = false) {
+
+        switch (control_to_display) {
+            case "offset":
+                $("#expiry-option-controls").removeClass("hide");
+                $("#expiry-date-option-controls").addClass("hide");
+                break;
+            case "date":
+                $("#expiry-option-controls").addClass("hide");
+                $("#expiry-date-option-controls").removeClass("hide");
+                break;
+            default:
+                break;
+        }
+
+        if (clear_values) {
+            $("#expiry-option").attr("checked", false);
+            $("#expiry-date").val("");
+        }
+    }
+
+    automatically_triggered = true;
+    $("#assessment_type").trigger("change");
+
+    var popover_options = {
+        animation: false,
+        container: "body",
+        selector: "[rel=\"popover\"]",
+        html: true,
+        placement: "left",
+        title: "User Information",
+        content: function () {
+            var result = "";
+            var target_id = $(this).attr("data-id");
+            var user_data_request = $.ajax({
+                url: "?section=api-distributions",
+                data: "method=get-user-popover-data&proxy_id=" + target_id + "&advanced_search=1&proxy_id=" + target_id,
+                type: "GET"
+            });
+            $.when(user_data_request).done(function (data) {
+                result = false;
+                var jsonResponse = safeParseJson(data, "");
+                if (typeof jsonResponse.data !== 'undefined') {
+                    if (jsonResponse.data) {
+                        var data = jsonResponse.data[0];
+                        if (typeof data !== 'undefined') {
+                            if (typeof data.target_id !== 'undefined') {
+                                result = "<div class='inner-popover-content'><img class='userAvatar img-polaroid center-align square-image' src='" + ENTRADA_URL + "/api/photo.api.php/" + data.target_id + "/official' /><br/>";
+                                result += "<div> " + data.target_label;
+
+                                if ((data.learner_level == "" && data.group == "faculty") || (data.cbme_flag == false)) {
+                                    result += "<div class='pull-right'><span class='label'>" + data.group.charAt(0).toUpperCase() + data.group.slice(1) + " &bull; " + data.role + "</span></div>";
+                                } else {
+                                    if (data.hasOwnProperty("stage_name") && data.hasOwnProperty("stage") && data.hasOwnProperty("cbme_flag")) {
+                                        /**
+                                         * Removed the functionality that showed the learners CBME stage since at this point a course_id isn't always known, therefore the learner stage can't reliably be determined.
+                                         */
+                                        //result += "<div class='pull-right'><span data-toggle='tooltip' title='"+ data.stage_name +"' class='label "+ (data.cbme_flag == true ? "learner-level-badge cbme" : "") +"'>" + data.stage + (data.stage == "" ? "" : " &bull; ") + data.learner_level + "</span></div>";
+                                        result += "<div class='pull-right'><span class='label'>" + data.group.charAt(0).toUpperCase() + data.group.slice(1) + " &bull; " + data.role + "</span></div>";
+                                    }
+                                }
+
+                                result += "</div>";
+                                result += "<div class='truncate'><a href='mailto:" + data.email + "' target='_top'>" + data.email + "</a></div>";
+                            }
+                        }
+                    }
+                }
+
+                if (!result) {
+                    result = "<p class='center-align space-above large'><strong>No information found</strong></p>";
+                }
+
+                $(".popover-content").html(result);
+            });
+            return result;
+        }
+    };
+
+    $(document).on("mouseenter", ".search-filter-item", function(e) {
+        e.stopPropagation();
+        var item = $(this);
+
+        if ($(item).attr("data-id").length && $(item).attr("data-id") > 0) {
+            var popover = false;
+            var popover_filters = [
+                "target_individual",
+                "individual_target_learner",
+                "target_faculty",
+                "additional_target_faculty",
+                "additional_target_learners",
+                "assessor_individual",
+                "individual_assessor_learners",
+                "assessor_faculty",
+                "additional_assessor_faculty",
+                "additional_assessor_learners",
+                "delegator"
+            ];
+
+            // We only want to render popover user cards in individual user cases, which we determine using the data filter.
+            $.each(popover_filters, function (i, v) {
+                if ($(item).find("input[data-filter=\"" + v + "\"]").length) {
+                    popover = true;
+                }
+            });
+
+            if (popover) {
+                timer = setTimeout(function () {
+                    $(".popover").remove();
+                    $("[rel=\"popover\"]").popover(popover_options);
+                    item.popover("show");
+                }, 700);
+            }
+        }
+    });
+
+    $(document).on("click", ".popover", function(e) {
+        e.stopPropagation();
+        $(".popover").remove();
+        $("[rel=\"popover\"]").popover(popover_options);
+        $(this).popover("show");
+    });
+
+    $(document).on("mouseleave", ".search-filter-item", function(e) {
+        e.stopPropagation();
+        clearTimeout(timer);
+        setTimeout(function () {
+            if (!$(".popover:hover").length) {
+                $(".popover-content").empty();
+                $(".popover").remove();
+            }
+        }, 300);
+    });
+
+    $(document).on("mouseleave", ".popover", function(e) {
+        e.stopPropagation();
+        clearTimeout(timer);
+        if (!$(".search-filter-item:hover").length) {
+            setTimeout(function () {
+                if (!$(".popover:hover").length) {
+                    $(".popover-content").empty();
+                    $(".popover").remove();
+                }
+            }, 300);
+        }
+    });
+
+    $(document).on("click", ".search-filter-item", function(e) {
+        e.stopPropagation();
+        $(".popover").hide();
     });
 });
 
@@ -2181,7 +3426,6 @@ function distribution_next_step (next_step) {
                     break;
 
                 case 3: /** Validation completed on method selection, prepare for Targets step **/
-
                     var settings = jQuery("#choose-method-btn").data("settings");
                     var selected_method = settings.value;
                     jQuery("#distribution-feedback-options").addClass("hide");
@@ -2219,12 +3463,12 @@ function distribution_next_step (next_step) {
                         break;
                         case "eventtype" :
                             jQuery("#eventtype-target-options").removeClass("hide");
+                            jQuery("#non-cbme-targets-btn").attr("checked", "checked");
                         break;
                     }
                     break;
 
                 case 4: /** Validation complete on Targets step, prepare for Assessors step **/
-
                     // Clear the previous step's additional target learners when necessary. We don't want to POST additional learners if we don't have to (this causes problems if we do).
                     if (jQuery('#distribution-rs-target-individual').attr("checked") == "checked" || jQuery('#distribution-rs-target-additional-learners').attr("checked") != "checked" ) {
                         jQuery("input[name='additional_target_learners[]']").remove();
@@ -2236,6 +3480,12 @@ function distribution_next_step (next_step) {
                     var settings = jQuery("#choose-method-btn").data("settings");
                     var selected_method = settings.value;
                     jQuery("#distribution-feedback-options").addClass("hide");
+
+                    if (jQuery("#assessment_type").val() == "assessment" && selected_method == "date_range") {
+                        jQuery("#exclude_self_assessment_options").removeClass("hide");
+                    } else {
+                        jQuery("#exclude_self_assessment_options").addClass("hide");
+                    }
 
                     switch (selected_method) {
                         case "rotation_schedule" :
@@ -2878,11 +4128,7 @@ function distribution_method_changed (new_distribution_method) {
     jQuery('input[name="schedule_delivery_type"]').removeAttr("checked");
 
     reset_wizard_step_2_visibility(new_distribution_method);
-
-    /** Reset step 3 **/
     reset_wizard_step_3(new_distribution_method);
-
-    /** Reset step 4 **/
     reset_wizard_step_4(new_distribution_method);
 
     /** Don't need to reset step 5 as its content is not necessarily dependent on the rest of the wizard. **/
@@ -2913,9 +4159,7 @@ function delegation_type_changed (new_type) {
     jQuery("#delegator_timeframe_"+new_type).attr("checked","checked");
 
     reset_wizard_step_2_visibility(new_type);
-
     reset_wizard_step_3(new_type);
-
     reset_wizard_step_4(new_type);
 }
 
@@ -2967,9 +4211,9 @@ function reset_wizard_step_3 (distribution_method) {
     jQuery('[name="additional_target_learners[]"]').remove();
     jQuery('[name="selected_internal_targets[]"]').remove();
     jQuery('[name="distribution_approvers[]"]').remove();
+    jQuery(".selected-target-item").remove();
 
     jQuery('#distribution-feedback-options').addClass("hide");
-
     jQuery('#internal-targets-list').html('');
 
     jQuery('#specific_dates_target_options').addClass("hide");
@@ -2991,7 +4235,9 @@ function reset_wizard_step_3 (distribution_method) {
     jQuery('#rs-target-learner-service').addClass("hide");
     jQuery("#eventtype-target-selector").addClass("hide");
     jQuery('#select-approvers').addClass("hide");
-    jQuery('#distribution-approver-option').addClass("hide");
+
+    jQuery("#rs-target-external-options").addClass("hide");
+    jQuery("#select-targets-external").addClass("hide");
 
     var selected_method = get_selected_method_type(distribution_method);
     if (selected_method == "date_range") {
@@ -3015,19 +4261,19 @@ function reset_wizard_step_4 (distribution_method) {
     clear_form_elements('#wizard-step-4', true);
 
     // These are the variables added to the form via hidden elements when autocompletes and advancedSearch return.
+    jQuery('[name="distribution_approvers[]"]').remove();
+    jQuery('[name="additional_assessor_learners[]"]').remove();
+    jQuery('[name="additional_assessor_eventtype_faculty[]"]').remove();
+    jQuery('[name="additional_assessor_faculty[]"]').remove();
     jQuery('[name="assessor_cohort_id"]').remove();
     jQuery('[name="assessor_course_id"]').remove();
-    jQuery('[name="selected_internal_assessors[]"]').remove();
-    jQuery('[name="additional_assessor_faculty[]"]').remove();
-    jQuery('[name="additional_assessor_learners[]"]').remove();
+    jQuery('[name="assessor_cgroup_id"]').remove();
     jQuery('[name="assessor_faculty[]"]').remove();
-    jQuery('[name="additional_assessor_eventtype_faculty[]"]').remove();
-    jQuery('[name="eventtypes[]"]').remove();
-    jQuery('[name="distribution_approvers[]"]').remove();
     jQuery('#internal-assessors-list').html('');
     jQuery('#rs-internal-assessors-list').html('');
     jQuery('#eventtype-internal-assessors-list').html('');
-    jQuery('#approver-required').removeAttr("checked");
+    jQuery('[name="selected_internal_assessors[]"]').remove();
+    jQuery(".selected-target-item").remove();
 
     jQuery('#choose-assessors-btn').html(ca_btn_default_text + chevron);
     jQuery('.eventtype-assessor-option').addClass("hide");
@@ -3044,8 +4290,9 @@ function reset_wizard_step_4 (distribution_method) {
     jQuery('#rs-select-assessors-individual').addClass("hide");
     jQuery('#distribution-feedback-options').addClass("hide");
     jQuery('#select-approvers').addClass("hide");
-    jQuery('#distribution-approver-option').addClass("hide");
-    
+    jQuery('#approver-required').removeAttr("checked");
+    jQuery('input[name="distribution_rs_assessor_option"]').removeAttr("checked");
+
     var selected_method = get_selected_method_type(distribution_method);
     if (selected_method == "date_range") {
         jQuery('#specific_dates_assessor_options').removeClass("hide");

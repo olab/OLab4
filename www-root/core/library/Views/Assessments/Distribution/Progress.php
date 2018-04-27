@@ -22,7 +22,7 @@
  */
 class Views_Assessments_Distribution_Progress extends Views_Assessments_Base {
 
-    public static function renderProgressSection($PREFERENCES, $DISTRIBUTION_ID, $distribution, $details, $pending, $in_progress, $complete, $assessment_permissions, $disable_pdf_button = false) {
+    public static function renderProgressSection($SUBMODULE_TEXT, $PREFERENCES, $DISTRIBUTION_ID, $distribution, $details, $pending, $in_progress, $complete, $assessment_permissions, $disable_pdf_button = false, $form_action = "", $target_list = array(), $start_date = 0, $end_date = 0) {
         global $translate;
         ?>
         <div id="assessment-block" class="clearfix space-below">
@@ -46,7 +46,7 @@ class Views_Assessments_Distribution_Progress extends Views_Assessments_Base {
             </div>
         </div>
         <div id="target-search-block" class="clearfix space-below medium">
-            <input class="search-icon" type="text" id="target-search-input" placeholder="<?php echo $translate->_("Search Assessors...") ?>"/>
+            <input class="search-icon" type="text" id="target-progress-search-input" placeholder="<?php echo $translate->_("Search Targets...") ?>"/>
         </div>
         <div id="distribution-load-error" class="alert alert-block alert-danger hide">
             <button type="button" class="close distribution-load-error-msg">&times;</button>
@@ -69,11 +69,9 @@ class Views_Assessments_Distribution_Progress extends Views_Assessments_Base {
                         <li>
                             <a href="<?php echo ENTRADA_URL . "/admin/assessments/distributions?section=form&adistribution_id=" . html_encode($distribution->getID()); ?>" class="edit-distribution" title="<?php echo $translate->_("Edit Distribution Details"); ?>" data-adistribution-id="<?php echo html_encode($DISTRIBUTION_ID) ?>"><?php echo $translate->_("Edit Distribution") ?></a>
                         </li>
-                        <?php if ($details["distribution_target_type"] == "proxy_id"): ?>
-                            <li>
-                                <a href="#add-task-modal" title="<?php echo $translate->_("Add Task To Distribution"); ?>" data-toggle="modal" data-adistribution-id="<?php echo html_encode($DISTRIBUTION_ID) ?>"><?php echo $translate->_("Add a Task") ?></a>
-                            </li>
-                        <?php endif; ?>
+                        <li>
+                            <a href="#add-task-modal" title="<?php echo $translate->_("Add Task To Distribution"); ?>" data-toggle="modal" data-adistribution-id="<?php echo html_encode($DISTRIBUTION_ID) ?>"><?php echo $translate->_("Add a Task") ?></a>
+                        </li>
                         <li>
                             <a href="#reminder-modal" title="<?php echo $translate->_("Send Reminder to Assessor"); ?>" data-toggle="modal" data-adistribution-id="<?php echo html_encode($DISTRIBUTION_ID) ?>"><?php echo $translate->_("Send Reminders") ?></a>
                         </li>
@@ -83,43 +81,17 @@ class Views_Assessments_Distribution_Progress extends Views_Assessments_Base {
             <?php
         }
 
-        if (isset($details) && isset($details["pending"])) {
-            ?>
-            <div id="targets-pending-table" class="target-table <?php (isset($PREFERENCES["target_view"]) && $PREFERENCES["target_view"] === "list" ? "" : "hide"); ?>">
-                <table id="assessment-tasks-table" class="table table-striped table-bordered">
-                    <thead>
-                    <tr>
-                        <th width="35%"><?php echo $translate->_("Assessor"); ?></th>
-                        <th width="35%"><?php echo $translate->_("Target(s)"); ?></th>
-                        <th width="20%"><?php echo $translate->_("Delivery Date"); ?></th>
-                        <th class="heading-icon"><i class="icon-bell"></th>
-                        <th class="heading-icon"><i class="icon-trash"></th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <?php
-                    foreach ($details["pending"] as $type) {
-                        foreach ($type as $detail) {
-                            ?>
-                            <tr class="target-pending-block target-block">
-                                <?php Views_Assessments_Distribution_Progress::renderTaskRow($detail, $DISTRIBUTION_ID); ?>
-                            </tr>
-                            <tr class="hide no-search-targets">
-                                <td colspan="5"><?php echo $translate->_("No targets found matching your search criteria."); ?></td>
-                            </tr>
-                            <?php
-                        }
+        if (isset($details) && isset($details["pending"])) { ?>
+            <div id="targets-pending-table" class="target-table <?php echo(!isset($PREFERENCES["target_view"]) ? "" : (isset($PREFERENCES["target_view"]) && $PREFERENCES["target_view"] === "list" ? "" : "hide")); ?>">
+                <?php
+                foreach ($details["pending"] as $type) {
+                    foreach ($type as $detail) {
+                        Views_Assessments_Distribution_Progress::renderAssessorTable($detail, "pending", $DISTRIBUTION_ID);
                     }
-                    if ($pending == 0) { ?>
-                        <tr>
-                            <td colspan="5">
-                                <p id="no-pending-targets" class="no-targets"><?php echo $translate->_("There are currently no assessments pending."); ?></p>
-                            </td>
-                        </tr>
-                    <?php }
-                    ?>
-                    </tbody>
-                </table>
+                }
+                if ($pending == 0) { ?>
+                    <p id="no-pending-targets" class="no-targets"><?php echo $translate->_("There are currently no assessments pending."); ?></p>
+                <?php } ?>
             </div>
             <?php
         } else { ?>
@@ -144,9 +116,16 @@ class Views_Assessments_Distribution_Progress extends Views_Assessments_Base {
                         <li>
                             <a href="<?php echo ENTRADA_URL . "/admin/assessments/distributions?section=form&adistribution_id=" . html_encode($distribution->getID()); ?>" class="edit-distribution" title="<?php echo $translate->_("Edit Distribution Details"); ?>" data-adistribution-id="<?php echo html_encode($DISTRIBUTION_ID) ?>"><?php echo $translate->_("Edit Distribution") ?></a>
                         </li>
-                        <?php if ($details["distribution_target_type"] == "proxy_id"): ?>
+                        <li>
+                            <a href="#add-task-modal" title="<?php echo $translate->_("Add Task To Distribution"); ?>" data-toggle="modal" data-adistribution-id="<?php echo html_encode($DISTRIBUTION_ID) ?>"><?php echo $translate->_("Add a Task") ?></a>
+                        </li>
+                        <?php if ($disable_pdf_button): ?>
                             <li>
-                                <a href="#add-task-modal" title="<?php echo $translate->_("Add Task To Distribution"); ?>" data-toggle="modal" data-adistribution-id="<?php echo html_encode($DISTRIBUTION_ID) ?>"><?php echo $translate->_("Add a Task") ?></a>
+                                <a id="generate-pdf-btn" class="generate-pdf-btn" href="#" title="<?php echo $translate->_("Download PDF"); ?>" data-pdf-unavailable="1" data-adistribution-id="<?php echo html_encode($DISTRIBUTION_ID) ?>"><?php echo $translate->_("Download PDF") ?></a>
+                            </li>
+                        <?php else: ?>
+                            <li>
+                                <a id="generate-pdf-btn" class="generate-pdf-btn" href="#generate-pdf-modal" title="<?php echo $translate->_("Download PDF"); ?>" data-pdf-unavailable="0" data-adistribution-id="<?php echo html_encode($DISTRIBUTION_ID) ?>"><?php echo $translate->_("Download PDF") ?></a>
                             </li>
                         <?php endif; ?>
                         <li>
@@ -161,39 +140,16 @@ class Views_Assessments_Distribution_Progress extends Views_Assessments_Base {
         if (isset($details) && isset($details["inprogress"])) {
             ?>
             <div id="targets-inprogress-table" class="target-table <?php echo(!isset($PREFERENCES["target_view"]) ? "" : (isset($PREFERENCES["target_view"]) && $PREFERENCES["target_view"] === "list" ? "" : "hide")); ?>">
-                <table id="assessment-tasks-table" class="table table-striped table-bordered">
-                    <thead>
-                    <tr>
-                        <th width="35%"><?php echo $translate->_("Assessor"); ?></th>
-                        <th width="35%"><?php echo $translate->_("Target(s)"); ?></th>
-                        <th width="20%"><?php echo $translate->_("Delivery Date"); ?></th>
-                        <th class="heading-icon"><i class="icon-bell"></th>
-                        <th class="heading-icon"><i class="icon-trash"></th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <?php
-                    foreach ($details["inprogress"] as $type) {
-                        foreach ($type as $detail) {
-                            ?>
-                            <tr class="target-inprogress-block target-block">
-                                <?php Views_Assessments_Distribution_Progress::renderTaskRow($detail, $DISTRIBUTION_ID); ?>
-                            </tr>
-                            <tr class="hide no-search-targets">
-                                <td colspan="5"><?php echo $translate->_("No targets found matching your search criteria."); ?></td>
-                            </tr>
-                            <?php
-                        }
+                <?php
+                foreach ($details["inprogress"] as $type) {
+                    foreach ($type as $detail) {
+                        Views_Assessments_Distribution_Progress::renderAssessorTable($detail, "inprogress", $DISTRIBUTION_ID);
                     }
-                    if ($in_progress == 0) { ?>
-                        <tr>
-                            <td colspan="5">
-                                <p id="no-inprogress-targets" class="no-targets"><?php echo $translate->_("There are currently no assessments in progress."); ?></p>
-                            </td>
-                        </tr>
-                    <?php } ?>
-                    </tbody>
-                </table>
+                }
+                if ($in_progress == 0) { ?>
+                    <p id="no-inprogress-targets" class="no-targets"><?php echo $translate->_("There are currently no assessments in progress."); ?></p>
+                    <?php
+                } ?>
             </div>
             <?php
         } else { ?>
@@ -208,33 +164,51 @@ class Views_Assessments_Distribution_Progress extends Views_Assessments_Base {
         echo "<div id=\"assessment-error\" class=\"hide\"></div>";
         if ($assessment_permissions && isset($details) && isset($details["complete"])) { ?>
             <div class="clearfix space-below medium">
-                <a href="#delete-tasks-modal" class="btn btn-danger pull-left" title="<?php echo $translate->_("Delete Task(s) From Distribution"); ?>" data-toggle="modal" data-adistribution-id="<?php echo html_encode($DISTRIBUTION_ID) ?>"><i class="icon-trash icon-white"></i> <?php echo $translate->_("Delete Task(s)") ?>
-                </a>
-                <div class="assessment-distributions-container btn-group pull-right">
-                    <button class="btn btn-primary dropdown-toggle no-printing" data-toggle="dropdown" title="<?php echo $translate->_("Manage Distribution Details"); ?>">
-                        <i class="icon-pencil icon-white"></i> <?php echo $translate->_("Manage Distribution") ?>
-                        <span class="caret"></span>
-                    </button>
-                    <ul class="dropdown-menu">
-                        <li>
-                            <a href="<?php echo ENTRADA_URL . "/admin/assessments/distributions?section=form&adistribution_id=" . html_encode($distribution->getID()); ?>" class="edit-distribution" title="<?php echo $translate->_("Edit Distribution Details"); ?>" data-adistribution-id="<?php echo html_encode($DISTRIBUTION_ID) ?>"><?php echo $translate->_("Edit Distribution") ?></a>
-                        </li>
-                        <?php if ($details["distribution_target_type"] == "proxy_id"): ?>
+                <form <?php echo ($form_action ? "action=\"" . html_encode($form_action) . "\"" : "") ?> method="post" target="_blank">
+                    <input type="hidden" name="parent_id_container" id="targets-complete-container" value="targets-complete-container" />
+                    <?php if ($distribution) : ?>
+                        <div id="report-msgs"></div>
+                        <a id="csv-report" href="<?php echo ENTRADA_URL . "/admin/assessments/distributions?section=api-distributions&method=get-distribution-csv-report&form_id=" . html_encode($distribution->getFormID()) . "&adistribution_id=" . $DISTRIBUTION_ID ?>" class="btn btn-default space-left"><i class="fa fa-download" aria-hidden="true"></i> <?php echo $SUBMODULE_TEXT["weighted_csv_report"]; ?></a>
+                        <?php if ($distribution->getAssessmentType() == "evaluation" && $form_action && $form_action != "") : ?>
+                            <input class="btn btn-default space-left medium" type="submit" value="<?php echo $translate->_("Aggregated Report") ?>" />
+                            <?php if ($target_list) : ?>
+                                <?php foreach ($target_list as $target) : ?>
+                                    <input type="hidden" name="targets[]" value="<?php echo $target["proxy_id"] ?>" />
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                            <input type="hidden" name="form_id" value="<?php echo $distribution->getFormID(); ?>" />
+                            <input type="hidden" name="course_id" value="<?php echo $distribution->getCourseID(); ?>" />
+                            <input type="hidden" name="adistribution_id" value="<?php echo $distribution->getID(); ?>" />
+                            <input type="hidden" name="start_date" value="<?php echo html_encode($start_date) ?>" />
+                            <input type="hidden" name="end_date" value="<?php echo html_encode($end_date) ?>" />
+                        <?php endif; ?>
+                    <?php endif; ?>
+                    <a href="#delete-tasks-modal" class="btn btn-danger pull-left" title="<?php echo $translate->_("Delete Task(s) From Distribution"); ?>" data-toggle="modal" data-adistribution-id="<?php echo html_encode($DISTRIBUTION_ID) ?>"><i class="icon-trash icon-white"></i> <?php echo $translate->_("Delete Task(s)") ?></a>
+
+                    <div class="assessment-distributions-container btn-group pull-right">
+                        <button class="btn btn-primary dropdown-toggle no-printing" data-toggle="dropdown" title="<?php echo $translate->_("Manage Distribution Details"); ?>">
+                            <i class="icon-pencil icon-white"></i> <?php echo $translate->_("Manage Distribution") ?>
+                            <span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a href="<?php echo ENTRADA_URL . "/admin/assessments/distributions?section=form&adistribution_id=" . html_encode($distribution->getID()); ?>" class="edit-distribution" title="<?php echo $translate->_("Edit Distribution Details"); ?>" data-adistribution-id="<?php echo html_encode($DISTRIBUTION_ID) ?>"><?php echo $translate->_("Edit Distribution") ?></a>
+                            </li>
                             <li>
                                 <a href="#add-task-modal" title="<?php echo $translate->_("Add Task To Distribution"); ?>" data-toggle="modal" data-adistribution-id="<?php echo html_encode($DISTRIBUTION_ID) ?>"><?php echo $translate->_("Add a Task") ?></a>
                             </li>
-                        <?php endif; ?>
-                        <?php if ($disable_pdf_button): ?>
-                            <li>
-                                <a id="generate-pdf-btn" href="#" title="<?php echo $translate->_("Download PDF"); ?>" data-pdf-unavailable="1" data-adistribution-id="<?php echo html_encode($DISTRIBUTION_ID) ?>"><?php echo $translate->_("Download PDF") ?></a>
-                            </li>
-                        <?php else: ?>
-                            <li>
-                                <a id="generate-pdf-btn" href="#generate-pdf-modal" title="<?php echo $translate->_("Download PDF"); ?>" data-pdf-unavailable="0" data-toggle="modal" data-adistribution-id="<?php echo html_encode($DISTRIBUTION_ID) ?>"><?php echo $translate->_("Download PDF") ?></a>
-                            </li>
-                        <?php endif; ?>
-                    </ul>
-                </div>
+                            <?php if ($disable_pdf_button): ?>
+                                <li>
+                                    <a id="generate-pdf-btn" class="generate-pdf-btn" href="#" title="<?php echo $translate->_("Download PDF"); ?>" data-pdf-unavailable="1" data-adistribution-id="<?php echo html_encode($DISTRIBUTION_ID) ?>"><?php echo $translate->_("Download PDF") ?></a>
+                                </li>
+                            <?php else: ?>
+                                <li>
+                                    <a id="generate-pdf-btn" class="generate-pdf-btn" href="#generate-pdf-modal" title="<?php echo $translate->_("Download PDF"); ?>" data-pdf-unavailable="0" data-adistribution-id="<?php echo html_encode($DISTRIBUTION_ID) ?>"><?php echo $translate->_("Download PDF") ?></a>
+                                </li>
+                            <?php endif; ?>
+                        </ul>
+                    </div>
+                </form>
             </div>
             <?php
         }
@@ -242,40 +216,16 @@ class Views_Assessments_Distribution_Progress extends Views_Assessments_Base {
         if (isset($details) && isset($details["complete"])) {
             ?>
             <div id="targets-complete-table" class="target-table <?php echo(!isset($PREFERENCES["target_view"]) ? "" : (isset($PREFERENCES["target_view"]) && $PREFERENCES["target_view"] === "list" ? "" : "hide")); ?>">
-                <table id="assessment-tasks-table" class="table table-striped table-bordered">
-                    <thead>
-                    <tr>
-                        <th width="30%"><?php echo $translate->_("Assessor"); ?></th>
-                        <th width="35%"><?php echo $translate->_("Target(s)"); ?></th>
-                        <th width="20%"><?php echo $translate->_("Delivery Date"); ?></th>
-                        <th class="heading-icon"><i class="icon-download-alt"></th>
-                        <th class="heading-icon"><i class="icon-trash"></th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <?php
-                    foreach ($details["complete"] as $type) {
-                        foreach ($type as $detail) {
-                            ?>
-                            <tr class="target-complete-block target-block">
-                                <?php Views_Assessments_Distribution_Progress::renderTaskRow($detail, $DISTRIBUTION_ID, false); ?>
-                            </tr>
-                            <tr class="hide no-search-targets">
-                                <td colspan="5"><?php echo $translate->_("No targets found matching your search criteria."); ?></td>
-                            </tr>
-                            <?php
-                        }
+                <?php
+                foreach ($details["complete"] as $type) {
+                    foreach ($type as $detail) {
+                        Views_Assessments_Distribution_Progress::renderAssessorTable($detail, "complete", $DISTRIBUTION_ID, false);
                     }
-                    if ($complete == 0) { ?>
-                        <tr>
-                            <td colspan="5">
-                                <p id="no-complete-targets" class="no-targets"><?php echo $translate->_("There are currently no assessments completed."); ?></p>
-                            </td>
-                        </tr>
-                        <?php
-                    } ?>
-                    </tbody>
-                </table>
+                }
+                if ($complete == 0) { ?>
+                    <p id="no-complete-targets" class="no-targets"><?php echo $translate->_("There are currently no assessments completed."); ?></p>
+                    <?php
+                } ?>
             </div>
             <?php
         } else { ?>
@@ -286,169 +236,173 @@ class Views_Assessments_Distribution_Progress extends Views_Assessments_Base {
         echo "</div>";
     }
 
-    public static function renderTaskRow($detail, $DISTRIBUTION_ID = 0, $show_notification_checkbox = true) {
+    public static function renderAssessorTable($detail, $progress_value, $DISTRIBUTION_ID = 0, $show_notification_checkbox = true) {
         global $translate;
         ?>
-        <td>
-            <div>
-                <strong>
-                    <?php echo(isset($detail["assessor_name"]) ? html_encode($detail["assessor_name"]) : "N/A"); ?>
-                </strong>
-                <?php
-                if ($detail["assessor_email"]) {
-                    echo "<a href=\"mailto:" . html_encode($detail["assessor_email"]) . "\" target=\"_top\">" . html_encode($detail["assessor_email"]) . "</a>";
-                }
-                ?>
-            </div>
-        </td>
-        <td>
-            <?php
-            if (is_array($detail["targets"])) {
-                foreach ($detail["targets"] as $target) {
-                    echo "<div class=\"distribution-progress-row\"><strong>";
-                    $anonymous = true;
-                    if ($target["target_group"] && $target["target_group"] != "faculty") {
-                        $anonymous = false;
-                    }
-                    if ($target["dassessment_id"] && !$anonymous) {
-                        $progress = Models_Assessments_Progress::fetchRowByID($target["aprogress_id"]);
-                        if ($detail["assessor_type"] == "external" && ($progress && $progress->getProgressValue() != "complete" ? true : (!$progress ? true : false))) {
-                            $url = ENTRADA_URL . "/assessment?adistribution_id=" . $DISTRIBUTION_ID . "&target_record_id=" . $target["target_id"] . "&dassessment_id=" . $target["dassessment_id"] . "&assessor_value=" . $detail["assessor_value"] . ($target["aprogress_id"] ? "&aprogress_id=" . $target["aprogress_id"] : "") . "&external_hash=" . $target["external_hash"] . "&from=progress";
-                        } else {
-                            $url = ENTRADA_URL . "/assessments/assessment?adistribution_id=" . $DISTRIBUTION_ID . "&target_record_id=" . $target["target_id"] . "&dassessment_id=" . $target["dassessment_id"] . "&assessor_id=" . $detail["assessor_value"] . ($target["aprogress_id"] ? "&aprogress_id=" . $target["aprogress_id"] : "") . "&view=view_as";
-                        }
-                        echo "<a href=\"" . html_encode($url) . "\" alt=\"View Form for " . html_encode($target["target_name"]) . " \" title=\"View Form for " . html_encode($target["target_name"]) . "\">" . html_encode($target["target_name"]) . "</a>";
-                    } else {
-                        echo html_encode($target["target_name"]);
-                    }
-                    echo "</strong>";
-                    switch ($target["target_type"]) {
-                        case "schedule_id":
-                            echo "<div class=\"schedule-details\">" . $translate->_("Schedule");
-                            /*
-                            if ($target["child_schedules"]) {
-                                echo ": ";
-                                $last_index = sizeof($target["child_schedules"]) - 1;
-                                foreach ($target["child_schedules"] as $key => $child_schedule) {
-                                    echo html_encode($child_schedule["title"]) . ($key < $last_index ? ", " : "");
-                                }
-                                echo "<div class=\"schedule-details\">";
-                                echo html_encode(date("Y-m-d", $target["child_schedules"][0]["start_date"]) . " to " . date("Y-m-d", $target["child_schedules"][$last_index]["end_date"]));
-                                echo "</div>";
-                            }
-                            */
-                            echo "</div>";
-                            break;
-                        case "course_id":
-                            echo "<div class=\"schedule-details\">" . $translate->_("Course") . "</div>";
-                            break;
-                        case "proxy_id":
-                        default:
-                            echo "<div class=\"schedule-details\">";
-                            if ($target["parent_schedule"]) {
-                                echo $target["parent_schedule"]["title"];
-                                /*
-                                if ($target["child_schedules"]) {
-                                    $last_index = sizeof($target["child_schedules"]) - 1;
-                                    echo " - ";
-                                    foreach ($target["child_schedules"] as $key => $child_schedule) {
-                                        echo html_encode($child_schedule["title"]) . ($key < $last_index ? ", " : "");
-                                    }
-                                    echo "<div class=\"schedule-details\">";
-                                    echo html_encode(date("Y-m-d", $target["child_schedules"][0]["start_date"]) . " to " . date("Y-m-d", $target["child_schedules"][$last_index]["end_date"]));
-                                    echo "</div>";
-                                }
-                                */
-                            } else {
-                                echo "<div class=\"schedule-details\">" . $translate->_("Individual") . "</div>";
-                            }
-                            echo "</div>";
-                            break;
-                    }
-                    echo "</div>";
-                }
-            } ?>
-        </td>
-        <td>
-            <strong>
-                <?php
-                if (is_array($detail["targets"])) {
-                    foreach ($detail["targets"] as $target) {
-                        echo "<div class=\"distribution-progress-row\">";
-                        if (isset($target["delivery_date"]) && $target["delivery_date"]) {
-                            echo html_encode(date("Y-m-d", $target["delivery_date"]));
-                        } else {
-                            echo "N/A";
-                        }
-                        echo "</div>";
-                    }
-                } ?>
-            </strong>
-        </td>
-        <?php if ($show_notification_checkbox) { ?>
-            <td>
-                <?php
-                if (is_array($detail["targets"])) {
-                    foreach ($detail["targets"] as $target) { ?>
-                        <div class="distribution-progress-row">
-                            <?php
-                            if ($target["delivery_date"] <= time() && $target["dassessment_id"]) {
-                                ?>
-                                <input class="remind" type="checkbox" name="remind[]"
-                                       data-assessor-name="<?php echo html_encode($detail["assessor_name"]) ?>"
-                                       data-assessment-id="<?php echo html_encode(($target["dassessment_id"] ? $target["dassessment_id"] : 0)) ?>"
-                                       value="<?php echo html_encode($detail["assessor_value"]) ?>"/>
-                                <?php
-                            } ?>
-                        </div>
+        <table class="table table-striped table-bordered assessment-distribution-progress-table">
+            <thead>
+            <tr class="table-header-assessor-row">
+                <th colspan="5">
+                    <div>
+                        <?php echo $translate->_("Assessor: "); ?>
+                        <strong>
+                            <?php echo(isset($detail["assessor"]["name"]) ? html_encode($detail["assessor"]["name"]) : "N/A"); ?>
+                        </strong>
                         <?php
-                    }
-                } ?>
-            </td>
-        <?php } ?>
-        <?php if (!$show_notification_checkbox) { ?>
-            <td>
+                        if ($detail["assessor"]["email"]) {
+                            echo "<a href=\"mailto:" . html_encode($detail["assessor"]["email"]) . "\" target=\"_top\">" . html_encode($detail["assessor"]["email"]) . "</a>";
+                        }
+                        ?>
+                    </div>
+                </th>
+            </tr>
+            <tr>
+                <th width="44%"><?php echo $translate->_("Target(s)"); ?></th>
+                <th width="41%"><?php echo $translate->_("Delivery Date"); ?></th>
+                <th width="5%" class="heading-icon"><i class="icon-bell"></th>
+                <th width="5%" class="heading-icon"><i class="icon-download-alt"></th>
+                <th width="5%" class="heading-icon"><i class="icon-trash"></th>
+            </tr>
+            </thead>
+            <tbody>
             <?php
             if (is_array($detail["targets"])) {
                 foreach ($detail["targets"] as $target) {
+                    $progress = (!empty($target["progress"][$progress_value]) ? end($target["progress"][$progress_value]) : false);
                     ?>
-                    <div class="distribution-progress-row">
-                        <input class="generate-pdf" type="checkbox" name="generate-pdf[]"
-                               data-target-name="<?php echo html_encode($target["target_name"]) ?>"
-                               data-target-id="<?php echo html_encode($target["target_id"]) ?>"
-                               data-assessor-name="<?php echo html_encode($detail["assessor_name"]) ?>"
-                               data-assessor-value="<?php echo html_encode($detail["assessor_value"]) ?>"
-                               data-assessment-id="<?php echo html_encode(($target["dassessment_id"] ? $target["dassessment_id"] : 0)) ?>"
-                               data-progress-id="<?php echo html_encode($target["aprogress_id"]) ?>"
-                               data-distribution-id="<?php echo html_encode($DISTRIBUTION_ID) ?>"
-                               value="<?php echo html_encode($target["delivery_date"]) ?>"/>
-                    </div>
+                    <tr class="target-block<?php echo(!$target["should_exist"] && $progress_value != "complete" ? " deleted" : ""); ?>">
+                        <td class="target-block-target-details">
+                            <strong>
+                                <?php
+                                if (!$target["should_exist"] && $progress_value != "complete") {
+                                    echo html_encode($target["target_name"]);
+                                    echo "<div class=\"task-deleted\"><i class=\"icon-trash\"></i>" . $translate->_(" (Deleted)") . "</div>";
+                                } else {
+                                    if ($target["dassessment_id"]) {
+                                        $assessment_api = new Entrada_Assessments_Assessment(array("limit_dataset" => array("targets"), "fetch_deleted_targets" => true));
+                                        $url = $assessment_api->getAssessmentURL($target["target_value"], $target["target_type"], false, $target["dassessment_id"], $progress ? $progress->getID() : null);
+                                        echo "<a href=\"" . html_encode($url) . "\" alt=\"View Form for " . html_encode($target["target_name"]) . " \" title=\"View Form for " . html_encode($target["target_name"]) . "\">" . html_encode($target["target_name"]) . "</a>";
+                                    } else {
+                                        echo html_encode($target["target_name"]);
+                                    }
+                                }
+                                ?>
+                            </strong>
+                            <div class="schedule-details">
+                            <?php
+                            switch ($target["target_type"]) {
+                                case "schedule_id":
+                                    echo $translate->_("Schedule");
+                                    break;
+                                case "course_id":
+                                    echo $translate->_("Course");
+                                    break;
+                                case "cgroup_id":
+                                    echo $translate->_("Course Group");
+                                    break;
+                            } ?>
+                            </div>
+                        </td>
+                        <td>
+                            <?php
+                            echo "<div><strong>";
+                            if (isset($target["meta"]["delivery_date"]) && $target["meta"]["delivery_date"]) {
+                                echo html_encode(date("Y-m-d", $target["meta"]["delivery_date"]));
+                            } else {
+                                echo "N/A";
+                            }
+                            echo "</strong></div>";
+                            echo "<div class=\"schedule-details\">";
+                            switch ($target["target_type"]) {
+                                case "proxy_id":
+                                default:
+                                    // This progress page is for date range or schedule based distributions. If an associated record is set for a schedule based assessment, it will be the ID of the schedule record.
+                                    if ($target["meta"]["associated_record_type"] == "schedule_id" && $target["meta"]["associated_record_id"]) {
+                                        $schedule = Models_Schedule::fetchRowByID($target["meta"]["associated_record_id"]);
+                                        echo Entrada_Assessments_Base::getConcatenatedBlockString(($target["dassessment_id"] ? $target["dassessment_id"] : false), ($schedule ? $schedule : false), $target["meta"]["start_date"], $target["meta"]["end_date"], $target["meta"]["organisation_id"]);
+                                    }
+                                    break;
+                            }
+                            echo "</div>";
+                            ?>
+                        </td>
+                        <td>
+                            <?php if ($show_notification_checkbox && $target["should_exist"] && $target["meta"]["delivery_date"] <= time() && $target["dassessment_id"]) { ?>
+                                <div>
+                                    <input class="remind" type="checkbox" name="remind[]"
+                                           data-assessor-name="<?php echo html_encode($detail["assessor"]["name"]) ?>"
+                                           data-dassessment-id="<?php echo html_encode($target["dassessment_id"]) ?>"
+                                           value="<?php echo html_encode($detail["assessor"]["assessor_value"]) ?>"/>
+                                </div>
+                            <?php } ?>
+                        </td>
+                        <td>
+                            <?php if ($progress && ($target["should_exist"] || $progress_value == "complete")) { ?>
+                                <div>
+                                    <input class="generate-pdf" type="checkbox" name="generate-pdf[]"
+                                           data-target-name="<?php echo html_encode($target["target_name"]) ?>"
+                                           data-target-id="<?php echo html_encode($target["target_value"]) ?>"
+                                           data-assessor-name="<?php echo html_encode($detail["assessor"]["name"]) ?>"
+                                           data-assessor-value="<?php echo html_encode($detail["assessor"]["assessor_value"]) ?>"
+                                           data-dassessment-id="<?php echo html_encode(($target["dassessment_id"] ? $target["dassessment_id"] : 0)) ?>"
+                                           data-aprogress-id="<?php echo html_encode($progress ? $progress->getID() : null) ?>"
+                                           data-distribution-id="<?php echo html_encode($DISTRIBUTION_ID) ?>"
+                                           value="<?php echo html_encode($target["meta"]["delivery_date"]) ?>"/>
+                                </div>
+                            <?php } ?>
+                        </td>
+                        <td>
+                            <?php if ($target["should_exist"] && $progress_value != "complete") { ?>
+                                <div>
+                                    <?php
+                                    if (!empty($target["current_record"])) { ?>
+                                        <input class="delete" type="checkbox" name="delete[]"
+                                               data-target-name="<?php echo html_encode($target["target_name"]); ?>"
+                                               data-assessor-name="<?php echo html_encode($detail["assessor"]["name"]); ?>"
+                                               data-atarget-id="<?php echo html_encode($target["current_record"][0]->getID()); ?>"
+                                               value="<?php echo html_encode($target["meta"]["delivery_date"]); ?>"/>
+                                    <?php } else { ?>
+                                        <input class="delete" type="checkbox" name="delete[]"
+                                               data-target-name="<?php echo html_encode($target["target_name"]); ?>"
+                                               data-target-id="<?php echo html_encode($target["target_value"]); ?>"
+                                               data-target-type="<?php echo html_encode($target["target_type"]); ?>"
+                                               data-assessor-name="<?php echo html_encode($detail["assessor"]["name"]); ?>"
+                                               data-assessor-value="<?php echo html_encode($detail["assessor"]["assessor_value"]); ?>"
+                                               data-assessor-type="<?php echo html_encode($detail["assessor"]["assessor_type"]); ?>"
+                                               data-form-id="<?php echo html_encode($target["meta"]["form_id"]); ?>"
+                                               data-organisation-id="<?php echo html_encode($target["meta"]["organisation_id"]); ?>"
+                                               data-delivery-date="<?php echo html_encode($target["meta"]["delivery_date"]); ?>"
+                                               data-feedback-required="<?php echo html_encode($target["meta"]["feedback_required"]); ?>"
+                                               data-min-submittable="<?php echo html_encode($target["meta"]["min_submittable"]); ?>"
+                                               data-max-submittable="<?php echo html_encode($target["meta"]["max_submittable"]); ?>"
+                                               data-start-date="<?php echo html_encode($target["meta"]["start_date"]); ?>"
+                                               data-end-date="<?php echo html_encode($target["meta"]["end_date"]); ?>"
+                                               data-rotation-start-date="<?php echo html_encode($target["meta"]["rotation_start_date"]); ?>"
+                                               data-rotation-end-date="<?php echo html_encode($target["meta"]["rotation_end_date"]); ?>"
+                                               data-associated-record-type="<?php echo html_encode($target["meta"]["associated_record_type"]); ?>"
+                                               data-associated-record-id="<?php echo html_encode($target["meta"]["associated_record_id"]); ?>"
+                                               data-additional-task="<?php echo html_encode(isset($target["meta"]["additional"]) ? 1 : 0); ?>"
+                                               data-task-type="<?php echo html_encode($target["task_type"]); ?>"
+                                               value="<?php echo html_encode($target["meta"]["delivery_date"]); ?>"/>
+                                    <?php } ?>
+                                </div>
+                            <?php } ?>
+                        </td>
+                    </tr>
                     <?php
                 }
-            } ?>
-            </td>
-        <?php } ?>
-            <td>
-            <?php
-            if (is_array($detail["targets"])) {
-                foreach ($detail["targets"] as $target) {
-                    ?>
-                    <div class="distribution-progress-row">
-                        <input class="delete" type="checkbox" name="delete[]"
-                               data-target-name="<?php echo html_encode($target["target_name"]) ?>"
-                               data-target-id="<?php echo html_encode($target["target_id"]) ?>"
-                               data-assessor-name="<?php echo html_encode($detail["assessor_name"]) ?>"
-                               data-assessor-value="<?php echo html_encode($detail["assessor_value"]) ?>"
-                               data-assessor-type="<?php echo html_encode($detail["assessor_type"]) ?>"
-                               data-assessment-id="<?php echo html_encode(($target["dassessment_id"] ? $target["dassessment_id"] : 0)) ?>"
-                               value="<?php echo html_encode($target["delivery_date"]) ?>"/>
-                    </div>
-                    <?php
-                }
-            } ?>
-            </td>
-        </div>
+            }
+            ?>
+            <tr class="hide no-search-targets">
+                <td colspan="5"><?php echo $translate->_("No targets found matching your search criteria."); ?></td>
+            </tr>
+            </tbody>
+        </table>
         <?php
     }
 
+    public static function renderHead($active_tab = "") {
+        global $HEAD;
+        $HEAD[] = "<script type=\"text/javascript\">var active_tab = '". $active_tab ."';</script>";
+    }
 }

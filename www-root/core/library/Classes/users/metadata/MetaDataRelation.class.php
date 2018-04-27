@@ -57,6 +57,14 @@ class MetaDataRelation {
 	}
 	
 	/**
+	 * Returns the entity value for this relationship
+	 * @return int
+	 */
+	public function getEntityValue() {
+		return $this->entity_value;
+	}
+
+	/**
 	 * Returns true if this relationship is applicable to the supplied user
 	 * @param User $user
 	 * @return boolean
@@ -72,7 +80,7 @@ class MetaDataRelation {
 	}
 	
 	/**
-	 * Parses out the rtelationship restriction componenets from a string of the fromat "organistion:group:role:user". Internal use only. 
+	 * Parses out the relationship restriction componenets from a string of the format "organisation:group:role:user". Internal use only.
 	 * @throws Exception 
 	 */
 	private function parseParts() {
@@ -83,7 +91,7 @@ class MetaDataRelation {
 		}
 		$parts = array_combine($type_parts, $value_parts);
 		foreach (self::$TYPES as $part) {
-			$this->{$part} = $parts[$part];
+			$this->{$part} = isset($parts[$part])? $parts[$part]: false;
 		}
 	}
 	

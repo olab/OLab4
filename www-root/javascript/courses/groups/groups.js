@@ -15,6 +15,7 @@ jQuery(document).ready(function ($) {
         item_offset = 0;
         show_loading_message = true;
         $("#cperiod_assign_select").val($(this).val());
+        $("#cperiod_import_select").val($(this).val());
         $("#no-curriculum-msg").hide();
         $("#assign-period-modal-but").addClass("active");
         get_groups();
@@ -126,7 +127,7 @@ jQuery(document).ready(function ($) {
         });
     });
     
-    $("#download-csv").on("click", function (e) {
+    $(".export").on("click", function (e) {
         e.preventDefault();
         var container = "group-table-container";
         var groups = $("#" + container + " input[name='groups[]']:checked").map(function () {
@@ -136,13 +137,13 @@ jQuery(document).ready(function ($) {
         var course_id = jQuery("#course-id").val();
 
         if (groups.length == 0) {
-            $("input[name='groups[]']").prop('checked',true);
-            $('#form-search').attr("action", ENTRADA_URL+"/admin/courses/groups?section=export&id=" + course_id);
-            $('#form-search').submit();
-            $("input[name='groups[]']").prop('checked',false);
+            $("input[name=\"groups[]\"]").prop("checked",true);
+            $("#form-search").attr("action", ENTRADA_URL+"/admin/courses/groups?section=export&method=" + this.id + "&id=" + course_id);
+            $("#form-search").submit();
+            $("input[name=\"groups[]\"]").prop("checked",false);
         } else {
-            $('#form-search').attr("action", ENTRADA_URL+"/admin/courses/groups?section=export&id=" + course_id);
-            $('#form-search').submit();
+            $("#form-search").attr("action", ENTRADA_URL+"/admin/courses/groups?section=export&method=" + this.id + "&id=" + course_id);
+            $("#form-search").submit();
         }
 
     });
@@ -267,9 +268,12 @@ jQuery(document).ready(function ($) {
                             var no_results_div = jQuery(document.createElement("div"));
                             var no_results_p = jQuery(document.createElement("p"));
 
-                            no_results_p.html(module_text.index.no_items_found);
+                            no_results_p.html("No Groups Found.");
                             jQuery(no_results_div).append(no_results_p).attr({id: "groups-no-results"});
                             jQuery("#groups-msgs").append(no_results_div);
+                            jQuery("#groups-table").addClass("hide");
+                            jQuery("#printable-csv").hide();
+                            jQuery("#download-csv").hide();
                         }
                     });
                 } else if(data.status == "error") {
@@ -282,7 +286,50 @@ jQuery(document).ready(function ($) {
         });
     });
 
-    
+    $("#import-csv-button").on("click", function (event) {
+        $("#import-msgs").empty();
+        $("#modal-import-csv").modal("show");
+    });
+
+    $("#import-form").submit(function(e) {
+        $("#import-msgs").empty();
+        $("#msgs").empty();
+        var formData = new FormData($(this)[0]);
+        $("#submit-btn").attr("disabled", "disabled");
+        $.ajax({
+            type: "POST",
+            url: $(this).attr("action"),
+            data: formData,
+            contentType: false,
+            cache: false,
+            processData: false,
+            success: function (data) {
+                var jsonResponse = JSON.parse(data);
+                $("#submit-btn").removeAttr("disabled");
+                if (jsonResponse.status === "success") {
+                    if (jsonResponse.dataNotice.length > 0) {
+                        display_notice(jsonResponse.dataNotice, "#import-msgs");
+                    }
+                    if (jsonResponse.dataSuccess.length > 0) {
+                        display_success(jsonResponse.dataSuccess, "#import-msgs");
+                        uploaded = true;
+                    }
+                    if (jsonResponse.dataError.length > 0) {
+                        display_error(jsonResponse.dataError, "#import-msgs");
+                    }
+                } else if (jsonResponse.status === "error") {
+                    display_error(jsonResponse.dataError, "#import-msgs");
+                }
+                total_groups = 0;
+                item_offset = 0;
+                show_loading_message = true;
+                get_groups();
+            }
+        });
+        e.preventDefault();
+    });
+
+    $("#cperiod_import_select").val($("#cperiod_select").val());
 });
 
 function get_groups (item_index) {
@@ -388,6 +435,8 @@ function get_groups (item_index) {
             });
 
             show_loading_message = false;
+            jQuery("#printable-csv").show();
+            jQuery("#download-csv").show();
         } else {
             jQuery("#groups-items-loading").addClass("hide");
             var no_results_div = jQuery(document.createElement("div"));
@@ -396,6 +445,8 @@ function get_groups (item_index) {
             no_results_p.html("No Groups Found.");
             jQuery(no_results_div).append(no_results_p).attr({id: "groups-no-results"});
             jQuery("#groups-msgs").append(no_results_div);
+            jQuery("#printable-csv").hide();
+            jQuery("#download-csv").hide();
         }
     });
 }

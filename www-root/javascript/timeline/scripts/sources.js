@@ -48,7 +48,13 @@ Timeline.DefaultEventSource.prototype.loadXML = function(xml, url) {
                 this._resolveRelativeURL(node.getAttribute("link"), base),
                 this._resolveRelativeURL(node.getAttribute("icon"), base),
                 node.getAttribute("color"),
-                node.getAttribute("textColor")
+                node.getAttribute("textColor"),
+                node.getAttribute("courseName"),
+                node.getAttribute("eventLocation"),
+                node.getAttribute("attendanceRequired"),
+                node.getAttribute("eventDuration"),
+                node.getAttribute("unitName"),
+                node.getAttribute("unitUrl")
             );
             evt._node = node;
             evt.getProperty = function(name) {
@@ -262,11 +268,18 @@ Timeline.DefaultEventSource.prototype._resolveRelativeURL = function(url, base) 
 };
 
 
+/*
 Timeline.DefaultEventSource.Event = function(
         start, end, latestStart, earliestEnd, instant, 
         text, description, image, link,
         icon, color, textColor) {
-        
+*/
+Timeline.DefaultEventSource.Event = function(
+        start, end, latestStart, earliestEnd, instant,
+        text, description, image, link,
+        icon, color, textColor,
+        courseName, eventLocation, attendanceRequired, eventDuration, unitName, unitUrl) {
+
     this._id = "e" + Math.floor(Math.random() * 1000000);
     
     this._instant = instant || (end == null);
@@ -285,6 +298,12 @@ Timeline.DefaultEventSource.Event = function(
     this._icon = (icon != null && icon != "") ? icon : null;
     this._color = (color != null && color != "") ? color : null;
     this._textColor = (textColor != null && textColor != "") ? textColor : null;
+    this._courseName = courseName;
+    this._eventLocation = eventLocation;
+    this._attendanceRequired = attendanceRequired;
+    this._eventDuration = eventDuration;
+    this._unitName = unitName;
+    this._unitUrl = unitUrl;
 };
 
 Timeline.DefaultEventSource.Event.prototype = {
@@ -372,5 +391,40 @@ Timeline.DefaultEventSource.Event.prototype = {
         this.fillTime(divTime, labeller);
         theme.event.bubble.timeStyler(divTime);
         elmt.appendChild(divTime);
+
+        var divCourseName = doc.createElement("div");
+        divCourseName.innerHTML = this._courseName;
+        theme.event.bubble.bodyStyler(divCourseName);
+        elmt.appendChild(divCourseName);
+
+        var divUnitName = doc.createElement("div");
+        var textUnitName = doc.createTextNode(this._unitName);
+
+        if (this._unitUrl != '') {
+            var a = doc.createElement("a");
+            a.href = this._unitUrl;
+            a.appendChild(textUnitName);
+            divUnitName.appendChild(a);
+        } else {
+            divUnitName.appendChild(textUnitName);
+        }
+
+        theme.event.bubble.titleStyler(divUnitName);
+        elmt.appendChild(divUnitName);
+
+        var divEventDuration = doc.createElement("div");
+        divEventDuration.innerHTML = this._eventDuration;
+        theme.event.bubble.bodyStyler(divEventDuration);
+        elmt.appendChild(divEventDuration);
+
+        var divEventLocation = doc.createElement("div");
+        divEventLocation.innerHTML = this._eventLocation;
+        theme.event.bubble.bodyStyler(divEventLocation);
+        elmt.appendChild(divEventLocation);
+
+        var divAttendanceRequired = doc.createElement("div");
+        divAttendanceRequired.innerHTML = this._attendanceRequired;
+        theme.event.bubble.bodyStyler(divAttendanceRequired);
+        elmt.appendChild(divAttendanceRequired);
     }
 };

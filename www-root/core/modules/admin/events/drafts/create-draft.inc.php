@@ -61,6 +61,12 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
 			} else {
 				add_error("The <strong>Draft Name</strong> is a required field.");
 			}
+
+            if (isset($_POST["copy_resources_as_draft"]) && !empty($_POST["copy_resources_as_draft"])) {
+                $PROCESSED["copy_resources_as_draft"] = 1;
+            } else {
+                $PROCESSED["copy_resources_as_draft"] = 0;
+            }
 			
 			if (isset($_POST["draft_description"]) && !empty($_POST["draft_description"])) {
 				$PROCESSED["description"] = clean_input($_POST["draft_description"], array("nohtml"));
@@ -68,17 +74,28 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                 $PROCESSED["description"] = "";
             }
 
+            $PROCESSED["course_ids"] = [];
+
             if (isset($_POST["course_array"])) {
                 $course_array_decoded = json_decode($_POST["course_array"], true);
+
+                // Doing this to work around an issue that Chrome has with double encoding JSON.
                 if (is_string($course_array_decoded)) {
-                    $course_array_decoded2 = json_decode($course_array_decoded, true);
-                    $PROCESSED["course_ids"] = array();
-                    if ($course_array_decoded2 && is_array($course_array_decoded2)) {
-                        foreach ($course_array_decoded2 as $courses) {
-                            $PROCESSED["course_ids"][] = array(
-                                "source_course"         => (int)$courses["source_course_id"],
-                                "destination_course"    => (int)$courses["destination_course_id"],
-                            );
+                    $course_array_decoded = json_decode($course_array_decoded, true);
+                }
+
+                if (is_array($course_array_decoded)) {
+                    foreach ($course_array_decoded as $courses) {
+                        if (isset($courses["source_course_id"]) && isset($courses["destination_course_id"])) {
+                            $source_course_id = clean_input($courses["source_course_id"], "int");
+                            $destination_course_id = clean_input($courses["destination_course_id"], "int");
+
+                            if ($source_course_id && $destination_course_id) {
+                                $PROCESSED["course_ids"][] = array(
+                                    "source_course" => $source_course_id,
+                                    "destination_course" => $destination_course_id,
+                                );
+                            }
                         }
                     }
                 }
@@ -139,7 +156,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                             }
                         }
                     }
-				
+
                     if (isset($PROCESSED["course_ids"]) && is_array($PROCESSED["course_ids"])) {
                         foreach ($PROCESSED["course_ids"] as $course_id) {
                             //checks if the source course and destination course are the same or not
@@ -157,53 +174,57 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                                 $date_diff = (int) ($PROCESSED["new_start_day"] - $events[0]->getEventStart());
 
                                 foreach ($events as $event_object) {
-                                    //converts the event object to an array
+                                    // converts the event object to an array
                                     $event = $event_object->toArray();
                                     $event["draft_id"] = $draft_id;
 
                                     // adds the offset time to the event year and week, preserves the day of the week
-                                    $event["event_start"]  = strtotime((date("o", ($event["event_start"] + $date_diff)))."-W".date("W", ($event["event_start"] + $date_diff))."-".date("w", $event["event_start"])." ".date("H:i",$event["event_start"]));
-                                    $event["event_finish"] = strtotime((date("o", ($event["event_finish"] + $date_diff)))."-W".date("W", ($event["event_finish"] + $date_diff))."-".date("w", $event["event_finish"])." ".date("H:i",$event["event_finish"]));
+                                    $event["event_start"] = strtotime((date("o", ($event["event_start"] + $date_diff))) . "-W" . date("W", ($event["event_start"] + $date_diff)) . "-" . date("w", $event["event_start"]) . " " . date("H:i", $event["event_start"]));
+                                    $event["event_finish"] = strtotime((date("o", ($event["event_finish"] + $date_diff))) . "-W" . date("W", ($event["event_finish"] + $date_diff)) . "-" . date("w", $event["event_finish"]) . " " . date("H:i", $event["event_finish"]));
 
-                                    if ($event["objectives_release_date"] != 0) {
-                                        $event["objectives_release_date"] = strtotime((date("o", ($event["objectives_release_date"] + $date_diff)))."-W".date("W", ($event["objectives_release_date"] + $date_diff))."-".date("w", $event["objectives_release_date"])." ".date("H:i",$event["objectives_release_date"]));
-                                    } else {
-                                        $event["objectives_release_date"] = 0;
+                                    if ((int) $event["release_date"]) {
+                                        $event["release_date"] = strtotime((date("o", ($event["release_date"] + $date_diff))) . "-W" . date("W", ($event["release_date"] + $date_diff)) . "-" . date("w", $event["release_date"]) . " " . date("H:i", $event["release_date"]));
                                     }
 
-                                    $event["course_id"] = $course_id["destination_course"];
+                                    if ((int) $event["release_until"]) {
+                                        $event["release_until"] = strtotime((date("o", ($event["release_until"] + $date_diff))) . "-W" . date("W", ($event["release_until"] + $date_diff)) . "-" . date("w", $event["release_until"]) . " " . date("H:i", $event["release_until"]));
+                                    }
+
+                                    if ((int) $event["objectives_release_date"]) {
+                                        $event["objectives_release_date"] = strtotime((date("o", ($event["objectives_release_date"] + $date_diff))) . "-W" . date("W", ($event["objectives_release_date"] + $date_diff)) . "-" . date("w", $event["objectives_release_date"]) . " " . date("H:i", $event["objectives_release_date"]));
+                                    }
+
+                                    $event["course_id"] = (int) $course_id["destination_course"];
 
                                     $draft_event = new Models_Event_Draft_Event($event);
 
                                     if ($draft_event->insert() && $devent_id = $db->Insert_ID()) {
-                                        // Copy the audience for the event.//                                    
+                                        // Copy the audience for the event.
                                         $audiences = Models_Event_Audience::fetchAllByEventID($draft_event->getEventID());
-                                        //check if there are course groups         
-                                        
                                         if ($audiences && is_array($audiences)) {
-                                            //if course groups then only copy course groups 
+                                            // If course groups then only copy course groups
                                             $course_exist = Models_Event_Audience::onlyCourse($audiences);
                                             if (!$course_exist) {
                                                 foreach ($audiences as $audience_object) {
                                                     $audience = $audience_object->toArray();
-                                                    //get new course group value
+                                                    // Get new course group value
                                                     if ($course_different && $audience["audience_type"] == "group_id") {
-                                                        // check $audience['audience_value']
-                                                        $query_group = "    SELECT `group_name` 
-                                                                            FROM `course_groups`
-                                                                            WHERE `cgroup_id` = " . $db->qstr($audience["audience_value"]);
+                                                        // Check $audience['audience_value']
+                                                        $query_group = "SELECT `group_name` 
+                                                                        FROM `course_groups`
+                                                                        WHERE `cgroup_id` = " . $db->qstr($audience["audience_value"]);
 
-                                                        $query = "  SELECT `cgroup_id`
-                                                                    FROM `course_groups`
-                                                                    WHERE `group_name` = ($query_group)
-                                                                    AND `course_id` = " . $db->qstr($draft_event->getCourseID());
+                                                        $query = "SELECT `cgroup_id`
+                                                                  FROM `course_groups`
+                                                                  WHERE `group_name` = ($query_group)
+                                                                  AND `course_id` = " . $db->qstr($draft_event->getCourseID());
                                                         $cgroup_id = $db->GetOne($query);
                                                         if ($cgroup_id) {
                                                             $audience["audience_value"] = $cgroup_id;
-                                                            //adds time diff for granular scheduling
+                                                            // adds time diff for granular scheduling
                                                             if ($audience["custom_time"] == "1") {
-                                                                $audience["custom_time_start"] = strtotime((date("o", ($audience["custom_time_start"] + $date_diff)))."-W".date("W", ($audience["custom_time_start"] + $date_diff))."-".date("w", $audience["custom_time_start"])." ".date("H:i",$audience["custom_time_start"]));
-                                                                $audience["custom_time_end"]   = strtotime((date("o", ($audience["custom_time_end"] + $date_diff)))."-W".date("W", ($audience["custom_time_end"] + $date_diff))."-".date("w", $audience["custom_time_end"])." ".date("H:i",$audience["custom_time_end"]));
+                                                                $audience["custom_time_start"] = strtotime((date("o", ($audience["custom_time_start"] + $date_diff))) . "-W" . date("W", ($audience["custom_time_start"] + $date_diff)) . "-" . date("w", $audience["custom_time_start"]) . " " . date("H:i", $audience["custom_time_start"]));
+                                                                $audience["custom_time_end"] = strtotime((date("o", ($audience["custom_time_end"] + $date_diff))) . "-W" . date("W", ($audience["custom_time_end"] + $date_diff)) . "-" . date("w", $audience["custom_time_end"]) . " " . date("H:i", $audience["custom_time_end"]));
                                                             }
                                                         } else {
                                                             $cgroup_name = $db->GetOne($query_group);
@@ -417,6 +438,12 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                                 </label>
                             </div>
                         </div>
+                        <div class="control-group controls" id="resource-as-draft">
+                            <label class="checkbox">
+                                <input type="checkbox" name="copy_resources_as_draft"<?php echo(!isset($_POST) || !$_POST || isset($PROCESSED["copy_resources_as_draft"]) && $PROCESSED["copy_resources_as_draft"] == 1 ? " checked=\"checked\"" : ""); ?> />
+                                Copy <strong>event resources</strong> (links and files) <strong>as draft</strong>.
+                            </label>
+                        </div>
 
                         <div class="control-group" id="copy-course-events">
                             <label class="control-label form-nrequired">Courses Included</label>
@@ -454,7 +481,6 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                         </div>
                         <input type="hidden" name="course_array" id="course_array" />
                         <?php echo Entrada_Utilities::generate_calendars("copy", "", true, true, ((isset($PROCESSED["draft_start_date"])) ? $PROCESSED["draft_start_date"] : strtotime("September 1st, ".(date("o") - 1))), true, true, ((isset($PROCESSED["draft_finish_date"])) ? $PROCESSED["draft_finish_date"] : time()), false); ?>
-
                         <?php echo Entrada_Utilities::generate_calendars("new", "New Start Date", true, true, ((isset($PROCESSED["new_start_day"])) ? $PROCESSED["new_start_day"] : ((isset($PROCESSED["draft_start_date"])) ? strtotime("+1 Year", $PROCESSED["draft_start_date"]) : strtotime("September 1st, ".(date("o"))))), false, false, 0, false, false, ""); ?>
                     </div>
 

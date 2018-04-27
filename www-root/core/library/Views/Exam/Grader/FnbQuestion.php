@@ -89,7 +89,7 @@ class Views_Exam_Grader_FnbQuestion extends Views_Exam_Grader_Question {
         $html .= "<textarea name=\"$comments_name\" id=\"$comments_id\" rows=\"5\">".html_encode($this->response->getGraderComments())."</textarea></div>\n";
         $html .= "<div>\n";
         $html .= "<label for=\"$score_id\"><strong>Score:</strong></label><br />\n";
-        $html .= "<input type=\"text\" name=\"$score_name\" id=\"$score_id\" value=\"$score_text\" readonly /><span>&nbsp;/ ".(int)$this->element->getAdjustedPoints($this->response->getPostID())."</span>\n";
+        $html .= "<input type=\"text\" name=\"$score_name\" id=\"$score_id\" value=\"$score_text\" readonly /><span>&nbsp;/ ".(int)$this->element->getAdjustedPoints()."</span>\n";
         $html .= "<input class=\"btn btn-primary pull-right grading-save-btn\" data-id=\"$response_id\" type=\"submit\" value=\"".$translate->_("Save")."\" />\n";
         $html .= "<span class=\"grading-submit-spinner\" id=\"spinner_$response_id\" style=\"display: none;\"><i class=\"fa fa-lg fa-spinner fa-spin\"></i></span>\n";
         $html .= "</div>\n";

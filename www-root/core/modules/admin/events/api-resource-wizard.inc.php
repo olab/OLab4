@@ -59,7 +59,7 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 
                         $recurring_events = 0;
                         if (isset(${$request_var}["recurring_event_ids"]) && is_string(${$request_var}["recurring_event_ids"]) && !empty(${$request_var}["recurring_event_ids"])) {
-                            $tmp = json_decode(${$request_var}["recurring_event_ids"]);
+                            $tmp = ${$request_var}["recurring_event_ids"];
                             if (isset($tmp) && is_string($tmp)) {
                                 $PROCESSED["recurring_event_ids"] = json_decode($tmp);
                             }
@@ -337,6 +337,14 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                                             $PROCESSED["release_until"] = 0;
                                             break;
                                     }
+                                }
+
+                                if (isset(${$request_var}["event_resource_draft_value"]) && $tmp_input = clean_input(${$request_var}["event_resource_draft_value"], array("int"))) {
+                                    $PROCESSED["event_resource_draft_value"] = $tmp_input;
+                                    $PROCESSED["draft"] = $tmp_input;
+                                } else {
+                                    $PROCESSED["event_resource_draft_value"] = 0;
+                                    $PROCESSED["draft"] = 0;
                                 }
 
                                 $PROCESSED["updated_date"] = time();
@@ -951,13 +959,23 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                                                             case 0 :
                                                                 $PROCESSED["file_size"] = (int) trim($_FILES["file"]["size"]);
                                                                 $PROCESSED["file_name"] = useable_filename(trim($_FILES["file"]["name"]));
-                                                                $PROCESSED["file_type"] = trim($_FILES["file"]["type"]);
+                                                                $PROCESSED["file_type"] = mime_content_type($_FILES["file"]["tmp_name"]);
 
                                                                 if ($PROCESSED["event_resource_type_value"] == "1") {
                                                                     if (!in_array($PROCESSED["file_type"], $VALID_PODCASTS)) {
                                                                         add_error("The provided file was not a valid Podcast file.");
                                                                     }
                                                                 }
+
+                                                                /**
+                                                                 * Search file content now moved to a cron process. See www-root/cron/event-file-parse.php
+                                                                 */
+                                                                //if (SEARCH_FILE_CONTENTS) { // parse the file's contents so we can search it later
+                                                                //    $pathinfo = pathinfo($PROCESSED["file_name"]);
+                                                                //    $PROCESSED["file_contents"] = Entrada_FileToText::decode($_FILES["file"]["tmp_name"], $pathinfo["extension"]);
+                                                                //} else {
+                                                                //    $PROCESSED["file_contents"] = "";
+                                                                //}
                                                                 break;
                                                             case 1 :
                                                             case 2 :
@@ -1031,7 +1049,11 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                                                         }
 
                                                     } else {
-                                                        $PROCESSED["file_title"] = "";
+                                                        if (isset(${$request_var}["event_resource_file_title_value"]) && $tmp_input = clean_input(${$request_var}["event_resource_file_title_value"], array("trim", "striptags"))) {
+                                                            $PROCESSED["file_title"] = $tmp_input;
+                                                        } else {
+                                                            $PROCESSED["file_title"] = "";
+                                                        }
                                                     }
 
                                                     if (isset(${$request_var}["event_resource_file_description_value"]) && $tmp_input = clean_input(${$request_var}["event_resource_file_description_value"], array("trim", "striptags"))) {
@@ -1049,6 +1071,9 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                                                             $method = "update";
                                                         } else {
                                                             $method = "insert";
+	                                                        if (isset(${$request_var}["event_resource_file_title_value"]) && $tmp_input = clean_input(${$request_var}["event_resource_file_title_value"], array("trim", "striptags"))) {
+		                                                        $PROCESSED["file_title"] = $tmp_input;
+	                                                        }
                                                         }
 
                                                         $resource_file = new Models_Event_Resource_File($PROCESSED);
@@ -1754,6 +1779,8 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                                                         add_error("Please provide a valid number of attempts for this quiz.");
                                                     }
 
+                                                    $PROCESSED["secure"] = 0;
+
                                                     if (!$ERROR) {
 
                                                         if (isset($PROCESSED["resource_id"])) {
@@ -2102,6 +2129,144 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                                                 echo json_encode(array("status" => "error", "data" => $ERRORSTR));
                                             }
                                             break;
+                                        case 13 :
+                                            if (isset(${$request_var}["event_resource_module_form_id"]) && $tmp_input = clean_input(${$request_var}["event_resource_module_form_id"], array("trim", "int"))) {
+                                                $PROCESSED["form_id"] = $tmp_input;
+                                            } else {
+                                                add_error("Please provide a form for this resource.");
+                                            }
+
+                                            $PROCESSED["accesses"] = 0;
+
+                                            if (!$ERROR) {
+                                                if (isset($PROCESSED["resource_id"])) {
+                                                    $PROCESSED["id"] = $PROCESSED["resource_id"];
+                                                    $method = "update";
+                                                    $current_resource           = Models_Event_Resource_FeedBackForm::fetchRowByID($PROCESSED["id"]);
+                                                    $current_resource_entity    = Models_Event_Resource_Entity::fetchRowByID($PROCESSED["event_resource_entity_id"]);
+                                                    $current_resource_date      = $current_resource->getUpdatedDate();
+                                                    $current_entity_type        = $current_resource_entity->getEntityType();
+                                                } else {
+                                                    $method = "insert";
+                                                }
+
+                                                $PROCESSED["created_by"] = $ENTRADA_USER->getActiveID();
+                                                $PROCESSED["created_date"] = time();
+
+                                                $resource_link = new Models_Event_Resource_FeedBackForm($PROCESSED);
+                                                if ($resource_link->$method()) {
+                                                    if (isset($PROCESSED["id"])) {
+                                                        $PROCESSED_ENTITY["id"] = $PROCESSED["id"];
+                                                    }
+
+                                                    $PROCESSED_ENTITY["event_id"] = $PROCESSED["event_id"];
+                                                    $PROCESSED_ENTITY["entity_type"] = $PROCESSED["event_resource_type_value"];
+                                                    $PROCESSED_ENTITY["entity_value"] = $resource_link->getID();
+                                                    $PROCESSED_ENTITY["release_date"] = $PROCESSED["release_date"];
+                                                    $PROCESSED_ENTITY["release_until"] = $PROCESSED["release_until"];
+                                                    $PROCESSED_ENTITY["updated_date"] = time();
+                                                    $PROCESSED_ENTITY["updated_by"] = $ENTRADA_USER->getActiveID();
+                                                    $PROCESSED_ENTITY["active"] = 1;
+
+                                                    $resource_entity = new Models_Event_Resource_Entity($PROCESSED_ENTITY);
+                                                    if (!$resource_entity->$method()) {
+                                                        add_error("A problem occured while attempting to save this event resource. Please try again later.");
+                                                        application_log("error", "Failed to " .$method. " Feedback Form event resource entity for event: " . $PROCESSED["event_id"] ." DB said:" . $db->ErrorMsg());
+                                                    }
+
+                                                    if (!$ERROR) {
+                                                        last_updated("event", $PROCESSED["event_id"]);
+
+                                                        $PROCESSED["next_step"] = 6;
+                                                        application_log("success", "Successfully added Event Resource ". $resource_link->getID()  ." to event " . $PROCESSED["event_id"]);
+
+                                                        if (isset($recurring_events) && $recurring_events == 1) {
+                                                            if (isset($PROCESSED["recurring_event_ids"]) && is_array($PROCESSED["recurring_event_ids"]) && !empty($PROCESSED["recurring_event_ids"])) {
+                                                                foreach ($PROCESSED["recurring_event_ids"] as $r_event_id) {
+                                                                    if (isset($current_resource) && is_object($current_resource)) {
+                                                                        $resource_recurring_updated = $current_resource;
+                                                                        $resource_recurring_updated->setEventID($r_event_id);
+                                                                        $resource_recurring_updated->setRequired($PROCESSED["required"]);
+                                                                        $resource_recurring_updated->setTimeFrame($PROCESSED["timeframe"]);
+                                                                        $resource_recurring_updated->setFormID($PROCESSED["form_id"]);
+                                                                        $resource_recurring_updated->setAccesses($PROCESSED["accesses"]);
+                                                                        $resource_recurring_updated->setReleaseDate($PROCESSED["release_date"]);
+                                                                        $resource_recurring_updated->setUpdatedDate($PROCESSED["updated_date"]);
+                                                                        $resource_recurring_updated->setUpdatedBy($PROCESSED["updated_by"]);
+
+                                                                        if ($resource_recurring_updated->update()) {
+                                                                            $old_entity_re = Models_Event_Resource_Entity::fetchRowByEventIdEntityTypeEntityValue($r_event_id, $current_entity_type, $resource_recurring_updated->getID());
+
+                                                                            if (isset($old_entity_re) && is_object($old_entity_re)) {
+                                                                                $PROCESSED_RECURRING_ENTITY["event_resource_entity_id"] = $old_entity_re->getID();
+                                                                                $PROCESSED_RECURRING_ENTITY["event_id"] = $r_event_id;
+                                                                                $PROCESSED_RECURRING_ENTITY["entity_type"] = $PROCESSED["event_resource_type_value"];
+                                                                                $PROCESSED_RECURRING_ENTITY["entity_value"] = $resource_recurring_updated->getID();
+                                                                                $PROCESSED_RECURRING_ENTITY["release_date"] = $PROCESSED["release_date"];
+                                                                                $PROCESSED_RECURRING_ENTITY["release_until"] = $PROCESSED["release_until"];
+                                                                                $PROCESSED_RECURRING_ENTITY["updated_date"] = $PROCESSED_ENTITY["updated_date"];
+                                                                                $PROCESSED_RECURRING_ENTITY["updated_by"] = $ENTRADA_USER->getActiveID();
+                                                                                $PROCESSED_RECURRING_ENTITY["active"] = 1;
+
+                                                                                $resource_entity = new Models_Event_Resource_Entity($PROCESSED_RECURRING_ENTITY);
+                                                                                if (!$resource_entity->update()) {
+                                                                                    add_error("A problem occured while attempting to save this event resource. Please try again later.");
+                                                                                    application_log("error", "Failed to " . $method . " Feedback Form event resource entity for event: " . $r_event_id . " DB said:" . $db->ErrorMsg());
+                                                                                } else {
+                                                                                    history_log($r_event_id, "updated Feedback Form.", $ENTRADA_USER->getID());
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                    } else {
+                                                                        $recurring_event = $PROCESSED;
+                                                                        $recurring_event["event_id"] = $r_event_id;
+                                                                        $resource = new Models_Event_Resource_FeedBackForm($recurring_event);
+
+                                                                        if ($resource->insert()) {
+                                                                            last_updated("event", $recurring_event["event_id"]);
+
+                                                                            $resource_recurring_id = $resource->getID();
+
+                                                                            $PROCESSED_RECURRING_ENTITY["event_id"]         = $recurring_event["event_id"];
+                                                                            $PROCESSED_RECURRING_ENTITY["entity_type"]      = $PROCESSED["event_resource_type_value"];
+                                                                            $PROCESSED_RECURRING_ENTITY["entity_value"]     = $resource_recurring_id;
+                                                                            $PROCESSED_RECURRING_ENTITY["release_date"]     = $PROCESSED["release_date"];
+                                                                            $PROCESSED_RECURRING_ENTITY["release_until"]    = $PROCESSED["release_until"];
+                                                                            $PROCESSED_RECURRING_ENTITY["updated_date"]     = $PROCESSED_ENTITY["updated_date"];
+                                                                            $PROCESSED_RECURRING_ENTITY["updated_by"]       = $ENTRADA_USER->getActiveID();
+                                                                            $PROCESSED_RECURRING_ENTITY["active"]           = 1;
+
+                                                                            $resource_entity = new Models_Event_Resource_Entity($PROCESSED_RECURRING_ENTITY);
+                                                                            if (!$resource_entity->insert()) {
+                                                                                add_error("A problem occured while attempting to save this event resource. Please try again later.");
+                                                                                application_log("error", "Failed to " . $method . " File event resource entity for event: " . $r_event_id . " DB said:" . $db->ErrorMsg());
+                                                                            } else {
+                                                                                history_log($r_event_id, "inserted Feedback Form.", $ENTRADA_USER->getID());
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+
+                                                        if (!$ERROR) {
+                                                            echo json_encode(array("status" => "success", "data" => array("next_step" => $PROCESSED["next_step"], "sub_step" => 1, "event_resource_type" => $PROCESSED["event_resource_type_value"])));
+                                                        } else {
+                                                            application_log("error", "Failed to " .$method. " Feedback Form event resource entity for event: " . $PROCESSED["event_id"] ." DB said:" . $db->ErrorMsg());
+                                                            echo json_encode(array("status" => "error", "data" => $ERRORSTR));
+                                                        }
+                                                    } else {
+                                                        application_log("error", "Failed to " .$method. " Feedback Form event resource entity for event: " . $PROCESSED["event_id"] ." DB said:" . $db->ErrorMsg());
+                                                        echo json_encode(array("status" => "error", "data" => $ERRORSTR));
+                                                    }
+                                                } else {
+                                                    add_error("A problem occured while attempting to save this event resource. Please try again later.");
+                                                    echo json_encode(array("status" => "error", "data" => $ERRORSTR));
+                                                }
+                                            } else {
+                                                echo json_encode(array("status" => "error", "data" => $ERRORSTR));
+                                            }
+                                            break;
                                     }
                                 } else {
                                     echo json_encode(array("status" => "error", "data" => $ERRORSTR));
@@ -2188,6 +2353,10 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                                                         $resource_type = "Exam";
                                                         $resource_title = "";
                                                         break;
+                                                    case 13 :
+                                                        $resource_type = "Feedback Form";
+                                                        $resource_title = "";
+                                                        break;
                                                 }
 
                                                 history_log($resource_entity->getEventID(), "deleted ". $resource_title . " " . $resource_type, $ENTRADA_USER->getID());
@@ -2268,7 +2437,8 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                                                 "start_time" => ($resource->getReleaseDate() != "0" ? date("H:i", $resource->getReleaseDate()) : ""),
                                                 "finish_time" => ($resource->getReleaseUntil() != "0" ? date("H:i", $resource->getReleaseUntil()) : ""),
                                                 "resource_type" => $entity->getEntityType(),
-                                                "resource_type_title" => $resource_type_title
+                                                "resource_type_title" => $resource_type_title,
+                                                "draft" => $resource->getDraft()
                                             );
                                         }
                                         break;
@@ -2295,7 +2465,8 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                                                 "start_time" => ($resource->getReleaseDate() != "0" ? date("H:i", $resource->getReleaseDate()) : ""),
                                                 "finish_time" => ($resource->getReleaseUntil() != "0" ? date("H:i", $resource->getReleaseUntil()) : ""),
                                                 "resource_type" => $entity->getEntityType(),
-                                                "resource_type_title" => "Quiz"
+                                                "resource_type_title" => "Quiz",
+                                                "draft" => $resource->getDraft()
                                             );
                                         }
                                         break;
@@ -2373,7 +2544,8 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                                                 "start_time" => ($resource->getReleaseDate() != "0" ? date("H:i", $resource->getReleaseDate()) : ""),
                                                 "finish_time" => ($resource->getReleaseUntil() != "0" ? date("H:i", $resource->getReleaseUntil()) : ""),
                                                 "resource_type" => $entity->getEntityType(),
-                                                "resource_type_title" => "External Link"
+                                                "resource_type_title" => "External Link",
+                                                "draft" => $resource->getDraft()
                                             );
                                         }
                                         break;
@@ -2398,6 +2570,33 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                                                 "resource_type" => $entity->getEntityType(),
                                                 "resource_type_title" => "LTI Provider"
                                             );
+                                        }
+                                        break;
+                                    case 13 :
+                                        $resource = Models_Event_Resource_FeedBackForm::fetchRowByID($entity->getEntityValue());
+                                        if ($resource) {
+                                            $form = Models_Assessments_Form::fetchRowByID($resource->getFormID());
+                                            if ($form) {
+                                                $resource_array = array(
+                                                    "entity_id" => $entity->getID(),
+                                                    "resource_id" => $resource->getID(),
+                                                    "form_id" => $resource->getFormID(),
+                                                    "link" => "",
+                                                    "title" => $form->getTitle(),
+                                                    "url" => ENTRADA_RELATIVE . "/admin/assessments/forms?section=edit-form&form_id=" . (int)$resource->getFormID(),
+                                                    "description" => $form->getDescription(),
+                                                    "timeframe" => $resource->getTimeframe(),
+                                                    "proxyify" => 0,
+                                                    "required" => $resource->getRequired(),
+                                                    "accesses" => $resource->getAccesses(),
+                                                    "release_date" => ($resource->getReleaseDate() != "0" ? date("Y-m-d", $resource->getReleaseDate()) : ""),
+                                                    "release_until" => ($resource->getReleaseUntil() != "0" ? date("Y-m-d", $resource->getReleaseUntil()) : ""),
+                                                    "start_time" => ($resource->getReleaseDate() != "0" ? date("H:i", $resource->getReleaseDate()) : ""),
+                                                    "finish_time" => ($resource->getReleaseUntil() != "0" ? date("H:i", $resource->getReleaseUntil()) : ""),
+                                                    "resource_type" => $entity->getEntityType(),
+                                                    "resource_type_title" => "Feedback Form"
+                                                );
+                                            }
                                         }
                                         break;
                                 }
@@ -2478,7 +2677,7 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                                         $row .= "   <label class=\"checkbox\" for=\"r_event_id_" . $event->getID() . "\">";
                                         $row .= "       <input type=\"checkbox\" id=\"r_event_id_" . $event->getID() . "\" class=\"r_events\" name=\"r_events[]\" value=\"" . $event->getID() . "\" data-id=\"" .  $event->getID() . "\"" . $checked . ">";
                                         $row .=         html_encode($event->getEventTitle());
-                                        $row .= "       on " . html_encode(date(DEFAULT_DATE_FORMAT, $event->getEventStart())) . ".";
+                                        $row .= "       on " . html_encode(date(DEFAULT_DATETIME_FORMAT, $event->getEventStart())) . ".";
                                         $row .= "    </label>";
                                         $row .= "</div>";
 
@@ -2557,7 +2756,17 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                                     break;
                                 case 12 :
                                     //exam
-                                    $resource = false;
+                                    $resource               = false;
+                                    break;
+                                case 13 :
+                                    $resource = Models_Event_Resource_FeedBackForm::fetchRowByID($entity->getEntityValue());
+                                    if ($resource) {
+                                        $form = Models_Assessments_Form::fetchRowByID($resource->getFormID());
+                                        if ($form) {
+                                            $resource_title = $form->getTitle();
+                                            $resource_update_time = $resource->getUpdatedDate();
+                                        }
+                                    }
                                     break;
                             }
 
@@ -2645,9 +2854,15 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                                                     $resource_value = $resource->getID();
                                                 }
                                             break;
-
                                             case 12 :
                                                 //exam
+                                                break;
+                                            case 13 :
+                                                $resource = Models_Event_Resource_FeedBackForm::fetchRowByEventIDUpdatedDate($recurring_event->getID(), $resource_update_time);
+
+                                                if ($resource) {
+                                                    $resource_value = $resource->getID();
+                                                }
                                                 break;
                                             default :
                                                 continue;
@@ -2668,7 +2883,7 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                                             $row .= "</td>\n";
                                             $row .= "<td>\n";
                                             $row .= "<span class=\"content-small\">" . html_encode($recurring_event->getEventTitle()) . " on ";
-                                            $row .= html_encode(date(DEFAULT_DATE_FORMAT, $recurring_event->getEventStart())) . "</span>\n";
+                                            $row .= html_encode(date(DEFAULT_DATETIME_FORMAT, $recurring_event->getEventStart())) . "</span>\n";
                                             $row .= "</td>\n";
                                             $row .= "</tr>\n";
                                             $html .= $row;
@@ -2773,9 +2988,9 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                                                 $resource_array["release_date"] = "";
                                                 $resource_array["release_until"] = "";
                                                 if (((int) $resource->getReleaseDate()) && ($resource->getReleaseDate() > time())) {
-                                                    $resource_array["release_date"] =  "This file will be available for downloading <strong>".date(DEFAULT_DATE_FORMAT, $resource->getReleaseDate())."</strong>.";
+                                                    $resource_array["release_date"] =  "This file will be available for downloading <strong>".date(DEFAULT_DATETIME_FORMAT, $resource->getReleaseDate())."</strong>.";
                                                 } elseif (((int) $resource->getReleaseUntil()) && ($resource->getReleaseUntil() < time())) {
-                                                    $resource_array["release_until"] = "This file was only available for download until <strong>".date(DEFAULT_DATE_FORMAT, $resource->getReleaseUntil())."</strong>.";
+                                                    $resource_array["release_until"] = "This file was only available for download until <strong>".date(DEFAULT_DATETIME_FORMAT, $resource->getReleaseUntil())."</strong>.";
                                                 }
                                             }
                                             break;
@@ -2797,18 +3012,19 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                                                     "timeframe" => $resource->getTimeframe(),
                                                     "required" => $resource->getRequired(),
                                                     "resource_type" => $entity->getEntityType(),
-                                                    "resource_type_title" => "Quiz"
+                                                    "resource_type_title" => "Quiz",
+                                                    "draft" => $resource->getDraft()
                                                 );
 
                                                 $resource_array["release_date"] = "";
                                                 $resource_array["release_until"] = "";
 
                                                 if ((int) $resource->getReleaseDate() && (int) $resource->getReleaseUntil()) {
-                                                    $resource_array["release_until"] .= "This quiz ".($resource->getReleaseUntil() > time() ? "is" : "was only")." available from <strong>".date(DEFAULT_DATE_FORMAT, html_encode($resource->getReleaseDate()))."</strong> to <strong>".date(DEFAULT_DATE_FORMAT, html_encode($resource->getReleaseUntil()))."</strong>.";
+                                                    $resource_array["release_until"] .= "This quiz ".($resource->getReleaseUntil() > time() ? "is" : "was only")." available from <strong>".date(DEFAULT_DATETIME_FORMAT, html_encode($resource->getReleaseDate()))."</strong> to <strong>".date(DEFAULT_DATETIME_FORMAT, html_encode($resource->getReleaseUntil()))."</strong>.";
                                                 } elseif ((int) $resource->getReleaseDate()) {
-                                                    $resource_array["release_until"] .= "This quiz ".($resource->getReleaseDate() > time() ? "will become" : "became")." available on <strong>".date(DEFAULT_DATE_FORMAT, html_encode($resource->getReleaseDate()))."</strong>.";
+                                                    $resource_array["release_until"] .= "This quiz ".($resource->getReleaseDate() > time() ? "will become" : "became")." available on <strong>".date(DEFAULT_DATETIME_FORMAT, html_encode($resource->getReleaseDate()))."</strong>.";
                                                 } elseif ((int) $resource->getReleaseUntil()) {
-                                                    $resource_array["release_until"] .= "This quiz ".($resource->getReleaseUntil() > time() ? "is" : "was only")." available until <strong>".date(DEFAULT_DATE_FORMAT, html_encode($resource->getReleaseUntil()))."</strong>.";
+                                                    $resource_array["release_until"] .= "This quiz ".($resource->getReleaseUntil() > time() ? "is" : "was only")." available until <strong>".date(DEFAULT_DATETIME_FORMAT, html_encode($resource->getReleaseUntil()))."</strong>.";
                                                 } else {
                                                     $resource_array["release_until"] = "This quiz is available indefinitely.";
                                                 }
@@ -2831,9 +3047,9 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                                                 $resource_array["release_date"] = "";
                                                 $resource_array["release_until"] = "";
                                                 if (((int) $resource->getReleaseDate()) && ($resource->getReleaseDate() > time())) {
-                                                    $resource_array["release_date"] =  "This homework will become accessible <strong>".date(DEFAULT_DATE_FORMAT, $resource->getReleaseDate())."</strong>.";
+                                                    $resource_array["release_date"] =  "This homework will become accessible <strong>".date(DEFAULT_DATETIME_FORMAT, $resource->getReleaseDate())."</strong>.";
                                                 } elseif (((int) $resource->getReleaseUntil()) && ($resource->getReleaseUntil() < time())) {
-                                                    $resource_array["release_until"] = "This homework was only available until <strong>".date(DEFAULT_DATE_FORMAT, $resource->getReleaseUntil())."</strong>.";
+                                                    $resource_array["release_until"] = "This homework was only available until <strong>".date(DEFAULT_DATETIME_FORMAT, $resource->getReleaseUntil())."</strong>.";
                                                 }
                                             }
                                             break;
@@ -2854,9 +3070,9 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                                                 $resource_array["release_date"] = "";
                                                 $resource_array["release_until"] = "";
                                                 if (((int) $resource->getReleaseDate()) && ($resource->getReleaseDate() > time())) {
-                                                    $resource_array["release_date"] =  "This classwork will become accessible <strong>".date(DEFAULT_DATE_FORMAT, $resource->getReleaseDate())."</strong>.";
+                                                    $resource_array["release_date"] =  "This classwork will become accessible <strong>".date(DEFAULT_DATETIME_FORMAT, $resource->getReleaseDate())."</strong>.";
                                                 } elseif (((int) $resource->getReleaseUntil()) && ($resource->getReleaseUntil() < time())) {
-                                                    $resource_array["release_until"] = "This classwork was only available until <strong>".date(DEFAULT_DATE_FORMAT, $resource->getReleaseUntil())."</strong>.";
+                                                    $resource_array["release_until"] = "This classwork was only available until <strong>".date(DEFAULT_DATETIME_FORMAT, $resource->getReleaseUntil())."</strong>.";
                                                 }
                                             }
                                             break;
@@ -2877,9 +3093,9 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                                                 $resource_array["release_date"] = "";
                                                 $resource_array["release_until"] = "";
                                                 if (((int) $resource->getReleaseDate()) && ($resource->getReleaseDate() > time())) {
-                                                    $resource_array["release_date"] =  "This textbook reading resource will become accessible <strong>".date(DEFAULT_DATE_FORMAT, $resource->getReleaseDate())."</strong>.";
+                                                    $resource_array["release_date"] =  "This textbook reading resource will become accessible <strong>".date(DEFAULT_DATETIME_FORMAT, $resource->getReleaseDate())."</strong>.";
                                                 } elseif (((int) $resource->getReleaseUntil()) && ($resource->getReleaseUntil() < time())) {
-                                                    $resource_array["release_until"] = "This textbook reading resource was only available until <strong>".date(DEFAULT_DATE_FORMAT, $resource->getReleaseUntil())."</strong>.";
+                                                    $resource_array["release_until"] = "This textbook reading resource was only available until <strong>".date(DEFAULT_DATETIME_FORMAT, $resource->getReleaseUntil())."</strong>.";
                                                 }
                                             }
                                             break;
@@ -2899,15 +3115,16 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                                                     "timeframe" => $resource->getTimeframe(),
                                                     "required" => $resource->getRequired(),
                                                     "resource_type" => $entity->getEntityType(),
-                                                    "resource_type_title" => "External Link"
+                                                    "resource_type_title" => "External Link",
+                                                    "draft" => $resource->getDraft()
                                                 );
 
                                                 $resource_array["release_date"] = "";
                                                 $resource_array["release_until"] = "";
                                                 if (((int) $resource->getReleaseDate()) && ($resource->getReleaseDate() > time())) {
-                                                    $resource_array["release_date"] =  "This link will become accessible <strong>".date(DEFAULT_DATE_FORMAT, $resource->getReleaseDate())."</strong>.";
+                                                    $resource_array["release_date"] =  "This link will become accessible <strong>".date(DEFAULT_DATETIME_FORMAT, $resource->getReleaseDate())."</strong>.";
                                                 } elseif (((int) $resource->getReleaseUntil()) && ($resource->getReleaseUntil() < time())) {
-                                                    $resource_array["release_until"] = "This link was only accessible until <strong>".date(DEFAULT_DATE_FORMAT, $resource->getReleaseUntil())."</strong>.";
+                                                    $resource_array["release_until"] = "This link was only accessible until <strong>".date(DEFAULT_DATETIME_FORMAT, $resource->getReleaseUntil())."</strong>.";
                                                 }
                                             }
                                             break;
@@ -2932,9 +3149,9 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                                                 $resource_array["release_date"] = "";
                                                 $resource_array["release_until"] = "";
                                                 if (((int) $resource->getReleaseDate()) && ($resource->getReleaseDate() > time())) {
-                                                    $resource_array["release_date"] =  "This LTI provider will be available for downloading <strong>".date(DEFAULT_DATE_FORMAT, $resource->getReleaseDate())."</strong>.";
+                                                    $resource_array["release_date"] =  "This LTI provider will be available for downloading <strong>".date(DEFAULT_DATETIME_FORMAT, $resource->getReleaseDate())."</strong>.";
                                                 } elseif (((int) $resource->getReleaseUntil()) && ($resource->getReleaseUntil() < time())) {
-                                                    $resource_array["release_until"] = "This LTI provider was only available for download until <strong>".date(DEFAULT_DATE_FORMAT, $resource->getReleaseUntil())."</strong>.";
+                                                    $resource_array["release_until"] = "This LTI provider was only available for download until <strong>".date(DEFAULT_DATETIME_FORMAT, $resource->getReleaseUntil())."</strong>.";
                                                 }
                                             }
                                             break;
@@ -2971,6 +3188,36 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                                                     "delete"                => ($progress ? 0 : 1),
                                                     "progress_count"        => ($progress_count ? $progress_count : 0)
                                                 );
+                                            }
+                                            break;
+                                        case 13 :
+                                            $resource = Models_Event_Resource_FeedBackForm::fetchRowByID($entity->getEntityValue());
+                                            if ($resource) {
+                                                $form = Models_Assessments_Form::fetchRowByID($resource->getFormID());
+                                                if ($form) {
+                                                    $resource_array = array(
+                                                        "entity_id" => $entity->getID(),
+                                                        "resource_id" => $resource->getID(),
+                                                        "form_id" => $resource->getFormID(),
+                                                        "title" => $form->getTitle(),
+                                                        "link" => "",
+                                                        "url" => ENTRADA_RELATIVE . "/admin/assessments/forms?section=edit-form&form_id=" . (int)$resource->getFormID(),
+                                                        "description" => $form->getDescription(),
+                                                        "proxyify" => 0,
+                                                        "timeframe" => $resource->getTimeframe(),
+                                                        "required" => $resource->getRequired(),
+                                                        "resource_type" => $entity->getEntityType(),
+                                                        "resource_type_title" => "FeedBack Form"
+                                                    );
+
+                                                    $resource_array["release_date"] = "";
+                                                    $resource_array["release_until"] = "";
+                                                    if (((int)$resource->getReleaseDate()) && ($resource->getReleaseDate() > time())) {
+                                                        $resource_array["release_date"] = "This link will become accessible <strong>" . date(DEFAULT_DATE_FORMAT, $resource->getReleaseDate()) . "</strong>.";
+                                                    } elseif (((int)$resource->getReleaseUntil()) && ($resource->getReleaseUntil() < time())) {
+                                                        $resource_array["release_until"] = "This link was only accessible until <strong>" . date(DEFAULT_DATE_FORMAT, $resource->getReleaseUntil()) . "</strong>.";
+                                                    }
+                                                }
                                             }
                                             break;
                                     }
@@ -3024,7 +3271,7 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
                         if ($resource_views) {
                             $resource_views_data = array();
                             foreach ($resource_views as $resource_view) {
-                                $resource_views_data[] = array("name" => $resource_view["lastname"] . " " . $resource_view["firstname"], "last_viewed" => date(DEFAULT_DATE_FORMAT, $resource_view["last_viewed_time"]), "views" => $resource_view["views"]);
+                                $resource_views_data[] = array("name" => $resource_view["lastname"] . " " . $resource_view["firstname"], "last_viewed" => date(DEFAULT_DATETIME_FORMAT, $resource_view["last_viewed_time"]), "views" => $resource_view["views"]);
                             }
 
                             if ($resource_views_data) {
@@ -3035,6 +3282,118 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 
                         } else {
                             echo json_encode(array("status" => "error", "data" => array("There are no views associated with this resource.")));
+                        }
+                        break;
+                    case "get-user-forms" :
+                        if (isset(${$request_var}["search_value"]) && $tmp_input = clean_input(strtolower(${$request_var}["search_value"]), array("trim", "striptags"))) {
+                            $PROCESSED["search_value"] = $tmp_input;
+                        } else {
+                            $PROCESSED["search_value"] = "";
+                        }
+
+                        $data = array();
+                        $forms = Models_Assessments_Form::fetchAllByOwner($ENTRADA_USER->getActiveID(), $ENTRADA_USER->getActiveOrganisation(), $PROCESSED["search_value"]);
+
+                        if ($forms) {
+                            $data = array();
+                            foreach ($forms as $form) {
+                                $data[] = array("target_id" => $form->getID(), "target_label" => $form->getTitle());
+                            }
+                        }
+
+                        if (!empty($data)) {
+                            echo json_encode(array("status" => "success", "data" => $data, "level_selectable" => 1));
+                        } else {
+                            echo json_encode(array("status" => "error", "data" => $translate->_("No forms were found.")));
+                        }
+                        break;
+                    case "get-form-name-by-id" :
+                        if (isset($_GET["form_id"]) && $tmp_input = clean_input($_GET["form_id"], array("trim", "int"))) {
+                            $PROCESSED["form_id"] = $tmp_input;
+                        } else {
+                            add_error($translate->_("No form id set."));
+                        }
+
+                        $form = false;
+                        if (!$ERROR) {
+                            $form = Models_Assessments_Form::fetchRowByID($PROCESSED["form_id"]);
+                        }
+
+                        if ($form) {
+                            echo json_encode(array("status" => "success", "data" => $form->getTitle()));
+                        } else {
+                            echo json_encode(array("status" => "error", "data" => $translate->_("Form was not found.")));
+                        }
+                        break;
+                    case "get-exams-by-folder" :
+                        $request = ${$request_var};
+                        if (isset($request["parent_id"]) && $tmp_input = clean_input(strtolower($request["parent_id"]), array("trim", "int"))) {
+                            $PROCESSED["parent_id"] = $tmp_input;
+                        } else if ($request["parent_id"] == "0") {
+                            $PROCESSED["parent_id"] = 0;
+                        } else {
+                            add_error($translate->_("Invalid parent ID."));
+                        }
+
+                        if (isset($request["search_value"]) && $tmp_input = clean_input(strtolower($request["search_value"]), array("trim", "striptags"))) {
+                            $PROCESSED["search_value"] = $tmp_input;
+                        } else {
+                            $PROCESSED["search_value"] = null;
+                        }
+
+                        $folders = array();
+                        $exams = array();
+
+                        if($PROCESSED["search_value"] != ""){
+                            $exams = Models_Exam_Exam::fetchAllBySearchTerm($PROCESSED["search_value"]);
+                        }else{
+                            $folders = Models_Exam_Bank_Folders::fetchAllByParentID($PROCESSED["parent_id"], "exam");
+                            $exams = Models_Exam_Exam::fetchAllByFolderID($PROCESSED["parent_id"]);
+                        }
+
+                        // Defaults to "0" so advanced search won't show anything.
+                        $parent_folder_id = $parent_folder_name = "0";
+
+                        if ($PROCESSED["parent_id"]) {
+                            $parent_folder = Models_Exam_Bank_Folders::fetchRowByID($PROCESSED["parent_id"]);
+                            $parent_folder_id = $parent_folder->getParentFolderID();
+                            $parent_folder_name = $parent_folder->getFolderTitle();
+                        }
+
+                        $data = [];
+
+                        foreach ($exams as $exam) {
+                            array_push($data, [
+                                "target_id" => $exam->getID(),
+                                "target_label" => $exam->getTitle(),
+                                "target_children" => 0, // Exams have no children.
+                                "level_selectable" => 1, // Let the user select this exam.
+                                "parent_id" => $exam->getFolderId(),
+                            ]);
+                        }
+
+                        foreach ($folders as $folder) {
+                            array_push($data, [
+                                "target_id" => $folder->getID(),
+                                "target_label" => $folder->getFolderTitle(),
+                                "target_children" => $folder->hasChildren(true) ? 1 : 0,
+                                "level_selectable" => 0, // Do not let the user select this level. (Hides checkboxes/radio buttons).
+                                "parent_id" => $folder->getParentFolderID(),
+                            ]);
+                        }
+
+                        if (!has_error()) {
+                            echo json_encode([
+                                "status" => "success",
+                                "data" => $data,
+                                "parent_id" => $parent_folder_id,
+                                "parent_name" => $parent_folder_name,
+                            ]);
+                        } else {
+                            echo json_encode([
+                                "status" => "error",
+                                "data" => $ERRORSTR,
+                            ]);
                         }
                         break;
                 }

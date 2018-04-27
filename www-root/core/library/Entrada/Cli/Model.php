@@ -155,7 +155,7 @@ HEADERMESSAGE;
             $count++;
             print "\n   ".$count.") ".$variable;
         }
-        print "\n\nEnter a number between 0 and ".$count.": ";
+        print "\n\nEnter a number between 1 and ".$count.": ";
         fscanf(STDIN, "%i\n", $active_field_index);
 
         while ($active_field_index != 0 && !array_key_exists(($active_field_index - 1), $this->variables)) {
@@ -294,7 +294,8 @@ HEADERMESSAGE;
             $this->class_contents .= "    }\n\n";
             // setter
             $this->class_contents .= "    public function set".$variable_name_formatted."(\$".$variable.") {\n";
-            $this->class_contents .= "        \$this->".$variable." = \$".$variable.";\n";
+            $this->class_contents .= "        \$this->".$variable." = \$".$variable.";\n\n";
+            $this->class_contents .= "        return \$this;\n";
             $this->class_contents .= "    }\n\n";
         }
         if ($this->primary_id) {
@@ -314,20 +315,10 @@ HEADERMESSAGE;
         $this->class_contents .= "    }\n\n";
         if (in_array("deleted_date", $this->variables, true)) {
             $this->class_contents .= "    public function delete() {\n";
-            if (in_array("deleted_by", $this->variables, true) || in_array("updated_by", $this->variables, true)) {
-                $this->class_contents .= "        global \$ENTRADA_USER;\n\n";
-            }
-            $this->class_contents .= "        \$this->deleted_date = time();\n";
-            if (in_array("deleted_by", $this->variables, true)) {
-                $this->class_contents .= "        \$this->deleted_by = \$ENTRADA_USER->getActiveId();\n";
-            }
-            if (in_array("updated_date", $this->variables, true)) {
-                $this->class_contents .= "        \$this->updated_date = time();\n";
-            }
-            if (in_array("updated_by", $this->variables, true)) {
-                $this->class_contents .= "        \$this->updated_by = \$ENTRADA_USER->getActiveId();\n";
-            }
-            $this->class_contents .= "\n        return \$this->update();\n";
+            $this->class_contents .= "        if (empty(\$this->deleted_date)) {\n";
+            $this->class_contents .= "            \$this->deleted_date = time();\n";
+            $this->class_contents .= "        }\n\n";
+            $this->class_contents .= "        return \$this->update();\n";
             $this->class_contents .= "    }\n\n";
         }
         $this->class_contents .= "}";

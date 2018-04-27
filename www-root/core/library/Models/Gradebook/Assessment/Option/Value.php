@@ -53,6 +53,7 @@ class Models_Gradebook_Assessment_Option_Value extends Models_Base {
         return $this->value;
     }
 
+    /* @return bool|Models_Gradebook_Assessment_Option_Value */
     public static function fetchRowByID($aovalue_id) {
         $self = new self();
         return $self->fetchRow(array(
@@ -60,6 +61,7 @@ class Models_Gradebook_Assessment_Option_Value extends Models_Base {
         ));
     }
 
+    /* @return ArrayObject|Models_Gradebook_Assessment_Option_Value[] */
     public static function fetchAllByOptionID($aoption_id) {
         $self = new self();
         return $self->fetchAll(array(
@@ -67,6 +69,7 @@ class Models_Gradebook_Assessment_Option_Value extends Models_Base {
         ));
     }
 
+    /* @return ArrayObject|Models_Gradebook_Assessment_Option_Value[] */
     public static function fetchAllByAOptionIDsStudentIDs($aoption_ids = array(), $student_ids = array()) {
         $self = new self();
         return $self->fetchAll(array(

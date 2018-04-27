@@ -28,7 +28,7 @@ if (!defined("IN_ASSESSMENTS_REPORTS")) {
 } elseif ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
     header("Location: " . ENTRADA_URL);
     exit;
-} elseif (!$ENTRADA_ACL->amIAllowed("academicadvisor", "read", false)) {
+} elseif (!$ENTRADA_ACL->amIAllowed("assessments", "read", false)) {
     $ONLOAD[] = "setTimeout('window.location=\\'" . ENTRADA_URL . "/" . $MODULE . "\\'', 15000)";
     $ERROR++;
     $ERRORSTR[] = "Your account does not have the permissions required to use this module.<br /><br />If you believe you are receiving this message in error please contact <a href=\"mailto:" . html_encode($AGENT_CONTACTS["administrator"]["email"]) . "\">" . html_encode($AGENT_CONTACTS["administrator"]["name"]) . "</a> for assistance.";
@@ -73,7 +73,7 @@ if (!defined("IN_ASSESSMENTS_REPORTS")) {
     }
 
     // Make sure proxy exists. Course is optional (will be inferred)
-    if ($specified_proxy_id && ($specified_target_role == "learner" || $specified_target_role == "faculty")) {
+    if ($specified_proxy_id && ($specified_target_role == "learner" || $specified_target_role == "faculty" || $specified_target_role == "target")) {
         $validated_inputs = true;
     }
 
@@ -82,7 +82,7 @@ if (!defined("IN_ASSESSMENTS_REPORTS")) {
         $assessment_user = Models_User::fetchRowByID($specified_proxy_id);
         if ($assessment_user) {
             if ($specified_target_role == "faculty") {
-                $override_permission = Entrada_Utilities_Assessments_AssessmentTask::getFacultyAccessOverrideByCourseFacultyOrWhitelist($ENTRADA_USER, $specified_proxy_id);
+                $override_permission = Entrada_Utilities_Assessments_DeprecatedAssessmentTask::getFacultyAccessOverrideByCourseFacultyOrWhitelist($ENTRADA_USER, $specified_proxy_id);
             } else {
                 $override_permission = null;
             }
@@ -94,7 +94,7 @@ if (!defined("IN_ASSESSMENTS_REPORTS")) {
                 $HEAD[] = "<script type=\"text/javascript\">sidebarBegone();</script>";
                 $JQUERY[] = "<script type=\"text/javascript\" src=\"" . ENTRADA_URL . "/javascript/assessments/assessment-index.js?release=" . html_encode(APPLICATION_VERSION) . "\"></script>";
                 $HEAD[] = "<script type=\"text/javascript\" src=\"" . ENTRADA_URL . "/javascript/jquery/jquery.timepicker.js?release=" . html_encode(APPLICATION_VERSION) . "\"></script>";
-                $HEAD[] = "<link href=\"" . ENTRADA_URL . "/css/assessments/assessment-public-index.css\" rel=\"stylesheet\" type=\"text/css\" media=\"all\" />";
+                $HEAD[] = "<link href=\"" . ENTRADA_URL . "/css/assessments/assessment-public-index.css?release=" . html_encode(APPLICATION_VERSION)."\" rel=\"stylesheet\" type=\"text/css\" media=\"all\" />";
                 ?>
                 <script type="text/javascript">
                     var assessment_reports = {};
@@ -117,8 +117,8 @@ if (!defined("IN_ASSESSMENTS_REPORTS")) {
                 </script>
                 <?php
 
-                $group_by_distribution = Entrada_Utilities_Assessments_Reports::getPreferenceFromSession("group_by_distribution");
                 $target_role = $specified_target_role;
+                $group_by_distribution = ($target_role == "target" ? 1 : Entrada_Utilities_Assessments_Reports::getPreferenceFromSession("group_by_distribution"));
 
                 // Create the reporting utility object
                 $construction = array(
@@ -135,7 +135,7 @@ if (!defined("IN_ASSESSMENTS_REPORTS")) {
 
                 // Fetch the summary of forms submitted on the user (form title, times submitted, for what cperiod)
                 $completed_tasks = array();
-                $completed_tasks_meta_by_cperiod = $reporting_utility->fetchCompletedAssessmentsMeta();
+                $completed_tasks_meta_by_cperiod = $reporting_utility->fetchCompletedAssessmentsMeta($target_role);
                 $completed_tasks_meta = array();
                 foreach ($completed_tasks_meta_by_cperiod as $group) {
                     foreach ($group as $form_meta) {
@@ -147,10 +147,13 @@ if (!defined("IN_ASSESSMENTS_REPORTS")) {
                 }
 
                 // Draw the page header
+                $target_name = ($ENTRADA_USER->getActiveID() == $specified_proxy_id)
+                    ? $translate->_("Me")
+                    : "{$assessment_user->getFirstname()} {$assessment_user->getLastname()}";
                 $header_view = new Views_Assessments_Reports_Header();
                 $header_view->render(
                     array(
-                        "target_name" => "{$assessment_user->getFirstname()} {$assessment_user->getLastname()}",
+                        "target_name" => $target_name,
                     )
                 );
                 ?>

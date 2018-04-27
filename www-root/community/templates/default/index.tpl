@@ -22,7 +22,8 @@
 
         <script src="{$sys_website_relative}/javascript/jquery/jquery.min.js"></script>
         <script src="{$sys_website_relative}/javascript/jquery/jquery-ui.min.js"></script>
-
+		<script src="{$sys_website_url}/javascript/disclaimers.js?release={$application_version}"></script>
+		<script>var ENTRADA_URL = "{$sys_website_url}";</script>
         <script>var COMMUNITY_ID = "{$community_id}";</script>
         <script>jQuery.noConflict();</script>
 

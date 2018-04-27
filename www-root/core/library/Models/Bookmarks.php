@@ -15,12 +15,12 @@
  * You should have received a copy of the GNU General Public License
  * along with Entrada.  If not, see <http://www.gnu.org/licenses/>.
  *
- * A model for handling community courses
+ * A model for handling bookmarks.
  *
- * @author Organization: David Geffen School of Medicine at UCLA
+ * @author Organisation: David Geffen School of Medicine at UCLA
  * @author Unit: Instructional Design and Technology Unit
- * @author Developer: Daniel Noji <DNoji@mednet.ucla.edu>
- * @copyright Copyright 2016 Regents of The University of California. All Rights Reserved.
+ * @author Developer: Daniel Noji <dnoji@mednet.ucla.edu>
+ * @copyright Copyright 2017 Regents of the University of California. All Rights Reserved.
  */
 
 class Models_Bookmarks extends Models_Base {
@@ -30,6 +30,7 @@ class Models_Bookmarks extends Models_Base {
               $updated_date,
               $order,
               $proxy_id,
+              $organisation_id,
               $db;
     
     protected static $table_name            = "bookmarks";
@@ -62,6 +63,11 @@ class Models_Bookmarks extends Models_Base {
     public function getProxyId() {
         return $this->proxy_id;
     }
+
+    public function getOrganisationId() {
+        return $this->organisation_id;
+    }
+
     public function getOrder() {
         return $this->order;
     }
@@ -103,13 +109,14 @@ class Models_Bookmarks extends Models_Base {
     }
 
     /* @return ArrayObject|Models_Bookmarks[] */
-    public function fetchAllByProxyId($id, $search_value = "") {
+    public function fetchAllByProxyIdOrganisationId($id, $organisation_id = 0, $search_value = "") {
         $self = new Models_Bookmarks();
         $query = "SELECT * 
                     FROM `bookmarks` 
                     WHERE `proxy_id` = ? " . ($search_value != "" ? " AND (`bookmark_title` LIKE '%" . $search_value . "%' OR `uri` LIKE '%" . $search_value . "%')" : "") . "
+                    AND `organisation_id` = ?
                     ORDER BY `order` ASC, `updated_date` DESC";
-        $results = $this->db->GetAll($query, array($id));
+        $results = $this->db->GetAll($query, [$id, $organisation_id]);
 
         $output = array();
         if ($results) {
@@ -144,6 +151,108 @@ class Models_Bookmarks extends Models_Base {
         );
     }
 
+    /**
+     *
+     * This function gets an array of the default groups/roles for the bookmark permissions
+     * @return mixed
+     *
+     */
+    public static function fetchAllDefault() {
+        global $db;
+        // Get all the default bookmarks from the database
+        $query =    "   SELECT *
+                        FROM `bookmarks_default`";
+        $default_bookmarks = $db->GetAll($query);
+
+        // Build each bookmarks permissions
+        if ($default_bookmarks) {
+            foreach ($default_bookmarks as $key => $new_bookmark) {
+                if (isset($new_bookmark["entity_type"]) && $new_bookmark["entity_type"] == "organisation") {
+                    // Organisation
+                    if (!isset($new_bookmark["entity_value"])) {
+                        application_log("error", "Default Bookmark [".$new_bookmark["permission_id"]."] cannot have a null entity value. Please fix this in the database.");
+                        continue;
+                    }
+                    $default_bookmarks[$key]["organisation"] = $new_bookmark["entity_value"];
+                    $default_bookmarks[$key]["group"] = NULL;
+                    $default_bookmarks[$key]["role"] = NULL;
+                } elseif (isset($new_bookmark["entity_type"]) && $new_bookmark["entity_type"] == "group") {
+                    //Group
+                    if (!isset($new_bookmark["entity_value"])) {
+                        application_log("error", "Default Bookmark [".$new_bookmark["permission_id"]."] cannot have a null entity value. Please fix this in the database.");
+                        continue;
+                    }
+                    $default_bookmarks[$key]["group"] = $new_bookmark["entity_value"];
+                    $default_bookmarks[$key]["organisation"] = NULL;
+                    $default_bookmarks[$key]["role"] = NULL;
+                } elseif (isset($new_bookmark["entity_type"]) && $new_bookmark["entity_type"] == "role") {
+                    if (!isset($new_bookmark["entity_value"])) {
+                        application_log("error", "Default Bookmark [".$new_bookmark["permission_id"]."] cannot have a null entity value. Please fix this in the database.");
+                        continue;
+                    }
+                    $default_bookmarks[$key]["role"] = $new_bookmark["entity_value"];
+                    $default_bookmarks[$key]["group"] = NULL;
+                    $default_bookmarks[$key]["organisation"] = NULL;
+
+                } elseif (isset($new_bookmark["entity_type"]) && $new_bookmark["entity_type"] == "group:role") {
+                    // Group:Role
+                    if (!isset($new_bookmark["entity_value"])) {
+                        application_log("error", "Default Bookmark [".$new_bookmark["permission_id"]."] cannot have a null entity value. Please fix this in the database.");
+                        continue;
+                    }
+
+                    $entity_vals = explode(":", $new_bookmark["entity_value"]);
+
+                    if (!isset($entity_vals[1])) {
+                        application_log("error", "Default Bookmark [".$new_bookmark["permission_id"]."] needs to have both a group AND a role seperated by a colon. Please fix this in the database.");
+                        continue;
+                    }
+                    $default_bookmarks[$key]["group"] = $entity_vals[0];
+                    $default_bookmarks[$key]["role"] = $entity_vals[1];
+                    $default_bookmarks[$key]["organisation"] = NULL;
+
+                } elseif (isset($new_bookmark["entity_type"]) && $new_bookmark["entity_type"] == "organisation:group") {
+
+                    // Organisation:group
+                    if (!isset($new_bookmark["entity_value"])) {
+                        application_log("error", "Default Bookmark [".$new_bookmark["permission_id"]."] cannot have a null entity value. Please fix this in the database.");
+                        continue;
+                    }
+
+                    $entity_vals = explode(":", $new_bookmark["entity_value"]);
+
+                    if (!isset($entity_vals[1])) {
+                        application_log("error", "Default Bookmark [".$new_bookmark["permission_id"]."] needs to have both an organisation AND a group seperated by a colon. Please fix this in the database.");
+                        continue;
+                    }
+                    $default_bookmarks[$key]["organisation"] = $entity_vals[0];
+                    $default_bookmarks[$key]["group"] = $entity_vals[1];
+                    $default_bookmarks[$key]["role"] = NULL;
+
+                } elseif (isset($new_bookmark["entity_type"]) && $new_bookmark["entity_type"] == "organisation:group:role") {
+
+                    // Organisation:group:role
+                    if (!isset($new_bookmark["entity_value"])) {
+                        application_log("error", "Default Bookmark [".$new_bookmark["permission_id"]."] cannot have a null entity value. Please fix this in the database.");
+                        continue;
+                    }
+
+                   $entity_vals = explode(":", $new_bookmark["entity_value"]);
+
+                    if (!isset($entity_vals[1]) || !isset($entity_vals[2])) {
+                        application_log("error", "Default Bookmark [".$new_bookmark["permission_id"]."] needs to have both a group, role AND organisation seperated by a colon. Please fix this in the database.");
+                        continue;
+                    }
+                    $default_bookmarks[$key]["organisation"] = $entity_vals[0];
+                    $default_bookmarks[$key]["group"] = $entity_vals[1];
+                    $default_bookmarks[$key]["role"] = $entity_vals[2];
+
+                }
+            }
+        }
+        return $default_bookmarks;
+    }
+
     /*
      * Bookmarks sidebar
      *
@@ -152,76 +261,78 @@ class Models_Bookmarks extends Models_Base {
     public static function showSidebar($returnHtml = NULL) {
         global $Bookmarks, $translate, $ENTRADA_USER;
 
-        $Bookmarks = new Models_Bookmarks();
-        $size = 0;
+        if ($ENTRADA_USER) {
+            $Bookmarks = new Models_Bookmarks();
+            $size = 0;
 
-        $currentBookmark = $Bookmarks->fetchBookmarkByUri($ENTRADA_USER->getID(), Entrada_Utilities::getCurrentUrl());
-        $Bookmarks = $Bookmarks->fetchAllByProxyId($ENTRADA_USER->getID());
-        $visible_bookmarks = 5; //Number of bookmarks to initially show
+            $currentBookmark = $Bookmarks->fetchBookmarkByUri($ENTRADA_USER->getID(), Entrada_Utilities::getCurrentUrl());
+            $Bookmarks = $Bookmarks->fetchAllByProxyIdOrganisationId($ENTRADA_USER->getID(), $ENTRADA_USER->getActiveOrganisation());
+            $visible_bookmarks = 5; //Number of bookmarks to initially show
 
-        $sidebar_html = "<div id=\"bookmarks-widget\">";
+            $sidebar_html = "<div id=\"bookmarks-widget\">";
 
-        $sidebar_html .= "<div class=\"row-fluid\" id=\"bookmark-controls\">";
-        if ($currentBookmark) {
-            $sidebar_html .= "<button class=\"btn btn-small btn-primary bookmark-btn active pull-right\" id=\"bookmarked-page\" data-bookmark=\"". $currentBookmark->getId() . "\" data-bookmark-url=\"". Entrada_Utilities::getCurrentUrl() ."\" role=\"button\"><i class=\"icon-bookmark icon-white\"></i> <span id=\"bookmark-text\">Bookmarked</span></button> ";
-        } else {
-            if (!$Bookmarks) {
-                $sidebar_html .= "<div class=\"muted space-below\">
+            $sidebar_html .= "<div class=\"row-fluid\" id=\"bookmark-controls\">";
+            if ($currentBookmark) {
+                $sidebar_html .= "<button class=\"btn btn-small btn-primary bookmark-btn active pull-right\" id=\"bookmarked-page\" data-bookmark=\"" . $currentBookmark->getId() . "\" data-bookmark-url=\"" . Entrada_Utilities::getCurrentUrl() . "\"><i class=\"icon-bookmark icon-white\"></i> <span id=\"bookmark-text\">Bookmarked</span></button> ";
+            } else {
+                if (!$Bookmarks) {
+                    $sidebar_html .= "<div class=\"muted space-below\">
  <small>You can bookmark this page</small> <i class=\"fa fa-arrow-down\" aria-hidden=\"true\"></i></div>";
+                }
+                $sidebar_html .= "<button class=\"btn btn-small btn-primary bookmark-btn pull-right\" id=\"bookmark-page\" data-bookmark-url=\"" . htmlspecialchars(Entrada_Utilities::getCurrentUrl()) . "\"><i class=\"fa fa-bookmark bookmark-icon\"></i> <span id=\"bookmark-text\"> " . $translate->_("Add Bookmark") . "</span></button>";
             }
-            $sidebar_html .= "<button class=\"btn btn-small btn-primary bookmark-btn pull-right\" id=\"bookmark-page\" data-bookmark-url=\"". htmlspecialchars(Entrada_Utilities::getCurrentUrl()) ."\" role=\"button\"><i class=\"fa fa-bookmark bookmark-icon\"></i> <span id=\"bookmark-text\"> " . $translate->_("Add Bookmark") . "</span></button>";
-        }
 
-        if ($Bookmarks) {
-            $sidebar_html .= "<button class=\"btn btn-small\" id=\"edit-bookmarks\"><i class=\"fa fa-cog\"></i></button>";
-            $sidebar_html .= "<input type=\"text\" class=\"space-above span12 search-icon\" id=\"bookmark_search_value\" name=\"bookmark_search_value\" placeholder=\"Search bookmarks\">";
-        }
-        $sidebar_html .= "</div>";//end bookmark-controls
-        $sidebar_html .= "<div class=\"row-fluid\" id=\"bookmark-list\">";
-        $sidebar_html .= "<div class=\"span12\" id=\"bookmark-list-container\">";
+            if ($Bookmarks) {
+                $sidebar_html .= "<button class=\"btn btn-small\" id=\"edit-bookmarks\"><i class=\"fa fa-cog\"></i></button>";
+                $sidebar_html .= "<input type=\"text\" class=\"space-above span12 search-icon\" id=\"bookmark_search_value\" name=\"bookmark_search_value\" placeholder=\"Search bookmarks\">";
+            }
+            $sidebar_html .= "</div>";//end bookmark-controls
+            $sidebar_html .= "<div class=\"row-fluid\" id=\"bookmark-list\">";
+            $sidebar_html .= "<div class=\"span12\" id=\"bookmark-list-container\">";
 
-        if ($Bookmarks) {
+            if ($Bookmarks) {
 
-            $size = count($Bookmarks);
-            for ($i = 0; $i < $size; ++$i) {
-                $Bookmark = $Bookmarks[$i];
+                $size = count($Bookmarks);
+                for ($i = 0; $i < $size; ++$i) {
+                    $Bookmark = $Bookmarks[$i];
 
-                if ($i == $visible_bookmarks) {
-                    $sidebar_html .="<div id=\"all-bookmarks\" style=\"display: none;\">";
-                }
-                if ($i+1 > $visible_bookmarks) {
-                    $sidebar_html .="<div class=\"row-fluid bookmark-item hidden-bookmark\" id=\"bookmark_". $Bookmark->getId() ."\" data-bookmark-link-id=\"". $Bookmark->getId() . "\">";
-                } else {
-                    $sidebar_html .="<div class=\"row-fluid bookmark-item\" id=\"bookmark_". $Bookmark->getId() ."\" data-bookmark-link-id=\"". $Bookmark->getId() . "\">";
-                }
-                $sidebar_html .="<div class=\"span1 delete-column\" style=\"display: none;\"><i class=\"fa fa-trash\" id=\"delete-bookmark\"></i></div>";
-                $sidebar_html .="<div class=\"span12 bookmark-column\">";
-                $sidebar_html .="<a href=\"". $Bookmark->getUri() ."\" class=\"bookmark-link\"><span class=\"bookmark-text\" data-toggle=\"popover\">";
-                $sidebar_html .= ($currentBookmark && $currentBookmark->getUri() == $Bookmark->getUri()) ? "<strong>" . $Bookmark->getBookmarkTitle() . "</strong>" : $Bookmark->getBookmarkTitle();
-                $sidebar_html .="</span></a>";
-                $sidebar_html .="</div>";
-                $sidebar_html .="<div class=\"span1 move-column muted\" style=\"display: none;\"><i class=\"fa fa-arrows\" id=\"move-bookmark\"></i></div>";
-                $sidebar_html .="</div>";
-
-                if ($i >= $visible_bookmarks && $i+1 == $size) {
+                    if ($i == $visible_bookmarks) {
+                        $sidebar_html .= "<div id=\"all-bookmarks\" style=\"display: none;\">";
+                    }
+                    if ($i + 1 > $visible_bookmarks) {
+                        $sidebar_html .= "<div class=\"row-fluid bookmark-item hidden-bookmark\" id=\"bookmark_" . $Bookmark->getId() . "\" data-bookmark-link-id=\"" . $Bookmark->getId() . "\">";
+                    } else {
+                        $sidebar_html .= "<div class=\"row-fluid bookmark-item\" id=\"bookmark_" . $Bookmark->getId() . "\" data-bookmark-link-id=\"" . $Bookmark->getId() . "\">";
+                    }
+                    $sidebar_html .= "<div class=\"span1 delete-column\" style=\"display: none;\"><i class=\"fa fa-trash\" id=\"delete-bookmark\"></i></div>";
+                    $sidebar_html .= "<div class=\"span12 bookmark-column\">";
+                    $sidebar_html .= "<a href=\"" . $Bookmark->getUri() . "\" class=\"bookmark-link\"><span class=\"bookmark-text\" data-toggle=\"popover\">";
+                    $sidebar_html .= ($currentBookmark && $currentBookmark->getUri() == $Bookmark->getUri()) ? "<strong>" . $Bookmark->getBookmarkTitle() . "</strong>" : $Bookmark->getBookmarkTitle();
+                    $sidebar_html .= "</span></a>";
                     $sidebar_html .= "</div>";
+                    $sidebar_html .= "<div class=\"span1 move-column muted\" style=\"display: none;\"><i class=\"fa fa-arrows\" id=\"move-bookmark\"></i></div>";
+                    $sidebar_html .= "</div>";
+
+                    if ($i >= $visible_bookmarks && $i + 1 == $size) {
+                        $sidebar_html .= "</div>";
+                    }
                 }
+
             }
 
-        }
+            $sidebar_html .= "</div>"; // END bookmark-list-container
+            $sidebar_html .= "</div>"; // END bookmark-list
+            if ($size > $visible_bookmarks) {
+                $sidebar_html .= "<a class=\"btn btn-link btn-block show-more\" id=\"btn-show-more-collapsible\">Show more</a>";
+            }
 
-        $sidebar_html .= "</div>"; // END bookmark-list-container
-        $sidebar_html .= "</div>"; // END bookmark-list
-        if ($size > $visible_bookmarks) {
-            $sidebar_html .= "<a class=\"btn btn-link btn-block show-more\" id=\"btn-show-more-collapsible\">Show more</a>";
-        }
+            $sidebar_html .= "</div>";
 
-        $sidebar_html .= "</div>";
-
-        if ($returnHtml == true) {
-            return $sidebar_html;
-        } else {
-            new_sidebar_item($translate->_("My Bookmarks"), $sidebar_html, "bookmarks", "open", 1);
+            if ($returnHtml == true) {
+                return $sidebar_html;
+            } else {
+                new_sidebar_item($translate->_("My Bookmarks"), $sidebar_html, "bookmarks", "open", 1);
+            }
         }
     }
 

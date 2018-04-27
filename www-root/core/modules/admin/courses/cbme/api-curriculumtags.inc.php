@@ -28,7 +28,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CBME"))) {
 } elseif ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
     header("Location: ".ENTRADA_URL);
     exit;
-} elseif (!$ENTRADA_ACL->amIAllowed("course", "update", false)) {
+} elseif (!$ENTRADA_ACL->amIAllowed("coursecontent", "update", false)) {
     add_error("Your account does not have the permissions required to use this feature of this module.<br /><br />If you believe you are receiving this message in error please contact <a href=\"mailto:".html_encode($AGENT_CONTACTS["administrator"]["email"])."\">".html_encode($AGENT_CONTACTS["administrator"]["name"])."</a> for assistance.");
 
     echo display_error();
@@ -89,6 +89,17 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CBME"))) {
                                                     ini_set("auto_detect_line_endings", true);
                                                     $fp = fopen($_FILES["files"]["tmp_name"], "r");
                                                     if ($fp) {
+
+                                                        $cbme_file_upload_history = new Models_CBME_UploadHistory();
+                                                        $cbme_file_upload_history->storeFileUploadHistory(
+                                                            $_FILES["files"]["tmp_name"],
+                                                            $_FILES["files"]["name"],
+                                                            $PROCESSED["file_type"],
+                                                            $ENTRADA_USER->getActiveID(),
+                                                            $PROCESSED["course_id"],
+                                                            $PROCESSED["curriculum_tag_shortname"]
+                                                        );
+
                                                         $file_error = false;
                                                         while (($data = fgetcsv($fp)) !== false) {
                                                             if (empty($data[0]) || empty($data[1])) {

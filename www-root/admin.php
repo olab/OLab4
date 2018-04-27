@@ -51,7 +51,7 @@ if ((isset($PATH_SEPARATED[2])) && (trim($PATH_SEPARATED[2]) != "")) {
 	$SUBMODULE = false; // This is the default file that will be launched upon successful login.
 }
 
-if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
+if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 	header("Location: ".ENTRADA_URL.((isset($_SERVER["REQUEST_URI"])) ? "?url=".rawurlencode(clean_input($_SERVER["REQUEST_URI"], array("nows", "url"))) : ""));
 	exit;
 } else {
@@ -61,14 +61,14 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 	 * If they were logged into another application and came here, they should still be
 	 * signed in, unfortunately I can't do that yet, so they're logged out.
 	 */
-	if($_SESSION["details"]["app_id"] != AUTH_APP_ID) {
+	if ($_SESSION["details"]["app_id"] != AUTH_APP_ID) {
 		application_log("error", "User attempted to enter from a different app_id, they were forced to log out.");
 
 		header("Location: ".ENTRADA_URL."/?action=logout");
 		exit;
 	}
 
-	if(($_SESSION["details"]["expires"]) && ($_SESSION["details"]["expires"] <= time())) {
+	if (($_SESSION["details"]["expires"]) && ($_SESSION["details"]["expires"] <= time())) {
 		header("Location: ".ENTRADA_URL."/?action=logout");
 		exit;
 	}
@@ -83,11 +83,11 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 	 */
 	users_online();
 	$proxy_id = $ENTRADA_USER->getActiveId();
-	if(($proxy_id != $ENTRADA_USER->getID()) && ($_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["expires"] <= time())) {
+	if (($proxy_id != $ENTRADA_USER->getID()) && ($_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["expires"] <= time())) {
 		unset($proxy_id);
 	}
 
-	if(!isset($proxy_id)) {
+	if (!isset($proxy_id)) {
 		$proxy_id = $ENTRADA_USER->getID();
 	}
 
@@ -95,16 +95,15 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 	 * Redirect guests and students users away from the admin section.
 	 */
 	if (in_array($ENTRADA_USER->getActiveGroup(), array("guest", "student"))) {
-
+        $student_access_allowed = $ENTRADA_ACL->amIAllowed("studentadmin", "read", true);
 		$course_contact = Models_Course_Contact::fetchRowByProxyIDContactType($proxy_id, "ta");
-		if(!$course_contact) {
-				header("Location: ".ENTRADA_URL);
-				exit;
+		if (!$course_contact && !$student_access_allowed) {
+            header("Location: ".ENTRADA_URL);
+            exit;
 		}
-		
 	}
 
-	if($PATH_SEPARATED[1] != "") {
+	if ($PATH_SEPARATED[1] != "") {
 		$MODULE = $PATH_SEPARATED[1];
 	} else {
 		/**
@@ -114,18 +113,14 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 			if (in_array($ADMINISTRATION[$_SESSION["permissions"][$proxy_id]["group"]][$_SESSION["permissions"][$proxy_id]["role"]]["start_file"], $ADMINISTRATION[$_SESSION["permissions"][$proxy_id]["group"]][$_SESSION["permissions"][$proxy_id]["role"]]["registered"])) {
 				$MODULE = $ADMINISTRATION[$_SESSION["permissions"][$proxy_id]["group"]][$_SESSION["permissions"][$proxy_id]["role"]]["start_file"];
 			} else {
-				$ERROR++;
-				$ERRORSTR[]	= "The start file for the &quot;".$_SESSION["permissions"][$proxy_id]["role"]."&quot; role in &quot;".$_SESSION["permissions"][$proxy_id]["group"]."&quot; group is not registered in file list this role is allow to access. Please fix this in the configuration file or have an administrator do this for you.";
+				add_error("The start file for the &quot;" . $_SESSION["permissions"][$proxy_id]["role"] . "&quot; role in &quot;" . $_SESSION["permissions"][$proxy_id]["group"] . "&quot; group is not registered in file list this role is allow to access. Please fix this in the configuration file or have an administrator do this for you.");
 				echo display_error();
-
-				application_log("error", "Start file for ".$_SESSION["permissions"][$proxy_id]["role"]." role in ".$_SESSION["permissions"][$proxy_id]["group"]." group is not a registered access file.");
+				application_log("error", "Start file for " . $_SESSION["permissions"][$proxy_id]["role"] . " role in " . $_SESSION["permissions"][$proxy_id]["group"] . " group is not a registered access file.");
 			}
 		} else {
-			$ERROR++;
-			$ERRORSTR[]	= "Either the group [".$_SESSION["permissions"][$proxy_id]["group"]."] or role [".$_SESSION["permissions"][$proxy_id]["role"]."] in which you reside does not have access to the administration module. Please fix this in the configuration file or have an administrator do this for you.<br /><br />If you're attempting to access this file without a valid account, please note that all access attempts are logged for security purposes and regular audits do take place.";
+			add_error("Either the group [".$_SESSION["permissions"][$proxy_id]["group"]."] or role [".$_SESSION["permissions"][$proxy_id]["role"]."] in which you reside does not have access to the administration module. Please fix this in the configuration file or have an administrator do this for you.<br /><br />If you're attempting to access this file without a valid account, please note that all access attempts are logged for security purposes and regular audits do take place.");
 			echo display_error();
-
-			application_log("error", "Either the ".$_SESSION["details"]["role"]." role or the ".$_SESSION["details"]["group"]." group is not able to access administraiton module.");
+			application_log("error", "Either the ".$_SESSION["details"]["role"]." role or the ".$_SESSION["details"]["group"]." group is not able to access administration module.");
 		}
 	}
 }
@@ -147,10 +142,15 @@ if (isset($_SESSION["isAuthorized"]) && (bool) $_SESSION["isAuthorized"] && isse
 
 switch ($MODULE) {
 	case "exams":
-		if ($SECTION === "summary" || $SECTION === "category") {
-			require_once (ENTRADA_ABSOLUTE."/templates/".$ENTRADA_TEMPLATE->activeTemplate()."/layouts/admin/header_no_prototype.tpl.php");
-		} else {
-            require_once (ENTRADA_ABSOLUTE."/templates/".$ENTRADA_TEMPLATE->activeTemplate()."/layouts/admin/header.tpl.php");
+		switch ($SECTION) {
+			case "summary":
+			case "category":
+			case "report-faculty-feedback":
+				require_once (ENTRADA_ABSOLUTE."/templates/".$ENTRADA_TEMPLATE->activeTemplate()."/layouts/admin/header_no_prototype.tpl.php");
+				break;
+			default:
+                require_once (ENTRADA_ABSOLUTE."/templates/".$ENTRADA_TEMPLATE->activeTemplate()."/layouts/admin/header.tpl.php");
+				break;
 		}
 	break;
 

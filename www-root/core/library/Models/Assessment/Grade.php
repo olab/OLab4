@@ -23,7 +23,11 @@
  */
 
 class Models_Assessment_Grade extends Models_Base {
-    protected $grade_id, $assessment_id, $proxy_id, $value, $threshold_notified;
+    protected $grade_id,
+        $assessment_id,
+        $proxy_id,
+        $value,
+        $threshold_notified;
 
     protected static $table_name = "assessment_grades";
     protected static $primary_key = "grade_id";
@@ -55,12 +59,19 @@ class Models_Assessment_Grade extends Models_Base {
 
     public function setValue($value) {
         $this->value = $value;
+        return $this;
     }
 
     public function getThresholdNotified() {
         return $this->threshold_notified;
     }
 
+    public function setThresholdNotified($threshold_notified) {
+        $this->threshold_notified = $threshold_notified;
+        return $this;
+    }
+
+    /* @return bool|Models_Assessment_Grade */
     public static function fetchRowByID($grade_id) {
         $self = new self();
         return $self->fetchRow(array(
@@ -68,6 +79,7 @@ class Models_Assessment_Grade extends Models_Base {
         ));
     }
 
+    /* @return bool|Models_Assessment_Grade */
     public function fetchRowByAssessmentIDProxyID() {
         return $this->fetchRow(array(
             array("key" => "assessment_id", "value" => $this->assessment_id, "method" => "="),
@@ -78,5 +90,40 @@ class Models_Assessment_Grade extends Models_Base {
     public static function fetchAllRecords() {
         $self = new self();
         return $self->fetchAll(array(array("key" => "grade_id", "value" => 0, "method" => ">=")));
+    }
+
+    /* @return bool|Models_Assessment_Grade */
+    public static function fetchAllByAssessmentIDProxyString($assessment_id, $proxy_string) {
+        $self = new self();
+        return $self->fetchAll(array(
+                array("key" => "assessment_id", "value" => $assessment_id, "method" => "=", "mode" => "AND"),
+                array("key" => "proxy_id", "value" => $proxy_string, "method" => "IN", "mode" => "AND")
+            )
+        );
+    }
+
+    /* @return ArrayObject|Models_Assessment_Grade[] */
+    public static function fetchAllByAssessmentID($assessment_id) {
+        $self = new self();
+
+        $constraints = array(
+            array(
+                "mode"      => "AND",
+                "key"       => "assessment_id",
+                "value"     => $assessment_id,
+                "method"    => "="
+            )
+        );
+
+        $objs = $self->fetchAll($constraints, "=", "AND");
+        $output = array();
+
+        if (!empty($objs)) {
+            foreach ($objs as $o) {
+                $output[] = $o;
+            }
+        }
+
+        return $output;
     }
 }

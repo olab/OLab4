@@ -18,11 +18,11 @@ jQuery(document).ready(function ($) {
                 .addClass('community')
                 .attr({'id': type+'_'+$(type_id).val(), 'data-proxy-id': $(type_id).val() })
                 .css('cursor', 'move').html($(type_ref).val());
-            var img = $(document.createElement("img"))
-                .addClass('list-cancel-image')
-                .attr({src: '/images/action-delete.gif', onclick: 'removeItem(\''+$(type_id).val()+'\', \''+type+'\')'});
+            var close = $(document.createElement("span"))
+                .addClass('fa fa-close list-cancel-image space-left')
+                .attr({onclick: 'removeItem(\''+$(type_id).val()+'\', \''+type+'\')'});
             $(type_name).val('');
-            $(li).append(img);
+            $(li).append(close);
             $(type_id).val('');
             $(type_list).append(li);
             $(type_list).sortable("refresh");
@@ -89,6 +89,12 @@ jQuery(document).ready(function ($) {
         createAuto("pcoordinator_name", "pcoordinator");
         $('#pcoordinator_list').sortable({ update: function () { updateOrder('pcoordinator') }});
         updateOrder('pcoordinator');
+    }
+
+    if ($("#ccmember_name").length > 0) {
+        createAuto("ccmember_name", "ccmember");
+        $('#ccmember_list').sortable({ update: function () { updateOrder('ccmember') }});
+        updateOrder('ccmember');
     }
 
     if ($("#evaluationrep_name").length > 0) {
@@ -327,7 +333,7 @@ jQuery(document).ready(function ($) {
         //the element being added by the AutoComplete.js which uses the img tag still
         //or built on page load with the bootstrap icon.
 
-        if ($(e.target).is("i")) {
+        if ($(e.target).is("span")) {
             var period_info = String($(e.target).parent().parent().attr("id")).split('_');
             var id_info = String($(e.target).parent().attr("id")).split('_');
         } else {
@@ -377,10 +383,10 @@ jQuery(document).ready(function ($) {
                 $('#cohort_container_' + period_id).hide();
             }
         } else {
-            $(e.target).parent().parent().remove();
-            if ($(e.target).parent().parent().parent().children().length == 0) {
+            if ($(e.target).parent().parent().children().length == 1) {
                 $(e.target).parent().parent().parent().parent().hide();
             }
+            $(e.target).parent().remove();
         }
     });
 
@@ -546,7 +552,7 @@ jQuery(document).ready(function ($) {
         }
     });
 
-    $('div#period_list').on("click", 'img.list-cancel-image', function(e) {
+    $('div#period_list').on("click", '.list-cancel-image', function() {
 
         $('div.audience_list .sortableList').each(function() {
             if ($(this) !== 'undefined') {
@@ -642,7 +648,7 @@ function addAudience(period_id,audience_value,type,select_value) {
     }
     var li = jQuery(document.createElement('li')).attr({id: 'audience_'+type+'_'+select_value}).addClass('audience_'+type);
     li.append(audience_value + "&nbsp;");
-    li.append(jQuery(document.createElement('i')).css({cursor:'pointer', float:'right'}).addClass('remove_audience ' + type + ' icon-minus-sign'));
+    li.append(jQuery(document.createElement('span')).css({cursor:'pointer'}).addClass('remove_audience ' + type + ' fa fa-close remove-list-item'));
     jQuery('#' + type + '_audience_container_'+period_id).append(li);
 
     jQuery('#'+type+'_select_'+period_id).val('');

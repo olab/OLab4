@@ -21,7 +21,7 @@
  */
 
 class Models_Assessments_Item_Objective extends Models_Base {
-    protected $aiobjective_id, $item_id, $objective_id, $created_date, $created_by, $updated_date, $updated_by, $deleted_date;
+    protected $aiobjective_id, $item_id, $objective_id, $objective_metadata, $created_date, $created_by, $updated_date, $updated_by, $deleted_date;
 
     protected static $table_name = "cbl_assessment_item_objectives";
     protected static $primary_key = "aiobjective_id";
@@ -47,6 +47,10 @@ class Models_Assessments_Item_Objective extends Models_Base {
 
     public function getObjectiveID() {
         return $this->objective_id;
+    }
+
+    public function getObjectiveMetadata() {
+        return $this->objective_metadata;
     }
 
     public function getCreatedDate() {
@@ -116,6 +120,39 @@ class Models_Assessments_Item_Objective extends Models_Base {
                 return $this->buildObjectiveList($objective->getParent());
             }
         }
+        return 0;
+    }
+
+    /**
+     * Fetches the objectives attached to the items attached to a form.
+     * Returns an array in all cases.
+     *
+     * @param int|array $form_id
+     * @return array
+     */
+    public static function fetchObjectiveDataByFormID($form_id) {
+        global $db;
+        $query = "SELECT DISTINCT fe.form_id, io.aiobjective_id, io.item_id, io.objective_id, io.objective_metadata, o.objective_code, o.objective_name, o.objective_set_id
+                  FROM `cbl_assessment_item_objectives` AS io
+                  JOIN `cbl_assessment_form_elements`   AS fe ON fe.`element_id` = io.`item_id` AND fe.`element_type` = 'item'
+                  JOIN `global_lu_objectives`           AS o ON o.`objective_id` = io.`objective_id`
+                  WHERE fe.`form_id` = ?
+                  AND io.`deleted_date` IS NULL";
+        $result = $db->GetAll($query, array($form_id));
+        if (is_array($result)) {
+            return $result;
+        }
+        return array();
+    }
+
+    public static function deleteByObjectiveIDItemID($objective_id, $item_id) {
+        global $db;
+        $sql = "UPDATE `cbl_assessment_item_objectives` AS a 
+                SET `deleted_date` = ? 
+                WHERE a.`item_id` = ? 
+                AND a.`objective_id` = ? 
+                AND a.`deleted_date` IS NULL";
+        return $db->Execute($sql, array(time(), $item_id, $objective_id));
     }
 
     public static function deleteByID($id) {
@@ -124,5 +161,40 @@ class Models_Assessments_Item_Objective extends Models_Base {
             return $this_record->update();
         }
         return false;
+    }
+
+    public static function fetchAllByItemtypeID ($itemtype_id = 0) {
+        global $db;
+        $objective_items = array();
+        $query = "  SELECT b.* FROM `cbl_assessments_lu_items` AS a
+                    JOIN `cbl_assessment_item_objectives` AS b
+                    ON a.`item_id` = b.`item_id`
+                    WHERE a.`itemtype_id` = ?
+                    AND a.`deleted_date` IS NULL
+                    AND b.`deleted_date` IS NULL";
+        $results = $db->GetAll($query, array($itemtype_id));
+        if ($results) {
+            foreach ($results as $result) {
+                $self = new self();
+                $objective_items[] = $self->fromArray($result);
+            }
+        }
+        return $objective_items;
+    }
+
+    /**
+     * Fetch an item objective record by item_id and objective_id
+     * @param $item_id
+     * @param $objective_id
+     * @param null $deleted_date
+     * @return bool|Models_Base
+     */
+    public function fetchRowByItemIDObjectiveID($item_id, $objective_id, $deleted_date = NULL) {
+        $self = new self();
+        return $self->fetchRow(array(
+            array("key" => "item_id", "value" => $item_id, "method" => "="),
+            array("key" => "objective_id", "value" => $objective_id, "method" => "="),
+            array("key" => "deleted_date", "value" => ($deleted_date ? $deleted_date : NULL), "method" => ($deleted_date ? "<=" : "IS"))
+        ));
     }
 }

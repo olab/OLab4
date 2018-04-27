@@ -79,9 +79,9 @@ if (communities_module_access($COMMUNITY_ID, $MODULE_ID, "delete-poll")) {
 														maximizable:	false,
 														recenterAuto:	true,
 														destroyOnClose:	true,
-														url:			'<?php echo ENTRADA_URL."/api/notifications.api.php?community_id=".$COMMUNITY_ID."&id=".$PAGE_ID; ?>&type=poll&action=edit&active='+(enabled == 1 ? '0' : '1'),
+														url:			"<?php echo ENTRADA_URL . "/api/notifications.api.php?community_id=" . $COMMUNITY_ID . "&id=" . $COMMUNITY_ID; ?>&type=poll&action=edit&active=" + (enabled == 1 ? "0" : "1"),
 														onClose:			function () {
-																			new Ajax.Updater('notifications-toggle', '<?php echo ENTRADA_URL."/api/notifications.api.php?community_id=".$COMMUNITY_ID."&id=".$PAGE_ID; ?>&type=poll&action=view');
+																			new Ajax.Updater("notifications-toggle", "<?php echo ENTRADA_URL . "/api/notifications.api.php?community_id=" . $COMMUNITY_ID . "&id=" . $COMMUNITY_ID; ?>&type=poll&action=view");
 																		}
 													}
 										).showCenter();
@@ -93,7 +93,7 @@ if (communities_module_access($COMMUNITY_ID, $MODULE_ID, "delete-poll")) {
 		
 		</script>
 		<?php
-		$ONLOAD[] = "new Ajax.Updater('notifications-toggle', '".ENTRADA_URL."/api/notifications.api.php?community_id=".$COMMUNITY_ID."&id=".$PAGE_ID."&type=poll&action=view')";
+        $ONLOAD[] = "new Ajax.Updater(\"notifications-toggle\", \"" . ENTRADA_URL . "/api/notifications.api.php?community_id=" . $COMMUNITY_ID . "&id=" . $COMMUNITY_ID . "&type=poll&action=view\")";
 	}
 	if (communities_module_access($COMMUNITY_ID, $MODULE_ID, "add-poll")) {
 		?>

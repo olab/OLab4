@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates>
+    <template lang="en">
+        <subject>Preceptor Access Request</subject>
+        <body>
+            Dear %TARGET_FIRSTNAME% %TARGET_LASTNAME%,
+
+            %LEARNER_FIRSTNAME% %LEARNER_LASTNAME% has requested MEdTech Central %GROUP% %ROLE% access for %MISSING_PRECEPTOR_FIRSTNAME% %MISSING_PRECEPTOR_LASTNAME%
+
+            %LEARNER_FIRSTNAME% has provided the following information for this preceptor:
+
+            Name: %MISSING_PRECEPTOR_FIRSTNAME% %MISSING_PRECEPTOR_LASTNAME%
+            Email: %MISSING_PRECEPTOR_EMAIL%
+            Staff Number: %MISSING_PRECEPTOR_NUMBER%
+
+            Additional Comments:
+            %ADDITIONAL_COMMENTS%
+
+            Once you have confirmed this is a valid preceptor who should have %GROUP% %ROLE% access, please forward this request to %SUPPORT_EMAIL_ADDRESS%. Once this request has been
+            processed you will receive a confirmation email.
+
+            Sincerely,
+            The %APPLICATION_NAME% team,
+            %ENTRADA_URL%
+        </body>
+    </template>
+</templates>

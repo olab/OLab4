@@ -255,12 +255,12 @@ if (communities_module_access($COMMUNITY_ID, $MODULE_ID, "delete")) {
 						 * If you need to add more checks, this is there they would go.
 						 */
 					} else {
-						add_notice("This announcement was only accessible until <strong>".date(DEFAULT_DATE_FORMAT, $release_until)."</strong>.<br /><br />Please contact your community administrators for further assistance.");
+						add_notice("This announcement was only accessible until <strong>".date(DEFAULT_DATETIME_FORMAT, $release_until)."</strong>.<br /><br />Please contact your community administrators for further assistance.");
 
 						$allow_to_load	= false;
 					}
 				} else {
-					add_notice("This announcement will not be accessible until <strong>".date(DEFAULT_DATE_FORMAT, $release_date)."</strong>.<br /><br />Please check back at this time, thank-you.");
+					add_notice("This announcement will not be accessible until <strong>".date(DEFAULT_DATETIME_FORMAT, $release_date)."</strong>.<br /><br />Please check back at this time, thank-you.");
 
 					$allow_to_load	= false;
 				}
@@ -275,15 +275,15 @@ if (communities_module_access($COMMUNITY_ID, $MODULE_ID, "delete")) {
 				 * If there is time release properties, display them to the browsing users.
 				 */
 				if (($release_date = (int) $result["release_date"]) && ($release_date > time())) {
-					add_notice("This announcement will not be accessible to others until <strong>".date(DEFAULT_DATE_FORMAT, $release_date)."</strong>.");
+					add_notice("This announcement will not be accessible to others until <strong>".date(DEFAULT_DATETIME_FORMAT, $release_date)."</strong>.");
 				} elseif ($release_until = (int) $result["release_until"]) {
 					if ($release_until > time()) {
-						add_notice("This announcement will be accessible until <strong>".date(DEFAULT_DATE_FORMAT, $release_until)."</strong>.");
+						add_notice("This announcement will be accessible until <strong>".date(DEFAULT_DATETIME_FORMAT, $release_until)."</strong>.");
 					} else {
 						/**
 						 * Only administrators or people who wrote the post will get this.
 						 */
-						add_notice("This announcement was only accessible until <strong>".date(DEFAULT_DATE_FORMAT, $release_until)."</strong> by others.");
+						add_notice("This announcement was only accessible until <strong>".date(DEFAULT_DATETIME_FORMAT, $release_until)."</strong> by others.");
 					}
 				}
 
@@ -371,7 +371,7 @@ if (communities_module_access($COMMUNITY_ID, $MODULE_ID, "delete")) {
 				}
 			}
 		} else {
-			add_notice("<strong>No Announcements Available</strong><br />There have been no announcements posted by the administrators of this community, please check again later.");
+			add_notice($translate->_("<strong>No Announcements Available</strong><br />There have been no announcements posted by the administrators of this community, please check again later."));
 
 			echo display_notice();
 		}

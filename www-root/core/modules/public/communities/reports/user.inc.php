@@ -73,7 +73,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COMMUNITIES"))) {
 		if ($result) {
 			$fullname = $result["fullname"];
 			$BREADCRUMB[] = array("url" => ENTRADA_URL."/".$MODULE, "title" => "Report for ".$fullname);
-			echo "<h2>Community Usage Report for ".$fullname."</h2>";
+			echo "<h2>" . $translate->_("Community Usage Report for ") .$fullname."</h2>";
 
 
 			$query = "	SELECT COUNT(*) AS `count`, `proxy_id`, `module`, `action_field`, `action_value`, `action` 

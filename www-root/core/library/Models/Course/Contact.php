@@ -61,13 +61,15 @@ class Models_Course_Contact extends Models_Base {
         return $this->contact_order;
     }
 
+    /* @return bool|Models_Course_Contact */
     public static function fetchRowByID($contact_id) {
         $self = new self();
         return $self->fetchRow(array(
             array("key" => "contact_id", "value" => $contact_id, "method" => "=")
         ));
     }
-    
+
+    /* @return bool|Models_Course_Contact */
     public static function fetchRowByContactID($contact_id = 0) {
         $self = new self();
         return $self->fetchRow(array(
@@ -76,7 +78,7 @@ class Models_Course_Contact extends Models_Base {
         );
     }
     
-    /* @return bool|Models_Course_Contact */
+    /* @return ArrayObject|Models_Course_Contact[] */
     public static function fetchAllByCourseID($course_id = 0, $deleted_date = NULL) {
         $self = new self();
 
@@ -105,12 +107,13 @@ class Models_Course_Contact extends Models_Base {
         return $output;
     }
 
-
+    /* @return ArrayObject|Models_Course_Contact[] */
     public static function fetchAllRecords() {
         $self = new self();
         return $self->fetchAll(array(array("key" => "contact_id", "value" => 0, "method" => ">=")));
     }
 
+    /* @return ArrayObject|Models_Course_Contact[] */
     public static function fetchAllByCourseIDContactType($course_id, $contact_type = NULL) {
         $self = new self();
         $constraints = array(
@@ -122,6 +125,7 @@ class Models_Course_Contact extends Models_Base {
         return $self->fetchAll($constraints);
     }
 
+    /* @return bool|Models_Course_Contact */
     public static function fetchRowByProxyIDContactType($proxy_id, $contact_type = NULL) {
         $self = new self();
         $constraints = array(
@@ -187,6 +191,7 @@ class Models_Course_Contact extends Models_Base {
         return false;
     }
 
+    /* @return ArrayObject|Models_Course_Contact[] */
     public static function fetchByProxyAndCourse($proxy_id, $course_id) {
         $self = new self();
 
@@ -196,5 +201,47 @@ class Models_Course_Contact extends Models_Base {
         );
 
         return $self->fetchAll($constraints);
+    }
+
+    /**
+     * Return the number of course from the submitted array of which proxy_id
+     * is a contact for.
+     *
+     * @param $proxy_id
+     * @param $course_ids
+     * @param $contact_type
+     * @return int
+     */
+    public static function countIsMemberOf($proxy_id, $course_ids, $contact_type = null) {
+        global $db;
+
+        $clean_course_ids = "";
+        if (is_array($course_ids)) {
+            $clean_course_ids_a = array_filter(
+                array_map(function ($v) {
+                    return clean_input($v, array("trim", "int"));
+                }, $course_ids)
+            );
+            $clean_course_ids = implode(",", $clean_course_ids_a);
+        }
+        if (!$clean_course_ids) {
+            return false;
+        }
+
+        $params = array($proxy_id);
+        $contact_type_qry = "";
+        if ($contact_type) {
+            $contact_type_qry = "AND `contact_type` = ?";
+            $params[] = $contact_type;
+        }
+
+        $query = "SELECT count(*) 
+                  FROM `course_contacts` 
+                  WHERE `proxy_id` = ?
+                  $contact_type_qry
+                  AND `course_id` IN ($clean_course_ids)";
+
+        $result = intval($db->getOne($query, $params));
+        return $result;
     }
 }

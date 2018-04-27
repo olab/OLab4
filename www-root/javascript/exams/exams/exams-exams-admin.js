@@ -7,6 +7,9 @@ var elements_checked = {};
 var exam_ids_approved = [];
 var element_ids_approved = [];
 
+var folder_id;
+var exams_xhr;
+
 jQuery(function($) {
     var display_page_breaks = ($("#exam-questions").hasClass("allow-page-breaks")) ? true : false;
     if (typeof exam_id && exam_id == "undefined") {
@@ -69,33 +72,6 @@ jQuery(function($) {
     });
     
     var timeout;
-    
-    jQuery("#exam-search").keypress(function (event) {
-        if (event.keyCode == 13)  {
-            event.preventDefault();
-        }
-        
-        total_exams = 0;
-        exam_offset = 0;
-        show_loading_message = true;
-        
-        clearTimeout(timeout);
-        timeout = window.setTimeout(get_exams, 700);
-    });
-    
-    jQuery("#load-exams").on("click", function (e) {
-        e.preventDefault();
-        if (!$(this).attr("disabled")) {
-            get_exams("more");
-        }
-    });
-
-    jQuery("#load-previous-exams").on("click", function (e) {
-        e.preventDefault();
-        if (!$(this).attr("disabled")) {
-            get_exams("previous");
-        }
-    });
 
     if (display_page_breaks === true) {
         $("body").on("mouseenter", ".after-element", function () {
@@ -112,8 +88,8 @@ jQuery(function($) {
         .on("mouseleave", ".after-element", function () {
             $(this).animate({height: "25px"}, 200);
             $(this).empty();
-
         });
+
         /*
          * Add .after-element to each question
          * This is needed to create page-breaks on the fly
@@ -126,8 +102,12 @@ jQuery(function($) {
     }
 
     $("body").on("click", ".add-page-break", function(e) {
-        addPageBreak($(this));
         e.preventDefault();
+        var add_page_break = $("a.add-page-break").parent();
+
+        if (!$(add_page_break).hasClass("disabled")) {
+            addPageBreak($(this));
+        }
     });
 
     $("#exam-questions").on("click", ".add-to-group", function(e) {
@@ -202,7 +182,7 @@ jQuery(function($) {
         exam_detail_container.removeClass("hide");
     }
 
-    jQuery("#toggle-exam-bank").on("click", function (e) {
+    jQuery("#toggle-exam-bank-details").on("click", function (e) {
         e.preventDefault();
         toggleExamBankView($(this));
     });
@@ -218,8 +198,12 @@ jQuery(function($) {
     });
 
     $(".add-text").on("click", function(e) {
-        addTextElement($(this));
         e.preventDefault();
+        var add_text_link = $("a.add-text").parent();
+
+        if (!$(add_text_link).hasClass("disabled")) {
+            addTextElement($(this));
+        }
     });
 
     $("#exam-questions").on("click", ".save-element", function(e) {
@@ -227,7 +211,18 @@ jQuery(function($) {
         e.preventDefault();
     });
 
-    $("#exam-questions").on("change", ".points", function(e) {
+    function update_points_widget() {
+        var questions = $(".points");
+        $("#questions_count").text(questions.length);
+        var points = 0;
+        for(var i = 0; i < questions.length; i++){
+            var score = parseFloat(questions[i].value);
+            points += (isNaN(score) ? 0 : score);
+        }
+        $("#points_count").text(points);
+    }
+
+    $("#exam-questions").on("keyup change blur", ".points", function(e) {
         var element = $(this).parents(".exam-question");
         var $this = $(this);
 
@@ -241,12 +236,14 @@ jQuery(function($) {
                 "points" : $(this).val()
             },
             success: function (data) {
-                var jsonResponse = JSON.parse(data);
-                if (jsonResponse.status == "success") {
-                    $this.parents(".input-append").before("<span class=\"text-success\"><small>Saved points</small></span> ");
+                var response = JSON.parse(data);
+                element.find(".scoring-alert").remove();
+                if (response.status == "success") {
+                    element.find(".question-type").after("<span class=\"label label-success scoring-alert\">Saved scoring</span> ");
                 } else {
-                    $this.parents(".input-append").before("<span class=\"text-error\"><small>Error!</small></span> ");
+                    element.find(".question-type").after("<span class=\"label label-error scoring-alert\">Score can't be blank</span> ");
                 }
+                update_points_widget();
              }
         });
 
@@ -366,49 +363,9 @@ jQuery(function($) {
      * Ends Group Questions
      */
 
-    /**
-     * Enables the per page selector interface
-     */
-
-    var number_exams_pp = $("#number_exams_pp");
-
-    if (number_exams_pp.length) {
-        $("#number_exams_pp").inputSelector({
-            rows:       1,
-            columns:    6,
-            data_text: [10, 25, 50, 100, 150, 200],
-            modal:      0,
-            header:     "Exams Per Page",
-            form_name : "#exams-container",
-            type:       "button",
-            label:      "Per Page"
-        });
-    }
-
-    $("#per_page_nav").on("click", ".selector-menu td.ui-timefactor-cell", function () {
-        setTimeout(function () {
-            exam_limit = parseInt($("#number_exams_pp").data("value"));
-            exam_offset = 0;
-            get_exams();
-        }, 100);
-    });
-
     /*
-     * Event listeners for deleting, copying, and moving exams
+     Exam Copy
      */
-    $("#delete-exam-modal").on("show.bs.modal", function (e) {
-        buildDeleteExam();
-    });
-
-    $("#delete-exam-modal").on("hide.bs.modal", function (e) {
-        $("#delete-exams-container").html("");
-    });
-
-    $("#delete-exams-modal-button").on("click", function(e) {
-        e.preventDefault();
-        deleteApprovedExams();
-    });
-
     $("#copy-exam-modal").on("show.bs.modal", function (e) {
         buildCopyExam();
     });
@@ -421,72 +378,9 @@ jQuery(function($) {
         e.preventDefault();
         copyApprovedExams();
     });
-
-    $("#move-exam-modal").on("show.bs.modal", function (e) {
-        buildMoveExam();
-    });
-
-    $("#move-exam-modal").on("hide.bs.modal", function (e) {
-        $("#move-exams-container").html("");
-    });
-
-    $("#move-exams-modal-delete").on("click", function(e) {
-        e.preventDefault();
-        moveApprovedExams();
-    });
-
-    jQuery("#exams-table").on("click", ".select-exam", function (e) {
-        e.preventDefault();
-        $(this).trigger("change");
-    });
-
-    jQuery("#exams-table").on("change", ".select-exam", function (e) {
-        var span = jQuery(this);
-        var icon = jQuery(this).find(".icon-select-exam");
-        var exam_id = icon.data("exam-id");
-        var title = icon.data("title");
-        var removed_select = false;
-
-        if (span.closest("tr.exam-row").hasClass("selected")) {
-            span.closest("tr.exam-row").removeClass("selected");
-            span.removeClass("selected");
-            icon.addClass("fa-square-o").removeClass("fa-check-square-o");
-
-            if (exams_checked[exam_id]) {
-                delete exams_checked[exam_id];
-            }
-            removed_select = true;
-        } else {
-            span.closest("tr.exam-row").addClass("selected");
-            span.addClass("selected");
-            icon.addClass("fa-check-square-o").removeClass("fa-square-o");
-
-            if (!exams_checked[exam_id]) {
-                exams_checked[exam_id] = {
-                    id: exam_id,
-                    title: title
-                };
-            }
-        }
-
-        if (post_exam && post_exam != 0) {
-            togglePostBtn();
-            var select_buttons = $(".select-exam");
-            select_buttons.each(function(key, value) {
-                if (removed_select) {
-                    $(value).prop("disabled", false);
-                } else {
-                    if (!$(value).hasClass("selected")) {
-                        $(value).prop("disabled", true);
-                    }
-
-                }
-            });
-        } else {
-            toggleActionBtn();
-        }
-    });
-
+    /*
+     End Exam Copy
+     */
 
     $("#post-exam").on("click", function(e) {
         e.preventDefault();
@@ -504,11 +398,161 @@ jQuery(function($) {
         }
     });
 
+    function buildCopyExam() {
+        var on_edit_exam = 0;
+        var exam_id = $("#exam_id").val();
+
+        if (typeof exam_id && exam_id != "undefined") {
+            if (jQuery.isEmptyObject(exam_id)) {
+                on_edit_exam = 0;
+            } else {
+                on_edit_exam = 1;
+            }
+        }
+
+        $("#exam-msgs").html("");
+        $("#exams-selected-copy").addClass("hide");
+        $("#no-exams-selected-copy").addClass("hide");
+
+        var exams_to_modify = exams_checked;
+        var empty = jQuery.isEmptyObject(exams_to_modify);
+
+        var exam_ids = [];
+        var exam_titles = {};
+
+        if (!empty || on_edit_exam === 1) {
+            exam_ids_approved = [];
+            $("#exams-selected-copy").removeClass("hide");
+            $("#copy-exams-modal-button").removeClass("hide");
+
+            var list = document.createElement("ul");
+
+            if (on_edit_exam === 0) {
+                var keys = Object.keys(exams_to_modify);
+
+                for (var i = 0; i < keys.length; i++ ) {
+                    var exam_obj        = exams_to_modify[keys[i]];
+                    var exam_id         = exam_obj.id;
+                    var title           = exam_obj.title;
+                    exam_ids.push(exam_id);
+                    exam_titles[exam_id] = title;
+                }
+            } else {
+                var title = $("h1#exam_title").text();
+                exam_ids.push(exam_id);
+                exam_titles[exam_id] = title;
+            }
+
+            // Now check the ids for permissions and build the html for display.
+            var dataObject = {
+                method : "get-exam-copy-permission",
+                exam_ids: exam_ids
+            };
+
+            jQuery.ajax({
+                url: API_URL,
+                data: dataObject,
+                type: "GET",
+                success: function (data) {
+                    var jsonResponse = JSON.parse(data);
+                    if (jsonResponse.status === "success") {
+                        var copy_permissions = jsonResponse.copy_permission;
+
+                        if (typeof copy_permissions && copy_permissions !== "undefined") {
+                            $.each(copy_permissions, function(exam_id, copy_permissions) {
+                                var list_question = document.createElement("li");
+                                if (copy_permissions === 1) {
+                                    $(list_question).append("<span>" + INDEX_TEXT.Exam_id + ": <strong>" + exam_id + "</strong> - " + exam_titles[exam_id] + "</span>");
+                                    exam_ids_approved.push(exam_id);
+                                } else {
+                                    var can_not = INDEX_TEXT.can_not_copy;
+                                    $(list_question).append("<span class=\"no-delete\"" + INDEX_TEXT.Exam_id + ": <strong>" + exam_id + "</strong> - " + can_not + "</span>");
+                                }
+                                $(list).append(list_question);
+                            });
+                        }
+                    } else if (jsonResponse.status === "error") {
+                        $("#no-exams-selected-copy").removeClass("hide");
+                        $("#exams-selected-copy").addClass("hide");
+                    }
+
+                    $("#copy-exams-container").append(list);
+                }
+            });
+        } else {
+            $("#no-exams-selected-copy").removeClass("hide");
+            $("#copy-exams-modal-button").addClass("hide");
+        }
+    }
+
+    function copyApprovedExams() {
+        var on_edit_exam = 0;
+        var exam_id = $("#exam_id").val();
+        var target_message = "#exam-msgs";
+
+        if (typeof exam_id && exam_id !== "undefined") {
+            if (jQuery.isEmptyObject(exam_id)) {
+                on_edit_exam = 0;
+            } else {
+                on_edit_exam = 1;
+            }
+        }
+
+        var dataObject = {
+            method : "copy-exams",
+            copy_ids: exam_ids_approved
+        };
+
+        jQuery.ajax({
+            url: API_URL,
+            data: dataObject,
+            type: "POST",
+            success: function (data) {
+                var jsonResponse = JSON.parse(data);
+                if (jsonResponse.status === "success") {
+                    if (on_edit_exam === 0) {
+                        $(jsonResponse.exam_view_data).each(function(index, exam_view) {
+                            $("#exams-table").append(exam_view);
+                        });
+                        var message = [jsonResponse.msg];
+                    } else {
+                        target_message =  "#msgs";
+                        var new_exam_id = jsonResponse.new_exam_id;
+                        var url = $("#copy-exam-modal").data("href") + "&id=" + new_exam_id;
+                        var message_part_1 = INDEX_TEXT.text_copy_01;
+                        var message_part_2 = INDEX_TEXT.text_copy_02;
+                        var message_part_3 = INDEX_TEXT.text_copy_03;
+                        var message = [jsonResponse.msg, message_part_1 + "<a href=\"" + url + "\" style=\"font-weight: bold\">" + message_part_2 + "</a>" + message_part_3];
+                    }
+
+                    $("#copy-exam-modal").modal("hide");
+
+                    display_success(message, target_message);
+
+                    if (on_edit_exam === 1) {
+                        setTimeout(function() {
+                            window.location = url + "&id=" + new_exam_id;
+                        }, 5000);
+                    }
+                } else if (jsonResponse.status === "error") {
+                    $("#copy-exam-modal").modal("hide");
+                    display_error([jsonResponse.msg], target_message);
+                }
+            }
+        });
+
+        if (on_edit_exam === 0) {
+            exams_checked = {};
+            var rows = $("tr.exam-row.selected");
+            var buttons = $("button.selected");
+            $(rows).removeClass("selected");
+            $(buttons).removeClass("selected");
+        }
+    }
 
     /**
      * Group Questions Functions
      */
-
     function onClickDeleteGroupQuestion(clicked) {
         var exam_question = $(clicked).parents(".exam-question");
         var exam_element_id;
@@ -529,7 +573,7 @@ jQuery(function($) {
             type: "POST",
             success: function(data) {
                 var jsonResponse = JSON.parse(data);
-                if (jsonResponse.status == "success") {
+                if (jsonResponse.status === "success") {
                     var updated_html = jsonResponse.updated_html;
 
                     $.each(updated_html, function(current_id, question_view) {
@@ -540,7 +584,7 @@ jQuery(function($) {
                         var no_elements_attached = INDEX_TEXT.no_elements_attached;
                         $("#exam-questions").html(no_elements_attached);
                     }
-                } else if (jsonResponse.status == "error") {
+                } else if (jsonResponse.status === "error") {
                     var error   = [jsonResponse.data];
                     var target  = "#msgs";
 
@@ -558,7 +602,7 @@ jQuery(function($) {
         var html_details    = question_view.details;
         var html_list       = question_view.list;
 
-        if (remove_element == update_element) {
+        if (remove_element === update_element) {
             /* removes detail group view */
             var parents   = selected_exam_q.parents(".exam-question-group-elements");
             selected_exam_q.remove();
@@ -575,12 +619,12 @@ jQuery(function($) {
             parent_row.before(html_list);
 
             /* removes list group view container */
-            if (children.length == 0) {
+            if (children.length === 0) {
                 container.remove();
             }
 
             /* removes list group view container */
-            if (row_children.length == 0) {
+            if (row_children.length === 0) {
                 parent_row.remove();
             }
         } else {
@@ -603,9 +647,12 @@ jQuery(function($) {
             filters: {
                 question_group: {
                     label: "Question Group",
-                    data_source: "get-user-groups",
+                    data_source: "get-exam-groups",
                     mode: "radio",
-                    selector_control_name: "question-group"
+                    selector_control_name: "question-group",
+                    api_params: {
+                        exam_id: original_exam_id
+                    }
                 }
             },
             control_class: "question-group-selector",
@@ -620,6 +667,7 @@ jQuery(function($) {
         var modal       = $("#group-question-modal");
         var form        = $("form#group-question-modal-question");
         var new_group   = form.find("input[name=\"new_group\"]:checked").val();
+        var questions   = elements_checked;
 
         modal.find(".alert").remove();
         switch (new_group) {
@@ -706,6 +754,7 @@ jQuery(function($) {
 
                             modal.find(".modal-body").empty().append(alert.append(msg), success_options);
                             $("#group-question-modal").find(".modal-footer").html(buildGroupModalFooter("complete"));
+                            window.location.href = ENTRADA_URL + "/admin/exams/exams?section=edit-exam&id=" + original_exam_id;
                         } else if (status === "error") {
                             alert.addClass("alert-error");
                             alert.append(msg);
@@ -908,12 +957,16 @@ jQuery(function($) {
     }
 
     function disableFormControls() {
+        $("#sort-first-column").css("display", "none");
         $(".q-list-edit").css("display", "none");
+        $(".q-list-edit").next("td").removeClass("span2").addClass("span3");
         $(".question-number-update").prop("disabled", true);
         $(".question-table tr.type .btn-group.scoring").css("display", "none");
         $(".question-table tr.type .btn-group.header-buttons").css("display", "none");
         $(".question-table tr.heading .element-controls").css("display", "none");
         $(".group-edit-buttons").css("display", "none");
+        $("tr.type .select-item.select-question").css("display", "none");
+        $("tr.heading").css("display", "none");
     }
 
     function updateAllQuestions() {
@@ -1077,7 +1130,7 @@ jQuery(function($) {
         var details_row = parent_detail_row.find(".question-detail-view");
         details_row.toggleClass("hide");
         icon.toggleClass("active");
-        //icon.find("i").toggleClass("white-icon");
+        icon.find("i").toggleClass("white-icon");
     }
 
     function toggleExamView(clicked) {
@@ -1111,10 +1164,10 @@ jQuery(function($) {
 
         if ($(clicked).hasClass("active")) {
             $(clicked).removeClass("active");
-            //$(clicked).find("i").removeClass("white-icon");
+            $(clicked).find("i").removeClass("white-icon");
         } else {
             $(clicked).addClass("active");
-            //$(clicked).find("i").addClass("white-icon");
+            $(clicked).find("i").addClass("white-icon");
             active = true;
         }
 
@@ -1380,16 +1433,16 @@ jQuery(function($) {
     }
 
     function changeSelectActiveHTML(object) {
-        var btn = object.find(".select-item");
-        var icon = btn.find("i.fa");
+        var span = object.find("span.select-item");
+        var icon = span.find("i.fa");
         if (object.hasClass("selected")) {
             object.removeClass("selected");
-            btn.removeClass("selected");
-            icon.addClass("fa-square-o").removeClass("fa-check-square-o");
+            span.removeClass("selected");
+            icon.addClass("fa-square-o").removeClass("white-icon").removeClass("fa-check-square-o");
         } else {
             object.addClass("selected");
-            btn.addClass("selected");
-            icon.addClass("fa-check-square-o").removeClass("fa-square-o");
+            span.addClass("selected");
+            icon.addClass("fa-check-square-o").addClass("white-icon").removeClass("fa-square-o");
         }
     }
 
@@ -1449,7 +1502,6 @@ jQuery(function($) {
 
                             //Build the Details view
                             $.each(questions, function(question_id, question) {
-                                console.log(question);
                                 var question_row        = $("<tr>");
                                 var columnID            = $("<td>").text("ID: " + question.question_id + " / Ver: " + question.version_count);
                                 var columnType          = $("<td>").text(question.question_type);
@@ -1513,479 +1565,8 @@ jQuery(function($) {
             // Error no elements to remove
         }
     }
-
-    function buildDeleteExam() {
-        $("#exam-msgs").html("");
-        $("#exams-selected").addClass("hide");
-        $("#no-exams-selected").addClass("hide");
-
-        var exams_to_modify = exams_checked;
-        var empty = jQuery.isEmptyObject(exams_to_modify);
-
-        var exam_ids = [];
-        var exam_titles = {};
-
-        if (!empty) {
-            exam_ids_approved = [];
-            $("#exams-selected").removeClass("hide");
-            $("#delete-exams-modal-button").removeClass("hide");
-
-            var list = document.createElement("ul");
-            var keys = Object.keys(exams_to_modify);
-
-            for (var i = 0; i < keys.length; i++ ) {
-                var exam_obj        = exams_to_modify[keys[i]];
-                var exam_id         = exam_obj.id;
-                var title           = exam_obj.title;
-                exam_ids.push(exam_id);
-                exam_titles[exam_id] = title;
-            }
-
-            // Now check the ids for permissions and build the html for display.
-            var dataObject = {
-                method : "get-exam-delete-permission",
-                exam_ids: exam_ids
-            };
-
-            jQuery.ajax({
-                url: API_URL,
-                data: dataObject,
-                type: "GET",
-                success: function (data) {
-                    var jsonResponse = JSON.parse(data);
-                    if (jsonResponse.status == "success") {
-                        var delete_permissions = jsonResponse.delete_permission;
-
-                        if (typeof delete_permissions && delete_permissions != "undefined") {
-                            $.each(delete_permissions, function(exam_id, delete_permission) {
-                                var list_question = document.createElement("li");
-                                if (delete_permission === 1) {
-                                    $(list_question).append("<span>" + INDEX_TEXT.Exam_id + ": <strong>" + exam_id + "</strong> - " + exam_titles[exam_id] + "</span>");
-                                    exam_ids_approved.push(exam_id);
-                                } else {
-                                    var can_not = INDEX_TEXT.can_not_delete;
-                                    $(list_question).append("<span class=\"no-delete\">Exam ID: " + INDEX_TEXT.Exam_id + ": <strong>" + exam_id + "</strong> - " + can_not + "</span>");
-                                }
-                                $(list).append(list_question);
-                            });
-                        }
-                    } else if (jsonResponse.status == "error") {
-                        $("#no-exams-selected").removeClass("hide");
-                        $("#exams-selected").addClass("hide");
-                    }
-
-                    $("#delete-exams-container").append(list);
-                }
-            });
-        } else {
-            $("#no-exams-selected").removeClass("hide");
-            $("#delete-exams-modal-button").addClass("hide");
-        }
-    }
-
-    function buildCopyExam() {
-        var on_edit_exam = 0;
-        var exam_id = $("#exam_id").val();
-
-        if (typeof exam_id && exam_id != "undefined") {
-            if (jQuery.isEmptyObject(exam_id)) {
-                on_edit_exam = 0;
-            } else {
-                on_edit_exam = 1;
-            }
-        }
-
-        $("#exam-msgs").html("");
-        $("#exams-selected-copy").addClass("hide");
-        $("#no-exams-selected-copy").addClass("hide");
-
-        var exams_to_modify = exams_checked;
-        var empty = jQuery.isEmptyObject(exams_to_modify);
-
-        var exam_ids = [];
-        var exam_titles = {};
-
-        if (!empty || on_edit_exam === 1) {
-            exam_ids_approved = [];
-            $("#exams-selected-copy").removeClass("hide");
-            $("#copy-exams-modal-button").removeClass("hide");
-
-            var list = document.createElement("ul");
-
-            if (on_edit_exam === 0) {
-                var keys = Object.keys(exams_to_modify);
-
-                for (var i = 0; i < keys.length; i++ ) {
-                    var exam_obj        = exams_to_modify[keys[i]];
-                    var exam_id         = exam_obj.id;
-                    var title           = exam_obj.title;
-                    exam_ids.push(exam_id);
-                    exam_titles[exam_id] = title;
-                }
-            } else {
-                var title = $("h1#exam_title").text();
-                exam_ids.push(exam_id);
-                exam_titles[exam_id] = title;
-            }
-
-            // Now check the ids for permissions and build the html for display.
-            var dataObject = {
-                method : "get-exam-copy-permission",
-                exam_ids: exam_ids
-            };
-
-            jQuery.ajax({
-                url: API_URL,
-                data: dataObject,
-                type: "GET",
-                success: function (data) {
-                    var jsonResponse = JSON.parse(data);
-                    if (jsonResponse.status == "success") {
-                        var copy_permissions = jsonResponse.copy_permission;
-
-                        if (typeof copy_permissions && copy_permissions != "undefined") {
-                            $.each(copy_permissions, function(exam_id, copy_permissions) {
-                                var list_question = document.createElement("li");
-                                if (copy_permissions === 1) {
-                                    $(list_question).append("<span>" + INDEX_TEXT.Exam_id + ": <strong>" + exam_id + "</strong> - " + exam_titles[exam_id] + "</span>");
-                                    exam_ids_approved.push(exam_id);
-                                } else {
-                                    var can_not = INDEX_TEXT.can_not_copy;
-                                    $(list_question).append("<span class=\"no-delete\"" + INDEX_TEXT.Exam_id + ": <strong>" + exam_id + "</strong> - " + can_not + "</span>");
-                                }
-                                $(list).append(list_question);
-                            });
-                        }
-                    } else if (jsonResponse.status == "error") {
-                        $("#no-exams-selected-copy").removeClass("hide");
-                        $("#exams-selected-copy").addClass("hide");
-                    }
-
-                    $("#copy-exams-container").append(list);
-                }
-            });
-        } else {
-            $("#no-exams-selected-copy").removeClass("hide");
-            $("#copy-exams-modal-button").addClass("hide");
-        }
-    }
-
-    function buildMoveExam() {
-        $("#exam-msgs").html("");
-        $("#exams-selected-move").addClass("hide");
-        $("#no-exams-selected-move").addClass("hide");
-
-        var exams_to_modify = exams_checked;
-        var empty = jQuery.isEmptyObject(exams_to_modify);
-
-        var exam_ids = [];
-        var exam_titles = {};
-
-        if (!empty) {
-            exam_ids_approved = [];
-            $("#exams-selected-move").removeClass("hide");
-            $("#move-exams-modal-button").removeClass("hide");
-
-            var list = document.createElement("ul");
-            var keys = Object.keys(exams_to_modify);
-
-            for (var i = 0; i < keys.length; i++ ) {
-                var exam_obj        = exams_to_modify[keys[i]];
-                var exam_id         = exam_obj.id;
-                var title           = exam_obj.title;
-                exam_ids.push(exam_id);
-                exam_titles[exam_id] = title;
-            }
-
-            // Now check the ids for permissions and build the html for display.
-            var dataObject = {
-                method : "get-exam-move-permission",
-                exam_ids: exam_ids
-            };
-
-            jQuery.ajax({
-                url: API_URL,
-                data: dataObject,
-                type: "GET",
-                success: function (data) {
-                    var jsonResponse = JSON.parse(data);
-                    if (jsonResponse.status == "success") {
-                        var move_permissions = jsonResponse.move_permission;
-
-                        if (typeof move_permissions && move_permissions != "undefined") {
-                            $.each(move_permissions, function(exam_id, move_permissions) {
-                                var list_question = document.createElement("li");
-                                if (move_permissions === 1) {
-                                    $(list_question).append("<span>" + INDEX_TEXT.Exam_id + ": <strong>" + exam_id + "</strong> - " + exam_titles[exam_id] + "</span>");
-                                    exam_ids_approved.push(exam_id);
-                                } else {
-                                    var can_not = INDEX_TEXT.can_not_move;
-                                    $(list_question).append("<span class=\"no-delete\">" + INDEX_TEXT.Exam_id + ": <strong>" + exam_id + "</strong> - " + can_not + "</span>");
-                                }
-                                $(list).append(list_question);
-                            });
-                        }
-                    } else if (jsonResponse.status == "error") {
-                        $("#no-exams-selected-move").removeClass("hide");
-                        $("#exams-selected-move").addClass("hide");
-                    }
-
-                    $("#move-exams-container").append(list);
-                }
-            });
-        } else {
-            $("#no-exams-selected-move").removeClass("hide");
-            $("#move-exams-modal-button").addClass("hide");
-        }
-    }
-
-    function deleteApprovedExams() {
-        var dataObject = {
-            method : "delete-exams",
-            delete_ids: exam_ids_approved
-        };
-
-        jQuery.ajax({
-            url: API_URL,
-            data: dataObject,
-            type: "POST",
-            success: function (data) {
-                var jsonResponse = JSON.parse(data);
-                if (jsonResponse.status == "success") {
-                    $(jsonResponse.exam_ids).each(function(index, element) {
-                        var exam_row = $("tr.exam-row[data-id=\"" + element + "\"]");
-                        exam_row.remove();
-                    });
-                    $("#delete-exam-modal").modal("hide");
-                    display_success([jsonResponse.msg], "#exam-msgs")
-                } else if (jsonResponse.status == "error") {
-                    $("#delete-exam-modal").modal("hide");
-                    display_error([jsonResponse.msg], "#exam-msgs");
-                }
-            }
-        });
-
-        exams_checked = {};
-        var rows = $("tr.exam-row.selected");
-        var buttons = $("button.selected");
-        $(rows).removeClass("selected");
-        $(buttons).removeClass("selected");
-    }
-
-    function copyApprovedExams() {
-        var on_edit_exam = 0;
-        var exam_id = $("#exam_id").val();
-        var target_message = "#exam-msgs";
-
-        if (typeof exam_id && exam_id != "undefined") {
-            if (jQuery.isEmptyObject(exam_id)) {
-                on_edit_exam = 0;
-            } else {
-                on_edit_exam = 1;
-            }
-        }
-
-        var dataObject = {
-            method : "copy-exams",
-            copy_ids: exam_ids_approved
-        };
-
-        jQuery.ajax({
-            url: API_URL,
-            data: dataObject,
-            type: "POST",
-            success: function (data) {
-                var jsonResponse = JSON.parse(data);
-                if (jsonResponse.status == "success") {
-                    if (on_edit_exam === 0) {
-                        $(jsonResponse.exam_view_data).each(function(index, exam_view) {
-                            $("#exams-table").append(exam_view);
-                        });
-                        var message = [jsonResponse.msg];
-                    } else {
-                        target_message =  "#msgs";
-                        var new_exam_id = jsonResponse.new_exam_id;
-                        var url = $("#copy-exam-modal").data("href") + "&id=" + new_exam_id;
-                        var message_part_1 = INDEX_TEXT.text_copy_01;
-                        var message_part_2 = INDEX_TEXT.text_copy_02;
-                        var message_part_3 = INDEX_TEXT.text_copy_03;
-                        var message = [jsonResponse.msg, message_part_1 + "<a href=\"" + url + "\" style=\"font-weight: bold\">" + message_part_2 + "</a>" + message_part_3];
-                    }
-
-                    $("#copy-exam-modal").modal("hide");
-
-                    display_success(message, target_message);
-
-                    if (on_edit_exam === 1) {
-                        setTimeout(function() {
-                            window.location = url + "&id=" + new_exam_id;
-                        }, 5000);
-                    }
-                } else if (jsonResponse.status == "error") {
-                    $("#copy-exam-modal").modal("hide");
-                    display_error([jsonResponse.msg], target_message);
-                }
-            }
-        });
-        if (on_edit_exam === 0) {
-            exams_checked = {};
-            var rows = $("tr.exam-row.selected");
-            var buttons = $("button.selected");
-            $(rows).removeClass("selected");
-            $(buttons).removeClass("selected");
-        }
-    }
-    
-    function moveApprovedExams() {
-        // todo update this once we add the folders for exams
-        // todo it is commented out for now
-
-        //var dataObject = {
-        //    method : "move-exams",
-        //    move_ids: exam_ids_approved
-        //};
-        //
-        //jQuery.ajax({
-        //    url: API_URL,
-        //    data: dataObject,
-        //    type: "POST",
-        //    success: function (data) {
-        //        var jsonResponse = JSON.parse(data);
-        //        if (jsonResponse.status == "success") {
-        //            $(jsonResponse.exam_ids).each(function(index, element) {
-        //
-        //                //var exam_row = $("tr.exam-row[data-id=\"" + element + "\"]");
-        //                //exam_row.remove();
-        //                //$("#delete-exam-modal").modal("hide");
-        //                //display_success([jsonResponse.msg], "#exam-msgs")
-        //            });
-        //        } else if (jsonResponse.status == "error") {
-        //            $("#move-exam-modal").modal("hide");
-        //            display_error([jsonResponse.msg], "#exam-msgs");
-        //        }
-        //    }
-        //});
-        //exams_checked = {};
-        //var rows = $("tr.exam-row.selected");
-        //var buttons = $("button.selected");
-        //$(rows).removeClass("selected");
-        //$(buttons).removeClass("selected");
-    }
-
-
 });
 
-
-function get_exams (offset) {
-    if (jQuery("#search-targets-exam").length > 0) {
-        total_exams = 0;
-        show_loading_message = true;
-        var filters = jQuery("#search-targets-exam").serialize();
-    }
-
-    var search_term = jQuery("#exam-search").val();
-
-    if ( typeof search_term === "undefined") {
-        var search_term = "";
-    }
-
-    if (exam_offset < 0) {
-        exam_offset = 0;
-    }
-
-    // Moves the offset for the next search
-    if (offset == "more") {
-        exam_offset = (parseInt(exam_limit) + parseInt(exam_offset));
-    } else if (offset == "previous") {
-        exam_offset = (parseInt(exam_offset) - parseInt(exam_limit));
-    } else {
-        exam_offset = 0;
-    }
-
-    if (exam_offset > 0) {
-        jQuery("#load-previous-exams").prop("disabled", false);
-    } else {
-        jQuery("#load-previous-exams").prop("disabled", true);
-    }
-
-    var data_string = "method=get-exams" +
-        "&search_term=" + search_term +
-        "&limit=" + exam_limit +
-        "&offset=" + exam_offset +
-        (typeof filters !== "undefined" ? "&" + filters : "");
-
-    var exams = jQuery.ajax({
-            url: "?section=api-exams",
-            data: data_string,
-            type: "GET",
-            beforeSend: function () {
-                if (jQuery("#exams-no-results").length) {
-                    jQuery("#exams-no-results").remove();
-                }
-
-                if (show_loading_message) {
-                    jQuery("#exam-exams-loading").removeClass("hide");
-                    jQuery("#exams-table").addClass("hide");
-                    jQuery("#exams-table tbody").empty();
-                }
-            }
-        }
-    );
-
-    jQuery.when(exams).done(function (data) {
-        if (jQuery("#exams-no-results").length) {
-            jQuery("#exams-no-results").remove();
-            jQuery("#exams-table").removeClass("hide");
-        }
-
-        var jsonResponse = JSON.parse(data);
-        if (jsonResponse.results > 0) {
-            var exam_count = parseInt(jsonResponse.data.total_forms);
-            total_exams = parseInt(jsonResponse.results);
-
-            var exam_num_1 = exam_offset + 1;
-            var exam_num_2 = exam_offset + total_exams;
-
-            jQuery("#exams-loaded-display").html("Showing " + exam_num_1 + " - " +  exam_num_2 + " of " + exam_count + " total exams");
-
-            if (exam_num_1 >= exam_count || exam_limit > exam_count || exam_num_2 == exam_count) {
-                jQuery("#load-exams").prop("disabled", true);
-            } else {
-                jQuery("#load-exams").prop("disabled", false);
-            }
-
-            if (exam_count > 0) {
-                jQuery("#exams-no-results").addClass("hide");
-            }
-
-            if (typeof jsonResponse.exams != "undefined") {
-                jQuery("#exams-table tbody").empty();
-                jQuery.each(jsonResponse.exams, function (key, exam) {
-                    jQuery("#exams-table").append(exam);
-                });
-                jQuery("#exams-table").removeClass("hide");
-            }
-
-            if (show_loading_message) {
-                jQuery("#exam-exams-loading").addClass("hide");
-                jQuery("#exams-table").removeClass("hide");
-            }
-
-            show_loading_message = false;
-
-        } else {
-            jQuery("#exam-exams-loading").addClass("hide");
-            jQuery("#load-exams").prop("disabled", true);
-            jQuery("#exams-table").addClass("hide");
-            var no_results_div = jQuery(document.createElement("div"));
-            var no_results_p = jQuery(document.createElement("p"));
-
-            no_results_p.html(submodule_text.index.no_exams_found);
-            jQuery(no_results_div).append(no_results_p).attr({id: "exams-no-results"});
-            jQuery("#exam-msgs").append(no_results_div);
-        }
-    });
-}
 
 function build_exam_row (exam) {
 
@@ -2020,14 +1601,14 @@ function build_exam_row (exam) {
 
 function toggle_active_question_detail(question) {
     var element = question.parents(".exam-question");
-//    var question_id = element.data("question-id");
-//    if (!jQuery(question).hasClass("active")) {
-//        element.find(".question-detail-view").removeClass("hide");
-//        jQuery(question).addClass("active");
-//        jQuery(question).find("i").addClass("white-icon");
-//    } else {
-//        element.find(".question-detail-view").addClass("hide");
-//        jQuery(question).removeClass("active");
-//        jQuery(question).find("i").removeClass("white-icon");
-//    }
+    var question_id = element.data("question-id");
+    if (!jQuery(question).hasClass("active")) {
+        element.find(".question-detail-view").removeClass("hide");
+        jQuery(question).addClass("active");
+        jQuery(question).find("i").addClass("white-icon");
+    } else {
+        element.find(".question-detail-view").addClass("hide");
+        jQuery(question).removeClass("active");
+        jQuery(question).find("i").removeClass("white-icon");
+    }
 }

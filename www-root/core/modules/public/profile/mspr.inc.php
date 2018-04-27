@@ -810,26 +810,26 @@ if (!defined("IN_PROFILE")) {
                 <h2 title="Supplied Information Section" class="collapsed">Information Supplied by Staff and Faculty</h2>
                 <div id="supplied-information-section">
                     <div class="instructions">
-                        <p>This section consists of information entered by staff or extracted from other sources (for example, clerkship schedules).</p>
+                        <p>This section consists of information entered by staff or extracted from other sources (for example, <?php echo $translate->_("clerkship schedules"); ?>).</p>
                         <p>Please periodically read over the information in the following sections to verify its accuracy. If any errors are found, please contact the undergraduate office.</p>
                     </div>
 
                     <div class="section">
-                        <h3 title="Clerkship Core Rotations Completed Satisfactorily to Date" class="collapsable collapsed">Clerkship Core Rotations Completed Satisfactorily to Date</h3>
+                        <h3 title="Clerkship Core Rotations Completed Satisfactorily to Date" class="collapsable collapsed"><?php echo $translate->_("Clerkship Core Rotations"); ?> Completed Satisfactorily to Date</h3>
                         <div id="clerkship-core-rotations-completed-satisfactorily-to-date">
                             <div id="clerkships_core_completed"><?php echo display_clerkship_details($clerkship_core_completed); ?></div>
                         </div>
                     </div>
 
                     <div class="section">
-                        <h3 title="Clerkship Core Rotations Pending" class="collapsable collapsed">Clerkship Core Rotations Pending</h3>
+                        <h3 title="Clerkship Core Rotations Pending" class="collapsable collapsed"><?php echo $translate->_("Clerkship Core Rotations"); ?> Pending</h3>
                         <div id="clerkship-core-rotations-pending">
                             <div id="clerkships_core_pending"><?php echo display_clerkship_details($clerkship_core_pending); ?></div>
                         </div>
                     </div>
 
                     <div class="section">
-                        <h3 title="Clerkship Electives Completed Satisfactorily to Date" class="collapsable collapsed">Clerkship Electives Completed Satisfactorily to Date</h3>
+                        <h3 title="Clerkship Electives Completed Satisfactorily to Date" class="collapsable collapsed"><?php echo $translate->_("Clerkship Electives"); ?> Completed Satisfactorily to Date</h3>
                         <div id="clerkship-electives-completed-satisfactorily-to-date">
                             <div id="clerkships_electves_completed"><?php echo display_clerkship_details($clerkship_elective_completed); ?></div>
                         </div>
@@ -1055,19 +1055,19 @@ if (!defined("IN_PROFILE")) {
                     </div>
                 </div>
                 <div class="section">
-                    <h3 title="Clerkship Core Rotations Completed Satisfactorily to Date" class="collapsable collapsed">Clerkship Core Rotations Completed Satisfactorily to Date</h3>
+                    <h3 title="Clerkship Core Rotations Completed Satisfactorily to Date" class="collapsable collapsed"><?php echo $translate->_("Clerkship Core Rotations"); ?> Completed Satisfactorily to Date</h3>
                     <div id="clerkship-core-rotations-completed-satisfactorily-to-date">
                         <div id="clerkships_core_completed"><?php echo display_clerkship_details($clerkship_core_completed); ?></div>
                     </div>
                 </div>
                 <div class="section">
-                    <h3 title="Clerkship Core Rotations Pending" class="collapsable collapsed">Clerkship Core Rotations Pending</h3>
+                    <h3 title="Clerkship Core Rotations Pending" class="collapsable collapsed"><?php echo $translate->_("Clerkship Core Rotations"); ?> Pending</h3>
                     <div id="clerkship-core-rotations-pending">
                         <div id="clerkships_core_pending"><?php echo display_clerkship_details($clerkship_core_pending); ?></div>
                     </div>
                 </div>
                 <div class="section">
-                    <h3 title="Clerkship Electives Completed Satisfactorily to Date" class="collapsable collapsed">Clerkship Electives Completed Satisfactorily to Date</h3>
+                    <h3 title="Clerkship Electives Completed Satisfactorily to Date" class="collapsable collapsed"><?php echo $translate->_("Clerkship Electives"); ?> Completed Satisfactorily to Date</h3>
                     <div id="clerkship-electives-completed-satisfactorily-to-date">
                         <div id="clerkships_electves_completed"><?php echo display_clerkship_details($clerkship_elective_completed); ?></div>
                     </div>

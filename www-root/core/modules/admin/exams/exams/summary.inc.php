@@ -167,9 +167,9 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS") && !defined("IN_EXAMS
                                                 <li id="tags-list-<?php echo $tag->getID();?>" class="selected-list-item" data-id="<?php echo $tag->getID();?>" data-parent="" data-filter="tags">
                                                     <?php echo $tag->getName();?>
                                                     <span class="pull-right selected-item-container">
-                                                    <span class="selected-item-label">Curriculum Tag Set</span>
-                                                    <span class="remove-list-item">×</span>
-                                                </span>
+                                                        <span class="selected-item-label">Curriculum Tag Set</span>
+                                                        <span class="remove-list-item">×</span>
+                                                    </span>
                                                 </li>
                                             </ul>
                                         </div>
@@ -217,22 +217,25 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS") && !defined("IN_EXAMS
                         count($submissions);
                         if ($submissions && is_array($submissions)) {
                             foreach ($submissions as $submission) {
-                                $points         = $submission->getExamPoints();
+                                $point          = $submission->getExamPoints();
+                                $exam_score     = $submission->getExamScore();
                                 $possible       = $submission->getExamValue();
-                                $score          = number_format(($points / $possible * 100), 2);
-                                $scores[$submission->getProxyID()] = $score;
 
-                                if ($scores < 40) {
+                                $score          = number_format(($point / $possible * 100), 2);
+                                $scores[$submission->getProxyID()] = $score;
+                                $points[$submission->getProxyID()] = $point;
+
+                                if ($scores <= 40) {
                                     $histograms["<40"] = $histograms["<40"] + 1;
-                                } else if ($score < 49) {
+                                } else if ($score <= 50) {
                                     $histograms["40-49"] = $histograms["40-49"] + 1;
-                                } else if ($score < 59) {
+                                } else if ($score <= 60) {
                                     $histograms["50-59"] = $histograms["50-59"] + 1;
-                                } else if ($score < 69) {
+                                } else if ($score <= 70) {
                                     $histograms["60-69"] = $histograms["60-69"] + 1;
-                                } else if ($score < 79) {
+                                } else if ($score <= 80) {
                                     $histograms["70-79"] = $histograms["70-79"] + 1;
-                                } else if ($score < 89) {
+                                } else if ($score <= 90) {
                                     $histograms["80-89"] = $histograms["80-89"] + 1;
                                 } else {
                                     $histograms[">90"] = $histograms[">90"] + 1;
@@ -248,7 +251,9 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS") && !defined("IN_EXAMS
                         $num_scores     = count($scores);
                         $total_points   = $num_scores ? $submissions[0]->getExamValue() : 1;
                         $mean           = $num_scores ? array_sum($scores) / $num_scores : false;
+                        $mean_points    = $num_scores ? array_sum($points) / $num_scores : false;
                         $mean_percent   = $num_scores ? $mean * 100 / $total_points : false;
+
 
                         if (!$num_scores) {
                             $median = false;
@@ -262,6 +267,9 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS") && !defined("IN_EXAMS
                         if ($num_scores) {
                             $min_percent = reset($scores);
                             $max_percent = end($scores);
+
+                            $min_point = reset($points);
+                            $max_point = end($points);
                         } else {
                             $min = false;
                         }
@@ -296,7 +304,6 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS") && !defined("IN_EXAMS
                         }
                         sort($letters);
                     }
-
 
                     if (isset($exam_elements) && is_array($exam_elements) && !empty($exam_elements)) {
                         foreach ($exam_elements as $element) {
@@ -390,7 +397,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS") && !defined("IN_EXAMS
                                             Average Score
                                         </div>
                                         <div class="score_details">
-                                            (<?php echo number_format($mean, 2); ?>/100)
+                                            (<?php echo number_format($mean_points, 2) . "/" . $total_points; ?>)
                                         </div>
                                     </div>
                                     <div class="span4 header">
@@ -401,7 +408,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS") && !defined("IN_EXAMS
                                             Low Score
                                         </div>
                                         <div class="score_details">
-                                            (<?php echo number_format($min_percent, 2); ?>/100)
+                                            (<?php echo number_format($min_point, 2) . "/" . $total_points; ?>)
                                         </div>
                                     </div>
                                     <div class="span4 header">
@@ -412,7 +419,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS") && !defined("IN_EXAMS
                                             High Score
                                         </div>
                                         <div class="score_details">
-                                            (<?php echo number_format($max_percent, 2); ?>/100)
+                                            (<?php echo number_format($max_point, 2) . "/" . $total_points; ?>)
                                         </div>
                                     </div>
                                 </div>
@@ -841,12 +848,12 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS") && !defined("IN_EXAMS
                             api_url: API_URL,
                             resource_url: ENTRADA_URL,
                             filter_component_label: "Curriculum Tag Set",
+                            select_all_enabled: true,
                             filters: {
                                 tags: {
                                     label: "Curriculum Tags",
                                     data_source: "get-category-report-sets",
                                     mode: "checkbox",
-                                    select_all_enabled: true,
                                     api_params: {
                                         exam_id: function () {
                                             var exam_id = $("input[name=\"exam_id\"]");

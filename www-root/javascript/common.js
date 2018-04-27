@@ -10,7 +10,7 @@ function safeParseJson(data, default_message) {
 	try {
 		var jsonResponse = JSON.parse(data);
 	} catch (e) {
-		var jsonResponse = [];
+		var jsonResponse = {};
 		jsonResponse.status = "error";
 		jsonResponse.data = [default_message];
 	}
@@ -145,8 +145,10 @@ function dateLock(inputField) {
 	if(jQuery(field)) {
 		jQuery(field + '_text').removeClass('form-nrequired');
 		jQuery(field + '_text').removeClass('form-required');
+		
+		var visible = jQuery("#" + field).is(":visible");
 
-		if (jQuery(field).prop('checked') == true) {
+		if (jQuery(field).prop('checked') == true || (visible == false && jQuery("#" + field).val() == 1)) {
 			jQuery(field + '_text').addClass('form-required');
 			jQuery(field + '_date').prop('disabled', false);
 
@@ -620,6 +622,15 @@ function eraseCookie(name) {
 }
 
 /**
+ * Create a UNIX timestamp in seconds.
+ *
+ * @returns {number}
+ */
+function createUnixTimestamp() {
+    return Math.round(new Date().getTime() / 1000);
+}
+
+/**
  * Allows specification of a select all check box and a defined group of slaves to it. clicking the master (select all) will select/de-select all slaves. clicking one of the slaves may check/uncheck the master depending on the state of th other checkboxes (all checked -> master checked, one or more unchecked -> master unchecked)
  * @param master element which acts as the "selecct all" checkbox
  * @param slaves css selector pattern, or nodelist/array of elements
@@ -880,6 +891,13 @@ function sidebarBegone() {
     });
 }
 
+function sidebarBeback() {
+    jQuery(function($) {
+        $("#sidebar").show();
+        $("#content").removeClass("span12").addClass("span9").removeAttr("style");
+    });
+}
+
 /**
  * jQuery Textarea AutoSize plugin
  * Author: Javier Julio
@@ -959,6 +977,14 @@ if (typeof Prototype !== 'undefined' && Prototype.BrowserFeatures.ElementExtensi
 
 jQuery(document).ready(function($) {
 
+	/**
+	 * Disabled buttons should have their default action prevented; this stops the page from jumping to the
+	 * top on click.
+	 */
+	$("html").on("click", ".btn.disabled", function(e) {
+		e.preventDefault();
+	});
+
     /**
      * if there are expandable text areas on the screen, enable them to auto-grow with content
      */
@@ -994,6 +1020,54 @@ jQuery(document).ready(function($) {
     });
 
     $(function () {
-        $('[data-toggle="tooltip"]').tooltip()
+        $('[data-toggle="tooltip"]').tooltip({
+            container: "body"
+		})
     });
+
+    $(".event-evaluation-resource-link").on("click", function (e) {
+    	e.preventDefault();
+
+        var assessment_request = $.ajax({
+            url: ENTRADA_URL + "/assessments?section=api-assessments",
+            type: "POST",
+            data: {
+                "method": "trigger-feedback-assessment-for-learning-event",
+                "form_id": $(this).attr("data-form-id"),
+				"event_id": $(this).attr("data-event-id")
+			}
+        });
+
+        $.when(assessment_request).done(function (data) {
+            var jsonResponse = safeParseJson(data, "Unable to read response.");
+            if (jsonResponse.status == "success") {
+                window.location.replace(jsonResponse.data.url);
+            } else {
+                $("#msgs").empty();
+                display_error(jsonResponse.data, "#msgs");
+            }
+        });
+    });
+
+    /**
+	 * Generic collapsible card JS.
+     */
+    $(document).on("click", ".collapsible-card-heading", function () {
+    	var parent = $(this).parent();
+    	var body = $(parent).find("div.collapsible-card-body");
+
+    	var collapsed = $(body).hasClass("collapsed");
+        if (collapsed) {
+            $(body).slideDown("fast");
+        } else {
+            $(body).slideUp("fast");
+        }
+        $(body).toggleClass("collapsed");
+
+        var icon = $(this).find("i.collapsible-card-icon");
+        if (icon !== typeof undefined) {
+            $(icon).toggleClass("active");
+        }
+    })
+
 });

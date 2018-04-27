@@ -36,6 +36,16 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 
 	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] does not have access to this module [".$MODULE."]");
 } else {
+    $JAVASCRIPT_TRANSLATIONS[] = "var course_index_localization = {};";
+    $JAVASCRIPT_TRANSLATIONS[] = "course_index_localization.Setup = '" . html_encode($translate->_("Setup")) . "';";
+    $JAVASCRIPT_TRANSLATIONS[] = "course_index_localization.Content = '" . html_encode($translate->_("Content")) . "';";
+    $JAVASCRIPT_TRANSLATIONS[] = "course_index_localization.Units = '" . html_encode($translate->_("Units")) . "';";
+    $JAVASCRIPT_TRANSLATIONS[] = "course_index_localization.Enrolment = '" . html_encode($translate->_("Enrolment")) . "';";
+    $JAVASCRIPT_TRANSLATIONS[] = "course_index_localization.Groups = '" . html_encode($translate->_("Groups")) . "';";
+    $JAVASCRIPT_TRANSLATIONS[] = "course_index_localization.Gradebook = '" . html_encode($translate->_("Gradebook")) . "';";
+    $JAVASCRIPT_TRANSLATIONS[] = "course_index_localization.Cbme = '" . html_encode($translate->_("CBME")) . "';";
+    $JAVASCRIPT_TRANSLATIONS[] = "course_index_localization.Reports = '" . html_encode($translate->_("Reports")) . "';";
+
     $HEAD[] = "<script>var ENTRADA_URL = \"". ENTRADA_URL ."\";</script>";
     $HEAD[] = "<script type=\"text/javascript\">var ORGANISATION = '".$ENTRADA_USER->getActiveOrganisation()."';</script>";
     $HEAD[] = "<script src=\"".  ENTRADA_URL ."/javascript/". $MODULE ."/". $MODULE .".js\"></script>";

@@ -57,6 +57,9 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
 
             $METHOD = "update";
             $PROCESSED = $exam->toArray();
+            if ($PROCESSED["folder_id"] == NULL) {
+                $PROCESSED["folder_id"] = 0;
+            }
             ?>
             <h1><?php echo $exam->getTitle(); ?></h1>
             <?php

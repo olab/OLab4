@@ -128,7 +128,7 @@ jQuery(document).ready(function ($) {
                             jQuery("#courses-no-results").removeClass("hide");
                         }
                     });
-                    jQuery("#load-more-courses").html("Showing " + (parseInt(jQuery("#load-more-courses").html().split(" ")[1]) - data.course_ids.length) + " of " + (parseInt(jQuery("#load-more-courses").html().split(" ")[3]) - data.course_ids.length) + " total items");
+                    jQuery("#load-more-courses").html("Showing " + (parseInt(jQuery("#load-more-courses").html().split(" ")[1]) - data.course_ids.length) + " of " + (parseInt(jQuery("#load-more-courses").html().split(" ")[3]) - data.course_ids.length) + " total");
                 } else if(data.status == "error") {
                     display_error([data.msg], "#msgs");
                 }
@@ -197,8 +197,14 @@ function get_courses (item_index) {
 
         var jsonResponse = JSON.parse(data);
         if (jsonResponse.results > 0) {
+            var total_courses_allowed = 0;
+            var total_courses = parseInt(jsonResponse.results);
             if (!reload_items) {
-                total_courses += parseInt(jsonResponse.results);
+                jQuery.each(jsonResponse.data.courses, function (key, item) {
+                    if (item.course_permission || item.course_content_permission) {
+                        total_courses_allowed += 1;
+                    }
+                });
             } else {
                 total_courses = parseInt(jsonResponse.results);
                 var checked_items = jQuery("#courses-table input.add-item:checkbox:checked").length;
@@ -208,9 +214,9 @@ function get_courses (item_index) {
                 }
             }
 
-            jQuery("#load-more-courses").html("Showing " + total_courses + " of " + jsonResponse.data.total_courses + " total courses");
+            jQuery("#load-more-courses").html("Showing " + total_courses_allowed + " of " + total_courses_allowed + " total");
 
-            if (jsonResponse.results < item_limit) {
+            if (total_courses_allowed < item_limit) {
                 jQuery("#load-more-courses").attr("disabled", "disabled");
             } else {
                 jQuery("#load-more-courses").removeAttr("disabled");
@@ -234,8 +240,9 @@ function get_courses (item_index) {
             }
 
             jQuery.each(jsonResponse.data.courses, function (key, item) {
-                build_course_row(item);
-                // build_item_details(item);
+                if (item.course_permission || item.course_content_permission) {
+                    build_course_row(item);
+                }
             });
 
             show_loading_message = false;
@@ -264,20 +271,26 @@ function build_course_row (course) {
     var btn_li = "";
 
     if (course.course_permission) {
-        btn_li += "<li><a href=\"" + ENTRADA_URL + "/admin/courses?section=edit&amp;id=" + course.course_id + "\">Setup</a></li>";
+        btn_li += "<li><a href=\"" + ENTRADA_URL + "/admin/courses?section=edit&amp;id=" + course.course_id + "\">" + course_index_localization.Setup + "</a></li>";
     }
     if (course.course_content_permission) {
-        btn_li += "<li><a href=\""+ ENTRADA_URL +"/admin/courses?section=content&amp;id=" + course.course_id + "\">Content</a></li>";
+        btn_li += "<li><a href=\""+ ENTRADA_URL +"/admin/courses?section=content&amp;id=" + course.course_id + "\">" + course_index_localization.Content + "</a></li>";
+    }
+    if (course.course_permission && course.course_week) {
+        btn_li += "<li><a href=\"" + ENTRADA_URL + "/admin/courses/units?id=" + course.course_id + "\">" + course_index_localization.Units + "</a></li>";
     }
     if (course.course_permission) {
-        btn_li += "<li><a href=\"" + ENTRADA_URL + "/admin/courses/enrolment?id=" + course.course_id + "\">Enrolment</a></li>";
-        btn_li += "<li><a href=\"" + ENTRADA_URL + "/admin/courses/groups?id=" + course.course_id + "\">Groups</a></li>";
+        btn_li += "<li><a href=\"" + ENTRADA_URL + "/admin/courses/enrolment?id=" + course.course_id + "\">" + course_index_localization.Enrolment + "</a></li>";
+        btn_li += "<li><a href=\"" + ENTRADA_URL + "/admin/courses/groups?id=" + course.course_id + "\">" + course_index_localization.Groups + "</a></li>";
     }
     if (course.course_gradebook) {
-        btn_li += "<li><a href=\""+ ENTRADA_URL +"/admin/gradebook?section=view&amp;id=" + course.course_id + "\">Gradebook</a></li>";
+        btn_li += "<li><a href=\""+ ENTRADA_URL +"/admin/gradebook?section=view&amp;id=" + course.course_id + "\">" + course_index_localization.Gradebook + "</a></li>";
+    }
+    if (course.course_cbme) {
+        btn_li += "<li><a href=\"" + ENTRADA_URL +"/admin/courses/cbme?id=" + course.course_id + "\">" + course_index_localization.Cbme + "</a></li>";
     }
     if (course.course_content_permission) {
-        btn_li += "<li><a href=\""+ ENTRADA_URL +"/admin/courses/reports?id=" + course.course_id + "\">Reports</a></li>";
+        btn_li += "<li><a href=\""+ ENTRADA_URL +"/admin/courses/reports?id=" + course.course_id + "\">" + course_index_localization.Reports + "</a></li>";
     }
 
 

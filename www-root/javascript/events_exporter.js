@@ -30,7 +30,7 @@ jQuery(document).ready(function($){
 		}
 	}).sortable({
 		items: "ul li",
-		sort: function (event, ui) {
+        stop: function (event, ui ) {
 			var my_export_options = {};
 			$("#selected_export_options > li").each(function(index) {
 				my_export_options[$(this).attr("data-field")] = $(this).text();
@@ -52,7 +52,7 @@ jQuery(document).ready(function($){
 		}
 	});
 
-	$("#export-results-button").live("click", function() {
+	jQuery(document).on("click", "#export-results-button", function() {
 		var modal_container = $("#modal_export_container");
 
 		modal_container.dialog({

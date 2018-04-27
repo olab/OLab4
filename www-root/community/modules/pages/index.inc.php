@@ -39,7 +39,6 @@ if ($COMMUNITY_ID) {
 	$query				= "SELECT * FROM `communities` WHERE `community_id` = ".$db->qstr($COMMUNITY_ID)." AND `community_active` = '1'";
 	$community_details	= $db->GetRow($query);
 	if ($community_details) {
-		$BREADCRUMB[]		= array("url" => ENTRADA_URL."/community".$community_details["community_url"], "title" => limit_chars($community_details["community_title"], 50));
 		$BREADCRUMB[]		= array("url" => ENTRADA_URL."/communities?".replace_query(array("section" => "pages", "step" => "", "action" => "", "page" => "")), "title" => "Manage Pages");
 		$query	= "	SELECT * FROM `community_members`
 					WHERE `community_id` = ".$db->qstr($COMMUNITY_ID)."
@@ -50,12 +49,9 @@ if ($COMMUNITY_ID) {
 		if ($result) {
 			?>
 			<h1>Manage Pages</h1>
-			<div style="float: right">
-				<ul class="page-action" style="margin-bottom: 10px">
-					<li><a href="<?php echo COMMUNITY_URL.$COMMUNITY_URL; ?>:pages?section=add">Add New Page</a></li>
-				</ul>
-			</div>
-			<div style="clear: both"></div>
+
+            <a class="btn btn-success pull-right" href="<?php echo COMMUNITY_URL.$COMMUNITY_URL; ?>:pages?section=add"><i class="icon-plus-sign icon-white"></i> Add New Page</a>
+
 			<?php
 			$query	= "SELECT COUNT(*) AS `total_pages` FROM `community_pages` WHERE `community_id` = ".$db->qstr($COMMUNITY_ID)." AND `page_url` != '' AND `page_active` = '1'";
 			$result	= $db->GetRow($query);
@@ -75,14 +71,9 @@ if ($COMMUNITY_ID) {
 								</td>
 							</tr>
 						</tfoot>
-						<!--<thead>
-							<tr>
-								<td colspan="2">Community Pages</td>
-							</tr>
-						</thead>-->
 						<tbody>
 							<tr>
-								<td class="community-page-list home">
+								<td colspan="2" class="community-page-list home">
 										<a href="<?php echo COMMUNITY_URL.$COMMUNITY_URL.":pages?".replace_query(array("action" => "edit", "step" => 1, "page" => "home"))?>" style="font-weight: bold">
 										<?php
 											$home_title = $db->GetOne("SELECT `menu_title` FROM `community_pages` WHERE `community_id` =".$db->qstr($COMMUNITY_ID)." AND `page_url` = ''");
@@ -93,7 +84,7 @@ if ($COMMUNITY_ID) {
 							</tr>
 							<tr>
 								<td colspan="2" class="page-lists-style">
-							<?php echo communities_pages_inlists(0, 0, array('id'=>'pagelists'), (isset($COMMUNITY_LOCKED_PAGE_IDS) && $COMMUNITY_LOCKED_PAGE_IDS) ? $COMMUNITY_LOCKED_PAGE_IDS : array()); ?>
+							        <?php echo communities_pages_inlists(0, 0, array('id'=>'pagelists'), (isset($COMMUNITY_LOCKED_PAGE_IDS) && $COMMUNITY_LOCKED_PAGE_IDS) ? $COMMUNITY_LOCKED_PAGE_IDS : array()); ?>
 								</td>
 							</tr>
 						</tbody>
@@ -151,7 +142,7 @@ if ($COMMUNITY_ID) {
 				<?php
 			} else {
 				$NOTICE++;
-				$NOTICESTR[] = "There are currently no content pages available in this community.<br /><br />To create a new page in this community, click the <strong>Add New Page</strong> button above.";
+				$NOTICESTR[] = $translate->_("There are currently no content pages available in this community.<br /><br />To create a new page in this community, click the <strong>Add New Page</strong> button above.");
 		
 				echo display_notice();
 			}
@@ -159,7 +150,7 @@ if ($COMMUNITY_ID) {
 			application_log("error", "User tried to modify a community, but they aren't an administrator of this community.");
 
 			$ERROR++;
-			$ERRORSTR[] = "You do not appear to be an administrator of the community that you are trying to modify.<br /><br />If you feel you are getting this message in error, please contact the MEdTech Unit (page feedback on left) and we will investigate. The MEdTech Unit has automatically been informed that this error has taken place.";
+			$ERRORSTR[] = $translate->_("You do not appear to be an administrator of the community that you are trying to modify.<br /><br />If you feel you are getting this message in error, please contact the MEdTech Unit (page feedback on left) and we will investigate. The MEdTech Unit has automatically been informed that this error has taken place.");
 
 			echo display_error();
 		}
@@ -167,7 +158,7 @@ if ($COMMUNITY_ID) {
 		application_log("error", "User tried to modify a community id [".$COMMUNITY_ID."] that does not exist or is not active in the system.");
 
 		$ERROR++;
-		$ERRORSTR[] = "The community you are trying to modify either does not exist in the system or has been deactived by an administrator.<br /><br />If you feel you are receiving this message in error, please contact the MEdTech Unit (page feedback on left) and we will investigate. The MEdTech Unit has automatically been informed that this error has taken place.";
+		$ERRORSTR[] = $translate->_("The community you are trying to modify either does not exist in the system or has been deactived by an administrator.<br /><br />If you feel you are receiving this message in error, please contact the MEdTech Unit (page feedback on left) and we will investigate. The MEdTech Unit has automatically been informed that this error has taken place.");
 
 		echo display_error();
 	}

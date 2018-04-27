@@ -50,7 +50,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                 $BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/events?".replace_query(array("section" => "content", "id" => $EVENT_ID)), "title" => "Event Content");
                 events_subnavigation($event_info, "recurring");
 
-                echo "<div class=\"content-small\">".fetch_course_path($event_info["course_id"])."</div>\n";
+                echo "<div class=\"content-small\">".fetch_course_path($event_info["course_id"], $event_info["cunit_id"])."</div>\n";
                 echo "<h1 class=\"event-title\">".html_encode($event_info["event_title"])."</h1>\n";
 
                 if ($SUCCESS) {
@@ -70,19 +70,19 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                 <h2 title="Event Resources Section">Related Recurring Events</h2>
                 <div id="event-attendance-section">
                     <form name="frmSelect" action="<?php echo ENTRADA_URL; ?>/admin/events?section=delete" method="post">
-                        <table class="tableList" cellspacing="0" summary="List of Recurring Events">
+                        <table class="table table-bordered table-striped" summary="List of Recurring Events">
                             <colgroup>
-                                <col class="modified"/>
-                                <col class="date"/>
-                                <col class="title"/>
-                                <col class="attachment"/>
+                                <col class="modified" />
+                                <col class="date" />
+                                <col class="title" />
+                                <col class="attachment" />
                             </colgroup>
                             <thead>
                                 <tr>
-                                    <td class="modified">&nbsp;</td>
-                                    <td class="date">Date & Time</td>
-                                    <td class="title">Event Title</td>
-                                    <td class="attachment">&nbsp;</td>
+                                    <th class="modified">&nbsp;</th>
+                                    <th class="date">Date &amp; Time</th>
+                                    <th class="title">Event Title</th>
+                                    <th class="attachment">&nbsp;</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -100,7 +100,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                                 <tr>
                                     <td><input type="checkbox" class="delete" name="checked[]" value="<?php echo $recurring_event["event_id"];?>" id="event-<?php echo $recurring_event["event_id"];?>" /></td>
                                     <?php
-                                    echo "	<td class=\"date".((!$url) ? " np" : "")."\">".(($url) ? "<a href=\"".$url."\" title=\"Event Date\">" : "").($EVENT_ID == $recurring_event["event_id"] ? "<strong>" : "").date(DEFAULT_DATE_FORMAT, $recurring_event["event_start"]).($EVENT_ID == $recurring_event["event_id"] ? "</strong>" : "").(($url) ? "</a>" : "")."</td>\n";
+                                    echo "	<td class=\"date".((!$url) ? " np" : "")."\">".(($url) ? "<a href=\"".$url."\" title=\"Event Date\">" : "").($EVENT_ID == $recurring_event["event_id"] ? "<strong>" : "").date(DEFAULT_DATETIME_FORMAT, $recurring_event["event_start"]).($EVENT_ID == $recurring_event["event_id"] ? "</strong>" : "").(($url) ? "</a>" : "")."</td>\n";
                                     echo "	<td class=\"title".((!$url) ? " np" : "")."\">".(($url) ? "<a href=\"".$url."\" title=\"Event Title: ".html_encode($recurring_event["event_title"])."\">" : "").($EVENT_ID == $recurring_event["event_id"] ? "<strong>" : "").html_encode($recurring_event["event_title"]).($EVENT_ID == $recurring_event["event_id"] ? "</strong>" : "").(($url) ? "</a>" : "")."</td>\n";
                                     echo "  <td class=\"attachment".((!$url) ? " np" : "")."\">";
                                     if ($url) {

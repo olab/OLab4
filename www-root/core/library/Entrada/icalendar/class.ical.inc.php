@@ -244,11 +244,22 @@ class iCal {
 		else
 		  {*/
 		//if (!extension_loaded('mbstring')) {
-			$quotprint = (string) str_replace('\r\n',chr(13) . chr(10),$quotprint);
-			$quotprint = (string) str_replace('\n',chr(13) . chr(10),$quotprint);
+
+			//ua-msf : Case 2003 :
+	        // : change any encoded characters like &nbsp; and &#160; back to their actual characters
+	        $quotprint = html_entity_decode($quotprint);
+	        // : add escape character (\) before commas, semicolons, and backslashes
+	        $quotprint = addcslashes($quotprint, ';,\\');
+	        // : the quotedPrintable (DESCRIPTION, SUMMARY, CATEGORIES, LOCATION) should have escaped returns/line-feeds
+	        //   instead of actual crlf or \n so that we can be sure there is a space at the beginning of the line.
+	        $quotprint = (string) str_replace("\r\n", '\\n', $quotprint);
+	        $quotprint = (string) str_replace("\n", '\\n', $quotprint);
+	        //$quotprint = (string) str_replace('\r\n',chr(13) . chr(10),$quotprint);
+			//$quotprint = (string) str_replace('\n',chr(13) . chr(10),$quotprint);
 			//$quotprint = (string) preg_replace("~([\x01-\x1F\x3D\x7F-\xFF])~e", "sprintf('=%02X', ord('\\1'))", $quotprint);
-			$quotprint = (string) str_replace('\=0D=0A','=0D=0A',$quotprint);
-			return (string) $quotprint;
+			//$quotprint = (string) str_replace('\=0D=0A','=0D=0A',$quotprint);
+
+		return (string) $quotprint;
 		//} else {
 		//	return (string) mb_encode_mimeheader($quotprint, 'iso-8859-1', 'Q');
 		//} // end if
@@ -1009,7 +1020,41 @@ class iCal {
 	function isEmpty(&$variable) {
 		return (boolean) ((strlen(trim($variable)) > 0) ? FALSE : TRUE);
     }
-	
+
+    /**
+     * Creates ICS/ICAL formatted output from $this->output. Specifically forces max line length to 75
+	 * any sub-lines start with a space (critical for google calendar import). ua-msf : Case 2003
+     *
+     * @return string ICS/ICAL formatted
+     */
+    function formatIcs()
+	{
+        if (isset($this->output) && $this->output_format == "ics") {
+            $lines = preg_split("/\r\n|\n|\r/", $this->output);
+            $formatted = "";
+            foreach ($lines as $line) {
+                // make sure we're using the right endings
+                $line = str_replace(array("<br>","<BR>","<br/>","<BR/"),"\\n",$line);
+                $line = str_replace(array("\r\n","\n\r","\n","\r"),'\n',$line);
+                // make sure each line is 75 characters or less
+                $lineCount = 0;
+                $newLines = "";
+                while (strlen($line) > 0) {
+                    $lineWidth = ($lineCount == 0? 75 : 74);
+                    $lineSize = (strlen($line) > $lineWidth? $lineWidth: strlen($line));
+                    if($lineCount > 0)
+                        $newLines .= " "; // sub-lines start with space (critical for google calendar import)
+                    $newLines .= substr($line,0,$lineSize) . "\r\n";
+                    $lineCount += 1;
+                    $line = substr($line,$lineWidth);
+                }
+                $formatted .= $newLines;
+            }
+            // replace the output with the formatted version
+            return $formatted;
+        }
+    }
+
 	/**
 	* Generates the string to be written in the file later on
 	*
@@ -1078,7 +1123,9 @@ class iCal {
 					$this->output .= (string) "CATEGORIES" . $event->getLanguage() . ";ENCODING=QUOTED-PRINTABLE:" . $this->quotedPrintableEncode($event->getCategories()) . "\r\n";
 				} // end if
 				if (!$this->isEmpty($event->getDescription())) {
-					$this->output .= (string) "DESCRIPTION" . $event->getLanguage() . ";ENCODING=QUOTED-PRINTABLE:" . str_replace('\n', '=0D=0A=',str_replace('\r', '=0D=0A=', $this->quotedPrintableEncode($event->getDescription()))) . "\r\n";
+                    //ua-msf : Case 2003 : let quotedPrintableEncode handle descriptions with line-feeds in them
+					$this->output .= (string) "DESCRIPTION" . $event->getLanguage() . ";ENCODING=QUOTED-PRINTABLE:" . $this->quotedPrintableEncode($event->getDescription()) . "\r\n";
+					//$this->output .= (string) "DESCRIPTION" . $event->getLanguage() . ";ENCODING=QUOTED-PRINTABLE:" . str_replace('\n', '=0D=0A=',str_replace('\r', '=0D=0A=', $this->quotedPrintableEncode($event->getDescription()))) . "\r\n";
 				} // end if
 				$this->output .= (string) "SUMMARY" . $event->getLanguage() . ";ENCODING=QUOTED-PRINTABLE:" . $this->quotedPrintableEncode($event->getSummary()) . "\r\n";
 				$this->output .= (string) "PRIORITY:" . $event->getPriority() . "\r\n";
@@ -1111,7 +1158,9 @@ class iCal {
 					$this->output .= (string) "CATEGORIES" . $todo->getLanguage() . ";ENCODING=QUOTED-PRINTABLE:" . $this->quotedPrintableEncode($todo->getCategories()) . "\r\n";
 				} // end if
 				if (!$this->isEmpty($todo->getDescription())) {
-					$this->output .= (string) "DESCRIPTION" . $todo->getLanguage() . ";ENCODING=QUOTED-PRINTABLE:" . str_replace('\n', '=0D=0A=',str_replace('\r', '=0D=0A=', $this->quotedPrintableEncode($todo->getDescription()))) . "\r\n";
+                    //ua-msf : Case 2003 : let quotedPrintableEncode handle descriptions with line-feeds in them
+                    $this->output .= (string) "DESCRIPTION" . $todo->getLanguage() . ";ENCODING=QUOTED-PRINTABLE:" . $this->quotedPrintableEncode($todo->getDescription()) . "\r\n";
+					//$this->output .= (string) "DESCRIPTION" . $todo->getLanguage() . ";ENCODING=QUOTED-PRINTABLE:" . str_replace('\n', '=0D=0A=',str_replace('\r', '=0D=0A=', $this->quotedPrintableEncode($todo->getDescription()))) . "\r\n";
 				} // end if
 				$this->output .= (string) "SUMMARY" . $todo->getLanguage() . ";ENCODING=QUOTED-PRINTABLE:" . $this->quotedPrintableEncode($todo->getSummary()) . "\r\n";
 				$this->output .= (string) "PRIORITY:" . $todo->getPriority() . "\r\n";
@@ -1174,7 +1223,9 @@ class iCal {
 					$this->output .= (string) "CATEGORIES" . $journal->getLanguage() . ";ENCODING=QUOTED-PRINTABLE:" . $this->quotedPrintableEncode($journal->getCategories()) . "\r\n";
 				} // end if
 				if (!$this->isEmpty($journal->getDescription())) {
-					$this->output .= (string) "DESCRIPTION" . $journal->getLanguage() . ";ENCODING=QUOTED-PRINTABLE:" . str_replace('\n', '=0D=0A=',str_replace('\r', '=0D=0A=', $this->quotedPrintableEncode($journal->getDescription()))) . "\r\n";
+                    //ua-msf : Case 2003 : let quotedPrintableEncode handle descriptions with line-feeds in them
+                    $this->output .= (string) "DESCRIPTION" . $journal->getLanguage() . ";ENCODING=QUOTED-PRINTABLE:" . $this->quotedPrintableEncode($journal->getDescription()) . "\r\n";
+					//$this->output .= (string) "DESCRIPTION" . $journal->getLanguage() . ";ENCODING=QUOTED-PRINTABLE:" . str_replace('\n', '=0D=0A=',str_replace('\r', '=0D=0A=', $this->quotedPrintableEncode($journal->getDescription()))) . "\r\n";
 				} // end if
 				$this->output .= (string) "SUMMARY" . $journal->getLanguage() . ";ENCODING=QUOTED-PRINTABLE:" . $this->quotedPrintableEncode($journal->getSummary()) . "\r\n";
 				$this->output .= (string) "CLASS:" . $this->getClassName($journal->getClass()) . "\r\n";
@@ -1243,6 +1294,8 @@ class iCal {
 				$this->output .= (string) "END:VFREEBUSY\r\n";
 			} // end foreach
 			$this->output .= (string) "END:VCALENDAR\r\n";
+            //ua-msf : Case 2003 : convert output to standard ICS/ICAL format
+            $this->output = $this->formatIcs();
 		} // end if ics
 		elseif ($this->output_format == 'xcs') {
 			$this->output  = (string) '<?xml version="1.0" encoding="UTF-8"?>';

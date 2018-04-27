@@ -213,21 +213,7 @@ if ($RECORD_ID) {
                                             application_log("error", "User {$ENTRADA_USER->getID()} uploaded a file to shares without an extension.");
                                         } else {
                                             if (($file_filesize = (int) trim($_FILES["uploaded_file"]["size"][$tmp_file_id])) <= $VALID_MAX_FILESIZE) {
-                                                $finfo = new finfo(FILEINFO_MIME);
-                                                $type = $finfo->file($_FILES["uploaded_file"]["tmp_name"][$tmp_file_id]);
-                                                $type_array = explode(";", $type);
-                                                $mimetype = $type_array[0];
-                                                $file_info["file_mimetype"] = strtolower(trim($_FILES["uploaded_file"]["type"][$tmp_file_id]));
-
-                                                switch ($file_info["file_mimetype"]) {
-                                                    case "application/x-forcedownload":
-                                                    case "application/octet-stream":
-                                                    case "\"application/octet-stream\"":
-                                                    case "application/download":
-                                                    case "application/force-download":
-                                                        $file_info["file_mimetype"] = $mimetype;
-                                                    break;
-                                                }
+                                                $file_info["file_mimetype"] = mime_content_type($_FILES["uploaded_file"]["tmp_name"][$tmp_file_id]);
                                                 $file_info["file_version"] = 1;
                                                 $file_info["file_filesize"] = $file_filesize;
                                                 $file_info["file_filename"] = useable_filename(trim($file_name));
@@ -411,7 +397,7 @@ if ($RECORD_ID) {
                                                         <input type="checkbox" id="anonymous" name="anonymous" <?php echo (isset($PROCESSED["anonymous"]) && $PROCESSED["anonymous"] ? "checked=\"checked\"" : ""); ?> value="1"/>
                                                     </td>
                                                     <td>
-                                                        <label for="anonymous" class="form-nrequired">Hide my name from other community members.</label>
+                                                        <label for="anonymous" class="form-nrequired"><?php echo $translate->_("Hide my name from other community members."); ?></label>
                                                     </td>
                                                 </tr>
                                                 <?php
@@ -576,7 +562,7 @@ if ($RECORD_ID) {
                                     case 0 :
                                         if (($file_filesize = (int) trim($_FILES["uploaded_file"]["size"][$tmp_file_id])) <= $VALID_MAX_FILESIZE) {
                                             $file_info["file_version"]        = 1;
-                                            $file_info["file_mimetype"]        = strtolower(trim($_FILES["uploaded_file"]["type"][$tmp_file_id]));
+                                            $file_info["file_mimetype"]        = mime_content_type($_FILES["uploaded_file"]["tmp_name"][$tmp_file_id]);
                                             $file_info["file_filesize"]        = $file_filesize;
                                             $file_info["file_filename"]        = useable_filename(trim($file_name));
 
@@ -778,7 +764,7 @@ if ($RECORD_ID) {
                                             <tr>
                                                 <td style="border-bottom: none; border-right: none"><?php echo get_online_status($result["proxy_id"], "image"); ?> <a href="<?php echo ENTRADA_URL."/people?profile=".html_encode($result["poster_username"]); ?>" style="font-weight: bold; text-decoration: underline"><?php echo html_encode($result["poster_fullname"]); ?></a></td>
                                                 <td style="border-bottom: none; text-align: left">
-                                                        <span class="content-small"><strong>Posted:</strong> <?php echo date(DEFAULT_DATE_FORMAT, $result["updated_date"]); ?></span>
+                                                        <span class="content-small"><strong>Posted:</strong> <?php echo date(DEFAULT_DATETIME_FORMAT, $result["updated_date"]); ?></span>
                                                 </td>
                                             </tr>
                                             <tr>
@@ -842,7 +828,7 @@ if ($RECORD_ID) {
                                                         <input type="checkbox" name="anonymous" <?php echo (isset($PROCESSED["anonymous"]) && $PROCESSED["anonymous"] ? "checked=\"checked\"" : ""); ?> value="1"/>
                                                     </td>
                                                     <td>
-                                                        <span class="file-checkbox-text">Hide my name from other community members.</span>
+                                                        <span class="file-checkbox-text"><?php echo $translate->_("Hide my name from other community members."); ?></span>
                                                     </td>
                                                 </tr>
 

@@ -61,7 +61,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP"))) {
                     <tr>
                         <td>Encounter Date</td>
                         <td>
-                            <?php echo date(DEFAULT_DATE_FORMAT, $PROCESSED["encounter_date"]); ?>
+                            <?php echo date(DEFAULT_DATETIME_FORMAT, $PROCESSED["encounter_date"]); ?>
                         </td>
                     </tr>
                     <tr>

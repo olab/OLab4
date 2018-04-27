@@ -184,7 +184,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_CONFIGURATION"))) {
                             _old_toggle.apply(this);
                             this.$element.trigger('active');
                         }
-                        jQuery('.toggle-days').live('active', function(event) {
+                        jQuery(document).on('active', '.toggle-days', function(event) {
                             event.preventDefault();
                             if (jQuery(this).hasClass('active') && jQuery('#weekday_'+ jQuery(this).data("value")).length < 1) {
                                 jQuery('#days-container').html('<input type="hidden" value="'+ jQuery(this).data("value") +'" name="weekday" id="weekday_'+ jQuery(this).data("value") +'" />');

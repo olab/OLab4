@@ -52,6 +52,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_REPORTS"))) {
 		);
 			
 	$BREADCRUMB[]	= array("url" => "", "title" => "Teaching Report By Course" );
+	$distribute_event_duration = (isset($_POST['distribute_event_duration']) && $_POST['distribute_event_duration'] == 'on');
 	?>
 	<style type="text/css">
 	h1 {
@@ -85,6 +86,14 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_REPORTS"))) {
 				<td colspan="3"><h2>Report Options</h2></td>
 			</tr>
 			<?php echo generate_calendars("reporting", "Reporting Date", true, true, $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_start"], true, true, $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_finish"]); ?>
+            <tr>
+                <td>
+                    <input type="checkbox" id="distribute_event_duration" name="distribute_event_duration" <?php echo ($distribute_event_duration ? "checked='checked'" : ""); ?>>
+                </td>
+                <td colspan="2">
+					<?php echo $translate->_("Assign session time equally to instructors"); ?>
+                </td>
+            </tr>
 			<tr>
 				<td colspan="3" style="text-align: right; padding-top: 10px"><input type="submit" class="btn btn-primary" value="Create Report" /></td>
 			</tr>
@@ -122,13 +131,35 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_REPORTS"))) {
 			$course_sidebar[$course["course_id"]]	= array("course_name" => $course["course_name"], "course_link" => clean_input($course["course_name"], "credentials"));
 
 			$report_results[$course["course_id"]]	= array();
-			
-			$query	= "	SELECT a.*, b.`audience_type`, b.`audience_value`
-						FROM `events` AS a
-						LEFT JOIN `event_audience` AS b
-						ON a.`event_id` = b.`event_id`
-						WHERE a.`course_id` = ".$db->qstr($course["course_id"])."
-						AND (a.`event_start` BETWEEN ".$db->qstr($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_start"])." AND ".$db->qstr($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_finish"]).")";
+
+			if ($distribute_event_duration) {
+				$query = "
+				    SELECT 
+                        a.*, 
+                        b.`audience_type`, 
+                        b.`audience_value`, 
+                        COUNT(ec.proxy_id) AS instructor_count
+                    FROM `events` AS a
+                    LEFT JOIN `event_audience` AS b
+                    ON a.`event_id` = b.`event_id`
+                    LEFT JOIN event_contacts AS ec
+                    ON ec.event_id = a.event_id
+                    WHERE a.`course_id` = " . $db->qstr($course["course_id"]) . "
+                    AND (a.`event_start` BETWEEN " . $db->qstr($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_start"]) . " AND " . $db->qstr($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_finish"]) . ")
+                    GROUP BY a.event_id";
+			} else {
+				$query = "
+				    SELECT 
+                        a.*, 
+                        b.`audience_type`, 
+                        b.`audience_value`
+                    FROM `events` AS a
+                    LEFT JOIN `event_audience` AS b
+                    ON a.`event_id` = b.`event_id`                            
+                    WHERE a.`course_id` = " . $db->qstr($course["course_id"]) . "
+                    AND (a.`event_start` BETWEEN " . $db->qstr($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_start"]) . " AND " . $db->qstr($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_finish"]) . ")
+                ";
+            }
 			if($int_use_cache) {
 				$events	= $db->CacheGetAll(LONG_CACHE_TIMEOUT, $query);
 			} else {
@@ -144,18 +175,25 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_REPORTS"))) {
 								WHERE a.`event_id` = ".$db->qstr($event["event_id"])."
 								AND a.`contact_role` = 'teacher' 
 								ORDER BY `fullname` ASC";
+
 					if($int_use_cache) {
 						$sresults	= $db->CacheGetAll(LONG_CACHE_TIMEOUT, $squery);
 					} else {
 						$sresults	= $db->GetAll($squery);
 					}
-					
+
+					if ($distribute_event_duration && $event["instructor_count"] != 0) {
+						$event_duration = (int) $event["event_duration"] / $event["instructor_count"];
+					} else {
+						$event_duration = $event["event_duration"];
+					}
+
 					if($sresults) {
 						foreach($sresults as $sresult) {
-							$report_results[$course["course_id"]][$sresult["fullname"]] += $event["event_duration"];
+							$report_results[$course["course_id"]][$sresult["fullname"]] += $event_duration;
 						}
 					} else {
-						$report_results[$course["course_id"]]["No Assigned Teacher"] += $event["event_duration"];						
+						$report_results[$course["course_id"]]["No Assigned Teacher"] += $event_duration;
 					}
 				}
 			}
@@ -165,14 +203,35 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_REPORTS"))) {
 	/**
 	 * Check for Learning Events that are not in a course.
 	 */
-	$query	= "	SELECT a.*, b.`audience_type`, b.`audience_value`
-				FROM `events` AS a
-				LEFT JOIN `event_audience` AS b
-				ON a.`event_id` = b.`event_id`
-				WHERE a.`course_id` = '0'
-				AND (a.`event_start` BETWEEN ".$db->qstr($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_start"])." 
-				AND ".$db->qstr($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_finish"]).")
-				AND (b.`audience_type` = 'organisation' AND b.`audience_value` = ".$ENTRADA_USER->getActiveOrganisation().")";
+	if ($distribute_event_duration) {
+		$query	= "
+			SELECT 
+				a.*, 
+				b.`audience_type`, 
+				b.`audience_value`,
+				COUNT(ec.proxy_id) AS instructor_count
+			FROM `events` AS a
+			LEFT JOIN `event_audience` AS b
+			ON a.`event_id` = b.`event_id`
+			LEFT JOIN event_contacts AS ec
+			ON ec.event_id = e.event_id
+			WHERE a.`course_id` = '0'
+			AND (a.`event_start` BETWEEN ".$db->qstr($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_start"])." 
+			AND ".$db->qstr($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_finish"]).")
+			AND (b.`audience_type` = 'organisation' AND b.`audience_value` = ".$ENTRADA_USER->getActiveOrganisation().")
+			GROUP BY ec.event_id
+		";
+	} else {
+		$query	= "
+			SELECT a.*, b.`audience_type`, b.`audience_value`
+			FROM `events` AS a
+			LEFT JOIN `event_audience` AS b
+			ON a.`event_id` = b.`event_id`
+			WHERE a.`course_id` = '0'
+			AND (a.`event_start` BETWEEN ".$db->qstr($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_start"])." 
+			AND ".$db->qstr($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_finish"]).")
+			AND (b.`audience_type` = 'organisation' AND b.`audience_value` = ".$ENTRADA_USER->getActiveOrganisation().")";
+	}
 
 	
 	if($int_use_cache) {
@@ -194,20 +253,26 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_REPORTS"))) {
 			} else {
 				$sresults	= $db->GetAll($squery);
 			}
-			
+
+			if ($distribute_event_duration && $event["instructor_count"] != 0) {
+				$event_duration = (int) $event["event_duration"] / $event["instructor_count"];
+			} else {
+				$event_duration = $event["event_duration"];
+			}
+
 			if($sresults) {
 				foreach($sresults as $sresult) {
-					$report_results[0][$sresult["fullname"]] += $event["event_duration"];
+					$report_results[0][$sresult["fullname"]] += $event_duration;
 				}
 			} else {
-				$report_results[0]["No Assigned Teacher"] += $event["event_duration"];						
+				$report_results[0]["No Assigned Teacher"] += $event_duration;
 			}
 		}
 	}
 	
 	echo "<h1 style=\"page-break-before: avoid\">Teaching Report By Course (hourly)</h1>";
 	echo "<div class=\"content-small\" style=\"margin-bottom: 10px\">\n";
-	echo "	<strong>Date Range:</strong> ".date(DEFAULT_DATE_FORMAT, $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_start"])." <strong>to</strong> ".date(DEFAULT_DATE_FORMAT, $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_finish"]);
+	echo "	<strong>Date Range:</strong> ".date(DEFAULT_DATETIME_FORMAT, $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_start"])." <strong>to</strong> ".date(DEFAULT_DATETIME_FORMAT, $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_finish"]);
 	echo "</div>";
 
 	echo "<div id=\"table-of-contents\" class=\"printing-enabled\">\n";

@@ -81,7 +81,7 @@ if ($results) {
 		$percentage = ((round(($result["quiz_score"] / $result["quiz_value"]), 2)) * 100);
 
 		echo "<tr>\n";
-		echo "	<td>".date(DEFAULT_DATE_FORMAT, $result["quiz_completed_date"])."</td>\n";
+		echo "	<td>".date(DEFAULT_DATETIME_FORMAT, $result["quiz_completed_date"])."</td>\n";
 		echo "	<td>".html_encode($result["course_num"])."</td>\n";
 		echo "	<td><a href=\"".ENTRADA_RELATIVE."/events?id=".$result["event_id"]."\" target=\"_blank\">".html_encode($result["quiz_title"])."</a></td>\n";
 		echo "	<td>".$result["quiz_score"]."/".$result["quiz_value"]."</td>\n";

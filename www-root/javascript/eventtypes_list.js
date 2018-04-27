@@ -13,7 +13,7 @@ function cleanupList() {
 	}
 	var some_too_low = false;
 	total = $$('input.duration_segment').inject(0, function(acc, e) {
-		seg = parseInt($F(e), 10);
+		seg = parseFloat($F(e), 10);
 		if(seg < 60) {
 			some_too_low = true;
 		}

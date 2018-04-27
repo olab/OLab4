@@ -222,7 +222,7 @@ if (!defined("IN_PROFILE")) {
 	
 	if ((defined("COMMUNITY_NOTIFICATIONS_ACTIVE")) && ((bool) COMMUNITY_NOTIFICATIONS_ACTIVE)) {
 		?>
-		<h2>Community Notifications</h2>
+		<h2><?php echo $translate->_("Community Notifications"); ?></h2>
 		<?php
 		$query	= "SELECT * FROM `".AUTH_DATABASE."`.`user_data` WHERE `".AUTH_DATABASE."`.`user_data`.`id`=".$db->qstr($ENTRADA_USER->getID());
 		$result	= $db->GetRow($query);
@@ -243,15 +243,15 @@ if (!defined("IN_PROFILE")) {
 								<tr>
 									<td style="vertical-align: top"><input type="radio" id="enabled-notifications" name="enable-notifications" onclick="$('notifications-toggle').show()" value="1"<?php echo ($result["notifications"] ? " checked=\"checked\"" : ""); ?> /></td>
 									<td style="vertical-align: top">
-										<label for="enabled-notifications"><strong>Enable</strong> Community Notifications</label><br />
-										<span class="content-small">You will be able to receive notifications from communities and enable notifications for different types of content.</span>
+										<label for="enabled-notifications"><?php echo $translate->_("<strong>Enable</strong> Community Notifications"); ?></label><br />
+										<span class="content-small"><?php echo $translate->_("You will be able to receive notifications from communities and enable notifications for different types of content."); ?></span>
 									</td>
 								</tr>
 								<tr>
 									<td style="vertical-align: top"><input type="radio" id="disabled-notifications" name="enable-notifications" onclick="$('notifications-toggle').hide()" value="0"<?php echo (!$result["notifications"] ? " checked=\"checked\"" : ""); ?> /></td>
 									<td style="vertical-align: top">
-										<label for="disabled-notifications"><strong>Disable</strong> Community Notifications</label><br />
-										<span class="content-small">You will no longer receive notifications from any communities and will not be able to enable notifications for any content.</span>
+										<label for="disabled-notifications"><?php echo $translate->_("<strong>Disable</strong> Community Notifications"); ?></label><br />
+										<span class="content-small"><?php echo $translate->_("You will no longer receive notifications from any communities and will not be able to enable notifications for any content."); ?></span>
 									</td>
 								</tr>
 							</tbody>
@@ -272,7 +272,7 @@ if (!defined("IN_PROFILE")) {
                         <hr />
 
                         <div class="alert alert-info">
-						    Please select the notifications you would like to receive for each community you are a member of. If you are a community administrator, then you will also have the option of being notified when members join or leave your community.
+                            <?php echo $translate->_("Please select the notifications you would like to receive for each community you are a member of. If you are a community administrator, then you will also have the option of being notified when members join or leave your community."); ?>
                         </div>
 						<?php
 						$query = "	SELECT DISTINCT(a.`community_id`), a.`member_acl`, e.`community_title`, b.`notify_active` AS `announcements`, c.`notify_active` AS `events`, d.`notify_active` AS `polls`, f.`notify_active` AS `members`

@@ -141,14 +141,23 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 						
 						$PROCESSED["proxy_id"] = $ENTRADA_USER->getID(); // @todo: this needs to be fixed
 						$PROCESSED["submitted_date"] = time();
+						// Go ahead and reset "Reviewed" on update
 						$PROCESSED["reviewed_by"] = "0";
 						$PROCESSED["reviewed_date"] = "0";
-						$PROCESSED["flag"] = "0";
-						$PROCESSED["flagged_by"] = "0";
-						$PROCESSED["flagged_date"] = "0";
+						// But do not reset "Flagged" on update
+						if (!isset($PROCESSED["pentry_id"])) {
+							$PROCESSED["flag"] = "0";
+							$PROCESSED["flagged_by"] = "0";
+							$PROCESSED["flagged_date"] = "0";
+						}
 						$PROCESSED["order"] = "0";
 						$PROCESSED["updated_date"] = date(time());
 						$PROCESSED["updated_by"] = $ENTRADA_USER->getID();
+						if (Entrada_Settings::fetchValueByShortname("eportfolio_entry_is_assessable_by_default", $ENTRADA_USER->getActiveOrganisation())) {
+							$PROCESSED["is_assessable"] = 1;
+							$PROCESSED["is_assessable_set_by"] = $ENTRADA_USER->getID();
+							$PROCESSED["is_assessable_set_date"] = date(time());
+						}
 						$_edata = array();
 						$_edata["description"] = $PROCESSED["description"];
 						$_edata["title"] = $PROCESSED["title"];
@@ -273,6 +282,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 								echo json_encode(array("error" => "error", "data" => "Unable to create folder artifact."));
 							}
 						} else {
+							// ToDo: this needs a check to determine whether this is a learner-created artifact, and whether those are allowed in this folder
 							$pfartifact = new Models_Eportfolio_Folder_Artifact();
 							if ($pfartifact->fromArray($PROCESSED)->insert()) {
 								echo json_encode(array("status" => "success", "data" => array("pfartifact_id" => $pfartifact->getID(), "pfolder_id" => $pfartifact->getPfolderID(), "title" => $pfartifact->getTitle(), "description" => $pfartifact->getDescription())));
@@ -415,6 +425,39 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 						}
 					}
 				break;
+                case "pentry-assessable" :
+					if(${$request_var}["action"] && $tmp_input = clean_input(${$request_var}["action"], array("trim", "striptags"))) {
+						$PROCESSED["action"] = $tmp_input;
+					} else {
+						add_error("Invalid action.");
+					}
+
+					if(${$request_var}["pentry_id"] && $tmp_input = clean_input(${$request_var}["pentry_id"], array("int"))) {
+						$PROCESSED["pentry_id"] = $tmp_input;
+					} else {
+						add_error("Invalid pentry_id.");
+					}
+
+					if (!$ERROR) {
+
+						$entry = Models_Eportfolio_Entry::fetchRow($PROCESSED["pentry_id"]);
+
+						if ($PROCESSED["action"] == "assessable") {
+							$assessable["is_assessable"] = 1;
+							$assessable["is_assessable_set_by"] = $ENTRADA_USER->getID();
+							$assessable["is_assessable_set_date"] = time();
+						} else {
+							$assessable["is_assessable"] = "0";
+							$assessable["is_assessable_set_by"] = null;
+							$assessable["is_assessable_set_date"] = null;
+						}
+
+						if ($entry->fromArray($assessable)->update()) {
+							echo json_encode(array("status" => "success", "data" => $entry->toArray()));
+						}
+
+					}
+					break;
 				case "pentry-flag" :
 					if(${$request_var}["action"] && $tmp_input = clean_input(${$request_var}["action"], array("trim", "striptags"))) {
 						$PROCESSED["action"] = $tmp_input;
@@ -764,6 +807,40 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 						echo json_encode(array("status" => "error", "data" => "Invalid portfolio ID."));
 					}
 				break;
+			   case "get-portfolio-pulse":
+					if (${$request_var}["pfolder_id"] && $tmp_input = clean_input(${$request_var}["pfolder_id"], "int")) {
+						$PROCESSED["pfolder_id"] = $tmp_input;
+					}
+					if(${$request_var}["portfolio_id"] && $tmp_input = clean_input(${$request_var}["portfolio_id"], "int")) {
+						$PROCESSED["portfolio_id"] = $tmp_input;
+					}
+					// switch for json/html Views_Profile_Portfolio_Pulse supports either
+					$PROCESSED["view_type"] = 'json';
+					if (${$request_var}["view_type"] && $tmp_input = clean_input(${$request_var}["view_type"], "string")) {
+						$PROCESSED["view_type"] = $tmp_input;
+					}
+
+					if ($PROCESSED["portfolio_id"]) {
+						if ($proxy_id) {
+							$pulse = new Views_Profile_Portfolio_Pulse(["portfolio_id" => $PROCESSED["portfolio_id"], "proxy_id" => $proxy_id]);
+							$pulse->render(["type" => 'json']);
+
+						} else {
+							echo json_encode(array("status" => "error", "data" => "No proxy ID or invalid proxy ID."));
+						}
+					} elseif ($PROCESSED["pfolder_id"]) {
+						if ($proxy_id) {
+
+							$pulse = new Views_Profile_Portfolio_Pulse(["pfolder_id" => $PROCESSED["pfolder_id"], "proxy_id" => $proxy_id]);
+							$pulse->render(["type" => 'html']);
+
+						} else {
+							echo json_encode(array("status" => "error", "data" => "No proxy ID or invalid proxy ID."));
+						}
+					} else {
+						echo json_encode(array("status" => "error", "data" => "No portfolio folder ID or invalid portfolio folder ID."));
+					}
+				break;
 				case "get-portfolio-members" :
 					if (${$request_var}["portfolio_id"] && $tmp_input = clean_input(${$request_var}["portfolio_id"], "int")) {
 						$PROCESSED["portfolio_id"] = $tmp_input;
@@ -853,15 +930,17 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 					}
 					
 					if ($PROCESSED["pfolder_id"]) {
+						// The client needs to be informed whether learner artifacts are allowed in this folder
+						$folder = Models_Eportfolio_Folder::fetchRow($PROCESSED["pfolder_id"]);
 						$folder_artifacts = Models_Eportfolio_Folder_Artifact::fetchAll($PROCESSED["pfolder_id"], (isset($proxy_id) ? $proxy_id : NULL));
 						if ($folder_artifacts) {
 							$fa_data = array();
 							foreach ($folder_artifacts as $folder_artifact) {
 								$fa_data[] = $folder_artifact->toArray();
 							}
-							echo json_encode(array("status" => "success", "data" => $fa_data));
+							echo json_encode(array("status" => "success", "data" => $fa_data, "folder" => $folder->toArray()));
 						} else {
-							echo json_encode(array("status" => "error", "data" => "No artifacts attached to this portfolio folder ID. "));
+							echo json_encode(array("status" => "error", "data" => "No artifacts attached to this portfolio folder ID.", "folder" => $folder->toArray()));
 						}
 					} else {
 						echo json_encode(array("status" => "error", "data" => "No portfolio folder ID or invalid portfolio folder ID."));

@@ -149,10 +149,10 @@ class Models_Assessments_Notification extends Models_Base {
                             if (!$notification_user) {
                                 $notification_user = NotificationUser::add($reviewer->getProxyID(), "assessment_flagged_response", $aprogress_id, $assessor_id);
                                 if ($notification_user) {
-                                    Notification::add($notification_user->getID(), $target_record_id, $aprogress_id);
+                                    Notification::add($notification_user->getID(), $reviewer->getProxyID(), $aprogress_id);
                                 }
                             } else {
-                                Notification::add($notification_user->getID(), $target_record_id, $aprogress_id, NULL);
+                                Notification::add($notification_user->getID(), $reviewer->getProxyID(), $aprogress_id, NULL);
                             }
                         }
                     }
@@ -166,10 +166,10 @@ class Models_Assessments_Notification extends Models_Base {
                                 if (!$notification_user) {
                                     $notification_user = NotificationUser::add($author->getAuthorID(), "assessment_flagged_response", $aprogress_id, $assessor_id);
                                     if ($notification_user) {
-                                        Notification::add($notification_user->getID(), $target_record_id, $aprogress_id);
+                                        Notification::add($notification_user->getID(), $author->getAuthorID(), $aprogress_id);
                                     }
                                 } else {
-                                    Notification::add($notification_user->getID(), $target_record_id, $aprogress_id, NULL);
+                                    Notification::add($notification_user->getID(), $author->getAuthorID(), $aprogress_id, NULL);
                                 }
                             }
                         }
@@ -177,29 +177,30 @@ class Models_Assessments_Notification extends Models_Base {
                 break;
                 case "pcoordinators" :
                     if ($distribution->getCourseID()) {
+                        $pcoordinators = array();
+
                         $course = Models_Course::fetchRowByID($distribution->getCourseID());
-                        if ($course->getPcoordID()) {
-                            $notification_user = NotificationUser::get($course->getPcoordID(), "assessment_flagged_response", $aprogress_id, $assessor_id);
-                            if (!$notification_user) {
-                                $notification_user = NotificationUser::add($course->getPcoordID(), "assessment_flagged_response", $aprogress_id, $assessor_id);
-                                if ($notification_user) {
-                                    Notification::add($notification_user->getID(), $target_record_id, $aprogress_id);
-                                }
-                            } else {
-                                Notification::add($notification_user->getID(), $target_record_id, $aprogress_id, NULL);
+                        if ($course && $course->getPcoordID()) {
+                            $pcoordinators[$course->getPcoordID()] = $course->getPcoordID();
+                        }
+
+                        $contact_pcoordinators = Models_Course_Contact::fetchAllByCourseIDContactType($distribution->getCourseID(), "pcoordinator");
+                        if ($contact_pcoordinators) {
+                            foreach ($contact_pcoordinators as $contact_pcoordinator) {
+                                $pcoordinators[$contact_pcoordinator->getProxyID()] = $contact_pcoordinator->getProxyID();
                             }
                         }
-                        $pcoordinators = Models_Course_Contact::fetchAllByCourseIDContactType($distribution->getCourseID(), "pcoordinator");
-                        if ($pcoordinators) {
+
+                        if (!empty($pcoordinators)) {
                             foreach ($pcoordinators as $pcoordinator) {
-                                $notification_user = NotificationUser::get($pcoordinator->getProxyID(), "assessment_flagged_response", $aprogress_id, $assessor_id);
+                                $notification_user = NotificationUser::get($pcoordinator, "assessment_flagged_response", $aprogress_id, $assessor_id);
                                 if (!$notification_user) {
-                                    $notification_user = NotificationUser::add($pcoordinator->getProxyID(), "assessment_flagged_response", $aprogress_id, $assessor_id);
+                                    $notification_user = NotificationUser::add($pcoordinator, "assessment_flagged_response", $aprogress_id, $assessor_id);
                                     if ($notification_user) {
-                                        Notification::add($notification_user->getID(), $target_record_id, $aprogress_id);
+                                        Notification::add($notification_user->getID(), $pcoordinator, $aprogress_id);
                                     }
                                 } else {
-                                    Notification::add($notification_user->getID(), $target_record_id, $aprogress_id, NULL);
+                                    Notification::add($notification_user->getID(), $pcoordinator, $aprogress_id, NULL);
                                 }
                             }
                         }
@@ -213,10 +214,10 @@ class Models_Assessments_Notification extends Models_Base {
                             if (!$notification_user) {
                                 $notification_user = NotificationUser::add($director->getProxyID(), "assessment_flagged_response", $aprogress_id, $assessor_id);
                                 if ($notification_user) {
-                                    Notification::add($notification_user->getID(), $target_record_id, $aprogress_id);
+                                    Notification::add($notification_user->getID(), $director->getProxyID(), $aprogress_id);
                                 }
                             } else {
-                                Notification::add($notification_user->getID(), $target_record_id, $aprogress_id, NULL);
+                                Notification::add($notification_user->getID(), $director->getProxyID(), $aprogress_id, NULL);
                             }
                         }
                     }
@@ -224,6 +225,67 @@ class Models_Assessments_Notification extends Models_Base {
                 case "disabled" :
                 default :
                 break;
+            }
+        }
+    }
+
+    public static function sendCourseCoordinatorsFlaggingNotification($aprogress_id = null, $assessor_id = null, $course_id = null) {
+        require_once("Classes/notifications/NotificationUser.class.php");
+        require_once("Classes/notifications/Notification.class.php");
+
+        $pcoordinators = array();
+
+        $course = Models_Course::fetchRowByID($course_id);
+        if ($course && $course->getPcoordID()) {
+            $pcoordinators[$course->getPcoordID()] = $course->getPcoordID();
+        }
+
+        $contact_pcoordinators = Models_Course_Contact::fetchAllByCourseIDContactType($course_id, "pcoordinator");
+        if ($contact_pcoordinators) {
+            foreach ($contact_pcoordinators as $contact_pcoordinator) {
+                $pcoordinators[$contact_pcoordinator->getProxyID()] = $contact_pcoordinator->getProxyID();
+            }
+        }
+
+        if (!empty($pcoordinators)) {
+            foreach ($pcoordinators as $pcoordinator) {
+                $notification_user = NotificationUser::get($pcoordinator, "assessment_flagged_response", $aprogress_id, $assessor_id);
+                if (!$notification_user) {
+                    $notification_user = NotificationUser::add($pcoordinator, "assessment_flagged_response", $aprogress_id, $assessor_id);
+                    if ($notification_user) {
+                        Notification::add($notification_user->getID(), $pcoordinator, $aprogress_id);
+                    }
+                } else {
+                    Notification::add($notification_user->getID(), $pcoordinator, $aprogress_id, NULL);
+                }
+            }
+        }
+    }
+
+    public static function sendCourseDirectorsFlaggingNotification($aprogress_id = null, $assessor_id = null, $course_id = null) {
+        require_once("Classes/notifications/NotificationUser.class.php");
+        require_once("Classes/notifications/Notification.class.php");
+
+        $directors = array();
+
+        $contact_directors = Models_Course_Contact::fetchAllByCourseIDContactType($course_id, "director");
+        if ($contact_directors) {
+            foreach ($contact_directors as $contact_director) {
+                $directors[$contact_director->getProxyID()] = $contact_director->getProxyID();
+            }
+        }
+
+        if (!empty($directors)) {
+            foreach ($directors as $director) {
+                $notification_user = NotificationUser::get($director, "assessment_flagged_response", $aprogress_id, $assessor_id);
+                if (!$notification_user) {
+                    $notification_user = NotificationUser::add($director, "assessment_flagged_response", $aprogress_id, $assessor_id);
+                    if ($notification_user) {
+                        Notification::add($notification_user->getID(), $director, $aprogress_id);
+                    }
+                } else {
+                    Notification::add($notification_user->getID(), $director, $aprogress_id, NULL);
+                }
             }
         }
     }

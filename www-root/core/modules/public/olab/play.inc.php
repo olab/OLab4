@@ -24,7 +24,7 @@
  *
  */
 
-use App\Modules\Olab\Classes\HostSystemApi;
+use Entrada\Modules\Olab\Classes\HostSystemApi;
 
 // loads any system-level script files
 function getAutoloadContents($dir, &$results = array()){
@@ -34,7 +34,7 @@ function getAutoloadContents($dir, &$results = array()){
         $path = $dir.DIRECTORY_SEPARATOR.$value;
         if(!is_dir($path)) {
             $results[] = str_replace( $dir, "", $path );
-        } 
+        }
     }
 
     return $results;

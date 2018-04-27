@@ -124,7 +124,7 @@ $COURSE_REPORT_EVENT_TYPES = array(4);
 
 define("CURRICULAR_OBJECTIVES_PARENT_ID", 1);
 
-define("AUTH_PRODUCTION", ENTRADA_URL."/authentication/authenticate.php");		// Full URL to your production Entrada authentication server.
+define("AUTH_PRODUCTION", ENTRADA_URL."/api/v2/auth/login");		// Full URL to your production Entrada authentication server.
 define("AUTH_ENCRYPTION_METHOD", "default");									// Encryption method the authentication client will use to decrypt information from authentication server. default = low security, but no requirements | blowfish = medium security, requires mCrypt | rijndael 256 = highest security, requires mcrypt.
 define("AUTH_APP_ID", "1");														// Application ID for the Authentication System.
 define("AUTH_APP_IDS_STRING", "1");												// Application ID's to query for users in.
@@ -136,6 +136,7 @@ define("AUTH_MAX_LOGIN_ATTEMPTS", 5);											// The number of login attempts 
 define("AUTH_LOCKOUT_TIMEOUT", 900);											// The amount of time in seconds a locked out user is prevented from logging in
 
 define("AUTH_FORCE_SSL", false);												// If you want to force all login attempts to use SSL, set this to true, otherwise false.
+define("SSL_VERIFY_CERTIFICATE", false);                                        // Determines whether cURL verifies or ignores host and peer SSL certificate validation.
 
 define("LDAP_HOST", "ldap.yourschool.ca");										// The hostname of your LDAP server.
 define("LDAP_PEOPLE_BASE_DN", "ou=people,o=main,dc=yourschool,dc=ca");			// The BaseDN of your LDAP server.
@@ -193,10 +194,29 @@ define("DEFAULT_PROVINCE_ID", 9);												// The default province_id that is 
 
 define("DEFAULT_CITY", "City");
 define("DEFAULT_POSTALCODE", "0123456");
-define("DEFAULT_DATE_FORMAT", "D M d/y g:ia");
 define("DEFAULT_ROWS_PER_PAGE", 25);
 
 define("ENCRYPTION_KEY", "UXZF4tTES8RmTHY9qA7DQrvqEde7R5a8");					// Encryption key to encrypt data in the encrypted session ;)
+
+/**
+ * Default date & time formats for displaying date times to users
+ * See http://php.net/manual/en/function.date.php for date & time formatting options.
+ *
+ * PLEASE NOTE: As of July 2017 DEFAULT_DATE_FORMAT no longer contains the time.
+ * Keep your existing value of DEFAULT_DATE_FORMAT until you are sure that all
+ * of occurrences of this constant have been refactored to DEFAULT_DATETIME_FORMAT
+ * or they do not need to show the time.
+ */
+define("DEFAULT_FULLDATE_FORMAT", "D M d/y");
+define("DEFAULT_DATE_FORMAT", "Y-m-d");
+define("DEFAULT_TIME_FORMAT", "g:ia");
+define("DEFAULT_DATETIME_FORMAT", "D M d/y g:ia");
+
+/**
+ * Kiosk Mode Card Parsing
+ * define a javascript expression to extract id number from card input
+ */
+define("KIOSK_MODE_CARD_PARSER", "data.substring(0,data.length-2)");
 
 /**
  * Google Analystics Tracking Code
@@ -211,6 +231,12 @@ define("GOOGLE_ANALYTICS_CODE",	"");											// If you would like Google Analy
 define("GOOGLE_MAPS_API", "http://maps.google.com/maps?file=api&amp;v=2&amp;sensor=false&amp;key=XXXXXXXXXXX");
 
 /**
+ * Safe iframe regex
+ * iframes matching this pattern will not have the src attribute stripped out by HTMLPurifier
+ */
+define("VIDEO_EMBED_REGEX", "www.youtube.com/embed/|player.vimeo.com/video/");
+
+/**
  * Defines whether the system should allow communities to have mailing lists created for them,
  * and what type of mailing lists will be used (currently google is the only choice.)
  *
@@ -218,6 +244,14 @@ define("GOOGLE_MAPS_API", "http://maps.google.com/maps?file=api&amp;v=2&amp;sens
 $MAILING_LISTS = array();
 $MAILING_LISTS["active"] = false;
 $MAILING_LISTS["type"] = "google";
+
+/* RP NOW SECURE BROWSER API */
+define("RP_NOW_API", "https://exams.remoteproctor.io/");
+define("RP_NOW_ACCESS_KEY_ID", "XXXXXXXXXXXXXXXXXXXX");
+define("RP_NOW_SSI_SECRET_KEY", "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
+define("RP_NOW_CRYPTO_KEY", "XXXXXXXXXXXXXXXXXXXXXXXX");
+define("RP_NOW_ORGANIZATION", "zentrada");
+define("RP_NOW_DOWNLOAD_URL", "http://zentrada.remoteproctor.com/RPInstallCEF/sep28install/InstallV2.html?orgName=zentrada&orgType=true");
 
 /**
  * Google Hosted Apps Details
@@ -333,20 +367,30 @@ $COMMUNITY_ORGANISATIONS = array();															// Array of integer organisati
 define("ANNUALREPORT_STORAGE", $config->entrada_storage."/annualreports");		// Full directory path where the annual reports are stored without trailing slash.
 
 define("STORAGE_USER_PHOTOS", $config->entrada_storage . "/user-photos");		// Full directory path where user profile photos are stored without trailing slash.
+
+define("STORAGE_RESOURCE_IMAGES", $config->entrada_storage . "/resource-images");		// Full directory path where course/track images are stored without trailing slash.
 define("FILE_STORAGE_PATH", $config->entrada_storage . "/event-files");			// Full directory path where off-line files are stored without trailing slash.
+define("SECURE_QUIZ_STORAGE_PATH", $config->entrada_storage . "/secure-quiz");	// Full directory path where secure quiz access files are stored without trailing slash.
+define("SECURE_ACCESS_STORAGE_PATH", $config->entrada_storage . "/secure-access");	// Full directory path where secure access files are stored without trailing slash.
 define("MSPR_STORAGE",$config->entrada_storage . "/msprs");						//Full directory path where student Medical School Performance Reports should be sotred
 define("SEARCH_INDEX_PATH",$config->entrada_storage . "/search-indexes");		//Full directory path where student Medical School Performance Reports should be sotred
 define("SYLLABUS_STORAGE", $config->entrada_storage . "/syllabi");			// Full directory path where syllabi are stored without trailing slash.
 define("EPORTFOLIO_STORAGE_PATH", $config->entrada_storage . "/eportfolio");	// Full directory path where eportfolio files should be sotred 
 define("LOR_STORAGE_PATH", $config->entrada_storage . "/lor");                                // Full directory path where learning object repository files are stored without trailing slash.
+define("EXAM_STORAGE_PATH", $config->entrada_storage . "/exam-files");          // Full directory path where learning object repository files are stored without trailing slash.
+define("CBME_UPLOAD_STORAGE_PATH", $config->entrada_storage . "/cbme-uploads");          // Full directory path where CBME files are stored without trailing slash.
+
+define("STORAGE_LOR", "lor");                                                   // This typically will not need to be changed. It's the directory with $filesystem (flysystem) that stores learning objects.
 
 define("SENDMAIL_PATH", "/usr/sbin/sendmail -t -i");							// Full path and parametres to sendmail.
 
 define("DEBUG_MODE", true);														// Some places have extra debug code to show sample output. Set this to true if you want to see it.
 define("SHOW_LOAD_STATS", false);												// Do you want to see the time it takes to load each page?
 
+define("SEARCH_FILE_CONTENTS", true);											// Add file contents search to curriculum search
+
 define("APPLICATION_NAME", "Entrada ME");											// The name of this application in your school (i.e. MedCentral, Osler, etc.)
-define("APPLICATION_VERSION", "1.9.0"); 										// The current filesystem version of Entrada.
+define("APPLICATION_VERSION", "1.12.0"); 										// The current filesystem version of Entrada.
 define("APPLICATION_IDENTIFIER", "app-".AUTH_APP_ID);							// PHP does not allow session key's to be integers (sometimes), so we have to make it a string.
 
 $DEFAULT_META["title"] = "Entrada ME: An eLearning Ecosystem";
@@ -358,6 +402,12 @@ define("COPYRIGHT_STRING", "Copyright ".date("Y", time())." Entrada Project. All
 define("NOTIFY_ADMIN_ON_ERROR", false);											// Do you want to notify the administrator when an error is logged? Please Note: This can be a high volume of e-mail.
 
 define("ENABLE_NOTICES", true);													// Do you want the dashboard notices to display or not?
+
+/**
+ * Do you want the dashboard event resource links to display or just the plain resource counts?
+ * Default is true.
+*/
+define("ENABLE_DASHBOARD_EVENT_RESOURCE_LINKS", true);
 
 /**
  * A list of external command-line applications that Entrada uses.
@@ -421,7 +471,7 @@ $VALID_PODCASTS[] = "application/pdf";
 $VALID_PODCASTS[] = "document/x-epub";
 
 /**
- * Array containing valid name prefix's.
+ * Array containing valid name prefixes.
  */
 $PROFILE_NAME_PREFIX = array();
 $PROFILE_NAME_PREFIX[] = "Dr.";
@@ -431,6 +481,33 @@ $PROFILE_NAME_PREFIX[] = "Ms.";
 $PROFILE_NAME_PREFIX[] = "Prof.";
 $PROFILE_NAME_PREFIX[] = "Assoc. Prof.";
 $PROFILE_NAME_PREFIX[] = "Asst. Prof.";
+
+/**
+ * Array containing valid name generational suffixes.
+ */
+$PROFILE_NAME_SUFFIX_GEN = array();
+$PROFILE_NAME_SUFFIX_GEN[] = "Jr.";
+$PROFILE_NAME_SUFFIX_GEN[] = "Sr.";
+$PROFILE_NAME_SUFFIX_GEN[] = "I";
+$PROFILE_NAME_SUFFIX_GEN[] = "II";
+$PROFILE_NAME_SUFFIX_GEN[] = "III";
+$PROFILE_NAME_SUFFIX_GEN[] = "IV";
+$PROFILE_NAME_SUFFIX_GEN[] = "V";
+$PROFILE_NAME_SUFFIX_GEN[] = "VI";
+
+/**
+ * Array containing valid name post nominal suffixes.
+ */
+$PROFILE_NAME_SUFFIX_POST_NOMINAL = array();
+$PROFILE_NAME_SUFFIX_POST_NOMINAL[] = "DDS";
+$PROFILE_NAME_SUFFIX_POST_NOMINAL[] = "DNP";
+$PROFILE_NAME_SUFFIX_POST_NOMINAL[] = "EdD";
+$PROFILE_NAME_SUFFIX_POST_NOMINAL[] = "MBA";
+$PROFILE_NAME_SUFFIX_POST_NOMINAL[] = "MD";
+$PROFILE_NAME_SUFFIX_POST_NOMINAL[] = "MPH";
+$PROFILE_NAME_SUFFIX_POST_NOMINAL[] = "MSc";
+$PROFILE_NAME_SUFFIX_POST_NOMINAL[] = "PhD";
+$PROFILE_NAME_SUFFIX_POST_NOMINAL[] = "RN";
 
 /**
  * Would you like to add the ability to web-proxy links? If not you can leave
@@ -568,23 +645,26 @@ USERNOTIFICATION;
 $MODULES = array();
 $MODULES["annualreport"] = array("title" => "Annual Reports", "resource" => "annualreportadmin", "permission" => "read");
 $MODULES["assessments"] = array("title" => "Assessment & Evaluation", "resource" => "assessments", "permission" => "update");
+$MODULES["clinical"] = array("title" => "Clinical Experience", "resource" => "rotationschedule", "permission" => "update");
 $MODULES["awards"] = array("title" => "Manage Awards", "resource" => "awards", "permission" => "update");
 $MODULES["clerkship"] = array("title" => "Manage Clerkship", "resource" => "clerkship", "permission" => "update");
 $MODULES["groups"] = array("title" => "Manage Cohorts", "resource" => "group", "permission" => "update");
 $MODULES["communities"] = array("title" => "Manage Communities", "resource" => "communityadmin", "permission" => "read");
 $MODULES["courses"] = array("title" => "Manage Courses", "resource"=> "coursecontent", "permission" => "update");
+$MODULES["curriculum"] = array("title" => "Manage Curriculum", "resource"=> "curriculum", "permission" => "update");
 $MODULES["eportfolio"] = array("title" => "Manage ePortfolios", "resource" => "eportfolio", "permission" => "update");
-$MODULES["evaluations"] = array("title" => "Manage Evaluations", "resource" => "evaluation", "permission" => "update");
 $MODULES["events"] = array("title" => "Manage Events", "resource" => "eventcontent", "permission" => "update");
+$MODULES["exams"] = array("title" => "Manage Exams", "resource" => "examdashboard", "permission" => "read");
 $MODULES["gradebook"] = array("title" => "Manage Gradebook", "resource" => "gradebook", "permission" => "update");
+$MODULES["lor"] = array("title" => "Manage Learning Objects", "resource" => "lor", "permission" => "update");
 $MODULES["mspr"] = array("title" => "Manage MSPRs", "resource" => "mspr", "permission" => "create");
 $MODULES["notices"] = array("title" => "Manage Notices", "resource" => "notice", "permission" => "update");
 $MODULES["observerships"] = array("title" => "Manage Observerships", "resource" => "observerships", "permission" => "update");
 $MODULES["polls"] = array("title" => "Manage Polls", "resource" => "poll", "permission" => "update");
 $MODULES["quizzes"] = array("title" => "Manage Quizzes", "resource" => "quiz", "permission" => "update");
 $MODULES["users"] = array("title" => "Manage Users", "resource" => "user", "permission" => "update");
+$MODULES["weeks"] = array("title" => "Manage Weeks", "resource" => "weekcontent", "permission" => "update", "enabled" => "curriculum_weeks_enabled");
 $MODULES["regionaled"] = array("title" => "Regional Education", "resource" => "regionaled", "permission" => "update");
-$MODULES["rotationschedule"] = array("title" => "Rotation Schedule", "resource" => "rotationschedule", "permission" => "update");
 $MODULES["reports"] = array("title" => "System Reports", "resource" => "reportindex", "permission" => "read");
 $MODULES["settings"] = array("title" => "System Settings", "resource" => "configuration", "permission" => "update");
 
@@ -594,32 +674,32 @@ $MODULES["settings"] = array("title" => "System Settings", "resource" => "config
  * Example usage:
  * $ADMINISTRATION[GROUP][ROLE] = array(
  *     "start_file" => "module",
- *     "registered" => array("courses", "events", "users")
+ *     "registered" => array("courses", "weeks", "events", "users")
  * );
  */
 $ADMINISTRATION = array();
 
 $ADMINISTRATION["medtech"]["admin"]	= array(
     "start_file" => "notices",
-    "registered" => array("courses", "events", "notices", "clerkship", "quizzes", "reports", "users"),
+    "registered" => array("courses", "weeks", "events", "notices", "clerkship", "quizzes", "reports", "users"),
     "assistant_support"	=> true
 );
 
 $ADMINISTRATION["faculty"]["director"] = array(
     "start_file" => "events",
-    "registered" => array("courses", "events", "notices", "quizzes"),
+    "registered" => array("courses", "weeks", "events", "notices", "quizzes"),
     "assistant_support" => true
 );
 
 $ADMINISTRATION["faculty"]["clerkship"] = array(
     "start_file" => "notices",
-    "registered" => array("courses", "events", "notices", "clerkship", "quizzes"),
+    "registered" => array("courses", "weeks", "events", "notices", "clerkship", "quizzes"),
     "assistant_support" => true
 );
 
 $ADMINISTRATION["faculty"]["admin"] = array(
     "start_file" => "notices",
-    "registered" => array("courses", "events", "notices", "quizzes", "reports"),
+    "registered" => array("courses", "weeks", "events", "notices", "quizzes", "reports"),
     "assistant_support" => true
 );
 
@@ -637,13 +717,13 @@ $ADMINISTRATION["resident"]["lecturer"]	= array(
 
 $ADMINISTRATION["staff"]["admin"] = array(
     "start_file" => "notices",
-    "registered" => array("courses", "events", "notices", "clerkship", "quizzes", "reports", "users"),
+    "registered" => array("courses", "weeks", "events", "notices", "clerkship", "quizzes", "reports", "users"),
     "assistant_support"	=> true
 );
 
 $ADMINISTRATION["staff"]["pcoordinator"] = array(
     "start_file" => "notices",
-    "registered" => array("courses", "events", "notices", "quizzes"),
+    "registered" => array("courses", "weeks", "events", "notices", "quizzes"),
     "assistant_support"	=> true
 );
 
@@ -652,6 +732,12 @@ $ADMINISTRATION["staff"]["staff"] = array(
     "registered" => array("dashboard", "quizzes"),
     "assistant_support"	=> false
 );
+
+
+/**
+ * Breadcrumb separator
+ */
+$BREADCRUMB_SEPARATOR = ">";
 
 /**
  * These are the avialable character sets in both PHP and their cooresponding MySQL names and collation.
@@ -680,6 +766,11 @@ $AR_CUR_YEAR = (date("Y") - ((date("n") < 5) ? 1 : 0));
 $AR_NEXT_YEAR = (int) $AR_CUR_YEAR + 1;
 $AR_PAST_YEARS = 1985;
 $AR_FUTURE_YEARS = $AR_CUR_YEAR + 10;
+
+/*
+ * Reporting settings
+ */
+define("REPORTS_CALC_HALF_DAYS", false); // Used by teaching-report-by-department.inc.php, default is true
 
 /**
  * Values used in the Clerkship lottery and schedule generation process
@@ -722,6 +813,36 @@ define("GRADEBOOK_DISPLAY_MEAN_GRADE", 1);              // Used to determine whe
 define("GRADEBOOK_DISPLAY_MEDIAN_GRADE", 1);            // Used to determine whether or not to include median grade calculations in student gradebook.
 
 /**
+ * File access timeout
+ */
+define("FILE_PUBLIC_ACCESS_TIMEOUT", 30);				// Used to determine the length of time a file can be accessible in the context of requiring temporary public access to that file. 
+
+/**
  * Learning Events Validation Constant
  */
 define("LEARNING_EVENT_MIN_DURATION", 30);              // Used to determine the minimum event duration for validation when adding and editing learning events.
+define("LEARNING_EVENT_DEFAULT_DURATION", 60);          // Used to determine the default event duration when adding event types to a learning event.
+
+/**
+ * Bookmark related constants
+ */
+$BOOKMARK_REMOVE_URL_TOKENS = array();                  // Defines a list of tokens to be stripped out of URLs when saving bookmarks.
+
+/*
+ * Curriculum mapping configuration settings
+ */
+define("EVENT_OBJECTIVES_SHOW_LINKS", 0);
+define("WEEK_OBJECTIVES_SHOW_LINKS", 0);
+define("COURSE_OBJECTIVES_SHOW_LINKS", 0);
+define("OBJECTIVE_LINKS_VIEW_EXCLUDE", "");             // Defines the links between tag sets to get to course objective tag set
+define("OBJECTIVE_LINKS_SEARCH_EXCLUDE", "");           // List the names of the tag sets in the string, separated by commas.
+define("EVENT_ADMIN_TAG_QUICK_SEARCH", 0);
+define("COURSE_ADMIN_TAG_QUICK_SEARCH", 0);
+
+/**
+ * Valid CBME objective code pattern settings
+ */
+define("CBME_EPA_PATTERN", "/^[A-Z]{1}[0-9]+$/");
+define("CBME_KEY_COMPETENCY_PATTERN", "/^[A-Z]{2}[0-9]*$/");
+define("CBME_ENABLING_COMPETENCY_PATTERN", "/^[A-Z]{2}[0-9]*[\\.][0-9]*$/");
+define("CBME_MILESTONE_PATTERN", "/^[A-Z]{1}\\s[A-Z]{2}[0-9]*[\\.][0-9]*[\\.][0-9]*$/");

@@ -1,196 +1,3 @@
-var mapped = [];
-var listed = [];
-
-function addObjective(id, rownum) {
-    var ids = id;
-
-    if (jQuery('div.objectives-empty-notice').is(':visible')) {
-        jQuery('div.objectives-empty-notice').hide();
-    }
-
-    var alreadyAdded = false;
-    jQuery('input.objective_ids_'+rownum).each(
-        function () {
-            if (!ids) {
-                ids = jQuery(this).val();
-            } else {
-                ids += ','+jQuery(this).val();
-            }
-            if (jQuery(this).val() == id) {
-                alreadyAdded = true;
-            }
-        }
-    );
-
-    jQuery('#objective_ids_string_'+rownum).val(ids);
-
-    if (!alreadyAdded) {
-        var attrs = {
-            type		: 'hidden',
-            className	: 'objective_ids_'+rownum,
-            id			: 'objective_ids_'+rownum+'_'+id,
-            value		: id,
-            name		:'objective_ids_'+rownum+'[]'
-        };
-
-        var newInput = new Element('input', attrs);
-        $('objectives_'+rownum+'_list').insert({bottom: newInput});
-    }
-}
-
-function removeObjective(id, rownum) {
-    var ids = "";
-
-    jQuery('#objective_ids_'+rownum+'_'+id).remove();
-
-    jQuery('input.objective_ids_'+rownum).each(
-        function () {
-            if (!ids) {
-                ids = jQuery(this).val();
-            } else {
-                ids += ','+jQuery(this).val();
-            }
-        }
-    );
-
-    if (!jQuery('div.objectives-empty-notice').is(':visible') && !ids) {
-        jQuery('div.objectives-empty-notice').show();
-    }
-
-    jQuery('#objective_ids_string_'+rownum).val(ids);
-}
-
-function unmapObjective(id,list,importance){
-    var key = jQuery.inArray(id,mapped);
-    if(key != -1){
-        mapped.splice(key,1);
-    }
-    var lkey = jQuery.inArray(id,listed);
-    if(lkey === -1){
-        importance = 'checked';
-    }
-
-    jQuery("#"+importance+"_objectives_select option[value='"+id+"']").remove();
-    jQuery('#check_objective_'+id).prop('checked',false);
-    jQuery('#check_mapped_'+id).prop('checked',false);
-    jQuery('#text_container_'+id).remove();
-    if(lkey === -1){
-        jQuery('.mapped_objective_'+id).remove();
-    }
-    var mapped_siblings = false;
-    jQuery('#objective_'+id).siblings('li.objective-container').each(function(){
-        var oid = jQuery(this).attr('data-id');
-        if(jQuery('#check_objective_'+oid).prop('checked')){
-            mapped_siblings = true;
-        }
-    });
-    jQuery('#objective_'+id).parents('.objective-list').each(function(){
-        var mapped_cousins = false;
-        var pid = jQuery(this).attr('data-id');
-        if(mapped_siblings == false){
-            jQuery('#objective_list_'+pid+' > li').each(function(){
-                var cid = jQuery(this).attr('data-id');
-                if(jQuery('#check_objective_'+cid).prop('checked')){
-                    mapped_cousins = true;
-                }
-            });
-            if(mapped_cousins == false){
-                jQuery('#check_objective_'+pid).prop('checked',false);
-                jQuery('#check_objective_'+pid).prop('disabled',false);
-            }
-        }
-    });
-
-}
-
-function mapObjective(id,title,description,list,create){
-    var key = jQuery.inArray(id,mapped);
-    var lkey = jQuery.inArray(id,listed);
-    if(key != -1) return;
-    var importance = 'checked';
-    if(list === undefined || !list){
-        list = 'flat';
-    }
-    if(list == 'flat'){
-        importance = 'clinical';
-    }
-
-    if(description === undefined || !description || description == null || description == 'null'){
-        description = '';
-    }
-
-    if(create && lkey == -1 && key == -1){
-        var li = jQuery(document.createElement('li'))
-            .attr('class','mapped-objective mapped_objective_'+id)
-            .attr('data-title',title)
-            .attr('data-description',description);
-        var controls = 	jQuery(document.createElement('div'))
-            .attr('class','assessment-item-objective-controls');
-        var rm = jQuery(document.createElement('i'))
-            .attr('data-id',id)
-            .attr('class','icon-remove-sign pull-right objective-remove list-cancel-image')
-            .attr('id','objective_remove_'+id);
-
-        jQuery(controls).append(rm);
-        jQuery(li).append(controls);
-
-        var strong_title = jQuery(document.createElement('strong'))
-            .html(title);
-
-        jQuery(li).append(strong_title);
-
-        var desc = jQuery(document.createElement('div'))
-            .attr('class','objective-description')
-            .attr('data-description',description);
-        var sets_above = jQuery('#objective_'+id).parents('.objective-set');
-        var set_id = jQuery(sets_above[sets_above.length-1]).attr('data-id');
-        var set_name = jQuery('#objective_title_'+set_id).attr('data-title');
-        if(set_name){
-            jQuery(desc).html("Curriculum Tag Set: <strong>"+set_name+"</strong><br/>");
-        }
-        jQuery(desc).append(description);
-
-        jQuery(li).append(desc);
-        //jQuery(li).append(rm);
-        jQuery('.mapped_assessment_item_objectives').append(li);
-        jQuery('.mapped_assessment_item_objectives .display-notice').remove();
-        jQuery('#objective_'+id).parents('.objective-list').each(function(){
-            var id = jQuery(this).attr('data-id');
-            jQuery('#check_objective_'+id).prop('checked',true);
-            jQuery('#check_objective_'+id).prop('disabled',true);
-        });
-        if(jQuery('#assessment-item-toggle').hasClass('collapsed')){
-            jQuery('#assessment-item-toggle').removeClass('collapsed');
-            jQuery('#assessment-item-toggle').addClass('expanded');
-            var d = jQuery('#assessment-item-toggle').next();
-            jQuery(d).slideDown();
-        }
-        if(!jQuery('#assessment-item-list-wrapper').is(':visible')){
-            jQuery('#assessment-item-list-wrapper').show();
-        }
-        list = 'assessment-item';
-    }
-
-
-    jQuery('#check_objective_'+id).prop('checked',true);
-    jQuery('#check_mapped_'+id).prop('checked',true);
-    if(jQuery("#"+importance+"_objectives_select option[value='"+id+"']").length == 0){
-        var option = jQuery(document.createElement('option'))
-            .val(id)
-            .attr('selected','selected')
-            .html(title);
-        jQuery('#'+importance+'_objectives_select').append(option);
-    }
-
-    jQuery('#objective_'+id).parents('.objective-list').each(function(){
-        var id = jQuery(this).attr('data-id');
-        jQuery('#check_objective_'+id).prop('checked',true);
-        jQuery('#check_objective_'+id).prop('disabled',true);
-    });
-
-    mapped.push(id);
-}
-
 jQuery(document).ready(function ($) {
 
     $("a.disabled").on("click", function(e){
@@ -336,7 +143,6 @@ jQuery(document).ready(function ($) {
 
     function updateControls(modify_mandatory) {
         var selected_item_type = $("#item-type").find(":selected").data("type-name");
-
         switch (selected_item_type) {
             case "horizontal_multiple_choice_single" :
             case "vertical_multiple_choice_single" :
@@ -350,27 +156,33 @@ jQuery(document).ready(function ($) {
                 $("#field-note-response").addClass("hide");
                 $("#response-section").removeClass("hide");
                 $("#objective-options").removeClass("hide");
-                $("#comments-options").removeClass("hide");
+                $(".comments-options").removeClass("hide");
+                $(".default-response-options").removeClass("hide");
+                $(".item-rating-scale-control-group").removeClass("hide");
                 if (modify_mandatory == true) {
                     $("#item-mandatory").prop("checked", true);
                 }
                 break;
+            case "free_text" :
             case "numeric" :
                 $("#response-section").addClass("hide");
                 $("#field-note-response").addClass("hide");
                 $("#objective-options").removeClass("hide");
-                $("#comments-options").addClass("hide");
+                $(".comments-options").addClass("hide");
+                $(".default-response-options").addClass("hide");
+                $(".item-rating-scale-control-group").addClass("hide");
                 if (modify_mandatory == true) {
                     $("#item-mandatory").prop("checked", false);
                 }
                 break;
-            case "free_text" :
             case "date" :
             case "user" :
                 $("#response-section").addClass("hide");
                 $("#field-note-response").addClass("hide");
                 $("#objective-options").addClass("hide");
-                $("#comments-options").addClass("hide");
+                $(".comments-options").addClass("hide");
+                $(".default-response-options").addClass("hide");
+                $(".item-rating-scale-control-group").addClass("hide");
                 if (modify_mandatory == true) {
                     $("#item-mandatory").prop("checked", false);
                 }
@@ -379,7 +191,9 @@ jQuery(document).ready(function ($) {
                 $("#response-section").addClass("hide");
                 $("#field-note-response").addClass("hide");
                 $("#objective-options").addClass("hide");
-                $("#comments-options").addClass("hide");
+                $(".comments-options").addClass("hide");
+                $(".default-response-options").addClass("hide");
+                $(".item-rating-scale-control-group").addClass("hide");
                 if (modify_mandatory == true) {
                     $("#item-mandatory").prop("checked", true);
                 }
@@ -390,7 +204,9 @@ jQuery(document).ready(function ($) {
                 $("#field-note-response").addClass("hide");
                 $("#response-section").removeClass("hide");
                 $("#objective-options").removeClass("hide");
-                $("#comments-options").removeClass("hide");
+                $(".comments-options").removeClass("hide");
+                $(".default-response-options").removeClass("hide");
+                $(".item-rating-scale-control-group").removeClass("hide");
                 if (modify_mandatory == true) {
                     $("#item-mandatory").prop("checked", true);
                 }
@@ -465,7 +281,10 @@ jQuery(document).ready(function ($) {
             tpl_item_responses_name: "item_responses[" + response_number + "]",
             tpl_ardescriptor_name: "ardescriptor_id[" + response_number + "]",
             tpl_descriptor_id: "descriptor-" + response_number,
-            tpl_flag_response: "flag_response[" + response_number + "]"
+            tpl_flag_response: "flag_response[" + response_number + "]",
+            tpl_flag_id: "flag-" + response_number,
+            tpl_default_response: "default_response",
+            tpl_default_response_id: "default-response-" + response_number
         };
 
         // Append new element from template to the table.
@@ -479,6 +298,7 @@ jQuery(document).ready(function ($) {
 
         // Attach advancedSearch to the new item
         enable_descriptor_advanced_search(response_number);
+        enable_reponse_flag_advanced_search(response_number);
 
         // Each item has a unique ordinal value (not related to the actual response number). Keep it updated here.
         response_item_ordinal++;
@@ -488,6 +308,9 @@ jQuery(document).ready(function ($) {
 
         // Set properties of the new element (button handlers)
         set_item_response_selector_properties();
+
+        // Show/Hide default selection column based on the checkbox state
+        toggle_default_column();
 
         // Clear any error/success messages for responses
         clear_response_error();
@@ -540,8 +363,46 @@ jQuery(document).ready(function ($) {
         }
     }
 
+    function enable_reponse_flag_advanced_search(response_number) {
+        // If it hasn't already been set, updated the advanced search
+        if (typeof jQuery("#flag-" + response_number).data("settings") == "undefined") {
+            $("#flag-" + response_number).advancedSearch({
+                api_url: ENTRADA_URL + "/admin/assessments/items?section=api-items",
+                resource_url: ENTRADA_URL,
+                filters: {},
+                control_class: "flag-" + response_number,
+                no_results_text: "",
+                parent_form: $("#item-form"),
+                width: 275,
+                modal: false
+            });
+
+            // We must declare the filter after the object has been created to allow us to use a dynamic key with a variable in the name.
+            var descriptor_settings = jQuery("#flag-" + response_number).data("settings");
+            if (descriptor_settings) {
+                descriptor_settings.filters["response_category_" + response_number] = {
+                    label: "",
+                    data_source: "get-response-flags",
+                    mode: "radio",
+                    selector_control_name: "flag_response[" + response_number + "]",
+                    search_mode: false
+                }
+            }
+        }
+    }
+
+    /**
+     * Clear the selected custom flags, this is mainly called when swtiching
+     * between rating scales, to avoid previous flag selection to interfere
+     * with the new response set.
+     */
+    function clear_advancedsearch_flags() {
+        $("input[name^='flag_response'][type='hidden']").remove();
+    }
+
     function remove_response_row () {
         $("#response-table tr:last").remove();
+        toggle_default_column();
     }
 
     function remove_field_note_response_row () {
@@ -588,6 +449,7 @@ jQuery(document).ready(function ($) {
         if (total_responses > max_responses) {
             $("#response-table tbody tr").slice(max_responses, total_responses).remove();
         }
+        toggle_default_column();
     }
 
     $("#author-list").on("click", ".remove-permission", function(e) {
@@ -609,95 +471,9 @@ jQuery(document).ready(function ($) {
         e.preventDefault();
     });
 
-    $('#objective-options').on('click', '.objective-remove', function(){
-        var id = jQuery(this).attr('data-id');
-        var qrow = jQuery("#qrow").val();
-        var list = jQuery('.mapped_objective_'+id).parent().attr('data-importance');
-        var importance = 'checked';
-        if(list == "flat"){
-            importance = 'clinical';
-        }
-        unmapObjective(id,list,importance);
-        removeObjective(id, qrow);
-        return false;
-    });
-
-    $('#objective-options').on('change', '.checked-objective', function(){
-        var id = jQuery(this).val();
-        var qrow = jQuery("#qrow").val();
-        // parents will return all sets above that objective, which for anything other than curriculum objectives will be an array
-        // this grabs all parents above the object and then fetches the list from the immediate (last) parent
-        var sets_above = jQuery(this).parents('.objective-set');
-        var list = jQuery(sets_above[sets_above.length-1]).attr('data-list');
-
-        var title = jQuery('#objective_title_'+id).attr('data-title');
-        var description = jQuery('#objective_'+id).attr('data-description');
-        if (jQuery(this).is(':checked')) {
-            mapObjective(id,title,description,list,true);
-            addObjective(id, qrow);
-        } else {
-            var importance = 'checked';
-            if (list == "flat") {
-                importance = 'clinical';
-            }
-            unmapObjective(id,list,importance);
-            removeObjective(id, qrow);
-        }
-    });
-
-    // cannot find instances of 'checked-mapped' class in add or edit item code
-    $(document).on('change', '.checked-mapped', function(){
-        var id = jQuery(this).val();
-        var qrow = jQuery("#qrow").val();
-        // parents will return all sets above that objective, which for anything other than curriculum objectives will be an array
-        // this grabs all parents above the object and then fetches the list from the immediate (last) parent
-        var sets_above = jQuery(this).parents('.mapped-list');
-        var list = jQuery(sets_above[sets_above.length-1]).attr('data-importance');
-
-        var title = jQuery('.mapped_objective_'+id).attr('data-title');
-        var description = jQuery('.mapped_objective_'+id).attr('data-description');
-        if (jQuery(this).is(':checked')) {
-            mapObjective(id,title,description,list,false);
-            addObjective(id, qrow);
-        } else {
-            var importance = 'checked';
-            if (list == "flat"){
-                importance = 'clinical';
-            }
-            if (jQuery('.mapped_objective_'+id).is(':checked')) {
-                mapObjective(id,title,description,list,false);
-                addObjective(id, qrow);
-            } else {
-                unmapObjective(id,list,importance);
-                removeObjective(id, qrow);
-            }
-        }
-    });
-
     /**
      * Init Code
      */
-
-    //jQuery('#assessment-item-topics-toggle').trigger('click');
-
-    if(jQuery('#mapped_flat_objectives').children('li').length == 0){
-        jQuery('#toggle_sets').trigger('click');
-    }
-
-    //load mapped array on page load
-    jQuery('#checked_objectives_select').children('option').each(function(){
-        mapped.push($(this).val());
-    });
-
-    jQuery('#clinical_objectives_select').children('option').each(function(){
-        mapped.push($(this).val());
-    });
-
-    jQuery('#mapped_flat_objectives').children('li').each(function(){
-        if(jQuery(this).attr('data-id') !== undefined && jQuery(this).attr('data-id')){
-            listed.push(jQuery(this).attr('data-id'));
-        }
-    });
 
     /**
      * Set extra properties/handlers for a response item row.
@@ -730,6 +506,7 @@ jQuery(document).ready(function ($) {
         display_success([assessment_item_localization.success_removed_item], "#item-removal-success-box");
         update_response_label_ordering();
         $("#delete-item-response-modal").modal("hide");
+        toggle_default_column();
     });
 
     function clear_response_error() {
@@ -740,20 +517,39 @@ jQuery(document).ready(function ($) {
      * Enable sorting for item responses
      */
     function enable_responses_sortable() {
+        var selected_default;
+
         $(".sortable-items").sortable({
             handle: "td.move-item-response",
             placeholder: "success response-row",
             helper: "clone",
             axis: 'y',
             containment: "document",
+            disable: true,
             start: function (event, ui) {
                 clear_response_error();
+                // A bug in jQuery UI resets the selected radio, taking note of what is
+                // selected at the start to restore it when the drop happen end
+                selected_default = jQuery.find("input[name='default_response']:checked");
+                if (selected_default.length) {
+                    selected_default = selected_default[0].value;
+                } else {
+                    selected_default = null;
+                }
+
                 var placeholder_item = ui.item.html();
                 ui.placeholder.html(placeholder_item);
                 //ui.helper.hide();
             },
             stop: function (event, ui) {
                 update_response_label_ordering();
+                // Restore the selected default value if any and re-index the values to reflect the new order
+                if (selected_default) {
+                    $("#default-response-" + selected_default).prop("checked", true);
+                }
+                $("input[name='default_response']").each(function(index) {
+                    $(this).val(index + 1);
+                });
             }
         });
     }
@@ -772,4 +568,464 @@ jQuery(document).ready(function ($) {
 
     // Set the initial response item ordinal value
     set_response_item_ordinal();
+
+    /**
+     * Rating scale functions
+     */
+
+    /**
+     * Build a scale response edit row from a template.
+     * Enables sorting, advanced search and keeps track of its position on the page.
+     */
+    function build_scale_response_row (response_number, response) {
+        var template_data = {
+            tpl_response_number: response_number,
+            tpl_response_label: text_into_span(assessment_item_localization.response_item_template, response_number),
+            tpl_response_element_id: "item_response_" + response_number,
+            tpl_item_responses_name: "item_responses[" + response_number + "]",
+            tpl_ardescriptor_name: "ardescriptor_id[" + response_number + "]",
+            tpl_ardescriptor_value: response.descriptor,
+            tpl_ardescriptor_id_value: response.ardescriptor_id,
+            tpl_selected_ardescriptor_name: "selected_ardescriptor_id[" + response_number + "]",
+            tpl_selected_ardescriptor_id: response.ardescriptor_id,
+            tpl_descriptor_id: "descriptor-" + response_number,
+            tpl_flag_response: "flag_response[" + response_number + "]",
+            tpl_flag_id: "flag-" + response_number,
+            tpl_default_response: "default_response"
+        };
+
+        // Append new element from template to the table.
+        $("<tr/>").loadTemplate("#itemscale-response-row-template", template_data)
+            .appendTo("#response-table")
+            .addClass("response-row response-row-"+response_number)
+            .data("ordinal", response_number);
+
+        // Each item has a unique ordinal value (not related to the actual response number). Keep it updated here.
+        response_item_ordinal++;
+
+        // Update the labels (so that items in their respective positions are clearly labeled as such)
+        update_response_label_ordering();
+        enable_reponse_flag_advanced_search(response_number);
+
+        // Clear any error/success messages for responses
+        clear_response_error();
+
+        // Toggle the default selection column
+        toggle_default_column();
+    }
+
+    $("#item-rating-scale-btn").on("click", function (e) {
+        e.preventDefault();
+    });
+
+    $("#item-rating-scale-btn").on("change", function(e) {
+        e.preventDefault();
+        if ($(this).hasClass("disabled")) {
+            e.preventDefault();
+            return;
+        }
+        var scale_id = $("#item-form input[name='rating_scale_id']").val();
+        $("#response-table tr.response-row").remove();
+
+        if (scale_id == 0 || scale_id == null) {
+            $(".btn.add-response").show();
+            $(".btn.remove-response").show();
+            response_item_ordinal = 1;
+            build_missing_rows();
+            set_item_response_selector_properties();
+            update_response_label_ordering();
+            $(".items-header-flex-column").removeClass("hide");
+        } else {
+            response_item_ordinal = 1;
+            $(".btn.add-response").hide();
+            $(".btn.remove-response").hide();
+            $(".items-header-flex-column").addClass("hide");
+            $.ajax({
+                url: SCALE_API_URL,
+                type: "GET",
+                data: "method=get-scale-responses&rating_scale_id=" + scale_id,
+                dataType: "json",
+                success: function(response) {
+                    if (response.status == "success") {
+                        jQuery.each(response.data, function(num, response) {
+                            build_scale_response_row(num + 1, response);
+                        });
+                        set_response_item_ordinal();
+                    }
+                }
+            })
+        }
+        clear_advancedsearch_flags();
+    });
+
+    function toggle_default_column() {
+        if ($("#allow-default").prop("checked")) {
+            $(".default_selection_column").removeClass("hide");
+            if (! $("input:radio[name='default_response']").is(":checked")) {
+                $("input:radio[name='default_response']:first").attr('checked', true);
+            }
+        } else {
+            $(".default_selection_column").addClass("hide");
+        }
+    }
+
+    $("#allow-default").on("change", function() {
+        toggle_default_column();
+    });
+
+    /**
+     * Initial objective set controls are built based on the selected course.
+     */
+    $("#choose-objective-course-btn").on("change", function () {
+        $("#objectives-selector-controls").empty();
+        build_objective_set_selector_controls();
+    });
+
+    /**
+     * Build objective set selector controls.
+     */
+    function build_objective_set_selector_controls() {
+        var course_id = $("input[name=\"course_id\"]").val();
+        clear_objective_error();
+
+        // API call to fetch first level of objectives for the course.
+        $.ajax({
+            url: ENTRADA_URL + "/admin/assessments/forms?section=api-forms",
+            data: {
+                "method": "get-objective-sets-by-course",
+                "course_id": course_id
+            },
+            type: "GET",
+            success: function (results) {
+                var jsonResponse = JSON.parse(results);
+                if (jsonResponse.status === "success") {
+                    var markup = false;
+                    var template_data = false;
+
+                    // Build an objective set selector and append it to the container.
+                    jsonResponse.data.each(function (objective) {
+                        var processed_title = (objective.objective_code
+                            ? objective.objective_code + ($(objective.objective_name).length > 0 ? ": " + objective.objective_name : "")
+                            : objective.objective_name
+                        );
+
+                        template_data = {
+                            tpl_objective_id:           objective.objective_id,
+                            tpl_objective_node_id:      objective.node_id,
+                            tpl_objective_name:         "objectives[" + objective.objective_id + "]",
+                            tpl_objective_code:         objective.objective_code,
+                            tpl_objective_title:        processed_title,
+                            tpl_objective_description:  "",//objective.objective_description,
+                            tpl_objective_depth:        objective.depth,
+                            tpl_objective_course_id:    objective.course_id
+                        };
+
+                        // New objective set built from template.
+                        markup = $("<div/>").loadTemplate("#objective-set-template", template_data)
+                            .addClass("objective-set-container")
+                            .data("id", objective.objective_id)
+                            .data("depth", objective.depth)
+                            .data("node-id", objective.node_id)
+                            .data("course-id", objective.course_id)
+                            .attr("id", "objective_" + objective.objective_id);
+
+                        // If there are further objectives "below" this set, apply classes for styling.
+                        if (objective.has_children) {
+                            markup.find("div.objective-select").addClass("has-child-objectives").addClass("child-objectives-hidden");
+                        }
+
+                        // The objective code span should be hidden if this objective has no code set.
+                        if (!objective.objective_code) {
+                            markup.find("span.objective-code").addClass("hide");
+                        }
+
+                        $("#objectives-selector-controls").append(markup);
+                    });
+                } else {
+                    $("#objectives-selector-error").removeClass("hide");
+                    display_error(jsonResponse.msg, "#objectives-selector-error");
+                }
+            }
+        });
+    }
+
+    /**
+     * Handles when an objective or objective set is clicked. This only applies to the immediate
+     * .objective-select clicked rather than propagating through all handlers.
+     */
+    $(document).on("click", ".objective-select", function (e) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        clear_objective_error();
+        var control = $(this);
+        var control_objective_container = control.find("div.objective-container");
+
+        /**
+         * If the objective set already has children, it has previously been clicked and it's data fetched.
+         * Rather than fetching again, the child sets and parent class should be toggled.
+         */
+        if (control_objective_container.length > 0) {
+            var currently_visible = $(control_objective_container).is(":visible");
+            $(control_objective_container).slideToggle("fast");
+
+            if (!currently_visible) {
+                control.removeClass("child-objectives-hidden");
+                control.addClass("child-objectives-visible");
+            } else {
+                control.removeClass("child-objectives-visible");
+                control.addClass("child-objectives-hidden");
+            }
+        } else {
+            /**
+             * We pre-fetched the next level of objectives in the API to determine if there are children, so we
+             * don't need to bother if we didn't find any.
+             */
+            if (control.hasClass("has-child-objectives")) {
+
+                control.addClass("child-objectives-visible");
+                control.removeClass("child-objectives-hidden");
+
+                // There is further data to fetch. Build child objective sets from API response.
+                var node_id = control.data("node-id") ? control.data("node-id") : null;
+                var current_depth = control.data("depth") ? control.data("depth") : null;
+                var course_id = control.data("course-id") ? control.data("course-id") : null;
+                var objective_id = control.data("objective-id");
+
+                $.ajax({
+                    url: ENTRADA_URL + "/admin/assessments/forms?section=api-forms",
+                    data: {
+                        "method": "get-objectives-by-depth",
+                        "node_id": node_id,                             // If node is present, it is CBME objective tree based.
+                        "objective_id": objective_id,                   // When we are not processing a node, we use the parent/child relationship of objectives.
+                        "depth": current_depth + 1,                     // Depth applies when a node is being processed. We only want to fetch the next level down the tree.
+                        "course_id": course_id                          // Course only applies when fetching course specific CBME objectives.
+                    },
+                    type: "GET",
+                    success: function (results) {
+
+                        var jsonResponse = JSON.parse(results);
+                        if (jsonResponse.status === "success") {
+
+                            /**
+                             * Breadcrumb is either parent codes (ie: D1.1 > D1.2 > D2.3) or the truncated titles (ie: Performing a... > Assessing a... > As a medic...).
+                             */
+                            var crumbs = [];
+                            var string = "";
+                            if ($(control).data("objective-code")) {
+                                string = $(control).data("objective-code");
+                            } else {
+                                if ($(control).data("objective-title").length > 10) {
+                                    string = $.trim($(control).data("objective-title")).substring(0, 10).trim(this) + "...";
+                                } else {
+                                    string = $(control).data("objective-title");
+                                }
+                            }
+                            crumbs.push(string);
+                            control.parents(".objective-select").each(function (i, parent) {
+                                if ($(parent).data("objective-code")) {
+                                    string = $(parent).data("objective-code");
+                                } else {
+                                    if ($(parent).data("objective-title").length > 10) {
+                                        string = $.trim($(parent).data("objective-title")).substring(0, 10).trim(this) + "...";
+                                    } else {
+                                        string = $(parent).data("objective-title");
+                                    }
+                                }
+                                crumbs.push(string);
+                            });
+
+                            var breadcrumbs = "";
+                            crumbs.reverse().each(function (crumb_string) {
+                                breadcrumbs += (breadcrumbs ? " > " : " ");
+                                breadcrumbs += crumb_string;
+                            });
+
+                            var markup = false;
+                            var child_list = control.find("div.child-objectives");
+
+                            // Build an objective selector and append it after the current node.
+                            jsonResponse.data.each(function (objective) {
+                                markup = build_objective_selector(
+                                    objective.objective_id,
+                                    objective.node_id,
+                                    objective.depth,
+                                    objective.objective_name,
+                                    objective.objective_code,
+                                    "",//objective.objective_description,
+                                    objective.course_id,
+                                    breadcrumbs
+                                );
+
+                                // If the objective we just "found" is already mapped, it should be checked off.
+                                if (parseInt(objective.node_id) > 0) {
+                                    if ($(".mapped_objective_" + objective.objective_id).length > 0
+                                        && $("#mapped_objective_tree_ids_" + objective.node_id).length > 0 ) {
+                                        markup.find("input.objective-checkbox").prop("checked", true);
+                                    }
+                                } else {
+                                    if ($(".mapped_objective_" + objective.objective_id).length > 0) {
+                                        markup.find("input.objective-checkbox").prop("checked", true);
+                                    }
+                                }
+
+                                // If there are further objectives "below" this set, apply classes for styling.
+                                if (objective.has_children) {
+                                    markup.find("div.objective-select").addClass("has-child-objectives").addClass("child-objectives-hidden");
+                                }
+
+                                // The objective code span should be hidden if this objective has no code set.
+                                if (!objective.objective_code) {
+                                    markup.find("span.objective-code").addClass("hide");
+                                }
+
+                                child_list.append(markup);
+                            });
+                        } else {
+                            $("#objectives-selector-error").removeClass("hide");
+                            display_error(jsonResponse.msg, "#objectives-selector-error");
+                        }
+                    }
+                });
+            }
+        }
+    });
+
+    /**
+     * Build an objective selector from the template.
+     */
+    function build_objective_selector(objective_id, node_id, node_depth, objective_name, objective_code, objective_description, course_id, breadcrumb) {
+
+        var template_data = {
+            tpl_objective_id:                       objective_id,
+            tpl_objective_node_id:                  node_id,
+            tpl_objective_name:                     "objectives[" + objective_id + "]",
+            tpl_objective_code:                     objective_code,
+            tpl_objective_title:                    objective_name,
+            tpl_objective_description:              objective_description,
+            tpl_objective_depth:                    node_depth,
+            tpl_objective_course_id:                course_id,
+            tpl_objective_breadcrumb:               breadcrumb
+        };
+
+        // Return new element built from template.
+        return $("<div/>").loadTemplate("#objective-select-template", template_data)
+            .addClass("objective-container")
+            .data("id", objective_id)
+            .data("depth", node_depth)
+            .data("node-id", node_id)
+            .data("course-id", course_id)
+            .attr("id", "objective_" + objective_id);
+    }
+
+    /**
+     * Handles when an objective checkbox is clicked. The objective should be added to or removed
+     * from the mapped objectives. This only applies to the immediate input clicked rather than
+     * propagating through all handlers.
+     */
+    $(document).on("click", ".objective-checkbox", function (e) {
+        e.stopImmediatePropagation();
+        if ($(this).prop("checked") === false) {
+            unmap_objective($(this).val(), $(this).closest(".objective-selector").attr("data-node-id"));
+        } else {
+            var code = $(this).data("objective-code");
+            var objective_title = $(this).data("objective-title");
+            var objective_tree_id = $(this).closest(".objective-select").data("node-id");
+            var breadcrumb = $(this).closest(".objective-selector").find(".objective-breadcrumb").html();
+            var title = (code) ? code + "&nbsp;" + objective_title : objective_title;
+            map_objective($(this).val(), title, $(this).data("objective-description"), objective_tree_id, breadcrumb);
+        }
+    });
+
+    /**
+     * Add the objective to the mapped objective list if it is not already there.
+     */
+    function map_objective(objective_id, objective_title, objective_description, objective_tree_id, breadcrumb) {
+        var is_mapped = false;
+        if (!parseInt(objective_tree_id)) {
+            if ($(".mapped_objective_" + objective_id).length > 0) {
+                is_mapped = true;
+            }
+        } else {
+            if ($(".mapped_objective_" + objective_id).length > 0 && $("#mapped_objective_tree_ids_" + objective_tree_id).length > 0 ) {
+                is_mapped = true;
+            }
+        }
+        if (!is_mapped) {
+            var markup = build_mapped_objective(objective_id, objective_title, objective_description, objective_tree_id, breadcrumb);
+
+            $(".mapped_assessment_item_objectives").append(markup);
+            $(".objectives-empty-notice").hide();
+        }
+    }
+
+    /**
+     * Build a mapped objective from the template.
+     */
+    function build_mapped_objective(objective_id, objective_title, objective_description, objective_tree_id, breadcrumb) {
+        if (objective_tree_id > 0) {
+            var template_data = {
+                tpl_objective_id: objective_id,
+                tpl_objective_name: "mapped_objective_ids[" + objective_id + "]",
+                tpl_objective_class: "mapped-objective mapped_objective_" + objective_id,
+                tpl_objective_title: objective_title,
+                tpl_objective_description: objective_description,
+                tpl_node_input_id: "mapped_objective_tree_ids_" + objective_tree_id,
+                tpl_objective_tree_name: "mapped_objective_tree_ids_" + objective_id + "[]",
+                tpl_objective_tree_id: objective_tree_id,
+                tpl_objective_breadcrumb: breadcrumb,
+                tpl_breadcrumb_input_name: "mapped_objective_breadcrumbs[" + objective_tree_id + "]"
+            };
+        } else {
+            var template_data = {
+                tpl_objective_id: objective_id,
+                tpl_objective_name: "mapped_objective_ids[" + objective_id + "]",
+                tpl_objective_class: "mapped-objective mapped_objective_" + objective_id,
+                tpl_objective_title: objective_title,
+                tpl_objective_breadcrumb: breadcrumb,
+                tpl_objective_description: objective_description,
+            };
+        }
+
+        // Return new element built from template.
+        return $("<div/>").loadTemplate("#mapped-objective-template", template_data);
+    }
+
+    /**
+     * Remove button unmaps the objective and unchecks the respective checkbox from the selectors.
+     */
+    $(document).on("click", ".remove-mapped-objective", function() {
+        unmap_objective($(this).attr('data-id'), $(this).attr("data-tree-id"));
+    });
+
+    /**
+     * Remove the objective from the mapped objectives list and unchecks it from the selectors.
+     */
+    function unmap_objective(objective_id, objective_tree_id) {
+
+        if (parseInt(objective_tree_id) < 1 || objective_tree_id == "" || typeof(objective_tree_id)=="undefined") {
+            $("input[name=\"objectives[" + objective_id + "]\"]").prop("checked", false);
+            $(".mapped_objective_" + objective_id).remove();
+        } else {
+            $("input[name^='objectives'][value='" + objective_id + "']").each(function() {
+                if ($(this).closest(".objective-selector").attr("data-node-id") == objective_tree_id) {
+                    $(this).prop("checked", false);
+                }
+            })
+
+            $("input[name^='mapped_objective_tree_ids_" + objective_id + "'][value='" + objective_tree_id + "']").closest(".mapped-objective").remove();
+        }
+
+        // Show the empty notice if there are now no mapped objectives.
+        if ($("div.mapped-objective").length == 0) {
+            $("div.objectives-empty-notice").show();
+        }
+    }
+
+    function clear_objective_error() {
+        $("#objectives-selector-error").html("");
+    }
+
+    var course_select_height = $("#objectives-selector .course-select").outerHeight();
+    $("#objectives-selector #objectives-selector-controls").css("height", 496 - course_select_height + "px");
 });
+

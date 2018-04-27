@@ -2,7 +2,7 @@ var EDITABLE = false;
 var loaded = [];
 var loading_categories = false;
 jQuery(document).ready(function(){	
-    jQuery('.category-collapse-control').live('click',function(){
+    jQuery(document).on('click', '.category-collapse-control', function(){
         var id = jQuery(this).attr('data-id');
         if(jQuery('#children_'+id).is(':visible')){
             jQuery('#children_'+id).slideUp();
@@ -14,7 +14,7 @@ jQuery(document).ready(function(){
     });
 
 
-    jQuery('.category-title').live('click',function(){
+    jQuery(document).on('click', '.category-title', function(){
         var id = jQuery(this).attr('data-id');
         var children = [];
         if (loaded[id] === undefined || !loaded[id]) {
@@ -62,7 +62,7 @@ jQuery(document).ready(function(){
         });
     });
 
-    jQuery(".category-edit-control").live("click", function(){
+    jQuery(document).on("click", ".category-edit-control", function(){
         var category_id = jQuery(this).attr("data-id");
         var organisation_id = jQuery('#organisation_id').val();
         var modal_container = jQuery(document.createElement("div"));
@@ -137,7 +137,7 @@ jQuery(document).ready(function(){
         return false;
     });
 
-    jQuery(".category-add-control").live("click", function(){
+    jQuery(document).on("click", ".category-add-control", function(){
         var parent_id = jQuery(this).attr("data-id");
         var modal_container = jQuery(document.createElement("div"));
         var organisation_id = jQuery('#organisation_id').val();
@@ -215,7 +215,7 @@ jQuery(document).ready(function(){
         return false;
     });
 
-    jQuery(".category-delete-control").live("click", function(){
+    jQuery(document).on("click", ".category-delete-control", function(){
         var category_id = jQuery(this).attr("data-id");
         var modal_container = jQuery(document.createElement("div"));
         var organisation_id = jQuery('#organisation_id').val();

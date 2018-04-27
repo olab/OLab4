@@ -312,7 +312,7 @@ switch($_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]) {
 							$ONLOAD[]	= "setTimeout('window.location=\'".ENTRADA_URL."/clerkship\'', 5000)";
 							
 							$SUCCESS++;
-							$SUCCESSSTR[] = "You have successfully completed this evaluation, thank-you for your invaluable feedback.<br /><br />You will now be returned to the Clerkship tab, or if you prefer not to wait please <a href=\"".ENTRADA_URL."/clerkship\">click here</a>.";
+							$SUCCESSSTR[] = "You have successfully completed this evaluation, thank-you for your invaluable feedback.<br /><br />You will now be returned to the " . $translate->_("Clerkship") . " tab, or if you prefer not to wait please <a href=\"".ENTRADA_URL."/clerkship\">click here</a>.";
 							
 							echo display_success();
 
@@ -369,11 +369,11 @@ switch($_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]) {
 							</tr>
 							<tr>
 								<td>Rotation Started:</td>
-								<td><?php echo date(DEFAULT_DATE_FORMAT, $evaluate["event_start"]); ?></td>
+								<td><?php echo date(DEFAULT_DATETIME_FORMAT, $evaluate["event_start"]); ?></td>
 							</tr>
 							<tr>
 								<td>Rotation Ended:</td>
-								<td><?php echo date(DEFAULT_DATE_FORMAT, $evaluate["event_finish"]); ?></td>
+								<td><?php echo date(DEFAULT_DATETIME_FORMAT, $evaluate["event_finish"]); ?></td>
 							</tr>
 							<?php
 							switch($evaluate["form_type"]) {
@@ -612,7 +612,7 @@ switch($_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]) {
 				$ONLOAD[]	= "setTimeout('window.location=\'".ENTRADA_URL."/clerkship\'', 10000)";
 				
 				$ERROR++;
-				$ERRORSTR[] = "The evaluation that you are trying to complete is not available.<br /><br />You will be returned to the Clerkship tab in 10 seconds, or <a href=\"".ENTRADA_URL."/clerkship\"></a> to continue immediately.";
+				$ERRORSTR[] = "The evaluation that you are trying to complete is not available.<br /><br />You will be returned to the " . $translate->_("Clerkship") . " tab in 10 seconds, or <a href=\"".ENTRADA_URL."/clerkship\"></a> to continue immediately.";
 		
 				echo display_error($ERRORSTR);
 				
@@ -622,7 +622,7 @@ switch($_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]) {
 			$ONLOAD[]	= "setTimeout('window.location=\'".ENTRADA_URL."/clerkship\'', 10000)";
 			
 			$ERROR++;
-			$ERRORSTR[] = "The evaluation that you are trying to complete is not available.<br /><br />You will be returned to the Clerkship tab in 10 seconds, or <a href=\"".ENTRADA_URL."/clerkship\"></a> to continue immediately.";
+			$ERRORSTR[] = "The evaluation that you are trying to complete is not available.<br /><br />You will be returned to the " . $translate->_("Clerkship") . " tab in 10 seconds, or <a href=\"".ENTRADA_URL."/clerkship\"></a> to continue immediately.";
 	
 			echo display_error($ERRORSTR);
 		

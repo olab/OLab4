@@ -14,6 +14,8 @@ class Views_Exam_Question_ImportPreview extends Views_Deprecated_Base {
     }
 
     public function render() {
+        global $translate;
+
         $html = "";
         switch ($this->question["attributes"]["type"]) {
             case "mc_v":
@@ -47,7 +49,7 @@ class Views_Exam_Question_ImportPreview extends Views_Deprecated_Base {
         $folder_path = "";
         $current_folder_id = $this->question["folder_id"];
         while (0 != $current_folder_id) {
-            $folder = Models_Exam_Question_Bank_Folders::fetchRowByID($current_folder_id);
+            $folder = Models_Exam_Bank_Folders::fetchRowByID($current_folder_id);
             $folder_path = "/".$folder->getFolderTitle().$folder_path;
             $current_folder_id = $folder->getParentFolderID();
         }
@@ -58,6 +60,14 @@ class Views_Exam_Question_ImportPreview extends Views_Deprecated_Base {
         $header_text .= "<strong>Folder:</strong> ".html_encode($folder_path);
         if (isset($this->question["question_id"])) {
             $header_text .= ", <strong>Already Imported</strong>";
+        }
+        if (isset($this->question["attributes"]["curriculum_tags"])) {
+            $curriculum_tags_titles = array();
+            foreach($this->question["attributes"]["curriculum_tags"] as $curriculum_tag_id){
+                $objective = Models_Objective::fetchRow($curriculum_tag_id);
+                array_push($curriculum_tags_titles, $objective->getName());
+            }
+            $header_text .= "<br/><strong>" . $translate->_("Curriculum Tags") . ":</strong> " . implode(", ", $curriculum_tags_titles);
         }
         $html .= "<tr class=\"type\"><td colspan=\"100\"><span class=\"question-type\" style=\"margin: 0; padding-left: 10px; line-height: 35px\">".$header_text."</span></td></tr>\n";
         $html .= "<tr class=\"heading\"><td colspan=\"100\"><div id=\"question_stem\"><div class=\"question_text\">";
@@ -82,7 +92,12 @@ class Views_Exam_Question_ImportPreview extends Views_Deprecated_Base {
                     $html .= "<input type=\"".($multiple_answers ? "checkbox" : "radio")."\" class=\"question-control\" disabled".($checked ? " checked" : "")." />\n";
                     $html .= "</td>\n";
                     $html .= "<td class=\"vertical-answer-label\">\n";
-                    $html .= "<label>".$choice."</label>\n";
+                    $html .= "<label>";
+                    $html .= $choice;
+                    if(isset($this->question["attributes"]["locked"]) && is_array($this->question["attributes"]["locked"]) && in_array($letter, $this->question["attributes"]["locked"])){
+                        $html .= " <i class=\"fa-lock fa\"></i>\n";
+                    }
+                    $html .= "</label>\n";
                     $html .= "</td>\n";
                     $html .= "</tr>\n";
                 }
@@ -102,9 +117,14 @@ class Views_Exam_Question_ImportPreview extends Views_Deprecated_Base {
                 }
                 $html .= "</tr>\n";
                 $html .= "<tr class=\"horizontal-answer-label question-answer-view\">\n";
-                foreach ($this->question["choices"] as $choice) {
+                foreach ($this->question["choices"] as $letter => $choice) {
                     $html .= "<td width=\"$width%\">\n";
-                    $html .= "<label>".$choice."</label>\n";
+                    $html .= "<label>";
+                    $html .= $choice;
+                    if(isset($this->question["attributes"]["locked"]) && is_array($this->question["attributes"]["locked"]) && in_array($letter, $this->question["attributes"]["locked"])){
+                        $html .= " <i class=\"fa-lock fa\"></i>\n";
+                    }
+                    $html .= "</label>\n";
                     $html .= "</td>\n";
                 }
                 $html .= "</tr>\n";

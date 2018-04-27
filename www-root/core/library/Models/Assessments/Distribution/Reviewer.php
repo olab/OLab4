@@ -143,4 +143,31 @@ class Models_Assessments_Distribution_Reviewer extends Models_Base {
         return $this->update();
     }
 
+    /**
+     * Fetch the courses for distributions (with existing completed tasks) that a proxy_id is a reviewer for.
+     *
+     * @param $proxy_id
+     * @param $organisation_id
+     * @return mixed
+     */
+    public function getDistributionCoursesForReviewer($proxy_id, $organisation_id) {
+        global $db;
+
+        $query = "  SELECT c.*
+                    FROM `cbl_assessment_distribution_reviewers` AS dr 
+                    JOIN `cbl_assessment_distributions` AS ad 
+                    ON ad.`adistribution_id` = dr.`adistribution_id` 
+                    JOIN `courses` AS c 
+                    ON c.`course_id` = ad.`course_id`
+                    JOIN `cbl_assessment_progress` AS ap
+                    ON ap.`adistribution_id` = ad.`adistribution_id`
+                    WHERE dr.`proxy_id` = ?
+                    AND ad.`organisation_id` = ?
+                    AND ap.`progress_value` = 'complete'
+                    AND dr.`deleted_date` IS NULL
+                    GROUP BY c.`course_id`";
+
+        return $db->GetAll($query, array($proxy_id, $organisation_id));
+    }
+
 }

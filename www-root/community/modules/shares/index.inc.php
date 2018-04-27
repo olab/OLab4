@@ -154,6 +154,7 @@ $shares_hierarchy = Models_Community_Share::getSelectHierarchy($shares_index);
 $shares_options = implode("", array_map(function($i) { return "<option value=\"{$i["id"]}\">".html_encode($i["title"])."</option>"; }, $shares_hierarchy));
 $community_shares_select_folder = "<select id=\"share_id\" name=\"share_id\" style=\"width: 300px\"><option value=\"0\">Root Level</option>".$shares_options."</select>";
 $community_shares_select_documents = "<select id=\"share_id\" name=\"share_id\" style=\"width: 300px\">".$shares_options."</select>";
+$HEAD[] = "<script>var openArray;</script>";
 ?>
 <script>
     function fileDelete(id) {
@@ -242,7 +243,7 @@ $community_shares_select_documents = "<select id=\"share_id\" name=\"share_id\" 
     
     function fileMove(id) {
         var folder_id = getFolderIDFromDocID(id, "file");
-        var community_shares_select_clean_doc = community_shares_select_documents.replace('value="' + folder_id + '"', 'value="' + folder_id + '" disabled="disabled"');
+        var community_shares_select_clean_doc = community_shares_select_documents.replace('value="' + folder_id + '"', 'value="' + folder_id + '" disabled=\"disabled\"');
         Dialog.confirm('Do you really wish to move the '+ $('file-' + id + '-title').innerHTML +' file?<br /><br />If you confirm this action, you will be moving the file and all comments to the selected folder.<br /><br />' + community_shares_select_clean_doc,
             {
                 id:				'requestDialog',
@@ -263,7 +264,7 @@ $community_shares_select_documents = "<select id=\"share_id\" name=\"share_id\" 
     }
     function linkMove(id) {
         var folder_id = getFolderIDFromDocID(id, "link");
-        var community_shares_select_clean_doc = community_shares_select_documents.replace('value="' + folder_id + '"', 'value="' + folder_id + '" disabled="disabled"');
+        var community_shares_select_clean_doc = community_shares_select_documents.replace('value="' + folder_id + '"', 'value="' + folder_id + '" disabled=\"disabled\"');
         Dialog.confirm('Do you really wish to move the '+ $('link-' + id + '-title').innerHTML +' link?<br /><br />If you confirm this action, you will be moving the link to the selected folder.<br /><br />' + community_shares_select_clean_doc,
             {
                 id:             'requestDialog',
@@ -284,7 +285,7 @@ $community_shares_select_documents = "<select id=\"share_id\" name=\"share_id\" 
     }
     function htmlMove(id) {
         var folder_id = getFolderIDFromDocID(id, "html");
-        var community_shares_select_clean_doc = community_shares_select_documents.replace('value="' + folder_id + '"', 'value="' + folder_id + '" disabled="disabled"');
+        var community_shares_select_clean_doc = community_shares_select_documents.replace('value="' + folder_id + '"', 'value="' + folder_id + '" disabled=\"disabled\"');
         Dialog.confirm('Do you really wish to move the '+ $('html-' + id + '-title').innerHTML +' html?<br /><br />If you confirm this action, you will be moving the html document to the selected folder.<br /><br />' + community_shares_select_clean_doc,
             {
                 id:             'requestDialog',
@@ -305,9 +306,9 @@ $community_shares_select_documents = "<select id=\"share_id\" name=\"share_id\" 
     }
     function folderMove(id) {
         var folder_id = getFolderIDFromDocID(id, "folder");
-        var community_shares_select_clean = community_shares_select_folder.replace('value="' + id + '"', 'value="' + id + '" disabled="disabled"');
+        var community_shares_select_clean = community_shares_select_folder.replace('value="' + id + '"', 'value="' + id + '" disabled=\"disabled\"');
         if (folder_id != 0) {
-            community_shares_select_clean = community_shares_select_clean.replace('value="' + folder_id + '"', 'value="' + folder_id + '" disabled="disabled"');
+            community_shares_select_clean = community_shares_select_clean.replace('value="' + folder_id + '"', 'value="' + folder_id + '" disabled=\"disabled\"');
         }
         //hides all subfolders of the current folder as we don't want to let users move it into it's children as it would disaper.
         var subfolder_ids = getSub_folder_ids(id);
@@ -316,7 +317,7 @@ $community_shares_select_documents = "<select id=\"share_id\" name=\"share_id\" 
             jQuery(subfolder_ids).each(function() {
                 var id_sub = subfolder_ids[loop];
                 loop++;
-                community_shares_select_clean = community_shares_select_clean.replace('value="' + id_sub + '"', 'value="' + id_sub + '" disabled="disabled"');
+                community_shares_select_clean = community_shares_select_clean.replace('value="' + id_sub + '"', 'value="' + id_sub + '" disabled=\"disabled\"');
             });
         }
 
@@ -405,7 +406,7 @@ $community_shares_select_documents = "<select id=\"share_id\" name=\"share_id\" 
     }
     
     //creates the js array of opened folders   
-    function openFoldersSaved() {
+    function openFoldersSaved(open) {
         var url = "<?php echo ENTRADA_URL . "/api/community-shares-load-open.api.php";?>";
         var community_id = "<?php echo $COMMUNITY_ID?>";
         var page_id =  "<?php echo $PAGE_ID?>";
@@ -415,9 +416,14 @@ $community_shares_select_documents = "<select id=\"share_id\" name=\"share_id\" 
             url: url,
             data: dataString,
             dataType: "json",
-            async: false, 
             success: function(data) {
                 openArray = data;
+                if (open === true) {
+                    for (i=0; i < openArray.length; i++) {
+                        showFolder(".share_id_"+openArray[i]);
+                    }
+
+                }
             }
         });
         return openArray;
@@ -427,11 +433,9 @@ $community_shares_select_documents = "<select id=\"share_id\" name=\"share_id\" 
         //hides folders opened by ie7 code
         hideFolder(".point-right");
 
-        var openArray = openFoldersSaved();
+
+        openArray = openFoldersSaved(true);
         //loop through the folders to open them
-        for (i=0;i<openArray.length;i++) {
-            showFolder(".share_id_"+openArray[i]);
-        }
 
         jQuery(".point-right").click(function() {
             if (jQuery("#expandAllFolders").is(":visible")) {
@@ -663,7 +667,7 @@ $community_shares_select_documents = "<select id=\"share_id\" name=\"share_id\" 
         jQuery("#reorder").click(function() {
             if(moving == false) {
                 //saves the open folders into a variable to reload once the sorting is done
-                openArray = openFoldersSaved();
+                openArray = openFoldersSaved(false);
                 
                 //sets buttons
                 jQuery("#reorder").attr("value", "Cancel Reorder");
@@ -862,7 +866,7 @@ div.content {
         
 		<?php
 	} else {
-		add_notice("There are currently no shared folders available in this community.<br /><br />".((communities_module_access($COMMUNITY_ID, $MODULE_ID, "add-folder")) ? "As a community adminstrator you can add shared folders by clicking <a href=\"".COMMUNITY_URL.$COMMUNITY_URL.":".$PAGE_URL."?section=add-folder\">Add Shared Folder</a>." : "Please check back later."));
+		add_notice($translate->_("There are currently no shared folders available in this community.<br /><br />").((communities_module_access($COMMUNITY_ID, $MODULE_ID, "add-folder")) ? "As a community adminstrator you can add shared folders by clicking <a href=\"".COMMUNITY_URL.$COMMUNITY_URL.":".$PAGE_URL."?section=add-folder\">Add Shared Folder</a>." : "Please check back later."));
 
 		echo display_notice();
 	}

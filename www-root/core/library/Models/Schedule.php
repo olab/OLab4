@@ -135,13 +135,17 @@ class Models_Schedule extends Models_Base {
         return $this->copied_from;
     }
 
-    public function getChildren() {
+    public function getChildren($block_type_id = null) {
         $self = new self();
-        return $self->fetchAll(array(
+        $constraints = array(
             array("key" => "organisation_id", "value" => $this->organisation_id, "method" => "="),
             array("key" => "schedule_parent_id", "value" => $this->schedule_id, "method" => "="),
             array("key" => "deleted_date", "value" => NULL, "method" => "IS")
-        ));
+        );
+        if ($block_type_id) {
+            $constraints[] = array("key" => "block_type_id", "value" => $block_type_id, "method" => "=");
+        }
+        return $self->fetchAll($constraints);
     }
 
     public function getChildrenByDate($date_time) {
@@ -176,7 +180,18 @@ class Models_Schedule extends Models_Base {
 
     }
 
-    public static function fetchAllByParentAndDateRange($organisation_id, $parent_id, $start_date, $end_date, $include_deleted = false) {
+    /**
+     * Fetch all schedules by their parent ID in a date range, limited by a specified block type
+     *
+     * @param int $organisation_id
+     * @param int $parent_id Only schedules with this schedule parent will be returned
+     * @param int $start_date
+     * @param int $end_date
+     * @param bool $include_deleted
+     * @param int $block_type_id Only schedules of this block type will be returned
+     * @return array
+     */
+    public static function fetchAllByParentAndDateRange($organisation_id, $parent_id, $start_date, $end_date, $include_deleted = false, $block_type_id = 3) {
         global $db;
 
         $output = array();
@@ -186,7 +201,7 @@ class Models_Schedule extends Models_Base {
             $AND_deleted = "";
         }
 
-        $query = "SELECT * FROM `".static::$table_name."`
+        $query = "  SELECT * FROM `".static::$table_name."`
                     WHERE `organisation_id` = ?
                     AND `schedule_parent_id` = ?
                     AND (
@@ -194,8 +209,9 @@ class Models_Schedule extends Models_Base {
                             OR (`end_date` >= ? AND `end_date` <= ?)
                             OR (`start_date` <= ? AND `end_date` >= ?)
                         )
+                    AND `block_type_id` = ?    
                     $AND_deleted";
-        $results = $db->GetAll($query, array($organisation_id, $parent_id, $start_date, $end_date, $start_date, $end_date, $start_date, $end_date));
+        $results = $db->GetAll($query, array($organisation_id, $parent_id, $start_date, $end_date, $start_date, $end_date, $start_date, $end_date, $block_type_id));
         if ($results) {
             foreach ($results as $result) {
                 $output[] = new self($result);
@@ -600,22 +616,26 @@ class Models_Schedule extends Models_Base {
 
         if (is_array($course_id) && !empty($course_id)) {
             $imploded = implode(",", $course_id);
-            $AND_COURSE_ID = "AND `course_id` IN ($imploded)";
+            $AND_COURSE_ID = "AND s.`course_id` IN ($imploded)";
         } else {
-            $AND_COURSE_ID = "AND `course_id` = " . $db->qstr($course_id);
+            $AND_COURSE_ID = "AND s.`course_id` = " . $db->qstr($course_id);
         }
 
-        $query = "  SELECT * FROM `cbl_schedule`
-                    WHERE `deleted_date` IS NULL
-                    AND `schedule_type` = " . $db->qstr($schedule_type) . "
+        $query = "  SELECT s.* FROM `cbl_schedule` AS s
+                    JOIN `cbl_schedule_drafts` AS d
+                    ON d.`cbl_schedule_draft_id` = s.`draft_id`
+                    WHERE s.`deleted_date` IS NULL
+                    AND d.`deleted_date` IS NULL
+                    AND d.`status` = 'live'
+                    AND s.`schedule_type` = " . $db->qstr($schedule_type) . "
                     $AND_COURSE_ID
                     AND
                     (
-                        `title` LIKE (". $db->qstr("%". $search_value ."%") .") OR
-                        `description` LIKE (". $db->qstr("%". $search_value ."%") .")
+                        s.`title` LIKE (". $db->qstr("%". $search_value ."%") .") OR
+                        s.`description` LIKE (". $db->qstr("%". $search_value ."%") .")
                     )
-                    AND `cperiod_id` = ". $db->qstr($cperiod_id) ."
-                    ORDER BY `title` ASC";
+                    AND s.`cperiod_id` = ". $db->qstr($cperiod_id) ."
+                    ORDER BY s.`title` ASC";
 
         $results = $db->GetAll($query);
         if ($results) {
@@ -886,7 +906,7 @@ class Models_Schedule extends Models_Base {
 
     public static function fetchRotationsByMonth($proxy_id, $draft_id, $start_date, $end_date) {
         global $db;
-        $query = "SELECT c.`schedule_id`, d.`title`, c.`schedule_order` AS `order`, d.`code`, c.`start_date` AS `start`, c.`end_date` AS `end`, c.`block_type_id`, b.`slot_type_id`, 'rotation' AS `event_type`
+        $query = "SELECT c.`schedule_id`, d.`title`, c.`schedule_parent_id`, c.`schedule_order` AS `order`, d.`code`, c.`start_date` AS `start`, c.`end_date` AS `end`, c.`block_type_id`, b.`slot_type_id`, 'rotation' AS `event_type`
                     FROM `cbl_schedule_audience` AS a
                     JOIN `cbl_schedule_slots` AS b
                     ON a.`schedule_slot_id` = b.`schedule_slot_id`
@@ -1049,11 +1069,11 @@ class Models_Schedule extends Models_Base {
         ));
     }
 
-    public static function fetchAllScheduleChangesByProxyID($proxy_id) {
+    public static function fetchAllScheduleChangesByProxyIDOrganisationID($proxy_id, $organisation_id) {
         $schedule_change_data = array();
         $draft_id_list = array();
 
-        $drafts = Models_Schedule_Draft::fetchAllByProxyID($proxy_id, "live");
+        $drafts = Models_Schedule_Draft::fetchAllByProxyIDOrgIDStatus($proxy_id, $organisation_id, "live");
         if ($drafts) {
             foreach ($drafts as $draft) {
                 $draft_id_list[] = $draft->getID();
@@ -1108,4 +1128,5 @@ class Models_Schedule extends Models_Base {
         }
         return $schedule_change_data;
     }
+
 }

@@ -129,4 +129,19 @@ class Entrada_Utilities_jQueryHelper {
         endif;
         return $header_string;
     }
+
+    /**
+     * Safely add jQuery 3.0 and jQueryLoadTemplate plugin into the global HEAD.
+     */
+    public static function addScriptsToHead() {
+        global $HEAD;
+        $add_jquery = self::addjQuery();
+        $add_load_template = self::addjQueryLoadTemplate();
+        if (!in_array($add_jquery, $HEAD)) {
+            $HEAD[] = $add_jquery;
+        }
+        if (!in_array($add_load_template, $HEAD)) {
+            $HEAD[] = $add_load_template;
+        }
+    }
 }

@@ -42,9 +42,11 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
     $BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/" . $MODULE . "/" . $SUBMODULE . "/" . $SECTION, "title" => $SECTION_TEXT["breadcrumb"]["title"]);
 
     $title = clean_input($_POST["exam_title"], array("trim", "striptags"));
+    $folder_id = clean_input($_POST["folder_id"], array("trim", "int"));
 
     $exam = new Models_Exam_Exam();
     $exam->setTitle($title);
+    $exam->setFolderId($folder_id);
     $PROCESSED = $exam->toArray();
     $METHOD = "insert";
     ?>

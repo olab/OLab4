@@ -262,7 +262,7 @@ class Models_Course_Group extends Models_Base {
         return false;
     }
 
-    public static function fetchRowByGroupNameCourseIDCperiodID($group_name = 0, $course_id = 0, $cperiod_id = 0) {
+    public static function fetchRowByGroupNameCourseIDCperiodID($group_name = 0, $course_id = 0, $cperiod_id = 0, $active = 1) {
         $self = new self();
         $constraints = array(
             array(
@@ -276,6 +276,10 @@ class Models_Course_Group extends Models_Base {
             array(
                 "key" => "cperiod_id",
                 "value" => $cperiod_id
+            ),
+            array(
+                "key" => "active",
+                "value" => $active
             )
         );
         $row = $self->fetchRow($constraints);
@@ -293,13 +297,21 @@ class Models_Course_Group extends Models_Base {
             "name" => "`a`.`group_name`",
         );
 
-        $order_sql = " ORDER BY ".$sort_columns_array[$sort_column]. " ".$sort_direction." " ;
-
         $search_sql = "";
-        if(!empty($search_term)) {
-            $search_sql = " AND  `a`.`group_name` LIKE (". $db->qstr($search_term) . ")";
+        if ($search_term) {
+            $search_sql = " AND  `a`.`group_name` LIKE (?)";
         }
 
+        $constraints = array();
+        $constraints[] = $course_id;
+        $constraints[] = $cperiod_id;
+        if ($search_term) {
+            $constraints[] = $search_term;
+        }
+        $constraints[] = $offset;
+        $constraints[] = $limit;
+
+        $order_sql = " ORDER BY " . $sort_columns_array[$sort_column] . " " . $sort_direction;
 
         $query = "	SELECT a.*, (SELECT COUNT(b.`cgaudience_id`) FROM `course_group_audience` AS b 
 	                WHERE a.`cgroup_id` = b.`cgroup_id` AND b.`active` = 1) AS `members`
@@ -312,7 +324,7 @@ class Models_Course_Group extends Models_Base {
 					 " . $order_sql . "
 					LIMIT ?, ? ";
 
-        $results = $db->GetAll($query, array($course_id, $cperiod_id, $offset, $limit));
+        $results = $db->GetAll($query, $constraints);
 
         if ($results) {
             return $results;
@@ -320,17 +332,51 @@ class Models_Course_Group extends Models_Base {
         return false;
     }
 
-    public function getTotalCourseGroups($course_id,  $cperiod_id, $search_term = "") {
+    public function getGroupsByCourseIDSearchTerm($course_id, $search_term = "") {
         global $db;
 
         $search_sql = "";
         if(!empty($search_term)) {
-            $search_sql = " AND  `course_groups`.`group_name` LIKE (". $db->qstr($search_term) . ")";
+            $search_sql = " AND  `group_name` LIKE (". $db->qstr($search_term) . ")";
         }
 
-        $query = "	SELECT COUNT(*) AS `total_rows` FROM `course_groups` WHERE `active` = 1 AND `course_id` = ? AND (`cperiod_id` = ? OR `cperiod_id` IS NULL) " . $search_sql."";
+        $query = "	SELECT * 
+	                FROM `course_groups`
+					WHERE `course_id` = ? 
+					AND `active` = 1
+					 " . $search_sql . "
+					GROUP By `cgroup_id`
+					ORDER BY `group_name` ASC";
 
-        $results = $db->GetRow($query, array($course_id, $cperiod_id));
+        $results = $db->GetAll($query, array($course_id));
+
+        if ($results) {
+            foreach ($results as $key => $result) {
+                $results[$key] = new self($result);
+            }
+        }
+
+        return $results;
+    }
+
+    public function getTotalCourseGroups($course_id,  $cperiod_id, $search_term = "") {
+        global $db;
+
+        $search_sql = "";
+        if ($search_term) {
+            $search_sql = " AND `course_groups`.`group_name` LIKE (?)";
+        }
+
+        $constraints = array();
+        $constraints[] = $course_id;
+        $constraints[] = $cperiod_id;
+        if ($search_term) {
+            $constraints[] = $search_term;
+        }
+
+        $query = "SELECT COUNT(*) AS `total_rows` FROM `course_groups` WHERE `active` = 1 AND `course_id` = ? AND (`cperiod_id` = ? OR `cperiod_id` IS NULL)" . $search_sql;
+
+        $results = $db->GetRow($query, $constraints);
         if ($results) {
             return $results;
         }
@@ -365,6 +411,18 @@ class Models_Course_Group extends Models_Base {
         }
         return false;
 
+    }
+
+    public function getAudience($cgroup_id, $active = 1) {
+        global $db;
+        $query = "  SELECT a.*, b.`id` AS `proxy_id`, b.`firstname`, b.`lastname`, b.`email` 
+                    FROM `course_group_audience` AS a
+                    JOIN `" . AUTH_DATABASE . "`.`user_data` AS b
+                    ON a.`proxy_id` = b.`id`             
+                    WHERE a.`cgroup_id` = ?
+                    AND a.`active` = ?";
+        $results = $db->GetAll($query, array($cgroup_id, $active));
+        return $results;
     }
 
 }

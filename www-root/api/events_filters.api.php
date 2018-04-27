@@ -66,7 +66,6 @@ if (isset($_SESSION["isAuthorized"]) && (bool) $_SESSION["isAuthorized"]) {
 							ON e.`course_id` = d.`course_id`
 							WHERE b.`app_id` IN (".AUTH_APP_IDS_STRING.")
 							AND (b.`group` = 'faculty' OR (b.`group` = 'resident' AND b.`role` = 'lecturer'))
-							AND a.`id` IN (SELECT `proxy_id` FROM `event_contacts`)
 							AND e.`organisation_id` =  " . $db->qstr($ENTRADA_USER->getActiveOrganisation()) . "
 							GROUP BY a.`id`
 							ORDER BY `fullname` ASC";
@@ -295,6 +294,19 @@ if (isset($_SESSION["isAuthorized"]) && (bool) $_SESSION["isAuthorized"]) {
 				}
 				echo lp_multiple_select_popup("department", $department, array("title" => "Select Departments:", "submit_text" => "Apply", "cancel" => true, "submit" => true));
 			break;
+            case "week":
+                $week_checkboxes = $organisation;
+                $weeks = Models_Week::fetchAllRecords();
+                foreach ($weeks as $week) {
+                    if (isset($_SESSION[APPLICATION_IDENTIFIER]["events"]["filters"]["week"]) && is_array($_SESSION[APPLICATION_IDENTIFIER]["events"]["filters"]["week"]) && in_array($week->getID(), $_SESSION[APPLICATION_IDENTIFIER]["events"]["filters"]["week"])) {
+                        $checked = "checked=\"checked\"";
+                    } else {
+                        $checked = "";
+                    }
+                    $week_checkboxes[$ENTRADA_USER->getActiveOrganisation()]["options"][] = array("text" => $week->getWeekTitle(), "value" => sprintf("week_%d", $week->getID()), "checked" => $checked);
+                }
+                echo lp_multiple_select_popup("week", $week_checkboxes, array("title" => "Select Weeks:", "submit_text" => "Apply", "cancel" => true, "submit" => true));
+            break;
 			default :
 				application_log("notice", "Unknown learning event filter type [" . $options_for . "] provided to events_filters API.");
 			break;

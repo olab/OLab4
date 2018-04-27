@@ -118,7 +118,7 @@ Entrada_Utilities_Flashmessenger::displayMessages($MODULE);
 
             switch($ACTION) {
                 case "browse" :
-                    $BREADCRUMB[] = array("url" => ENTRADA_URL."/".$MODULE, "title" => "Browse Communities");
+                    $BREADCRUMB[] = array("url" => ENTRADA_URL."/".$MODULE, "title" => $translate->_("Browse Communities"));
 
                     /**
                      * Browsing communities within a category.
@@ -142,12 +142,12 @@ Entrada_Utilities_Flashmessenger::displayMessages($MODULE);
                     }
                     ?>
                     <div class="row-fluid">
-                        <div class="span8"><h2>Browse Communities</h2></div>
+                        <div class="span8"><h2><?php echo $translate->_("Browse Communities"); ?></h2></div>
                         <div class="span4 alignRight">
                             <?php
                             if ($ENTRADA_ACL->amIAllowed("community", "create")) {
                                 ?>
-                                <a href="<?php echo ENTRADA_URL; ?>/communities?section=create&amp;category=<?php echo $CATEGORY_ID; ?>" class="btn btn-small">create new community</a>
+                                <a href="<?php echo ENTRADA_URL; ?>/communities?section=create&amp;category=<?php echo $CATEGORY_ID; ?>" class="btn btn-small"><?php echo $translate->_("create new community"); ?></a>
                             <?php
                             }
                             ?>
@@ -226,7 +226,7 @@ Entrada_Utilities_Flashmessenger::displayMessages($MODULE);
                         echo "</div>\n";
                     } else {
                         echo "<div class=\"display-notice\" style=\"margin-top: 20px; padding: 15px\">\n";
-                        echo "	<div style=\"font-side: 13px; font-weight: bold\">No Communities</div>\n";
+                        echo "	<div style=\"font-side: 13px; font-weight: bold\">" . $translate->_("No Communities") . "</div>\n";
                         echo "	We have found no communities in this category. This is a great opportunity for you to <a href=\"".ENTRADA_URL."/communities?section=create&amp;category=".$CATEGORY_ID."\" style=\"color: #669900; font-weight: bold\">create a new community</a> to fill this niche!";
                         echo "</div>\n";
                     }
@@ -268,7 +268,7 @@ Entrada_Utilities_Flashmessenger::displayMessages($MODULE);
                             }
                         } else {
                             echo "<div class=\"display-notice\" style=\"margin-top: 20px; padding: 15px\">\n";
-                            echo "	<div style=\"font-side: 13px; font-weight: bold\">No Matching Communities</div>\n";
+                            echo "	<div style=\"font-side: 13px; font-weight: bold\">" . $translate->_("No Matching Communities") . "</div>\n";
                             echo "	We have found no communities matching your search query in the system. This is a great opportunity for you to <a href=\"".ENTRADA_URL."/communities?section=create\" style=\"color: #669900; font-weight: bold\">create a new community</a> to fill this niche!";
                             echo "</div>\n";
                         }
@@ -301,7 +301,7 @@ Entrada_Utilities_Flashmessenger::displayMessages($MODULE);
                         });
                     </script>
 
-                    <h2>Search for a Community</h2>
+                    <h2><?php echo $translate->_("Search for a Community"); ?></h2>
                     <form class="form-search">
                         <div class="input-append">
                             <input type="text" class="search-query input-xlarge" id="search-query" name="q" value="<?php echo ((isset($_GET["q"])) ? html_encode(trim($_GET["q"])) : ""); ?>" autocomplete="off" />
@@ -312,7 +312,7 @@ Entrada_Utilities_Flashmessenger::displayMessages($MODULE);
                     <div id="search-results"></div>
 
                     <div id="browse-communities">
-                        <h2>Browse Communities</h2>
+                        <h2><?php echo $translate->_("Browse Communities"); ?></h2>
                         <div class="row-fluid">
                         <?php
                         $query = "SELECT *

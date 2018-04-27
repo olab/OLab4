@@ -84,6 +84,21 @@ class Controllers_Exam_Post extends Controllers_Base {
             "data_type"             => "bool",
             "step"                  => 2
         ),
+        "use_honor_code"            => array(
+            "label"                 => "Use Honor Code",
+            "required"              => false,
+            "default"               => 0,
+            "sanitization_params"   => array("trim", "int"),
+            "data_type"             => "bool",
+            "step"                  => 2
+        ),
+        "honor_code"          => array(
+            "label"                 => "Honor Code",
+            "required"              => false,
+            "sanitization_params"   => array("allowedtags"),
+            "data_type"             => "text",
+            "step"                  => 2
+        ),
         "secure_mode"               => array(
             "label"                 => "Security Type",
             "db_fieldname"          => "secure_mode",
@@ -211,7 +226,7 @@ class Controllers_Exam_Post extends Controllers_Base {
             "required"              => false,
             "required_when"         => array(
                 "values" => array(
-                    "secure" => true,
+                    "secure" => false,
                 ),
                 "type" => "variable"
             ),
@@ -225,7 +240,7 @@ class Controllers_Exam_Post extends Controllers_Base {
             "required"              => false,
             "required_when"         => array(
                 "values" => array(
-                    "secure" => true,
+                    "secure" => false,
                     "time_limit_mins" => 0,
                 ),
                 "type" => "all"
@@ -239,7 +254,7 @@ class Controllers_Exam_Post extends Controllers_Base {
             "required"              => false,
             "required_when"         => array(
                 "values" => array(
-                    "secure" => true,
+                    "secure" => false,
                     "time_limit_hours" => 0,
                 ),
                 "type" => "all"
@@ -465,7 +480,7 @@ class Controllers_Exam_Post extends Controllers_Base {
             "step"                  => 5
         ),
         "grade_book"              => array(
-            "label"                 => "Grade Book Assessment",
+            "label"                 => "GradeBook Assessment",
             "required"              => false,
             "default"               => 0,
             "sanitization_params"   => array("trim", "int"),
@@ -560,6 +575,12 @@ class Controllers_Exam_Post extends Controllers_Base {
 
         if (isset($PROCESSED["backtrack"]) && $PROCESSED["backtrack"] == true) {
             $PROCESSED["backtrack"] = 1;
+        }
+
+        if (isset($PROCESSED["use_honor_code"]) && $PROCESSED["use_honor_code"] == true) {
+            $PROCESSED["use_honor_code"] = 1;
+        } else {
+            $PROCESSED["use_honor_code"] = 0;
         }
 
         if (isset($PROCESSED["start_date"]) && $PROCESSED["start_date"] && isset($PROCESSED["exam_start_time"]) && $PROCESSED["exam_start_time"]) {
@@ -774,6 +795,31 @@ class Controllers_Exam_Post extends Controllers_Base {
                         }
                     }
                 }
+
+                if ($PROCESSED["grade_book"] && $PROCESSED["grade_book"] > 0) {
+                    $submissions = Models_Exam_Progress::fetchAllByPostIDProgressValue($this->post->getID(), "submitted");
+                    if ($submissions && is_array($submissions)) {
+                        foreach ($submissions as $submission) {
+                            $submission_view = new Views_Exam_Progress($submission);
+                            $submission_view->updateGradeBook();
+                        }
+                    }
+                }
+
+                $history = new Models_Exam_Creation_History(array(
+                    "exam_id" => $this->post->getExamID(),
+                    "proxy_id" => $ENTRADA_USER->getID(),
+                    "action" => "post_exam_edit",
+                    "action_resource_id" => $this->post->getID(),
+                    "secondary_action" => NULL,
+                    "secondary_action_resource_id" => NULL,
+                    "history_message" => NULL,
+                    "timestamp" => $this->post->getUpdatedDate(),
+                ));
+
+                if (!$history->insert()) {
+                    add_error("Failed to insert history log for Exam Post");
+                }
             }
 
             if ($method === "insert") {
@@ -792,6 +838,21 @@ class Controllers_Exam_Post extends Controllers_Base {
                     if (!$entity->insert()) {
                         add_error("Failed to insert Event Resource Entity for Exam Post");
                     }
+                }
+
+                $history = new Models_Exam_Creation_History(array(
+                    "exam_id" => $this->post->getExamID(),
+                    "proxy_id" => $ENTRADA_USER->getID(),
+                    "action" => "post_exam_add",
+                    "action_resource_id" => $this->post->getID(),
+                    "secondary_action" => NULL,
+                    "secondary_action_resource_id" => NULL,
+                    "history_message" => NULL,
+                    "timestamp" => $this->post->getCreatedDate(),
+                ));
+
+                if (!$history->insert()) {
+                    add_error("Failed to insert history log for Exam Post");
                 }
             }
 

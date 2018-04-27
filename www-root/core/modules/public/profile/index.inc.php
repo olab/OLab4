@@ -24,7 +24,12 @@ if (!defined("IN_PROFILE")) {
 
 	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] do not have access to this module [".$MODULE."]");
 } else {
+	if (isset($PROCESSED["invalid_pin"])) {
+		$invalid_pin = $PROCESSED["invalid_pin"];
+	}
 
+    $HEAD[] = "<script type=\"text/javascript\" src=\"".ENTRADA_URL."/javascript/jquery/chosen.jquery.min.js?release=".html_encode(APPLICATION_VERSION)."\"></script>\n";
+    $HEAD[] = "<link href=\"".ENTRADA_URL."/css/jquery/chosen.css?release=".html_encode(APPLICATION_VERSION)."\" rel=\"stylesheet\" type=\"text/css\" media=\"all\" />\n";
 	$ajax_action = (isset($_POST["ajax_action"]) ? clean_input($_POST["ajax_action"], "alpha") : "");
 
 	if ($ajax_action == "uploadimageie") {
@@ -281,6 +286,13 @@ if (!defined("IN_PROFILE")) {
 
 	$user	= Models_User::fetchRowByID($ENTRADA_USER->getID());
 	if ($user && $user_data = $user->toArray()) {
+	
+	        //converts the comma seperated list 
+        if (isset($user_data["suffix_post_nominal"]) && !empty($user_data["suffix_post_nominal"])) {
+            //convert to array from comma seperated
+            $suffixes_post_nominal_array = explode(',', $user_data["suffix_post_nominal"]);
+        }
+        
 		/*
 		 * Get the user departments and the custom fields for the departments.
 		 */
@@ -302,7 +314,29 @@ if (!defined("IN_PROFILE")) {
 		$HEAD[] = "<script>var PROV_STATE = \"". $prov_state ."\";</script>";
 		$HEAD[] = "<script>var ENTRADA_URL = \"". ENTRADA_URL ."\";</script>";
 
-			?>
+        /**
+         * See if there is any metadata to show for this user
+         */
+        $metadata = false;
+        if ($ENTRADA_ACL->amIAllowed("metadata", "read", false)) {
+            require_once("Entrada/metadata/functions.inc.php");
+            $types = getTypes_User($ENTRADA_USER);
+            $categories = getCategories($types);
+            if ($categories) {
+                foreach ($categories as $category) {
+                    $values = getUserCategoryValues($ENTRADA_USER, $category);
+                    $descendant_type_sets = getDescendentTypesArray($types, $category);
+                    if ($category->getRestricted()) {
+                        continue;
+                    }
+                    if (count($values)) {
+                        $metadata = true;
+                    }
+                }
+            }
+        }
+
+        ?>
 		<h1>My <?php echo APPLICATION_NAME; ?> Profile</h1>
 		<div id="msgs"></div>
 		This section allows you to update your <?php echo APPLICATION_NAME; ?> user profile information. Please note that this information does not necessarily reflect any information stored at the main University. <span style="background-color: #FFFFCC; padding-left: 5px; padding-right: 5px">This is not your official institutional contact information.</span>
@@ -313,37 +347,59 @@ if (!defined("IN_PROFILE")) {
 		<?php
         $profile_image = ENTRADA_ABSOLUTE . '/../public/images/' . $ENTRADA_USER->getID() . '/' . $ENTRADA_USER->getID() . '-large.png';
         ?>
-		<div id="profile-image-container" class="pull-right">
-			<a href="#upload-image" id="upload-image-modal-btn" data-toggle="modal" class="btn btn-primary" id="upload-profile-image">Upload Photo</a>
-			<?php
-
-			$photo_object = Models_User_Photo::get($user_data["id"], Models_User_Photo::UPLOADED);
-
-			if ($photo_object) {
-				$uploaded_photo = $photo_object->toArray();
-			}
-			?>
-			<span>
-                <img src="<?php echo webservice_url("photo", array($ENTRADA_USER->getID(), $uploaded_photo ? "upload" : "official"))."/".time(); ?>" class="img-polaroid" />
-            </span>
-			<div class="btn-group" id="btn-toggle" class="<?php echo $uploaded_photo ? "uploaded" : "official"; ?>">
-				<a href="#" class="btn btn-small <?php echo $uploaded_photo["photo_active"] == "0" ? "active" : ""; ?>" id="image-nav-left">Official</a>
-				<?php
-                if ($uploaded_photo) {
-                    ?>
-                    <a href="#" class="btn btn-small <?php echo $uploaded_photo["photo_active"] == "1" ? "active" : ""; ?>" id="image-nav-right">Uploaded</a>
-                    <?php
-                }
-                ?>
-			</div>
-		</div>
-
+		<script type="text/javascript">
+		jQuery(function(){
+            jQuery("#suffix_post_nominal").chosen({width: "43%"});
+		});
+		</script>
 		<form class="form-horizontal" name="profile-update" id="profile-update" action="<?php echo ENTRADA_RELATIVE; ?>/profile" method="post" enctype="multipart/form-data" accept="<?php echo ((@is_array($VALID_MIME_TYPES)) ? implode(",", array_keys($VALID_MIME_TYPES)) : ""); ?>">
 		    <input type="hidden" name="action" value="profile-update" />
+            <div class="tabbable">
+                <ul class="nav nav-tabs">
+                    <li class="active"><a href="#tab1" data-toggle="tab"><?php echo $translate->_("Personal Information") ?></a></li>
+                    <?php
+                    if ($metadata) {
+                    ?>
+                    <li class=""><a href="#tab2" data-toggle="tab"><?php echo $translate->_("Extended Profile") ?></a></li>
+                    <?php
+                    }
+                    ?>
+                    <li class=""><a href="#tab3" data-toggle="tab"><?php echo $translate->_("Account Information") ?></a></li>
+                    <?php
+                    if ($custom_fields) {
+                    ?>
+                    <li class=""><a href="#tab4" data-toggle="tab"><?php echo $translate->_("Department Specific Information") ?></a></li>
+                    <?php
+                    }
+                    ?>
 
-            <fieldset>
-                <legend>Personal Information</legend>
+                </ul>
+                <div class="tab-content">
+                <div class="tab-pane active" id="tab1">
+                <div id="profile-image-container" class="pull-right">
+                    <a href="#upload-image" id="upload-image-modal-btn" data-toggle="modal" class="btn btn-primary" id="upload-profile-image">Upload Photo</a>
+                    <?php
 
+                    $photo_object = Models_User_Photo::get($user_data["id"], Models_User_Photo::UPLOADED);
+
+                    if ($photo_object) {
+                        $uploaded_photo = $photo_object->toArray();
+                    }
+                    ?>
+                    <span>
+                        <img src="<?php echo webservice_url("photo", array($ENTRADA_USER->getID(), $uploaded_photo ? "upload" : "official"))."/".time(); ?>" class="img-polaroid" />
+                    </span>
+                    <div class="btn-group" id="btn-toggle" class="<?php echo $uploaded_photo ? "uploaded" : "official"; ?>">
+                        <a href="#" class="btn btn-small <?php echo $uploaded_photo["photo_active"] == "0" ? "active" : ""; ?>" id="image-nav-left">Official</a>
+                        <?php
+                        if ($uploaded_photo) {
+                            ?>
+                            <a href="#" class="btn btn-small <?php echo $uploaded_photo["photo_active"] == "1" ? "active" : ""; ?>" id="image-nav-right">Uploaded</a>
+                            <?php
+                        }
+                        ?>
+                    </div>
+                </div>
                 <div class="control-group">
                     <?php
                     /*
@@ -380,6 +436,49 @@ if (!defined("IN_PROFILE")) {
                         <span class="input-large lead"><?php echo html_encode($user_data["firstname"]." ".$user_data["lastname"]); ?></span>
                     </div>
                 </div>
+
+                <?php
+                    // Generational Suffix / Post-nominal letters fields
+                    $settings = new Entrada_Settings();
+                    if ($settings->read("profile_name_extensions")) {
+                ?>
+                    <div class="control-group">
+                        <label class="control-label" for="suffix_gen">Generational Suffix:</label>
+                        <div class="controls">
+                            <select id="suffix_gen" name="suffix_gen" class="input-small">
+                                <option value=""<?php echo ((!isset($result["suffix_gen"])) ? " selected=\"selected\"" : ""); ?>></option>
+                                <?php
+                                if ((@is_array($PROFILE_NAME_SUFFIX_GEN)) && (@count($PROFILE_NAME_SUFFIX_GEN))) {
+                                    foreach($PROFILE_NAME_SUFFIX_GEN as $key => $suffix_gen) {
+                                        echo "<option value=\"".html_encode($suffix_gen)."\"".(((isset($user_data["suffix_gen"])) && ($user_data["suffix_gen"] == $suffix_gen)) ? " selected=\"selected\"" : "").">".html_encode($suffix_gen)."</option>\n";
+                                    }
+                                }
+                                ?>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <label class="control-label" for="suffix_post_nominal">Post-nominal letters:</label>
+                        <div class="controls">
+                            <select id="suffix_post_nominal" name="suffix_post_nominal[]" multiple class="input-small">
+                                 <?php
+                                 if ((@is_array($PROFILE_NAME_SUFFIX_POST_NOMINAL)) && (@count($PROFILE_NAME_SUFFIX_POST_NOMINAL))) {
+                                     foreach($PROFILE_NAME_SUFFIX_POST_NOMINAL as $key => $suffix_post_nominal) {
+                                         //checks if the value is in the selected array
+                                         if (isset($suffixes_post_nominal_array) && is_array($suffixes_post_nominal_array)) {
+                                             $in = in_array($suffix_post_nominal, $suffixes_post_nominal_array);
+                                         }
+                                         echo "<option value='" . html_encode($suffix_post_nominal) . "'" . ($in ? " selected='selected' " : "") . ">" . html_encode($suffix_post_nominal) . "</option>\n";
+                                     }
+                                 }
+                                 ?>
+                             </select>
+                        </div>
+                    </div>
+                <?php
+                    }
+                ?>
 
                 <div class="control-group">
                     <label class="control-label" for="email">Primary E-mail:</label>
@@ -476,7 +575,7 @@ if (!defined("IN_PROFILE")) {
                     </div>
                 </div>
                 <div class="control-group">
-                    <label class="control-label" for="prov_state">Province:</label>
+                    <label class="control-label" for="prov_state"><?php echo $translate->_("Province / State"); ?>:</label>
                     <div class="controls">
                         <div id="prov_state_div" class="padding5v">Please select a <strong>Country</strong> from above first.</div>
                     </div>
@@ -494,9 +593,9 @@ if (!defined("IN_PROFILE")) {
                     </div>
                 </div>
                 <div class="control-group">
-                    <label class="control-label" for="postcode">Postal Code:</label>
+                    <label class="control-label" for="postcode"><?php echo $translate->_("Postal Code"); ?>:</label>
                     <div class="controls">
-                        <input class="input-large" name="postcode" id="postcode" type="text" placeholder="Example: K7L 3N6" value="<?php echo html_encode($user_data["postcode"]); ?>" />
+                        <input class="input-large" name="postcode" id="postcode" type="text" placeholder="<?php echo $translate->_("Example"); ?>: <?php echo DEFAULT_POSTALCODE; ?>" value="<?php echo html_encode($user_data["postcode"]); ?>" />
                     </div>
                 </div>
                 <?php
@@ -511,9 +610,19 @@ if (!defined("IN_PROFILE")) {
                     <?php
                 }
                 ?>
-            </fieldset>
-            <fieldset>
-                <legend><?php echo APPLICATION_NAME; ?> Account Information</legend>
+                </div> <!-- #tab1 -->
+                <?php
+                if ($metadata) {
+                ?>
+                <div class="tab-pane" id="tab2">
+                    <?php
+                    viewMetaDataTable_User($ENTRADA_USER);
+                    ?>
+                </div> <!-- #tab2 -->
+                <?php
+                }
+                ?>
+                <div class="tab-pane" id="tab3">
                 <div class="control-group">
                     <label class="control-label">Username:</label>
                     <div class="controls">
@@ -541,17 +650,30 @@ if (!defined("IN_PROFILE")) {
                         </div>
                     </div>
                 </div>
+				<div class="control-group">
+					<label class="control-label">PIN:</label>
+					<div class="controls">
+						<?php if (!$user_data["pin"]) { ?>
+							<input type="text" name="pin" class="input-large pin-input" maxlength="6" value="<?php echo (isset($invalid_pin) ? html_encode($invalid_pin) : "") ?>" placeholder="<?php echo $translate->_("Enter a 4 to 6 digit PIN") ?>" />
+						<?php } else { ?>
+							<input type="text" name="pin" class="input-large pin-input <?php echo (isset($invalid_pin) ? "" : "hide") ?>" value="<?php echo (isset($invalid_pin) ? html_encode($invalid_pin) : "") ?>" maxlength="6" placeholder="<?php echo $translate->_("Enter a 4 to 6 digit PIN") ?>" />
+							<span class="input-large uneditable-input <?php echo (isset($invalid_pin) ? "hide" : "") ?>" id="pin-entered"><?php echo $translate->_("Your PIN has been set"); ?></span>
+							<a href="#" id="reset-pin-btn" class="btn btn-default <?php echo (isset($invalid_pin) ? "hide" : "") ?>"><?php echo $translate->_("Reset my PIN") ?></a>
+							<a href="#" id="cancel-pin-btn" class="btn btn-default <?php echo (isset($invalid_pin) ? "" : "hide") ?>"><?php echo $translate->_("Cancel") ?></a>
+						<?php } ?>
+					</div>
+				</div>
                 <div class="control-group">
                     <label class="control-label">Last Login:</label>
                     <div class="controls">
-                        <span class="input-large uneditable-input"><?php echo ((!$_SESSION["details"]["lastlogin"]) ? "Your first login" : date(DEFAULT_DATE_FORMAT, $_SESSION["details"]["lastlogin"])); ?></span>
+                        <span class="input-large uneditable-input"><?php echo ((!$_SESSION["details"]["lastlogin"]) ? "Your first login" : date(DEFAULT_DATETIME_FORMAT, $_SESSION["details"]["lastlogin"])); ?></span>
                     </div>
                 </div>
-            </fieldset>
+                </div> <!-- #tab3 -->
+                <div class="tab-pane" id="tab4">
 			<?php
 			load_rte();
 			if ($custom_fields) {
-				echo "<h2>Department Specific Information</h2>";
 				add_notice("The information below has been requested by departments the user is a member of. This information is considered public and may be published on department websites.");
 				echo display_notice();
 				echo "<div class=\"tabbable departments\">";
@@ -620,11 +742,17 @@ if (!defined("IN_PROFILE")) {
 				echo "</div>";
 			}
 			?>
+            </div> <!-- #tab4 -->
+            </div> <!-- tab-content -->
+            </div> <!-- tabbable -->
 			<div>
 				<div class="pull-right">
 					<input type="submit" class="btn btn-primary btn-large" value="Save Profile" />
 				</div>
 			</div>
+			<?php if (isset($invalid_pin)) { ?>
+				<input type="hidden" name="validate_pin" value="1" />
+			<?php } ?>
 		</form>
 		</div>
 		<div id="upload-image" class="modal hide" tabindex="-1" role="dialog" aria-labelledby="label" aria-hidden="true">

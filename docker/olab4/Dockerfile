@@ -19,6 +19,10 @@ RUN echo root:password | chpasswd && yum install -y passwd
 
 # Install Inline with Upstream Stable (IUS), which also enables EPEL.
 RUN yum -y install https://centos7.iuscommunity.org/ius-release.rpm
+RUN yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+RUN yum -y install http://rpms.remirepo.net/enterprise/remi-release-7.rpm
+RUN yum install yum-utils
+RUN yum-config-manager --enable remi-php72
 
 # Install Python and Supervisor.
 RUN yum -y install python-setuptools
@@ -47,22 +51,22 @@ RUN yum -y install git \
                 httpd \
                 dos2unix \
                 mod_ssl \
-                php56u \
-                php56u-mcrypt \
-                php56u-gd \
-                php56u-devel \
-                php56u-mysql \
-                php56u-intl \
-                php56u-mbstring \
-                php56u-pecl-xdebug \
-                php56u-bcmath \
-                php56u-ldap \
-                php56u-imap \
-                php56u-pspell \
-                php56u-soap \
-                php56u-xmlrpc \
-                php56u-tidy \
-                php56u-opcache \
+                php \
+                php-mcrypt \
+                php-gd \
+                php-devel \
+                php-mysql \
+                php-intl \
+                php-mbstring \
+                php-pecl-xdebug \
+                php-bcmath \
+                php-ldap \
+                php-imap \
+                php-pspell \
+                php-soap \
+                php-xmlrpc \
+                php-tidy \
+                php-opcache \
                 mariadb-client \
                 mariadb-server
 
@@ -86,9 +90,13 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 RUN echo "IncludeOptional vhosts.d/*.conf" >> /etc/httpd/conf/httpd.conf
 
 # Install PHPMyAdmin
-RUN yum -y install phpmyadmin
+# RUN yum -y install phpmyadmin
 COPY apache/phpmyadmin.conf /etc/httpd/conf.d/phpmyadmin.conf
+RUN mkdir /etc/phpMyAdmin
 COPY phpMyAdmin/config.inc.php /etc/phpMyAdmin/config.inc.php
+COPY phpMyAdmin/phpmyadmin_install.sh /usr/bin
+RUN chmod +x /usr/bin/phpmyadmin_install.sh
+RUN /usr/bin/phpmyadmin_install.sh
 
 # Install Capistrano for deployment recipes.
 RUN gem install capistrano -v 2.15.9

@@ -122,6 +122,48 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 
                     break;
 
+                case "get_group_by_id" :
+                    if(isset(${$request_var}["cgroup_id"]) && $tmp_input = clean_input(${$request_var}["cgroup_id"], ["int", "nows"])) {
+                        $PROCESSED["cgroup_id"] = $tmp_input;
+                    }
+
+                    if (isset($PROCESSED["cgroup_id"])) {
+                        $group_audiences = Models_Course_Group_Audience::getAllByGroupID($PROCESSED["cgroup_id"]);
+                        if ($group_audiences) {
+                            echo json_encode(array("status" => "success", "data" => $group_audiences));
+                        } else {
+                            echo json_encode(array("status" => "error", "data" => $translate->_("No course group found")));
+                        }
+                    }
+
+                    break;
+
+                case "get_groups_by_assessment_id" :
+                    if(isset(${$request_var}["assessment_id"]) && $tmp_input = clean_input(${$request_var}["assessment_id"], ["int", "nows"])) {
+                        $PROCESSED["assessment_id"] = $tmp_input;
+                    }
+
+                    if (isset($PROCESSED["assessment_id"])) {
+                        $groups_model = new Models_Assessment_Group(array("assessment_id" => $PROCESSED["assessment_id"]));
+                        $groups = $groups_model->fetchAllWithGroupNameByAssessmentID();
+
+                        $group_ids = Array();
+                        if ($groups) {
+                            foreach ($groups as $group) {
+                                $group_ids[] = $group["cgroup_id"];
+                            }
+                        }
+
+                        $group_audiences = Models_Course_Group_Audience::getAllByGroupIDs($group_ids);
+                        if ($group_audiences) {
+                            echo json_encode(array("status" => "success", "data" => $group_audiences));
+                        } else {
+                            echo json_encode(array("status" => "error", "data" => $translate->_("No course group found")));
+                        }
+                    }
+
+                    break;
+
                 case "get_assigned_learners":
                     $student_ids = Models_Gradebook_Assessment_Graders::fetchLearnersProxyIdByAssessmentGrader($assessment_id);
 

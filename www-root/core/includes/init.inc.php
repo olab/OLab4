@@ -36,6 +36,7 @@ require_once("config/settings.inc.php");
 header("X-Frame-Options: SAMEORIGIN");
 
 require_once("functions.inc.php");
+require_once("displayFunctions.inc.php");
 require_once("dbconnection.inc.php");
 require_once("cache.inc.php");
 require_once("Classes/users/User.class.php");
@@ -118,6 +119,17 @@ $translate->addTranslation(
 	)
 );
 $DEFAULT_TEXT_LABELS = $translate->_("default");
+
+/**
+ * Initialize Flysystem for storage of Learning Objects. This will be rolled out more deliberately
+ * in future versions, but for now we're just using the global $filesystem object.
+ *
+ * Not a good idea because of the fact here is global, could lead to unintended class name collisions.
+ * use League\Flysystem\Adapter\Local;
+ * use League\Flysystem\Filesystem;
+ */
+$adapter = new League\Flysystem\Adapter\Local($config->entrada_storage);
+$filesystem = new League\Flysystem\Filesystem($adapter);
 
 $ADODB_CACHE_DIR = CACHE_DIRECTORY;
 $time_start = getmicrotime();

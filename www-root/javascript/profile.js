@@ -56,8 +56,38 @@ jQuery(document).ready(function ($) {
 	$("#country_id").on("change", function() {
 		getProvinces($(this).val());
 	});
-	
-	
+
+	$("#reset-pin-btn").on("click", function (e) {
+		$(this).addClass("hide");
+		$("#pin-entered").addClass("hide");
+		$("#cancel-pin-btn").removeClass("hide");
+		$(".pin-input").removeClass("hide");
+
+		var validation_flag_input = $(document.createElement("input")).attr({type: "hidden", name: "validate_pin", value: "1"});
+		$("#profile-update").append(validation_flag_input);
+
+		e.preventDefault();
+	});
+
+	$("#cancel-pin-btn").on("click", function (e) {
+		$(this).addClass("hide");
+		$("#reset-pin-btn").removeClass("hide");
+		$("#pin-entered").removeClass("hide");
+		$(".pin-input").val("").addClass("hide");
+
+		$("input[name=\"validate_pin\"]").remove();
+		e.preventDefault();
+	});
+
+	$("input[name=\"pin\"]").on("blur", function () {
+		if ($(this).val()) {
+			var validation_flag_input = $(document.createElement("input")).attr({type: "hidden", name: "validate_pin", value: "1"});
+			$("#profile-update").append(validation_flag_input);
+		} else {
+			$("input[name=\"validate_pin\"]").remove();
+		}
+	});
+
 	function getProvinces(country_id) {
 		var target_request = $.ajax({
 			url: ENTRADA_URL+'/api/province.api.php',
@@ -116,7 +146,7 @@ jQuery(function(){
 		jQuery("#current_password, #new_password, #new_password_confirm").attr("value", "");
 	});
 
-	jQuery("#reset-hash").live("click", function() {
+	jQuery(document).on("click", "#reset-hash", function() {
 		jQuery.ajax({
 			url : ENTRADA_URL + "/profile",
 			data : "ajax_action=generatehash",
@@ -130,7 +160,7 @@ jQuery(function(){
 		jQuery("#reset-hash-modal").modal("hide");
 	});
 
-	jQuery("#btn-toggle .btn").live("click", function() {
+	jQuery(document).on("click", "#btn-toggle .btn", function() {
 		var clicked = jQuery(this);
 		if (!clicked.parent().hasClass(clicked.html().toLowerCase())) {
 			jQuery.ajax({
@@ -250,7 +280,7 @@ jQuery(function(){
 		}
 	});
 
-	jQuery("#upload-image-button").live("click", function(){
+	jQuery(document).on("click", "#upload-image-button", function(){
 		if (window.FileReader) {
 			if (typeof jQuery(".preview-image").attr("src") != "undefined") {
 				jQuery("#upload_profile_image_form").submit();
@@ -308,7 +338,7 @@ jQuery(function(){
 		}
 	});
 
-	jQuery("#image").live("change", function(){
+	jQuery(document).on("change", "#image", function(){
 		var files = jQuery(this).prop("files");
 
 		if (files && files[0]) {

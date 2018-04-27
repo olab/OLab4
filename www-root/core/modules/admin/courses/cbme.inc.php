@@ -17,8 +17,8 @@
  *
  * @author Organisation: Queen's University
  * @author Unit: School of Medicine
- * @author Developer: James Ellis <james.ellis@queensu.ca>
- * @copyright Copyright 2011 Queen's University. All Rights Reserved.
+ * @author Developer: Josh Dillon <jdillon@queensu.ca>
+ * @copyright Copyright 2016 Queen's University. All Rights Reserved.
  *
  */
 
@@ -27,7 +27,7 @@ if (!defined("PARENT_INCLUDED")) {
 } elseif ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
     header("Location: ".ENTRADA_URL);
     exit;
-} elseif (!$ENTRADA_ACL->amIAllowed("course", "update", false)) {
+} elseif (!$ENTRADA_ACL->amIAllowed("coursecontent", "update", false)) {
     $ONLOAD[]	= "setTimeout('window.location=\\'".ENTRADA_URL."/admin/".$MODULE."\\'', 15000)";
 
     $ERROR++;
@@ -39,9 +39,26 @@ if (!defined("PARENT_INCLUDED")) {
 } else {
     define("IN_CBME", true);
 
-    $BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/".$MODULE."/cbme?".replace_query(array("section" => false, "id" => $COURSE_ID, "step" => false)), "title" => $translate->_("Manage CBME"));
+    /*
+     * Unfortunately, not all files with the CBME folder are including $_GET["id"]. They should be, always, but
+     * they're not. So we have to do this for now.
+     */
+    if ($COURSE_ID) {
+        $course = Models_Course::get($COURSE_ID);
+        if ($course && $ENTRADA_ACL->amIAllowed(new CourseContentResource($course->getID(), $course->getOrganisationID()), "update")) {
+            $BREADCRUMB[] = array("title" => $course->getCourseCode());
+            echo "<h1 id=\"page-top\">" . $course->getFullCourseTitle() . "</h1>";
+        } else {
+            application_log("error", "The provided course_id [" . $COURSE_ID . "] was not found, and it really should have been since it was provided.");
 
-    if (($router) && ($router->initRoute())) {
+            header("Location: " . ENTRADA_URL . "/admin/courses");
+            exit;
+        }
+    }
+
+    $BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/".$MODULE."/cbme?".replace_query(array("section" => false, "id" => $COURSE_ID, "step" => false)), "title" => $translate->_("CBME"));
+
+    if ($router && $router->initRoute()) {
         $module_file = $router->getRoute();
         if ($module_file) {
             require_once($module_file);
@@ -58,4 +75,3 @@ if (!defined("PARENT_INCLUDED")) {
      */
     preferences_update($MODULE, $PREFERENCES);
 }
-?>

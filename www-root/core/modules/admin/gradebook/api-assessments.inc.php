@@ -38,21 +38,23 @@ if ($ENTRADA_ACL->isUserAuthorized("gradebook", "update", false, array("PARENT_I
     $url_params = Entrada_Utilities::getCleanUrlParams(array('cperiod_id' => 'int', 'search' => array('trim', 'striptags'), 'method' => array('trim', 'striptags')));
 
     switch ($request) {
-        case 'POST':
+        case "POST":
 
-            switch ($url_params['method']) {
+            switch ($url_params["method"]) {
                 
-                case 'update-assessments-order':
+                case "update-assessments-order":
 
                     $error = false;
 
-                    if ($_POST['new_order']) {
+                    if ($_POST["new_order"]) {
 
                         $i = 0;
-                        foreach($_POST['new_order'] as $raw_assessment_id) {
+                        foreach($_POST["new_order"] as $raw_assessment_id) {
                             $i++;
-                            $assessment_id = clean_input($raw_assessment_id, 'int');
-                            $assessment = new Models_Gradebook_Assessment(array('assessment_id' => $assessment_id));
+                            $assessment_id = clean_input($raw_assessment_id, "int");
+//                            $assessment = new Models_Gradebook_Assessment(array('assessment_id' => $assessment_id));
+                            // This must be done to preserve course_id, cperiod_id and other fields
+                            $assessment = Models_Gradebook_Assessment::fetchRowByID($assessment_id);
                             $assessment->setOrder($i);
                             $update = $assessment->update(array("assessment_id", "order"));
                         }
@@ -60,12 +62,12 @@ if ($ENTRADA_ACL->isUserAuthorized("gradebook", "update", false, array("PARENT_I
                     } else {
                         // $_POST['assessments'] is not set
                         $error = true;
-                        $response = array('status' => 'fail', 'message' => $translate->_('No assessments were set to be updated.'));
+                        $response = array("status" => "fail", "message" => $translate->_("No assessments were set to be updated."));
                     }
                     
                     // After all is run, return a success if no errors occured
                     if (!$error) {
-                        $response = array('status' => 'success', 'assessments' => $update);
+                        $response = array("status" => "success", "assessments" => $update);
                     }
 
                     // echo response
@@ -73,40 +75,40 @@ if ($ENTRADA_ACL->isUserAuthorized("gradebook", "update", false, array("PARENT_I
 
                 break;
 
-                case 'set-order':
+                case "set-order":
 
                     $error = false;
 
                     // if this isn't set, no info to update
-                    if ($_POST['assessments']) {
+                    if ($_POST["assessments"]) {
 
-                        foreach($_POST['assessments'] as $raw_assessment) {
+                        foreach($_POST["assessments"] as $raw_assessment) {
 
                             // clean inputs
-                            $assessment_id = clean_input($raw_assessment['assessment_id'], 'int');
-                            $order = clean_input($raw_assessment['order'], 'int');
+                            $assessment_id = clean_input($raw_assessment["assessment_id"], "int");
+                            $order = clean_input($raw_assessment["order"], "int");
 
                             // if both are present and are integers, update the order for that assessment
                             if (is_int($assessment_id) && is_int($order)) {
-                                $assignment = new Models_Gradebook_Assessment(array('assessment_id' => $assessment_id));
+                                $assignment = new Models_Gradebook_Assessment(array("assessment_id" => $assessment_id));
                                 $assignment->setOrder($order);
-                                $update = $assignment->update(array('assessment_id', 'order'));
+                                $update = $assignment->update(array("assessment_id", "order"));
                             } else {
                                 // if either id or order are not present
                                 $error = true;
-                                $response = array('status' => 'fail', 'message' => $translate->_('Missing assignment id or order.'));
+                                $response = array("status" => "fail", "message" => $translate->_("Missing assignment id or order."));
                             }
                         }
 
                     } else {
-                        // $_POST['assessments'] is not set
+                        // $_POST["assessments"] is not set
                         $error = true;
-                        $response = array('status' => 'fail', 'message' => $translate->_('No assessments were set to be updated.'));
+                        $response = array("status" => "fail", "message" => $translate->_("No assessments were set to be updated."));
                     }
                     
                     // After all is run, return a success if no errors occured
                     if (!$error) {
-                        $response = array('status' => 'success', 'assessments' => $raw_assessment);
+                        $response = array("status" => "success", "assessments" => $raw_assessment);
                     }
 
                     // echo response
@@ -114,16 +116,16 @@ if ($ENTRADA_ACL->isUserAuthorized("gradebook", "update", false, array("PARENT_I
 
                 break;
 
-                case 'copy':
+                case "copy":
 
                     $error = false;
 
                     // Parse serialized string
-                    parse_str($_POST['assessments'], $raw_assessments);
+                    parse_str($_POST["assessments"], $raw_assessments);
 
                     // Clean each input
-                    foreach($raw_assessments['assessments'] as $raw_assessment) {
-                        $assessment_ids[] = clean_input($raw_assessment, array('int'));
+                    foreach($raw_assessments["assessments"] as $raw_assessment) {
+                        $assessment_ids[] = clean_input($raw_assessment, array("int"));
                     }
 
                     // Get all records within ID array
@@ -134,7 +136,7 @@ if ($ENTRADA_ACL->isUserAuthorized("gradebook", "update", false, array("PARENT_I
                     foreach($assessments as $assessment) {
 
                         // Set the new cperiod_id
-                        $assessment->setCurriculumPeriodID($url_params['cperiod_id']);
+                        $assessment->setCurriculumPeriodID($url_params["cperiod_id"]);
 
                         // Set group assessment to false for all copied assessment
                         $assessment->setGroupAssessment(false);
@@ -145,7 +147,7 @@ if ($ENTRADA_ACL->isUserAuthorized("gradebook", "update", false, array("PARENT_I
                         // Insert each
                         if (!$new_assessment = $assessment->insertRemoveID()) {
                             $error = true;
-                            $response = array('status' => 'fail', 'message' => $translate->_('Could not insert record.'));
+                            $response = array("status" => "fail", "message" => $translate->_("Could not insert record."));
                         } else {
 
                             // Get new dropbox
@@ -234,7 +236,7 @@ if ($ENTRADA_ACL->isUserAuthorized("gradebook", "update", false, array("PARENT_I
                     }
 
                     if (!$error) {
-                        $response = array('status' => 'success');
+                        $response = array("status" => "success");
                     }
 
                     // echo response
@@ -242,16 +244,16 @@ if ($ENTRADA_ACL->isUserAuthorized("gradebook", "update", false, array("PARENT_I
 
                 break;
 
-                case 'delete':
+                case "delete":
 
                     $error = false;
 
                     // Parse serialized string
-                    parse_str($_POST['assessments'], $raw_assessments);
+                    parse_str($_POST["assessments"], $raw_assessments);
 
                     // Clean each input
-                    foreach($raw_assessments['assessments'] as $raw_assessment) {
-                        $assessment_ids[] = clean_input($raw_assessment, array('int'));
+                    foreach($raw_assessments["assessments"] as $raw_assessment) {
+                        $assessment_ids[] = clean_input($raw_assessment, array("int"));
                     }
 
                     // Get all records within ID array
@@ -266,12 +268,12 @@ if ($ENTRADA_ACL->isUserAuthorized("gradebook", "update", false, array("PARENT_I
                         // Insert each
                         if (!$assessment->update()) {
                             $error = true;
-                            $response = array('status' => 'fail', 'message' => $translate->_('Could not delete record.'));
+                            $response = array("status" => "fail", "message" => $translate->_("Could not delete record."));
                         }
                     }
 
                     if (!$error) {
-                        $response = array('status' => 'success');
+                        $response = array("status" => "success");
                     }
 
                     // echo response
@@ -279,48 +281,48 @@ if ($ENTRADA_ACL->isUserAuthorized("gradebook", "update", false, array("PARENT_I
 
                 break;
 
-                case 'add-collection':
+                case "add-collection":
 
-                    $title = clean_input($_POST['title'], array("notags", "trim"));
-                    $description = clean_input($_POST['description'], array("notags", "trim"));
-                    $course_id = clean_input($_POST['id'], array('int'));
+                    $title = clean_input($_POST["title"], array("notags", "trim"));
+                    $description = clean_input($_POST["description"], array("notags", "trim"));
+                    $course_id = clean_input($_POST["id"], array("int"));
 
                     if (!empty($title)) {
 
                         $collection_by_title = Models_Gradebook_Assessment_Collection::fetchRowByTitle($title, $course_id);
                         // disallow add a new collection with a redundant name
                         if ($collection_by_title) {
-                            $response = array('status' => 'abort', 'collection_id' => $collection_by_title->getID());
+                            $response = array("status" => "abort", "collection_id" => $collection_by_title->getID());
                         } else {
                             $collection = new Models_Gradebook_Assessment_Collection(array("title" => $title, "description" => $description, "course_id" => $course_id));
                             $row = $collection->insert();
                             
                             if ($row) {
-                                $html = '<option value="'. $row->getID() .'" desc="' . $row->getDescription() . '">'. $row->getTitle() . '</option>';
-                                $response = array('status' => 'success', 'data' => $html);
+                                $html = "<option value=\"" . $row->getID() . "\" desc=\"" . $row->getDescription() ."\">". $row->getTitle() . "</option>";
+                                $response = array("status" => "success", "data" => $html);
                             } else {
-                                $response = array('status' => 'fail', 'message' => $translate->_('Could not insert record.'));
+                                $response = array("status" => "fail", "message" => $translate->_("Could not insert record."));
                             }
                         }
                     } else {
-                        $response = array('status' => 'fail', 'message' => "please fill in the title field.");
+                        $response = array("status" => "fail", "message" => "please fill in the title field.");
                     }
 
                     echo json_encode($response);
 
                 break;
 
-                case 'add-to-collection':
+                case "add-to-collection":
                     
                     $error = false;
                     
-                    parse_str($_POST['assessments'], $raw_assessments);
+                    parse_str($_POST["assessments"], $raw_assessments);
                     
                     // Clean each input
-                    foreach($raw_assessments['assessments'] as $raw_assessment) {
-                        $assessment_ids[] = clean_input($raw_assessment, array('int'));
+                    foreach($raw_assessments["assessments"] as $raw_assessment) {
+                        $assessment_ids[] = clean_input($raw_assessment, array("int"));
                     }
-                    $collection_id = clean_input($_POST['collection_id']);
+                    $collection_id = clean_input($_POST["collection_id"]);
                    
                     if (count($assessment_ids)) {
                         foreach ($assessment_ids as $assessment_id) {
@@ -338,24 +340,24 @@ if ($ENTRADA_ACL->isUserAuthorized("gradebook", "update", false, array("PARENT_I
                     }
 
                     if (!$error) {
-                        $response = array('status' => 'success', 'message' => $translate->_('Update table assessments successfully.'));
+                        $response = array("status" => "success", "message" => $translate->_("Update table assessments successfully."));
                     } else {
-                        $response = array('status' => 'fail', 'message' => $translate->_('Could not update table assessments.'));
+                        $response = array("status" => "fail", "message" => $translate->_("Could not update table assessments."));
                     }
 
                     echo json_encode($response);
 
                 break;
 
-                case 'remove-from-collection':
+                case "remove-from-collection":
 
                     $error = false;
                     
-                    parse_str($_POST['assessments'], $raw_assessments);
+                    parse_str($_POST["assessments"], $raw_assessments);
                     
                     // Clean each input
-                    foreach($raw_assessments['assessments'] as $raw_assessment) {
-                        $assessment_ids[] = clean_input($raw_assessment, array('int'));
+                    foreach($raw_assessments["assessments"] as $raw_assessment) {
+                        $assessment_ids[] = clean_input($raw_assessment, array("int"));
                     }
 
                     if (count($assessment_ids)) {
@@ -374,19 +376,19 @@ if ($ENTRADA_ACL->isUserAuthorized("gradebook", "update", false, array("PARENT_I
                     }
 
                     if (!$error) {
-                        $response = array('status' => 'success', 'message' => $translate->_('Update assessments successfully.'));
+                        $response = array("status" => "success", "message" => $translate->_("Update assessments successfully."));
                     } else {
-                        $response = array('status' => 'fail', 'message' => $translate->_('Could not update table assessments.'));
+                        $response = array("status" => "fail", "message" => $translate->_("Could not update table assessments."));
                     }
 
                     echo json_encode($response);
 
                 break;
 
-                case 'update-collection':
-                    $collection_id = clean_input($_POST['collection_id'], array("int"));
-                    $title = clean_input($_POST['title'], array("notags", "trim"));
-                    $description = clean_input($_POST['description'], array("notags", "trim"));
+                case "update-collection":
+                    $collection_id = clean_input($_POST["collection_id"], array("int"));
+                    $title = clean_input($_POST["title"], array("notags", "trim"));
+                    $description = clean_input($_POST["description"], array("notags", "trim"));
 
                     if (!empty($title) && !empty($collection_id)) {
                         $collection = Models_Gradebook_Assessment_Collection::fetchRowByID($collection_id);
@@ -394,26 +396,26 @@ if ($ENTRADA_ACL->isUserAuthorized("gradebook", "update", false, array("PARENT_I
                         $collection->setDescription($description);
 
                         if ($collection->update()) {
-                            $response = array('status' => 'success', 'message' => $translate->_('Successfully update record.'));
+                            $response = array("status" => "success", "message" => $translate->_("Successfully update record."));
                         } else {
-                            $response = array('status' => 'fail', 'message' => $translate->_('Could not update record.'));
+                            $response = array("status" => "fail", "message" => $translate->_("Could not update record."));
                         }
                     } else {
-                        $response = array('status' => 'fail', 'message' => "please fill in the title field.");
+                        $response = array("status" => "fail", "message" => "please fill in the title field.");
                     }
 
                     echo json_encode($response);
                 
                 break;
 
-                case 'empty-collection':
+                case "empty-collection":
 
                     $error = false;
                     
-                    parse_str($_POST['collections'], $raw_collections);
+                    parse_str($_POST["collections"], $raw_collections);
                     // Clean each input
-                    foreach($raw_collections['collections'] as $raw_collection) {
-                        $collection_ids[] = clean_input($raw_collection, array('int'));
+                    foreach($raw_collections["collections"] as $raw_collection) {
+                        $collection_ids[] = clean_input($raw_collection, array("int"));
                     }
 
                     $assessments = Models_Gradebook_Assessment::fetchAssessmentsByCollectionIds($collection_ids);
@@ -431,24 +433,24 @@ if ($ENTRADA_ACL->isUserAuthorized("gradebook", "update", false, array("PARENT_I
                     }
 
                     if (!$error) {
-                        $response = array('status' => 'success', 'message' => $translate->_('Update assessments successfully.'));
+                        $response = array("status" => "success", "message" => $translate->_("Update assessments successfully."));
                     } else {
-                        $response = array('status' => 'fail', 'message' => $error);
+                        $response = array("status" => "fail", "message" => $error);
                     }
 
                     echo json_encode($response);
 
                 break;
 
-                case 'delete-collection':
+                case "delete-collection":
 
                     $error = false;
                     
-                    parse_str($_POST['collections'], $raw_collections);
+                    parse_str($_POST["collections"], $raw_collections);
                     
                     // Clean each input
-                    foreach($raw_collections['collections'] as $raw_collection) {
-                        $collection_ids[] = clean_input($raw_collection, array('int'));
+                    foreach($raw_collections["collections"] as $raw_collection) {
+                        $collection_ids[] = clean_input($raw_collection, array("int"));
                     }
 
                     // do we need to check if these collection_ids are not in the assessments table before purging from assessment_collections table?
@@ -463,9 +465,9 @@ if ($ENTRADA_ACL->isUserAuthorized("gradebook", "update", false, array("PARENT_I
                     }
 
                     if (!$error) {
-                        $response = array('status' => 'success', 'message' => $translate->_('Deactivated collections successfully.'));
+                        $response = array("status" => "success", "message" => $translate->_("Deactivated collections successfully."));
                     } else {
-                        $response = array('status' => 'fail', 'message' => $error);
+                        $response = array("status" => "fail", "message" => $error);
                     }
 
                     echo json_encode($response);
@@ -475,24 +477,24 @@ if ($ENTRADA_ACL->isUserAuthorized("gradebook", "update", false, array("PARENT_I
 
         break;
 
-        case 'GET':
+        case "GET":
 
-            switch ($url_params['method']) {
-                case 'list':
+            switch ($url_params["method"]) {
+                case "list":
 
-                    if ($url_params['cperiod_id'] && $COURSE_ID) {
+                    if ($url_params["cperiod_id"] && $COURSE_ID) {
 
-                        // cperiod_id has been selected, so save the preference in session settings, but for 'courses' and not for 'gradebook'
+                        // cperiod_id has been selected, so save the preference in session settings, but for "courses" and not for "gradebook"
                         $_SESSION[APPLICATION_IDENTIFIER]["courses"]["selected_curriculum_period"] = $url_params["cperiod_id"];
                         
                         // get assessments list with attached assignments and views
                         $assessment_model = new Models_Gradebook_Assessment();
-                        $assessments = $assessment_model->fetchAssessmentsByCurriculumPeriodIDWithAssignments($COURSE_ID, $url_params['cperiod_id']);
+                        $assessments = $assessment_model->fetchAssessmentsByCurriculumPeriodIDWithAssignments($COURSE_ID, $url_params["cperiod_id"]);
                         
                         if ($assessments) {
-                            $response = array('status' => 'success', 'data' => $assessments);
+                            $response = array("status" => "success", "data" => $assessments);
                         } else {
-                            $response = array('status' => 'fail', 'data' => false);
+                            $response = array("status" => "fail", "data" => false);
                         }
 
                         // echo response
@@ -502,48 +504,48 @@ if ($ENTRADA_ACL->isUserAuthorized("gradebook", "update", false, array("PARENT_I
 
                 break;
 
-                case 'fetch-collection-list':
+                case "fetch-collection-list":
 
                     $collections = Models_Gradebook_Assessment_Collection::fetchAllRowsByCourseID($COURSE_ID);
-                    $html = '';
+                    $html = "";
 
                     foreach ($collections as $collection) {
-                        $html .= '<option value="'. $collection->getID() .'" desc="' . $collection->getDescription() . '">'. $collection->getTitle() . '</option>';
+                        $html .= "<option value=\"" . $collection->getID() . "\" desc=\"" . $collection->getDescription() . "\">" . $collection->getTitle() . "</option>";
                     }
 
                     if ($html) {
-                        $response = array('status' => 'success', 'data' => $html);
+                        $response = array("status" => "success", "data" => $html);
                     } else {
-                        $response = array('status' => 'fail', 'data' => false);
+                        $response = array("status" => "fail", "data" => false);
                     }
                     
                     echo json_encode($response);
 
                 break;
 
-                case 'load-table':
+                case "load-table":
 
-                    if ($url_params['cperiod_id'] && $COURSE_ID) {
-                        // cperiod_id has been selected, so save the preference in session settings, but for 'courses' and not for 'gradebook'
+                    if ($url_params["cperiod_id"] && $COURSE_ID) {
+                        // cperiod_id has been selected, so save the preference in session settings, but for "courses" and not for "gradebook"
                         $_SESSION[APPLICATION_IDENTIFIER]["courses"]["selected_curriculum_period"] = $url_params["cperiod_id"];
                         $assessment_model = new Models_Gradebook_Assessment();
-                        $assessments = $assessment_model->fetchAssessmentsByCurriculumPeriodIDWithAssignments($COURSE_ID, $url_params['cperiod_id'], (isset($url_params['search']) ? $url_params['search'] : ''));
+                        $assessments = $assessment_model->fetchAssessmentsByCurriculumPeriodIDWithAssignments($COURSE_ID, $url_params["cperiod_id"], (isset($url_params["search"]) ? $url_params["search"] : ""));
 
                         $datatable = new Views_Gradebook_DivTable(
                             array(
                                 "id" => "datatable-assessments",
                                 "class" => "table table-striped table-bordered",
                                 "assessments" => $assessments,
-                                "search" =>  (isset($url_params['search']) ? $url_params['search'] : '')
+                                "search" =>  (isset($url_params["search"]) ? $url_params["search"] : "")
                             )
                         );
 
                         $html = $datatable->render(array(), false);
 
                         if ($html) {
-                            $response = array('status' => 'success', 'data' => $html);
+                            $response = array("status" => "success", "data" => $html);
                         } else {
-                            $response = array('status' => 'fail', 'data' => false);
+                            $response = array("status" => "fail", "data" => false);
                         }
                         
                         preferences_update("courses");

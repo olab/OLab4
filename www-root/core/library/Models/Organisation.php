@@ -96,7 +96,7 @@ class Models_Organisation extends Models_Base {
     public function getOrganisationEmail () {
         return $this->organisation_email;
     }
-    
+
     public function getOrganisationUrl () {
         return $this->organisation_url;
     }
@@ -136,7 +136,7 @@ class Models_Organisation extends Models_Base {
     public function getAamcProgramName () {
         return $this->aamc_program_name;
     }
-    
+
     public function getActive () {
         return $this->organisation_active;
     }
@@ -167,6 +167,14 @@ class Models_Organisation extends Models_Base {
         $self = new self();
 
         return $self->fetchRow(array("organisation_id" => $organisation_id));
+    }
+
+    public static function fetchRowByOrganisationTitle($organisation_title) {
+        $self = new self();
+
+        return $self->fetchRow(array(
+            array("key" => "organisation_title", "value" => $organisation_title, "method" => "=")
+        ));
     }
 
     public static function fetchAllOrganisations($search_term = null) {
@@ -267,11 +275,41 @@ class Models_Organisation extends Models_Base {
                     AND (b.`access_starts` = '0' OR b.`access_starts` <= ?)
                     AND (b.`access_expires` = '0' OR b.`access_expires` > ?)
                     AND b.`organisation_id` = ?
-                    AND (b.`group` = 'faculty' OR b.`group` = 'staff')
+                    AND b.`group` = ?
                     GROUP BY a.`id`
                     ORDER BY a.`firstname` ASC, a.`lastname` ASC";
 
         $results = $db->GetAll($query, array(time(), time(), $organisation_id, $group));
+        return $results;
+    }
+
+    public function fetchOrganisationUserByID($proxy_id, $organisation_id = null, $group = null) {
+        global $db;
+
+        $groups_string = "";
+        if (is_array($group)) {
+            foreach ($group as $group_name) {
+                $groups_string .= ($groups_string ? ", " : "").$db->qstr($group_name);
+            }
+        }
+
+        $query = "	SELECT a.`id` AS `proxy_id`, a.`firstname`, a.`lastname`, b.`group`, b.`role`, a.`email`
+                    FROM `".AUTH_DATABASE."`.`user_data` AS a
+                    LEFT JOIN `".AUTH_DATABASE."`.`user_access` AS b
+                    ON a.`id` = b.`user_id`
+                    WHERE a.`id` = ".$db->qstr($proxy_id)." 
+                    AND b.`app_id` IN (".AUTH_APP_IDS_STRING.")
+                    AND b.`account_active` = 'true'
+                    AND (b.`access_starts` = '0' OR b.`access_starts` <= ?)
+                    AND (b.`access_expires` = '0' OR b.`access_expires` > ?)
+                    AND b.`organisation_id` = ?
+                
+                    ".(isset($groups_string) && $groups_string ? "AND b.`group` IN (".$groups_string.")" : (isset($group) && $group ? "AND b.`group` = ?" : ""))."
+                    GROUP BY a.`id`
+                    ORDER BY a.`firstname` ASC, a.`lastname` ASC";
+
+
+        $results = $db->GetRow($query, ($groups_string ? array(time(), time(), $organisation_id) : ($group ? array(time(), time(), $organisation_id, $group) : array(time(), time(), $organisation_id))));
         return $results;
     }
 
@@ -289,5 +327,24 @@ class Models_Organisation extends Models_Base {
         $results = $db->GetAll($query);
 
         return $results;
+    }
+
+    public static function fetchAllOrganisationsIAmAllowed() {
+        global $ENTRADA_ACL;
+        global $db;
+        $organisations = array();
+        $results = self::fetchAllOrganisations();
+        if ($results) {
+            $all_organisations = true;
+            foreach ($results as $result) {
+                if ($ENTRADA_ACL->amIAllowed("resourceorganisation".$result["organisation_id"], "read")) {
+                    $organisations[] = $result;
+                    $all_organisations = false;
+                }
+            }
+            return array($all_organisations, $organisations);
+        } else {
+            return array(false, array());
+        }
     }
 }

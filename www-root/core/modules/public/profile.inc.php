@@ -38,7 +38,7 @@ if (!defined("PARENT_INCLUDED")) {
 	application_log("error", "Group [".$GROUP."] and role [".$ROLE."] do not have access to this module [".$MODULE."]");
 } else {
 	define("IN_PROFILE", true);
-	
+
 	$VALID_MIME_TYPES			= array("image/pjpeg" => "jpg", "image/jpeg" => "jpg", "image/jpg" => "jpg", "image/gif" => "gif", "image/png" => "png");
 	$VALID_MAX_FILESIZE			= MAX_UPLOAD_FILESIZE;
 	$VALID_MAX_DIMENSIONS		= array("photo-width" => 216, "photo-height" => 300, "thumb-width" => 75, "thumb-height" => 104);
@@ -111,7 +111,7 @@ if (!defined("PARENT_INCLUDED")) {
  * 
  */
 function add_profile_sidebar () {
-	global $ENTRADA_ACL, $ENTRADA_USER;
+	global $ENTRADA_ACL, $ENTRADA_USER, $translate;
 
 	$sidebar_html  = "<ul class=\"menu\">";
 	$sidebar_html .= "	<li class=\"link\"><a href=\"".ENTRADA_RELATIVE."/profile\">Personal Information</a></li>\n";
@@ -128,7 +128,7 @@ function add_profile_sidebar () {
 		$sidebar_html .= "	<li class=\"link\"><a href=\"".ENTRADA_RELATIVE."/profile/observerships\">My Observerships</a></li>\n";
 		$sidebar_html .= "	<li class=\"link\"><a href=\"".ENTRADA_RELATIVE."/profile/gradebook\">My Gradebooks</a></li>\n";
 		$sidebar_html .= "	<li class=\"link\"><a href=\"".ENTRADA_RELATIVE."/profile/gradebook/assignments\">My Assignments</a></li>\n";
-		$sidebar_html .= "	<li class=\"link\"><a href=\"".ENTRADA_RELATIVE."/profile/eportfolio\">My ePortfolio</a></li>\n";
+		$sidebar_html .= "	<li class=\"link\"><a href=\"".ENTRADA_RELATIVE."/profile/eportfolio\">".$translate->_("My ePortfolio")."</a></li>\n";
 	}
 	
 	$sidebar_html .= "</ul>";
@@ -140,7 +140,7 @@ function add_profile_sidebar () {
  * Processes the personal info update. source data retrieved from POST. modifies the $PROCESSED variable 
  */
 function profile_update_personal_info() {
-	global $PROCESSED, $PROFILE_NAME_PREFIX, $ERROR, $ERRORSTR, $SUCCESS, $SUCCESSSTR, $NOTICE, $NOTICESTR, $PROCESSED_PHOTO, $PROCESSED_PHOTO_STATUS, $PROCESSED_NOTIFICATIONS, $VALID_MIME_TYPES, $ENTRADA_USER;
+	global $db, $PROCESSED, $PROFILE_NAME_PREFIX, $PROFILE_NAME_SUFFIX_GEN, $PROFILE_NAME_SUFFIX_POST_NOMINAL, $ERROR, $ERRORSTR, $SUCCESS, $SUCCESSSTR, $NOTICE, $NOTICESTR, $PROCESSED_PHOTO, $PROCESSED_PHOTO_STATUS, $PROCESSED_NOTIFICATIONS, $VALID_MIME_TYPES, $ENTRADA_USER;
 	
 	if (isset($_POST["custom"]) && $_POST["custom"]) {
 		/*
@@ -207,10 +207,49 @@ function profile_update_personal_info() {
 		$PROCESSED["prefix"] = "";
 	}
 
+
+    /**
+     * Non-required field "suffix_gen" / suffix_gen.
+     */
+    if ((isset($_POST["suffix_gen"])) && (@in_array($suffix_gen = clean_input($_POST["suffix_gen"], "trim"), $PROFILE_NAME_SUFFIX_GEN))) {
+        $PROCESSED["suffix_gen"] = $suffix_gen;
+    } else {
+        $PROCESSED["suffix_gen"] = "";
+    }
+    
+    /**
+     * Non-required field "suffix_post_nominal" / suffix_post_nominal.
+     */
+    $suffix_post_nominal_array = array();
+    if (isset($_POST["suffix_post_nominal"]) && is_array($_POST["suffix_post_nominal"])) {
+        foreach ($_POST["suffix_post_nominal"] as $post_nominal) {
+            if (in_array($suffix_post_nominal = clean_input($post_nominal, "trim"), $PROFILE_NAME_SUFFIX_POST_NOMINAL)) {
+                $suffix_post_nominal_array[] = $suffix_post_nominal;
+            }
+        }
+        $PROCESSED["suffix_post_nominal"] = implode(",", $suffix_post_nominal_array);
+    } else {
+        $PROCESSED["suffix_post_nominal"] = "";
+    }
+    
 	if ((isset($_POST["office_hours"])) && ($office_hours = clean_input($_POST["office_hours"], array("notags","encode", "trim"))) && ($_SESSION["details"]["group"] != "student")) {
 		$PROCESSED["office_hours"] = ((strlen($office_hours) > 100) ? substr($office_hours, 0, 97)."..." : $office_hours);
 	} else {
 		$PROCESSED["office_hours"] = "";
+	}
+
+	if (isset($_POST["validate_pin"])) {
+		if (isset($_POST["pin"]) && $tmp_input = clean_input($_POST["pin"], array("trim", "int"))) {
+			if (strlen($tmp_input) >= 4 && strlen($tmp_input) <= 6) {
+				$PROCESSED["pin"] = Entrada_Assessments_Assessment::generatePINHash($_POST["pin"], $ENTRADA_USER->getSalt());
+			} else {
+				$PROCESSED["invalid_pin"] = $tmp_input;
+				add_error("Your pin must be 4 to 6 digits long.");
+			}
+		} else {
+			add_error("Please enter a numeric PIN");
+			$PROCESSED["invalid_pin"] = "";
+		}
 	}
 		
 	if($_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"] == "faculty") {
@@ -303,7 +342,7 @@ function profile_update_personal_info() {
 			add_success("Your account profile has been successfully updated.");
 
 			application_log("success", "User successfully updated their profile.");
-
+			unset($PROCESSED["invalid_pin"]);
 			if (isset($PROCESSED["custom"])) {
 				foreach ($PROCESSED["custom"] as $field_id => $value) {
 					Models_Profile_Custom_Responses::deleteByFieldIDProxyID($field_id, $ENTRADA_USER->getID());
@@ -326,7 +365,7 @@ function profile_update_privacy() {
 	 * Note: The sessions variable ($_SESSION["details"]["privacy_level"]) is actually being
 	 * changed in index.php on line 268, so that the proper tabs are displayed.
 	 */
-	global $ENTRADA_USER;
+	global $ENTRADA_USER, $ENTRADA_CACHE;
 	
 	if ((isset($_POST["privacy_level"])) && ($privacy_level = (int) trim($_POST["privacy_level"]))) {
 		if ($privacy_level > MAX_PRIVACY_LEVEL) {
@@ -334,6 +373,9 @@ function profile_update_privacy() {
 		}
 		$user = Models_User::fetchRowByID($ENTRADA_USER->getID());
 		if ($user && $user->fromArray(array("privacy_level" => $privacy_level))->update()) {
+            if (isset($ENTRADA_CACHE)) {
+                $ENTRADA_CACHE->remove("user_".AUTH_APP_ID."_".$ENTRADA_USER->getID());
+            }
 			if ((isset($_POST["redirect"])) && (trim($_POST["redirect"]) != "")) {
 				header("Location: ".((isset($_SERVER["HTTPS"])) ? "https" : "http")."://".$_SERVER["HTTP_HOST"].clean_input(rawurldecode($_POST["redirect"]), array("nows", "url")));
 				exit;
@@ -346,7 +388,6 @@ function profile_update_privacy() {
 
 			application_log("error", "Unable to update privacy setting. ");
 		}
-
 	}
 }
 
@@ -492,7 +533,7 @@ function profile_add_assistant() {
 							if ($permission_object->fromArray($PROCESSED)->update()) {
 								add_success("You have successfully updated <strong>".html_encode($fullname)."'s</strong> access permissions to your account.");
 
-								application_log("success", "Updated permissions for proxy_id [".$PROCESSED["assigned_by"]."] who is allowing [".$PROCESSED["assigned_by"]."] accecss to their account from ".date(DEFAULT_DATE_FORMAT, $PROCESSED["valid_from"])." until ".date(DEFAULT_DATE_FORMAT, $PROCESSED["valid_until"]));
+								application_log("success", "Updated permissions for proxy_id [".$PROCESSED["assigned_by"]."] who is allowing [".$PROCESSED["assigned_by"]."] accecss to their account from ".date(DEFAULT_DATETIME_FORMAT, $PROCESSED["valid_from"])." until ".date(DEFAULT_DATETIME_FORMAT, $PROCESSED["valid_until"]));
 							} else {
 								add_error("We were unable to update <strong>".html_encode($fullname)."'s</strong> access permissions to your account at this time. The system administrator has been informed of this, please try again later.");
 
@@ -503,7 +544,7 @@ function profile_add_assistant() {
 							if ($permission_object->fromArray($PROCESSED)->insert()) {
 								add_success("You successfully gave <strong>".html_encode($fullname)."</strong> access permissions to your account.");
 
-								application_log("success", "Added permissions for proxy_id [".$PROCESSED["assigned_by"]."] who is allowing [".$PROCESSED["assigned_by"]."] accecss to their account from ".date(DEFAULT_DATE_FORMAT, $PROCESSED["valid_from"])." until ".date(DEFAULT_DATE_FORMAT, $PROCESSED["valid_until"]));
+								application_log("success", "Added permissions for proxy_id [".$PROCESSED["assigned_by"]."] who is allowing [".$PROCESSED["assigned_by"]."] accecss to their account from ".date(DEFAULT_DATETIME_FORMAT, $PROCESSED["valid_from"])." until ".date(DEFAULT_DATETIME_FORMAT, $PROCESSED["valid_until"]));
 							} else {
 								add_error("We were unable to give <strong>".html_encode($fullname)."</strong> access permissions to your account at this time. The system administrator has been informed of this, please try again later.");
 

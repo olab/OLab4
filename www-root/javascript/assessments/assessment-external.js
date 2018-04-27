@@ -1,4 +1,15 @@
 jQuery(document).ready(function ($) {
+
+    $(".datepicker").datepicker({
+        "dateFormat": "yy-mm-dd"
+    });
+
+    $(".datepicker-icon").on("click", function () {
+        if (!$(this).prev("input").is(":disabled")) {
+            $(this).prev("input").focus();
+        }
+    });
+
     $("#assessment-form input[name^=\"item-\"]").on("change", function () {
         save_responses();
         var comment_type = $(this).closest("div").data("comment-type");
@@ -30,6 +41,7 @@ jQuery(document).ready(function ($) {
     $("#assessment-form select[name^=\"item-\"]").on("change", function () {
         save_responses();
         var comment_type = $(this).closest("div").data("comment-type");
+        enable_item_comment_box($(this).data("item-id"));
         if (comment_type == "flagged") {
             var item_name = "item-" + $(this).data("item-id");
             var flag_selected = false;
@@ -48,9 +60,10 @@ jQuery(document).ready(function ($) {
     $("#assessment-form input[name^=\"rubric-item-\"]").on("change", function () {
         save_responses();
         var comment_type = $(this).closest("tbody").data("comment-type");
+        var item_id = $(this).data("item-id");
+        enable_item_comment_box(item_id);
         if (comment_type == "flagged") {
-            var item_id = $(this).data("item-id");
-            var rubric_id = $(".rubric-container").closest("div").data("item-id");
+            var rubric_id = $(this).closest(".rubric-container").closest("div").data("item-id");
             var item_name = "rubric-item-" + rubric_id + "-" + item_id;
             var flag_selected = false;
             // For each input for the item, check to see if any flagged response is selected.
@@ -75,41 +88,55 @@ jQuery(document).ready(function ($) {
         e.stopPropagation();
     });
 
+    $("#assessment-begin-new-attempt").on("click", function(){
+        // Create a new progress record and reload page
+        var save_responses_request = $.ajax({
+            url: ENTRADA_URL + "/api-assessment-external",
+            data: "method=create-new-progress" +
+            "&dassessment_id=" + $("#dassessment_id").val() +
+            "&target_record_id=" + $("#target_record_id").val() +
+            "&target_type=" + $("#target_type").val() +
+            "&external_hash=" + $("#external_hash").val(),
+            type: "POST"
+        });
+        $.when(save_responses_request).done(function(data) {
+            var jsonResponse = safeParseJson(data, "Unknown Error");
+            if (jsonResponse.status === "success") {
+                window.location = jsonResponse.data.redirect_url;
+            } else {
+                display_error(jsonResponse.data, "#msgs");
+            }
+        });
+    });
+
     $(".change-target").on("click", function (e) {
+        e.preventDefault();
+        var target_record_id = $(this).data("target-record-id");
+        var target_type = $(this).data("target-type");
+
         var progress_id = $("input[name=\"aprogress_id\"]").val();
-        var target_record_id = $(this).attr("data-target-record-id");
         var dassessment_id = $("input[name=\"dassessment_id\"]").val();
         var assessor_value = $("input[name=\"assessor_value\"]").val();
         var external_hash = $("input[name=\"external_hash\"]").val();
 
         var target_request = $.ajax({
-            url: "api-assessment-external",
-            data: "method=change-target&aprogress_id=" + progress_id + "&target_record_id=" + target_record_id + "&dassessment_id=" + dassessment_id + "&assessor_value=" + assessor_value,
+            url: ENTRADA_URL + "/api-assessment-external",
+            data: "method=change-target" +
+                "&aprogress_id=" + progress_id +
+                "&target_record_id=" + target_record_id +
+                "&target_type=" + target_type +
+                "&dassessment_id=" + dassessment_id +
+                "&external_hash=" + external_hash,
             type: "POST"
         });
-
         $.when(target_request).done(function (data) {
-            var jsonResponse = JSON.parse(data);
+            var jsonResponse = safeParseJson(data, "Unknown Error");
             if (jsonResponse.status === "success") {
-                var distribution_id     = $("input[name=\"adistribution_id\"]").val();
-                var schedule_id         = $("input[name=\"schedule_id\"]").val();
-                var aprogress_id        = $("input[name=\"aprogress_id\"]").val();
-                var assessor_value        = $("input[name=\"assessor_value\"]").val();
-                var target_record_id    = jsonResponse.data.target_record_id;
-
-                window.location = ENTRADA_URL + "/assessment?adistribution_id=" + distribution_id + "&schedule_id=" + schedule_id + "&target_record_id=" + target_record_id + "&aprogress_id=" + aprogress_id + "&dassessment_id=" + dassessment_id + "&assessor_value=" + assessor_value + "&external_hash=" + external_hash;
+                window.location = jsonResponse.data.redirect_url;
             } else {
-                var distribution_id     = $("input[name=\"adistribution_id\"]").val();
-                var schedule_id         = $("input[name=\"schedule_id\"]").val();
-                var aprogress_id        = $("input[name=\"aprogress_id\"]").val();
-                var target_record_id    = $("input[name=\"target_record_id\"]").val();
-                var assessor_value        = $("input[name=\"assessor_value\"]").val();
-
-                window.location = ENTRADA_URL + "/assessment?adistribution_id=" + distribution_id + "&schedule_id=" + schedule_id + "&target_record_id=" + target_record_id + "&aprogress_id=" + aprogress_id + "&dassessment_id=" + dassessment_id + "&assessor_value=" + assessor_value + "&external_hash=" + external_hash;
+                display_error(jsonResponse.data, "#msgs");
             }
         });
-
-        e.preventDefault();
     });
 
     $("#target-search-input").on("keyup", function () {
@@ -186,7 +213,7 @@ jQuery(document).ready(function ($) {
         var indent = parseInt(anchor.parent().css("padding-left")) - 14;
         
         var objective_request = $.ajax({
-            url: "api-assessment-external",
+            url: ENTRADA_URL + "/api-assessment-external",
             data: "method=get-parent-objectives&objective_id=" + objective_id + "&organisation_id=" + organisation_id,
             type: "GET",
             beforeSend: function () {
@@ -249,7 +276,7 @@ jQuery(document).ready(function ($) {
         var indent = parseInt($("#selected-objective-list-" + afelement_id).attr("data-indent")) + 14;
         
         var objective_request = $.ajax({
-            url: "api-assessment-external",
+            url: ENTRADA_URL + "/api-assessment-external",
             data: "method=get-objectives&objective_id=" + objective_id + "&afelement_id=" + afelement_id + "&organisation_id=" + organisation_id,
             type: "GET",
             beforeSend: function () {
@@ -298,7 +325,24 @@ jQuery(document).ready(function ($) {
     $('#change_target_modal').on('hide', function (e) {
 
     });
-    
+
+    $(".rubric-content-collapsible").on("click", function(e){
+        e.preventDefault();
+        var rubric_id = $(this).data('rubric-id');
+        var rubric_selector = ".rubric-content-collapsible-" + rubric_id;
+        var rubric_chevron_up = ".rubric-chevron-up-" + rubric_id;
+        var rubric_chevron_down = ".rubric-chevron-down-" + rubric_id;
+        if ($(rubric_selector).hasClass("hide")) {
+            $(rubric_selector).removeClass("hide");
+            $(rubric_chevron_up).removeClass("hide");
+            $(rubric_chevron_down).addClass("hide");
+        } else {
+            $(rubric_selector).addClass("hide");
+            $(rubric_chevron_up).addClass("hide");
+            $(rubric_chevron_down).removeClass("hide");
+        }
+    });
+
     $("#change_target_next_step").on("click", function() {
         $("#modal_msgs").html("");
 
@@ -329,7 +373,7 @@ jQuery(document).ready(function ($) {
                     };
 
                     $.ajax({
-                        url: "api-assessment-external?section=api-change-target",
+                        url: ENTRADA_URL + "/api-assessment-external?section=api-change-target",
                         data: change_target_data,
                         type: "POST",
                         beforeSend: function () {
@@ -384,6 +428,10 @@ jQuery(document).ready(function ($) {
         }
     });
 
+    $("input[name=\"assessor_feedback_response\"]").on("change", function () {
+        save_feedback();
+    });
+
     $("#change_target_previous_step").on("click", function() {
         var step = parseInt($("#change_target_step").val());
 
@@ -398,6 +446,12 @@ jQuery(document).ready(function ($) {
             $("#change_target_previous_step").addClass("hide");
         }
     })
+
+    function enable_item_comment_box(item_id) {
+        var comment_selector = "#item-" + item_id + "-comments";
+        $(comment_selector).removeProp("disabled");
+        $(comment_selector).removeAttr("placeholder");
+    }
 
     function show_loading_msg () {
         disable_wizard_controls();
@@ -473,7 +527,7 @@ jQuery(document).ready(function ($) {
         } else {
             $("#objective-list-" + afelement_id).empty();
             var item_request = $.ajax({
-                url: "api-assessment-external",
+                url: ENTRADA_URL + "/api-assessment-external",
                 data: "method=get-competency-items&objective_id=" + objective_data.objective_parent.objective_parent_id,
                 type: "GET"
             });
@@ -541,17 +595,18 @@ jQuery(document).ready(function ($) {
     
     function save_responses () {
         var save_responses_request = $.ajax({
-            url: "api-assessment-external",
+            url: ENTRADA_URL + "/api-assessment-external",
             data: "method=save-responses&" + $("#assessment-form").serialize(),
             type: "POST"
         });
-        
         $.when(save_responses_request).done(function(data) {
             var jsonResponse = JSON.parse(data);
+            console.log(data);
             if (jsonResponse.status === "success") {
+                $("#submit_form").removeProp("disabled");
+                $("#submit_form").removeClass("disabled");
                 $("#last-saved-time").remove();
                 $("#aprogress_id").val(jsonResponse.data.aprogress_id);
-
                 var saved_span = $(document.createElement("span")).addClass("label label-info").html("Last saved @ " + jsonResponse.data.saved).attr({id: "last-saved-time"});
                 $("#last-saved-container").append(saved_span);
             } else {
@@ -561,13 +616,79 @@ jQuery(document).ready(function ($) {
     }
 
     function toggle_comments(item_name, flag_selected) {
+        var header = "#assessment-form #" + item_name + "-comments-header";
+        var comment_block = "#assessment-form #" + item_name + "-comments-block";
+
         if (flag_selected == true) {
-            $("#assessment-form #" + item_name + "-comments-header").removeClass("hide");
-            $("#assessment-form #" + item_name + "-comments-block").removeClass("hide");
+            $(comment_block).prev().children().each(function (i, v) {
+                if (i > 0) {
+                    $(v).attr("rowspan", 1);
+                }
+            });
+            $(header).removeClass("hide");
+            $(comment_block).removeClass("hide");
         } else {
-            $("#assessment-form #" + item_name + "-comments-header").addClass("hide");
-            $("#assessment-form #" + item_name + "-comments-block").addClass("hide");
+            $(comment_block).prev().children().each(function (i, v) {
+                if (i > 0) {
+                    $(v).attr("rowspan", 2);
+                }
+            });
+            $(header).addClass("hide");
+            $(comment_block).addClass("hide");
         }
     }
 
+    function save_feedback () {
+        var assessor_feedback_response = $("input[name=\"assessor_feedback_response\"]:checked").val();
+        var feedback_response = $("input[name=\"target_feedback_response\"]:checked").val();
+        var actor_id = $("input[name=\"feedback_actor_id\"]").val();
+        var actor_type = $("input[name=\"feedback_actor_type\"]").val();
+        var assessor_id = $("input[name=\"feedback_assessor_id\"]").val();
+        var assessor_type = $("input[name=\"feedback_assessor_type\"]").val();
+        var target_record_id = $("#target_record_id").val();
+        var target_scope = $("#target_scope").val(); // We use target_scope instead of target_type because it indicates internal/external instead of proxy_id/schedule_id/etc.
+        var dassessment_id = $("#dassessment_id").val();
+        var assessor_feedback_question = $("#assessor-feedback-question-text").data("feedback-question-text");
+        var target_feedback_question = $("#target-feedback-question-text").data("feedback-question-text");
+        var external_hash = $("input[name=\"external_hash\"]").val();
+
+        if (actor_id == target_record_id) {
+            var comments = $("textarea[name=\"feedback_meeting_comments\"]").val();
+        }
+
+        var save_feedback_request = $.ajax({
+            url: ENTRADA_URL + "/api-assessment-external",
+            data: "method=save-feedback" +
+            "&target_feedback_response=" + feedback_response +
+            "&assessor_feedback_response=" + assessor_feedback_response +
+            "&target_record_id=" + target_record_id +
+            "&target_scope=" + target_scope +
+            "&actor_id=" + actor_id +
+            "&actor_type=" + actor_type +
+            "&assessor_id=" + assessor_id +
+            "&assessor_type=" + assessor_type +
+            "&dassessment_id=" + dassessment_id +
+            "&external_hash=" + external_hash +
+            (typeof comments !== "undefined" ? "&assessor_feedback_question=" + assessor_feedback_question : "") +
+            (typeof comments !== "undefined" ? "&target_feedback_question=" + target_feedback_question : "") +
+            (typeof comments !== "undefined" ? "&feedback_meeting_comments=" + comments : ""),
+            type: "POST"
+        });
+
+        $.when(save_feedback_request).done(function (data) {
+            var jsonResponse = safeParseJson(data, "Unknown Error");
+            if (jsonResponse.status === "success") {
+
+            } else {
+                //display_error(jsonResponse.data, "#msgs");
+            }
+        });
+    }
+
+    $(".match-height").matchHeight({
+        byRow: true,
+        property: "height",
+        target: null,
+        remove: false
+    });
 });

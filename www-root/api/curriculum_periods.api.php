@@ -42,11 +42,11 @@ if ((isset($_SESSION["isAuthorized"])) && ((bool) $_SESSION["isAuthorized"]) && 
         }
 
 ?>
-	 <div class="period_item" id="period_item_<?php echo $key;?>" style="margin-top:20px;">									
-		<div class="clearfix clear_both">
-			<i class="icon-minus-sign remove_period" id="remove_period_<?php echo $key;?>"></i>&nbsp;<strong><?php echo (($period_data["curriculum_period_title"]) ? $period_data["curriculum_period_title"] . " - " : ""); ?></strong><span class=\"content-small\"><?php echo date("F jS, Y",$period_data["start_date"])." to ".date("F jS, Y",$period_data["finish_date"]); ?></span><a href="javascript:void(0)" class="enrollment-toggle strong-green pull-right" id="add_audience_<?php echo $key;?>">Add Audience</a>											
+	 <div class="period_item clearfix" id="period_item_<?php echo $key;?>">
+		<div class="clearfix">
+            <div class="pull-left"><h4 class="period-item-title"><?php echo (($period_data["curriculum_period_title"]) ? $period_data["curriculum_period_title"] . " - " : ""); ?><?php echo date("F jS, Y",$period_data["start_date"])." to ".date("F jS, Y",$period_data["finish_date"]); ?></h4></div><div class="pull-right"><a href="javascript:void(0)" class="enrollment-toggle btn btn-success" id="add_audience_<?php echo $key;?>">Add Audience</a><span class="fa fa-close remove_period" id="remove_period_<?php echo $key;?>"></span></div>
 		</div>	
-		<div class="audience_selector span12 pull-left" id="audience_type_select_<?php echo $key;?>" style="display: none; margin-top: 20px;">
+		<div class="audience_selector pull-left" id="audience_type_select_<?php echo $key;?>" style="display: none;">
 			<select class="audience_type_select" id="audience_type_select_<?php echo $key;?>" onchange="showSelect(<?php echo $key;?>,this.options[this.selectedIndex].value)">
 				<option value="0">-- Select Audience Type --</option>
 				<?php if (is_array($cohorts) && !empty($cohorts)) :?>
@@ -86,27 +86,27 @@ if ((isset($_SESSION["isAuthorized"])) && ((bool) $_SESSION["isAuthorized"]) && 
 			<input type="hidden" name="student_ref[]" id="student_<?php echo $key;?>_ref"/>
 			<input type="hidden" name="periods[]" value="<?php echo $key;?>"/>
 		</div>
-		<div id="no_audience_msg_<?php echo $key;?>" class="alert alert-block alert-info no_audience_msg" style="margin-top: 20px;">
+		<div id="no_audience_msg_<?php echo $key;?>" class="alert alert-block alert-info no_audience_msg">
 			Please use the <strong>Add Audience</strong> link above to add an audience to this enrollment period.
 		</div>
-		<div class="audience_section span12 pull-left" id="audience_section_<?php echo $key;?>" style="display:none; margin-top: 20px; margin-bottom: 20px; border-bottom:1px solid #D3D3D3;">
+		<div class="audience_section" id="audience_section_<?php echo $key;?>" style="display:none;">
 			<div class="audience_list" id="audience_list_<?php echo $key;?>">
 				<ul id="cohort_container_<?php echo $key;?>" class="listContainer" style="display: none;">
-					<li><strong>Cohorts</strong>
+					<li><h5>Cohorts</h5>
 						<ol id="cohort_audience_container_<?php echo $key;?>" class="sortableList">
 
 						</ol>
 					</li>
 				</ul>
 				<ul id="course_list_container_<?php echo $key;?>" class="listContainer" style="display: none;">
-					<li><strong>Course List</strong>
+					<li><h5>Course List</h5>
 						<ol id="course_list_audience_container_<?php echo $key;?>" class="sortableList">
 
 						</ol>
 					</li>
 				</ul>
 				<ul id="student_<?php echo $key;?>_list_container" class="listContainer" style="display: none;">
-					<li><strong>Students</strong>
+					<li><h5>Students</h5>
 						<ol id="student_<?php echo $key;?>_list" class="sortableList">
 							
 						</ol>

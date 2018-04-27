@@ -29,7 +29,8 @@ class Entrada_Settings extends Entrada_Base {
               $value;
 
     protected static $table_name = "settings";
-    protected static $default_sort_column = "setting_id";
+    protected static $primary_key = "setting_id";
+    protected static $default_sort_column = "shortname";
 
     public function __construct($arr = NULL) {
         parent::__construct($arr);
@@ -80,14 +81,16 @@ class Entrada_Settings extends Entrada_Base {
         return $this->update();
     }
 
+    /* @return bool|Entrada_Settings */
     public static function fetchByID($setting_id = 0) {
         $self = new self();
         return $self->fetchRow(array(
                 array("key" => "setting_id", "value" => $setting_id, "method" => "=", "mode" => "AND")
-            )
-        );
+           )
+       );
     }
-    
+
+    /* @return bool|Entrada_Settings */
     public static function fetchByShortname($shortname, $organisation_id = 1) {
         global $db;
         
@@ -102,24 +105,15 @@ class Entrada_Settings extends Entrada_Base {
             return false;
         }
     }
-    
+
+    /* @return ArrayObject|Entrada_Settings[] */
     public static function fetchAllRecords($organisation_id = 1) {
         $self = new self();
 
         $constraints = array(
-            array(
-                "mode"      => "AND",
-                "key"       => "organisation_id",
-                "method"    => "=",
-                "value"     => $organisation_id
-            ),
-            array(
-                "mode"      => "OR",
-                "key"       => "organisation_id",
-                "method"    => "=",
-                "value"     => $organisation_id
-            )
-        );
+            array("mode" => "AND", "key" => "organisation_id", "method" => "=", "value" => $organisation_id),
+            array("mode" => "OR", "key" => "organisation_id", "method" => "=", "value" => $organisation_id)
+       );
 
         $objs = $self->fetchAll($constraints, "=", "AND");
         $output = array();
@@ -133,14 +127,47 @@ class Entrada_Settings extends Entrada_Base {
         return $output;
     }
 
+    public function saveValueByShortname($shortname, $value, $organisation_id = 1) {
+        global $db;
+        // test if the setting exists already
+        $original_value = $this->fetchValueByShortname($shortname, $organisation_id);
+        if ($original_value === false) {
+            $query = "INSERT INTO `settings` (`shortname`, `organisation_id`, `value`)
+                      VALUES
+                     (" .
+                          $db->qstr($shortname) . "," .
+                          $organisation_id . "," .
+                          $db->qstr($value) .
+                     ")";
+
+            if ($db->Execute($query)) {
+                return true;
+            }
+        } else {
+            $query = "  UPDATE `settings`
+                        SET value = ". $db->qstr($value) .
+                        " WHERE `shortname` = ". $db->qstr($shortname) .
+                        " AND (`organisation_id` = " . $organisation_id . " OR `organisation_id` IS NULL)";
+
+            if ($db->Execute($query)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public static function fetchValueByShortname($shortname, $organisation_id = 1) {
         $self = new self();
         return $self->read($shortname, $organisation_id);
     }
 
-    public function read($shortname, $organisation_id = 1) {
-        global $db;
-        
+    public function read($shortname, $organisation_id = null) {
+        global $db, $ENTRADA_USER;
+
+        if ($ENTRADA_USER && $organisation_id == null) {
+            $organisation_id = $ENTRADA_USER->getActiveOrganisation();
+        }
+
         $query = "SELECT * FROM `settings` 
                     WHERE `shortname` = ? AND 
                     (`organisation_id` = ? OR `organisation_id` IS NULL)

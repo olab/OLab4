@@ -200,7 +200,7 @@ function fetch_event_resources_text($event_id = 0) {
 				$output["html"] .= "		<a href=\"".ENTRADA_URL."/admin/events?section=content&id=".$event_id."\" title=\"Click to update ".html_encode($entity["title"])."\" style=\"font-weight: bold\">".html_encode($entity["title"])."</a>";
 				$output["html"] .= "		<span class=\"content-small\">(".$entity["entity_type_title"].")</span>";
 				$output["html"] .= "	</td>\n";
-				$output["html"] .= "	<td>".(((int) $entity["updated_date"]) ? date(DEFAULT_DATE_FORMAT, $entity["updated_date"]) : "Over two years ago")."</td>\n";
+				$output["html"] .= "	<td>".(((int) $entity["updated_date"]) ? date(DEFAULT_DATETIME_FORMAT, $entity["updated_date"]) : "Over two years ago")."</td>\n";
 				$output["html"] .= "</tr>\n";
 			}
 			$output["html"] .= "</tbody>\n";
@@ -208,7 +208,7 @@ function fetch_event_resources_text($event_id = 0) {
 
 			foreach ($entities as $key => $entity) {
 				$output["text"] .= "   - ".$entity["title"]." (".$entity["entity_type_title"].")\n";
-				$output["text"] .= "     Last Updated: ".(((int) $entity["updated_date"]) ? date(DEFAULT_DATE_FORMAT, $entity["updated_date"]) : "Over two years ago")."\n\n";
+				$output["text"] .= "     Last Updated: ".(((int) $entity["updated_date"]) ? date(DEFAULT_DATETIME_FORMAT, $entity["updated_date"]) : "Over two years ago")."\n\n";
 			}
 		} else {
 			$output["html"] .= "<div class=\"display-red\">\n";
@@ -340,7 +340,7 @@ function notifications_send($timestamp_start = 0, $timestamp_end = 0, $notice = 
 								ENTRADA_URL."/admin/events?section=content&id=".$event["event_id"],
 								$event["event_title"],
 								$event["event_phase"],
-								date(DEFAULT_DATE_FORMAT, $event["event_start"]),
+								date(DEFAULT_DATETIME_FORMAT, $event["event_start"]),
 								$event["event_duration"]. " min",
 								$event["event_location"],
 								((count($associated_faculty) > 0) ? "<li>".implode("</li>\n<li>", $associated_faculty)."</li>" : ""),

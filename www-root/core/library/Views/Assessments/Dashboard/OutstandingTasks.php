@@ -35,24 +35,27 @@ class Views_Assessments_Dashboard_OutstandingTasks extends Views_Assessments_Bas
 
     protected function renderView($options = array()) {
         global $translate; ?>
+
         <div class="row-fluid space-above space-below">
-            <a href="#reminder-modal" class="btn btn-primary reminder-btn pull-right space-right" title="<?php echo $translate->_("Send Reminder to Assessor"); ?>" data-toggle="modal"><i class="icon-bell icon-white"></i> <?php echo $translate->_("Send Reminders") ?></a>
             <input type="text" placeholder="<?php echo $translate->_("Search Tasks..."); ?>" class="task-table-search search-icon space-left <?php echo html_encode($options["task_type"]); ?>-outstanding-tasks-search">
             <span class="badge assessment-badge hide <?php echo html_encode($options["task_type"]); ?>-outstanding-tasks-search-results-found"></span>
             <button class="btn disabled pull-left task-btn <?php echo html_encode($options["task_type"]); ?>-outstanding-tasks-previous"><i class="icon-chevron-left"></i> <?php echo $translate->_("Previous"); ?></button>
             <button class="btn space-left pull-left task-btn <?php echo html_encode($options["task_type"]); ?>-outstanding-tasks-next"><?php echo $translate->_("Next"); ?> <i class="icon-chevron-right"></i></button>
+            <a href="#reminder-modal" class="btn btn-primary reminder-btn pull-right space-right" title="<?php echo $translate->_("Send Reminder to Assessor"); ?>" data-toggle="modal"><i class="icon-bell icon-white"></i> <?php echo $translate->_("Send Reminders") ?></a>
         </div>
-        <table class="hide table table-striped table-bordered task-table <?php echo html_encode($options["task_type"]); ?>-outstanding-tasks">
-            <thead>
-                <th style="width: 50%;"><?php echo $translate->_("Task"); ?></th>
-                <th style="width: 30%;"><?php echo $translate->_("Owner"); ?></th>
-                <th class="dashboard-center-info" style="width: 10%;"><?php echo $translate->_("Targets"); ?></th>
-                <th class="dashboard-center-info select-all-reminders" style="width: 5%;"><i class="icon-bell"></i></th>
-                <th class="dashboard-center-info" style="width: 5%;"><i class="icon-trash"></i></th>
-            </thead>
-            <tbody>
-            </tbody>
-        </table>
+        <div class="fixed-tab-height task-table-wrap">
+            <table class="table table-striped table-bordered task-table <?php echo html_encode($options["task_type"]); ?>-outstanding-tasks">
+                <thead>
+                    <th style="width: 50%;"><?php echo $translate->_("Task"); ?></th>
+                    <th style="width: 30%;"><?php echo $translate->_("Owner"); ?></th>
+                    <th class="dashboard-center-info" style="width: 10%;"><?php echo $translate->_("Targets"); ?></th>
+                    <th class="dashboard-center-info select-all-reminders" style="width: 5%;"><i class="icon-bell"></i></th>
+                    <th class="dashboard-center-info" style="width: 5%;"><i class="icon-trash"></i></th>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
         <?php
     }
 }

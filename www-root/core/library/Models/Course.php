@@ -60,6 +60,11 @@ class Models_Course extends Models_Base {
             $course_twitter_handle,
             $course_twitter_hashtags,
             $course_color,
+            $cbme_milestones,
+            $created_date,
+            $created_by,
+            $updated_date,
+            $updated_by,
             $course_active = 1;
     
     protected static $table_name = "courses";
@@ -214,8 +219,48 @@ class Models_Course extends Models_Base {
         return $this->course_color;
     }
 
+    public function getCBMEMilestones () {
+        return $this->cbme_milestones;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getCreatedDate() {
+        return $this->created_date;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getCreatedBy() {
+        return $this->created_by;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getUpdatedDate() {
+        return $this->updated_date;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getUpdatedBy() {
+        return $this->updated_by;
+    }
+
     public function __construct($arr = NULL) {
         parent::__construct($arr);
+    }
+
+    public function getCourseText() {
+        if ($this->getCourseCode()) {
+            return sprintf("%s: %s", $this->getCourseCode(), $this->getCourseName());
+        } else {
+            return $this->getCourseName();
+        }
     }
     
     /* @return bool|Models_Community */
@@ -225,7 +270,7 @@ class Models_Course extends Models_Base {
         } else {
             $course_community = Models_Community_Course::fetchRowByCourseID($this->course_id);
             if (isset($course_community) && is_object($course_community)) {
-                return $this->community = Models_Community::fetchRowByID($course_community->getCourseID());
+                return $this->community = Models_Community::fetchRowByID($course_community->getCommunityID());
             } else {
                 return null;
             }
@@ -249,7 +294,26 @@ class Models_Course extends Models_Base {
     
     public static function fetchAllByOrg($org_id) {
         $self = new self();
-        return $self->fetchAll(array("organisation_id" => $org_id, "course_active" => "1"));
+        // Sort by course name
+        return $self->fetchAll(array("organisation_id" => $org_id, "course_active" => "1"), "=", "AND", "course_name");
+    }
+
+    public static function fetchAllByOrgSortByName($org_id) {
+        $self = new self();
+        return $self->fetchAll(array("organisation_id" => $org_id, "course_active" => "1"), "=", "AND", "course_name", "ASC");
+    }
+
+    // Only return courses that have events
+    public static function getCoursesThatHaveEventsByOrg($org_id) {
+        global $db;
+
+        $query = 'SELECT c.* FROM courses c'
+            . ' JOIN events e ON e.course_id = c.course_id'
+            . ' WHERE c.`course_active`="1"'
+            . ' AND `organisation_id` = ' . $org_id
+            . ' ORDER BY c.`course_code`, c.`course_name`';
+
+        return $db->GetAll($query);
     }
 
     /* @return ArrayObject|Models_Course_Audience */
@@ -332,7 +396,36 @@ class Models_Course extends Models_Base {
         }
         return $a;
     }
-    
+
+    public function getCperiodID() {
+        global $ENTRADA_USER;
+        $user_id = $ENTRADA_USER->getID();
+        $course_audiences = Models_Course_Audience::fetchAudienceByUserID($this->getID(), $user_id);
+        if ($course_audiences) {
+            $first_course_audience = current($course_audiences);
+            $cperiod_id = $first_course_audience->getCperiodID();
+        } else {
+            $curriculum_periods = Models_Curriculum_Period::fetchAllByDateCourseID(time(), $this->getID());
+            if ($curriculum_periods) {
+                $first_curriculum_period = current($curriculum_periods);
+                $cperiod_id = $first_curriculum_period->getCperiodID();
+            } else {
+                $cperiod_id = null;
+            }
+        }
+        return $cperiod_id;
+    }
+
+    public function getObjectives($cperiod_id) {
+        $objective_repository = Models_Repository_Objectives::getInstance();
+        $objectives_by_course = $objective_repository->fetchAllByCourseIDsAndCperiodID(array($this->getID()), $cperiod_id);
+        if (isset($objectives_by_course[$this->getID()])) {
+            return $objectives_by_course[$this->getID()];
+        } else {
+            return array();
+        }
+    }
+
     public function update() {
 		global $db;
 		if ($db->AutoExecute("`courses`", $this->toArray(), "UPDATE", "`course_id` = ".$db->qstr($this->getID()))) {
@@ -388,6 +481,35 @@ class Models_Course extends Models_Base {
         return $teachers;
     }
 
+    public function getCurriculumMapVersion($cperiod_id) {
+        $version_repository = Models_Repository_CurriculumMapVersions::getInstance();
+        $versions = $version_repository->fetchVersionsByCourseIDCperiodID($this->getID(), $cperiod_id);
+        if ($versions) {
+            $first = current($versions);
+            return $first;
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * @return array[from_objective_id][to_objective_id] = Models_Objective
+     */
+    public function getLinkedObjectives($version_id, $objectives) {
+        $objective_ids = array_map(function (Models_Objective $objective) { return $objective->getID(); }, $objectives);
+        $context = new Entrada_Curriculum_Context_Specific_Course($this->getID());
+        $objective_repository = Models_Repository_Objectives::getInstance();
+        $objectives_by_version = $objective_repository->fetchLinkedObjectivesByIDs("from", $objective_ids, $version_id, $context);
+
+        // Flatten the array by one level to return linked objectives for this version only
+        return $objective_repository->flatten($objectives_by_version);
+    }
+
+    public function updateLinkedObjectives(array $objectives, array $linked_objectives, $version_id) {
+        $context = new Entrada_Curriculum_Context_Specific_Course($this->getID());
+        return Models_Repository_Objectives::getInstance()->updateLinkedObjectives($objectives, $linked_objectives, $version_id, $context);
+    }
+
     public static function checkCourseOwner($course_id = null, $proxy_id = null) {
         global $db;
 
@@ -425,21 +547,32 @@ class Models_Course extends Models_Base {
         return false;
     }
 
-    public static function getUserCourses ($proxy_id, $organisation_id, $search_value = null, $active = 1) {
+    //TODO: Change this to not depend on $ENTRADA_USER
+    public static function getUserCourses($proxy_id, $organisation_id, $search_value = null, $active = 1, $order_by_course_code = false) {
         global $db, $ENTRADA_USER, $ENTRADA_ACL;
         $courses = false;
-
-        $admin = $ENTRADA_ACL->amIAllowed("assessmentreportadmin", "read", true);
-        if ($ENTRADA_USER->getActiveRole() == "admin" || $admin) {
+        $admin = false;
+        if ($ENTRADA_ACL->amIAllowed("assessmentreportadmin", "read", true)
+            || ($ENTRADA_USER->getActiveRole() == "admin" && $ENTRADA_USER->getActiveGroup() == "medtech")
+        ) {
+            $admin = true;
+        }
+        if ($admin) {
             $query = "      SELECT * FROM `courses`
                             WHERE `organisation_id` = ?
                             AND `course_active` = ? ";
             if($search_value != null) {
-                $query .= " AND `course_name` LIKE (" . $db->qstr("%" . $search_value . "%") . ")";
+                $query .= " AND `course_name` LIKE (" . $db->qstr("%" . $search_value . "%") . ")
+                            OR `course_code` LIKE (" . $db->qstr("%" . $search_value . "%") . ")";
             }
 
-            $query .="      GROUP BY `course_id`
-                            ORDER BY `course_name`";
+            $query .= "      GROUP BY `course_id`";
+
+            if ($order_by_course_code) {
+                $query .= "  ORDER BY `course_code`";
+            } else {
+                $query .= "  ORDER BY `course_name`";
+            }
 
             $results = $db->GetAll($query, array($organisation_id, $active));
         } else {
@@ -466,8 +599,14 @@ class Models_Course extends Models_Base {
             if($search_value != null) {
                 $query .= " AND a.`course_name` LIKE (". $db->qstr("%". $search_value ."%") .")";
             }
-            $query .= "     GROUP BY a.`course_id`
-                            ORDER BY a.`course_name`";
+            $query .= "     GROUP BY a.`course_id`";
+
+            if ($order_by_course_code) {
+                $query .= "  ORDER BY a.`course_code`";
+            } else {
+                $query .= "  ORDER BY a.`course_name`";
+            }
+
             $results = $db->GetAll($query, array($proxy_id, $proxy_id, $organisation_id, $active));
         }
         if ($results) {
@@ -479,18 +618,51 @@ class Models_Course extends Models_Base {
         return $courses;
     }
 
+    /**
+     * Fetch a list of the proxy/contact types for a given course.
+     *
+     * @param $course_id
+     * @return mixed
+     */
+    public static function fetchCourseOwnerList ($course_id) {
+        global $db;
+        $entrada_auth = AUTH_DATABASE;
+        $query = "  SELECT c.`course_id`, cc.`proxy_id`, cc.`contact_type`
+                    FROM `course_contacts` AS cc
+                    LEFT JOIN `courses` AS c
+                    ON c.`course_id` = cc.`course_id`
+                    WHERE c.`course_id` = ?
+                    AND (cc.`contact_type` = 'director' OR cc.`contact_type` = 'ccoordinator' OR cc.`contact_type` = 'pcoordinator')
+
+                    UNION ALL
+
+                    SELECT uc.`course_id`, uc.`pcoord_id` AS `proxy_id`, 'pcoordinator'
+                    FROM `courses` AS uc
+                    LEFT JOIN `{$entrada_auth}`.`user_data` AS u
+                    ON uc.`pcoord_id` = u.`id`
+                    WHERE uc.`course_id` = ?";
+        $results = $db->GetAll($query, array($course_id, $course_id));
+        if (!$results) {
+            return array();
+        }
+        return $results;
+    }
+
+
+    // TODO: Change this to not depend on $ENTRADA_USER or $ENTRADA_ACL.
     public static function getActiveUserCoursesIDList() {
         global $db, $ENTRADA_USER, $ENTRADA_ACL;
 
         $course_list = array();
         $admin = $ENTRADA_ACL->amIAllowed("assessmentreportadmin", "read", true);
-        $AND_PROXY_ID = $JOIN_COURSE_CONTACTS = "";
+        $AND_WHERE = $JOIN_COURSE_CONTACTS = "";
 
         if (!$admin) {
             $JOIN_COURSE_CONTACTS = "   JOIN `course_contacts` AS b
                                         ON a.`course_id` = b.`course_id` ";
             $proxy_id = $ENTRADA_USER->getActiveId();
-            $AND_PROXY_ID = " AND b.`proxy_id` = $proxy_id ";
+            $AND_WHERE = "  AND b.`proxy_id` = $proxy_id 
+                            AND b.`contact_type` IN ('pcoordinator','director','ccoordinator') ";
         }
 
         $query = "  
@@ -498,7 +670,7 @@ class Models_Course extends Models_Base {
                 $JOIN_COURSE_CONTACTS
                 WHERE a.`organisation_id` = ?
                 AND a.`course_active` = 1 
-                $AND_PROXY_ID ";
+                $AND_WHERE ";
 
         $results = $db->GetAll($query, array($ENTRADA_USER->getActiveOrganisation()));
 
@@ -511,7 +683,61 @@ class Models_Course extends Models_Base {
         return $course_list;
     }
 
-    public static function fetchAllByIDs($course_ids = array(), $active = 1) {
+    /**
+     * Get a list of courses for a specific user.
+     * $admin is a true/false flag based on an ACL check done before calling this method.
+     * @param $proxy_id
+     * @param $organisation_id
+     * @param $admin
+     * @return array
+     */
+    public static function getUserCoursesList($proxy_id, $organisation_id, $admin) {
+        global $db;
+        $AND_WHERE = $JOIN_COURSE_CONTACTS = "";
+
+        if (!$admin) {
+            $JOIN_COURSE_CONTACTS = "   JOIN `course_contacts` AS b
+                                        ON a.`course_id` = b.`course_id` ";
+            $AND_WHERE = "  AND b.`proxy_id` = $proxy_id 
+                            AND b.`contact_type` IN ('pcoordinator','director','ccoordinator') ";
+        }
+
+        $query = "SELECT a.* FROM `courses` AS a
+                $JOIN_COURSE_CONTACTS
+                WHERE a.`organisation_id` = ?
+                AND a.`course_active` = 1 
+                $AND_WHERE ";
+
+        $results = $db->GetAll($query, array($organisation_id));
+        return $results;
+    }
+
+    public static function getActiveUserCoursesByProxyIDOrganisationID($proxy_id, $organisation_id) {
+        global $db;
+        $course_list = array();
+
+        $query = "  SELECT a.* FROM `courses` AS a
+                    JOIN `course_contacts` AS b
+                    ON a.`course_id` = b.`course_id`
+                    WHERE b.`proxy_id` = ?
+                    AND a.`organisation_id` = ?
+                    AND a.`course_active` = 1
+                    AND b.`contact_type` IN ('pcoordinator','director','ccoordinator')
+                    GROUP BY b.`course_id`
+                    ORDER BY a.`course_code`, a.`course_name` ASC";
+
+        $results = $db->GetAll($query, array($proxy_id, $organisation_id));
+
+        if ($results) {
+            foreach ($results as $result) {
+                $self = new self();
+                $course_list[] = $self->fromArray($result);
+            }
+        }
+        return $course_list;
+    }
+
+    public static function fetchAllByIDs ($course_ids = array(), $active = 1) {
         global $db;
 
         $courses = array();
@@ -550,7 +776,7 @@ class Models_Course extends Models_Base {
                     WHERE `course_id` = ?
                     AND `course_active` = ?";
         
-        $results = $db->GetAll($query, array($course_id, $active));
+        $results = $db->GetRow($query, array($course_id, $active));
         if ($results) {
             return $results;
         }
@@ -1179,6 +1405,203 @@ class Models_Course extends Models_Base {
         }
         return false;
     }
-}
 
-?>
+    /**
+     * Return a list of course for a resident/user
+     * Based on the courses_get_courses function in functions.inc.php
+     *
+     * @param $proxy_id
+     * @param $organisation_id
+     * @param $cperiod_ids
+     * @return mixed
+     */
+    public static function getCoursesByProxyIDOrganisationID($proxy_id, $organisation_id, $cperiod_ids = null, $active_only = false) {
+        global $db;
+
+        $active_only = (bool) $active_only;
+
+        $query = "  SELECT DISTINCT(a.`course_id`), a.`course_name`, a.`course_code`, a.`course_active`, a.`organisation_id`
+                    FROM `courses` AS a
+                    LEFT JOIN `course_audience` AS b
+                    ON a.`course_id` = b.`course_id`
+                    LEFT JOIN `groups` AS c
+                    ON b.`audience_type` = 'group_id'
+                    AND b.`audience_value` = c.`group_id`
+                    LEFT JOIN `group_members` AS d
+                    ON d.`group_id` = c.`group_id`
+                    WHERE `organisation_id` = ?
+                    AND (
+                        d.`proxy_id` = ?
+                        OR (
+                            b.`audience_type` = 'proxy_id' AND b.`audience_value` = ?
+                        )
+                    )";
+
+        if ($active_only) {
+            $query .= " AND a.`course_active` = 1";
+        }
+
+        if ($cperiod_ids) {
+            $query .= " AND b.`cperiod_id` IN (".implode(", ", $cperiod_ids).")";
+        }
+
+        return $db->GetAll($query, array($organisation_id, $proxy_id, $proxy_id));
+    }
+
+    /**
+     * Return a list of courses for a faculty member
+     * @param $proxy_id
+     * @param $organisation_id
+     * @return mixed
+     */
+    public static function getCoursesByContacts($proxy_id, $organisation_id) {
+        global $db;
+
+        $query = "SELECT DISTINCT(a.`course_id`), a.`course_name`, a.`course_code`, a.`course_active`, a.`organisation_id`
+                  FROM `courses` as a
+                  INNER JOIN `course_contacts` AS b
+                  ON a.`course_id` = b.`course_id`
+                  WHERE b.`proxy_id` = ?
+                  AND a.`organisation_id` = ?";
+
+        return $db->getAll($query, array($proxy_id, $organisation_id));
+    }
+
+    /*
+     * Get the user's selected course preference and a list of their courses
+     *
+     * @param $limit_to_current_cperiod
+     *
+     * @return array
+     */
+    public function getCurrentUserCourseList($limit_to_current_cperiod) {
+        global $ENTRADA_USER;
+
+        /**
+         * Fetch all user courses
+         */
+        $cperiod_ids = array();
+        if ($limit_to_current_cperiod) {
+            $cperiod_model = new Models_Curriculum_Period();
+            $cperiod_ids = $cperiod_model->fetchAllCurrentIDsByOrganisation($ENTRADA_USER->getActiveOrganisation());
+        }
+        $courses = Models_Course::getCoursesByProxyIDOrganisationID($ENTRADA_USER->getActiveId(), $ENTRADA_USER->getActiveOrganisation(), $cperiod_ids, true);
+
+        return $courses;
+    }
+
+    /**
+     * return the total number of courses for a specific course parent.
+     * @param null $course_id
+     * @param int $active
+     * @return int
+     */
+    public static function countCourseChildren ($course_id = null, $active = 1) {
+        global $db;
+
+        $query = "  SELECT COUNT(`course_id`) AS `total_children` FROM `courses`
+                    WHERE `parent_id` = ?
+                    AND `course_active` = ?";
+
+        $result = $db->GetRow($query, array($course_id, $active));
+
+        if ($result) {
+            return $result["total_children"];
+        } else {
+            return 0;
+        }
+
+    }
+
+    /**
+     * Get the current users courses as a target list for the Advanced Search widget
+     * @param $search_value
+     * @return string
+     */
+    public static function getUserCoursesAsTargets($search_value) {
+        global $ENTRADA_USER, $translate;
+
+        $user_courses = Models_Course::getUserCourses($ENTRADA_USER->getActiveID(), $ENTRADA_USER->getActiveOrganisation(), $search_value);
+        if ($user_courses) {
+            $data = array();
+            foreach ($user_courses as $course) {
+                $data[] = array("target_id" => $course->getID(), "target_label" => $course->getCourseName(), "target_parent" => $course->getParentID(), "target_children" => Models_Course::countCourseChildren($course->getParentID()), "course_id" => $course->getID(), "level_selectable" => 1);
+            }
+            return json_encode(array("status" => "success", "data" => $data, "parent_name" => "0"));
+        } else {
+            return json_encode(array("status" => "error", "data" => $translate->_("No courses were found.")));
+        }
+    }
+
+    /**
+     * @param $proxy_id
+     * @param $contact_type
+     * @return array
+     */
+    public function fetchAllCoursesByProxyIDContactType($proxy_id, $contact_type) {
+        global $db;
+        $courses = array();
+
+        $query = "  SELECT co.* FROM ".$this::$table_name." AS co
+                    JOIN `course_contacts` AS cc
+                    ON cc.`course_id` = co.`course_id`
+                    WHERE cc.`proxy_id` = ?
+                    AND cc.`contact_type` = ?";
+        $results = $db->GetAll($query, array($proxy_id, $contact_type));
+
+        if ($results) {
+            foreach ($results as $result) {
+                $courses[] = new self($result);
+            }
+        }
+
+        return $courses;
+    }
+
+    /**
+     * @param $course_id
+     * @param $proxy_id
+     * @param $contact_type
+     * @return array
+     */
+    public function fetchRowByCourseIDProxyIDContactType($course_id, $proxy_id, $contact_type) {
+        global $db;
+        $course = null;
+
+        $query = "  SELECT co.* FROM ".$this::$table_name." AS co
+                    JOIN `course_contacts` AS cc
+                    ON cc.`course_id` = co.`course_id`
+                    WHERE cc.`proxy_id` = ?
+                    AND cc.`contact_type` = ?
+                    AND cc.`course_id` = ?";
+        $result = $db->GetRow($query, array($proxy_id, $contact_type, $course_id));
+
+        if ($result) {
+            $course = new self($result);
+        }
+
+        return $course;
+    }
+
+    /*
+     * Fetch all courses based on a users course_group_contact records
+     * @param $proxy_id
+     */
+    public function fetchAllByCourseGroupContact($proxy_id) {
+        global $db;
+        $courses = array();
+        $query = "  SELECT co.*, cg.`cgroup_id` FROM `".$this::$table_name."` AS co
+                    JOIN `course_groups` as cg
+                    ON co.`course_id` = cg.`course_id`
+                    JOIN `course_group_contacts` as cgc
+                    ON cg.`cgroup_id` = cgc.`cgroup_id`
+                    WHERE cgc.`proxy_id` = ?
+                    AND co.`course_active` = 1
+                    AND cg.`active` = 1";
+        $results = $db->GetAll($query, array($proxy_id));
+        if ($results) {
+            $courses = $results;
+        }
+        return $courses;
+    }
+}

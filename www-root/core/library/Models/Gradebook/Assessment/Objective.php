@@ -69,6 +69,7 @@ class Models_Gradebook_Assessment_Objective extends Models_Base {
         return $this->updated_by;
     }
 
+    /* @return bool|Models_Gradebook_Assessment_Objective */
     public static function fetchRowByID($aobjective_id) {
         $self = new self();
         return $self->fetchRow(array(
@@ -76,6 +77,7 @@ class Models_Gradebook_Assessment_Objective extends Models_Base {
         ));
     }
 
+    /* @return ArrayObject|Models_Gradebook_Assessment_Objective[] */
     public static function fetchAllByAssessmentID($assessment_id) {
         $self = new self();
         return $self->fetchAll(array(array("key" => "assessment_id", "value" => $assessment_id, "method" => "=")));

@@ -71,11 +71,9 @@ class Migrate_2017_02_17_150147_1646 extends Entrada_Cli_Migrate {
      */
     public function audit() {
         $migration = new Models_Migration();
-        if ($migration->getTableEngine(AUTH_DATABASE, "user_data") == "InnoDB") { 
-            if ($migration->tableExists(DATABASE_NAME, "sandbox")) {
-                if ($migration->tableExists(DATABASE_NAME, "sandbox_contacts")) {
-                    return 1;
-                }
+        if ($migration->tableExists(DATABASE_NAME, "sandbox")) {
+            if ($migration->tableExists(DATABASE_NAME, "sandbox_contacts")) {
+                return 1;
             }
         }
 

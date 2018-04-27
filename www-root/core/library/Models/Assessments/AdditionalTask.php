@@ -21,7 +21,7 @@
  */
 
 class Models_Assessments_AdditionalTask extends Models_Base {
-    protected $additional_task_id, $adistribution_id, $target_id, $assessor_value, $assessor_type, $delivery_date, $created_by, $created_date, $deleted_by, $deleted_date;
+    protected $additional_task_id, $adistribution_id, $target_id, $target_type, $assessor_value, $assessor_type, $delivery_date, $created_by, $created_date, $deleted_by, $deleted_date;
 
     protected static $table_name = "cbl_assessment_additional_tasks";
     protected static $primary_key = "additional_task_id";
@@ -41,6 +41,10 @@ class Models_Assessments_AdditionalTask extends Models_Base {
 
     public function getTargetID() {
         return $this->target_id;
+    }
+
+    public function getTargetType() {
+        return $this->target_type;
     }
 
     public function getADAssessorID() {

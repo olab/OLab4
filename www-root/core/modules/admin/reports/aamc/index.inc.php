@@ -40,19 +40,19 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_AAMC_CI"))) {
 
     $missing_eventtypes = $aamc->missingEventTypeMapping();
     if ($missing_eventtypes) {
-        $message  = "The following <strong>" . $translate->_("Event Types") . "</strong> do not have mapped <strong>Medbiquitos Instructional Methods</strong>. This means that any Learning Events in your report that contain these " . $translate->_("Event Types") . " will classified as &quot;Workshops.&quot;";
+        $message  = "The following <strong>" . $translate->_("Event Types") . "</strong> do not have mapped <strong>MedBiquitous Instructional Methods</strong>. This means that any Learning Events in your report that contain these " . $translate->_("Event Types") . " will be excluded. Click the links to below to map these types.";
         $message .= "<ol>\n";
         foreach ($missing_eventtypes as $eventtype) {
             $message .= "<li><a href=\"".ENTRADA_RELATIVE."/admin/settings/manage/eventtypes?section=edit&org=".$ACTIVE_ORG->getID()."&type_id=".(int) $eventtype["eventtype_id"]."\" target=\"_blank\">".html_encode($eventtype["eventtype_title"])."</a></li>\n";
         }
         $message .= "</ol>\n";
 
-        echo display_notice($message);
+        echo display_error($message);
     }
 
     $missing_assessment_methods = $aamc->missingAssessmentMethodMapping();
     if ($missing_assessment_methods) {
-        $message  = "The following <strong>Assessment Methods</strong> do not have mapped <strong>Medbiquitos Assessment Methods</strong>. This means that any Assessments in your report that contain these Characteristics will classified as &quot;Exam - Institutionally Developed, Written/Computer-based&quot;.";
+        $message  = "The following <strong>Assessment Methods</strong> do not have mapped <strong>MedBiquitous Assessment Methods</strong>. This means that any Assessments in your report that contain these Characteristics will classified as &quot;Exam - Institutionally Developed, Written/Computer-based&quot;.";
         $message .= "<ol>\n";
         foreach ($missing_assessment_methods as $assessment_method) {
             $message .= "<li><a href=\"".ENTRADA_RELATIVE."/admin/settings/manage/characteristics?section=edit&org=".$ACTIVE_ORG->getID()."&id=".$assessment_method["id"]."\" target=\"_blank\">".html_encode($assessment_method["title"])."</a></li>\n";

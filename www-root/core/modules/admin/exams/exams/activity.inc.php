@@ -94,18 +94,24 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
                 $audience_full = array();
                 if ($post->getTargetType() === "event") {
                     $event = Models_Event::fetchRowByID($post->getTargetID());
-                    $event_start = $event->getEventStart();
-                    if (!$event) {
-                        return array();
-                    }
-                    $event_audiences = $event->getEventAudience();
-                    foreach ($event_audiences as $event_audience) {
-                        $a = $event_audience->getAudience($event_start);
-                        $audience_full = array_merge($audience_full, array_keys($a->getAudienceMembers()));
+                    if ($event && is_object($event)) {
+                        $event_start = $event->getEventStart();
+                        if (!$event) {
+                            return array();
+                        }
+                        $event_audiences = $event->getEventAudience();
+                        foreach ($event_audiences as $event_audience) {
+                            $a = $event_audience->getAudience($event_start);
+                            if ($a && is_array($a) && !empty($a)) {
+                                $audience_full = array_merge($audience_full, array_keys($a->getAudienceMembers()));
+                            }
+                        }
                     }
                 } else if ($post->getTargetType() === "community") {
                     $community_members = Models_Community_Member::fetchAllByCommunityID($post->getTargetID());
-                    $audience_full = array_map(function($a) { return (int)$a->getProxyId(); }, $community_members);
+                    if ($community_members && is_array($community_members) && !empty($community_members)) {
+                        $audience_full = array_map(function($a) { return (int)$a->getProxyId(); }, $community_members);
+                    }
                 }
                 $audience_not_started = array_values(array_diff($audience_full, array_map(function($a) { return $a->getProxyId(); }, $progress)));
 
@@ -143,7 +149,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EXAMS"))) {
 
                     $num_of_columns = 10;
                     foreach ($audience_not_started as $proxy_id) {
-                        $student = Models_User::fetchRowByID($proxy_id, null, null, 1);
+                        $student = Models_User::fetchRowByID($proxy_id);
                         if ($student) {
                             echo "<tr>\n";
                             echo "<td>".$student->getFullname()."</td>\n";

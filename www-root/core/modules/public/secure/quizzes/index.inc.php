@@ -128,19 +128,19 @@ if ($userQuizzes || $communityQuizzes) {
                                 if (($quizType->getQuiztypeCode() == "delayed" && $userQuiz->getReleaseUntil() <= time()) || ($quizType->getQuiztypeCode() == "immediate")) {
                                     $percentage = ((round(($entry->getQuizScore() / $entry->getQuizValue()), 2)) * 100);
                                     echo "<li class=\"".(($percentage >= 60) ? "correct" : "incorrect")."\">";
-                                    echo	date(DEFAULT_DATE_FORMAT, $entry->getUpdatedDate())." <strong>Score:</strong> ".$entry->getQuizScore()."/".$entry->getQuizValue()." (".$percentage."%)";
+                                    echo	date(DEFAULT_DATETIME_FORMAT, $entry->getUpdatedDate())." <strong>Score:</strong> ".$entry->getQuizScore()."/".$entry->getQuizValue()." (".$percentage."%)";
                                     echo "</li>";
                                 } elseif ($quizType->getQuiztypeCode() == "hide") {
-                                    echo "<li>".date(DEFAULT_DATE_FORMAT, $entry->getUpdatedDate())." - <strong>Completed</strong></li>";
+                                    echo "<li>".date(DEFAULT_DATETIME_FORMAT, $entry->getUpdatedDate())." - <strong>Completed</strong></li>";
                                 } else {
-                                    echo "<li>".date(DEFAULT_DATE_FORMAT, $entry->getUpdatedDate())." <strong>Score:</strong> To Be Released ".date(DEFAULT_DATE_FORMAT, $userQuiz->getReleaseUntil())."</li>";
+                                    echo "<li>".date(DEFAULT_DATETIME_FORMAT, $entry->getUpdatedDate())." <strong>Score:</strong> To Be Released ".date(DEFAULT_DATETIME_FORMAT, $userQuiz->getReleaseUntil())."</li>";
                                 }
                                 break;
                             case "expired" :
-                                echo "<li class=\"incorrect\">".date(DEFAULT_DATE_FORMAT, $entry->getUpdatedDate())." <strong>Expired Attempt</strong>: not completed.</li>";
+                                echo "<li class=\"incorrect\">".date(DEFAULT_DATETIME_FORMAT, $entry->getUpdatedDate())." <strong>Expired Attempt</strong>: not completed.</li>";
                                 break;
                             case "inprogress" :
-                                echo "<li>".date(DEFAULT_DATE_FORMAT, $entry->getUpdatedDate())." <strong>Attempt In Progress</strong> ( <a class=\"start-quiz\" data-aquiz=\"". $userCommunityQuiz->getAquizID()."\" data-href=\"". ENTRADA_URL."/file-seb.php?id=". $userQuiz->getAquizID()."\" title=\"Take ".html_encode($userQuiz->getQuizTitle())."\">continue quiz</a> )</li>";
+                                echo "<li>".date(DEFAULT_DATETIME_FORMAT, $entry->getUpdatedDate())." <strong>Attempt In Progress</strong> ( <a class=\"start-quiz\" data-aquiz=\"". $userCommunityQuiz->getAquizID()."\" data-href=\"". ENTRADA_URL."/file-seb.php?id=". $userQuiz->getAquizID()."\" title=\"Take ".html_encode($userQuiz->getQuizTitle())."\">continue quiz</a> )</li>";
                                 
                                 break;
                             default :
@@ -151,7 +151,7 @@ if ($userQuizzes || $communityQuizzes) {
                 </ul>
                 <?php } ?>
             </td>
-            <td><?php echo (((int) $userQuiz->getReleaseUntil()) ? date(DEFAULT_DATE_FORMAT, $userQuiz->getReleaseUntil()) : "No Expiration"); ?></td>
+            <td><?php echo (((int) $userQuiz->getReleaseUntil()) ? date(DEFAULT_DATETIME_FORMAT, $userQuiz->getReleaseUntil()) : "No Expiration"); ?></td>
 		</tr>
 	<?php } ?>
 	</tbody>
@@ -160,7 +160,7 @@ if ($userQuizzes || $communityQuizzes) {
 <div class="alert alert-info">There are no available secure quizzes for your <strong>learning events</strong>.</div>
 <?php } ?>
     <br /><br />
-    <h2>Community Quizzes</h2>
+    <h2><?php echo $translate->_("Community Quizzes"); ?></h2>
     <br />
     <?php if ($userCommunityQuizzes) { ?>
 	<table class="tableList wrap datatable" cellspacing="0" summary="List of Secure Quizzes">
@@ -171,7 +171,7 @@ if ($userQuizzes || $communityQuizzes) {
         </colgroup>
 	<thead>
 		<tr>
-			<td class="date">Community Title</td>
+			<td class="date"><?php echo $translate->_("Community Title"); ?></td>
             <td class="title sortedASC">Quiz Title</td>
 			<td class="general">Quiz Expires</td>
 		</tr>
@@ -232,19 +232,19 @@ if ($userQuizzes || $communityQuizzes) {
                                 if (($quizType->getQuiztypeCode() == "delayed" && $userCommunityQuiz->getReleaseUntil() <= time()) || ($quizType->getQuiztypeCode() == "immediate")) {
                                     $percentage = ((round(($entry->getQuizScore() / $entry->getQuizValue()), 2)) * 100);
                                     echo "<li class=\"".(($percentage >= 60) ? "correct" : "incorrect")."\">";
-                                    echo	date(DEFAULT_DATE_FORMAT, $entry->getUpdatedDate())." <strong>Score:</strong> ".$entry->getQuizScore()."/".$entry->getQuizValue()." (".$percentage."%)";
+                                    echo	date(DEFAULT_DATETIME_FORMAT, $entry->getUpdatedDate())." <strong>Score:</strong> ".$entry->getQuizScore()."/".$entry->getQuizValue()." (".$percentage."%)";
                                     echo "</li>";
                                 } elseif ($quizType->getQuiztypeCode() == "hide") {
-                                    echo "<li>".date(DEFAULT_DATE_FORMAT, $entry->getUpdatedDate())." - <strong>Completed</strong></li>";
+                                    echo "<li>".date(DEFAULT_DATETIME_FORMAT, $entry->getUpdatedDate())." - <strong>Completed</strong></li>";
                                 } else {
-                                    echo "<li>".date(DEFAULT_DATE_FORMAT, $entry->getUpdatedDate())." <strong>Score:</strong> To Be Released ".date(DEFAULT_DATE_FORMAT, $userCommunityQuiz->getReleaseUntil())."</li>";
+                                    echo "<li>".date(DEFAULT_DATETIME_FORMAT, $entry->getUpdatedDate())." <strong>Score:</strong> To Be Released ".date(DEFAULT_DATETIME_FORMAT, $userCommunityQuiz->getReleaseUntil())."</li>";
                                 }
                                 break;
                             case "expired" :
-                                echo "<li class=\"incorrect\">".date(DEFAULT_DATE_FORMAT, $entry->getUpdatedDate())." <strong>Expired Attempt</strong>: not completed.</li>";
+                                echo "<li class=\"incorrect\">".date(DEFAULT_DATETIME_FORMAT, $entry->getUpdatedDate())." <strong>Expired Attempt</strong>: not completed.</li>";
                                 break;
                             case "inprogress" :
-                                echo "<li>".date(DEFAULT_DATE_FORMAT, $entry->getUpdatedDate())." <strong>Attempt In Progress</strong> ( <a class=\"start-quiz\" data-aquiz=\"". $userCommunityQuiz->getAquizID()."\" data-href=\"". ENTRADA_URL."/file-seb.php?id=". $userCommunityQuiz->getAquizID()."\" title=\"Take ".html_encode($userCommunityQuiz->getQuizTitle())."\">continue quiz</a> )</li>";
+                                echo "<li>".date(DEFAULT_DATETIME_FORMAT, $entry->getUpdatedDate())." <strong>Attempt In Progress</strong> ( <a class=\"start-quiz\" data-aquiz=\"". $userCommunityQuiz->getAquizID()."\" data-href=\"". ENTRADA_URL."/file-seb.php?id=". $userCommunityQuiz->getAquizID()."\" title=\"Take ".html_encode($userCommunityQuiz->getQuizTitle())."\">continue quiz</a> )</li>";
                                 break;
                             default :
                                 break;
@@ -254,13 +254,13 @@ if ($userQuizzes || $communityQuizzes) {
                 </ul>
                 <?php } ?>
             </td>
-            <td><?php echo (((int) $userCommunityQuiz->getReleaseUntil()) ? date(DEFAULT_DATE_FORMAT, $userCommunityQuiz->getReleaseUntil()) : "No Expiration"); ?></td>
+            <td><?php echo (((int) $userCommunityQuiz->getReleaseUntil()) ? date(DEFAULT_DATETIME_FORMAT, $userCommunityQuiz->getReleaseUntil()) : "No Expiration"); ?></td>
 		</tr>
 	<?php } ?>
 	</tbody>
 	</table>
     <?php } else { ?>
-    <div class="alert alert-info">There are currently no available secure quizzes for your <strong>communities</strong>.</div>
+    <div class="alert alert-info"><?php echo $translate->_("There are currently no available secure quizzes for your <strong>communities</strong>."); ?></div>
     <?php } ?>
     <div id="modal-access-quiz" class="modal fade">
         <div class="modal-dialog">

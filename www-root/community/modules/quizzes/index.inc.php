@@ -219,18 +219,18 @@ if ($COMMUNITY_ADMIN) {
                     $quiz_description = "";
 
                     if ((int) $quiz_record["release_date"] && (int) $quiz_record["release_until"]) {
-                        $quiz_description .= "<p>This quiz " . ($quiz_record["release_until"] > time() ? "is" : "was only") .  " available from <strong>".date(DEFAULT_DATE_FORMAT, html_encode($quiz_record["release_date"]))."</strong> to <strong>".date(DEFAULT_DATE_FORMAT, html_encode($quiz_record["release_until"]))."</strong>.</p>";
+                        $quiz_description .= "<p>This quiz " . ($quiz_record["release_until"] > time() ? "is" : "was only") .  " available from <strong>".date(DEFAULT_DATETIME_FORMAT, html_encode($quiz_record["release_date"]))."</strong> to <strong>".date(DEFAULT_DATETIME_FORMAT, html_encode($quiz_record["release_until"]))."</strong>.</p>";
                     } elseif ((int) $quiz_record["release_date"]) {
                         if ($quiz_record["release_date"] > time()) {
-                            $quiz_description .= "<p>You will be able to attempt this quiz starting <strong>".date(DEFAULT_DATE_FORMAT, html_encode($quiz_record["release_date"]))."</strong>.</p>";
+                            $quiz_description .= "<p>You will be able to attempt this quiz starting <strong>".date(DEFAULT_DATETIME_FORMAT, html_encode($quiz_record["release_date"]))."</strong>.</p>";
                         } else {
-                            $quiz_description .= "<p>This quiz has been available since <strong>".date(DEFAULT_DATE_FORMAT, html_encode($quiz_record["release_date"]))."</strong>.</p>";
+                            $quiz_description .= "<p>This quiz has been available since <strong>".date(DEFAULT_DATETIME_FORMAT, html_encode($quiz_record["release_date"]))."</strong>.</p>";
                         }
                     } elseif ((int) $quiz_record["release_until"]) {
                         if ($quiz_record["release_until"] > time()) {
-                            $quiz_description .= "<p>You will be able to attempt this quiz until <strong>".date(DEFAULT_DATE_FORMAT, html_encode($quiz_record["release_until"]))."</strong>.</p>";
+                            $quiz_description .= "<p>You will be able to attempt this quiz until <strong>".date(DEFAULT_DATETIME_FORMAT, html_encode($quiz_record["release_until"]))."</strong>.</p>";
                         } else {
-                            $quiz_description .= "<p>This quiz was only available until <strong>".date(DEFAULT_DATE_FORMAT, html_encode($quiz_record["release_until"]))."</strong>. Please contact a teacher for assistance if required.</p>";
+                            $quiz_description .= "<p>This quiz was only available until <strong>".date(DEFAULT_DATETIME_FORMAT, html_encode($quiz_record["release_until"]))."</strong>. Please contact a teacher for assistance if required.</p>";
                         }
                     } else {
                         $quiz_description .= "<p>This quiz is available indefinitely.</p>";
@@ -273,18 +273,18 @@ if ($COMMUNITY_ADMIN) {
                             if (($quiz_record["quiztype_code"] != "delayed") || ($quiz_record["release_until"] <= time())) {
                                 $percentage = ((round(($entry["quiz_score"] / $entry["quiz_value"]), 2)) * 100);
                                 echo "<li class=\"".(($percentage >= 60) ? "correct" : "incorrect")."\">";
-                                echo	date(DEFAULT_DATE_FORMAT, $entry["updated_date"])." <strong>Score:</strong> ".$entry["quiz_score"]."/".$entry["quiz_value"]." (".$percentage."%)";
+                                echo	date(DEFAULT_DATETIME_FORMAT, $entry["updated_date"])." <strong>Score:</strong> ".$entry["quiz_score"]."/".$entry["quiz_value"]." (".$percentage."%)";
                                 echo "	( <a href=\"".ENTRADA_URL."/community".$COMMUNITY_URL.":".$PAGE_URL."?section=results&amp;id=".$entry["qprogress_id"]."\">review quiz</a> )";
                                 echo "</li>";
                             } else {
-                                echo "<li>".date(DEFAULT_DATE_FORMAT, $entry["updated_date"])." <strong>Score:</strong> To Be Released ".date(DEFAULT_DATE_FORMAT, $quiz_record["release_until"])."</li>";
+                                echo "<li>".date(DEFAULT_DATETIME_FORMAT, $entry["updated_date"])." <strong>Score:</strong> To Be Released ".date(DEFAULT_DATETIME_FORMAT, $quiz_record["release_until"])."</li>";
                             }
                             break;
                         case "expired" :
-                            echo "<li class=\"incorrect\">".date(DEFAULT_DATE_FORMAT, $entry["updated_date"])." <strong>Expired Attempt</strong>: not completed.</li>";
+                            echo "<li class=\"incorrect\">".date(DEFAULT_DATETIME_FORMAT, $entry["updated_date"])." <strong>Expired Attempt</strong>: not completed.</li>";
                             break;
                         case "inprogress" :
-                            echo "<li>".date(DEFAULT_DATE_FORMAT, $entry["updated_date"])." <strong>Attempt In Progress</strong> ( <a href=\"".ENTRADA_URL."/community".$COMMUNITY_URL.":".$PAGE_URL."?section=attempt&amp;community=true&amp;id=".$quiz_record["aquiz_id"]."\">continue quiz</a> )</li>";
+                            echo "<li>".date(DEFAULT_DATETIME_FORMAT, $entry["updated_date"])." <strong>Attempt In Progress</strong> ( <a href=\"".ENTRADA_URL."/community".$COMMUNITY_URL.":".$PAGE_URL."?section=attempt&amp;community=true&amp;id=".$quiz_record["aquiz_id"]."\">continue quiz</a> )</li>";
                             break;
                         default :
                             continue;

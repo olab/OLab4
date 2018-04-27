@@ -26,17 +26,27 @@
 class Views_Assessments_Forms_Sections_RubricInformation extends Views_Assessments_Forms_Sections_Base {
 
     protected function validateOptions($options = array()) {
-        return $this->validateIsSet($options, array("in_use", "rubric_description", "rubric_title", "rubric_item_code"));
+        if (!$this->validateIsSet($options, array("in_use", "rubric_description", "rubric_title", "rubric_item_code", "scale_type_datasource")) ){
+            return false;
+        }
+        return true;
     }
 
     protected function renderView($options = array()) {
         global $translate;
-
-        $rubric_in_use = $options["in_use"];
-        $rubric_title = $options["rubric_title"];
-        $rubric_description = $options["rubric_description"];
-        $rubric_item_code = $options["rubric_item_code"];
-        $authors = @$options["authors"] ? $options["authors"] : array();
+        $rubric_in_use               = $options["in_use"];
+        $rubric_title                = $options["rubric_title"];
+        $rubric_description          = $options["rubric_description"];
+        $rubric_item_code            = $options["rubric_item_code"];
+        $scale_type_datasource       = $options["scale_type_datasource"];
+        $rating_scale_id             = @$options["rating_scale_id"];
+        $rating_scale_title          = @$options["rating_scale_title"];
+        $rating_scale_type_shortname = @$options["rating_scale_type_shortname"];
+        $lock_rating_scale           = @$options["lock_rating_scale"];
+        $rating_scale_type_id        = @$options["rating_scale_type_id"];
+        $rating_scale_type_title     = @$options["rating_scale_type_title"];
+        $rating_scale_deleted        = @$options["rating_scale_deleted"];
+        $authors                     = @$options["authors"] ? $options["authors"] : array();
         $disabled_text = "";
         if ($rubric_in_use) {
             $disabled_text = "disabled";
@@ -63,12 +73,28 @@ class Views_Assessments_Forms_Sections_RubricInformation extends Views_Assessmen
                 <input type="text" name="rubric_item_code" id="rubric-item-code" class="span11" value="<?php echo html_encode($rubric_item_code); ?>" <?php echo $disabled_text; ?>/>
             </div>
         </div>
+
         <?php
-            $audience_selector = new Views_Assessments_Forms_Controls_AudienceSelector(array("mode" => "edit"));
-            $audience_selector->render(array(
-                    "authors" => $authors,
-                    "related-data-key" => "data-arauthor-id"
-                )
-            );
+        $scale_search = new Views_Assessments_Forms_Controls_ScaleSelectorSearch();
+        $scale_search->render(array(
+            "parent_selector" => "rubric-form",
+            "search_selector" => "item-rating-scale-btn",
+            "readonly" => $lock_rating_scale,
+            "scale_type_datasource" => $scale_type_datasource,
+            "submodule" => "rubrics",
+            "selected_target_id" => $rating_scale_id,
+            "selected_target_label" => $rating_scale_title,
+            "selected_target_type_id" => $rating_scale_type_id,
+            "selected_target_type_label" => $rating_scale_type_title,
+            "selected_target_type_shortname" => $rating_scale_type_shortname,
+            "scale_deleted" => $rating_scale_deleted
+        ));
+
+        $audience_selector = new Views_Assessments_Forms_Controls_AudienceSelector(array("mode" => "edit"));
+        $audience_selector->render(array(
+                "authors" => $authors,
+                "related-data-key" => "data-arauthor-id"
+            )
+        );
     }
 }

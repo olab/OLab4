@@ -123,7 +123,7 @@ switch ($STEP) {
     case 1:
 
     default :
-        if (isset($post_id)) {;
+        if (isset($post_id)) {
             $access_time    = false;
             $access_audience = false;
             $grant_access = true;
@@ -204,6 +204,40 @@ switch ($STEP) {
                                      <div class="clear"></div>
                                      <?php
                                  }
+                            } else if ($post->getStartDate() > time()) {
+                                 $post_start_date = new DateTime('@' . $post->getStartDate());
+                                 ?>
+                                 <div id="attempt_countdown" class="alert alert-info">
+                                     This exam will be available in <strong class="countdown"></strong>
+                                 </div>
+                                 <script>
+                                    var end = new Date(<?php echo $post->getStartDate()*1000; ?>);
+                                    var _second = 1000;
+                                    var _minute = _second * 60;
+                                    var _hour = _minute * 60;
+                                    var _day = _hour * 24;
+                                    var post_timer;
+
+                                    post_timer = setInterval(function(){
+                                        var now = new Date();
+                                        var distance = end - now;
+                                        if (distance < 0) {
+                                            window.location.reload();
+                                            return false;
+                                        }
+                                        var days = Math.floor(distance / _day);
+                                        var hours = Math.floor((distance % _day) / _hour);
+                                        var minutes = Math.floor((distance % _hour) / _minute);
+                                        var seconds = Math.floor((distance % _minute) / _second);
+
+                                        html = (days > 0 ? days + ' days ' : '');
+                                        html += (hours > 0 ? hours + ' hours ' : (days > 0 ? '0 hours ' : ''));
+                                        html += (minutes > 0 ? minutes + ' mins ' : (hours > 0 ? '0 mins ' : ''));
+                                        html += (seconds > 0 ? seconds + ' secs ' : (minutes > 0 ? '0 secs ' : ''));
+                                        jQuery("#attempt_countdown .countdown").html(html);
+                                    }, 1000);
+                                 </script>
+                                 <?php
                             }
                             ?>
                         </div>

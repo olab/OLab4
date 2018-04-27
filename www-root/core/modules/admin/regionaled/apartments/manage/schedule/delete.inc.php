@@ -42,7 +42,7 @@ if (!defined("IN_SCHEDULE")) {
 		$query = "DELETE FROM `".CLERKSHIP_DATABASE."`.`apartment_schedule` WHERE `aschedule_id` = ".$db->qstr($ASCHEDULE_ID)." AND `apartment_id` = ".$db->qstr($APARTMENT_ID);
 		if ($db->Execute($query) && ($db->Affected_Rows() == 1)) {
 			$SUCCESS++;
-			$SUCCESSSTR[] = "You have successfully removed <strong>".html_encode($ASCHEDULE_INFO["firstname"]." ".$ASCHEDULE_INFO["lastname"])."</strong> from <strong>".html_encode($APARTMENT_INFO["apartment_title"])."</strong> between ".date(DEFAULT_DATE_FORMAT, $ASCHEDULE_INFO["inhabiting_start"])." and ".date(DEFAULT_DATE_FORMAT, $ASCHEDULE_INFO["inhabiting_finish"]).".<br /><br />You will now be redirected to the apartment schedule; this will happen <strong>automatically</strong> in 5 seconds or <a href=\"".ENTRADA_URL.$url."\" style=\"font-weight: bold\">click here</a> to continue.";
+			$SUCCESSSTR[] = "You have successfully removed <strong>".html_encode($ASCHEDULE_INFO["firstname"]." ".$ASCHEDULE_INFO["lastname"])."</strong> from <strong>".html_encode($APARTMENT_INFO["apartment_title"])."</strong> between ".date(DEFAULT_DATETIME_FORMAT, $ASCHEDULE_INFO["inhabiting_start"])." and ".date(DEFAULT_DATETIME_FORMAT, $ASCHEDULE_INFO["inhabiting_finish"]).".<br /><br />You will now be redirected to the apartment schedule; this will happen <strong>automatically</strong> in 5 seconds or <a href=\"".ENTRADA_URL.$url."\" style=\"font-weight: bold\">click here</a> to continue.";
 
 			application_log("success", "Successfully removed proxy_id [".$ASCHEDULE_INFO["proxy_id"]."] from apartment_id [".$APARTMENT_ID."] / aschedule_id [".$ASCHEDULE_ID."].");
 
@@ -70,8 +70,8 @@ if (!defined("IN_SCHEDULE")) {
 					"from_lastname" => $_SESSION["details"]["lastname"],
 					"region" => $APARTMENT_INFO["region_name"],
 					"apartment_address" => $apartment_address,
-					"inhabiting_start" => date(DEFAULT_DATE_FORMAT, $ASCHEDULE_INFO["inhabiting_start"]),
-					"inhabiting_finish" => date(DEFAULT_DATE_FORMAT, $ASCHEDULE_INFO["inhabiting_finish"]),
+					"inhabiting_start" => date(DEFAULT_DATETIME_FORMAT, $ASCHEDULE_INFO["inhabiting_start"]),
+					"inhabiting_finish" => date(DEFAULT_DATETIME_FORMAT, $ASCHEDULE_INFO["inhabiting_finish"]),
 					"application_name" => APPLICATION_NAME,
 					"department_title" => $APARTMENT_INFO["department_title"],
 					"department_id" => $APARTMENT_INFO["department_id"]

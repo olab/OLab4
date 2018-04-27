@@ -25,8 +25,9 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_USERS"))) {
 } else {
 	if ($PROXY_ID) {
 		
+        if (isset($_POST["ajax_action"])) {
 		$ajax_action = clean_input($_POST["ajax_action"], "alpha");
-
+        }
 		if (!empty($ajax_action)) {
 			ob_clear_open_buffers();
 
@@ -438,8 +439,8 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_USERS"))) {
 							$url = ENTRADA_URL."/admin/users/manage/incidents?section=edit&id=".$result["proxy_id"]."&incident-id=".$result["incident_id"];
 							echo "<tr ".(!$result["incident_status"] ? " class=\"closed\"" : "").">\n";
 							echo "	<td class=\"title\"><a href=\"".$url."\" title=\"Incident Title: ".html_encode($result["incident_title"])."\">[".html_encode($result["incident_severity"])."] ".html_encode(limit_chars($result["incident_title"], 75))."</a></td>\n";
-							echo "	<td class=\"date\"><a href=\"".$url."\" title=\"Incident Date\">".date(DEFAULT_DATE_FORMAT, $result["incident_date"])."</a></td>\n";
-							echo "	<td class=\"date\"><a href=\"".$url."\" title=\"Incident Follow-Up Date\">".(isset($result["follow_up_date"]) && ((int)$result["follow_up_date"]) ? date(DEFAULT_DATE_FORMAT, $result["follow_up_date"]) : "")."</a></td>\n";
+							echo "	<td class=\"date\"><a href=\"".$url."\" title=\"Incident Date\">".date(DEFAULT_DATETIME_FORMAT, $result["incident_date"])."</a></td>\n";
+							echo "	<td class=\"date\"><a href=\"".$url."\" title=\"Incident Follow-Up Date\">".(isset($result["follow_up_date"]) && ((int)$result["follow_up_date"]) ? date(DEFAULT_DATETIME_FORMAT, $result["follow_up_date"]) : "")."</a></td>\n";
 							echo "</tr>\n";
 						}
 						?>

@@ -528,7 +528,7 @@ if ($page_id) {
 					if ((is_array($rss_output)) && (count($rss_output))) {
 						foreach ($rss_output as $result) {
 
-							$description = (isset($result["event_location"]) && trim($result["event_location"]) != "" ? "Location: ".$result["event_location"]."<br /><br />" : "")."From: ".date(DEFAULT_DATE_FORMAT, $result["event_start"])."<br />To: ".date(DEFAULT_DATE_FORMAT, $result["event_finish"])."<br /><br />\n";
+							$description = (isset($result["event_location"]) && trim($result["event_location"]) != "" ? "Location: ".$result["event_location"]."<br /><br />" : "")."From: ".date(DEFAULT_DATETIME_FORMAT, $result["event_start"])."<br />To: ".date(DEFAULT_DATETIME_FORMAT, $result["event_finish"])."<br /><br />\n";
 							$description .= $result["event_description"];
 
 							$item								= new FeedItem();
@@ -552,6 +552,46 @@ if ($page_id) {
 			if (isset($_GET["id"]) && ($tmp_input = (int) $_GET["id"])) {
 				$discussion_id = $tmp_input;
 			}
+
+			// set $logged_in if $user_private_hash is verified
+            // if this is not set, a user cannot view private discussions feeds via serve-remote-feed.php
+            if (!$logged_in) {
+                if ($user_private_hash) {
+                    $query = "  SELECT a.`id`, a.`username`, a.`firstname`, a.`lastname`, a.`email`, a.`grad_year`, b.`role`, b.`group`, b.`organisation_id`, b.`access_expires`
+									FROM `" . AUTH_DATABASE . "`.`user_data` AS a
+									LEFT JOIN `" . AUTH_DATABASE . "`.`user_access` AS b
+									ON b.`user_id` = a.`id`
+									WHERE b.`private_hash` = " . $db->qstr($user_private_hash) . "
+									AND b.`app_id` = " . $db->qstr(AUTH_APP_ID) . "
+									AND b.`account_active` = 'true'
+									AND (b.`access_starts`='0' OR b.`access_starts` <= " . $db->qstr(time()) . ")
+									AND (b.`access_expires`='0' OR b.`access_expires` >= " . $db->qstr(time()) . ")
+									GROUP BY a.`id`";
+                    $result = $db->GetRow($query);
+                    if ($result) {
+                        // If $ENTRADA_USER was previously initialized in init.inc.php before the
+                        // session was authorized it is set to false and needs to be re-initialized.
+                        if ($ENTRADA_USER == false) {
+                            $ENTRADA_USER = User::get($result["id"]);
+                        }
+                        $_SESSION["details"]["id"] = $user_proxy_id = $result["id"];
+                        $_SESSION["details"]["access_id"] = $ENTRADA_USER->getAccessId();
+                        $_SESSION["details"]["username"] = $user_username = $result["username"];
+                        $_SESSION["details"]["firstname"] = $user_firstname = $result["firstname"];
+                        $_SESSION["details"]["lastname"] = $user_lastname = $result["lastname"];
+                        $_SESSION["details"]["email"] = $user_email = $result["email"];
+                        $_SESSION["details"]["role"] = $user_role = $result["role"];
+                        $_SESSION["details"]["group"] = $user_group = $result["group"];
+                        $_SESSION["details"]["organisation_id"] = $user_organisation_id = $result["organisation_id"];
+                        $_SESSION["details"]["app_id"] = AUTH_APP_ID;
+                        $_SESSION["details"]["grad_year"] = $result["grad_year"];
+                        $_SESSION["details"]["expires"] = $result["access_expires"];
+                        // this is used in subsequent queries
+                        $logged_in = true;
+                    }
+                }
+            }
+            // end setting $logged_in via $user_private_hash
 
 			if (isset($discussion_id) && ($discussion_id > 0)) {
 				$query 				= "	SELECT a.*, b.*, c.* FROM `community_discussions` as a

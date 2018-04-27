@@ -43,6 +43,10 @@ if (!defined("PARENT_INCLUDED")) {
 
     if (($router) && ($router->initRoute())) {
         $PREFERENCES = preferences_load($MODULE);
+        Entrada_Utilities::addJavascriptTranslation("Please update.", "please_update");
+        Entrada_Utilities::addJavascriptTranslation("No records found in the selected curriculum period.", "no_records_found_in_cperiod");
+        Entrada_Utilities::addJavascriptTranslation("There is currently no leave tracked by the system. Use the add leave button above to create a new leave record.", "no_leave_in_system");
+        Entrada_Utilities::addJavascriptTranslation("No leave records have been found to display.", "no_leave_records_found");
 
         $module_file = $router->getRoute();
         if ($module_file) {

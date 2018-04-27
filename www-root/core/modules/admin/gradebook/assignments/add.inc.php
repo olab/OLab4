@@ -56,11 +56,10 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
             $assessment_object = Models_Gradebook_Assessment::fetchRowByID($ASSESSMENT_ID);
             $assessment = $assessment_object->toArray();
             if ($assessment) {
-                $query = "SELECT * FROM `assignments`
-                            WHERE `assessment_id` = ".$db->qstr($ASSESSMENT_ID)."
-                            AND `assignment_active` = 1";
-                $assignment = $db->GetRow($query);
-                if ($assignment) {
+                $assignment = new Models_Assignment(["assessment_id" => $assessment["assessment_id"]]);
+                $assignment->fetchRowByAssessmentID();
+
+                if ($assignment->getID()) {
                     add_error("In order to add an Assignment to a Gradebook Assessment you must provide a valid assessment identifier. The provided assessment identifier is already has an assignment.");
                 } else {
                     $PROCESSED["assessment_id"] = $assessment["assessment_id"];
@@ -85,13 +84,10 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
         );
 
         if ($PROCESSED["assessment_id"]) {
-            $query = "	SELECT * FROM `courses`
-                        WHERE `course_id` = ".$db->qstr($COURSE_ID)."
-                        AND `course_active` = '1'";
-            $course_details	= $db->GetRow($query);
+            $course_details	= $course->toArray();
 
             if ($course_details) {
-                if ($course_details && $ENTRADA_ACL->amIAllowed(new GradebookResource($course_details["course_id"], $course_details["organisation_id"]), "update")) {
+                if ($ENTRADA_ACL->amIAllowed(new GradebookResource($course_details["course_id"], $course_details["organisation_id"]), "update")) {
                     // Error Checking
                     switch($STEP) {
                         case 2 :
@@ -218,7 +214,12 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
                                         $PROCESSED["updated_date"]	= time();
                                         $PROCESSED["updated_by"] = $ENTRADA_USER->getID();
                                         if ($db->AutoExecute("assignment_contacts", $PROCESSED, "INSERT")) {
-                                            if ($notice_enabled) {
+                                            $course_audience = new Models_Course_Audience();
+                                            $audience_records = $course_audience->fetchAllByCourseIDCperiodID($course->getID(), $cperiod_id);
+                                            /**
+                                             * only process notices if there is a course audience to receive them :)
+                                             */
+                                            if ($notice_enabled && $audience_records) {
                                                 $PROCESSED_NOTICE["target"] = "updated";
                                                 $PROCESSED_NOTICE["organisation_id"] = $course_details["organisation_id"];
                                                 $PROCESSED_NOTICE["updated_date"] = time();
@@ -242,22 +243,37 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
                                                     (isset($PROCESSED["assignment_description"]) && $PROCESSED["assignment_description"] ? nl2br(html_encode($PROCESSED["assignment_description"])) : "No assignment description provided")
                                                 );
                                                 $PROCESSED_NOTICE["notice_summary"] = str_ireplace($search, $replace, $PROCESSED_NOTICE["notice_summary"]);
-                                                $query = "SELECT * FROM `groups` WHERE `group_id` = ".$db->qstr($assessment["cohort"]);
-                                                $assessment_group = $db->GetRow($query);
-                                                if ($assessment_group) {
-                                                    $PROCESSED_NOTICE_AUDIENCE["audience_type"] = $assessment_group["group_type"];
-                                                    $PROCESSED_NOTICE_AUDIENCE["audience_value"] = $assessment_group["group_id"];
-                                                    $PROCESSED_NOTICE_AUDIENCE["updated_by"] = $ENTRADA_USER->getID();
-                                                    $PROCESSED_NOTICE_AUDIENCE["updated_date"] = time();
-                                                }
                                                 if ($db->AutoExecute("notices", $PROCESSED_NOTICE, "INSERT") && $NOTICE_ID = $db->Insert_Id()) {
-                                                    $query = "UPDATE `assignments` SET `notice_id` = ".$db->qstr($NOTICE_ID)." WHERE `assignment_id` = ".$db->qstr($ASSIGNMENT_ID);
-                                                    if (!$db->Execute($query)) {
+                                                    $PROCESSED["notice_id"] = $NOTICE_ID;
+                                                    // update the assignment with the notice ID, now that we have it.
+                                                    if ($db->AutoExecute("assignments", $PROCESSED, "UPDATE", "`assignment_id` = ".$db->qstr($ASSIGNMENT_ID))) {
+                                                        $PROCESSED_NOTICE_AUDIENCE["notice_id"] = $NOTICE_ID;
+                                                        $PROCESSED_NOTICE_AUDIENCE["updated_by"] = $ENTRADA_USER->getID();
+                                                        $PROCESSED_NOTICE_AUDIENCE["updated_date"] = time();
+                                                        // course audience may contain multiple records. Put each of them into the notice audience, with the corresponding type
+                                                        foreach ($audience_records as $audience) {
+                                                            $PROCESSED_NOTICE_AUDIENCE["audience_type"] = "";
+                                                            $PROCESSED_NOTICE_AUDIENCE["audience_value"] = $audience->getAudienceValue();
+                                                            if ($audience->getAudienceType() == "proxy_id") {
+                                                                $PROCESSED_NOTICE_AUDIENCE["audience_type"] = "students";
+                                                            }
+                                                            if ($audience->getAudienceType() == "group_id") {
+                                                                // is it a cohort or a class list?
+                                                                $group = Models_Group::fetchRowByID($audience->getAudienceValue());
+                                                                if ($group) {
+                                                                    $PROCESSED_NOTICE_AUDIENCE["audience_type"] = $group->getGroupType();
+                                                                }
+                                                            }
+                                                            if (!empty($PROCESSED_NOTICE_AUDIENCE["audience_type"])) {
+                                                                if (!$db->AutoExecute("notice_audience", $PROCESSED_NOTICE_AUDIENCE, "INSERT")) {
+                                                                    application_log("error", "An error was encountered while attempting to create a `notice_audience` record for a new assignment [" . $ASSIGNMENT_ID . "] notice [" . $NOTICE_ID . "]. DB Said: " . $db->ErrorMsg());
+                                                                }
+                                                            } else {
+                                                                application_log("error", "An error was encountered while attempting to create a `notice_audience` record for a new assignment [" . $ASSIGNMENT_ID . "] notice [" . $NOTICE_ID . "]. DB Said: " . $db->ErrorMsg());
+                                                            }
+                                                        }
+                                                    } else {
                                                         application_log("error", "An error was encountered while attempting to set the `notice_id` field for a new assignment [".$ASSIGNMENT_ID."] after creating a notice [".$NOTICE_ID."] for it. DB Said: ".$db->ErrorMsg());
-                                                    }
-                                                    $PROCESSED_NOTICE_AUDIENCE["notice_id"] = $NOTICE_ID;
-                                                    if (!$db->AutoExecute("notice_audience", $PROCESSED_NOTICE_AUDIENCE, "INSERT")) {
-                                                        application_log("error", "An error was encountered while attempting to create a `notice_audience` record for a new assignment [".$ASSIGNMENT_ID."] notice [".$NOTICE_ID."]. DB Said: ".$db->ErrorMsg());
                                                     }
                                                 } else {
                                                     application_log("error", "An error was encountered while attempting to create a `notice` record for a new assignment [".$ASSIGNMENT_ID."]. DB Said: ".$db->ErrorMsg());

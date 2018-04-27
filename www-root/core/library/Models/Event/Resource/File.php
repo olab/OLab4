@@ -29,6 +29,7 @@ class Models_Event_Resource_File extends Models_Base {
             $required,
             $timeframe,
             $file_category,
+            $file_contents,
             $file_type,
             $file_size,
             $file_name,
@@ -39,7 +40,8 @@ class Models_Event_Resource_File extends Models_Base {
             $release_date,
             $release_until,
             $updated_date,
-            $updated_by;
+            $updated_by,
+            $draft;
     
     protected static $table_name = "event_files";
     protected static $default_sort_column = "efile_id";
@@ -67,6 +69,15 @@ class Models_Event_Resource_File extends Models_Base {
     
     public function getFileCategory() {
         return $this->file_category;
+    }
+
+    public function getFileContents() {
+        return $this->file_contents;
+    }
+
+    public function setFileContents($contents = null) {
+        $this->file_contents = $contents;
+        return $this;
     }
     
     public function getFileType() {
@@ -111,6 +122,10 @@ class Models_Event_Resource_File extends Models_Base {
     
     public function getUpdatedBy() {
         return $this->updated_by;
+    }
+
+    public function getDraft() {
+        return $this->draft;
     }
     
     /* @return bool|Models_Event_Resource_File */
@@ -173,27 +188,6 @@ class Models_Event_Resource_File extends Models_Base {
         }
     }
     
-    public function insert() {
-        global $db;
-        
-        if ($db->AutoExecute(static::$table_name, $this->toArray(), "INSERT")) {
-            $this->efile_id = $db->Insert_ID();
-            return $this;
-        } else {
-            return false;
-        }
-    }
-    
-    public function update() {
-        global $db;
-        
-        if ($db->AutoExecute(static::$table_name, $this->toArray(), "UPDATE", "`efile_id` = ".$db->qstr($this->efile_id))) {
-            return $this;
-        } else {
-            return false;
-        }
-    }
-    
     public function delete() {
         global $db;
         
@@ -203,5 +197,18 @@ class Models_Event_Resource_File extends Models_Base {
         } else {
             return false;
         }
+    }
+
+    public static function getIdsNotParsed() {
+        global $db;
+
+        $query = "SELECT `efile_id`
+                  FROM `".static::$database_name."`.`".static::$table_name."`
+                  WHERE `file_contents` IS NULL
+                  ORDER BY " . static::$default_sort_column;
+
+        $results = $db->getCol($query);
+
+        return $results;
     }
 }

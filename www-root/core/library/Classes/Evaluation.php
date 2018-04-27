@@ -1435,7 +1435,7 @@ class Classes_Evaluation {
 	}
 
 	public static function getTargetControls ($target_data, $options_for = "", $form_id = 0) {
-		global $ENTRADA_USER, $ENTRADA_ACL, $db, $use_ajax;
+		global $ENTRADA_USER, $ENTRADA_ACL, $db, $use_ajax, $translate;
 		if ($form_id) {
 			$query = "	SELECT b.*
 						FROM `evaluation_forms` AS a
@@ -1948,7 +1948,7 @@ class Classes_Evaluation {
 						<tr>
 							<td colspan="2">&nbsp;</td>
 							<td>
-								<?php echo display_notice("When creating clerkship elective evaluations, the list of <strong>Evaluators</strong>, the <strong>Evaluation Start</strong>, and the <strong>Evaluation Finish</strong> determine which electives will be targeted for evaluation. <br /><br />Each elective which ends between the <strong>Evaluation Start</strong> and the <strong>Evaluation Finish</strong> for learners in the <strong>Evaluators</strong> list will require/allow an evaluation to be completed on it."); ?>
+								<?php echo display_notice("When creating ". $translate->_("clerkship") . " elective evaluations, the list of <strong>Evaluators</strong>, the <strong>Evaluation Start</strong>, and the <strong>Evaluation Finish</strong> determine which electives will be targeted for evaluation. <br /><br />Each elective which ends between the <strong>Evaluation Start</strong> and the <strong>Evaluation Finish</strong> for learners in the <strong>Evaluators</strong> list will require/allow an evaluation to be completed on it."); ?>
 							</td>
 						</tr>
 						<?php
@@ -1974,8 +1974,8 @@ class Classes_Evaluation {
 										<tr>
 											<td style="vertical-align: top"><input type="hidden" name="target_subtype" value="preceptor" /><input type="radio" name="target_type" id="target_type_rotations" value="rotations" onclick="selectEvaluationTargetOption('rotations')" style="vertical-align: middle"  checked="checked" /></td>
 											<td colspan="2" style="padding-bottom: 15px">
-												<label for="target_type_rotations" class="radio-group-title">Each Service in the selected Clerkship Rotation</label>
-												<div class="content-small">This evaluation is intended for all events associated with a custom selection of Clerkship Rotations.</div>
+												<label for="target_type_rotations" class="radio-group-title">Each Service in the selected <?php echo $translate->_("Clerkship"); ?> Rotation</label>
+												<div class="content-small">This evaluation is intended for all events associated with a custom selection of <?php echo $translate->_("Clerkship"); ?> Rotations.</div>
 												<?php
 
 												$ROTATION_LIST = array();
@@ -1998,7 +1998,7 @@ class Classes_Evaluation {
 
 													echo lp_multiple_select_inline("rotations", $rotations, array("title" => "Select Clerkship Rotations:", "hidden" => false, "class" => "select_multiple_area_container", "category_check_all" => true, "submit" => false));
 												} else {
-													echo display_notice("There are no clerkship rotations available.");
+													echo display_notice("There are no " . $translate->_("clerkship") . " rotations available.");
 												}
 												if (isset($target_data["associated_rotation_ids"]) && is_array($target_data["associated_rotation_ids"])) {
 													foreach ($target_data["associated_rotation_ids"] as $rotation_id) {
@@ -2033,7 +2033,7 @@ class Classes_Evaluation {
 						<tr>
 							<td colspan="2">&nbsp;</td>
 							<td>
-								<?php echo display_notice("When creating clerkship preceptor evaluations, the list of <strong>Rotations</strong>, <strong>Evaluators</strong>, the <strong>Evaluation Start</strong>, and the <strong>Evaluation Finish</strong> determine which electives will be targeted for evaluation. <br /><br />Each preceptor for services in one of the selected <strong>Rotations</strong> which ends between the <strong>Evaluation Start</strong> and the <strong>Evaluation Finish</strong> for learners in the <strong>Evaluators</strong> list will require/allow an evaluation to be completed on it."); ?>
+								<?php echo display_notice("When creating " . $translate->_("clerkship") . " preceptor evaluations, the list of <strong>Rotations</strong>, <strong>Evaluators</strong>, the <strong>Evaluation Start</strong>, and the <strong>Evaluation Finish</strong> determine which electives will be targeted for evaluation. <br /><br />Each preceptor for services in one of the selected <strong>Rotations</strong> which ends between the <strong>Evaluation Start</strong> and the <strong>Evaluation Finish</strong> for learners in the <strong>Evaluators</strong> list will require/allow an evaluation to be completed on it."); ?>
 							</td>
 						</tr>
 						<?php

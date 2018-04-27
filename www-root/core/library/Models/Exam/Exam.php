@@ -21,8 +21,26 @@
  */
 
 class Models_Exam_Exam extends Models_Base {
-    protected $exam_id, $organisation_id, $title, $description, $display_questions, $random, $examsoft_exam_id, $created_date, $created_by, $updated_date, $updated_by, $deleted_date;
-    protected $exam_elements, $exam_authors;
+    protected $exam_id,
+        $folder_id,
+        $organisation_id,
+        $title,
+        $description,
+        $display_questions,
+        $random,
+        $random_answers,
+        $examsoft_exam_id,
+        $created_date,
+        $created_by,
+        $updated_date,
+        $updated_by,
+        $deleted_date;
+
+    protected
+        $exam_elements,
+        $exam_authors,
+        $total_exam_points,
+        $parent_folder;
 
     /**
      * @var string
@@ -48,7 +66,7 @@ class Models_Exam_Exam extends Models_Base {
      * @return string
      */
     public function getDefaultSortColumn() {
-        return $this->default_sort_column;
+        return self::$default_sort_column;
     }
 
     /**
@@ -63,6 +81,14 @@ class Models_Exam_Exam extends Models_Base {
      */
     public function getExamID() {
         return $this->exam_id;
+    }
+
+    public function getFolderId() {
+        return $this->folder_id;
+    }
+
+    public function setFolderId($folder_id) {
+        $this->folder_id = $folder_id;
     }
 
     /**
@@ -98,6 +124,13 @@ class Models_Exam_Exam extends Models_Base {
      */
     public function getRandom() {
         return $this->random;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getRandomAnswers() {
+        return $this->random_answers;
     }
     
     /**
@@ -143,6 +176,16 @@ class Models_Exam_Exam extends Models_Base {
     }
 
     /**
+     * @return bool|Models_Exam_Bank_Folders
+     */
+    public function getParentFolder() {
+        if (NULL === $this->parent_folder) {
+            $this->parent_folder = Models_Exam_Bank_Folders::fetchRowByID($this->getFolderId());
+        }
+        return $this->parent_folder;
+    }
+
+    /**
      * @return ArrayObject|Models_Exam_Exam_Element[]
      */
     public function getExamElements() {
@@ -162,7 +205,11 @@ class Models_Exam_Exam extends Models_Base {
         return $this->exam_authors;
     }
 
-    public function setUpdatedBy($updated_by){
+    public function getTotalExamPoints() {
+        return $this->total_exam_points;
+    }
+
+    public function setUpdatedBy($updated_by) {
         $this->updated_by = $updated_by;
     }
 
@@ -172,6 +219,17 @@ class Models_Exam_Exam extends Models_Base {
 
     public function setTitle($title) {
         $this->title = $title;
+    }
+
+    public function setTotalExamPoints($total_exam_points) {
+        $this->total_exam_points = $total_exam_points;
+    }
+
+    /**
+     * @param mixed $random_answers
+     */
+    public function setRandomAnswers($random_answers) {
+        $this->random_answers = $random_answers;
     }
 
     /**
@@ -215,7 +273,7 @@ class Models_Exam_Exam extends Models_Base {
      * @return bool
      * @throws Exception
      */
-    public function hasQuestion(Models_Exam_Question_Versions $question_version){
+    public function hasQuestion(Models_Exam_Question_Versions $question_version) {
         $existing_exam_element = Models_Exam_Exam_Element::fetchRowByExamIDElementIDElementType($this->exam_id, $question_version->getVersionID(), "question");
         if (!$existing_exam_element) {
             $other_versions = $question_version->fetchAllRelatedVersions();
@@ -240,9 +298,11 @@ class Models_Exam_Exam extends Models_Base {
      * @param $sort_direction
      * @param $sort_column
      * @param array $filters
+     * @param int $folder_id
+     * @param int $sub_folder_search
      * @return mixed
      */
-    public static function fetchAllRecordsBySearchTerm($search_value, $limit, $offset, $sort_direction, $sort_column, $filters = array()) {
+    public static function fetchAllRecordsBySearchTerm($search_value, $limit, $offset, $sort_direction, $sort_column, $filters = array(), $folder_id, $sub_folder_search) {
         global $db, $ENTRADA_USER;
         
         if (isset($sort_column) && $tmp_input = clean_input($sort_column, array("trim", "striptags"))) {
@@ -257,15 +317,73 @@ class Models_Exam_Exam extends Models_Base {
             $sort_direction = "DESC";
         }
         
+        if (isset($folder_id) && $tmp_input = clean_input($folder_id, array("trim", "int"))) {
+            $folder_id = $tmp_input;
+        } else {
+            $folder_id = 0;
+        }
+
+        $basic_search = true;
+        if ($search_value != "") {
+            if (empty($filters)) {
+                $basic_search = false;
+            }
+        }
+
+        if ($sub_folder_search === 1) {
+            $folder_array = ($folder_id === 0 ? array($folder_id) : array());
+            $folder_children = Models_Exam_Bank_Folders::getChildrenFolders($folder_id, $folder_array);
+            if (empty($folder_children)) {
+                $folder_children = array($folder_id);
+            }
+        } else {
+            $folder_children = array($folder_id);
+        }
+
+        $type_array     = array("proxy_id");
+        $approved_folders = array();
+
+        if ($folder_children && is_array($folder_children) && !empty($folder_children)) {
+            foreach ($folder_children as $children_folder_id) {
+                $authors = Models_Exam_Bank_Folder_Authors::fetchAllInheritedByFolderID($children_folder_id, true, $type_array);
+                if ($authors && is_array($authors) && $type_array && is_array($type_array)) {
+                    foreach ($type_array as $type) {
+                        foreach ($authors[$type] as $author) {
+                            if ($author && is_array($author)) {
+                                if ($author["object"] && is_object($author["object"])) {
+                                    if ($ENTRADA_USER->getActiveID() == $author["object"]->getAuthorID()) {
+                                        if (!in_array($children_folder_id, $approved_folders)) {
+                                            $approved_folders[] = $children_folder_id;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        $author_join = true;
+
+        if (in_array((int)$ENTRADA_USER->getActiveID(), $approved_folders)) {
+            $author_join = false;
+        }
+
         $course_permissions = $ENTRADA_USER->getCoursePermissions();
 
-        $query = "  SELECT a.*, COUNT(DISTINCT b.`exam_element_id`) AS `question_count` " . ($ENTRADA_USER->getActiveGroup() != "medtech" || array_key_exists("author", $filters) ? ", c.`author_type`, c.`author_id`" : "") ."
+        if (!$basic_search) {
+            $query = "  SELECT a.*, COUNT(DISTINCT b.`exam_element_id`) AS `question_count` 
                     FROM `exams` AS a
                     LEFT JOIN `exam_elements` AS b
                     ON a.`exam_id` = b.`exam_id`
                     AND b.`deleted_date` IS NULL
                     LEFT JOIN `exam_posts` AS `posts`
                     ON `posts`.`exam_id` = a.`exam_id`";
+        } else {
+            $query = "  SELECT a.* 
+                        FROM `exams` AS a";
+        }
         
         if ($filters) {
             if ($ENTRADA_USER->getActiveGroup() != "medtech" && array_key_exists("author", $filters)) {
@@ -280,10 +398,10 @@ class Models_Exam_Exam extends Models_Base {
                                 (c.`author_type` = 'organisation_id' AND c.`author_id` = " . $db->qstr($ENTRADA_USER->getActiveOrganisation()) . ")
                             )
                             AND c.`author_type` = 'proxy_id'
-                            AND c.`author_id`  IN (". implode(",", array_keys($filters["author"])) .")
-                            AND a.`organisation_id` = ". $db->qstr($ENTRADA_USER->getActiveOrganisation());
-            } else if ($ENTRADA_USER->getActiveGroup() != "medtech") {
-                $query .= " JOIN `exam_authors` AS c
+                            AND c.`author_id`  IN (" . implode(",", array_keys($filters["author"])) . ")
+                            AND a.`organisation_id` = " . $db->qstr($ENTRADA_USER->getActiveOrganisation());
+            } elseif ($ENTRADA_USER->getActiveGroup() != "medtech") {
+                $query .= " LEFT JOIN `exam_authors` AS c
                             ON a.`exam_id` = c.`exam_id`
                             AND
                             ("
@@ -294,28 +412,28 @@ class Models_Exam_Exam extends Models_Base {
                                 (c.`author_type` = 'organisation_id' AND c.`author_id` = " . $db->qstr($ENTRADA_USER->getActiveOrganisation()) . ")
                             )
                             AND a.`organisation_id` = ". $db->qstr($ENTRADA_USER->getActiveOrganisation());
-            } else if (array_key_exists("author", $filters)) {
+            } elseif (array_key_exists("author", $filters)) {
                 $query .= " JOIN `exam_authors` AS c
                         ON a.`exam_id` = c.`exam_id`
                         AND c.`author_type` = 'proxy_id'
-                        AND c.`author_id`  IN (". implode(",", array_keys($filters["author"])) .")";
+                        AND c.`author_id`  IN (" . implode(",", array_keys($filters["author"])) . ")";
             }
 
             if (array_key_exists("organisation", $filters)) {
                 $query .= " JOIN `exam_authors` AS d
                             ON a.`exam_id` = d.`exam_id`
                             AND d.`author_type` = 'organisation_id'
-                            AND d.`author_id`  IN (". implode(",", array_keys($filters["organisation"])) .")";
+                            AND d.`author_id`  IN (" . implode(",", array_keys($filters["organisation"])) . ")";
             }
 
             if (array_key_exists("course", $filters)) {
                 $query .= " LEFT JOIN `exam_authors` AS e
                             ON a.`exam_id` = e.`exam_id`
                             AND e.`author_type` = 'course_id'
-                            AND e.`author_id`  IN (". implode(",", array_keys($filters["course"])) .")";
+                            AND e.`author_id`  IN (" . implode(",", array_keys($filters["course"])) . ")";
 
                 $query .= " LEFT JOIN `events` AS `events`
-                            ON `events`.`course_id` IN (". implode(",", array_keys($filters["course"])) .")
+                            ON `events`.`course_id` IN (" . implode(",", array_keys($filters["course"])) . ")
                             AND `a`.`exam_id` = `posts`.`exam_id`
                             AND `posts`.`target_id` = `events`.`event_id`
                             AND `posts`.`target_type` = 'event'";
@@ -329,11 +447,11 @@ class Models_Exam_Exam extends Models_Base {
                             ON `eqv`.`version_id` = `f`.`element_id`
                             JOIN `exam_question_objectives` AS g
                             ON `eqv`.`question_id` = g.`question_id`
-                            AND g.`objective_id` IN (". implode(",", array_keys($filters["curriculum_tag"])) .")";
+                            AND g.`objective_id` IN (" . implode(",", array_keys($filters["curriculum_tag"])) . ")";
             }
         } else {
-            if ($ENTRADA_USER->getActiveGroup() != "medtech") {
-                $query .= " JOIN `exam_authors` AS c
+            if ($ENTRADA_USER->getActiveGroup() != "medtech" && $author_join) {
+                $query .= " LEFT JOIN `exam_authors` AS c
                             ON a.`exam_id` = c.`exam_id` 
                             AND 	
                             ("
@@ -347,16 +465,62 @@ class Models_Exam_Exam extends Models_Base {
             }
         }
 
-        $query .= " WHERE a.`deleted_date` IS NULL
-                    AND
+        $query .= " WHERE a.`deleted_date` IS NULL";
+
+        if (isset($approved_folders) && is_array($approved_folders) && !empty($approved_folders) && $ENTRADA_USER->getActiveGroup() != "medtech") {
+            $folder_ids =  implode(",", $approved_folders);
+
+            if ((isset($folder_children) && is_array($folder_children))) {
+                $children_folder_ids =  implode(",", $folder_children);
+            }
+
+            $query .= " AND (
+                            `a`.`folder_id` IN (" . $folder_ids . ") 
+                             OR 
+                            (
+                               `c`.`author_type` IN ('course_id', 'proxy_id', 'organisation_id')
+                                AND 
+                                `c`.`deleted_date` IS NULL";
+
+                $query .= ($children_folder_ids ? " AND `a`.`folder_id` IN (" . $children_folder_ids . ")" : "");
+
+                $query .= "
+                            )
+                        )";
+        } elseif (isset($folder_children) && is_array($folder_children) && !empty($folder_children)) {
+            $folder_ids =  implode(",", $folder_children);
+            $query .= " AND `a`.`folder_id` IN (" . $folder_ids . ")";
+            if ($ENTRADA_USER->getActiveGroup() != "medtech") {
+                $query .= "AND (
+                               `c`.`author_type` IN ('course_id', 'proxy_id', 'organisation_id')
+                                AND 
+                                `c`.`deleted_date` IS NULL
+                            )";
+            }
+        } else {
+            $query .= " AND `a`.`folder_id` IN (" . $db->qstr($folder_id) . ")";
+
+            if ($ENTRADA_USER->getActiveGroup() != "medtech") {
+                $query .= "AND (
+                               `c`.`author_type` IN ('course_id', 'proxy_id', 'organisation_id')
+                                AND
+                                `c`.`deleted_date` IS NULL
+                            )";
+            }
+        }
+
+        if (!$basic_search) {
+            $query .= " AND
                     (
                         (
                             a.`title` LIKE (". $db->qstr("%". $search_value ."%") .") 
                             OR a.`description` LIKE (". $db->qstr("%". $search_value ."%") .")
                         )
                     )";
+        }
+
         if ($filters) {
-            if (array_key_exists("author", $filters)) {
+            if (array_key_exists("author", $filters) && $author_join) {
                 $query .= " AND c.`deleted_date` IS NULL";
             }
 
@@ -378,8 +542,6 @@ class Models_Exam_Exam extends Models_Base {
                 $query .= " AND f.`deleted_date` IS NULL
                             AND g.`deleted_date` IS NULL";
             }
-        } else if ($ENTRADA_USER->getActiveGroup() != "medtech") {
-            $query .= " AND c.`deleted_date` IS NULL";
         }
         
         $query .= " GROUP BY a.`exam_id`
@@ -387,6 +549,7 @@ class Models_Exam_Exam extends Models_Base {
                     LIMIT " . (int) $offset . ", " . (int) $limit;
 
         $results = $db->GetAll($query);
+
         return $results;
     }
 
@@ -396,8 +559,7 @@ class Models_Exam_Exam extends Models_Base {
      * @return mixed
      */
     public static function fetchAllRecordsBySearchTermCourseLimit($search_value, $course_id, $assessment_id = 0) {
-        global $db;
-        global $ENTRADA_USER;
+        global $db, $ENTRADA_USER;
 
         $course_permissions = $ENTRADA_USER->getCoursePermissions();
 
@@ -452,52 +614,109 @@ class Models_Exam_Exam extends Models_Base {
         return $results;
     }
 
-
-
     /**
      * @param $search_value
      * @param array $filters
+     * @param int $folder_id
+     * @param int $sub_folder_search
      * @return int
      */
-    public static function countAllRecordsBySearchTerm($search_value, $filters = array()) {
-        global $db;
-        global $ENTRADA_USER;
+    public static function countAllRecordsBySearchTerm($search_value, $filters = array(), $folder_id, $sub_folder_search) {
+        global $db, $ENTRADA_USER;
         
         $course_permissions = $ENTRADA_USER->getCoursePermissions();
 
-        $query = "  SELECT COUNT(DISTINCT a.`exam_id`) AS `total_exams`
-                    FROM `exams` AS a
-                    LEFT JOIN `exam_posts` AS `posts`
-                    ON `posts`.`exam_id` = a.`exam_id`";
-        
+        if (isset($folder_id) && $tmp_input = clean_input($folder_id, array("trim", "int"))) {
+            $folder_id = $tmp_input;
+        } else {
+            $folder_id = 0;
+        }
+
+        if ($sub_folder_search === 1) {
+            $folder_array = ($folder_id === 0 ? array($folder_id) : array());
+            $folder_children = Models_Exam_Bank_Folders::getChildrenFolders($folder_id, $folder_array);
+            if (empty($folder_children)) {
+                $folder_children = array($folder_id);
+            }
+        } else {
+            $folder_children = array($folder_id);
+        }
+
+        $basic_search = true;
+        if ($search_value != "") {
+            if (empty($filters)) {
+                $basic_search = false;
+            }
+        }
+
+        $type_array     = array("proxy_id");
+        $approved_folders = array();
+
+        if ($folder_children && is_array($folder_children) && !empty($folder_children)) {
+            foreach ($folder_children as $children_folder_id) {
+                $authors = Models_Exam_Bank_Folder_Authors::fetchAllInheritedByFolderID($children_folder_id, true, $type_array);
+                if ($authors && is_array($authors) && $type_array && is_array($type_array)) {
+                    foreach ($type_array as $type) {
+                        foreach ($authors[$type] as $author) {
+                            if ($author && is_array($author)) {
+                                if ($author["object"] && is_object($author["object"])) {
+                                    if ($ENTRADA_USER->getActiveID() == $author["object"]->getAuthorID()) {
+                                        if (!in_array($children_folder_id, $approved_folders)) {
+                                            $approved_folders[] = $children_folder_id;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        $author_join = true;
+
+        if (in_array((int)$ENTRADA_USER->getActiveID(), $approved_folders)) {
+            $author_join = false;
+        }
+
+        if (!$basic_search) {
+            $query = "  SELECT COUNT(DISTINCT a.`exam_id`) AS `total_exams`
+                        FROM `exams` AS a
+                        LEFT JOIN `exam_posts` AS `posts`
+                        ON `posts`.`exam_id` = a.`exam_id`";
+        } else {
+            $query = "  SELECT COUNT(DISTINCT a.`exam_id`) AS `total_exams`
+                        FROM `exams` AS a";
+        }
+
         if ($filters) {
             if ($ENTRADA_USER->getActiveGroup() != "medtech" && array_key_exists("author", $filters)) {
                 $query .= " JOIN `exam_authors` AS c
                             ON a.`exam_id` = c.`exam_id`
                             AND
                             ("
-                            .(isset($course_permissions["director"]) && $course_permissions["director"] ? "(c.`author_type` = 'course_id' AND c.`author_id` IN (" . implode(",", $course_permissions["director"]) . ")) OR" : "")
-                            .(isset($course_permissions["pcoordinator"]) && $course_permissions["pcoordinator"] ? "(c.`author_type` = 'course_id' AND c.`author_id` IN (" . implode(",", $course_permissions["pcoordinator"]) . ")) OR" : "")
-                            .(isset($course_permissions["ccoordinator"]) && $course_permissions["ccoordinator"] ? "(c.`author_type` = 'course_id' AND c.`author_id` IN (" . implode(",", $course_permissions["ccoordinator"]) . ")) OR" : "") . "
+                                .(isset($course_permissions["director"]) && $course_permissions["director"] ? "(c.`author_type` = 'course_id' AND c.`author_id` IN (" . implode(",", $course_permissions["director"]) . ")) OR" : "")
+                                .(isset($course_permissions["pcoordinator"]) && $course_permissions["pcoordinator"] ? "(c.`author_type` = 'course_id' AND c.`author_id` IN (" . implode(",", $course_permissions["pcoordinator"]) . ")) OR" : "")
+                                .(isset($course_permissions["ccoordinator"]) && $course_permissions["ccoordinator"] ? "(c.`author_type` = 'course_id' AND c.`author_id` IN (" . implode(",", $course_permissions["ccoordinator"]) . ")) OR" : "") . "
                                 (c.`author_type` = 'proxy_id' AND c.`author_id` = " . $db->qstr($ENTRADA_USER->getActiveID()) . ") OR
                                 (c.`author_type` = 'organisation_id' AND c.`author_id` = " . $db->qstr($ENTRADA_USER->getActiveOrganisation()) . ")
                             )
                             AND c.`author_type` = 'proxy_id'
                             AND c.`author_id`  IN (". implode(",", array_keys($filters["author"])) .")
                             AND a.`organisation_id` = ". $db->qstr($ENTRADA_USER->getActiveOrganisation());
-            } else if ($ENTRADA_USER->getActiveGroup() != "medtech") {
-                $query .= " JOIN `exam_authors` AS c
+            } elseif ($ENTRADA_USER->getActiveGroup() != "medtech") {
+                $query .= " LEFT JOIN `exam_authors` AS c
                             ON a.`exam_id` = c.`exam_id`
                             AND
                             ("
-                            .(isset($course_permissions["director"]) && $course_permissions["director"] ? "(c.`author_type` = 'course_id' AND c.`author_id` IN (" . implode(",", $course_permissions["director"]) . ")) OR" : "")
-                            .(isset($course_permissions["pcoordinator"]) && $course_permissions["pcoordinator"] ? "(c.`author_type` = 'course_id' AND c.`author_id` IN (" . implode(",", $course_permissions["pcoordinator"]) . ")) OR" : "")
-                            .(isset($course_permissions["ccoordinator"]) && $course_permissions["ccoordinator"] ? "(c.`author_type` = 'course_id' AND c.`author_id` IN (" . implode(",", $course_permissions["ccoordinator"]) . ")) OR" : "") . "
+                                .(isset($course_permissions["director"]) && $course_permissions["director"] ? "(c.`author_type` = 'course_id' AND c.`author_id` IN (" . implode(",", $course_permissions["director"]) . ")) OR" : "")
+                                .(isset($course_permissions["pcoordinator"]) && $course_permissions["pcoordinator"] ? "(c.`author_type` = 'course_id' AND c.`author_id` IN (" . implode(",", $course_permissions["pcoordinator"]) . ")) OR" : "")
+                                .(isset($course_permissions["ccoordinator"]) && $course_permissions["ccoordinator"] ? "(c.`author_type` = 'course_id' AND c.`author_id` IN (" . implode(",", $course_permissions["ccoordinator"]) . ")) OR" : "") . "
                                 (c.`author_type` = 'proxy_id' AND c.`author_id` = " . $db->qstr($ENTRADA_USER->getActiveID()) . ") OR
                                 (c.`author_type` = 'organisation_id' AND c.`author_id` = " . $db->qstr($ENTRADA_USER->getActiveOrganisation()) . ")
                             )
                             AND a.`organisation_id` = ". $db->qstr($ENTRADA_USER->getActiveOrganisation());
-            } else if (array_key_exists("author", $filters)) {
+            } elseif (array_key_exists("author", $filters)) {
                 $query .= " JOIN `exam_authors` AS c
                         ON a.`exam_id` = c.`exam_id`
                         AND c.`author_type` = 'proxy_id'
@@ -505,10 +724,10 @@ class Models_Exam_Exam extends Models_Base {
             }
 
             if (array_key_exists("organisation", $filters)) {
-                $query .= " JOIN `exam_authors` AS c
-                            ON a.`exam_id` = c.`exam_id`
-                            AND c.`author_type` = 'organisation_id'
-                            AND c.`author_id`  IN (". implode(",", array_keys($filters["organisation"])) .")";
+                $query .= " JOIN `exam_authors` AS d
+                            ON a.`exam_id` = d.`exam_id`
+                            AND d.`author_type` = 'organisation_id'
+                            AND d.`author_id`  IN (". implode(",", array_keys($filters["organisation"])) .")";
             }
 
             if (array_key_exists("course", $filters)) {
@@ -535,37 +754,81 @@ class Models_Exam_Exam extends Models_Base {
                             AND g.`objective_id` IN (". implode(",", array_keys($filters["curriculum_tag"])) .")";
             }
         } else {
-            if ($ENTRADA_USER->getActiveGroup() != "medtech") {
-                $query .= " JOIN `exam_authors` AS b
-                            ON a.`exam_id` = b.`exam_id`
+            if ($ENTRADA_USER->getActiveGroup() != "medtech" && $author_join) {
+                $query .= " LEFT JOIN `exam_authors` AS c
+                            ON a.`exam_id` = c.`exam_id` 
                             AND 	
                             ("
-                                .(isset($course_permissions["director"]) && $course_permissions["director"] ? "(b.`author_type` = 'course_id' AND b.`author_id` IN (" . implode(",", $course_permissions["director"]) . ")) OR" : "")
-                                .(isset($course_permissions["pcoordinator"]) && $course_permissions["pcoordinator"] ? "(b.`author_type` = 'course_id' AND b.`author_id` IN (" . implode(",", $course_permissions["pcoordinator"]) . ")) OR" : "")
-                                .(isset($course_permissions["ccoordinator"]) && $course_permissions["ccoordinator"] ? "(b.`author_type` = 'course_id' AND b.`author_id` IN (" . implode(",", $course_permissions["ccoordinator"]) . ")) OR" : "") . "
-                                (b.`author_type` = 'proxy_id' AND b.`author_id` = " . $db->qstr($ENTRADA_USER->getActiveID()) . ") OR
-                                (b.`author_type` = 'organisation_id' AND b.`author_id` = " . $db->qstr($ENTRADA_USER->getActiveOrganisation()) . ")
+                                .(isset($course_permissions["director"]) && $course_permissions["director"] ? "(c.`author_type` = 'course_id' AND c.`author_id` IN (" . implode(",", $course_permissions["director"]) . ")) OR" : "")
+                                .(isset($course_permissions["pcoordinator"]) && $course_permissions["pcoordinator"] ? "(c.`author_type` = 'course_id' AND c.`author_id` IN (" . implode(",", $course_permissions["pcoordinator"]) . ")) OR" : "")
+                                .(isset($course_permissions["ccoordinator"]) && $course_permissions["ccoordinator"] ? "(c.`author_type` = 'course_id' AND c.`author_id` IN (" . implode(",", $course_permissions["ccoordinator"]) . ")) OR" : "") . "
+                                (c.`author_type` = 'proxy_id' AND c.`author_id` = " . $db->qstr($ENTRADA_USER->getActiveID()) . ") OR
+                                (c.`author_type` = 'organisation_id' AND c.`author_id` = " . $db->qstr($ENTRADA_USER->getActiveOrganisation()) . ")
                             )
                             AND a.`organisation_id` = ". $db->qstr($ENTRADA_USER->getActiveOrganisation());
             }
         }
 
-        $query .= " WHERE a.`deleted_date` IS NULL
-                    AND
+        $query .= " WHERE a.`deleted_date` IS NULL";
+
+        if (isset($approved_folders) && is_array($approved_folders) && !empty($approved_folders) && $ENTRADA_USER->getActiveGroup() != "medtech") {
+            $folder_ids =  implode(",", $approved_folders);
+
+            if ((isset($folder_children) && is_array($folder_children))) {
+                $children_folder_ids =  implode(",", $folder_children);
+            }
+
+            $query .= " AND (
+                            `a`.`folder_id` IN (" . $folder_ids . ") 
+                             OR 
+                            (
+                               `c`.`author_type` IN ('course_id', 'proxy_id', 'organisation_id')
+                                AND 
+                                `c`.`deleted_date` IS NULL";
+
+                $query .= ($children_folder_ids ? " AND `a`.`folder_id` IN (" . $children_folder_ids . ")" : "");
+
+                $query .= "
+                            )
+                        )";
+        } elseif (isset($folder_children) && is_array($folder_children) && !empty($folder_children)) {
+            $folder_ids =  implode(",", $folder_children);
+            $query .= " AND `a`.`folder_id` IN (" . $folder_ids . ")";
+            if ($ENTRADA_USER->getActiveGroup() != "medtech") {
+                $query .= "AND (
+                               `c`.`author_type` IN ('course_id', 'proxy_id', 'organisation_id')
+                                AND 
+                                `c`.`deleted_date` IS NULL
+                            )";
+            }
+        } else {
+            $query .= " AND `a`.`folder_id` IN (" . $db->qstr($folder_id) . ")";
+            if ($ENTRADA_USER->getActiveGroup() != "medtech") {
+                $query .= "AND (
+                               `c`.`author_type` IN ('course_id', 'proxy_id', 'organisation_id')
+                                AND 
+                                `c`.`deleted_date` IS NULL
+                            )";
+            }
+        }
+
+        if (!$basic_search) {
+            $query .= " AND
                     (
                         (
                             a.`title` LIKE (". $db->qstr("%". $search_value ."%") .") 
                             OR a.`description` LIKE (". $db->qstr("%". $search_value ."%") .")
                         )
                     )";
+        }
 
         if ($filters) {
-            if (array_key_exists("author", $filters)) {
-                $query .= " AND b.`deleted_date` IS NULL";
+            if (array_key_exists("author", $filters) && $author_join) {
+                $query .= " AND c.`deleted_date` IS NULL";
             }
 
             if (array_key_exists("organisation", $filters)) {
-                $query .= " AND c.`deleted_date` IS NULL";
+                $query .= " AND d.`deleted_date` IS NULL";
             }
 
             if (array_key_exists("course", $filters)) {
@@ -579,12 +842,11 @@ class Models_Exam_Exam extends Models_Base {
             }
 
             if (array_key_exists("curriculum_tag", $filters)) {
-                $query .= " AND e.`deleted_date` IS NULL
-                            AND f.`deleted_date` IS NULL";
+                $query .= " AND f.`deleted_date` IS NULL
+                            AND g.`deleted_date` IS NULL";
             }
-        } else if ($ENTRADA_USER->getActiveGroup() != "medtech") {
-            $query .= " AND b.`deleted_date` IS NULL";
         }
+
         $results = $db->GetRow($query);
         if ($results) {
             return $results["total_exams"];
@@ -616,6 +878,30 @@ class Models_Exam_Exam extends Models_Base {
         return $self->fetchAll(array(
             array("key" => "deleted_date", "value" => ($deleted_date ? $deleted_date : NULL), "method" => ($deleted_date ? "<=" : "IS")))
         );
+    }
+
+    /* @return ArrayObject|Models_Exam_Exam[] */
+    public static function fetchAllByFolderID($folder_id, $deleted_date = NULL) {
+        $self = new self();
+        return $self->fetchAll(array(
+            array("key" => "folder_id", "value" => $folder_id, "method" => "="),
+            array("key" => "deleted_date", "value" => ($deleted_date ? $deleted_date : NULL), "method" => ($deleted_date ? "<=" : "IS")))
+        );
+    }
+
+    /* @return ArrayObject|Models_Exam_Exam[] */
+    public static function fetchAllBySearchTerm($search_value) {
+        global $db;
+        $query = "SELECT * FROM `exams` AS e WHERE e.`title` LIKE " . $db->qstr("%". $search_value ."%") . "
+                  AND e.`deleted_date` IS NULL";
+        $results = $db->GetAll($query);
+        $exams = array();
+        if ($results) {
+            foreach ($results as $exam) {
+                $exams[] = new self($exam);
+            }
+        }
+        return $exams;
     }
 
     /**
@@ -804,8 +1090,8 @@ class Models_Exam_Exam extends Models_Base {
      * @return $this
      * @throws Exception
      */
-    public function addElement(Models_Exam_Exam_Element $element, $position = NULL){
-        if ($this->hasQuestion($element->getQuestionVersion())){
+    public function addElement(Models_Exam_Exam_Element $element, $position = NULL) {
+        if ($this->hasQuestion($element->getQuestionVersion())) {
             throw new Exception('The question (or another version of it) already exists on this exam');
         }
 
@@ -818,8 +1104,8 @@ class Models_Exam_Exam extends Models_Base {
         array_splice($this->exam_elements, $element_order, 0, array($element));
 
         //If the position is not specified, the order for the rest of the collection doesn't need to be updated, so just persist it to the DB
-        if (NULL === $position){
-            if (!$element->getID()){
+        if (NULL === $position) {
+            if (!$element->getID()) {
                 $element->insert();
             } else {
                 $element->update();
@@ -919,6 +1205,15 @@ class Models_Exam_Exam extends Models_Base {
         return $n1 + $n0 ? round((($m1 - $m0) / $stdev) * sqrt(($n1 * $n0) / pow($n1 + $n0, 2)), 2) : "N/A";
     }
 
+    /**
+     *
+     * This function calculates the KR20 score for a group of exam questions.
+     *
+     * @param $exam_elements // elements to calculate against
+     * @param array $scores // this is an array of the calculated percentages and not the raw points
+     * @param float $mean // this is the mean of the calculated scores and not the raw points
+     * @return float|string
+     */
     public static function get_kr20($exam_elements, $scores, $mean) {
         $kr20_summation = 0;
         foreach ($exam_elements as $elem) {

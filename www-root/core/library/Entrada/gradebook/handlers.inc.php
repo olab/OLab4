@@ -164,7 +164,7 @@ class IncompleteCompleteGradeHandler extends BooleanGradeHandler {
 	public $pass_text = "C";
 	public $fail_text = "I";
 
-	public function getShortDescription($comparison_mark) {
+	public function getShortDescription($comparison_mark = null) {
 		return 'C for Complete, I for Incomplete';
 	}
 }

@@ -85,7 +85,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_REPORTS"))) {
 
 	echo "<h1>Open Incidents By Incident Date</h1>";
 	echo "<div class=\"content-small\" style=\"margin-bottom: 10px\">\n";
-	echo "	<strong>Date Range:</strong> ".date(DEFAULT_DATE_FORMAT, $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_start"])." <strong>to</strong> ".date(DEFAULT_DATE_FORMAT, $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_finish"]);
+	echo "	<strong>Date Range:</strong> ".date(DEFAULT_DATETIME_FORMAT, $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_start"])." <strong>to</strong> ".date(DEFAULT_DATETIME_FORMAT, $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_finish"]);
 	echo "</div>";
 	?>
 	<table class="tableList" cellspacing="0" summary="Opens Incidents By Incident Date">
@@ -115,7 +115,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_REPORTS"))) {
 			$url = ENTRADA_URL."/admin/users/manage/incidents?section=edit&id=".$result["proxy_id"]."&incident-id=".$result["incident_id"];
 			echo "<tr>\n";
 			echo "	<td class=\"general\"><a href=\"".$url."\" title=\"Student Name: ".html_encode($result["fullname"])."\">".html_encode($result["fullname"])."</a></td>\n";
-			echo "	<td class=\"date\"><a href=\"".$url."\" title=\"Incident Date\">".date(DEFAULT_DATE_FORMAT, $result["incident_date"])."</a></td>\n";
+			echo "	<td class=\"date\"><a href=\"".$url."\" title=\"Incident Date\">".date(DEFAULT_DATETIME_FORMAT, $result["incident_date"])."</a></td>\n";
 			echo "	<td class=\"title\"><a href=\"".$url."\" title=\"Incident Title: ".html_encode($result["incident_title"])."\">[".html_encode($result["incident_severity"])."] ".html_encode($result["incident_title"])."</a></td>\n";
 			echo "</tr>\n";
 		}
