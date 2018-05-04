@@ -1,4 +1,30 @@
-﻿var OlabLINKTag = function ( olabNodePlayer ) {
+﻿// node link
+Vue.component('olab-node-link', {
+
+    template: `<div class='olab-node-link'>
+                 <a v-bind:class ='classes' v-bind:onclick='"olab.navigate(" + link.DestinationNode.id + ");"'>{{link.DestinationNode.title}}</a>
+               </div>`,
+    props: ['link'],
+    computed: {
+        classes: function() {
+            var classes= 'olab-node-link';
+            if (this.link.link_style_id === 5) {
+                classes += " btn";
+            }
+            return classes;
+        }
+    },
+    data() {
+
+        return {
+            isButton: this.type === 'button'
+        };
+
+    }
+
+});
+
+var OlabLINKTag = function ( olabNodePlayer ) {
 
   var vm = this;
   vm.olabNodePlayer = olabNodePlayer;

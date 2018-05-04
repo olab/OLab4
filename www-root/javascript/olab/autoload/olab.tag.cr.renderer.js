@@ -1,4 +1,10 @@
-﻿var OlabCRTag = function ( olabNodePlayer ) {
+﻿// counter
+Vue.component('olab-counter', {
+    template: `<span v-html='counter.value'></span>`,
+    props: ['counter']
+});
+
+var OlabCRTag = function ( olabNodePlayer ) {
 
   var vm = this;
   vm.olabNodePlayer = olabNodePlayer;

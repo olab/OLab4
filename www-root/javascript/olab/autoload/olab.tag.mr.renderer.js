@@ -1,4 +1,22 @@
-﻿var OlabMRTag = function ( olabNodePlayer ) {
+﻿// audio
+Vue.component('olab-audio', {
+    template: `<audio v-bind:src="file.content" controls="" preload="auto" autoplay="autoplay" autobuffer=""></audio>`,
+    props: ['file']
+});
+
+// image
+Vue.component('olab-image', {
+    template: `<img v-bind:src='src' v-bind:alt='file.name'></img>`,
+    props: ['src', 'file']
+});
+
+// image
+Vue.component('olab-video', {
+    template: `<video controls><source v-bind:type='file.mimi' v-bind:src='file.content'></video>`,
+    props: ['file']
+});
+
+var OlabMRTag = function ( olabNodePlayer ) {
 
   var vm = this;
   vm.olabNodePlayer = olabNodePlayer;

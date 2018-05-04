@@ -78,6 +78,19 @@ RUN sed -i 's@upload_max_filesize = 2M@upload_max_filesize = 512M@g' /etc/php.in
 RUN sed -i 's@post_max_size = 8M@post_max_size = 512M@g' /etc/php.ini
 RUN sed -i 's@memory_limit = 128M@memory_limit = 512M@g' /etc/php.ini
 
+#RUN { \
+        #echo 'date.timezone = "$TZ"'; \
+        #echo 'display_errors = On'; \
+        #echo 'error_reporting = E_ALL \& ~E_NOTICE \& ~E_STRICT \& ~E_DEPRECATED'; \
+        #echo 'upload_max_filesize = 512M'; \
+        #echo 'post_max_size = 512M'; \
+        #echo 'memory_limit = 512M'; \
+        #echo 'opcache.validate_timestamps=on'; \
+        #echo 'opcache.revalidate_freq=0'; \
+        #echo 'opcache.enable_cli=0'; \
+        #echo 'opcache.enable=0'; \
+    #} > /etc/php.d/90-olab.ini
+
 # Set the container volumes.
 VOLUME /var/lib/mysql
 VOLUME /var/www/vhosts
