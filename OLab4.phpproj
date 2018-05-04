@@ -19,7 +19,7 @@
     <DebugMappingMethod>Manual</DebugMappingMethod>
     <DBGpProxyEnabled>false</DBGpProxyEnabled>
     <DBGpProxyPort>9001</DBGpProxyPort>
-    <DebugPathMapping>\\olablocal\wwwroot;/var/www/vhosts/OLab/entrada-1x-me/www-root</DebugPathMapping>
+    <DebugPathMapping>\\olablocal\wwwroot;/var/www/vhosts/OLab</DebugPathMapping>
     <ProjectHome />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
@@ -3260,28 +3260,12 @@
     <Compile Include="www-root\core\modules\public\secure.inc.php" />
     <Compile Include="www-root\core\modules\public\weeks.inc.php" />
     <Compile Include="www-root\core\storage\app\modules.json" />
-    <Compile Include="www-root\core\storage\cache\e8\adodb_e861540a7e23ba7f6ef2a685e7ae7626.cache" />
-    <Compile Include="www-root\core\storage\cache\d9\adodb_d9d4139db1d352e96fbcf9f3686dcef6.cache" />
-    <Compile Include="www-root\core\storage\cache\61\adodb_6107aaf823c0e58f2738a967ed83bdb1.cache" />
-    <Compile Include="www-root\core\storage\cache\services.php" />
-    <Compile Include="www-root\core\storage\cache\zend_cache---internal-metadatas---user_1_1" />
-    <Compile Include="www-root\core\storage\cache\zend_cache---user_1_1" />
-    <Compile Include="www-root\core\storage\cache\zend_cache---internal-metadatas---access_hash_1" />
-    <Compile Include="www-root\core\storage\cache\zend_cache---access_hash_1" />
-    <Compile Include="www-root\core\storage\cache\zend_cache---internal-metadatas---acl_1_1" />
-    <Compile Include="www-root\core\storage\cache\zend_cache---acl_1_1" />
-    <Compile Include="www-root\core\storage\cache\zend_cache---internal-metadatas---Zend_Translate_Array_Options" />
-    <Compile Include="www-root\core\storage\cache\zend_cache---Zend_Translate_Array_Options" />
-    <Compile Include="www-root\core\storage\cache\zend_cache---internal-metadatas---Zend_Translate_a6925bbea91779123e5277aaf268db0d_Array" />
-    <Compile Include="www-root\core\storage\cache\zend_cache---Zend_Translate_a6925bbea91779123e5277aaf268db0d_Array" />
     <Compile Include="www-root\core\storage\framework\cache\data\bb\6e\bb6eab6cc98ea0c36f13f132d3018cd9428de72f" />
     <Compile Include="www-root\core\storage\framework\cache\data\94\a1\94a13e61a15df5ea338d0fa66bed45c6ea26ce09" />
     <Compile Include="www-root\core\storage\framework\cache\data\96\05\96059cf057dc4f97ef1c2c215a6af54efecabbc7" />
     <Compile Include="www-root\core\storage\framework\cache\data\65\ce\65cea3b37a8ab8ff8a8ba043c0f7c23567469c5d" />
     <Compile Include="www-root\core\storage\framework\cache\data\f0\e6\f0e6e26f0ae35260c1046196e88183534b9c3702" />
     <Compile Include="www-root\core\storage\framework\cache\data\46\68\46685b860354c225068dbb37ad114447dbbbea20" />
-    <Compile Include="www-root\core\storage\logs\api.log" />
-    <Compile Include="www-root\core\storage\logs\access_log.txt" />
     <Compile Include="www-root\cron\add-fieldnote-competency.php" />
     <Compile Include="www-root\cron\assessment-statistics.php" />
     <Compile Include="www-root\cron\cache-cleanup.php" />
@@ -6529,10 +6513,6 @@
     <Folder Include="www-root\core\storage\annualreports" />
     <Folder Include="www-root\core\storage\app\public" />
     <Folder Include="www-root\core\storage\app" />
-    <Folder Include="www-root\core\storage\cache\e8" />
-    <Folder Include="www-root\core\storage\cache\d9" />
-    <Folder Include="www-root\core\storage\cache\61" />
-    <Folder Include="www-root\core\storage\cache" />
     <Folder Include="www-root\core\storage\cbme-uploads" />
     <Folder Include="www-root\core\storage\community-discussions" />
     <Folder Include="www-root\core\storage\community-galleries" />
@@ -6557,7 +6537,6 @@
     <Folder Include="www-root\core\storage\framework\sessions" />
     <Folder Include="www-root\core\storage\framework\views" />
     <Folder Include="www-root\core\storage\framework" />
-    <Folder Include="www-root\core\storage\logs" />
     <Folder Include="www-root\core\storage\lor" />
     <Folder Include="www-root\core\storage\msprs" />
     <Folder Include="www-root\core\storage\resource-images" />
@@ -6583,6 +6562,7 @@
     <Folder Include="www-root\css\jquery" />
     <Folder Include="www-root\css\learners" />
     <Folder Include="www-root\css\objectives" />
+    <Folder Include="www-root\css\olab\" />
     <Folder Include="www-root\css\profile" />
     <Folder Include="www-root\css\rotationschedule" />
     <Folder Include="www-root\css\sandbox" />
@@ -6617,6 +6597,7 @@
     <Folder Include="www-root\javascript\olab\log4javascript-1.4.13\js\stubs\" />
     <Folder Include="www-root\javascript\olab\log4javascript-1.4.13\js\tests\" />
     <Folder Include="www-root\javascript\olab\log4javascript-1.4.13\test\" />
+    <Folder Include="www-root\javascript\olab\vee-validate\" />
     <Folder Include="www-root\javascript\PlotKit" />
     <Folder Include="www-root\javascript\assessments\dashboard" />
     <Folder Include="www-root\javascript\assessments\distributions" />
@@ -7121,10 +7102,13 @@
     <Content Include="docker\olab4\post-create\post-create.sh" />
     <Content Include="docker\olab4\supervisor\supervisord.conf" />
     <Content Include="docker\README.md" />
+    <Content Include="www-root\css\olab\olab.css" />
+    <Content Include="www-root\css\olab\scrollingtable.css" />
     <Content Include="www-root\javascript\olab\autoload\olab.tag.const.renderer.js" />
     <Content Include="www-root\javascript\olab\autoload\olab.tag.counters.renderer.js" />
     <Content Include="www-root\javascript\olab\autoload\olab.tag.cr.renderer.js" />
     <Content Include="www-root\javascript\olab\autoload\olab.tag.dl.renderer.js" />
+    <Content Include="www-root\javascript\olab\autoload\olab.tag.links.renderer.js" />
     <Content Include="www-root\javascript\olab\autoload\olab.tag.link.renderer.js" />
     <Content Include="www-root\javascript\olab\autoload\olab.tag.mr.renderer.js" />
     <Content Include="www-root\javascript\olab\autoload\olab.tag.qu.renderer.js" />
@@ -7193,5 +7177,7 @@
     <Content Include="www-root\javascript\olab\olab.play.main.js" />
     <Content Include="www-root\javascript\olab\olab.tag.render.js" />
     <Content Include="www-root\javascript\olab\olab.utilities.js" />
+    <Content Include="www-root\javascript\olab\vee-validate\vee-validate.js" />
+    <Content Include="www-root\javascript\olab\vee-validate\vee-validate.min.js" />
   </ItemGroup>
 </Project>

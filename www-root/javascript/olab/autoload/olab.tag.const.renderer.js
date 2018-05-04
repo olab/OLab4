@@ -1,4 +1,10 @@
-﻿var OlabCONSTTag = function ( olabNodePlayer ) {
+﻿// constant
+Vue.component('olab-constant', {
+    template: `<span v-html='constant.value'></span>`,
+    props: ['constant']
+});
+
+var OlabCONSTTag = function ( olabNodePlayer ) {
 
   var vm = this;
   vm.olabNodePlayer = olabNodePlayer;

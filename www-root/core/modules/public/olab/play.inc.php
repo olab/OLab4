@@ -53,7 +53,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_OLAB"))) {
 
     $HEAD[] = "<script>var WEBSITE_ROOT = \"" . HostSystemApi::GetRootUrl() . "\";</script>";
     $HEAD[] = "<script type=\"text/javascript\" src=\"" . HostSystemApi::GetRelativePath() . "/javascript/vue/vue.js\"></script>";
-    $HEAD[] = "<script type=\"text/javascript\" src=\"" . HostSystemApi::GetRelativePath() . "/javascript/vue/vee-validate.js\"></script>";
+    $HEAD[] = "<script type=\"text/javascript\" src=\"" . HostSystemApi::GetRelativePath() . "/javascript/olab/vee-validate/vee-validate.min.js\"></script>";
     $HEAD[] = "<script type=\"text/javascript\" src=\"" . HostSystemApi::GetRelativePath() . "/javascript/olab/axios/axios.min.js\"></script>";
     $HEAD[] = "<script type=\"text/javascript\" src=\"" . HostSystemApi::GetRelativePath() . "/javascript/olab/olab.utilities.js\"></script>";
     $HEAD[] = "<script type=\"text/javascript\" src=\"" . HostSystemApi::GetRelativePath() . "/javascript/olab/olab.play.components.js\"></script>";

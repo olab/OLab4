@@ -1,4 +1,16 @@
-﻿var OlabDLTag = function ( olabNodePlayer ) {
+﻿Vue.component('olab-download', {
+    template: `<div>
+               <div style="display:none">
+                 <a v-bind:id="'file-link-' + file.id"></a>
+               </div>
+               <a v-bind:onclick="'olab.downloadFile(' + file.id + ')'">
+                {{file.name}}
+               </a>
+             </div>`,
+    props: ['file']
+});
+
+var OlabDLTag = function ( olabNodePlayer ) {
 
   var vm = this;
   vm.olabNodePlayer = olabNodePlayer;
