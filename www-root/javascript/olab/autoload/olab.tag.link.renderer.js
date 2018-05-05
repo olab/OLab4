@@ -24,43 +24,50 @@ Vue.component('olab-node-link', {
 
 });
 
-var OlabLINKTag = function ( olabNodePlayer ) {
+var OlabLINKTag = function(olabNodePlayer) {
 
-  var vm = this;
-  vm.olabNodePlayer = olabNodePlayer;
-  vm.OLAB_HTML_TAG = "olab-node-link";
+    var vm = this;
+    vm.olabNodePlayer = olabNodePlayer;
+    vm.OLAB_HTML_TAG = "olab-node-link";
 
-  var service = {
-    render: render
-  };
+    var service = {
+        render:render
+    };
 
-  return service;
+    return service;
 
-  function render( wikiTagParts ) {
+    function render(wikiTagParts) {
 
-    var element = "";
+        var element = "";
 
-    try {
+        try {
 
-      var id = wikiTagParts[2];
+            var id = wikiTagParts[2];
 
-      // build the vue.js component tag markup
-      element = "<" + vm.OLAB_HTML_TAG +
-                " class='" + vm.OLAB_HTML_TAG + "'" +
-                " v-bind:link='link(" + id + ")'>" +
-                "</" + vm.OLAB_HTML_TAG + ">";
+            // build the vue.js component tag markup
+            element = "<" +
+                vm.OLAB_HTML_TAG +
+                " class='" +
+                vm.OLAB_HTML_TAG +
+                "'" +
+                " v-bind:link='link(" +
+                id +
+                ")'>" +
+                "</" +
+                vm.OLAB_HTML_TAG +
+                ">";
 
-      vm.olabNodePlayer.log.debug(element);
+            vm.olabNodePlayer.log.debug(element);
 
-    } catch (e) {
-      element = "[[" + wikiTagParts.join("") + " ERROR: '" + e.message + "']]";
-      vm.olabNodePlayer.log.error(element);
+        } catch (e) {
+            element = "[[" + wikiTagParts.join("") + " ERROR: '" + e.message + "']]";
+            vm.olabNodePlayer.log.error(element);
+        }
+
+        return element;
     }
 
-    return element;
-  }
-
-}
+};
 
 jQuery(window).ready(function ($) {
 

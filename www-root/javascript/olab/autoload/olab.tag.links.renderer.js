@@ -1,14 +1,28 @@
-﻿// constant
-Vue.component('olab-constant', {
-    template: `<span v-html='constant.value'></span>`,
-    props: ['constant']
+﻿// node link
+Vue.component('olab-node-links', {
+    template: `<div id='links'>
+                 <div v-for='link in links' class='olab-node-link' v-bind:id='"link" + link.DestinationNode.id' >
+                    <a v-bind:class='classes(link)' v-bind:onclick='"olab.navigate(" + link.DestinationNode.id + ");"'>{{link.DestinationNode.title}}</a>
+                    <br/>
+                 </div>
+               </div>`,
+    props: ['links'],
+    methods: {
+        classes: function( link ) {
+            var classes= 'olab-node-link';
+            if (link.link_style_id === 5) {
+                classes += " btn";
+            }
+            return classes;
+        }
+    }
 });
 
-var OlabCONSTTag = function(olabNodePlayer) {
+var OlabLINKSTag = function(olabNodePlayer) {
 
     var vm = this;
     vm.olabNodePlayer = olabNodePlayer;
-    vm.OLAB_HTML_TAG = "olab-constant";
+    vm.OLAB_HTML_TAG = "olab-node-links";
 
     var service = {
         render:render
@@ -22,7 +36,7 @@ var OlabCONSTTag = function(olabNodePlayer) {
 
         try {
 
-            var id = '"' + wikiTagParts[2] + '"';
+            var id = wikiTagParts[2];
 
             // build the vue.js component tag markup
             element = "<" +
@@ -30,9 +44,7 @@ var OlabCONSTTag = function(olabNodePlayer) {
                 " class='" +
                 vm.OLAB_HTML_TAG +
                 "'" +
-                " v-bind:constant='constant(" +
-                id +
-                ")'>" +
+                " v-bind:links='node.MapNodeLinks'>" +
                 "</" +
                 vm.OLAB_HTML_TAG +
                 ">";

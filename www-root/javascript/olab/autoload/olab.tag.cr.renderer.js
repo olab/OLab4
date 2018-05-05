@@ -4,50 +4,56 @@ Vue.component('olab-counter', {
     props: ['counter']
 });
 
-var OlabCRTag = function ( olabNodePlayer ) {
+var OlabCRTag = function(olabNodePlayer) {
 
-  var vm = this;
-  vm.olabNodePlayer = olabNodePlayer;
-  vm.OLAB_HTML_TAG = "olab-counter";
+    var vm = this;
+    vm.olabNodePlayer = olabNodePlayer;
+    vm.OLAB_HTML_TAG = "olab-counter";
 
-  var service = {
-    render: render
-  };
+    var service = {
+        render:render
+    };
 
-  return service;
+    return service;
 
-  function render( wikiTagParts ) {
+    function render(wikiTagParts) {
 
-    var element = "";
+        var element = "";
 
-    try {
+        try {
 
-      var id = wikiTagParts[2];
-      // get the view variable name so vue.js can bind to it
-      var varName = vm.olabNodePlayer.getCounterBindingVariable(id);
+            var id = wikiTagParts[2];
+            // get the view variable name so vue.js can bind to it
+            var varName = vm.olabNodePlayer.getCounterBindingVariable(id);
 
-      if (varName != null) {
-        // build the vue.js component tag markup
-        element = "<" + vm.OLAB_HTML_TAG +
-                  " class='" + vm.OLAB_HTML_TAG + "'" +
-                  " v-bind:counter='" + varName + "'>" +
-                  "</" + vm.OLAB_HTML_TAG + ">";
-      }
-      else {
-        throw new Error("not found.");
-      }
+            if (varName !== null) {
+                // build the vue.js component tag markup
+                element = "<" +
+                    vm.OLAB_HTML_TAG +
+                    " class='" +
+                    vm.OLAB_HTML_TAG +
+                    "'" +
+                    " v-bind:counter='" +
+                    varName +
+                    "'>" +
+                    "</" +
+                    vm.OLAB_HTML_TAG +
+                    ">";
+            } else {
+                throw new Error("not found.");
+            }
 
-      vm.olabNodePlayer.log.debug(element);
+            vm.olabNodePlayer.log.debug(element);
 
-    } catch (e) {
-      element = "[[" + wikiTagParts.join("") + " ERROR: '" + e.message + "']]";
-      vm.olabNodePlayer.log.error(element);
+        } catch (e) {
+            element = "[[" + wikiTagParts.join("") + " ERROR: '" + e.message + "']]";
+            vm.olabNodePlayer.log.error(element);
+        }
+
+        return element;
     }
 
-    return element;
-  }
-
-}
+};
 
 jQuery(window).ready(function ($) {
 
