@@ -3,7 +3,7 @@
         {
             "type": "path",
             "url": "../OLab4-api",
-            "options": { "symlink" :  false } 
+            "options": { "symlink" :  true } 
         }
     ],
     "require": {

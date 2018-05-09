@@ -21,7 +21,7 @@ RUN echo root:password | chpasswd && yum install -y passwd
 RUN yum -y install https://centos7.iuscommunity.org/ius-release.rpm
 RUN yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
 RUN yum -y install http://rpms.remirepo.net/enterprise/remi-release-7.rpm
-RUN yum install yum-utils
+#RUN yum install yum-utils
 RUN yum-config-manager --enable remi-php72
 
 # Install Python and Supervisor.
@@ -68,7 +68,10 @@ RUN yum -y install git \
                 php-tidy \
                 php-opcache \
                 mariadb-client \
-                mariadb-server
+                mariadb-server \
+                pecl \
+                php-pecl-ds
+
 
 # Update PHP's configuration
 RUN sed -i 's@;date.timezone =@date.timezone = '"$TZ"'@g' /etc/php.ini
@@ -102,9 +105,14 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 # Tell Apache to include all of the virtual hosts
 RUN echo "IncludeOptional vhosts.d/*.conf" >> /etc/httpd/conf/httpd.conf
 
+# install PHP data structures
+# RUN pecl install ds
+
 # Install PHPMyAdmin
 # RUN yum -y install phpmyadmin
 COPY apache/phpmyadmin.conf /etc/httpd/conf.d/phpmyadmin.conf
+COPY apache/90-xdebug.ini /etc/php.d
+# COPY apache/95-php-ds.ini /etc/php.d
 RUN mkdir /etc/phpMyAdmin
 COPY phpMyAdmin/config.inc.php /etc/phpMyAdmin/config.inc.php
 COPY phpMyAdmin/phpmyadmin_install.sh /usr/bin
