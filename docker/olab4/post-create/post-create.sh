@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 #set -x 
 
-rm -Rf /var/www/vhosts/OLab4/www-root/core/storage/cache/*
+rm -Rf /var/www/vhosts/OLab/Olab4/www-root/core/storage/cache/*
 
-if [ ! -f /var/www/vhosts/OLab4/composer.lock ]; then
+if [ ! -f /var/www/vhosts/OLab/OLab4/composer.lock ]; then
   touch /tmp/composer.start
-	cd /var/www/vhosts/OLab4
+	cd /var/www/vhosts/OLab/OLab4
 	composer update
   touch /tmp/composer.finished
 fi

@@ -4,18 +4,18 @@
  */
 use Entrada\Modules\Olab\Classes\HostSystemApi;
 
-$HEAD[] = "<script>var WEBSITE_ROOT = \"" . HostSystemApi::GetRootUrl() . "\";</script>";
-$HEAD[] = "<script type=\"text/javascript\" src=\"". HostSystemApi::GetRelativePath() ."/javascript/jquery/jquery.dataTables-1.10.11.min.js\" defer></script>";
-$HEAD[] = "<script type=\"text/javascript\" src=\"". HostSystemApi::GetRelativePath() ."/javascript/vue/vue.js\" defer></script>";
-$HEAD[] = "<script type=\"text/javascript\" src=\"" . HostSystemApi::GetRelativePath() . "/javascript/olab/olab.utilities.js\"></script>";
-$HEAD[] = "<script type=\"text/javascript\" src=\"" . HostSystemApi::GetRelativePath() . "/javascript/olab/olab.list.main.js\"></script>";
-$HEAD[] = "<link href=\"". HostSystemApi::GetRootUrl() ."/css/olab/olab.css\" rel=\"stylesheet\" type=\"text/css\" media=\"all\" />";
-$HEAD[] = "<link href=\"". HostSystemApi::GetRootUrl() ."/css/olab/scrollingtable.css\" rel=\"stylesheet\" type=\"text/css\" media=\"all\" />";
+$HEAD[] = "<script>var WEBSITE_ROOT = \"" . HostSystemApi::getRootUrl() . "\";</script>";
+$HEAD[] = "<script type=\"text/javascript\" src=\"". HostSystemApi::getRelativePath() ."/javascript/jquery/jquery.dataTables-1.10.11.min.js\" defer></script>";
+$HEAD[] = "<script type=\"text/javascript\" src=\"". HostSystemApi::getRelativePath() ."/javascript/vue/vue.js\" defer></script>";
+$HEAD[] = "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/olab.utilities.js\"></script>";
+$HEAD[] = "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/olab.list.main.js\"></script>";
+$HEAD[] = "<link href=\"". HostSystemApi::getRootUrl() ."/css/olab/olab.css\" rel=\"stylesheet\" type=\"text/css\" media=\"all\" />";
+$HEAD[] = "<link href=\"". HostSystemApi::getRootUrl() ."/css/olab/scrollingtable.css\" rel=\"stylesheet\" type=\"text/css\" media=\"all\" />";
 
 if (!defined("PARENT_INCLUDED")) {
     exit;
 } elseif (!isset($_SESSION["isAuthorized"]) || !(bool) $_SESSION["isAuthorized"]) {
-    header("Location: " . HostSystemApi::GetRootUrl());
+    header("Location: " . HostSystemApi::getRootUrl());
     exit;
 
 } else {
@@ -31,7 +31,7 @@ if (!defined("PARENT_INCLUDED")) {
     /*
      * Adds a breadcrumb to the breadcrumb trail.
      */
-    HostSystemApi::UpdateBreadCrumb( HostSystemApi::GetRootUrl()  . "/olab", "Player " );
+    HostSystemApi::UpdateBreadCrumb( HostSystemApi::getRootUrl()  . "/olab", "Player " );
 
     /*
      * Renders the sandbox sidebar View Helper.

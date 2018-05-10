@@ -51,28 +51,27 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_OLAB"))) {
 
 } else {
 
-    $HEAD[] = "<script>var WEBSITE_ROOT = \"" . HostSystemApi::GetRootUrl() . "\";</script>";
-    $HEAD[] = "<script type=\"text/javascript\" src=\"" . HostSystemApi::GetRelativePath() . "/javascript/vue/vue.js\"></script>";
-    $HEAD[] = "<script type=\"text/javascript\" src=\"" . HostSystemApi::GetRelativePath() . "/javascript/olab/vee-validate/vee-validate.min.js\"></script>";
-    $HEAD[] = "<script type=\"text/javascript\" src=\"" . HostSystemApi::GetRelativePath() . "/javascript/olab/axios/axios.min.js\"></script>";
-    $HEAD[] = "<script type=\"text/javascript\" src=\"" . HostSystemApi::GetRelativePath() . "/javascript/olab/olab.utilities.js\"></script>";
-    $HEAD[] = "<script type=\"text/javascript\" src=\"" . HostSystemApi::GetRelativePath() . "/javascript/olab/olab.play.components.js\"></script>";
-    $HEAD[] = "<script type=\"text/javascript\" src=\"" . HostSystemApi::GetRelativePath() . "/javascript/olab/olab.play.main.js\"></script>";
-    $HEAD[] = "<link href=\"". HostSystemApi::GetRootUrl() ."/css/olab/olab.css\" rel=\"stylesheet\" type=\"text/css\" media=\"all\" />";
+    $HEAD[] = "<script>var WEBSITE_ROOT = \"" . HostSystemApi::getRootUrl() . "\";</script>";
+    $HEAD[] = "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/vue/vue.js\"></script>";
+    $HEAD[] = "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/vee-validate/vee-validate.min.js\"></script>";
+    $HEAD[] = "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/axios/axios.min.js\"></script>";
+    $HEAD[] = "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/olab.utilities.js\"></script>";
+    $HEAD[] = "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/olab.play.components.js\"></script>";
+    $HEAD[] = "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/olab.play.main.js\"></script>";
+    $HEAD[] = "<link href=\"". HostSystemApi::getRootUrl() ."/css/olab/olab.css\" rel=\"stylesheet\" type=\"text/css\" media=\"all\" />";
 
     // autoload any javascript extensions
-    $jsPath = HostSystemApi::GetFileRoot() . "/javascript/olab/autoload";
+    $jsPath = HostSystemApi::getFileRoot() . "/javascript/olab/autoload";
     $asJsFiles = getAutoloadContents( $jsPath );
 
     foreach ( $asJsFiles as $sJsFile )
     {
         $HEAD[] = "<script type=\"text/javascript\" src=\"" .
-                  HostSystemApi::GetRelativePath() .
+                  HostSystemApi::getRelativePath() .
                   "/javascript/olab/autoload" . $sJsFile . "\"></script>";
     }
 
-    HostSystemApi::UpdateBreadCrumb( HostSystemApi::GetRootUrl()  . "/" . $MODULE, "Play " );
-    //$BREADCRUMB[]	= array("url" => HostSystemApi::GetRootUrl() . "/" . $MODULE, "title" => "Play " );
+    HostSystemApi::UpdateBreadCrumb( HostSystemApi::getRootUrl()  . "/" . $MODULE, "Play " );
 }
 ?>
 
