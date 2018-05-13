@@ -1,6 +1,6 @@
 FROM centos:centos7
 
-LABEL maintainer "Matt Simpson <simpson@queensu.ca>"
+LABEL maintainer "Corey Wirun <corey@cardinalcreek.ca>"
 
 # You can connect to a bash shell on entrada-developer by typing:
 # docker exec -it entrada-developer bash
@@ -19,7 +19,7 @@ RUN echo root:password | chpasswd && yum install -y passwd
 
 # Install Inline with Upstream Stable (IUS), which also enables EPEL.
 RUN yum -y install https://centos7.iuscommunity.org/ius-release.rpm
-RUN yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+#RUN yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
 RUN yum -y install http://rpms.remirepo.net/enterprise/remi-release-7.rpm
 #RUN yum install yum-utils
 RUN yum-config-manager --enable remi-php72

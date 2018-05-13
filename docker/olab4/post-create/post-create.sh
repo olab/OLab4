@@ -13,17 +13,24 @@ fi
 cd /var/lib/mysql
 
 if [ ! -f /var/lib/mysql/entrada_data.sql ]; then  
-  wget http://www.olab.ca/dev/demo-files/entrada_data.sql.gz
-  gunzip -v entrada_data.sql.gz
-  touch /tmp/entrada_data.start
-  mysql -uroot -ppassword < /var/lib/mysql/entrada_data.sql
-  touch /tmp/entrada_data.finished
+    if [ ! -f /var/lib/mysql/entrada_data.sql.gz ]; then  
+        wget http://www.olab.ca/dev/demo-files/entrada_data.sql.gz
+    fi
+    gunzip -v entrada_data.sql.gz
 fi
 
+touch /tmp/entrada_data.start
+mysql -uroot -ppassword < /var/lib/mysql/entrada_data.sql
+touch /tmp/entrada_data.finished
+
 if [ ! -f /var/lib/mysql/openlabyrinth_data.sql ]; then
-  wget http://www.olab.ca/dev/demo-files/openlabyrinth_data.sql.gz
-  gunzip -v openlabyrinth_data.sql.gz
-  touch /tmp/openlabyrinth_data.start
-  mysql -uroot -ppassword < /var/lib/mysql/openlabyrinth_data.sql
-  touch /tmp/openlabyrinth_data.finished
+    if [ ! -f /var/lib/mysql/openlabyrinth_data.sql.gz ]; then
+        wget http://www.olab.ca/dev/demo-files/openlabyrinth_data.sql.gz
+    fi  
+    gunzip -v openlabyrinth_data.sql.gz
 fi 
+
+touch /tmp/openlabyrinth_data.start
+mysql -uroot -ppassword < /var/lib/mysql/openlabyrinth_data.sql
+touch /tmp/openlabyrinth_data.finished
+
