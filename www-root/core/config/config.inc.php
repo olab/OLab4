@@ -2,19 +2,19 @@
 return array (
   'entrada_url' => 'http://olab4.localhost/apidev',
   'entrada_relative' => '/apidev',
-  'entrada_absolute' =>     '/var/www/vhosts/OLab/Olab4/www-root',
+  'entrada_absolute' =>     '/var/www/vhosts/OLab/OLab4/www-root',
   // CMW: added
-  'entrada_api_absolute' => '/var/www/vhosts/OLab/Olab4-api',
-  'entrada_storage' =>      '/var/www/vhosts/OLab/Olab4/www-root/core/storage',
+  'entrada_api_absolute' => '/var/www/vhosts/OLab/OLab4-api',
+  'entrada_storage' =>      '/var/www/vhosts/OLab/OLab4/www-root/core/storage',
   'database' =>
   array (
     'adapter' => 'mysqli',
-    'host' => 'diskstation',
+    'host' => '127.0.0.1',
     'username' => 'entrada',
     'password' => 'password',
-    'entrada_database' => 'entrada_api',
-    'auth_database' => 'entrada_api_auth',
-    'clerkship_database' => 'entrada_api_clerkship',
+    'entrada_database' => 'entrada',
+    'auth_database' => 'entrada_auth',
+    'clerkship_database' => 'entrada_clerkship',
     // CMW: added
     'openlabyrinth_database' => 'openlabyrinth'
   ),
