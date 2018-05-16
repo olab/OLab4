@@ -110,14 +110,14 @@ RUN echo "IncludeOptional vhosts.d/*.conf" >> /etc/httpd/conf/httpd.conf
 # RUN pecl install ds
 
 # Install PHPMyAdmin
-# RUN yum -y install phpmyadmin
+RUN yum -y install php-pecl-zip phpMyAdmin
 COPY apache/phpmyadmin.conf /etc/httpd/conf.d/phpmyadmin.conf
 COPY apache/90-xdebug.ini /etc/php.d
 # RUN mkdir /etc/phpMyAdmin
-COPY phpMyAdmin/phpmyadmin_install.sh /usr/bin
-RUN  chmod +x /usr/bin/phpmyadmin_install.sh
-RUN  /usr/bin/phpmyadmin_install.sh
-COPY phpMyAdmin/config.inc.php /usr/share/phpMyAdmin
+# COPY phpMyAdmin/phpmyadmin_install.sh /usr/bin
+# RUN  chmod +x /usr/bin/phpmyadmin_install.sh
+# RUN  /usr/bin/phpmyadmin_install.sh
+# COPY phpMyAdmin/config.inc.php /usr/share/phpMyAdmin
 
 # Install Capistrano for deployment recipes.
 RUN gem install capistrano -v 2.15.9
