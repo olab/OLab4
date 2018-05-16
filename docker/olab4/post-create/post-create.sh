@@ -18,7 +18,7 @@ echo "Testing for entrada seed data"
 if [ ! -f /var/lib/mysql/entrada_data.sql ]; then  
     if [ ! -f /var/lib/mysql/entrada_data.sql.gz ]; then  
         echo "Retrieving entrada seed data"
-        wget http://www.olab.ca/dev/demo-files/entrada_data.sql.gz
+        wget http://www.olab.ca/apidev/demo-files/entrada_data.sql.gz
     fi
     gunzip -v entrada_data.sql.gz
 fi
@@ -32,7 +32,7 @@ echo "Testing for OLab seed data"
 if [ ! -f /var/lib/mysql/openlabyrinth_data.sql ]; then
     if [ ! -f /var/lib/mysql/openlabyrinth_data.sql.gz ]; then
         echo "Retrieving OLab seed data"
-        wget http://www.olab.ca/dev/demo-files/openlabyrinth_data.sql.gz
+        wget http://www.olab.ca/apidev/demo-files/openlabyrinth_data.sql.gz
     fi  
     gunzip -v openlabyrinth_data.sql.gz
 fi 

@@ -25,7 +25,7 @@ RUN yum -y install http://rpms.remirepo.net/enterprise/remi-release-7.rpm
 RUN yum-config-manager --enable remi-php72
 
 # Install Python and Supervisor.
-RUN yum -y install python-setuptools
+RUN yum -y install python-setuptools deltarpm
 RUN mkdir -p /var/log/supervisor
 RUN easy_install supervisor
 

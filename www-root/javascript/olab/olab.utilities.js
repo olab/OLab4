@@ -17,6 +17,10 @@
         debug:function(arg) {
             console.log("[Olab DEBUG]: " + arg);
         },
+        fatal:function(arg) {
+            console.log("[Olab FATAL]: " + arg);
+            alert(arg)
+        },
         error:function(arg) {
             console.log("[Olab ERROR]: " + arg);
         },

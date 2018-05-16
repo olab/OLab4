@@ -356,7 +356,13 @@ var OlabNodePlayer = function(params) {
      * Handler for a successful posting of a question response to the server
      * @returns { } 
      */
+    
     function onQuestionResponseSucceeded(data) {
+
+        // turn off any spinning img's for REST call
+        if (data.parameters.questionShowSubmit) {
+            jQuery(data.parameters.submitId).hide();
+        }
 
         // save state data to model
         vm.state = data.state;
@@ -507,25 +513,31 @@ var OlabNodePlayer = function(params) {
 
                 file:function(id) {
 
-                    // if no id, return everything
-                    if (id === null) {
-                        var items = this.server.Files;
-                        items = items.concat(this.map.Files);
-                        items = items.concat(this.node.Files);
-                        return items;
-                    }
+                    try {
+                      
+                        // if no id, return everything
+                        if (id === null) {
+                            var items = this.server.Files;
+                            items = items.concat(this.map.Files);
+                            items = items.concat(this.node.Files);
+                            return items;
+                        }
 
-                    var item = vm.Utilities.searchObjectArray(this.server.Files, id);
+                        var item = vm.Utilities.searchObjectArray(this.server.Files, id);
 
-                    if (item === null)
-                        item = vm.Utilities.searchObjectArray(this.map.Files, id);
+                        if (item === null)
+                            item = vm.Utilities.searchObjectArray(this.map.Files, id);
 
-                    if (item === null)
-                        item = vm.Utilities.searchObjectArray(this.node.Files, id);
+                        if (item === null)
+                            item = vm.Utilities.searchObjectArray(this.node.Files, id);
 
-                    if (item !== null) {
-                        return item.item;
-                    }
+                        if (item !== null) {
+                            return item.item;
+                        }
+
+                    } catch (e) {
+                        vm.Utilities.log.fatal('file: ' + e.message );
+                    } 
 
                     item = {};
                     item.value = "[[MR:" + id + " ERROR: 'not found']]";
@@ -534,25 +546,31 @@ var OlabNodePlayer = function(params) {
 
                 question:function(id) {
 
-                    // if no id, return everything
-                    if (id === null) {
-                        var items = this.server.Questions;
-                        items = items.concat(this.map.Questions);
-                        items = items.concat(this.node.Questions);
-                        return items;
-                    }
+                    try {
 
-                    var item = vm.Utilities.searchObjectArray(this.server.Questions, id);
+                        var item = vm.Utilities.searchObjectArray(this.server.Questions, id);
 
-                    if (item === null)
-                        item = vm.Utilities.searchObjectArray(this.map.Questions, id);
+                        if (item === null)
+                            item = vm.Utilities.searchObjectArray(this.map.Questions, id);
 
-                    if (item === null)
-                        item = vm.Utilities.searchObjectArray(this.node.Questions, id);
+                        if (item === null)
+                            item = vm.Utilities.searchObjectArray(this.node.Questions, id);
 
-                    if (item !== null) {
-                        return item.item;
-                    }
+                        if (item !== null) {
+                            return item.item;
+                        }
+
+                        // if no id, return everything
+                        if (id === null) {
+                            var items = this.server.Questions;
+                            items = items.concat(this.map.Questions);
+                            items = items.concat(this.node.Questions);
+                            return items;
+                        }
+
+                    } catch (e) {
+                        vm.Utilities.log.fatal('question: ' + e.message );
+                    } 
 
                     item = {};
                     item.value = "[[QU:" + id + " ERROR: 'not found']]";
@@ -561,50 +579,87 @@ var OlabNodePlayer = function(params) {
 
                 link:function(id) {
 
-                    for (var key in this.node.MapNodeLinks) {
+                    try {
 
-                        var data = this.node.MapNodeLinks[key];
-                        if (data.DestinationNode.id === id) {
-                            return data;
+                        for (var key in this.node.MapNodeLinks) {
+
+                            var data = this.node.MapNodeLinks[key];
+                            if (data.DestinationNode.id === id) {
+                                return data;
+                            }
                         }
-                    }
+
+                    } catch (e) {
+                        vm.Utilities.log.fatal('link: ' + e.message );
+                    } 
+
                     return null;
+
                 },
 
                 onDropdownResponseChanged:function(data) {
 
-                    vm.Utilities.log.debug('Xmit: ' + data.responseId + "= selected");
-                    data.state_data = vm.state.state_data;
+                    try {
 
-                    //var url = vm.restApiUrl + '/question/radio/' + node.id + "/" + data.responseId + "/" + data.value;
-                    var url = vm.restApiUrl + '/question/dropdown/' + node.id;
-                    vm.Utilities.postJson(url, data, onQuestionResponseSucceeded, onQuestionResponseFailed);
+                        vm.Utilities.log.debug('Xmit: ' + data.responseId + "= selected");
+                        data.state_data = vm.state.state_data;
+                        data.submitId = "#submit_" + data.questionId;
+                        if (data.questionShowSubmit) {
+                            jQuery( data.submitId ).show();
+                        }
+
+                        var url = vm.restApiUrl + '/question/dropdown/' + node.id;
+                        vm.Utilities.postJson(url, data, onQuestionResponseSucceeded, onQuestionResponseFailed);
+
+                    } catch (e) {
+                        vm.Utilities.log.fatal('onDropdownResponseChanged: ' + e.message );
+                    } 
+
 
                 },
 
                 // handler for question responses
                 onMultichoiceResponseChanged:function(data) {
 
-                    vm.Utilities.log.debug('Xmit: ' + data.responseId + "=" + data.value);
-                    data.state_data = vm.state.state_data;
-                    data.value = data.value;
+                    try {
 
-                    //var url = vm.restApiUrl + '/question/radio/' + node.id + "/" + data.responseId + "/" + data.value;
-                    var url = vm.restApiUrl + '/question/multichoice/' + node.id;
-                    vm.Utilities.postJson(url, data, onQuestionResponseSucceeded, onQuestionResponseFailed);
+                        vm.Utilities.log.debug('Xmit: ' + data.responseId + "=" + data.value);
+                        data.state_data = vm.state.state_data;
+                        data.value = data.value;
+                        data.submitId = "#submit_" + data.questionId + "_" + data.responseId;
+                        if (data.questionShowSubmit) {
+                            jQuery( data.submitId ).show();
+                        }
+
+                        var url = vm.restApiUrl + '/question/multichoice/' + node.id;
+                        vm.Utilities.postJson(url, data, onQuestionResponseSucceeded, onQuestionResponseFailed);
+                        
+                    } catch (e) {
+                        vm.Utilities.log.fatal('onMultichoiceResponseChanged: ' + e.message );
+                    } 
 
                 },
 
                 // handler for question responses
                 onRadioResponseChanged:function(data) {
 
-                    vm.Utilities.log.debug('Xmit: ' + data.responseId + "=" + data.value);
-                    data.state_data = vm.state.state_data;
+                    try {
+                    
+                        vm.Utilities.log.debug('Xmit: ' + data.responseId + "=" + data.value);
+                        data.state_data = vm.state.state_data;
+                        data.submitId = "#submit_" + data.questionId + "_" + data.responseId;
+                        if (data.questionShowSubmit) {
+                            jQuery( data.submitId ).show();
+                        }
 
-                    //var url = vm.restApiUrl + '/question/radio/' + node.id + "/" + data.responseId + "/" + data.value;
-                    var url = vm.restApiUrl + '/question/radio/' + node.id;
-                    vm.Utilities.postJson(url, data, onQuestionResponseSucceeded, onQuestionResponseFailed);
+                        //var url = vm.restApiUrl + '/question/radio/' + node.id + "/" + data.responseId + "/" + data.value;
+                        var url = vm.restApiUrl + '/question/radio/' + node.id;
+                        vm.Utilities.postJson(url, data, onQuestionResponseSucceeded, onQuestionResponseFailed);
 
+                    } catch (e) {
+                        vm.Utilities.log.fatal('onMultichoiceResponseChanged: ' + e.message );
+                    } 
+                    
                 }
             }
 
