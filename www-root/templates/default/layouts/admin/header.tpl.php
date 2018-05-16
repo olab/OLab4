@@ -1,8 +1,9 @@
 <!doctype html>
 <html class="no-js" lang="en">
     <head>
-        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
         <meta charset="<?php echo DEFAULT_CHARSET; ?>" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
         <title>%TITLE%</title>
 
         <meta name="description" content="%DESCRIPTION%" />
@@ -17,20 +18,27 @@
         <link href="<?php echo $ENTRADA_TEMPLATE->relative(); ?>/css/common.css?release=<?php echo html_encode(APPLICATION_VERSION); ?>" rel="stylesheet" media="all" />
         <link href="<?php echo $ENTRADA_TEMPLATE->relative(); ?>/css/style.css?release=<?php echo html_encode(APPLICATION_VERSION); ?>" rel="stylesheet" media="all" />
         <link href="<?php echo ENTRADA_RELATIVE; ?>/javascript/calendar/css/xc2_default.css?release=<?php echo html_encode(APPLICATION_VERSION); ?>" rel="stylesheet" media="all" />
+
         <link href="<?php echo $ENTRADA_TEMPLATE->relative(); ?>/images/favicon.ico" rel="shortcut icon" type="image/x-icon" />
-        <link href="<?php echo ENTRADA_RELATIVE; ?>/javascript/entradajs/styles/normalize.css" rel="stylesheet" type="text/css" />
-        <link href="<?php echo ENTRADA_RELATIVE; ?>/javascript/entradajs/styles/entrada-shim.css" rel="stylesheet" type="text/css" />
-        <link href="<?php echo ENTRADA_RELATIVE; ?>/javascript/entradajs/styles/default.css" rel="stylesheet" type="text/css" />        <script>
+        <link rel="apple-touch-icon" href="<?php echo $ENTRADA_TEMPLATE->relative(); ?>/images/touch-icon-iphone.png"/>
+        <link rel="apple-touch-icon" href="<?php echo $ENTRADA_TEMPLATE->relative(); ?>/images/touch-icon-ipad.png" sizes="76x76"/>
+        <link rel="apple-touch-icon" href="<?php echo $ENTRADA_TEMPLATE->relative(); ?>/images/touch-icon-iphone-retina.png" sizes="120x120"/>
+        <link rel="apple-touch-icon" href="<?php echo $ENTRADA_TEMPLATE->relative(); ?>/images/touch-icon-ipad-retina.png" sizes="152x152"/>
+
+        <link href="<?php echo ENTRADA_RELATIVE; ?>/w3c/p3p.xml" rel="P3Pv1" type="text/xml" />
+        <script>
             if (self !== top) {
                 top.location = self.location;
             }
         </script>
         <link href="<?php echo ENTRADA_RELATIVE; ?>/css/jquery/jquery-ui.css?release=<?php echo html_encode(APPLICATION_VERSION); ?>" rel="stylesheet" type="text/css" />
-        <script>
+
+        <script type="text/javascript">
             %JAVASCRIPT_TRANSLATIONS%
         </script>
         <script src="<?php echo ENTRADA_RELATIVE; ?>/javascript/jquery/jquery.min.js?release=<?php echo html_encode(APPLICATION_VERSION); ?>"></script>
         <script src="<?php echo ENTRADA_RELATIVE; ?>/javascript/jquery/jquery-ui.min.js?release=<?php echo html_encode(APPLICATION_VERSION); ?>"></script>
+        <script type="text/javascript">var ENTRADA_URL = '<?php echo ENTRADA_URL; ?>'; var ENTRADA_RELATIVE = '<?php echo ENTRADA_RELATIVE; ?>'; var TEMPLATE_URL = '<?php echo $ENTRADA_TEMPLATE->url(); ?>'; var TEMPLATE_RELATIVE = '<?php echo $ENTRADA_TEMPLATE->relative(); ?>';</script>
         <script>jQuery.noConflict();</script>
         <script>
             var ENTRADA_URL = '<?php echo ENTRADA_URL; ?>'; 
@@ -38,25 +46,10 @@
             var TEMPLATE_URL = '<?php echo $ENTRADA_TEMPLATE->url(); ?>'; 
             var TEMPLATE_RELATIVE = '<?php echo $ENTRADA_TEMPLATE->relative(); ?>';
             var JWT = '<?php echo $ENTRADA_USER ? $ENTRADA_USER->getToken() : ''; ?>';
-            var API_URL = '<?php echo ENTRADA_URL . "/api/v2"; ?>';
-        </script>
-        <script src="<?php echo ENTRADA_RELATIVE; ?>/javascript/vue/vue.js?release=<?php echo html_encode(APPLICATION_VERSION); ?>"></script>
-        <script src="<?php echo ENTRADA_RELATIVE; ?>/javascript/vue/vuex.js?release=<?php echo html_encode(APPLICATION_VERSION); ?>"></script>
-        <script src="<?php echo ENTRADA_RELATIVE; ?>/javascript/axios/axios.min.js?release=<?php echo html_encode(APPLICATION_VERSION); ?>"></script>
-        <script src="<?php echo ENTRADA_RELATIVE; ?>/javascript/entradajs/EntradaJS/entradajs.js"></script>
-        <script>
-            // EntradaJS Bootstrap
-            jQuery(function() {
-                try {
-                    let bootstrap = new Bootstrap('<?php echo ENTRADA_RELATIVE; ?>/javascript/entradajs');
-                    bootstrap.boot('#app-root');
-                } catch(ex) {
-                    console.warn('Warning: This browser is currently not supported by EJS.');
-                }
-            });
-            window.filter = Array.prototype.filter;
+            var API_URL = '<?php echo ENTRADA_URL . "/" . API_BASE_PATH; ?>';
         </script>
         %JQUERY%
+
         <script src="<?php echo ENTRADA_RELATIVE; ?>/javascript/scriptaculous/prototype.js?release=<?php echo html_encode(APPLICATION_VERSION); ?>"></script>
         <script src="<?php echo ENTRADA_RELATIVE; ?>/javascript/scriptaculous/scriptaculous.js?release=<?php echo html_encode(APPLICATION_VERSION); ?>"></script>
         <script src="<?php echo ENTRADA_RELATIVE; ?>/javascript/livepipe/livepipe.js?release=<?php echo html_encode(APPLICATION_VERSION); ?>"></script>
@@ -66,12 +59,11 @@
         <script src="<?php echo ENTRADA_RELATIVE; ?>/javascript/selectmenu.js?release=<?php echo html_encode(APPLICATION_VERSION); ?>"></script>
         <script src="<?php echo ENTRADA_RELATIVE; ?>/javascript/calendar/config/xc2_default.js?release=<?php echo html_encode(APPLICATION_VERSION); ?>"></script>
         <script src="<?php echo ENTRADA_RELATIVE; ?>/javascript/calendar/script/xc2_inpage.js?release=<?php echo html_encode(APPLICATION_VERSION); ?>"></script>
+
         <script src="<?php echo $ENTRADA_TEMPLATE->relative(); ?>/js/libs/bootstrap.min.js?release=<?php echo html_encode(APPLICATION_VERSION); ?>"></script>
         <script src="<?php echo $ENTRADA_TEMPLATE->relative(); ?>/js/libs/modernizr-2.5.3.min.js?release=<?php echo html_encode(APPLICATION_VERSION); ?>"></script>
         <script src="<?php echo $ENTRADA_TEMPLATE->relative(); ?>/js/libs/jquery.matchHeight.js?release=<?php echo html_encode(APPLICATION_VERSION); ?>"></script>
-        <script src="<?php echo ENTRADA_RELATIVE; ?>/javascript/bookmark.js?release=<?php echo html_encode(APPLICATION_VERSION); ?>"></script>
-        <script src="<?php echo ENTRADA_RELATIVE; ?>/javascript/communities_sidebar.js?release=<?php echo html_encode(APPLICATION_VERSION); ?>"></script>
-        <script src="<?php echo ENTRADA_RELATIVE; ?>/javascript/disclaimers.js?release=<?php echo html_encode(APPLICATION_VERSION); ?>"></script>
+        <script type="text/javascript" src="<?php echo ENTRADA_RELATIVE; ?>/javascript/bookmark.js?release=<?php echo html_encode(APPLICATION_VERSION); ?>"></script>
         %HEAD%
     </head>
     <body>
@@ -84,26 +76,7 @@
                         </div>
                         <?php
                         if ((isset($_SESSION["isAuthorized"])) && ($_SESSION["isAuthorized"])) {
-
-                            $assessment_tasks_count = 0;
-
-                            $entrada_actor = array(
-                                "actor_proxy_id" => $ENTRADA_USER->getActiveId(),
-                                "actor_organisation_id" => $ENTRADA_USER->getActiveOrganisation(),
-                            );
-                            $subject = array(
-                                "subject_id" => $entrada_actor["actor_proxy_id"],
-                                "subject_type" => "proxy_id",
-                                "subject_scope" => "internal"
-                            );
-
-                            $assessment_tasks = new Entrada_Assessments_Tasks($entrada_actor);
-                            /**
-                             * Query for the non-complete tasks
-                             */
-                            $pending_tasks_lists = array("assessor-pending");
-                            $pending_tasks = $assessment_tasks->fetchAssessmentTaskList($pending_tasks_lists, $entrada_actor["actor_proxy_id"]);
-                            $assessment_tasks_count = $assessment_tasks->fetchAssessmentTaskListCount($pending_tasks_lists, $entrada_actor["actor_proxy_id"], "proxy_id", "internal", true);
+                            $assessment_tasks = 0;//Entrada_Utilities_Assessments_AssessmentTask::countAllIncompleteAssessmentTasks($ENTRADA_USER->getActiveID());
                             ?>
                             <div class="span8 pull-right">
                                 <div class="welcome-area">
@@ -115,14 +88,14 @@
                                             </div>
                                             <?php echo $ENTRADA_USER->getFirstname() . " " . $ENTRADA_USER->getLastname(); ?>
                                         </a>
-                                        <a href="<?php echo ENTRADA_RELATIVE; ?>/assessments">
+                                        <!--<a href="<?php echo ENTRADA_RELATIVE; ?>/assessments">
                                             <span class="fa fa-list-ul header-icon"></span>
                                             <?php
                                             echo $translate->_("Assessment &amp; Evaluation");
-                                            if ($assessment_tasks_count > 0) {
-                                                echo "<span class=\"space-left badge badge-success\">" . $assessment_tasks_count . "</span>";
+                                            if ($assessment_tasks > 0) {
+                                                echo "<span class=\"space-left badge badge-success\">" . $assessment_tasks . "</span>";
                                             } ?>
-                                        </a>
+                                        </a>-->
                                         <a href="<?php echo ENTRADA_RELATIVE; ?>/?action=logout" class="log-out"><span class="fa fa-power-off"></span> Logout</a>
                                     </div>
                                 </div>

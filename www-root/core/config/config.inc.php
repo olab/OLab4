@@ -1,9 +1,10 @@
 <?php
+
 return array (
   'entrada_url' => 'http://olab4.localhost/apidev',
   'entrada_relative' => '/apidev',
-  'entrada_absolute' =>     '/var/www/vhosts/OLab/OLab4/www-root',
-  // CMW: added
+  'entrada_absolute' => '/var/www/vhosts/OLab/OLab4/www-root',
+   // CMW: added
   'entrada_api_absolute' => '/var/www/vhosts/OLab/OLab4-api',
   'entrada_storage' =>      '/var/www/vhosts/OLab/OLab4/www-root/core/storage',
   'database' =>

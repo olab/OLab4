@@ -253,7 +253,9 @@ if (!$ENTRADA_ACL->amIAllowed("dashboard", "read")) {
 		}
 	}
 
-	switch ($_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]) {
+    // CMJW - commented out
+	//switch ($_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]) {
+	switch ($_SESSION) {
 		case "medtech" :
 		case "student" :
 

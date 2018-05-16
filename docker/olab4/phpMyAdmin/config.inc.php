@@ -12,6 +12,7 @@
  * cookie
  */
 $cfg['blowfish_secret'] = 'U2vNZmKLgfuErF8SnmuM24YQoX9HQ4Wm'; /* YOU MUST FILL IN THIS FOR COOKIE AUTH! */
+$cfg['TempDir'] = '/tmp';
 
 /**
  * Server(s) configuration

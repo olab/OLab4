@@ -57,6 +57,7 @@ define("ENTRADA_RELATIVE", $config->entrada_relative);							// Absolute Path fr
 define("ENTRADA_ABSOLUTE", $config->entrada_absolute);							// Full Directory Path to application's index file without a trailing slash.
 define("ENTRADA_API_ABSOLUTE", $config->entrada_api_absolute);			        // Full Directory Path to api root directory without a trailing slash.
 define("ENTRADA_CORE", ENTRADA_ABSOLUTE.DIRECTORY_SEPARATOR."core");			// Full Directory Path to the Entrada core directory.
+define("API_BASE_PATH", "api/v2");
 
 /**
  * DEMO_MODE - Whether or not you want to run in demo mode.
@@ -393,11 +394,13 @@ define("SHOW_LOAD_STATS", false);												// Do you want to see the time it t
 
 define("SEARCH_FILE_CONTENTS", true);											// Add file contents search to curriculum search
 
-define("APPLICATION_NAME", "Entrada ME");											// The name of this application in your school (i.e. MedCentral, Osler, etc.)
+define("APPLICATION_NAME", "OLab 4");											// The name of this application in your school (i.e. MedCentral, Osler, etc.)
+//define("APPLICATION_NAME", "Entrada ME");											// The name of this application in your school (i.e. MedCentral, Osler, etc.)
 define("APPLICATION_VERSION", "1.12.0"); 										// The current filesystem version of Entrada.
 define("APPLICATION_IDENTIFIER", "app-".AUTH_APP_ID);							// PHP does not allow session key's to be integers (sometimes), so we have to make it a string.
 
-$DEFAULT_META["title"] = "Entrada ME: An eLearning Ecosystem";
+$DEFAULT_META["title"] = "OpenLabyrinth 4: Scenario-Based Training ";
+//$DEFAULT_META["title"] = "Entrada ME: An eLearning Ecosystem";
 $DEFAULT_META["keywords"] = "";
 $DEFAULT_META["description"] = "";
 
