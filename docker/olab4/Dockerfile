@@ -8,8 +8,8 @@ LABEL maintainer "Corey Wirun <corey@cardinalcreek.ca>"
 # Set your specific Timezone
 ENV TZ="America/Edmonton"
 
-# Set docker machine hostname
-RUN echo "olab4.localhost" > /etc/hostname
+# Set default database server
+RUN echo "127.0.0.1 database" /etc/hosts
 
 # Sets Timezone in container.
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime
