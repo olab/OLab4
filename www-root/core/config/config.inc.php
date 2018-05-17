@@ -10,12 +10,12 @@ return array (
   'database' =>
   array (
     'adapter' => 'mysqli',
-    'host' => 'diskstation',
+    'host' => 'database',
     'username' => 'entrada',
     'password' => 'password',
-    'entrada_database' => 'entrada_api',
-    'auth_database' => 'entrada_api_auth',
-    'clerkship_database' => 'entrada_api_clerkship',
+    'entrada_database' => 'entrada',
+    'auth_database' => 'entrada_auth',
+    'clerkship_database' => 'entrada_clerkship',
     // CMW: added
     'openlabyrinth_database' => 'openlabyrinth'
   ),

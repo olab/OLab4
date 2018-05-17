@@ -8,6 +8,9 @@ LABEL maintainer "Corey Wirun <corey@cardinalcreek.ca>"
 # Set your specific Timezone
 ENV TZ="America/Edmonton"
 
+# Set docker machine hostname
+RUN echo "olab4.localhost" > /etc/hostname
+
 # Sets Timezone in container.
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime
 
@@ -31,6 +34,7 @@ RUN easy_install supervisor
 
 # Install Entrada Developer dependancies.
 RUN yum -y install git \
+                pv \
                 htmldoc \
                 wkhtmltopdf \
                 curl \
@@ -136,6 +140,8 @@ COPY supervisor/supervisord.conf /etc/supervisord.conf
 COPY mariadb/entrada.cnf /etc/my.cnf.d
 COPY mariadb/create-entrada-db.sql /tmp
 COPY mariadb/create-olab-db.sql /tmp
+COPY mariadb/reset-data-db.sh /tmp
+COPY mariadb/reset-data-db.sql /tmp
 
 # Run any code set up steps
 COPY post-create/post-create.sh /tmp
