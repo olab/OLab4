@@ -17,9 +17,6 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime
 # Sets Networking in container.
 RUN echo "NETWORKING=yes" > /etc/sysconfig/network
 
-# Add generic database server name to hosts.
-RUN echo "127.0.0.1     database" > /etc/hosts
-
 # Sets CentOS root password.
 RUN echo root:password | chpasswd && yum install -y passwd
 
