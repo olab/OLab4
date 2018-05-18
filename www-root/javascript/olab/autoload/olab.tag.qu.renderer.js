@@ -109,10 +109,6 @@ Vue.component('olab-question-multilinetext',
                   v-bind:id="'QU_' + question.id"
                   v-bind:name="'QU_' + question.id">
                 </textarea>
-                <p v-if='question.show_submit'>
-                   <span v-bind:id="'questionSubmit' + question.id" style='display: none; font-size: 12px;'>Answer has been sent.</span>
-                   <button onclick="jQuery(this).hide();jQuery("#questionSubmit2911").show();jQuery("#qresponse_2911").attr("readonly", "readonly");">Submit</button>
-                </p>
             </div>`,
         props:['question']
     });
