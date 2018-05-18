@@ -40,6 +40,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_OLAB"))) {
     header("Location: ".ENTRADA_URL);
     exit;
 } else {
+
     HostSystemApi::addToHead( "<script>var WEBSITE_ROOT = \"" . HostSystemApi::getRootUrl() . "\";</script>" );
     HostSystemApi::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/vue/vue.js\"></script>" );
     HostSystemApi::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/vee-validate/vee-validate.min.js\"></script>" );
