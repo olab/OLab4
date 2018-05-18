@@ -9,7 +9,7 @@ LABEL maintainer "Corey Wirun <corey@cardinalcreek.ca>"
 ENV TZ="America/Edmonton"
 
 # Set default database server
-RUN echo "127.0.0.1 database" /etc/hosts
+RUN echo "127.0.0.1 database" > /etc/hosts
 
 # Sets Timezone in container.
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime
@@ -17,14 +17,15 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime
 # Sets Networking in container.
 RUN echo "NETWORKING=yes" > /etc/sysconfig/network
 
+# Add generic database server name to hosts.
+RUN echo "127.0.0.1     database" > /etc/hosts
+
 # Sets CentOS root password.
 RUN echo root:password | chpasswd && yum install -y passwd
 
 # Install Inline with Upstream Stable (IUS), which also enables EPEL.
 RUN yum -y install https://centos7.iuscommunity.org/ius-release.rpm
-#RUN yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
 RUN yum -y install http://rpms.remirepo.net/enterprise/remi-release-7.rpm
-#RUN yum install yum-utils
 RUN yum-config-manager --enable remi-php72
 
 # Install Python and Supervisor.
@@ -110,18 +111,10 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 # Tell Apache to include all of the virtual hosts
 RUN echo "IncludeOptional vhosts.d/*.conf" >> /etc/httpd/conf/httpd.conf
 
-# install PHP data structures
-# RUN pecl install ds
-
 # Install PHPMyAdmin
 RUN yum -y install php-pecl-zip phpMyAdmin
 COPY apache/phpmyadmin.conf /etc/httpd/conf.d/phpmyadmin.conf
 COPY apache/90-xdebug.ini /etc/php.d
-# RUN mkdir /etc/phpMyAdmin
-# COPY phpMyAdmin/phpmyadmin_install.sh /usr/bin
-# RUN  chmod +x /usr/bin/phpmyadmin_install.sh
-# RUN  /usr/bin/phpmyadmin_install.sh
-# COPY phpMyAdmin/config.inc.php /usr/share/phpMyAdmin
 
 # Install Capistrano for deployment recipes.
 RUN gem install capistrano -v 2.15.9

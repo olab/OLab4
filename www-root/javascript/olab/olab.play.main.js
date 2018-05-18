@@ -390,9 +390,6 @@ var OlabNodePlayer = function(params) {
      */
     function onNodeLoadSucceeded(data) {
 
-        //if (vm.Utilities.testServerError(data))
-        //  return;
-
         if (data.node !== null) {
 
             // save map data

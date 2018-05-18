@@ -4,13 +4,13 @@
  */
 use Entrada\Modules\Olab\Classes\HostSystemApi;
 
-$HEAD[] = "<script>var WEBSITE_ROOT = \"" . HostSystemApi::getRootUrl() . "\";</script>";
-$HEAD[] = "<script type=\"text/javascript\" src=\"". HostSystemApi::getRelativePath() ."/javascript/jquery/jquery.dataTables-1.10.11.min.js\" defer></script>";
-$HEAD[] = "<script type=\"text/javascript\" src=\"". HostSystemApi::getRelativePath() ."/javascript/vue/vue.js\" defer></script>";
-$HEAD[] = "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/olab.utilities.js\"></script>";
-$HEAD[] = "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/olab.list.main.js\"></script>";
-$HEAD[] = "<link href=\"". HostSystemApi::getRootUrl() ."/css/olab/olab.css\" rel=\"stylesheet\" type=\"text/css\" media=\"all\" />";
-$HEAD[] = "<link href=\"". HostSystemApi::getRootUrl() ."/css/olab/scrollingtable.css\" rel=\"stylesheet\" type=\"text/css\" media=\"all\" />";
+HostSystemApi::addToHead( "<script>var WEBSITE_ROOT = \"" . HostSystemApi::getRootUrl() . "\";</script>" );
+HostSystemApi::addToHead( "<script type=\"text/javascript\" src=\"". HostSystemApi::getRelativePath() ."/javascript/jquery/jquery.dataTables-1.10.11.min.js\" defer></script>" (;
+HostSystemApi::addToHead( "<script type=\"text/javascript\" src=\"". HostSystemApi::getRelativePath() ."/javascript/vue/vue.js\" defer></script>" );
+HostSystemApi::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/olab.utilities.js\"></script>" );
+HostSystemApi::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/olab.list.main.js\"></script>" );
+HostSystemApi::addToHead( "<link href=\"". HostSystemApi::getRootUrl() ."/css/olab/olab.css\" rel=\"stylesheet\" type=\"text/css\" media=\"all\" />" );
+HostSystemApi::addToHead( "<link href=\"". HostSystemApi::getRootUrl() ."/css/olab/scrollingtable.css\" rel=\"stylesheet\" type=\"text/css\" media=\"all\" />" );
 
 if (!defined("PARENT_INCLUDED")) {
     exit;

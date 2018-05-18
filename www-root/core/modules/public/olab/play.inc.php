@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Entrada [ http://www.entrada-project.org ]
  *
@@ -23,61 +22,45 @@
  * @copyright Copyright 2017 University of Calgary. All Rights Reserved.
  *
  */
-
 use Entrada\Modules\Olab\Classes\HostSystemApi;
-
 // loads any system-level script files
 function getAutoloadContents($dir, &$results = array()){
     $files = scandir($dir);
-
     foreach($files as $key => $value){
         $path = $dir.DIRECTORY_SEPARATOR.$value;
         if(!is_dir($path)) {
             $results[] = str_replace( $dir, "", $path );
         }
     }
-
     return $results;
 }
-
 if((!defined("PARENT_INCLUDED")) || (!defined("IN_OLAB"))) {
-
-	exit;
-
+    exit;
 } elseif ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
-
     header("Location: ".ENTRADA_URL);
     exit;
-
 } else {
+    HostSystemApi::addToHead( "<script>var WEBSITE_ROOT = \"" . HostSystemApi::getRootUrl() . "\";</script>" );
+    HostSystemApi::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/vue/vue.js\"></script>" );
+    HostSystemApi::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/vee-validate/vee-validate.min.js\"></script>" );
+    HostSystemApi::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/axios/axios.min.js\"></script>" );
+    HostSystemApi::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/olab.utilities.js\"></script>" );
+    HostSystemApi::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/olab.play.components.js\"></script>" );
+    HostSystemApi::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/olab.play.main.js\"></script>" );
+    HostSystemApi::addToHead( "<link href=\"". HostSystemApi::getRootUrl() ."/css/olab/olab.css\" rel=\"stylesheet\" type=\"text/css\" media=\"all\" />" );
 
-    $HEAD[] = "<script>var WEBSITE_ROOT = \"" . HostSystemApi::getRootUrl() . "\";</script>";
-    $HEAD[] = "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/vue/vue.js\"></script>";
-    $HEAD[] = "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/vee-validate/vee-validate.min.js\"></script>";
-    $HEAD[] = "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/axios/axios.min.js\"></script>";
-    $HEAD[] = "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/olab.utilities.js\"></script>";
-    $HEAD[] = "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/olab.play.components.js\"></script>";
-    $HEAD[] = "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/olab.play.main.js\"></script>";
-    $HEAD[] = "<link href=\"". HostSystemApi::getRootUrl() ."/css/olab/olab.css\" rel=\"stylesheet\" type=\"text/css\" media=\"all\" />";
-
-    // autoload any javascript extensions
+    // autoload any kernel-level javascript extensions
     $jsPath = HostSystemApi::getFileRoot() . "/javascript/olab/autoload";
     $asJsFiles = getAutoloadContents( $jsPath );
-
     foreach ( $asJsFiles as $sJsFile )
     {
-        $HEAD[] = "<script type=\"text/javascript\" src=\"" .
-                  HostSystemApi::getRelativePath() .
-                  "/javascript/olab/autoload" . $sJsFile . "\"></script>";
+        HostSystemApi::addToHead( "<script type=\"text/javascript\" src=\"" .
+        HostSystemApi::getRelativePath() . "/javascript/olab/autoload" . $sJsFile . "\"></script>" );
     }
 
     HostSystemApi::UpdateBreadCrumb( HostSystemApi::getRootUrl()  . "/" . $MODULE, "Play " );
 }
 ?>
-
 <!-- DIV for Olab content binding.  DO NOT EDIT. -->
-<div id="olabNodeContent" align="center">
-
-</div>
-
+<div id="olabNodeContent" align="center"></div>
 
