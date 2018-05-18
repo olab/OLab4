@@ -107,7 +107,7 @@ Vue.component('olab-question-multilinetext',
                   v-bind:cols="question.width"
                   v-bind:rows="question.height"
                   v-bind:id="'QU_' + question.id"
-                  v-bind:name="'QU_' + question.id">
+                  v-bind:name="'QU_' + question.id"> 
                 </textarea>
             </div>`,
         props:['question']
