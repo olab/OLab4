@@ -25,6 +25,6 @@ return array (
     'lastname' => 'Administrator',
     'email' => 'corey@cardinalcreek.ca',
   ),
-  'auth_username' => 'c8c4e3a858a62dd27b6b55564124294d',
+  'auth_username' => '63a9de5adfe453481679d421f490222e',
   'auth_password' => '4a7f94f8938f6e5549d9a1b65a591205',
 );

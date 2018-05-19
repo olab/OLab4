@@ -141,6 +141,6 @@ COPY mariadb/mariadb-start.sh /usr/bin
 RUN chmod +x /usr/bin/mariadb-start.sh
 
 # Set default database server
-RUN echo "127.0.0.1 database" >> /etc/hosts
+#RUN echo "127.0.0.1 database" >> /etc/hosts
 
 CMD ["/usr/bin/supervisord"]
