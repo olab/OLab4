@@ -40,7 +40,6 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_OLAB"))) {
     header("Location: ".ENTRADA_URL);
     exit;
 } else {
-
     HostSystemApi::addToHead( "<script>var WEBSITE_ROOT = \"" . HostSystemApi::getRootUrl() . "\";</script>" );
     HostSystemApi::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/vue/vue.js\"></script>" );
     HostSystemApi::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/vee-validate/vee-validate.min.js\"></script>" );
@@ -49,7 +48,6 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_OLAB"))) {
     HostSystemApi::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/olab.play.components.js\"></script>" );
     HostSystemApi::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/olab.play.main.js\"></script>" );
     HostSystemApi::addToHead( "<link href=\"". HostSystemApi::getRootUrl() ."/css/olab/olab.css\" rel=\"stylesheet\" type=\"text/css\" media=\"all\" />" );
-
     // autoload any kernel-level javascript extensions
     $jsPath = HostSystemApi::getFileRoot() . "/javascript/olab/autoload";
     $asJsFiles = getAutoloadContents( $jsPath );
@@ -58,10 +56,12 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_OLAB"))) {
         HostSystemApi::addToHead( "<script type=\"text/javascript\" src=\"" .
         HostSystemApi::getRelativePath() . "/javascript/olab/autoload" . $sJsFile . "\"></script>" );
     }
-
     HostSystemApi::UpdateBreadCrumb( HostSystemApi::getRootUrl()  . "/" . $MODULE, "Play " );
 }
 ?>
-<!-- DIV for Olab content binding.  DO NOT EDIT. -->
+<!-- DIVs for Olab content binding.  DO NOT EDIT. -->
+<div id="olabHeaderContent" align="center"></div>
 <div id="olabNodeContent" align="center"></div>
+<div id="olabAnnotationContent" align="center"></div>
+<div id="olabFooterContent" align="center"></div>
 

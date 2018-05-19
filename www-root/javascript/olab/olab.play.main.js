@@ -36,7 +36,11 @@ var OlabNodePlayer = function(params) {
     vm.state = [];
     vm.haveMapData = false;
 
-    vm.app = [];
+    // vue.js containers
+    vm.nodeVue = [];
+    vm.headerVue = [];
+    vm.footerVue = [];
+
     vm.restApiUrl = params.apiRoot + '/olab';
 
     // set the event handler for when the url location hash changes
@@ -52,7 +56,7 @@ var OlabNodePlayer = function(params) {
 
     // these are the methods/properties we expose to the outside
     vm.service = {
-        app:vm.app,
+        app:vm.nodeVue,
         downloadFile:downloadFile,
         navigate:navigate,
         play:play,
@@ -150,8 +154,8 @@ var OlabNodePlayer = function(params) {
      * @param {} nodeText 
      * @returns {} 
      */
-    function encapsulateNodeMarkup(nodeText) {
-        return '<div id="olabNodeContent">' + nodeText + '</div>';
+    function encapsulateNodeMarkup(type, nodeText) {
+        return '<div id="olab' + type + 'Content">' + nodeText + '</div>';
     }
 
     /**
@@ -416,15 +420,15 @@ var OlabNodePlayer = function(params) {
             // overlay state counter values on top of count objects
             applyStateToCounters();
 
-            renderNewContent(data.node);
+            renderNodeContent(data.node);
 
             // register a onclick handler for all question elements in the node
 
-            vm.app.node = data.node;
+            vm.nodeVue.node = data.node;
             document.title = data.node.title;
 
         } else {
-            vm.app.content = "error";
+            vm.nodeVue.content = "error";
         }
     }
 
@@ -458,9 +462,9 @@ var OlabNodePlayer = function(params) {
      * Spins up VUE js with the node markup
      * @returns {} 
      */
-    function renderNewContent(node) {
+    function renderNodeContent(node) {
 
-        var nodeHtml = encapsulateNodeMarkup(node.text);
+        var nodeHtml = encapsulateNodeMarkup('Node', node.text);
 
         // test if bypassing Wiki tag rendering
         if (vm.qs["showWiki"] !== "1")
@@ -468,10 +472,36 @@ var OlabNodePlayer = function(params) {
 
         // compile the markup so Vue components resolve 
         var res = Vue.compile(nodeHtml);
+        vm.nodeVue = createNodeVue('#olabNodeContent', res);     
+
+        nodeHtml = encapsulateNodeMarkup('Header', node.header);
+
+        // test if bypassing Wiki tag rendering
+        if (vm.qs["showWiki"] !== "1")
+            nodeHtml = dewikifyMarkup(nodeHtml);
+
+        // compile the markup so Vue components resolve 
+        var res = Vue.compile(nodeHtml);
+        vm.headerVue = createNodeVue('#olabHeaderContent', res);
+
+
+        nodeHtml = encapsulateNodeMarkup('Footer', node.footer);
+
+        // test if bypassing Wiki tag rendering
+        if (vm.qs["showWiki"] !== "1")
+            nodeHtml = dewikifyMarkup(nodeHtml);
+
+        // compile the markup so Vue components resolve 
+        var res = Vue.compile(nodeHtml);
+        vm.footerVue = createNodeVue('#olabFooterContent', res);
+
+    }
+
+    function createNodeVue(targetId, res) {
 
         // spin up Vue to load the compiled markup
-        vm.app = new Vue({
-            el:vm.targetId,
+        return new Vue({
+            el:targetId,
             data:{
                 websiteRoot:vm.websiteUrl,
                 server:vm.server,
@@ -661,7 +691,6 @@ var OlabNodePlayer = function(params) {
             }
 
         });
-
     }
 
 };
