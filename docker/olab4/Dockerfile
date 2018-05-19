@@ -129,6 +129,7 @@ COPY mariadb/create-entrada-db.sql /tmp
 COPY mariadb/create-olab-db.sql /tmp
 COPY mariadb/reset-data-db.sh /tmp
 COPY mariadb/reset-data-db.sql /tmp
+COPY mariadb/dump-data-db.sh /tmp
 
 # Run any code set up steps
 COPY post-create/post-create.sh /tmp
