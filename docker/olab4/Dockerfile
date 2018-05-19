@@ -135,9 +135,6 @@ COPY mariadb/dump-data-db.sh /tmp
 COPY post-create/post-create.sh /tmp
 RUN chmod +x /tmp/post-create.sh 
 
-# Update PHP for XDEBUG
-COPY post-create/php.ini /etc/php.d/90-xdebug.ini
-
 COPY mariadb/mariadb-start.sh /usr/bin
 RUN chmod +x /usr/bin/mariadb-start.sh
 
