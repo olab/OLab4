@@ -8,9 +8,6 @@ LABEL maintainer "Corey Wirun <corey@cardinalcreek.ca>"
 # Set your specific Timezone
 ENV TZ="America/Edmonton"
 
-# Set default database server
-RUN echo "127.0.0.1 database" > /etc/hosts
-
 # Sets Timezone in container.
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime
 
@@ -142,5 +139,8 @@ COPY post-create/php.ini /etc/php.d/90-xdebug.ini
 
 COPY mariadb/mariadb-start.sh /usr/bin
 RUN chmod +x /usr/bin/mariadb-start.sh
+
+# Set default database server
+RUN echo "127.0.0.1 database" >> /etc/hosts
 
 CMD ["/usr/bin/supervisord"]
