@@ -635,7 +635,7 @@ var OlabNodePlayer = function(params) {
                             jQuery( data.submitId ).show();
                         }
 
-                        var url = vm.restApiUrl + '/question/dropdown/' + node.id;
+                        var url = vm.restApiUrl + '/question/dropdown/' + this.node.id;
                         vm.Utilities.postJson(url, data, onQuestionResponseSucceeded, onQuestionResponseFailed);
 
                     } catch (e) {
@@ -658,7 +658,7 @@ var OlabNodePlayer = function(params) {
                             jQuery( data.submitId ).show();
                         }
 
-                        var url = vm.restApiUrl + '/question/multichoice/' + node.id;
+                        var url = vm.restApiUrl + '/question/multichoice/' + this.node.id;
                         vm.Utilities.postJson(url, data, onQuestionResponseSucceeded, onQuestionResponseFailed);
                         
                     } catch (e) {
@@ -679,8 +679,7 @@ var OlabNodePlayer = function(params) {
                             jQuery( data.submitId ).show();
                         }
 
-                        //var url = vm.restApiUrl + '/question/radio/' + node.id + "/" + data.responseId + "/" + data.value;
-                        var url = vm.restApiUrl + '/question/radio/' + node.id;
+                        var url = vm.restApiUrl + '/question/radio/' + this.node.id;
                         vm.Utilities.postJson(url, data, onQuestionResponseSucceeded, onQuestionResponseFailed);
 
                     } catch (e) {
