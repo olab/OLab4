@@ -110,11 +110,11 @@ var OlabNodePlayer = function(params) {
     */
     function autoloadScripts() {
 
+        var list = vm.server.Scripts;
         // autoload and execute server-level scripts
-        jQuery.each(vm.server.Scripts,
-            function(index, value) {
+        jQuery.each(list, function(index, value) {
 
-                var url = vm.websiteUrl + "/javascript/olab/autoload" + value;
+                var url = vm.websiteUrl + "/javascript/olab/autoload/script" + value;
                 // autoload the server and map-level javascript scripts
                 jQuery.getScript(url)
                     .done(function(script, textStatus) {console.log(textStatus);})
@@ -122,11 +122,11 @@ var OlabNodePlayer = function(params) {
 
             });
 
+        list = vm.map.Scripts;
         // autoload and execute map-level scripts
-        jQuery.each(vm.map.Scripts,
-            function(index, value) {
+        jQuery.each(vm.map.Scripts, function(index, value) {
 
-                var url = vm.websiteUrl + "/javascript/olab/autoload" + value;
+                var url = vm.websiteUrl + "/javascript/olab/autoload/script" + value;
                 // autoload the server and map-level javascript scripts
                 jQuery.getScript(url)
                     .done(function(script, textStatus) {console.log(textStatus);})
@@ -134,6 +134,17 @@ var OlabNodePlayer = function(params) {
 
             });
 
+        list = vm.node.Scripts;
+        // autoload and execute node-level scripts
+        jQuery.each(list, function(index, value) {
+
+                var url = vm.websiteUrl + "/javascript/olab/autoload/script" + value;
+                // autoload the server and map-level javascript scripts
+                jQuery.getScript(url)
+                    .done(function(script, textStatus) {console.log(textStatus);})
+                    .fail(function(jqxhr, settings, exception) {alert(url + ":" + exception);});
+
+            });
     }
 
     /**
@@ -396,6 +407,10 @@ var OlabNodePlayer = function(params) {
 
         if (data.node !== null) {
 
+            // translate node link to get valid urls for this server/site     
+            data.node.MapNodeLinks = buildNodeUrls(data.node.MapNodeLinks);
+            vm.node = data.node;
+
             // save map data
             if (vm.haveMapData === false) {
 
@@ -405,13 +420,10 @@ var OlabNodePlayer = function(params) {
                 // flag that we have map data so subsequent 'play' calls don't re-ask for it.
                 vm.haveMapData = true;
 
-                // autoload any server or map-level scripts
-                autoloadScripts();
             }
 
-            // translate node link to get valid urls for this server/site     
-            data.node.MapNodeLinks = buildNodeUrls(data.node.MapNodeLinks);
-            vm.node = data.node;
+            // autoload any server, map, or node-level scripts
+            autoloadScripts();
 
             // save state data to model
             vm.state = data.state;
@@ -420,12 +432,16 @@ var OlabNodePlayer = function(params) {
             // overlay state counter values on top of count objects
             applyStateToCounters();
 
-            renderNodeContent(data.node);
+            // render any map-level content (header/footer, etc)
+            renderMapContent( vm.map );
 
-            // register a onclick handler for all question elements in the node
+            // render node content
+            renderNodeContent(vm.node);
 
-            vm.nodeVue.node = data.node;
-            document.title = data.node.title;
+            vm.nodeVue.node = vm.node;
+
+            // set the browser page title to the node title
+            document.title = vm.node.title;
 
         } else {
             vm.nodeVue.content = "error";
@@ -459,49 +475,58 @@ var OlabNodePlayer = function(params) {
     }
 
     /**
+     * Translates raw OLab markup into vue-ready markup
+     * @param {any} contentName target div id "#olab<contentName>Content"
+     * @param {any} olabMarkup olab (wikitag-ified) markup
+     */
+    function renderContent( contentName, olabMarkup) {
+
+        var nodeHtml = "";
+
+        // test if any olab markup passed in
+        if (olabMarkup !== null) {
+
+            nodeHtml = encapsulateNodeMarkup( contentName, olabMarkup);
+
+            // test if bypassing Wiki tag rendering
+            if (vm.qs["showWiki"] !== "1")
+                nodeHtml = dewikifyMarkup(nodeHtml);
+
+            return createNodeVue('#olab' + contentName + 'Content', nodeHtml);
+        }
+
+        return null;
+    }
+
+    /**
+     * Spins up VUE js with the map markups (header/footer)
+     * @returns {} 
+     */
+    function renderMapContent( map ) {
+
+        vm.headerVue = renderContent('Header', map.header);
+        vm.footerVue = renderContent('Footer', map.footer);
+    }
+
+
+    /**
      * Spins up VUE js with the node markup
      * @returns {} 
      */
     function renderNodeContent(node) {
 
-        var nodeHtml = encapsulateNodeMarkup('Node', node.text);
+        vm.nodeVue = renderContent('Node', node.text); 
+    }
 
-        // test if bypassing Wiki tag rendering
-        if (vm.qs["showWiki"] !== "1")
-            nodeHtml = dewikifyMarkup(nodeHtml);
+    /**
+     * Creates vue instance with source markup
+     * @param {any} targetId HTML target DIV id
+     * @param {any} nodeHtml OLab wikitag-ified markup
+     */
+    function createNodeVue(targetId, nodeHtml) {
 
         // compile the markup so Vue components resolve 
         var res = Vue.compile(nodeHtml);
-        vm.nodeVue = createNodeVue('#olabNodeContent', res);
-
-        if (node.header !== null) {
-            nodeHtml = encapsulateNodeMarkup('Header', node.header);
-
-            // test if bypassing Wiki tag rendering
-            if (vm.qs["showWiki"] !== "1")
-                nodeHtml = dewikifyMarkup(nodeHtml);
-
-            // compile the markup so Vue components resolve 
-            var res = Vue.compile(nodeHtml);
-            vm.headerVue = createNodeVue('#olabHeaderContent', res);
-        }
-
-        if (node.footer !== null) {
-
-            nodeHtml = encapsulateNodeMarkup('Footer', node.footer);
-
-            // test if bypassing Wiki tag rendering
-            if (vm.qs["showWiki"] !== "1")
-                nodeHtml = dewikifyMarkup(nodeHtml);
-
-            // compile the markup so Vue components resolve 
-            var res = Vue.compile(nodeHtml);
-            vm.footerVue = createNodeVue('#olabFooterContent', res);
-        }
-
-    }
-
-    function createNodeVue(targetId, res) {
 
         // spin up Vue to load the compiled markup
         return new Vue({
@@ -513,7 +538,21 @@ var OlabNodePlayer = function(params) {
                 node:vm.node
             },
             render:res.render,
+
             staticRenderFns:res.staticRenderFns,
+
+            mounted: function() {
+
+                let recaptchaScript = document.createElement('script');
+                recaptchaScript.setAttribute('type', 'text/javascript');
+                recaptchaScript.setAttribute('src',
+                    'http://www.conceptispuzzles.com/index.aspx?uri=channel/bat-starter-1/1/js');
+                document.head.appendChild(recaptchaScript)
+
+                var header = document.head.children;
+
+            },
+
             methods:{
                 constant:function(id) {
 

@@ -23,8 +23,9 @@
  *
  */
 use Entrada\Modules\Olab\Classes\HostSystemApi;
+
 // loads any system-level script files
-function getAutoloadContents($dir, &$results = array()){
+function getKernelScripts($dir, &$results = array()){
     $files = scandir($dir);
     foreach($files as $key => $value){
         $path = $dir.DIRECTORY_SEPARATOR.$value;
@@ -48,9 +49,10 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_OLAB"))) {
     HostSystemApi::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/olab.play.components.js\"></script>" );
     HostSystemApi::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/olab.play.main.js\"></script>" );
     HostSystemApi::addToHead( "<link href=\"". HostSystemApi::getRootUrl() ."/css/olab/olab.css\" rel=\"stylesheet\" type=\"text/css\" media=\"all\" />" );
+
     // autoload any kernel-level javascript extensions
     $jsPath = HostSystemApi::getFileRoot() . "/javascript/olab/autoload";
-    $asJsFiles = getAutoloadContents( $jsPath );
+    $asJsFiles = getKernelScripts( $jsPath );
     foreach ( $asJsFiles as $sJsFile )
     {
         HostSystemApi::addToHead( "<script type=\"text/javascript\" src=\"" .
@@ -64,4 +66,5 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_OLAB"))) {
 <div id="olabNodeContent" align="center"></div>
 <div id="olabAnnotationContent" align="center"></div>
 <div id="olabFooterContent" align="center"></div>
+
 
