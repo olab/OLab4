@@ -472,28 +472,32 @@ var OlabNodePlayer = function(params) {
 
         // compile the markup so Vue components resolve 
         var res = Vue.compile(nodeHtml);
-        vm.nodeVue = createNodeVue('#olabNodeContent', res);     
+        vm.nodeVue = createNodeVue('#olabNodeContent', res);
 
-        nodeHtml = encapsulateNodeMarkup('Header', node.header);
+        if (node.header !== null) {
+            nodeHtml = encapsulateNodeMarkup('Header', node.header);
 
-        // test if bypassing Wiki tag rendering
-        if (vm.qs["showWiki"] !== "1")
-            nodeHtml = dewikifyMarkup(nodeHtml);
+            // test if bypassing Wiki tag rendering
+            if (vm.qs["showWiki"] !== "1")
+                nodeHtml = dewikifyMarkup(nodeHtml);
 
-        // compile the markup so Vue components resolve 
-        var res = Vue.compile(nodeHtml);
-        vm.headerVue = createNodeVue('#olabHeaderContent', res);
+            // compile the markup so Vue components resolve 
+            var res = Vue.compile(nodeHtml);
+            vm.headerVue = createNodeVue('#olabHeaderContent', res);
+        }
 
+        if (node.footer !== null) {
 
-        nodeHtml = encapsulateNodeMarkup('Footer', node.footer);
+            nodeHtml = encapsulateNodeMarkup('Footer', node.footer);
 
-        // test if bypassing Wiki tag rendering
-        if (vm.qs["showWiki"] !== "1")
-            nodeHtml = dewikifyMarkup(nodeHtml);
+            // test if bypassing Wiki tag rendering
+            if (vm.qs["showWiki"] !== "1")
+                nodeHtml = dewikifyMarkup(nodeHtml);
 
-        // compile the markup so Vue components resolve 
-        var res = Vue.compile(nodeHtml);
-        vm.footerVue = createNodeVue('#olabFooterContent', res);
+            // compile the markup so Vue components resolve 
+            var res = Vue.compile(nodeHtml);
+            vm.footerVue = createNodeVue('#olabFooterContent', res);
+        }
 
     }
 
