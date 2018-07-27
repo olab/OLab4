@@ -1,5 +1,5 @@
 ﻿/**
- * Main olab player class
+ * Main olab player class for info windows
  * @param {} authToken = current auth token
  * @param {} targetId = main content view div name for data binding
  * @param {} websiteRootUrl = root url for web site
@@ -28,7 +28,7 @@ jQuery(document).ready(function ($) {
 
     // spin up class that does all the work
     olab = new OlabNodePlayer(params);
-    olab.play();
+    olab.info();
 
   } catch (e) {
     alert(e.name + ":" + e.message);

@@ -79,6 +79,7 @@
 
     // these are the methods/properties we expose to the outside
     var service = {
+        addToHeadElement: addToHeadElement,
         convertQSToArray:convertQsToArray,
         convertToAssociativeArray:convertToAssociativeArray,
         downloadFile:downloadFile,
@@ -102,6 +103,39 @@
     };
 
     return service;
+
+    function addToHeadElement(data) {
+
+        // create a DOMParser to parse the HTML content
+        var parser = new DOMParser();
+        var parsedDocument = parser.parseFromString(data, 'text/html');
+
+        // set the current page's <html> contents to the newly parsed <html> content
+        document.getElementsByTagName('html')[0].innerHTML = parsedDocument.getElementsByTagName('html')[0].innerHTML;
+
+        // get a list of all <script> tags in the new page
+        var tmpScripts = document.getElementsByTagName('script');
+        if (tmpScripts.length > 0) {
+            // push all of the document's script tags into an array
+            // (to prevent dom manipulation while iterating over dom nodes)
+            var scripts = [];
+            for (var i = 0; i < tmpScripts.length; i++) {
+                scripts.push(tmpScripts[i]);
+            }
+
+            // iterate over all script tags and create a duplicate tags for each
+            for (var i = 0; i < scripts.length; i++) {
+                var s = document.createElement('script');
+                s.innerHTML = scripts[i].innerHTML;
+
+                // add the new node to the page
+                scripts[i].parentNode.appendChild(s);
+
+                // remove the original (non-executing) node from the page
+                scripts[i].parentNode.removeChild(scripts[i]);
+            }
+        }
+    }
 
     /**
      * Trims named character from start/end of string
