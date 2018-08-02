@@ -68,6 +68,7 @@ var OlabMapList= function(params) {
             row.push(data[i]['description']);
             row.push(data[i]['navigation']['mapId']);
             row.push(data[i]['userState']);
+            row.push(data[i]['version']);
             row.push(0);
             tableData.push(row);
         }
@@ -84,20 +85,29 @@ var OlabMapList= function(params) {
                     'width':'17%',
                     'render':function(data, type, full, meta) {
 
-                        var html =
-                            '<a title="Map Info" onclick="view.showDetail(this);" class="btn btn-primary"><i class="fa fa-info-circle"></i></a> ';
-                        html += '<a title="Play" onclick="view.play(' +
-                            full[3] +
-                            ',0 )" class="btn btn-primary"><i class="fa fa-play"></i></a> ';
+                        var html = "";
 
-                        if (typeof full[4] !== "undefined") {
-                            html += '<a title="Resume from Checkpoint" onclick="view.play(' +
+                        // test if convertable-only map
+                        if (full[5] == null) {
+
+                            html =
+                                '<a title="Convert to V4" onclick="view.convertMap(this);" class="btn btn-primary"><i class="fa fa-download"></i></a> ';
+
+                        } else {
+                            html =
+                                '<a title="Map Info" onclick="view.showDetail(this);" class="btn btn-primary"><i class="fa fa-info-circle"></i></a> ';
+                            html += '<a title="Play" onclick="view.play(' +
                                 full[3] +
-                                ',' +
-                                full[4]["map_node_id"] +
-                                ')" class ="btn btn-primary"><i class ="fa fa-pause"></i></a>';
-                        }
+                                ',0 )" class="btn btn-primary"><i class="fa fa-play"></i></a> ';
 
+                            if (typeof full[4] !== "undefined") {
+                                html += '<a title="Resume from Checkpoint" onclick="view.play(' +
+                                    full[3] +
+                                    ',' +
+                                    full[4]["map_node_id"] +
+                                    ')" class ="btn btn-primary"><i class ="fa fa-pause"></i></a>';
+                            }
+                        }
                         return html;
                     }
                 },
