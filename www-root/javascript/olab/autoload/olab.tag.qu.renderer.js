@@ -277,9 +277,9 @@ var OlabQUTag = function(olabNodePlayer) {
                 id +
                 "'" +
                 changeHandler +
-                " v-bind:question='question(" +
+                " v-bind:question='question(\"" +
                 id +
-                ")'></" +
+                "\")'></" +
                 questionTag +
                 ">";
 

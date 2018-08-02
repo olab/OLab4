@@ -33,9 +33,9 @@ var OlabCRTag = function(olabNodePlayer) {
                     " class='" +
                     vm.OLAB_HTML_TAG +
                     "'" +
-                    " v-bind:counter='" +
+                    " v-bind:counter=\"" +
                     varName +
-                    "'>" +
+                    "\">" +
                     "</" +
                     vm.OLAB_HTML_TAG +
                     ">";

@@ -459,6 +459,7 @@
         // if ID is not a number, then search assuming string 
         if (isNaN(idNumber)) {
 
+            id = id.replace(new RegExp("'", 'g'), "");
             for (var i = 0; i < source.length; i++) {
                 if (source[i].name === id) {
                     return {index:i, item:source[i]};
