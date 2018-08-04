@@ -1,29 +1,29 @@
 ﻿// audio
 Vue.component('olab-audio', {
-    template: `<audio v-bind:src="file.content" controls="" preload="auto" autoplay="autoplay" autobuffer=""></audio>`,
-    props: ['file']
+    template: `<audio v-bind:src="src" v-bind:alt='filename' controls="" preload="auto" autoplay="autoplay" autobuffer=""></audio>`,
+    props:['src', 'filename']
 });
 
 // image
 Vue.component('olab-image', {
-    template: `<img v-bind:src='src' v-bind:alt='file.name'></img>`,
-    props: ['src', 'file']
+    template: `<img v-bind:src='src' v-bind:alt='filename'></img>`,
+    props: ['src', 'filename']
 });
 
 // image
 Vue.component('olab-video', {
-    template: `<video controls><source v-bind:type='file.mimi' v-bind:src='file.content'></video>`,
+    template: `<video controls><source v-bind:type='file.mime' v-bind:src='file.content'></video>`,
     props: ['file']
 });
 
-var OlabMRTag = function ( olabNodePlayer ) {
+var OlabMRTag = function(olabNodePlayer) {
 
   var vm = this;
   vm.olabNodePlayer = olabNodePlayer;
   vm.OLAB_HTML_TAG = "olab-download";
 
   var service = {
-    render: render
+    render:render
   };
 
   return service;
@@ -41,7 +41,7 @@ var OlabMRTag = function ( olabNodePlayer ) {
   }
 
 
-  function render( wikiTagParts ) {
+  function render(wikiTagParts) {
 
     var element = "";
 
@@ -57,24 +57,43 @@ var OlabMRTag = function ( olabNodePlayer ) {
       if (IsImageType(file.item["mime"])) {
         tag = "olab-image";
       }
-
       // test if audio mime type
-      if (IsAudioType(file.item["mime"])) {
+      else if (IsAudioType(file.item["mime"])) {
         tag = "olab-audio";
       }
-
       // test if video mime type
-      if (IsVideoType(file.item["mime"])) {
+      else if (IsVideoType(file.item["mime"])) {
         tag = "olab-video";
       }
 
-      // build the vue.js component tag markup
-      element = "<" + tag +
-                " class='" + tag + "'" +
-                " id='" + tag + id + "'" +
-                " v-bind:file='file(" + id + ")'" +
-                " src='" + file["encodedContent"] + "'></" +
-                tag + ">";
+      // test if file has embedded content that will be put inline
+      // in the HTML.  otherwise its a public-accessible URL for the src
+      if ( file.item['is_embedded'] == 1 ) {
+
+        // handle special case of PDF file
+          if (file.item["mime"] == "application/pdf") {
+
+              element = "<embed src = '" +
+                  vm.olabNodePlayer.mediaUrl +
+                  file.item["path"] +
+                  "' " +
+                  " width = \"500\" height = \"375\" type = 'application/pdf' >";
+          }
+          else {
+
+            element = "<" + tag + " class='" + tag + "'" +
+              " id='" + tag + id + "'" +
+              " filename='" + file.item['name'] + "'" +
+              " src='" + file.item["encodedContent"] + "'></" + tag + ">";
+          }
+
+      } else {
+
+        element = "<" + tag + " class='" + tag + "'" +
+          " id='" + tag + id + "'" +
+          " filename='" + file.item['name'] + "'" +
+          " src='" + vm.olabNodePlayer.mediaUrl + file.item["path"] + "'></" + tag + ">";
+      }
 
       vm.olabNodePlayer.log.debug(element);
 

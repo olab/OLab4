@@ -39,6 +39,7 @@ RUN yum -y install git \
                 nano \
                 iproute \
                 python-setuptools \
+		file \
                 hostname \
                 inotify-tools \
                 yum-utils \
