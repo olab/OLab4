@@ -91,8 +91,21 @@ if (!defined("PARENT_INCLUDED")) {
                         </small>
                     </div>
                     <div v-else id="conversionFailure">
-                        <p>Conversion failed:</p>
-                        {{data.message}}
+                        <b>Conversion Failed</b>
+                        <p>Error:</p>
+                        <p>{{data.message}}</p>
+                        <p>Current Conversion Stack:</p>
+                        <ul>
+                          <li v-for="item in data.conversionStack">
+                            {{ item }}
+                          </li>
+                        </ul>
+                        <p>Code Stack:</p>
+                        <ul>
+                          <li v-for="item in data.callStack">
+                            {{item.file}}:{{item.line}}&nbsp;{{ item.function }}
+                          </li>
+                        </ul>
                     </div>
                 </div>
             </div>
