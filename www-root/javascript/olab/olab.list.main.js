@@ -31,11 +31,14 @@ var OlabMapList= function(params) {
 
     // spin up vue object
     vm.app = new Vue({
+
         el:vm.targetInfoId,
 
         data:{
             loadingDetail:false,
             detailDataPending:true,
+            loadingConvert:false,
+            convertDataPending:true,
             loadingList:true,
             haveInfo:true,
             data:{id:1999, title:'title'}
@@ -47,6 +50,7 @@ var OlabMapList= function(params) {
     var service = {
         app:vm.app,
         showDetail:showDetail,
+        convertMap:convertMap,
         load:load,
         play:play
     };
@@ -73,7 +77,15 @@ var OlabMapList= function(params) {
             tableData.push(row);
         }
 
+        // get/default the initial pagelength
+        var pageLength = vm.Utilities.readCookie("olab.maplist.pagesize");
+        if (pageLength == null)
+            pageLength = 5;
+
+        var filterString = vm.Utilities.readCookie("olab.maplist.filter");
+
         return {
+            'search': { 'search': filterString},
             'dom':'lfript',
             'order':[[1, 'asc']],
             'columns':[
@@ -113,7 +125,7 @@ var OlabMapList= function(params) {
                 },
             ],
             'lengthMenu':[[5, 10, 25, -1], [5, 10, 25, "All"]],
-            "iDisplayLength":5,
+            "iDisplayLength": pageLength,
             "data":tableData
         };
 
@@ -126,11 +138,25 @@ var OlabMapList= function(params) {
     }
 
     /**
+     * Handle Map convert call success
+     * @param {} data 
+     * @returns {} 
+     */
+    function onMapConvertLoadSuccess(data) {
+
+        if (vm.Utilities.testServerError(data))
+            return;
+
+        vm.app.data = data;
+        vm.app.convertDataPending = false;
+    }
+
+    /**
      * Handle Map info server call success
      * @param {} data 
      * @returns {} 
      */
-    function onMapInfoLoadSuccess(data) {
+    function onMapDetailLoadSuccess(data) {
 
         if (vm.Utilities.testServerError(data))
             return;
@@ -144,7 +170,16 @@ var OlabMapList= function(params) {
      * @param {} data 
      * @returns {} 
      */
-    function onMapInfoLoadFailure(data) {
+    function onMapConvertLoadFailure(data) {
+        alert(data);
+    }
+
+    /**
+     * Hanlde Map info server call failure
+     * @param {} data 
+     * @returns {} 
+     */
+    function onMapDetailLoadFailure(data) {
         alert(data);
     }
 
@@ -161,6 +196,9 @@ var OlabMapList= function(params) {
         vm.app.loadingList = false;
         var tableOptions = buildTableOptions(data.data);
         vm.mapDataTable = jQuery(vm.targetTableId).DataTable(tableOptions);
+
+        // change the preferences any time the table changes
+        vm.mapDataTable.on('draw', savePreferences);
     }
 
     /**
@@ -206,9 +244,44 @@ var OlabMapList= function(params) {
 
             var url = vm.restApiUrl + '/map/canopen/' + mapId + '/' + nodeId;
             vm.Utilities.getJson(url, null, onMapPlaySuccess, onMapPlayFailure);
+
         } catch (e) {
             vm.Utilities.testJavascriptError(e);
         }
+    }
+
+    /**
+     * Converts a map to new format
+     * @param {} name current map name 
+     * @returns {} 
+     */
+    function convertMap(name) {
+
+        try {
+
+            vm.app.convertDataPending = true;
+            vm.app.loadingConvert = true;
+            vm.app.detailDataPending = false;
+            vm.app.loadingDetail = false;
+
+            var data = vm.mapDataTable.row(jQuery(name).parents('tr')).data();
+            var url = vm.restApiUrl + '/convert/' + data[0];
+
+            vm.Utilities.getJson(url, null, onMapConvertLoadSuccess, onMapConvertLoadFailure);
+
+        } catch (e) {
+            vm.Utilities.testJavascriptError(e);
+        }
+    }
+
+    /**
+     * Persists table preferences
+     */
+    function savePreferences() {
+
+        vm.Utilities.createCookie("olab.maplist.filter", vm.mapDataTable.search(), 30);
+        vm.Utilities.createCookie("olab.maplist.pagesize", vm.mapDataTable.page.len(), 30);
+
     }
 
     function showDetail(name) {
@@ -217,11 +290,14 @@ var OlabMapList= function(params) {
 
             vm.app.detailDataPending = true;
             vm.app.loadingDetail = true;
+            vm.app.convertDataPending = false;
+            vm.app.loadingConvert = false;
+
 
             var data = vm.mapDataTable.row(jQuery(name).parents('tr')).data();
             var url = vm.restApiUrl + '/map/info/' + data[0];
 
-            vm.Utilities.getJson(url, null, onMapInfoLoadSuccess, onMapInfoLoadFailure);
+            vm.Utilities.getJson(url, null, onMapDetailLoadSuccess, onMapDetailLoadFailure);
 
         } catch (e) {
             vm.Utilities.testJavascriptError(e);

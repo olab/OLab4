@@ -82,7 +82,9 @@
         addToHeadElement: addToHeadElement,
         convertQSToArray:convertQsToArray,
         convertToAssociativeArray:convertToAssociativeArray,
+        createCookie:createCookie,
         downloadFile:downloadFile,
+        eraseCookie:eraseCookie,
         getAuthHeader:getAuthHeader,
         getAuthToken:getAuthToken,
         getJson:getJson,
@@ -95,11 +97,13 @@
         log:vm.logger,
         normalizeDivId:normalizeDivId,
         postJson:postJson,
+        readCookie:readCookie,
         searchObjectArray:searchObjectArray,
         setAuthHeader:setAuthHeader,
         setAuthToken:setAuthToken,
         setPreference:setPreference,
-        testServerError:testServerError
+        testServerError:testServerError,
+        testJavascriptError:testJavascriptError
     };
 
     return service;
@@ -198,6 +202,35 @@
 
         return queries;
 
+    }
+
+    /**
+     * Creates/sets a cookie value
+     * @param {any} name
+     * @param {any} value
+     * @param {any} days
+     */
+    function createCookie(name, value, days) {
+        var expires;
+
+        if (days) {
+            var date = new Date();
+            date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+            expires = "; expires=" + date.toGMTString();
+        } else {
+            expires = "";
+        }
+
+        vm.logger.debug("setting: " + name + " = " + value);
+        document.cookie = encodeURIComponent(name) + "=" + encodeURIComponent(value) + expires + "; path=/";
+    }
+
+    /**
+     * Clears/erases a cookie value
+     * @param {any} name
+     */
+    function eraseCookie(name) {
+        createCookie(name, "", -1);
     }
 
     /*
@@ -446,6 +479,30 @@
     }
 
     /**
+     * Reads a cookie value
+     * @param {any} name
+     * @param {any} value
+     * @param {any} days
+     */
+    function readCookie(name) {
+        var nameEQ = encodeURIComponent(name) + "=";
+        var ca = document.cookie.split(';');
+        for (var i = 0; i < ca.length; i++) {
+            var c = ca[i];
+            while (c.charAt(0) === ' ')
+                c = c.substring(1, c.length);
+            if (c.indexOf(nameEQ) === 0) {
+
+                value = decodeURIComponent(c.substring(nameEQ.length, c.length)); 
+                vm.logger.debug("reading: " + name + " = " + value);
+
+                return value;
+            }
+        }
+        return null;
+    }
+
+    /**
      * Searches for a id or a name in a system object list
      * @param {} source Source array
      * @param {} id Id to look for
@@ -538,4 +595,5 @@
         return true;
 
     }
+
 };

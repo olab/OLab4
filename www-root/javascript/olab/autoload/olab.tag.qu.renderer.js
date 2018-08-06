@@ -261,10 +261,10 @@ var OlabQUTag = function(olabNodePlayer) {
             var changeHandler = "";
 
             switch (questionType) {
-            case "radio":
-                changeHandler = " v-bind:onChanged='onRadioResponseChanged' ";
-                break;
-            default:
+                case "radio":
+                    changeHandler = " v-bind:onChanged='onRadioResponseChanged' ";
+                    break;
+                default:
             }
             // build the vue.js component tag markup
             element = "<" +

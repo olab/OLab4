@@ -71,40 +71,63 @@ if (!defined("PARENT_INCLUDED")) {
                 </table>
             </div>
 
-            <div id="mapDetails" class="span3">
-
-                <div v-if="loadingDetail">
-                    <div v-if="detailDataPending">
-                        <center>
-                            <img src="/apidev/images/loading.gif" />
-                        </center>
+            <div id="convertResults" class="span3" v-if="loadingConvert">
+                <div v-if="convertDataPending">
+                    <center>
+                        <img src="/apidev/images/loading.gif" />
+                    </center>
+                </div>
+                <div v-else>
+                    <h4>Conversion Results</h4>
+                    <div v-if="data.result == 1" id="conversionSuccess">
+                        <p>Conversion succeeded:</p>
+                        <small>
+                            <p>
+                                <b>New Id:&nbsp;</b>{{data.id}}
+                                <br />
+                                <b>New Title:&nbsp;</b>{{data.name}}
+                                <br />
+                            </p>
+                        </small>
                     </div>
-                    <div v-else>
-                        <h4>Map Details</h4>
-                        <div>
-                            <small>
-                                <p>
-                                    <b>Id:&nbsp;</b>{{data.id}}
+                    <div v-else id="conversionFailure">
+                        <p>Conversion failed:</p>
+                        {{data.message}}
+                    </div>
+                </div>
+            </div>
+
+            <div id="mapDetails" class="span3" v-if="loadingDetail">
+                <div v-if="detailDataPending">
+                    <center>
+                        <img src="/apidev/images/loading.gif" />
+                    </center>
+                </div>
+                <div v-else>
+                    <h4>Map Details</h4>
+                    <div>
+                        <small>
+                            <p>
+                                <b>Id:&nbsp;</b>{{data.id}}
+                                <br />
+                                <b>Title:&nbsp;</b>{{data.title}}
+                                <br />
+                                <b>Authors:&nbsp;</b>{{data.author}}
+                                <br />
+                                <b>Nodes:&nbsp;</b>{{data.nodeCount}}
+                                <br />
+                                <b>Links:&nbsp;</b>{{data.linkCount}}
+                                <br />
+                                <b>Questions:&nbsp;</b>{{data.questionCount}}
+                                <br />
+                            </p>
+                            <p>
+                                <b>
+                                    Checkpoint:
                                     <br />
-                                    <b>Title:&nbsp;</b>{{data.title}}
-                                    <br />
-                                    <b>Authors:&nbsp;</b>{{data.author}}
-                                    <br />
-                                    <b>Nodes:&nbsp;</b>{{data.nodeCount}}
-                                    <br />
-                                    <b>Links:&nbsp;</b>{{data.linkCount}}
-                                    <br />
-                                    <b>Questions:&nbsp;</b>{{data.questionCount}}
-                                    <br />
-                                </p>
-                                <p>
-                                    <b>
-                                        Checkpoint:
-                                        <br />
-                                    </b>{{data.resumeInfo}}
-                                </p>
-                            </small>
-                        </div>
+                                </b>{{data.resumeInfo}}
+                            </p>
+                        </small>
                     </div>
                 </div>
             </div>
