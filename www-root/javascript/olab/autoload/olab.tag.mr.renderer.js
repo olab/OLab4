@@ -89,10 +89,10 @@ var OlabMRTag = function(olabNodePlayer) {
 
       } else {
 
-        element = "<" + tag + " class='" + tag + "'" +
-          " id='" + tag + id + "'" +
-          " filename='" + file.item['name'] + "'" +
-          " src='" + vm.olabNodePlayer.mediaUrl + file.item["path"] + "'></" + tag + ">";
+          element = "<" + tag + " class='" + tag + "'" +
+            " id='" + tag + id + "'" +
+            " filename='" + file.item['name'] + "'" +
+            " src='" + vm.olabNodePlayer.mediaUrl + file.item["path"] + "'></" + tag + ">";
       }
 
       vm.olabNodePlayer.log.debug(element);

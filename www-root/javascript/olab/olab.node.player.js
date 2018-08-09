@@ -23,7 +23,7 @@ var OlabNodePlayer = function(params) {
 
     vm.targetId = vm.Utilities.normalizeDivId(params.targetId);
     vm.websiteUrl = params.siteRoot;
-    vm.mediaUrl = vm.websiteUrl + "/images/olab";
+    vm.mediaUrl = vm.websiteUrl + "/images/olab/files";
     vm.moduleUrl = params.siteRoot + '/olab';
 
     vm.qs = vm.Utilities.convertQSToArray(window.location.href);
