@@ -42,6 +42,7 @@ RUN yum -y install git \
 		file \
                 hostname \
                 inotify-tools \
+		npm \
                 yum-utils \
                 which \
                 ruby \
