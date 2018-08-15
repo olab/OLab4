@@ -499,7 +499,7 @@ var OLabUtilities = function(siteRoot, pageUrl, authToken) {
                 return value;
             }
         }
-        return null;
+        return "";
     }
 
     /**
