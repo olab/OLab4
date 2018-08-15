@@ -5,7 +5,8 @@
 use Entrada\Modules\Olab\Classes\HostSystemApi;
 
 HostSystemApi::addToHead( "<script>var WEBSITE_ROOT = \"" . HostSystemApi::getRootUrl() . "\";</script>" );
-HostSystemApi::addToHead( "<script type=\"text/javascript\" src=\"". HostSystemApi::getRelativePath() ."/javascript/jquery/jquery.dataTables-1.10.11.min.js\" defer></script>" );
+HostSystemApi::addToHead( "<link rel=\"stylesheet\" type=\"text/css\" href=\"". HostSystemApi::getRelativePath() . "/javascript/olab/jquery.dataTables/datatables.min.css\"/>");
+HostSystemApi::addToHead( "<script type=\"text/javascript\" src=\"". HostSystemApi::getRelativePath() ."/javascript/olab/jquery.dataTables/datatables.min.js\" defer></script>" );
 HostSystemApi::addToHead( "<script type=\"text/javascript\" src=\"". HostSystemApi::getRelativePath() ."/javascript/vue/vue.js\" defer></script>" );
 HostSystemApi::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/olab.utilities.js\"></script>" );
 HostSystemApi::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/olab.list.main.js\"></script>" );

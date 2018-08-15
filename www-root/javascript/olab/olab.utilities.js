@@ -1,4 +1,4 @@
-﻿var OLabUtilities = function(siteRoot, pageUrl, authToken) {
+var OLabUtilities = function(siteRoot, pageUrl, authToken) {
 
     var vm = this;
 
