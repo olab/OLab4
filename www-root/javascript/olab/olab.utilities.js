@@ -510,6 +510,10 @@ var OLabUtilities = function(siteRoot, pageUrl, authToken) {
      */
     function searchObjectArray(source, id) {
 
+        // catch case where there is no source array
+        if (typeof(source) === "undefined")
+            return null;
+
         // do dumb search for record based on the id or name
         var idNumber = parseInt(id);
 

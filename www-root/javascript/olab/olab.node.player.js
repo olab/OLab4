@@ -51,6 +51,7 @@ var OlabNodePlayer = function(params) {
     vm.getQuestion = getQuestion;
     vm.getCounter = getCounter;
     vm.getFile = getFile;
+    vm.getAvatar = getAvatar;
     vm.log = vm.Utilities.log;
 
     // these are the methods/properties we expose to the outside
@@ -272,6 +273,36 @@ var OlabNodePlayer = function(params) {
         item = vm.Utilities.searchObjectArray(vm.node.Counters, id);
         if (item !== null) {
             return "node.Counters[" + item.index + "]";
+        }
+
+        return null;
+    }
+
+    /**
+     * Utility function to get a requested avatar from the scoped objects
+     * @param {} file id
+     * @returns { file } 
+     */
+    function getAvatar(id) {
+
+        // if no id, return everything
+        if (id === null) {
+            var items = vm.server.Avatars;
+            items = items.concat(vm.map.Avatars);
+            items = items.concat(vm.node.Avatars);
+            return items;
+        }
+
+        var item = vm.Utilities.searchObjectArray(vm.server.Avatars, id);
+
+        if (item === null)
+            item = vm.Utilities.searchObjectArray(vm.map.Avatars, id);
+
+        if (item === null)
+            item = vm.Utilities.searchObjectArray(vm.node.Avatars, id);
+
+        if (item !== null) {
+            return item;
         }
 
         return null;
