@@ -19,8 +19,7 @@ return array (
 	 * Navigation
 	 */
 	"navigation_tabs" => array (
-		"public" => array (
-                        "olab" => array("title" => "Maps") )
+		"public" => array ( "olab" => array("title" => "Maps") )
 	),
 
 	/*

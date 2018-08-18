@@ -97,6 +97,7 @@ var OLabUtilities = function(siteRoot, pageUrl, authToken) {
         log:vm.logger,
         normalizeDivId:normalizeDivId,
         postJson:postJson,
+        postData:postData,
         readCookie:readCookie,
         searchObjectArray:searchObjectArray,
         setAuthHeader:setAuthHeader,
@@ -303,6 +304,77 @@ var OLabUtilities = function(siteRoot, pageUrl, authToken) {
         }
     }
 
+    /**
+     * Routine to post data to server
+     * @param {any} url
+     * @param {any} data
+     */
+    function postData(uri, formData, onloadstartHandler, onprogressHandler, onloadHandler, onreadystatechangeHandler ) {
+
+        // Get an XMLHttpRequest instance
+        var xhr = new XMLHttpRequest();
+        // Set up events
+        xhr.upload.addEventListener('loadstart', onloadstartHandler, false);
+        xhr.upload.addEventListener('progress', onprogressHandler, false);
+        xhr.upload.addEventListener('load', onloadHandler, false);
+        xhr.addEventListener('readystatechange', onreadystatechangeHandler, false);
+        setHttpHeader(xhr, 'Authorization', getAuthHeader());
+
+        // Set up request
+        xhr.open('POST', uri, true);
+        // Fire!
+        xhr.send(formData);
+    }
+
+    /*
+     * Centralized method to post/recieve JSON data. 
+     */
+    function postJson(url, data, onSuccess, onError) {
+
+        var options = {
+            url:url,
+            type:'POST',
+            data:data,
+            dataType:'json',
+            success:function(data, textStatus, request) {
+
+                if (testServerError(data))
+                    return;
+
+                if (onSuccess !== null) {
+                    onSuccess(data);
+                }
+
+            },
+
+            error:function(data, textStatus, request) {
+
+                if (onError !== null) {
+                    onError(textStatus + ' ' + request);
+                }
+
+            },
+
+            beforeSend:function(xhr) {
+
+                if (vm.authHeader.length > 0) {
+                    setHttpHeader(xhr, 'Authorization', getAuthHeader());
+                }
+            },
+
+            complete:function(xhr, status) {
+                var headerValue = xhr.getResponseHeader("Authorization");
+                if (headerValue !== null) {
+                    setAuthHeader(headerValue);
+                }
+
+            }
+
+        };
+
+        var jqxhr = jQuery.ajax(options);
+    }
+
     /*
      * Centralized method to get JSON data. 
      */
@@ -427,55 +499,6 @@ var OLabUtilities = function(siteRoot, pageUrl, authToken) {
             return '#' + divId;
 
         return divId;
-    }
-
-    /*
-     * Centralized method to post/recieve JSON data. 
-     */
-    function postJson(url, data, onSuccess, onError) {
-
-        var options = {
-            url:url,
-            type:'POST',
-            data:data,
-            dataType:'json',
-            success:function(data, textStatus, request) {
-
-                if (testServerError(data))
-                    return;
-
-                if (onSuccess !== null) {
-                    onSuccess(data);
-                }
-
-            },
-
-            error:function(data, textStatus, request) {
-
-                if (onError !== null) {
-                    onError(textStatus + ' ' + request);
-                }
-
-            },
-
-            beforeSend:function(xhr) {
-
-                if (vm.authHeader.length > 0) {
-                    setHttpHeader(xhr, 'Authorization', getAuthHeader());
-                }
-            },
-
-            complete:function(xhr, status) {
-                var headerValue = xhr.getResponseHeader("Authorization");
-                if (headerValue !== null) {
-                    setAuthHeader(headerValue);
-                }
-
-            }
-
-        };
-
-        var jqxhr = jQuery.ajax(options);
     }
 
     /**
