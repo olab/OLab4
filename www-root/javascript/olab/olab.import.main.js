@@ -150,7 +150,7 @@ jQuery(document).ready(function ($) {
         jQuery("#result").html("");    
         jQuery("#uploadStatus").html( "Upload started..." );
 
-        jQuery("#uploadStatus").html(current);
+        jQuery("#uploadStatus").html("");
         jQuery("#progress").hide();
         jQuery("#copyToClipboard").hide();
         jQuery("#diagnosticData").val();
@@ -234,7 +234,7 @@ jQuery(document).ready(function ($) {
                     }
                 }
 
-                jQuery("#importDiagnostics").val(diagnosticsInfo);
+                jQuery("#diagnosticData").val(diagnosticsInfo);
                 jQuery("#result").html( '<p>Conversion status:</p><pre>' + message + '</pre>' );
             }
 
