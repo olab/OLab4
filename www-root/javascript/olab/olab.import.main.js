@@ -147,6 +147,7 @@ jQuery(document).ready(function ($) {
     // Handle the start of the transmission
     function onloadstartHandler(evt) {
 
+        jQuery("#result").html("");    
         jQuery("#uploadStatus").html( "Upload started..." );
 
     }
@@ -154,8 +155,9 @@ jQuery(document).ready(function ($) {
     // Handle the end of the transmission
     function onloadHandler(evt) {
 
+        jQuery("#result").html("");
         var current = jQuery("#uploadStatus").html();
-        current += "<br>File uploaded. Waiting for response.";
+        current += "<br>File uploaded. Waiting for response...";
         jQuery("#uploadStatus").html( current );
 
     }
@@ -187,9 +189,9 @@ jQuery(document).ready(function ($) {
 
         if (readyState == 4 && status == '200' && evt.target.responseText) {
 
-            var current = jQuery("#uploadStatus").html(); 
-            current += '<br>Success!';
+            var current = '<br>Success!';
             jQuery("#uploadStatus").html( current );
+            jQuery("#progress").hide();
 
             // parse the json result into an object
             var result = JSON.parse(evt.target.responseText) 
