@@ -30,7 +30,7 @@ var OlabImportUpload = function(params) {
 
     vm.restApiUrl = params.apiRoot + '/olab';
 
-    // Actually confirm support
+    // Confirm support
     if (supportAjaxUploadWithProgress()) {
 
         // Ajax uploads are supported!
@@ -38,7 +38,7 @@ var OlabImportUpload = function(params) {
         var notice = document.getElementById('support-notice');
         var uploadBtn = document.getElementById('upload-button-id');
 
-        notice.innerHTML = "Your browser supports HTML uploads. Go try me! :-)";
+        notice.innerHTML = "HTML upload mode enabled.";
         uploadBtn.removeAttribute('disabled');
 
         // Init the Ajax form submission
@@ -48,30 +48,23 @@ var OlabImportUpload = function(params) {
         initFileOnlyAjaxUpload();
     }
 
-    // these are the methods/properties we expose to the outside
-    var service = {
-        importUpload:importUpload
-    };
-
-    return service;
-
-    function importUpload(data ) {
-
-        vm.Utilities.postData( "http://olab4.localhost/apidev/olab/import/upload", data );
-
-    }
+    return;
 
     function initFullFormAjaxUpload() {
 
-        var form = document.getElementById('form-id');
+        var form = document.getElementById('uploadForm');
 
         form.onsubmit = function () {
+
             // FormData receives the whole form
             var formData = new FormData(form);
+
             // We send the data where the form wanted
             var action = form.getAttribute('action');
+
             // Code common to both variants
             sendXHRequest(formData, action);
+
             // Avoid normal form submission
             return false;
         }
@@ -85,7 +78,7 @@ var OlabImportUpload = function(params) {
 
             var formData = new FormData();
             // Since this is the file only, we send it to a specific location
-            var action = 'http://olab4.localhost/apidev/api/v2/olab/import/upload';
+            var action = vm.restApiUrl + '/import/upload';
 
             // FormData only has the file
             var fileInput = document.getElementById('file-id');
@@ -151,56 +144,71 @@ jQuery(document).ready(function ($) {
 
   try {
 
-    var uploadBtn = document.getElementById('upload-button-id');
-
-    uploadBtn.onclick = function (evt) {
-
-        var formData = new FormData();
-        // Since this is the file only, we send it to a specific location
-        var action = 'http://olab4.localhost/apidev/api/v2/olab/import/upload';
-        // FormData only has the file
-        var fileInput = document.getElementById('file-id');
-        var file = fileInput.files[0];
-        formData.append('our-file', file);
-        // Code common to both variants
-        sendXHRequest(formData, action);
-    }
-
     // Handle the start of the transmission
     function onloadstartHandler(evt) {
-        var div = document.getElementById('upload-status');
-        div.innerHTML = 'Upload started.';
+
+        jQuery("#uploadStatus").html( "Upload started..." );
+
     }
 
     // Handle the end of the transmission
     function onloadHandler(evt) {
-        var div = document.getElementById('upload-status');
-        div.innerHTML += '<' + 'br>File uploaded. Waiting for response.';
+
+        var current = jQuery("#uploadStatus").html();
+        current += "<br>File uploaded. Waiting for response.";
+        jQuery("#uploadStatus").html( current );
+
     }
 
     // Handle the progress
     function onprogressHandler(evt) {
-        var div = document.getElementById('progress');
-        var percent = evt.loaded / evt.total * 100;
-        div.innerHTML = 'Progress: ' + percent + '%';
+        var percent = evt.loaded / evt.total * 100;    
+        jQuery("#progress").html( 'Progress: ' + percent + '%' );
     }
 
     // Handle the response from the server
     function onreadystatechangeHandler(evt) {
         var status, text, readyState;
+
         try {
+
             readyState = evt.target.readyState;
             text = evt.target.responseText;
             status = evt.target.status;
+
         }
         catch (e) {
-            return;
+
+            jQuery("#uploadStatus").html( e.message );
+
         }
+
+        //var contentType = evt.target.getAllResponseHeaders();
+
         if (readyState == 4 && status == '200' && evt.target.responseText) {
-            var status = document.getElementById('upload-status');
-            status.innerHTML += '<' + 'br>Success!';
-            var result = document.getElementById('result');
-            result.innerHTML = '<p>Conversion status:</p><pre>' + evt.target.responseText + '</pre>';
+
+            var current = jQuery("#uploadStatus").html(); 
+            current += '<br>Success!';
+            jQuery("#uploadStatus").html( current );
+
+            // parse the json result into an object
+            var result = JSON.parse(evt.target.responseText) 
+            if (result.result == 1) {
+                var message = "Success!  New map '" + result.name + "' created.  Id = " + result.id;
+                jQuery("#result").html('<p>Conversion status:</p><pre>' + message + '</pre>');
+
+            }
+            else {
+
+                var message = "Conversion error.<br>" + result.message + "<br>";
+                message += "Conversion stack:<br>";
+                for (var i = 0; i < result.conversionStack.length; i++) {
+                    message += " " + result.conversionStack[ i ] + "<br>";
+                }
+
+                jQuery("#result").html( '<p>Conversion status:</p><pre>' + message + '</pre>' );
+            }
+
         }
     }
 

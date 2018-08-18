@@ -53,21 +53,16 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_OLAB"))) {
 </p>
 
 <!-- The form starts -->
-<form action="/" method="post" enctype="multipart/form-data" id="form-id">
+<form action="/" method="post" enctype="multipart/form-data" id="uploadForm">
 
     <!-- The file to upload -->
     <p>
         <input id="file-id" type="file" name="our-file" />
-
-        <!--
-    Also by default, we disable the upload button.
-    If Ajax uploads are supported we'll enable it.
-  -->
         <input type="button" value="Upload" id="upload-button-id" disabled="disabled" />
     </p>
 
     <!-- Placeholders for messages set by event handlers -->
-    <p id="upload-status"></p>
+    <p id="uploadStatus"></p>
     <p id="progress"></p>
     <pre id="result"></pre>
 
