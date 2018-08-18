@@ -65,5 +65,6 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_OLAB"))) {
     <p id="uploadStatus"></p>
     <p id="progress"></p>
     <pre id="result"></pre>
-
+    <input id="copyToClipboard" type="button" value="Copy to Clipboard" style="display:none;"/>
+    <textarea id="diagnosticData" style="display:none"></textarea>
 </form>

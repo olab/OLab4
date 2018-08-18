@@ -150,6 +150,11 @@ jQuery(document).ready(function ($) {
         jQuery("#result").html("");    
         jQuery("#uploadStatus").html( "Upload started..." );
 
+        jQuery("#uploadStatus").html(current);
+        jQuery("#progress").hide();
+        jQuery("#copyToClipboard").hide();
+        jQuery("#diagnosticData").val();
+
     }
 
     // Handle the end of the transmission
@@ -189,30 +194,64 @@ jQuery(document).ready(function ($) {
 
         if (readyState == 4 && status == '200' && evt.target.responseText) {
 
-            var current = '<br>Success!';
-            jQuery("#uploadStatus").html( current );
-            jQuery("#progress").hide();
+            var current = '<br>Import request completed.';
 
             // parse the json result into an object
             var result = JSON.parse(evt.target.responseText) 
             if (result.result == 1) {
+
                 var message = "Success!  New map '" + result.name + "' created.  Id = " + result.id;
                 jQuery("#result").html('<p>Conversion status:</p><pre>' + message + '</pre>');
 
             }
             else {
 
+                jQuery("#copyToClipboard").show();
+
+                var diagnosticsInfo = result.message + "\n\nConversion stack:\n";
+
                 var message = "Conversion error.<br>" + result.message + "<br>";
                 message += "Conversion stack:<br>";
                 for (var i = 0; i < result.conversionStack.length; i++) {
                     message += " " + result.conversionStack[ i ] + "<br>";
+                    diagnosticsInfo += " " + result.conversionStack[i] + "\n";
                 }
 
+                diagnosticsInfo += "\nCallStack:\n";
+                for (var i = 0; i < result.callStack.length; i++) {
+                    diagnosticsInfo += " " +
+                        result.callStack[i].class +
+                        ": " +
+                        result.callStack[i].file +
+                        "(" +
+                        result.callStack[i].line +
+                        ") " +
+                        "function: " +
+                        result.callStack[i].function + "\n";
+
+                    for (var j = 0; j < result.callStack[i].args.length; j++) {
+                        diagnosticsInfo += "   [" + j + "]: " + result.callStack[i].args[j] + "\n";
+                    }
+                }
+
+                jQuery("#importDiagnostics").val(diagnosticsInfo);
                 jQuery("#result").html( '<p>Conversion status:</p><pre>' + message + '</pre>' );
             }
 
         }
     }
+
+      jQuery('#copyToClipboard').click(function(evt) {
+
+          var diagnosticTextArea = jQuery('#diagnosticData');
+          diagnosticTextArea.show();
+          diagnosticTextArea.focus();
+          diagnosticTextArea.select();
+
+          document.execCommand("copy");
+          diagnosticTextArea.hide();
+          alert("Copied diagnostic data to clipboard.");
+      });
 
     var params = {
       siteRoot: WEBSITE_ROOT,
