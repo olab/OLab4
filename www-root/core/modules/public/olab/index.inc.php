@@ -62,7 +62,7 @@ if (!defined("PARENT_INCLUDED")) {
 
                 <div v-show="loadingList">
                     <center>
-                        <img src="/apidev/images/loading.gif" /><p/>
+                        <img src="<?php echo HostSystemApi::getRelativePath(); ?>/images/loading.gif" /><p/>
                     </center>
                 </div>
                 <table id='olabMapData' class='table table-striped table-bordered' style="table-layout: fixed;word-wrap: break-word;">
@@ -74,7 +74,7 @@ if (!defined("PARENT_INCLUDED")) {
             <div id="convertResults" class="span3" v-if="loadingConvert">
                 <div v-if="convertDataPending">
                     <center>
-                        <img src="/apidev/images/loading.gif" />
+                        <img src="<?php echo HostSystemApi::getRelativePath(); ?>/images/loading.gif" />
                     </center>
                 </div>
                 <div v-else>
@@ -113,7 +113,7 @@ if (!defined("PARENT_INCLUDED")) {
             <div id="mapDetails" class="span3" v-if="loadingDetail">
                 <div v-if="detailDataPending">
                     <center>
-                        <img src="/apidev/images/loading.gif" />
+                        <img src="<?php echo HostSystemApi::getRelativePath(); ?>/images/loading.gif" />
                     </center>
                 </div>
                 <div v-else>
