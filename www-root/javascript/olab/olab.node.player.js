@@ -584,6 +584,9 @@ var OlabNodePlayer = function(params) {
     function renderNodeContent(node) {
 
         vm.nodeVue = renderContent('Node', node ); 
+
+        // if any node annotations, add them to markup DIV
+        jQuery("#olabAnnotationContent").html(node.Annotations[0].text);
     }
 
     /**
