@@ -113,6 +113,7 @@ COPY apache/phpmyadmin.conf /etc/httpd/conf.d/phpmyadmin.conf
 COPY apache/90-xdebug.ini /etc/php.d
 
 # Install Capistrano for deployment recipes.
+RUN gem install net-ssh -v 4.2.0
 RUN gem install capistrano -v 2.15.9
 RUN gem install colorize
 RUN gem install sshkit

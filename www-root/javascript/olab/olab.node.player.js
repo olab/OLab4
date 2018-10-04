@@ -587,7 +587,12 @@ var OlabNodePlayer = function(params) {
 
         // if any node annotations, add them to markup DIV
         if (node.annotation.length > 0) {
+            
             jQuery("#olabAnnotationContent").html(node.annotation);
+            // add the annotation CSS style class so we don't 
+            // see the annotation style if there nothing to display
+            jQuery("#olabAnnotationContent").addClass("annotation");
+
         }
     }
 
