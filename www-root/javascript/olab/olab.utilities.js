@@ -88,6 +88,7 @@ var OLabUtilities = function(siteRoot, pageUrl, authToken) {
         getAuthHeader:getAuthHeader,
         getAuthToken:getAuthToken,
         getJson:getJson,
+        getJsonAsyc:getJsonAsyc,
         getPreference:getPreference,
         getWikiTags:getWikiTags,
         getWikiTagParts:getWikiTagParts,
@@ -329,7 +330,7 @@ var OLabUtilities = function(siteRoot, pageUrl, authToken) {
     /*
      * Centralized method to post/recieve JSON data. 
      */
-    function postJson(url, data, onSuccess, onError) {
+    function postJson(url, data ) {
 
         var options = {
             url:url,
@@ -373,6 +374,35 @@ var OLabUtilities = function(siteRoot, pageUrl, authToken) {
         };
 
         var jqxhr = jQuery.ajax(options);
+    }
+
+    function getJsonAsyc( url, data ) {
+
+        var options = {
+            url:url,
+            type:'GET',
+            dataType:'json',
+            beforeSend:function(xhr) {
+
+                if (vm.authHeader.length > 0) {
+                    setHttpHeader(xhr, 'Authorization', getAuthHeader());
+                }
+            },
+
+            complete:function(xhr, status) {
+                var headerValue = xhr.getResponseHeader("Authorization");
+                if (headerValue !== null) {
+                    setAuthHeader(headerValue);
+                }
+
+            }
+
+        };
+
+        if (data !== null)
+            options.data = data;
+
+        return jQuery.ajax(options);
     }
 
     /*
@@ -423,7 +453,7 @@ var OLabUtilities = function(siteRoot, pageUrl, authToken) {
         if (data !== null)
             options.data = data;
 
-        var jqxhr = jQuery.ajax(options);
+        return jQuery.ajax(options);
     }
 
     /**

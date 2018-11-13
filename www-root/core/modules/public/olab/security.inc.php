@@ -48,81 +48,137 @@ if (!defined("PARENT_INCLUDED")) {
 }
 ?>
 
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css" integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous">
+
 <script>
     var view = null;
 </script>
 
 <div id="content">
 
-    <div id="olabContent" class="container">
+    <div id="olabContent" class="container-fluid">
 
-        <div class="row" v-show="pageMode === 'users'">
-            <div class="span6">
-                <h3>Users</h3>
+        <div id="wizardStepRow" class="row" v-cloak="">
+
+            <div class="span2" v-bind:class="{ wizardActiveStep: isStep1Active, wizardInactiveStep: !isStep1Active }" 
+                 v-on:click="wizardPageSelect(1);" >
+                    <span class="wizardOptionText">
+                        <span class="badge badge-info">Step 1</span>&nbsp;Select Objects&nbsp;
+                        <i class="fas fa-arrow-right"></i>
+                    </span>
             </div>
-
-            <div class="span6">
-                <h3>Roles</h3>
+            <div class="span2" v-bind:class="{ wizardActiveStep: isStep2Active, wizardInactiveStep: !isStep2Active }" 
+                 v-show="bHaveObjectsSelected"
+                 v-on:click="wizardPageSelect(2);" >
+                    <span class="wizardOptionText">
+                        <span class="badge badge-info">Step 2</span>&nbsp;Select Users&nbsp;
+                        <i class="fas fa-arrow-right"></i>
+                    </span>
+            </div>
+            <!--<div class="span2" v-bind:class="{ wizardActiveStep: isStep3Active, wizardInactiveStep: !isStep3Active }" 
+                 v-on:click="wizardPageSelect(3);" >
+                    <span class="wizardOptionText"><span class="badge badge-info">Step 3</span>&nbsp;Select Roles&nbsp;<i class="fas fa-arrow-right"></i></span>
+            </div>-->
+            <div class="span2" v-bind:class="{ wizardActiveStep: isStep3Active, wizardInactiveStep: !isStep3Active }" 
+                 v-show="bHaveObjectsSelected && bHaveUsersRolesSelected"
+                 v-on:click="wizardPageSelect(3);" >
+                    <span class="wizardOptionText">
+                        <span class="badge badge-info">Step 3</span>&nbsp;Verify/Apply
+                    </span>
             </div>
 
         </div>
 
-        <div class="row" v-show="pageMode === 'users'">
-            <div class="span6">
+        <div id="objectSelectRow" class="row" v-show="isStep1Active" v-cloak="">
+                <br />
 
-                <table id='olabUserTable' class='table table-striped table-bordered compact' style="table-layout: fixed;word-wrap: break-word;" >
-                    <thead></thead>
-                    <tbody></tbody>
-                </table>
-
-            </div>
-
-            <div class="span6">
-
-                <table id='olabRoleTable' class='table table-striped table-bordered compact' style="table-layout: fixed;word-wrap: break-word;">
-                    <thead></thead>
-                    <tbody></tbody>
-                </table>
-            </div>
-
-        </div>
-
-        <div class="row">
-            <div class="span3">Object Type:</div>
+            <div class="span1">Object Type:</div>
             <div class="span3">
-                <select>
+                <select id="objectTypeSelector" v-model="objectTypeSelection">
                     <option value="">-- Select --</option>
                     <option value="maps">Maps</option>
                     <option value="mapnodes">Map Nodes</option>
                 </select>
             </div>
             <div class="span1">
-                <button id="btnLoad" type="button" class="btn btn-secondary">Load</button>
+                <button id="btnLoad" type="button" v-bind:disabled="objectTypeSelection === ''"
+                        onclick="view.onClickLoadObjects(this);" 
+                        class="btn btn-secondary">Load</button>
             </div>
+
         </div>
 
-        <div class="row">
+        <div id="objectTableRow" class="row" v-show="isStep1Active" v-cloak="">
+                <br />
 
             <div class="span12">
 
-                <!--
-                <div v-show="loadingList">
-                    <center>
-                        <img src="<?php echo HostSystemApi::getRelativePath(); ?>/images/loading.gif" />
-                        <p></p>
-                    </center>
-                </div>
-                -->
-
-                <table id='olabObjectTable' class='table table-striped table-bordered' style="table-layout: fixed;word-wrap: break-word;">
+                <span v-show="bLoadingObjects === true">Loading...</span>
+                <table v-pre="" id='olabObjectTable' class='table table-bordered compact' 
+                       v-show="bLoadingObjects === false"
+                       style="table-layout: fixed;word-wrap: break-word;  width: 100%" >
                     <thead></thead>
                     <tbody></tbody>
                 </table>
+
             </div>
+
         </div>
 
-        <div class="row">
+        <div id="userRoleSelectRow" class="row" v-show="isStep2Active" v-cloak="">
+                <br />
+
+            <div class="span1">Object Type:</div>
+            <div class="span3">
+                <select id="userRoleSelector" v-model="userRoleSelection">
+                    <option value="">-- Select --</option>
+                    <option value="users">Users</option>
+                    <option value="roles">Roles</option>
+                </select>
+            </div>
+            <div class="span1">
+                <button id="btnLoad" type="button" v-bind:disabled="userRoleSelection === ''"                        onclick="view.onClickLoadUserRoles(this);" 
+                        class="btn btn-secondary">Load</button>
+            </div>
+
+        </div>
+
+        <div id="userRoleSelectRow" class="row" v-show="isStep2Active">
+                <br />
+
+            <div class="span8">
+
+                <span v-show="bLoadingUsersRoles === true">Loading...</span>
+                <table v-pre="" id='olabUserRoleTable' class='table table-bordered compact' 
+                       v-show="bLoadingUsersRoles === false"                       
+                       style="table-layout: fixed;word-wrap: break-word; width: 100%" >
+                    <thead></thead>
+                    <tbody></tbody>
+                </table>
+
+            </div>
+
+        </div>
+
+        <div class="row" v-show="isStep3Active">
+
             <div class="span12">
+                <br />
+
+                <p>{{objectTypeSelection}}:</p>
+                <ul id="selectedObjectList">
+                  <li v-for="item in selectedObjects">
+                    {{ item[1] }}
+                  </li>
+                </ul>
+
+                <p>{{userRoleSelection}}</p>
+                <ul id="selectedUserRoleList">
+                  <li v-for="item in selectedUserRoles">
+                    {{ item[1] }}
+                  </li>
+                </ul>
+
                 <div class="btn-group btn-group-toggle" data-toggle="buttons">
                     <label class="btn btn-secondary">
                     <input type="checkbox" name="options" id="option1" autocomplete="off" checked> Play
@@ -134,16 +190,43 @@ if (!defined("PARENT_INCLUDED")) {
                     <input type="checkbox" name="options" id="option3" autocomplete="off"> Annotate
                     </label>
                 </div>
+
             </div>
+
         </div>
 
-        <div class="row">
+        <div class="row" v-show="wizardStepCount === 3">
             <div class="span12">
                 <center>
                     <button id="btnClear" type="button" class="btn btn-primary">Clear</button>
-                    <button id="btnApply" type="button" class="btn btn-primary">Apply</button>
+                    <button id="btnApply" type="button" class="btn btn-secondary">Apply</button>
                 </center>
             </div>
         </div>
+
+        <!--
+        <div id="pageNavButtonsRow" class="row">
+
+            <div class="span4">
+                &nbsp;
+            </div>
+
+            <div class="span4">
+                <button v-cloak="" id="btnPrev" type="button" class="btn btn-primary" v-show="!isStep1Active">
+                    <i class="fas fa-arrow-left"></i>&nbsp;Previous
+                </button>
+                &nbsp;
+                <button v-cloak="" id="btnNext" type="button" class="btn btn-primary" v-show="!isStep4Active">
+                    Next&nbsp;<i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+
+            <div class="span4">
+                &nbsp;
+            </div>
+
+        </div>
+        -->
+
     </div>
 </div>

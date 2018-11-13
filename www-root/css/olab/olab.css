@@ -22,6 +22,10 @@
 
 [v-cloak] { display: none; }
 
+.selected {
+    background-color: #acbad4;
+}
+
 ul.navigation li { border-left: none; }
 
 .dataTables_paginate {
@@ -37,6 +41,33 @@ textarea { resize: both; }
 .lightning-multi {
     min-width: 200px;
     margin: 0;
+}
+
+.wizardActiveStep {
+    margin-top: 20px;
+    border-radius: 5px;
+    background: #006699;
+    color: white;
+    height: 50px;
+    text-align: left;
+    border: 1px solid #000000;
+}
+
+.wizardInactiveStep {
+    margin-top: 20px;
+    border-radius: 5px;
+    background: #d9dee2;
+    height: 50px;
+    text-align: left;
+    border: 1px solid #000000;
+}
+
+.wizardOptionText {
+    margin-top:12px;
+    margin-left: 10px;
+    display: inline-block;
+    vertical-align: middle;
+    line-height: normal;
 }
 
 .questions {

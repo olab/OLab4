@@ -27,52 +27,43 @@ var OlabSecurity = function(params) {
 
     vm.websiteUrl = params.siteRoot;
     vm.moduleUrl = params.siteRoot + '/olab';
-
-    var data = { 
-        "roles": 
-            [
-                { "id": 0, "name": "OLab:Superuser" },
-                { "id": 1, "name": "OLab:Learner" },
-                { "id": 2, "name": "OLab:Admin" }
-            ], 
-        "users": 
-            [
-                { "id": 0, "name": "olabadmin" },
-                { "id": 1, "name": "aopps" },
-                { "id": 2, "name": "ltopps" },
-                { "id": 3, "name": "rtopps" },
-                { "id": 3, "name": "dtopps" }
-            ], 
-        "objectTypes": 
-            [
-                { "id": 0, "name": "Maps" },
-                { "id": 1, "name": "Map Nodes" }
-            ] };
-
-
-    var tableUserOptions = buildSelectionTableOptions(data.users);
-    vm.userDataTable = jQuery(vm.targetUserTableId).DataTable(tableUserOptions);
-
-    var tableRoleOptions = buildSelectionTableOptions(data.roles);
-    vm.roleDataTable = jQuery(vm.targetRoleTableId).DataTable(tableRoleOptions);
-
-        // spin up vue object
-    vm.app = new Vue({
-
-        el:vm.targetInfoId,
-
-        data() {
-            return {
-                pageMode: "users"
-            }
-        }
-
-    });
+    vm.restApiUrl = params.apiRoot + '/olab';
+    vm.data = [
+        { user: null, role: null, object: null },
+        { selectedUsers: null, selectedRoles: null, selectedObjects: null }
+    ];
+    vm.userTable = null;
+    vm.roleTable = null;
+    vm.objectTable = null;
+    vm.app = null;
 
     // these are the methods/properties we expose to the outside
     var service = {
-        app:vm.app
+        app:vm.app,
+        data: vm.data,
+        load: load,
+        buildTableData: buildTableData,
+        buildSelectionTableOptions: buildSelectionTableOptions,
+        onClickLoadObjects: onClickLoadObjects,
+        onClickLoadUserRoles: onClickLoadUserRoles
     };
+
+    return service;
+
+    function buildTableData(source) {
+
+        // convert associative array into indexed array compatible with DataTable
+        var tableData = [];
+        for (var i = 0; i < source.length; i++) {
+            var row = [];
+            row.push(source[i]['id']);
+            row.push(source[i]['name']);
+            row.push(0);
+            tableData.push(row);
+        }
+
+        return tableData;
+    }
 
     /**
      * Build standard table options, including table data
@@ -81,25 +72,16 @@ var OlabSecurity = function(params) {
     function buildSelectionTableOptions(data) {
 
         // convert associative array into indexed array compatible with DataTable
-        var tableData = [];
-        for (var i = 0; i < data.length; i++) {
-            var row = [];
-            row.push(data[i]['id']);
-            row.push(data[i]['name']);
-            row.push(0);
-            tableData.push(row);
-        }
-
-        // get/default the initial pagelength
-        var pageLength = vm.Utilities.readCookie("olab.maplist.pagesize");
-        if (pageLength == null)
-            pageLength = 5;
-
-        var filterString = vm.Utilities.readCookie("olab.maplist.filter");
+        var tableData = buildTableData(data);
 
         return {
+            "paging": true,
+            'pageLength': 10,
+	        'responsive': true,
             'dom':'lfript',
             'order':[[1, 'asc']],
+            'lengthMenu':[[5, 10, 25, -1], [5, 10, 25, "All"]],
+            'data':tableData,
             'columns':[
                 {'visible':false},
                 {'title':'Name', 'width':'85%', "searchable": true},
@@ -112,12 +94,177 @@ var OlabSecurity = function(params) {
                         return html;
                     } 
                 }
-            ],
-            'lengthMenu':[[5, 10, 25, -1], [5, 10, 25, "All"]],
-            'iDisplayLength': pageLength,
-            'data': tableData
+            ]
         };
 
+    }
+
+    /**
+     * User pressed load object button
+     * @returns {} 
+     */
+    function onClickLoadObjects(source) {
+
+        try {
+
+            vm.app.bLoadingObjects = true;
+            var objectPromise = vm.Utilities.getJsonAsyc(vm.restApiUrl, null);
+
+            jQuery.when(objectPromise)
+                .done(function(data) {
+                    onObjectLoadSuccess(data.data);
+                    vm.app.bLoadingObjects = false;
+                });
+
+        } catch (e) {
+            vm.app.bLoadingObjects = false;
+        } 
+    }
+
+    function onObjectLoadSuccess(data) {
+
+        vm.data['object'] = data;
+
+        if (vm.objectTable != null) {
+            vm.objectTable.destroy();
+        }
+
+        var tableOptions = buildSelectionTableOptions(vm.data['object']);
+        vm.objectTable = jQuery('#olabObjectTable').DataTable(tableOptions);
+
+        // configure row-selection handler
+        jQuery(document).on("click",
+            "#olabObjectTable tbody tr",
+            function() {
+                jQuery(this).toggleClass('selected');
+                vm.app.setSelectedObjects(vm.objectTable.rows('.selected').data());
+            });
+    }
+
+    /**
+      * User pressed load object button
+      * @returns {} 
+      */
+    function onClickLoadUserRoles(source) {
+
+        try {
+
+            vm.app.bLoadingUsersRoles = true;
+            var objectPromise = null;
+
+            if (jQuery("#userRoleSelector").val() == "users") {
+                objectPromise = vm.Utilities.getJsonAsyc(vm.restApiUrl + '/admin/users', null);
+            } else if (jQuery("#userRoleSelector").val() == "roles") {
+                objectPromise = vm.Utilities.getJsonAsyc(vm.restApiUrl + '/admin/roles', null);
+            }
+
+            jQuery.when(objectPromise)
+                .done(function(data) {
+                    onUserLoadSuccess(data.data);
+                    vm.app.bLoadingUsersRoles = false;
+                });
+
+        } catch (e) {
+            vm.app.bLoadingUsersRoles = false;
+        } 
+    }
+
+    function onUserLoadSuccess(data) {
+
+        vm.data['user'] = data;
+
+
+        if (vm.userTable != null) {
+            vm.userTable.destroy();
+        }
+
+        var tableOptions = buildSelectionTableOptions(vm.data['user']);
+        vm.userTable = jQuery('#olabUserRoleTable').DataTable(tableOptions);
+
+        // configure row-selection handler
+        jQuery(document).on("click",
+            "#olabUserRoleTable tbody tr",
+            function() {
+                jQuery(this).toggleClass('selected');
+                //alert(vm.userTable.rows('.selected').data().length + ' row(s) selected');
+                vm.app.setUserRoleObjects(vm.userTable.rows('.selected').data());
+            });
+
+    }
+
+    /**
+     * Handle Map info server call failure
+     * @param {} data 
+     * @returns {} 
+     */
+    function onObjectListLoadFailure(data) {
+        alert(data);
+    }
+
+    /**
+     * Initial loading of form
+     * @returns {} 
+     */
+    function load() {
+
+        // spin up vue object
+        vm.app = new Vue({
+            el:vm.targetInfoId,
+
+            data:{
+                wizardStepCount:1,
+                objectTypeSelection:'',
+                userRoleSelection: '',
+                bHaveObjectsSelected: false,
+                bLoadingObjects:false,
+                selectedObjects:[],
+
+                bHaveUsersRolesSelected: false,
+                bLoadingUsersRoles: false,
+                selectedUserRoles: []
+            },
+
+            computed:{
+                isStep1Active:function() {
+                    return (this.wizardStepCount === 1);
+                },
+
+                isStep2Active:function() {
+                    return (this.wizardStepCount === 2);
+                },
+
+                isStep3Active:function() {
+                    return (this.wizardStepCount === 3);
+                },
+
+                isStep4Active:function() {
+                    return (this.wizardStepCount === 4);
+                },
+            },
+
+            methods:{
+                wizardPageSelect:function(wizardStepNumber) {
+                    this.wizardStepCount = wizardStepNumber;
+                },
+
+                setSelectedObjects: function(array) {
+                    this.selectedObjects = [];
+                    for (var i = 0; i < array.length; i++)
+                        this.selectedObjects.push(array[i]);
+                    this.bHaveObjectsSelected = (this.selectedObjects.length > 0);
+                },
+
+                setUserRoleObjects:function(array) {
+                    this.selectedUserRoles = [];
+                    for (var i = 0; i < array.length; i++)
+                        this.selectedUserRoles.push(array[i]);
+                    this.bHaveUsersRolesSelected = (this.selectedUserRoles.length > 0);
+                }
+            }
+
+        });
+
+        return;
     }
 }
 
@@ -141,7 +288,8 @@ jQuery(document).ready(function($) {
     };
 
     // spin up helper class that does all the work
-    view=new OlabSecurity(params);
+    view = new OlabSecurity(params);
+    view.load();
 
   } catch(e) {
     alert(e.message);
