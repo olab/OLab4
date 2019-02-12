@@ -57,7 +57,8 @@
         "phpoffice/phpword": "v0.13.*",
         "wikimedia/composer-merge-plugin": "^1.4",
         "maennchen/zipstream-php": "^0.4.1",
-        "smalot/pdfparser": "0.11"
+        "smalot/pdfparser": "0.11",
+        "ramsey/uuid": "^3.8"
     },
     "require-dev": {
         "phpunit/dbunit": "^1.3",
