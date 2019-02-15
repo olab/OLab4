@@ -114,7 +114,8 @@ COPY apache/90-xdebug.ini /etc/php.d
 
 # Install Capistrano for deployment recipes.
 # Install Capistrano for deployment recipes.
-RUN gem install net-ssh -v 4.2.0 --no-ri --no-rdoc  // This is new
+RUN gem install net-ssh -v "<5.0" --no-ri --no-rdoc  
+#RUN gem install net-ssh -v 4.2.0 --no-ri --no-rdoc  // This is new
 RUN gem install capistrano -v 2.15.9 --no-ri --no-rdoc
 RUN gem install colorize --no-ri --no-rdoc
 RUN gem install sshkit --no-ri --no-rdoc

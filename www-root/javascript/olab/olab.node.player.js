@@ -111,7 +111,7 @@ var OlabNodePlayer = function(params) {
     */
     function autoloadScripts() {
 
-        var list = vm.server.Scripts;
+        var list = vm.server.scripts;
         // autoload and execute server-level scripts
         jQuery.each(list, function(index, value) {
 
@@ -123,9 +123,9 @@ var OlabNodePlayer = function(params) {
 
             });
 
-        list = vm.map.Scripts;
+        list = vm.map.scripts;
         // autoload and execute map-level scripts
-        jQuery.each(vm.map.Scripts, function(index, value) {
+        jQuery.each(list, function(index, value) {
 
                 var url = vm.websiteUrl + "/javascript/olab/autoload/script" + value;
                 // autoload the server and map-level javascript scripts
@@ -135,7 +135,7 @@ var OlabNodePlayer = function(params) {
 
             });
 
-        list = vm.node.Scripts;
+        list = vm.node.scripts;
         // autoload and execute node-level scripts
         jQuery.each(list, function(index, value) {
 
