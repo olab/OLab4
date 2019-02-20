@@ -330,7 +330,7 @@ var OLabUtilities = function(siteRoot, pageUrl, authToken) {
     /*
      * Centralized method to post/recieve JSON data. 
      */
-    function postJson(url, data ) {
+    function postJson(url, data, onSuccess, onError ) {
 
         var options = {
             url:url,

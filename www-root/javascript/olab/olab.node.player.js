@@ -586,13 +586,16 @@ var OlabNodePlayer = function(params) {
         vm.nodeVue = renderContent('Node', node ); 
 
         // if any node annotations, add them to markup DIV
-        if (node.annotation.length > 0) {
-            
+        if (node.annotation != null) {
+
+          if (node.annotation.length > 0) {
+
             jQuery("#olabAnnotationContent").html(node.annotation);
             // add the annotation CSS style class so we don't 
             // see the annotation style if there nothing to display
             jQuery("#olabAnnotationContent").addClass("annotation");
 
+          }
         }
     }
 
@@ -614,7 +617,8 @@ var OlabNodePlayer = function(params) {
                 websiteRoot:vm.websiteUrl,
                 server:vm.server,
                 map:vm.map,
-                node:vm.node
+                node:vm.node,
+                loadingList: false
             },
             render:res.render,
 
@@ -634,6 +638,7 @@ var OlabNodePlayer = function(params) {
             },
 
             methods:{
+
                 constant:function(id) {
 
                     // if no id, return everything

@@ -31,7 +31,8 @@ var OlabAVTag = function(olabNodePlayer) {
       element = "<" + vm.OLAB_HTML_TAG + " class='" + tag + "'" +
         " id='" + vm.OLAB_HTML_TAG + id + "'" +
         " filename='" + file.item['image'] + "'" +
-        " src='" + vm.olabNodePlayer.mediaUrl + file.item["image"] + "'></" +
+        " src='" + vm.olabNodePlayer.mediaUrl + "/1/avatars/" +
+        file.item["image"] + "'></" +
         vm.OLAB_HTML_TAG + ">";
 
       vm.olabNodePlayer.log.debug(element);

@@ -62,9 +62,16 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_OLAB"))) {
     HostSystemApi::UpdateBreadCrumb( HostSystemApi::getRootUrl()  . "/" . $MODULE, "Play " );
 }
 ?>
+
 <!-- DIVs for Olab content binding.  DO NOT EDIT. -->
 <div id="olabHeaderContent" align="center"></div>
-<div id="olabNodeContent" align="center"></div>
+<div id="olabNodeContent" align="center">
+    <div v-show="loadingList">
+        <center>
+            <img src="<?php echo HostSystemApi::getRelativePath(); ?>/images/loading.gif" /><p/>
+        </center>
+    </div>
+</div>
 <div id="olabAnnotationContent" class=""></div>
 <div id="olabFooterContent" align="center"></div>
 
