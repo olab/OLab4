@@ -1,17 +1,14 @@
-# Welcome to Entrada ME
+# Welcome to OLab4
 
-Entrada is an open source web-based Integrated Teaching and Learning System created to allow teachers, learners and
-curriculum managers a simple way of accessing, interacting, and managing curriculum within an educational environment.
+OLab4 is an open source web-based educational research platform that supports the creation and publication of virtual scenarios. Much of its original structure is based on OpenLabyrinth v3, a platform that was originally designed to support virtual patients but evolved into so much more. 
 
-Entrada is ideally suited for the health sciences because of its tightly integrated curriculum management and clinical
-scheduling support; however, it can easily be modified and adapted to almost any professional program. The Entrada
-Project is built upon the philosophies of open access and collaboration, and we welcome new interest in the project.
+For more information please visit our website: http://olab.ca 
 
-For more information please visit our website: http://www.entrada-project.org
+In its early phases, OLab4 is based on the Entrada framework, an open source web-based Integrated Teaching and Learning System created to allow teachers, learners and
+curriculum managers a simple way of accessing, interacting, and managing curriculum within an educational environment. (http://www.entrada-project.org)
 
-## Installing Entrada ME
+However, OLab4 remains a standalone project. You do not have to adopt Entrada, or Elentra (its subsequent iteration), in order to use or install OLab4. There are no licensing commitments to those groups. 
+
+## Installing OLab4
 
 For detailed information on installing or upgrading Entrada ME please visit the wiki at:
-https://github.com/EntradaProject/entrada-1x-me/wiki/First-time-installation
-
-[![Build Status](https://travis-ci.com/EntradaProject/entrada-1x-me.svg?token=AjJr8HfNGWk3CeZGrsiF&branch=develop)](https://travis-ci.com/EntradaProject/entrada-1x-me)
