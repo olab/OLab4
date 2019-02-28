@@ -32,7 +32,7 @@
         },
         {
             "type": "git",
-            "url": "git@github.com:EntradaProject/entrada-1x-api.git",
+            "url": "git@github.com:olab/OLab4-api.git",
             "autoload": {
                 "psr-4": {"Entrada\\": "app"}
             }
@@ -48,7 +48,6 @@
         "google/apiclient": "~1.1.6",
         "zendframework/zendframework1": "~1.12.17",
         "entradapackages/mysqldump-php": "dev-master",
-        "entradapackages/entrada-1x-api": "dev-release/me/1.12",
         "mikehaertl/phpwkhtmltopdf": "^2.2",
         "league/flysystem" : "1.0.*",
         "laravel/laravel": "5.4.*",
