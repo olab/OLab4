@@ -7,7 +7,9 @@ For more information please visit our website: http://olab.ca
 In its early phases, OLab4 is based on the Entrada framework, an open source web-based Integrated Teaching and Learning System created to allow teachers, learners and
 curriculum managers a simple way of accessing, interacting, and managing curriculum within an educational environment. (http://www.entrada-project.org)
 
-However, OLab4 remains a standalone project. You do not have to adopt Entrada, or Elentra (its subsequent iteration), in order to use or install OLab4. There are no licensing commitments to those groups. 
+Internally, OLab4 still uses a simplified version of Entrada for basic housekeeping, such as user management, groups, roles etc. 
+
+However, OLab4 remains a standalone project. You do not have to buy Entrada, or Elentra (its subsequent iteration), in order to use or install OLab4. There are no licensing commitments to those groups. The version of Entrada embedded in OLab4 will remain free and open-source. 
 
 ## Installing OLab4
 
