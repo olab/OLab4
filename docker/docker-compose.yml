@@ -10,7 +10,7 @@ services:
     volumes:
       - ./Data:/var/lib/mysql
       - ../../..:/var/www/vhosts
-      - ./OLab4/apache/vhosts.d:/etc/httpd/vhosts.d
+      - ./Setup/apache/vhosts.d:/etc/httpd/vhosts.d
     restart: always
     extra_hosts:
       - "database:127.0.0.1"
