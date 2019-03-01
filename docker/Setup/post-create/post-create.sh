@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 #set -x 
 
-rm -Rf /var/www/vhosts/OLab/Olab4/www-root/core/storage/cache/*
+rm -Rf /var/www/vhosts/Olab4/www-root/core/storage/cache/*
 
 echo "Testing for composer API update"
-if [ ! -f /var/www/vhosts/OLab/OLab4-api/composer.lock ]; then
+if [ ! -f /var/www/vhosts/OLab4-api/composer.lock ]; then
     echo "Running composer update"
     touch /tmp/composer.api.start
     cd /var/www/vhosts/OLab/OLab4-api
@@ -13,7 +13,7 @@ if [ ! -f /var/www/vhosts/OLab/OLab4-api/composer.lock ]; then
 fi
 
 echo "Testing for composer update"
-if [ ! -f /var/www/vhosts/OLab/OLab4/composer.lock ]; then
+if [ ! -f /var/www/vhosts/OLab4/composer.lock ]; then
     echo "Running composer update"
     touch /tmp/composer.start
     cd /var/www/vhosts/OLab/OLab4
@@ -50,4 +50,3 @@ echo "Loading OLab seed data"
 touch /tmp/openlabyrinth_data.start
 mysql -uroot -ppassword < /var/lib/mysql/openlabyrinth_data.sql
 touch /tmp/openlabyrinth_data.finished
-
