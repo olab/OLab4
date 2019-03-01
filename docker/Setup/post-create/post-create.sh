@@ -7,7 +7,7 @@ echo "Testing for composer API update"
 if [ ! -f /var/www/vhosts/OLab4-api/composer.lock ]; then
     echo "Running composer update"
     touch /tmp/composer.api.start
-    cd /var/www/vhosts/OLab/OLab4-api
+    cd /var/www/vhosts/OLab4-api
     composer update
     touch /tmp/composer.api.finished
 fi
@@ -16,7 +16,7 @@ echo "Testing for composer update"
 if [ ! -f /var/www/vhosts/OLab4/composer.lock ]; then
     echo "Running composer update"
     touch /tmp/composer.start
-    cd /var/www/vhosts/OLab/OLab4
+    cd /var/www/vhosts/OLab4
     composer update
     touch /tmp/composer.finished
 fi
