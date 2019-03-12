@@ -60,6 +60,7 @@ var OlabNodePlayer = function(params) {
         downloadFile:downloadFile,
         info:info,
         navigate:navigate,
+        parameters: vm.urlParameters,
         play:play,
         onHashChanged:onHashChanged
     };
@@ -430,8 +431,7 @@ var OlabNodePlayer = function(params) {
     /**
      * Handler for a successful posting of a question response to the server
      * @returns { } 
-     */
-    
+     */    
     function onQuestionResponseSucceeded(data) {
 
         // turn off any spinning img's for REST call
@@ -506,6 +506,14 @@ var OlabNodePlayer = function(params) {
         } else {
             vm.nodeVue.content = "error";
         }
+    }
+
+    function onSuspendSucceeded(data) {
+
+    }
+  
+    function onSuspendFailed(data) {
+      alert(data);
     }
 
     /**
@@ -814,6 +822,20 @@ var OlabNodePlayer = function(params) {
                         vm.Utilities.log.fatal('onMultichoiceResponseChanged: ' + e.message );
                     } 
                     
+                },
+
+                onSuspendClicked: function(data) {
+
+                  try {
+                    
+                    vm.Utilities.log.debug('Xmit: suspend');
+                    var url = vm.restApiUrl + '/suspend/' + this.map.id + '/' + this.node.id;
+                    vm.Utilities.postJson(url, data, onSuspendSucceeded, onSuspendFailed);
+
+                  } catch (e) {
+                    vm.Utilities.log.fatal('onSuspendClicked: ' + e.message );
+                  } 
+
                 }
             }
 

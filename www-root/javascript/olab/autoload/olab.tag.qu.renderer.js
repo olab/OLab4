@@ -4,7 +4,7 @@ Vue.component('olab-question-dropdown',
         template:`<div class="questions olab-question-dropdown">
               <p>{{question.stem}}</p>
               <span>
-                  <select v-bind:id="'QU_' + question.id" v-on:change="changed">
+                  <select v-bind:id="'QU_' + question.id" v-bind:name="'QU_' + question.id" v-on:change="changed">
                     <option></option>
                     <option v-for='response in question.QuestionResponses'
                             v-bind:value="'QU_' + question.id + '_' + response.id">{{response.response}}</option>
@@ -54,7 +54,7 @@ Vue.component('olab-question-draganddrop',
     {
         template:`<div class="questions olab-question-draganddrop">
               <p>{{question.stem}}</p>
-              <ul class="drag-question-container ui-sortable navigation" v-bind:id="'qresponse_' + question.id" v-bind:questionid="question.id">
+              <ul class="drag-question-container ui-sortable navigation" v-bind:id="'qresponse_' + question.id" v-bind:name="'qresponse_' + question.id" v-bind:questionid="question.id">
                 <li v-for='response in question.QuestionResponses' class='sortable' v-bind:responseid='response.id'>{{response.response}}</li>
               </ul>
             </div>`,
@@ -75,7 +75,7 @@ Vue.component('olab-question-draganddrop',
 Vue.component('olab-question-slider',
     {
         template:
-            `<div class='questions olab-question-slider'><p>{{question.stem}}</p><div v-bind:id='id' ></div></div>`,
+            `<div class='questions olab-question-slider'><p>{{question.stem}}</p><div v-bind:id='id' v-bind:name='id'></div></div>`,
         props:['id', 'question'],
         mounted:function() {
 
@@ -125,6 +125,7 @@ Vue.component('olab-question-multiplechoice',
                      <span v-bind:id="'click' + response.id">
                        <input class="lightning-choice"
                               v-bind:id="'QU_' + question.id + '_' + response.id"
+                              v-bind:name="'QU_' + question.id + '_' + response.id"
                               v-bind:question="response.question_id"
                               v-bind:response="response.id"
                               v-on:change="changed"
