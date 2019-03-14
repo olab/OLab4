@@ -26,7 +26,7 @@ $config = new Zend_Config(require "config/config.inc.php");
  * The default timezone based on PHP's supported timezones:
  * http://php.net/manual/en/timezones.php
  */
-define("DEFAULT_TIMEZONE", "America/Toronto");
+define("DEFAULT_TIMEZONE", "America/Edmonton");
 
 date_default_timezone_set(DEFAULT_TIMEZONE);
 
