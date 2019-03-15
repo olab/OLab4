@@ -760,7 +760,7 @@ var OlabNodePlayer = function(params) {
 
                 },
 
-                onDropdownResponseChanged:function(data) {
+                onDropdownResponseChanged: function(data) {
 
                     try {
 
@@ -781,8 +781,29 @@ var OlabNodePlayer = function(params) {
 
                 },
 
+                onSliderResponseChanged: function(questionId, data) {
+
+                  try { 
+
+                    vm.Utilities.log.debug('Xmit: ' + questionId + "=" + data.value);
+                    data.state_data = vm.state.state_data;
+                    data.value = data.value;
+                    data.submitId = "#submit_" + questionId;
+                    if (data.questionShowSubmit) {
+                      jQuery( data.submitId ).show();
+                    }
+
+                    var url = vm.restApiUrl + '/question/slider/' + this.node.id;
+                    vm.Utilities.postJson(url, data, onQuestionResponseSucceeded, onQuestionResponseFailed);
+                        
+                  } catch (e) {
+                    vm.Utilities.log.fatal('onSliderResponseChanged: ' + e.message );
+                  } 
+
+                },
+
                 // handler for question responses
-                onMultichoiceResponseChanged:function(data) {
+                onMultichoiceResponseChanged: function(data) {
 
                     try {
 

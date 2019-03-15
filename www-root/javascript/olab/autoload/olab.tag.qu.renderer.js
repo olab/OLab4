@@ -14,8 +14,7 @@ Vue.component('olab-question-dropdown',
                   <img v-bind:src="webRoot(null) + '/images/loading_small.gif'"/>
               </span>
               <input type="hidden"
-                      v-bind:id="'QU_' + question.id + '_previous'"
-                      v-bind:name="'QU_' + question.id + '_previous'" />
+                     v-bind:id="'QU_' + question.id + '_previous'" />
             </div>`,
         props:['question'],
         methods:{
@@ -75,10 +74,12 @@ Vue.component('olab-question-draganddrop',
 Vue.component('olab-question-slider',
     {
         template:
-            `<div class='questions olab-question-slider'><p>{{question.stem}}</p><div v-bind:id='id' v-bind:name='id'></div></div>`,
+            `<div class='questions olab-question-slider'><p>{{question.stem}}</p>
+             <div v-bind:id='id' v-bind:name='id'></div></div>`,
         props:['id', 'question'],
         mounted:function() {
 
+            var self = this;
             // convert the question settings from a string to an object
             var questionSettings = JSON.parse(this.question.settings);
 
@@ -88,7 +89,10 @@ Vue.component('olab-question-slider',
                 min:Number(questionSettings.minValue),
                 max:Number(questionSettings.maxValue),
                 step:Number(questionSettings.stepValue),
-                orientation:questionSettings.orientation
+                orientation:questionSettings.orientation,
+                change: function(event, ui) {
+                  self.$parent.onSliderResponseChanged(question.id, ui);
+                }
             };
 
             // create the slider
@@ -176,7 +180,7 @@ Vue.component('olab-question-radio',
                     <span v-bind:id="'click' + response.id">
                       <input class="lightning-choice"
                              v-bind:id="'QU_' + question.id + '_' + response.id"
-                             v-bind:name="'QU_' + question.id"
+                             v-bind:name="'QU_' + question.id + '_' + response.id"
                              v-bind:response="response.id"
                              v-on:click="changed"
                              data-tries="1"
@@ -191,9 +195,7 @@ Vue.component('olab-question-radio',
                   </li>
 
                   <input type="hidden"
-                         v-bind:id="'QU_' + question.id + '_previous'"
-                         v-bind:name="'QU_' + question.id + '_previous'" />
-
+                         v-bind:id="'QU_' + question.id + '_previous'" />
                 </ul>
               </div>
             </div>`,
