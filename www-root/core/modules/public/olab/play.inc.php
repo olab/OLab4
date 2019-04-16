@@ -53,13 +53,13 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_OLAB"))) {
     OLabUtilities::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/olab.play.main.js\"></script>" );
     OLabUtilities::addToHead( "<link href=\"". HostSystemApi::getRootUrl() ."/css/olab/olab.css\" rel=\"stylesheet\" type=\"text/css\" media=\"all\" />" );
 
-    OLabUtilities::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/h5p/h5p-event-dispatcher.js\"></script>" );
-    OLabUtilities::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/h5p/h5p-utils.js\"></script>" );
-    OLabUtilities::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/h5p/h5p-data-view.js\"></script>" );
-    OLabUtilities::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/h5p/h5p-data-views.js\"></script>" );
+    //OLabUtilities::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/h5p/h5p-event-dispatcher.js\"></script>" );
+    //OLabUtilities::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/h5p/h5p-utils.js\"></script>" );
+    //OLabUtilities::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/h5p/h5p-data-view.js\"></script>" );
+    //OLabUtilities::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/h5p/h5p-data-views.js\"></script>" );
 
-    OLabUtilities::addToHead( "<link href=\"". HostSystemApi::getRootUrl() ."/css/olab/h5p/h5p.css\" rel=\"stylesheet\" type=\"text/css\" media=\"all\" />" );
-    OLabUtilities::addToHead( "<link href=\"". HostSystemApi::getRootUrl() ."/css/olab/h5p/h5p-admin.css\" rel=\"stylesheet\" type=\"text/css\" media=\"all\" />" );   
+    //OLabUtilities::addToHead( "<link href=\"". HostSystemApi::getRootUrl() ."/css/olab/h5p/h5p.css\" rel=\"stylesheet\" type=\"text/css\" media=\"all\" />" );
+    //OLabUtilities::addToHead( "<link href=\"". HostSystemApi::getRootUrl() ."/css/olab/h5p/h5p-admin.css\" rel=\"stylesheet\" type=\"text/css\" media=\"all\" />" );   
 
     // autoload any kernel-level javascript extensions
     $jsPath = HostSystemApi::getFileRoot() . "/javascript/olab/autoload";
