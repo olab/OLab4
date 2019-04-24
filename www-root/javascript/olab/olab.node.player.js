@@ -703,13 +703,13 @@ var OlabNodePlayer = function(params) {
             mounted: function() {
 
                 //let snippet = new DOMParser().parseFromString(source.scripts, 'text/html').querySelector("script");
-                let recaptchaScript = document.createElement('script');
-                recaptchaScript.setAttribute('type', 'text/javascript');
-                recaptchaScript.setAttribute('src',
-                    'http://www.conceptispuzzles.com/index.aspx?uri=channel/bat-starter-1/1/js');
-                document.head.appendChild(recaptchaScript);
+                //let recaptchaScript = document.createElement('script');
+                //recaptchaScript.setAttribute('type', 'text/javascript');
+                //recaptchaScript.setAttribute('src',
+                //    'http://www.conceptispuzzles.com/index.aspx?uri=channel/bat-starter-1/1/js');
+                //document.head.appendChild(recaptchaScript);
 
-                var header = document.head.children;
+                //var header = document.head.children;
 
             },
 

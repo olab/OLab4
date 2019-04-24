@@ -605,6 +605,12 @@ var OLabUtilities = function(siteRoot, pageUrl, authToken) {
     function setAuthToken(token) {
         vm.token = token;
         vm.authHeader = 'Bearer ' + vm.token;
+
+        jQuery.ajaxSetup({
+          beforeSend: function(xhr) {
+            xhr.setRequestHeader('Authorization', vm.authHeader );
+          }
+        });
     }
 
     /**
