@@ -26,7 +26,7 @@ if (!defined("PARENT_INCLUDED")) {
     /*
      * Updates the <title></title> of the page.
      */
-    $PAGE_META["title"] = $translate->_("OpenLabyrinth 4");
+    $PAGE_META["title"] = $translate->_("OLab 4");
 
 
     /*
@@ -42,7 +42,7 @@ if (!defined("PARENT_INCLUDED")) {
 ?>
 
 <h1>
-    <?php echo $translate->_("OpenLabyrinth 4"); ?>
+    <?php echo $translate->_("OLab 4"); ?>
 </h1>
 
 <?php

@@ -45,7 +45,7 @@ if(!defined("PARENT_INCLUDED")) {
 
     define("IN_OLAB", "IN_OLAB");
 
-    $BREADCRUMB[] = array("url" => ENTRADA_URL."/".$MODULE, "title" => "OpenLabyrinth 4");
+    $BREADCRUMB[] = array("url" => ENTRADA_URL."/".$MODULE, "title" => "OLab 4");
 
     if (($router) && ($router->initRoute())) {
 
