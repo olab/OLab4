@@ -57,7 +57,9 @@
         "wikimedia/composer-merge-plugin": "^1.4",
         "maennchen/zipstream-php": "^0.4.1",
         "smalot/pdfparser": "0.11",
-        "ramsey/uuid": "^3.8"
+        "ramsey/uuid": "^3.8",
+        "h5p/h5p-core": "^1.22",
+        "h5p/h5p-editor": "^1.22"
     },
     "require-dev": {
         "phpunit/dbunit": "^1.3",

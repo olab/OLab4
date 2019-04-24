@@ -500,6 +500,10 @@ var OlabNodePlayer = function(params) {
 
             vm.nodeVue.node = vm.node;
 
+            injectRawScriptAssets(data.raw_scripts_stack);
+            injectCssAssets(data.styles_stack);
+            injectScriptAssets(data.scripts_stack);
+
             // set the browser page title to the node title
             document.title = vm.node.title;
 
@@ -514,6 +518,70 @@ var OlabNodePlayer = function(params) {
   
     function onSuspendFailed(data) {
       alert(data);
+    }
+
+    function injectScriptAssets(assets) {
+
+      if (!assets) {
+        return;
+      }
+
+      for (var i = 0; i < assets.length; i++) {
+
+        var script = document.createElement('script');
+        script.async = false;
+        script.setAttribute('type', 'text/javascript');
+        script.setAttribute('id', assets[i].id);
+        script.setAttribute('src', assets[i].src);
+        script.onload = function() {
+          vm.Utilities.log.debug('injected script ' + this.id + ": " + this.src);
+        }
+        document.getElementsByTagName('body')[0].appendChild(script);
+
+        //vm.Utilities.log.debug('injecting script ' + assets[i].id + ": " + assets[i].src);
+
+      }
+
+    }
+
+    function injectCssAssets(assets) {
+
+      if (!assets) {
+        return;
+      }
+
+      for (var i = 0; i < assets.length; i++) {
+
+        var link = document.createElement("link");
+        link.type = "text/css";
+        link.setAttribute('id', assets[i].id);
+        link.href = assets[i].src;
+        link.rel = "stylesheet";
+        document.getElementsByTagName("body")[0].appendChild(link);
+
+        vm.Utilities.log.debug('injecting css ' + assets[i].id + ": " + assets[i].src);
+      
+      }
+
+    }
+    function injectRawScriptAssets(assets) {
+
+      if (!assets) {
+        return;
+      }
+
+      for (var i = 0; i < assets.length; i++) {
+
+        var script = document.createElement('script');
+        script.async = false;
+        script.setAttribute('id', assets[i].id);
+        script.innerHTML = assets[i].src;
+        script.onload = function() {
+          vm.Utilities.log.debug('injected raw script ' + this.id );
+        }
+        document.getElementsByTagName('body')[0].appendChild(script);
+
+      }
     }
 
     /**
