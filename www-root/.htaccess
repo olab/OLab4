@@ -2,7 +2,7 @@ RedirectMatch 404 /\\.git(/|$)
 
 <IfModule mod_rewrite.c>
 	RewriteEngine On
-	RewriteBase /apidev
+	RewriteBase /
 
 	RewriteCond %{HTTP:Authorization} ^(.*)
 	RewriteRule .* - [e=HTTP_AUTHORIZATION:%1]
@@ -30,3 +30,4 @@ RedirectMatch 404 /\\.git(/|$)
 
 	RewriteRule ^(.*)$ index.php/$1 [L,QSA]
 </IfModule>
+

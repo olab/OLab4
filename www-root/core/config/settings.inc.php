@@ -394,7 +394,7 @@ define("SHOW_LOAD_STATS", false);												// Do you want to see the time it t
 
 define("SEARCH_FILE_CONTENTS", true);											// Add file contents search to curriculum search
 
-define("APPLICATION_NAME", "OLab 4");											// The name of this application in your school (i.e. MedCentral, Osler, etc.)
+define("APPLICATION_NAME", "OLab 4 (dev)");											// The name of this application in your school (i.e. MedCentral, Osler, etc.)
 //define("APPLICATION_NAME", "Entrada ME");											// The name of this application in your school (i.e. MedCentral, Osler, etc.)
 define("APPLICATION_VERSION", "1.12.0"); 										// The current filesystem version of Entrada.
 define("APPLICATION_IDENTIFIER", "app-".AUTH_APP_ID);							// PHP does not allow session key's to be integers (sometimes), so we have to make it a string.
