@@ -528,17 +528,28 @@ var OlabNodePlayer = function(params) {
 
       for (var i = 0; i < assets.length; i++) {
 
-        var script = document.createElement('script');
-        script.async = false;
-        script.setAttribute('type', 'text/javascript');
-        script.setAttribute('id', assets[i].id);
-        script.setAttribute('src', assets[i].src);
-        script.onload = function() {
-          vm.Utilities.log.debug('injected script ' + this.id + ": " + this.src);
-        }
-        document.getElementsByTagName('body')[0].appendChild(script);
+        // check if script loaded already
+        var script = null; // document.getElementById(assets[i].id);
 
-        //vm.Utilities.log.debug('injecting script ' + assets[i].id + ": " + assets[i].src);
+        if (script == null) {
+
+          script = document.createElement('script');
+          script.async = false;
+          script.setAttribute('type', 'text/javascript');
+          script.setAttribute('id', assets[i].id);
+          script.setAttribute('src', assets[i].src);
+          script.onload = function() {
+            vm.Utilities.log.debug('injected script ' + this.id + ": " + this.src);
+          }
+          document.getElementsByTagName('body')[0].appendChild(script);
+
+          vm.Utilities.log.debug('injecting script ' + assets[i].id + ": " + assets[i].src);
+
+        } else {
+
+          vm.Utilities.log.debug('script ' + assets[i].id + ": already loaded" );
+
+        }
 
       }
 
@@ -552,18 +563,29 @@ var OlabNodePlayer = function(params) {
 
       for (var i = 0; i < assets.length; i++) {
 
-        var link = document.createElement("link");
-        link.type = "text/css";
-        link.setAttribute('id', assets[i].id);
-        link.href = assets[i].src;
-        link.rel = "stylesheet";
-        document.getElementsByTagName("body")[0].appendChild(link);
+        // check if style loaded already
+        var link = null; // document.getElementById(assets[i].id);
 
-        vm.Utilities.log.debug('injecting css ' + assets[i].id + ": " + assets[i].src);
-      
+        if (link == null) {
+          link = document.createElement("link");
+          link.type = "text/css";
+          link.setAttribute('id', assets[i].id);
+          link.href = assets[i].src;
+          link.rel = "stylesheet";
+          document.getElementsByTagName("body")[0].appendChild(link);
+
+          vm.Utilities.log.debug('injecting css ' + assets[i].id + ": " + assets[i].src);
+
+        } else {
+
+          vm.Utilities.log.debug('css ' + assets[i].id + ": already loaded");
+
+        }
+
       }
 
     }
+
     function injectRawScriptAssets(assets) {
 
       if (!assets) {
@@ -572,14 +594,25 @@ var OlabNodePlayer = function(params) {
 
       for (var i = 0; i < assets.length; i++) {
 
-        var script = document.createElement('script');
+        // check if script loaded already
+        var script = null; // document.getElementById(assets[i].id);
+
+        if (script != null) {
+
+          vm.Utilities.log.debug('raw script ' + assets[i].id + ': already loaded. removing.');
+          script.parentNode.removeChild(script);
+        }
+
+        script = document.createElement('script');
         script.async = false;
         script.setAttribute('id', assets[i].id);
         script.innerHTML = assets[i].src;
         script.onload = function() {
-          vm.Utilities.log.debug('injected raw script ' + this.id );
+          vm.Utilities.log.debug('injected raw script ' + this.id);
         }
         document.getElementsByTagName('body')[0].appendChild(script);
+
+        vm.Utilities.log.debug('injecting raw script: ' + assets[i].id);
 
       }
     }
