@@ -529,27 +529,25 @@ var OlabNodePlayer = function(params) {
       for (var i = 0; i < assets.length; i++) {
 
         // check if script loaded already
-        var script = null; // document.getElementById(assets[i].id);
+        var script = document.getElementById(assets[i].id);
 
-        if (script == null) {
+        if (script != null) {
 
-          script = document.createElement('script');
-          script.async = false;
-          script.setAttribute('type', 'text/javascript');
-          script.setAttribute('id', assets[i].id);
-          script.setAttribute('src', assets[i].src);
-          script.onload = function() {
-            vm.Utilities.log.debug('injected script ' + this.id + ": " + this.src);
-          }
-          document.getElementsByTagName('body')[0].appendChild(script);
-
-          vm.Utilities.log.debug('injecting script ' + assets[i].id + ": " + assets[i].src);
-
-        } else {
-
-          vm.Utilities.log.debug('script ' + assets[i].id + ": already loaded" );
-
+          vm.Utilities.log.debug('script ' + assets[i].id + ': already loaded. removing.');
+          script.parentNode.removeChild(script);
         }
+
+        script = document.createElement('script');
+        script.async = false;
+        script.setAttribute('type', 'text/javascript');
+        script.setAttribute('id', assets[i].id);
+        script.setAttribute('src', assets[i].src);
+        script.onload = function() {
+          vm.Utilities.log.debug('injected script ' + this.id + ": " + this.src);
+        }
+        document.getElementsByTagName('body')[0].appendChild(script);
+
+        //vm.Utilities.log.debug('injecting script ' + assets[i].id + ": " + assets[i].src);
 
       }
 
@@ -564,7 +562,7 @@ var OlabNodePlayer = function(params) {
       for (var i = 0; i < assets.length; i++) {
 
         // check if style loaded already
-        var link = null; // document.getElementById(assets[i].id);
+        var link = document.getElementById(assets[i].id);
 
         if (link == null) {
           link = document.createElement("link");
@@ -595,7 +593,7 @@ var OlabNodePlayer = function(params) {
       for (var i = 0; i < assets.length; i++) {
 
         // check if script loaded already
-        var script = null; // document.getElementById(assets[i].id);
+        var script = document.getElementById(assets[i].id);
 
         if (script != null) {
 
@@ -610,9 +608,10 @@ var OlabNodePlayer = function(params) {
         script.onload = function() {
           vm.Utilities.log.debug('injected raw script ' + this.id);
         }
+
         document.getElementsByTagName('body')[0].appendChild(script);
 
-        vm.Utilities.log.debug('injecting raw script: ' + assets[i].id);
+        //vm.Utilities.log.debug('injecting raw script: ' + assets[i].id);
 
       }
     }
