@@ -13,4 +13,4 @@ However, OLab4 remains a standalone project. You do not have to buy Entrada, or 
 
 ## Installing OLab4
 
-For detailed information on installing or upgrading Entrada ME please visit the wiki at:
+For detailed information on installing or upgrading Olab4 please visit the wiki at: https://github.com/olab/OLab4/blob/master/OLab4%20Docker%20Setup%20Notes%20v2a.docx
