@@ -43,8 +43,8 @@ Directions:
 
 •	Clone the OLab4 repositories into the container root directory.  Using GIT Bash or similar command line too, execute the following command lines:
 
-  $ git clone --single-branch --branch 4.1dev https://github.com/olab/OLab4.git  
-  $ git clone --single-branch --branch 4.1dev https://github.com/olab/OLab4-api.git
+  $ git clone --single-branch --branch 4.0dev https://github.com/olab/OLab4.git  
+  $ git clone --single-branch --branch 4.0dev https://github.com/olab/OLab4-api.git
 
 •	Change into the generated OLab/OLab4/docker directory.  Verify the file 'docker-compose.yml' exists in this directory.
 
