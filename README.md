@@ -48,6 +48,7 @@ Directions:
   $ docker-compose up -d  
   
   Depending on the speed of the internet connection, those may take some time.  When the creation has completed, open Kitematic (via the Docker context menu) and verify the container is running.  If the container creation was successful, you should see the following two log file lines that signify that the container is running:
+  
   2017-11-29 12:28:35,941 INFO success: httpd entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
   2017-11-29 12:28:35,941 INFO success: mariadb entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
   
