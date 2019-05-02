@@ -11,9 +11,7 @@ Internally, OLab4 still uses a simplified version of Entrada for basic housekeep
 
 However, OLab4 remains a standalone project. You do not have to buy Entrada, or Elentra (its subsequent iteration), in order to use or install OLab4. There are no licensing commitments to those groups. The version of Entrada embedded in OLab4 will remain free and open-source. 
 
-## Installing OLab4
-
-# OLab4-api
+## Installing OLab
 
 This note describes the step-by-step instructions for setting up the OLab4 demo Docker container on a host system.
 
