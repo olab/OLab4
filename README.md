@@ -37,25 +37,31 @@ Directions:
 •	Create a 'docker' directory on the host system (preferably with full permissions to the host system logged in user).  This is now the 'container root directory'.
 
 •	Clone the OLab4 repositories into the container root directory.  Using GIT Bash or similar command line too, execute the following command lines:
-  $ git clone --single-branch --branch 4.1dev https://github.com/olab/OLab4.git
+
+  $ git clone --single-branch --branch 4.1dev https://github.com/olab/OLab4.git  
   $ git clone --single-branch --branch 4.1dev https://github.com/olab/OLab4-api.git
 
 •	Change into the generated OLab/OLab4/docker directory.  Verify the file 'docker-compose.yml' exists in this directory.
 
 •	Execute the following command to create the 'olab4-developer' docker container:
+
   $ docker-compose up -d  
+  
   Depending on the speed of the internet connection, those may take some time.  When the creation has completed, open Kitematic (via the Docker context menu) and verify the container is running.  If the container creation was successful, you should see the following two log file lines that signify that the container is running:
   2017-11-29 12:28:35,941 INFO success: httpd entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
   2017-11-29 12:28:35,941 INFO success: mariadb entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
   
 •	Open a GIT Bash command prompt. Execute the following command to invoke a command line prompt hosted WITHIN the container:
+
   $ docker exec -it olab4-developer bash
   
   If GIT Bash (Windows) was installed with an alternate command console, you may be to prefix the command as such:  
+  
   $ winpty docker exec -it olab4-developer bash
   
   The window should respond with a different command prompt:
   [root@aa0a1928378c /]#
+  
   Verify that necessary file shares to the host system are configured properly and are operational.
   [root@ aa0a1928378c /]# ls -l /var/lib/mysql
   total 0
