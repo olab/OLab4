@@ -23,7 +23,9 @@ Prerequisites:
 
 •	Read-access to the OLab4 git repository (contact David for permission)
 
-•	GIT Bash shell installed on the host system (if Windows, part of GIT for Windows install)
+•	(Windows) GIT for Windows, inclunding GIT Bash shell
+
+•	(Linux) GIT
 
 
 Directions:
