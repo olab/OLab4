@@ -58,7 +58,7 @@ Directions:
 
   $ docker exec -it olab4-developer bash
   
-  If GIT Bash (Windows) was installed with an alternate command console, you may be to prefix the command as such:  
+  If GIT Bash (Windows) was installed with an alternate command console, you may need to prefix the command as such:  
   
   $ winpty docker exec -it olab4-developer bash
   
