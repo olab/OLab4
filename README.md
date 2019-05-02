@@ -61,10 +61,13 @@ Directions:
   $ winpty docker exec -it olab4-developer bash
   
   The window should respond with a different command prompt:
+  
   [root@aa0a1928378c /]#
   
   Verify that necessary file shares to the host system are configured properly and are operational.
+  
   [root@ aa0a1928378c /]# ls -l /var/lib/mysql
+  
   total 0
 
   [root@ aa0a1928378c /]# ls -l /var/www/vhosts/
