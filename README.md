@@ -50,7 +50,9 @@ Directions:
   Depending on the speed of the internet connection, those may take some time.  When the creation has completed, open Kitematic (via the Docker context menu) and verify the container is running.  If the container creation was successful, you should see the following two log file lines that signify that the container is running:
   
   2017-11-29 12:28:35,941 INFO success: httpd entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+  
   2017-11-29 12:28:35,941 INFO success: mariadb entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+  
   
 •	Open a GIT Bash command prompt. Execute the following command to invoke a command line prompt hosted WITHIN the container:
 
@@ -79,6 +81,7 @@ Directions:
   -rwxr-xr-x 1 root root 625 Apr 27  2018 olab4.dev.conf
   
 •	Run the following post-setup commands within the container to download and create the OLab4 demo databases, set up apache, and connect file shares from the host system:
+
   [root@aa0a1928378c /]# cd /tmp
   [root@aa0a1928378c /]# ./post-create.sh
   If, during the post-create step, you see the following message:
