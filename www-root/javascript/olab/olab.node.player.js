@@ -31,7 +31,7 @@ var OlabNodePlayer = function(params) {
     vm.server = [];
     vm.map = [];
     vm.node = [];
-
+    vm.H5P = [];
     vm.state = [];
     vm.haveMapData = false;
 
@@ -62,7 +62,8 @@ var OlabNodePlayer = function(params) {
         navigate:navigate,
         parameters: vm.urlParameters,
         play:play,
-        onHashChanged:onHashChanged
+        onHashChanged:onHashChanged,
+        utilities: vm.Utilities
     };
 
     return vm.service;
@@ -543,13 +544,46 @@ var OlabNodePlayer = function(params) {
         script.setAttribute('id', assets[i].id);
         script.setAttribute('src', assets[i].src);
         script.onload = function() {
-          vm.Utilities.log.debug('injected script ' + this.id + ": " + this.src);
+          onPostLoadScript( this );
         }
+
         document.getElementsByTagName('body')[0].appendChild(script);
 
         //vm.Utilities.log.debug('injecting script ' + assets[i].id + ": " + assets[i].src);
 
       }
+
+    }
+
+    function onPostLoadScript( source ) {
+
+      vm.Utilities.log.debug('injected script ' + source.id + ": " + source.src);
+
+      switch (source.id) {
+
+        case 'h5p-core-js-jquery': 
+          onLoadScript_h5pcorejsjquery( source );
+          break;
+
+        case 'h5p-core-js-h5p': 
+          onLoadScript_h5pcorejsh5p( source );
+          break;
+
+        default:
+          break;
+      }
+
+    }
+
+    function onLoadScript_h5pcorejsh5p( source ) {
+      vm.H5P = window.H5P = window.H5P || {};  
+    }
+
+    function onLoadScript_h5pcorejsjquery( source ) {
+
+      var headerObj = {};
+      headerObj[ 'Authorization'] = vm.Utilities.getAuthHeader();
+      H5P.jQuery.ajaxSetup({ headers: headerObj });
 
     }
 
