@@ -87,6 +87,7 @@ var OLabUtilities = function(siteRoot, pageUrl, authToken) {
         eraseCookie:eraseCookie,
         getAuthHeader:getAuthHeader,
         getAuthToken:getAuthToken,
+        getFileName:getFileName,
         getJson:getJson,
         getJsonAsyc:getJsonAsyc,
         getPreference:getPreference,
@@ -262,6 +263,27 @@ var OLabUtilities = function(siteRoot, pageUrl, authToken) {
 
         return null;
 
+    }
+
+    function getFileName( source ) {
+
+      try {
+
+        // Use the regular expression to replace the non-matching content with a blank space
+        var t = source.replace(/^.*[\\\/]/, '');
+
+        // test for and remove any query string part
+        var pos = t.indexOf('?');
+        if ( pos == -1 )
+          return t;
+
+        return t.substr( 0, pos );
+
+      } catch (e) {
+        vm.logger.error(e);
+      }
+
+      return source;
     }
 
     function getHttpHeader(request, key) {

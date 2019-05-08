@@ -500,10 +500,15 @@ var OlabNodePlayer = function(params) {
             renderNodeContent(vm.node);
 
             vm.nodeVue.node = vm.node;
-
-            injectCssAssets(data.styles_stack);
-            injectScriptAssets(data.scripts_stack);
+          
             injectRawScriptAssets(data.raw_scripts_stack);
+
+            // load document-level H5P infrastructure, if there
+            // is any.
+            injectH5P();
+
+            //injectCssAssets(data.styles_stack);
+            //injectScriptAssets(data.scripts_stack);
 
             // set the browser page title to the node title
             document.title = vm.node.title;
@@ -521,6 +526,23 @@ var OlabNodePlayer = function(params) {
       alert(data);
     }
 
+    function injectH5P() {
+
+      // test if H5P integration object defined
+      var t = typeof( H5PIntegration );
+      if ( t != "object") 
+        return;
+
+      // inject H5P core assets
+      injectCssAssets( H5PIntegration.core.styles || [] );
+      injectScriptAssets( H5PIntegration.core.scripts || [] );
+
+      // inject document-level assets
+      injectCssAssets( H5PIntegration.loadedCss || [] );
+      injectScriptAssets( H5PIntegration.loadedJs || [] );
+
+    }
+
     function injectScriptAssets(assets) {
 
       if (!assets) {
@@ -529,61 +551,32 @@ var OlabNodePlayer = function(params) {
 
       for (var i = 0; i < assets.length; i++) {
 
+        var id = vm.Utilities.getFileName( assets[i] );
+
         // check if script loaded already
-        var script = document.getElementById(assets[i].id);
+        var script = document.getElementById(id);
 
         if (script != null) {
 
-          vm.Utilities.log.debug('script ' + assets[i].id + ': already loaded. removing.');
+          vm.Utilities.log.debug('script ' + assets[i] + ': already loaded. removing.');
           script.parentNode.removeChild(script);
         }
 
         script = document.createElement('script');
         script.async = false;
         script.setAttribute('type', 'text/javascript');
-        script.setAttribute('id', assets[i].id);
-        script.setAttribute('src', assets[i].src);
+        script.setAttribute('id', id );
+        script.setAttribute('src', assets[i]);
+
         script.onload = function() {
           onPostLoadScript( this );
         }
 
         document.getElementsByTagName('body')[0].appendChild(script);
 
-        //vm.Utilities.log.debug('injecting script ' + assets[i].id + ": " + assets[i].src);
+        vm.Utilities.log.debug('injecting script ' + id + ": " + assets[i]);
 
       }
-
-    }
-
-    function onPostLoadScript( source ) {
-
-      vm.Utilities.log.debug('injected script ' + source.id + ": " + source.src);
-
-      switch (source.id) {
-
-        case 'h5p-core-js-jquery': 
-          onLoadScript_h5pcorejsjquery( source );
-          break;
-
-        case 'h5p-core-js-h5p': 
-          onLoadScript_h5pcorejsh5p( source );
-          break;
-
-        default:
-          break;
-      }
-
-    }
-
-    function onLoadScript_h5pcorejsh5p( source ) {
-      vm.H5P = window.H5P = window.H5P || {};  
-    }
-
-    function onLoadScript_h5pcorejsjquery( source ) {
-
-      var headerObj = {};
-      headerObj[ 'Authorization'] = vm.Utilities.getAuthHeader();
-      H5P.jQuery.ajaxSetup({ headers: headerObj });
 
     }
 
@@ -595,18 +588,22 @@ var OlabNodePlayer = function(params) {
 
       for (var i = 0; i < assets.length; i++) {
 
+        var id = vm.Utilities.getFileName( assets[i] );
+
         // check if style loaded already
-        var link = document.getElementById(assets[i].id);
+        var link = document.getElementById(id);
 
         if (link == null) {
+
           link = document.createElement("link");
           link.type = "text/css";
-          link.setAttribute('id', assets[i].id);
-          link.href = assets[i].src;
+          link.setAttribute('id', assets[i]);
+          link.href = assets[i];
+          link.setAttribute('id', id );
           link.rel = "stylesheet";
           document.getElementsByTagName("body")[0].appendChild(link);
 
-          vm.Utilities.log.debug('injecting css ' + assets[i].id + ": " + assets[i].src);
+          vm.Utilities.log.debug('injecting css ' + id + ": " + assets[i]);
 
         } else {
 
@@ -647,6 +644,33 @@ var OlabNodePlayer = function(params) {
         }
 
       }
+
+    }
+
+    function onPostLoadScript( source ) {
+
+      var id = source.id;
+      vm.Utilities.log.debug('injected script ' + id );
+
+      if ( id.indexOf( 'jquery.js' ) != -1 ) { 
+          onLoadScript_h5pcorejsjquery( source );
+      }
+
+      else if ( id.indexOf( 'h5p.js' ) != -1 ) { 
+          onLoadScript_h5pcorejsh5p( source );
+      }
+
+    }
+
+    function onLoadScript_h5pcorejsh5p( source ) {
+      vm.H5P = window.H5P = window.H5P || {};  
+    }
+
+    function onLoadScript_h5pcorejsjquery( source ) {
+
+      var headerObj = {};
+      headerObj[ 'Authorization'] = vm.Utilities.getAuthHeader();
+      H5P.jQuery.ajaxSetup({ headers: headerObj });
 
     }
 
