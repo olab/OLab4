@@ -641,6 +641,7 @@ var OlabNodePlayer = function(params) {
 
         } catch (e) {
 
+          vm.Utilities.log.error('raw script ' + assets[i].id + ': error:');
           vm.Utilities.log.error(e);
 
         }
