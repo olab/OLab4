@@ -501,9 +501,9 @@ var OlabNodePlayer = function(params) {
 
             vm.nodeVue.node = vm.node;
 
-            injectRawScriptAssets(data.raw_scripts_stack);
             injectCssAssets(data.styles_stack);
             injectScriptAssets(data.scripts_stack);
+            injectRawScriptAssets(data.raw_scripts_stack);
 
             // set the browser page title to the node title
             document.title = vm.node.title;
