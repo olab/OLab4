@@ -65,6 +65,10 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_OLAB"))) {
 }
 ?>
 
+<script>
+  var H5PIntegration = null;
+</script>
+
 <!-- DIVs for Olab content binding.  DO NOT EDIT. -->
 <div id="olabHeaderContent" align="center"></div>
 <div id="olabNodeContent" align="center">

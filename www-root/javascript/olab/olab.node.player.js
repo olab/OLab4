@@ -618,36 +618,35 @@ var OlabNodePlayer = function(params) {
 
     }
 
+    /* Execute raw script */
     function injectRawScriptAssets(assets) {
 
       if (!assets) {
         return;
       }
 
+      // loop through all assets and eval() it to ensure it's executed SYNCHRONOUSLY.
       for (var i = 0; i < assets.length; i++) {
 
-        // check if script loaded already
-        var script = document.getElementById(assets[i].id);
+        try {
 
-        if (script != null) {
+          var src = assets[i].src;
+          // yes, I know: people say eval is evil.  It is used here to ensure
+          // the code is executed synchronously.  Later loads of server-side
+          // .js files may rely on the raw script to be executed completely
+          // before they are loaded.
+          eval(src);
 
-          vm.Utilities.log.debug('raw script ' + assets[i].id + ': already loaded. removing.');
-          script.parentNode.removeChild(script);
+          vm.Utilities.log.debug('raw script ' + assets[i].id + ': executed.');
+
+        } catch (e) {
+
+          vm.Utilities.log.error(e);
+
         }
-
-        script = document.createElement('script');
-        script.async = false;
-        script.setAttribute('id', assets[i].id);
-        script.innerHTML = assets[i].src;
-        script.onload = function() {
-          vm.Utilities.log.debug('injected raw script ' + this.id);
-        }
-
-        document.getElementsByTagName('body')[0].appendChild(script);
-
-        //vm.Utilities.log.debug('injecting raw script: ' + assets[i].id);
 
       }
+
     }
 
     /**
