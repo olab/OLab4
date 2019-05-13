@@ -501,7 +501,7 @@ var OlabNodePlayer = function(params) {
 
             vm.nodeVue.node = vm.node;
           
-            injectRawScriptAssets(data.raw_scripts_stack);
+            injectRawScriptAssets(data.raw_scripts_stack || [] );
 
             // load document-level H5P infrastructure, if there
             // is any.
@@ -530,17 +530,50 @@ var OlabNodePlayer = function(params) {
 
       // test if H5P integration object defined
       var t = typeof( H5PIntegration );
-      if ( t != "object") 
+      if ( ( t != "object") || ( H5PIntegration == null ) )
         return;
 
       // inject H5P core assets
       injectCssAssets( H5PIntegration.core.styles || [] );
-      injectScriptAssets( H5PIntegration.core.scripts || [] );
-
-      // inject document-level assets
       injectCssAssets( H5PIntegration.loadedCss || [] );
-      injectScriptAssets( H5PIntegration.loadedJs || [] );
 
+      var scripts = H5PIntegration.core.scripts;
+      scripts.splice( 1, 0, H5PIntegration.loadedJs );
+      testLoad( scripts || [] );
+      //testLoad( H5PIntegration.loadedJs || [] );
+
+      //injectScriptAssets( H5PIntegration.core.scripts || [] );
+      //injectScriptAssets( H5PIntegration.loadedJs || [] );
+
+    }
+
+    function testLoad( hrefArray ) {
+
+      jsuLoader
+        .reset()
+        .addScript( hrefArray )
+        .onComplete(() => console.info("* ALL SCRIPTS LOADED *"))
+        .load();
+    }
+
+    function createScriptTag( id, href ) {
+
+        // check if script loaded already
+        var script = document.getElementById(id);
+
+        if (script != null) {
+
+          vm.Utilities.log.debug('script ' + id + ': already loaded. removing.');
+          script.parentNode.removeChild(script);
+        }
+
+        script = document.createElement('script');
+        script.async = false;
+        script.setAttribute('type', 'text/javascript');
+        script.setAttribute('id', id );
+        script.setAttribute('src', href);
+
+        return script;
     }
 
     function injectScriptAssets(assets) {
@@ -553,29 +586,16 @@ var OlabNodePlayer = function(params) {
 
         var id = vm.Utilities.getFileName( assets[i] );
 
-        // check if script loaded already
-        var script = document.getElementById(id);
+        vm.Utilities.log.debug('injecting script ' + id + ": " + assets[i]);
 
-        if (script != null) {
-
-          vm.Utilities.log.debug('script ' + assets[i] + ': already loaded. removing.');
-          script.parentNode.removeChild(script);
-        }
-
-        script = document.createElement('script');
-        script.async = false;
-        script.setAttribute('type', 'text/javascript');
-        script.setAttribute('id', id );
-        script.setAttribute('src', assets[i]);
+        // create script tag and insert into DOM
+        var script = createScriptTag( id, assets[i] );
 
         script.onload = function() {
           onPostLoadScript( this );
         }
 
         document.getElementsByTagName('body')[0].appendChild(script);
-
-        vm.Utilities.log.debug('injecting script ' + id + ": " + assets[i]);
-
       }
 
     }
@@ -650,7 +670,7 @@ var OlabNodePlayer = function(params) {
     function onPostLoadScript( source ) {
 
       var id = source.id;
-      vm.Utilities.log.debug('injected script ' + id );
+      vm.Utilities.log.debug('injected/executed script ' + id );
 
       if ( id.indexOf( 'jquery.js' ) != -1 ) { 
           onLoadScript_h5pcorejsjquery( source );
