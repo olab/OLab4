@@ -1,16 +1,16 @@
 ﻿// node link
 Vue.component('olab-node-links', {
     template: `<div id='links'>
-                 <div v-for='link in links' class='olab-node-link' v-bind:id='"link" + link.DestinationNode.id' >
+                 <div v-for='link in node.MapNodeLinks' class='olab-node-link' v-bind:id='"link" + link.DestinationNode.id' >
                     <a v-bind:class='classes(link)' v-bind:onclick='"olab.navigate(" + link.DestinationNode.id + ");"'>{{link.DestinationNode.title}}</a>
                     <br/>
                  </div>
                </div>`,
-    props: ['links'],
+    props: ['node'],
     methods: {
         classes: function( link ) {
             var classes= 'olab-node-link';
-            if (link.link_style_id === 5) {
+            if (this.$props.node.link_style_id === 5) {
                 classes += " btn";
             }
             return classes;
@@ -44,7 +44,7 @@ var OlabLINKSTag = function(olabNodePlayer) {
                 " class='" +
                 vm.OLAB_HTML_TAG +
                 "'" +
-                " v-bind:links='node.MapNodeLinks'>" +
+                " v-bind:node='node'>" +
                 "</" +
                 vm.OLAB_HTML_TAG +
                 ">";
