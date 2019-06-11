@@ -501,6 +501,7 @@ var OlabNodePlayer = function(params) {
 
             vm.nodeVue.node = vm.node;
           
+            //injectScriptAssets(data.scripts_stack || [] );
             injectRawScriptAssets(data.raw_scripts_stack || [] );
 
             // load document-level H5P infrastructure, if there
@@ -584,12 +585,13 @@ var OlabNodePlayer = function(params) {
 
       for (var i = 0; i < assets.length; i++) {
 
-        var id = vm.Utilities.getFileName( assets[i] );
+        var url = assets[i].src;
+        var id = assets[i].id;
 
-        vm.Utilities.log.debug('injecting script ' + id + ": " + assets[i]);
+        vm.Utilities.log.debug('injecting script ' + id + ": " + url);
 
         // create script tag and insert into DOM
-        var script = createScriptTag( id, assets[i] );
+        var script = createScriptTag( id, url );
 
         script.onload = function() {
           onPostLoadScript( this );
