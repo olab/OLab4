@@ -319,19 +319,19 @@ var OlabNodePlayer = function(params) {
 
         // if no id, return everything
         if (id === null) {
-            var items = vm.server.Files;
-            items = items.concat(vm.map.Files);
-            items = items.concat(vm.node.Files);
+            var items = vm.server.files;
+            items = items.concat(vm.map.files);
+            items = items.concat(vm.node.files);
             return items;
         }
 
-        var item = vm.Utilities.searchObjectArray(vm.server.Files, id);
+        var item = vm.Utilities.searchObjectArray(vm.server.files, id);
 
         if (item === null)
-            item = vm.Utilities.searchObjectArray(vm.map.Files, id);
+            item = vm.Utilities.searchObjectArray(vm.map.files, id);
 
         if (item === null)
-            item = vm.Utilities.searchObjectArray(vm.node.Files, id);
+            item = vm.Utilities.searchObjectArray(vm.node.files, id);
 
         if (item !== null) {
             return item;
@@ -349,19 +349,19 @@ var OlabNodePlayer = function(params) {
 
         // if no id, return everything
         if (id === null) {
-            var items = vm.server.Questions;
-            items = items.concat(vm.map.Questions);
-            items = items.concat(vm.node.Questions);
+            var items = vm.server.questions;
+            items = items.concat(vm.map.questions);
+            items = items.concat(vm.node.questions);
             return items;
         }
 
-        var item = vm.Utilities.searchObjectArray(vm.server.Questions, id);
+        var item = vm.Utilities.searchObjectArray(vm.server.questions, id);
 
         if (item === null)
-            item = vm.Utilities.searchObjectArray(vm.map.Questions, id);
+            item = vm.Utilities.searchObjectArray(vm.map.questions, id);
 
         if (item === null)
-            item = vm.Utilities.searchObjectArray(vm.node.Questions, id);
+            item = vm.Utilities.searchObjectArray(vm.node.questions, id);
 
         if (item !== null) {
             return item;
@@ -436,7 +436,7 @@ var OlabNodePlayer = function(params) {
     function onQuestionResponseSucceeded(data) {
 
         // turn off any spinning img's for REST call
-        if (data.parameters.questionShowSubmit) {
+        if (data.parameters.questionshowSubmit) {
             jQuery(data.parameters.submitId).hide();
         }
 
@@ -831,19 +831,19 @@ var OlabNodePlayer = function(params) {
 
                     // if no id, return everything
                     if (id === null) {
-                        var items = this.server.Constants;
-                        items = items.concat(this.map.Constants);
-                        items = items.concat(this.node.Constants);
+                        var items = this.server.constants;
+                        items = items.concat(this.map.constants);
+                        items = items.concat(this.node.constants);
                         return items;
                     }
 
-                    var item = vm.Utilities.searchObjectArray(this.server.Constants, id);
+                    var item = vm.Utilities.searchObjectArray(this.server.constants, id);
 
                     if (item === null)
-                        item = vm.Utilities.searchObjectArray(this.map.Constants, id);
+                        item = vm.Utilities.searchObjectArray(this.map.constants, id);
 
                     if (item === null)
-                        item = vm.Utilities.searchObjectArray(this.node.Constants, id);
+                        item = vm.Utilities.searchObjectArray(this.node.constants, id);
 
                     if (item !== null) {
                         return item.item;
@@ -860,24 +860,24 @@ var OlabNodePlayer = function(params) {
                       
                         // if no id, return everything
                         if (id === null) {
-                            var items = this.server.Files;
-                            items = items.concat(this.map.Files);
-                            items = items.concat(this.node.Files);
+                            var items = this.server.files;
+                            items = items.concat(this.map.files);
+                            items = items.concat(this.node.files);
                             return items;
                         }
 
-                        var item = vm.Utilities.searchObjectArray(this.server.Files, id);
+                        var item = vm.Utilities.searchObjectArray(this.server.files, id);
 
                         if (item === null)
-                            item = vm.Utilities.searchObjectArray(this.map.Files, id);
+                            item = vm.Utilities.searchObjectArray(this.map.files, id);
 
                         if (item === null)
-                            item = vm.Utilities.searchObjectArray(this.node.Files, id);
+                            item = vm.Utilities.searchObjectArray(this.node.files, id);
 
                         if (item !== null) {
                             return item.item;
                         }
-
+                      x
                     } catch (e) {
                         vm.Utilities.log.fatal('file: ' + e.message );
                     } 
@@ -891,13 +891,13 @@ var OlabNodePlayer = function(params) {
 
                     try {
 
-                        var item = vm.Utilities.searchObjectArray(this.server.Questions, id);
+                        var item = vm.Utilities.searchObjectArray(this.server.questions, id);
 
                         if (item === null)
-                            item = vm.Utilities.searchObjectArray(this.map.Questions, id);
+                            item = vm.Utilities.searchObjectArray(this.map.questions, id);
 
                         if (item === null)
-                            item = vm.Utilities.searchObjectArray(this.node.Questions, id);
+                            item = vm.Utilities.searchObjectArray(this.node.questions, id);
 
                         if (item !== null) {
                             return item.item;
@@ -905,9 +905,9 @@ var OlabNodePlayer = function(params) {
 
                         // if no id, return everything
                         if (id === null) {
-                            var items = this.server.Questions;
-                            items = items.concat(this.map.Questions);
-                            items = items.concat(this.node.Questions);
+                            var items = this.server.questions;
+                            items = items.concat(this.map.questions);
+                            items = items.concat(this.node.questions);
                             return items;
                         }
 
@@ -947,7 +947,7 @@ var OlabNodePlayer = function(params) {
                         vm.Utilities.log.debug('Xmit: ' + data.responseId + "= selected");
                         data.state_data = vm.state.state_data;
                         data.submitId = "#submit_" + data.questionId;
-                        if (data.questionShowSubmit) {
+                        if (data.questionshowSubmit) {
                             jQuery( data.submitId ).show();
                         }
 
@@ -969,7 +969,7 @@ var OlabNodePlayer = function(params) {
                     data.state_data = vm.state.state_data;
                     data.value = data.value;
                     data.submitId = "#submit_" + questionId;
-                    if (data.questionShowSubmit) {
+                    if (data.questionshowSubmit) {
                       jQuery( data.submitId ).show();
                     }
 
@@ -991,7 +991,7 @@ var OlabNodePlayer = function(params) {
                         data.state_data = vm.state.state_data;
                         data.value = data.value;
                         data.submitId = "#submit_" + data.questionId + "_" + data.responseId;
-                        if (data.questionShowSubmit) {
+                        if (data.questionshowSubmit) {
                             jQuery( data.submitId ).show();
                         }
 
@@ -1012,7 +1012,7 @@ var OlabNodePlayer = function(params) {
                         vm.Utilities.log.debug('Xmit: ' + data.responseId + "=" + data.value);
                         data.state_data = vm.state.state_data;
                         data.submitId = "#submit_" + data.questionId + "_" + data.responseId;
-                        if (data.questionShowSubmit) {
+                        if (data.questionshowSubmit) {
                             jQuery( data.submitId ).show();
                         }
 
