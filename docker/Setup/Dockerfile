@@ -23,9 +23,11 @@ RUN yum -y install http://rpms.remirepo.net/enterprise/remi-release-7.rpm
 RUN yum-config-manager --enable remi-php72
 
 # Install Python and Supervisor.
-RUN yum -y install python-setuptools deltarpm
+RUN yum -y install python-setuptools deltarpm python-pip
 RUN mkdir -p /var/log/supervisor
-RUN easy_install supervisor
+#RUN easy_install supervisor
+RUN pip install --upgrade pip
+RUN pip install supervisor
 
 # Install Entrada Developer dependancies.
 RUN yum -y install git \
