@@ -20,6 +20,7 @@ var OlabNodePlayer = function(params) {
     vm.urlParameters = {};
     vm.urlParameters.mapId = paramArray[0];
     vm.urlParameters.nodeId = paramArray[1];
+    vm.urlParameters.linkId = null;
 
     vm.targetId = vm.Utilities.normalizeDivId(params.targetId);
     vm.websiteUrl = params.siteRoot;
@@ -52,7 +53,7 @@ var OlabNodePlayer = function(params) {
     vm.getCounter = getCounter;
     vm.getFile = getFile;
     vm.getAvatar = getAvatar;
-    vm.log = vm.Utilities.log;
+    vm.log = vm.Utilities.log; 
 
     // these are the methods/properties we expose to the outside
     vm.service = {
@@ -63,7 +64,10 @@ var OlabNodePlayer = function(params) {
         parameters: vm.urlParameters,
         play:play,
         onHashChanged:onHashChanged,
-        utilities: vm.Utilities
+        utilities: vm.Utilities,
+        getCounter: getCounter,
+        getConstant: getConstant,
+        getQuestion: getQuestion
     };
 
     return vm.service;
@@ -77,7 +81,7 @@ var OlabNodePlayer = function(params) {
             function(index, value) {
 
                 // search for counter at server level
-                var counter = vm.Utilities.searchObjectArray(vm.server.Counters, value.id);
+                var counter = vm.Utilities.searchObjectArray(vm.server.counters, value.id);
 
                 if (counter !== null) {
                     counter.item.value = value.value;
@@ -88,7 +92,7 @@ var OlabNodePlayer = function(params) {
             function(index, value) {
 
                 // search for counter at server level
-                var counter = vm.Utilities.searchObjectArray(vm.map.Counters, value.id);
+                var counter = vm.Utilities.searchObjectArray(vm.map.counters, value.id);
 
                 if (counter !== null) {
                     counter.item.value = value.value;
@@ -99,7 +103,7 @@ var OlabNodePlayer = function(params) {
             function(index, value) {
 
                 // search for counter at map level
-                var counter = vm.Utilities.searchObjectArray(vm.node.Counters, value.id);
+                var counter = vm.Utilities.searchObjectArray(vm.node.counters, value.id);
 
                 if (counter !== null) {
                     counter.item.value = value.value;
@@ -161,630 +165,6 @@ var OlabNodePlayer = function(params) {
                 value.url = vm.moduleUrl + '/play#' + value.map_id + ":" + value.DestinationNode.id;
             });
         return data;
-    }
-
-    /**
-     * Makes the node text compatible with Vue (single HTML root)
-     * @param {} nodeText 
-     * @returns {string} HTML div string
-     */
-    function encapsulateNodeMarkup(type, nodeText) {
-        return '<div id="olab' + type + 'Content">' + nodeText + '</div>';
-    }
-
-    /**
-     * Substitutes WIKI tags in the node markup and replaces
-     * them with VUE.JS components
-     * @param {} node markup
-     * @returns {string} markup
-     */
-    function dewikifyMarkup(markup) {
-
-        // get a list of Wiki tags
-        var tags = vm.Utilities.getWikiTags(markup);
-
-        // loop through all remaining wiki tags in the markup
-        jQuery.each(tags,
-            function(key, value) {
-
-                // split up wiki tag into parts
-                var tagParts = vm.Utilities.getWikiTagParts(value);
-                try {
-
-                    // try and spin up handler for wiki tag by 'new'ing the object.
-                    // the various classes are autoloaded via PHP in the main view html file
-                    var renderer = new window["Olab" + tagParts[0] + "Tag"](vm);
-
-                    // pass all the parts into the handler for processing and store the rendered
-                    // contents back to the main markup
-                    markup = String(markup).replace("[[" + value + "]]", renderer.render(tagParts));
-
-                } catch (e) {
-
-                    // tag isn't found (TypeError), flag it as such, else flag error from exception
-                    if (e instanceof TypeError) {
-                        markup = String(markup).replace("[[" + value + "]]",
-                            "&lt;&lt;unsupported tag '" + tagParts[0] + "'&gt;&gt;");
-                    } else {
-                        markup = String(markup).replace("[[" + value + "]]",
-                            "&lt;&lt;error '" + value + "': " + e.message + "'&gt;&gt;");
-                    }
-                }
-
-            });
-
-        return markup;
-    }
-
-    /**
-     * Downloads a file from the server
-     * @param {} file resource id
-     * @returns {} 
-     */
-    function downloadFile(id) {
-        vm.Utilities.downloadFile(id);
-    }
-
-    /**
-     * Utility function to get a requested counter from the scoped counter objects
-     * @param {} counter id
-     * @returns { counter } 
-     */
-    function getCounter(id) {
-
-        // if no id, return everything
-        if (id === null) {
-            var items = vm.server.Counters;
-            items = items.concat(vm.map.Counters);
-            items = items.concat(vm.node.Counters);
-            return items;
-        }
-
-        var item = vm.Utilities.searchObjectArray(vm.server.Counters, id);
-
-        if (item === null)
-            item = vm.Utilities.searchObjectArray(vm.map.Counters, id);
-
-        if (item === null)
-            item = vm.Utilities.searchObjectArray(vm.node.Counters, id);
-
-        if (item !== null) {
-            return item;
-        }
-
-        return null;
-    }
-
-    /**
-     * Builds a vue.js binding variable to one-way bind to an UI object in the form
-     * @param {} id 
-     * @returns {} 
-     */
-    function getCounterBindingVariable(id) {
-
-        var item = vm.Utilities.searchObjectArray(vm.server.Counters, id);
-        if (item !== null) {
-            return "server.Counters[" + item.index + "]";
-        }
-
-        item = vm.Utilities.searchObjectArray(vm.map.Counters, id);
-        if (item !== null) {
-            return "map.Counters[" + item.index + "]";
-        }
-
-        item = vm.Utilities.searchObjectArray(vm.node.Counters, id);
-        if (item !== null) {
-            return "node.Counters[" + item.index + "]";
-        }
-
-        return null;
-    }
-
-    /**
-     * Utility function to get a requested avatar from the scoped objects
-     * @param {} file id
-     * @returns { file } 
-     */
-    function getAvatar(id) {
-
-        // if no id, return everything
-        if (id === null) {
-            var items = vm.server.Avatars;
-            items = items.concat(vm.map.Avatars);
-            items = items.concat(vm.node.Avatars);
-            return items;
-        }
-
-        var item = vm.Utilities.searchObjectArray(vm.server.Avatars, id);
-
-        if (item === null)
-            item = vm.Utilities.searchObjectArray(vm.map.Avatars, id);
-
-        if (item === null)
-            item = vm.Utilities.searchObjectArray(vm.node.Avatars, id);
-
-        if (item !== null) {
-            return item;
-        }
-
-        return null;
-    }
-
-    /**
-     * Utility function to get a requested file from the scoped file objects
-     * @param {} file id
-     * @returns { file } 
-     */
-    function getFile(id) {
-
-        // if no id, return everything
-        if (id === null) {
-            var items = vm.server.files;
-            items = items.concat(vm.map.files);
-            items = items.concat(vm.node.files);
-            return items;
-        }
-
-        var item = vm.Utilities.searchObjectArray(vm.server.files, id);
-
-        if (item === null)
-            item = vm.Utilities.searchObjectArray(vm.map.files, id);
-
-        if (item === null)
-            item = vm.Utilities.searchObjectArray(vm.node.files, id);
-
-        if (item !== null) {
-            return item;
-        }
-
-        return null;
-    }
-
-    /**
-     * Utility function to get a requested question from the scoped question objects
-     * @param {} question id
-     * @returns { question } 
-     */
-    function getQuestion(id) {
-
-        // if no id, return everything
-        if (id === null) {
-            var items = vm.server.questions;
-            items = items.concat(vm.map.questions);
-            items = items.concat(vm.node.questions);
-            return items;
-        }
-
-        var item = vm.Utilities.searchObjectArray(vm.server.questions, id);
-
-        if (item === null)
-            item = vm.Utilities.searchObjectArray(vm.map.questions, id);
-
-        if (item === null)
-            item = vm.Utilities.searchObjectArray(vm.node.questions, id);
-
-        if (item !== null) {
-            return item;
-        }
-
-        return null;
-    }
-
-    /**
-     * Plays the node info
-     * @param {number} node id
-     * @returns {} 
-     */
-    function info(nodeId) {
-
-        // test if no node passed in - get nodeId from Url parameters
-        if (typeof nodeId !== 'undefined') {
-            vm.urlParameters.nodeId = nodeId;
-        }
-
-        var url = vm.restApiUrl + '/info/' + vm.urlParameters.mapId + "/" + vm.urlParameters.nodeId;
-        vm.Utilities.log.debug('info url: ' + url);
-
-        vm.Utilities.getJson(url, vm.urlParameters, onInfoLoadSucceeded, onLoadError);
-
-    }
-
-    /**
-     * Navigate to a new map node
-     * @param {} node id
-     * @returns { } 
-     */
-    function navigate(nodeId) {
-        vm.urlParameters.nodeId = nodeId;
-        var param = vm.urlParameters.mapId + ":" + vm.urlParameters.nodeId;
-        window.location.hash = param;
-    }
-
-    /**
-     * Handler if the url hash changes (navigate to new node)
-     * @returns { } 
-     */
-    function onHashChanged() {
-        var paramArray = vm.Utilities.getUrlParameters(window.location.hash);
-        vm.urlParameters.mapId = paramArray[0];
-        vm.urlParameters.nodeId = paramArray[1];
-
-        play(vm.urlParameters.nodeId);
-    }
-
-    /**
-     * Node info retrieval successful
-     * @param {} node data
-     * @returns {} 
-     */
-    function onInfoLoadSucceeded(data) {
-
-    }
-
-    /**
-     * Handler for a error found in posting of a question response to the server
-     * @returns { } 
-     */
-    function onQuestionResponseFailed(data) {
-        alert(data);
-    }
-
-    /**
-     * Handler for a successful posting of a question response to the server
-     * @returns { } 
-     */    
-    function onQuestionResponseSucceeded(data) {
-
-        // turn off any spinning img's for REST call
-        if (data.parameters.questionshowSubmit) {
-            jQuery(data.parameters.submitId).hide();
-        }
-
-        // save state data to model
-        vm.state = data.state;
-        vm.state.state_data = JSON.parse(vm.state.state_data);
-
-        // overlay state counter values on top of count objects
-        applyStateToCounters();
-    }
-
-    /**
-     * Node markup retrieval failed
-     * @param {} node data error
-     * @returns {} 
-     */
-    function onLoadError(data) {
-
-        alert(data);
-
-    }
-
-    /**
-     * Node markup retrieval successful
-     * @param {} node data
-     * @returns {} 
-     */
-    function onNodeLoadSucceeded(data) {
-
-        if (data.node !== null) {
-
-            // translate node link to get valid urls for this server/site     
-            data.node.MapNodeLinks = buildNodeUrls(data.node.MapNodeLinks);
-            vm.node = data.node;
-
-            // save map data
-            if (vm.haveMapData === false) {
-
-                vm.server = data.server;
-                vm.map = data.map;
-
-                // flag that we have map data so subsequent 'play' calls don't re-ask for it.
-                vm.haveMapData = true;
-
-            }
-
-            // autoload any server, map, or node-level scripts
-            // autoloadScripts();
-
-            // save state data to model
-            vm.state = data.state;
-            vm.state.state_data = JSON.parse(vm.state.state_data);
-
-            // overlay state counter values on top of count objects
-            applyStateToCounters();
-
-            // render any map-level content (header/footer, etc)
-            renderMapContent( vm.map );
-
-            // render node content
-            renderNodeContent(vm.node);
-
-            vm.nodeVue.node = vm.node;
-          
-            //injectScriptAssets(data.scripts_stack || [] );
-            injectRawScriptAssets(data.raw_scripts_stack || [] );
-
-            // load document-level H5P infrastructure, if there
-            // is any.
-            injectH5P();
-
-            //injectCssAssets(data.styles_stack);
-            //injectScriptAssets(data.scripts_stack);
-
-            // set the browser page title to the node title
-            document.title = vm.node.title;
-
-        } else {
-            vm.nodeVue.content = "error";
-        }
-    }
-
-    function onSuspendSucceeded(data) {
-
-    }
-  
-    function onSuspendFailed(data) {
-      alert(data);
-    }
-
-    function injectH5P() {
-
-      // test if H5P integration object defined
-      var t = typeof( H5PIntegration );
-      if ( ( t != "object") || ( H5PIntegration == null ) )
-        return;
-
-      // inject H5P core assets
-      injectCssAssets( H5PIntegration.core.styles || [] );
-      injectCssAssets( H5PIntegration.loadedCss || [] );
-
-      var scripts = H5PIntegration.core.scripts;
-      scripts.splice( 1, 0, H5PIntegration.loadedJs );
-      testLoad( scripts || [] );
-      //testLoad( H5PIntegration.loadedJs || [] );
-
-      //injectScriptAssets( H5PIntegration.core.scripts || [] );
-      //injectScriptAssets( H5PIntegration.loadedJs || [] );
-
-    }
-
-    function testLoad( hrefArray ) {
-
-      jsuLoader
-        .reset()
-        .addScript( hrefArray )
-        .onComplete(() => console.info("* ALL SCRIPTS LOADED *"))
-        .load();
-    }
-
-    function createScriptTag( id, href ) {
-
-        // check if script loaded already
-        var script = document.getElementById(id);
-
-        if (script != null) {
-
-          vm.Utilities.log.debug('script ' + id + ': already loaded. removing.');
-          script.parentNode.removeChild(script);
-        }
-
-        script = document.createElement('script');
-        script.async = false;
-        script.setAttribute('type', 'text/javascript');
-        script.setAttribute('id', id );
-        script.setAttribute('src', href);
-
-        return script;
-    }
-
-    function injectScriptAssets(assets) {
-
-      if (!assets) {
-        return;
-      }
-
-      for (var i = 0; i < assets.length; i++) {
-
-        var url = assets[i].src;
-        var id = assets[i].id;
-
-        vm.Utilities.log.debug('injecting script ' + id + ": " + url);
-
-        // create script tag and insert into DOM
-        var script = createScriptTag( id, url );
-
-        script.onload = function() {
-          onPostLoadScript( this );
-        }
-
-        document.getElementsByTagName('body')[0].appendChild(script);
-      }
-
-    }
-
-    function injectCssAssets(assets) {
-
-      if (!assets) {
-        return;
-      }
-
-      for (var i = 0; i < assets.length; i++) {
-
-        var id = vm.Utilities.getFileName( assets[i] );
-
-        // check if style loaded already
-        var link = document.getElementById(id);
-
-        if (link == null) {
-
-          link = document.createElement("link");
-          link.type = "text/css";
-          link.setAttribute('id', assets[i]);
-          link.href = assets[i];
-          link.setAttribute('id', id );
-          link.rel = "stylesheet";
-          document.getElementsByTagName("body")[0].appendChild(link);
-
-          vm.Utilities.log.debug('injecting css ' + id + ": " + assets[i]);
-
-        } else {
-
-          vm.Utilities.log.debug('css ' + assets[i].id + ": already loaded");
-
-        }
-
-      }
-
-    }
-
-    /* Execute raw script */
-    function injectRawScriptAssets(assets) {
-
-      if (!assets) {
-        return;
-      }
-
-      // loop through all assets and eval() it to ensure it's executed SYNCHRONOUSLY.
-      for (var i = 0; i < assets.length; i++) {
-
-        try {
-
-          var src = assets[i].src;
-          // yes, I know: people say eval is evil.  It is used here to ensure
-          // the code is executed synchronously.  Later loads of server-side
-          // .js files may rely on the raw script to be executed completely
-          // before they are loaded.
-          eval(src);
-
-          vm.Utilities.log.debug('raw script ' + assets[i].id + ': executed.');
-
-        } catch (e) {
-
-          vm.Utilities.log.error('raw script ' + assets[i].id + ': error:');
-          vm.Utilities.log.error(e);
-
-        }
-
-      }
-
-    }
-
-    function onPostLoadScript( source ) {
-
-      var id = source.id;
-      vm.Utilities.log.debug('injected/executed script ' + id );
-
-      if ( id.indexOf( 'jquery.js' ) != -1 ) { 
-          onLoadScript_h5pcorejsjquery( source );
-      }
-
-      else if ( id.indexOf( 'h5p.js' ) != -1 ) { 
-          onLoadScript_h5pcorejsh5p( source );
-      }
-
-    }
-
-    function onLoadScript_h5pcorejsh5p( source ) {
-      vm.H5P = window.H5P = window.H5P || {};  
-    }
-
-    function onLoadScript_h5pcorejsjquery( source ) {
-
-      var headerObj = {};
-      headerObj[ 'Authorization'] = vm.Utilities.getAuthHeader();
-      H5P.jQuery.ajaxSetup({ headers: headerObj });
-
-    }
-
-    /**
-     * Plays the map
-     * @param {number} node id
-     * @returns {} 
-     */
-    function play(nodeId) {
-
-        // test if no node passed in - get nodeId from Url parameters
-        if (typeof nodeId !== 'undefined') {
-            vm.urlParameters.nodeId = nodeId;
-        }
-
-        var url = vm.restApiUrl + '/play/' + vm.urlParameters.mapId + "/" + vm.urlParameters.nodeId;
-
-        // if don't have map data yet, signal server to get and return it with request
-        if (vm.haveMapData === false) {
-            if (url.indexOf("?") === -1) {
-                url += '?includeMapData=1';
-            } else {
-                url += '&includeMapData=1';
-            }
-        }
-
-        vm.Utilities.log.debug('play url: ' + url);
-
-        vm.Utilities.getJson(url, vm.urlParameters, onNodeLoadSucceeded, onLoadError);
-    }
-
-    /**
-     * Translates raw OLab markup into vue-ready markup
-     * @param {any} contentName target div id "#olab<contentName>Content"
-     * @param {any} source olab (wikitag-ified) markup
-     * @returns {any} new vue-able html markup
-     */
-    function renderContent( contentName, source) {
-
-        // test if any olab markup passed in
-        if (source.text !== null) {
-
-            source.text = encapsulateNodeMarkup( contentName, source.text);
-
-            // test if bypassing Wiki tag rendering
-            if (vm.qs["showWiki"] !== "1")
-                source.text = dewikifyMarkup(source.text);
-
-            return createNodeVue('#olab' + contentName + 'Content', source);
-        }
-
-        return null;
-    }
-
-    /**
-     * Spins up VUE js with the map markups (header/footer)
-     * @returns {} 
-     */
-    function renderMapContent( map ) {
-
-        if (typeof map.header !== 'undefined') {
-            map.text = map.header;
-            vm.headerVue = renderContent('Header', map);
-        }
-        if (typeof map.footer !== 'undefined') {
-            map.text = map.footer;
-            vm.footerVue = renderContent('Footer', map);
-        }
-    }
-
-
-    /**
-     * Spins up VUE js with the node markup
-     * @argument {any} node HTML
-     * @returns {undefined} 
-     */
-    function renderNodeContent(node) {
-
-        vm.nodeVue = renderContent('Node', node ); 
-
-        // if any node annotations, add them to markup DIV
-        if (node.annotation != null) {
-
-          if (node.annotation.length > 0) {
-
-            jQuery("#olabAnnotationContent").html(node.annotation);
-            // add the annotation CSS style class so we don't 
-            // see the annotation style if there nothing to display
-            jQuery("#olabAnnotationContent").addClass("annotation");
-
-          }
-        }
     }
 
     /**
@@ -877,7 +257,7 @@ var OlabNodePlayer = function(params) {
                         if (item !== null) {
                             return item.item;
                         }
-                      x
+                      
                     } catch (e) {
                         vm.Utilities.log.fatal('file: ' + e.message );
                     } 
@@ -1041,6 +421,682 @@ var OlabNodePlayer = function(params) {
             }
 
         });
+    }
+
+    function createScriptTag( id, href ) {
+
+      // check if script loaded already
+      var script = document.getElementById(id);
+
+      if (script != null) {
+
+        vm.Utilities.log.debug('script ' + id + ': already loaded. removing.');
+        script.parentNode.removeChild(script);
+      }
+
+      script = document.createElement('script');
+      script.async = false;
+      script.setAttribute('type', 'text/javascript');
+      script.setAttribute('id', id );
+      script.setAttribute('src', href);
+
+      return script;
+    }
+
+    /**
+     * Makes the node text compatible with Vue (single HTML root)
+     * @param {} nodeText 
+     * @returns {string} HTML div string
+     */
+    function encapsulateNodeMarkup(type, nodeText) {
+        return '<div id="olab' + type + 'Content">' + nodeText + '</div>';
+    }
+
+    /**
+     * Substitutes WIKI tags in the node markup and replaces
+     * them with VUE.JS components
+     * @param {} node markup
+     * @returns {string} markup
+     */
+    function dewikifyMarkup(markup) {
+
+        // get a list of Wiki tags
+        var tags = vm.Utilities.getWikiTags(markup);
+
+        // loop through all remaining wiki tags in the markup
+        jQuery.each(tags,
+            function(key, value) {
+
+                // split up wiki tag into parts
+                var tagParts = vm.Utilities.getWikiTagParts(value);
+                try {
+
+                    // try and spin up handler for wiki tag by 'new'ing the object.
+                    // the various classes are autoloaded via PHP in the main view html file
+                    var renderer = new window["Olab" + tagParts[0] + "Tag"](vm);
+
+                    // pass all the parts into the handler for processing and store the rendered
+                    // contents back to the main markup
+                    markup = String(markup).replace("[[" + value + "]]", renderer.render(tagParts));
+
+                } catch (e) {
+
+                    // tag isn't found (TypeError), flag it as such, else flag error from exception
+                    if (e instanceof TypeError) {
+                        markup = String(markup).replace("[[" + value + "]]",
+                            "&lt;&lt;unsupported tag '" + tagParts[0] + "'&gt;&gt;");
+                    } else {
+                        markup = String(markup).replace("[[" + value + "]]",
+                            "&lt;&lt;error '" + value + "': " + e.message + "'&gt;&gt;");
+                    }
+                }
+
+            });
+
+        return markup;
+    }
+
+    /**
+     * Downloads a file from the server
+     * @param {} file resource id
+     * @returns {} 
+     */
+    function downloadFile(id) {
+        vm.Utilities.downloadFile(id);
+    }
+
+    /**
+     * Utility function to get a requested constant from the scoped counter objects
+     * @param {} id or name
+     * @returns { constant } 
+     */
+    function getConstant(id) {
+
+      // if no id, return everything
+      if (id === null) {
+        var items = vm.server.constants;
+        items = items.concat(vm.map.constants);
+        items = items.concat(vm.node.constants);
+        return items;
+      }
+
+      var item = vm.Utilities.searchObjectArray(vm.server.constants, id);
+
+      if (item === null)
+        item = vm.Utilities.searchObjectArray(vm.map.constants, id);
+
+      if (item === null)
+        item = vm.Utilities.searchObjectArray(vm.node.constants, id);
+
+      if (item !== null) {
+        return item.item;
+      }
+
+      return null;
+    }
+
+    /**
+     * Utility function to get a requested counter from the scoped counter objects
+     * @param {} id or name
+     * @returns { counter } 
+     */
+    function getCounter(id) {
+
+        // if no id, return everything
+        if (id === null) {
+            var items = vm.server.counters;
+            items = items.concat(vm.map.counters);
+            items = items.concat(vm.node.counters);
+            return items;
+        }
+
+        var item = vm.Utilities.searchObjectArray(vm.server.counters, id);
+
+        if (item === null)
+            item = vm.Utilities.searchObjectArray(vm.map.counters, id);
+
+        if (item === null)
+            item = vm.Utilities.searchObjectArray(vm.node.counters, id);
+
+        if (item !== null) {
+            return item.item;
+        }
+
+        return null;
+    }
+
+    /**
+     * Builds a vue.js binding variable to one-way bind to an UI object in the form
+     * @param {} id 
+     * @returns {} 
+     */
+    function getCounterBindingVariable(id) {
+
+        var item = vm.Utilities.searchObjectArray(vm.server.counters, id);
+        if (item !== null) {
+            return "server.counters[" + item.index + "]";
+        }
+
+        item = vm.Utilities.searchObjectArray(vm.map.counters, id);
+        if (item !== null) {
+            return "map.counters[" + item.index + "]";
+        }
+
+        item = vm.Utilities.searchObjectArray(vm.node.counters, id);
+        if (item !== null) {
+            return "node.counters[" + item.index + "]";
+        }
+
+        return null;
+    }
+
+    /**
+     * Utility function to get a requested avatar from the scoped objects
+     * @param {} file id
+     * @returns { file } 
+     */
+    function getAvatar(id) {
+
+        // if no id, return everything
+        if (id === null) {
+            var items = vm.server.Avatars;
+            items = items.concat(vm.map.Avatars);
+            items = items.concat(vm.node.Avatars);
+            return items;
+        }
+
+        var item = vm.Utilities.searchObjectArray(vm.server.Avatars, id);
+
+        if (item === null)
+            item = vm.Utilities.searchObjectArray(vm.map.Avatars, id);
+
+        if (item === null)
+            item = vm.Utilities.searchObjectArray(vm.node.Avatars, id);
+
+        if (item !== null) {
+            return item.item;
+        }
+
+        return null;
+    }
+
+    /**
+     * Utility function to get a requested file from the scoped file objects
+     * @param {} id or name
+     * @returns { file } 
+     */
+    function getFile(id) {
+
+        // if no id, return everything
+        if (id === null) {
+            var items = vm.server.files;
+            items = items.concat(vm.map.files);
+            items = items.concat(vm.node.files);
+            return items;
+        }
+
+        var item = vm.Utilities.searchObjectArray(vm.server.files, id);
+
+        if (item === null)
+            item = vm.Utilities.searchObjectArray(vm.map.files, id);
+
+        if (item === null)
+            item = vm.Utilities.searchObjectArray(vm.node.files, id);
+
+        if (item !== null) {
+            return item.item;
+        }
+
+        return null;
+    }
+
+    /**
+     * Utility function to get a requested question from the scoped question objects
+     * @param {} id or name
+     * @returns { question } 
+     */
+    function getQuestion(id) {
+
+        // if no id, return everything
+        if (id === null) {
+            var items = vm.server.questions;
+            items = items.concat(vm.map.questions);
+            items = items.concat(vm.node.questions);
+            return items;
+        }
+
+        var item = vm.Utilities.searchObjectArray(vm.server.questions, id);
+
+        if (item === null)
+            item = vm.Utilities.searchObjectArray(vm.map.questions, id);
+
+        if (item === null)
+            item = vm.Utilities.searchObjectArray(vm.node.questions, id);
+
+        if (item !== null) {
+            return item.item;
+        }
+
+        return null;
+    }
+
+    /**
+     * Plays the node info
+     * @param {number} node id
+     * @returns {} 
+     */
+    function info(nodeId) {
+
+        // test if no node passed in - get nodeId from Url parameters
+        if (typeof nodeId !== 'undefined') {
+            vm.urlParameters.nodeId = nodeId;
+        }
+
+        var url = vm.restApiUrl + '/info/' + vm.urlParameters.mapId + "/" + vm.urlParameters.nodeId;
+        vm.Utilities.log.debug('info url: ' + url);
+
+        vm.Utilities.getJson(url, vm.urlParameters, onInfoLoadSucceeded, onLoadError);
+
+    }
+
+    function injectCssAssets(assets) {
+
+      if (!assets) {
+        return;
+      }
+
+      for (var i = 0; i < assets.length; i++) {
+
+        var id = vm.Utilities.getFileName( assets[i] );
+
+        // check if style loaded already
+        var link = document.getElementById(id);
+
+        if (link == null) {
+
+          link = document.createElement("link");
+          link.type = "text/css";
+          link.setAttribute('id', assets[i]);
+          link.href = assets[i];
+          link.setAttribute('id', id );
+          link.rel = "stylesheet";
+          document.getElementsByTagName("body")[0].appendChild(link);
+
+          vm.Utilities.log.debug('injecting css ' + id + ": " + assets[i]);
+
+        } else {
+
+          vm.Utilities.log.debug('css ' + assets[i].id + ": already loaded");
+
+        }
+
+      }
+
+    }
+
+    function injectH5P() {
+
+      // test if H5P integration object defined
+      var t = typeof( H5PIntegration );
+      if ( ( t != "object") || ( H5PIntegration == null ) )
+        return;
+
+      // inject H5P core assets
+      injectCssAssets( H5PIntegration.core.styles || [] );
+      injectCssAssets( H5PIntegration.loadedCss || [] );
+
+      var scripts = H5PIntegration.core.scripts;
+      scripts.splice( 1, 0, H5PIntegration.loadedJs );
+      testLoad( scripts || [] );
+      //testLoad( H5PIntegration.loadedJs || [] );
+
+      //injectScriptAssets( H5PIntegration.core.scripts || [] );
+      //injectScriptAssets( H5PIntegration.loadedJs || [] );
+
+    }
+
+    /* Execute raw script */
+    function injectRawScriptAssets(assets) {
+
+      if (!assets) {
+        return;
+      }
+
+      // loop through all assets and eval() it to ensure it's executed SYNCHRONOUSLY.
+      for (var i = 0; i < assets.length; i++) {
+
+        try {
+
+          var src = assets[i].src;
+          // yes, I know: people say eval is evil.  It is used here to ensure
+          // the code is executed synchronously.  Later loads of server-side
+          // .js files may rely on the raw script to be executed completely
+          // before they are loaded.
+          eval(src);
+
+          vm.Utilities.log.debug('raw script ' + assets[i].id + ': executed.');
+
+        } catch (e) {
+
+          vm.Utilities.log.error('raw script ' + assets[i].id + ': error:');
+          vm.Utilities.log.error(e);
+
+        }
+
+      }
+
+    }
+
+    function injectScriptAssets(assets) {
+
+      if (!assets) {
+        return;
+      }
+
+      for (var i = 0; i < assets.length; i++) {
+
+        var url = assets[i].src;
+        var id = assets[i].id;
+
+        vm.Utilities.log.debug('injecting script ' + id + ": " + url);
+
+        // create script tag and insert into DOM
+        var script = createScriptTag( id, url );
+
+        script.onload = function() {
+          onPostLoadScript( this );
+        }
+
+        document.getElementsByTagName('body')[0].appendChild(script);
+      }
+
+    }
+
+    /**
+     * Navigate to a new map node
+     * @param {} node id
+     * @returns { } 
+     */
+    function navigate(nodeId, linkId) {
+
+        vm.log.debug("navigate from node " + vm.urlParameters.nodeId + " to node: " + nodeId );
+
+        // save previous node
+        vm.urlParameters.linkId = linkId;
+
+        var param = vm.urlParameters.mapId + ":" + nodeId;
+        window.location.hash = param;
+    }
+
+    /**
+     * Handler if the url hash changes (navigate to new node)
+     * @returns { } 
+     */
+    function onHashChanged() {
+
+        var paramArray = vm.Utilities.getUrlParameters(window.location.hash);
+        vm.urlParameters.mapId = paramArray[0];
+        vm.urlParameters.nodeId = paramArray[1];
+
+        play(vm.urlParameters.nodeId);
+    }
+
+    /**
+     * Node info retrieval successful
+     * @param {} node data
+     * @returns {} 
+     */
+    function onInfoLoadSucceeded(data) {
+
+    }
+
+    /**
+     * Node markup retrieval failed
+     * @param {} node data error
+     * @returns {} 
+     */
+    function onLoadError(data) {
+
+      alert(data);
+
+    }
+
+    function onLoadScript_h5pcorejsh5p( source ) {
+      vm.H5P = window.H5P = window.H5P || {};  
+    }
+
+    function onLoadScript_h5pcorejsjquery( source ) {
+
+      var headerObj = {};
+      headerObj[ 'Authorization'] = vm.Utilities.getAuthHeader();
+      H5P.jQuery.ajaxSetup({ headers: headerObj });
+
+    }
+
+    function onPostLoadScript( source ) {
+
+      var id = source.id;
+      vm.Utilities.log.debug('injected/executed script ' + id );
+
+      if ( id.indexOf( 'jquery.js' ) != -1 ) { 
+        onLoadScript_h5pcorejsjquery( source );
+      }
+
+      else if ( id.indexOf( 'h5p.js' ) != -1 ) { 
+        onLoadScript_h5pcorejsh5p( source );
+      }
+
+    }
+
+    /**
+     * Handler for a error found in posting of a question response to the server
+     * @returns { } 
+     */
+    function onQuestionResponseFailed(data) {
+        alert(data);
+    }
+
+    /**
+     * Handler for a successful posting of a question response to the server
+     * @returns { } 
+     */    
+    function onQuestionResponseSucceeded(data) {
+
+        // turn off any spinning img's for REST call
+        if (data.parameters.questionshowSubmit) {
+            jQuery(data.parameters.submitId).hide();
+        }
+
+        // save state data to model
+        vm.state = data.state;
+        vm.state.state_data = JSON.parse(vm.state.state_data);
+
+        // overlay state counter values on top of count objects
+        applyStateToCounters();
+    }
+
+    /**
+     * Node markup retrieval successful
+     * @param {} node data
+     * @returns {} 
+     */
+    function onNodeLoadSucceeded(data) {
+
+        if (data.node !== null) {
+
+            // save the current node id (since root nodes are requested with id = 0
+            // and we need to know/save the actual node id)
+            vm.urlParameters.nodeId = data.node.id;
+
+            // translate node link to get valid urls for this server/site     
+            data.node.MapNodeLinks = buildNodeUrls(data.node.MapNodeLinks);
+            vm.node = data.node;
+
+            // save map data
+            if (vm.haveMapData === false) {
+
+                vm.server = data.server;
+                vm.map = data.map;
+
+                // flag that we have map data so subsequent 'play' calls don't re-ask for it.
+                vm.haveMapData = true;
+
+            }
+
+            // autoload any server, map, or node-level scripts
+            // autoloadScripts();
+
+            // save state data to model
+            vm.state = data.state;
+            vm.state.state_data = JSON.parse(vm.state.state_data);
+
+            // overlay state counter values on top of count objects
+            applyStateToCounters();
+
+            // render any map-level content (header/footer, etc)
+            renderMapContent( vm.map );
+
+            // render node content
+            renderNodeContent(vm.node);
+
+            vm.nodeVue.node = vm.node;
+          
+            //injectScriptAssets(data.scripts_stack || [] );
+            injectRawScriptAssets(data.raw_scripts_stack || [] );
+
+            // load document-level H5P infrastructure, if there
+            // is any.
+            injectH5P();
+
+            //injectCssAssets(data.styles_stack);
+            //injectScriptAssets(data.scripts_stack);
+
+            // set the browser page title to the node title
+            document.title = vm.node.title;
+
+        } else {
+            vm.nodeVue.content = "error";
+        }
+    }
+
+    function onSuspendSucceeded(data) {
+
+    }
+  
+    function onSuspendFailed(data) {
+      alert(data);
+    }
+
+    /**
+     * Plays the map
+     * @param {number} node id
+     * @returns {} 
+     */
+    function play(nodeId) {
+
+      // test if no node passed in - get nodeId from Url parameters
+      if (typeof nodeId !== 'undefined') {
+        vm.urlParameters.nodeId = nodeId;
+      }
+
+      // build URL for node to play
+      var url = vm.restApiUrl + '/play/' + vm.urlParameters.mapId + "/" + vm.urlParameters.nodeId;
+
+      // if don't have map data yet, signal server to get and return it with request
+      if (vm.haveMapData === false) {
+
+        if (url.indexOf("?") === -1) {
+          url += '?includeMapData=1';
+        } else {
+          url += '&includeMapData=1';
+        }
+      }
+
+      // if there's was a link involved, then add it's id as a querystring so we can
+      // have server-side test/record if it's a 'visit once' link
+      if (vm.urlParameters.linkId !== null) {
+
+        if (url.indexOf("?") === -1) {
+          url += '?linkId=' + vm.urlParameters.linkId;
+        } else {
+          url += '&linkId=' + vm.urlParameters.linkId;
+        }
+      }
+
+      vm.Utilities.log.debug('play url: ' + url);
+
+      vm.Utilities.getJson(url, null, onNodeLoadSucceeded, onLoadError);
+    }
+
+    /**
+     * Translates raw OLab markup into vue-ready markup
+     * @param {any} contentName target div id "#olab<contentName>Content"
+     * @param {any} source olab (wikitag-ified) markup
+     * @returns {any} new vue-able html markup
+     */
+    function renderContent( contentName, source) {
+
+      // test if any olab markup passed in
+      if (source.text !== null) {
+
+        source.text = encapsulateNodeMarkup( contentName, source.text);
+
+        // test if bypassing Wiki tag rendering
+        if (vm.qs["showWiki"] !== "1")
+          source.text = dewikifyMarkup(source.text);
+
+        return createNodeVue('#olab' + contentName + 'Content', source);
+      }
+
+      return null;
+    }
+
+    /**
+     * Spins up VUE js with the map markups (header/footer)
+     * @returns {} 
+     */
+    function renderMapContent( map ) {
+
+      if (typeof map.header !== 'undefined') {
+        map.text = map.header;
+        vm.headerVue = renderContent('Header', map);
+      }
+      if (typeof map.footer !== 'undefined') {
+        map.text = map.footer;
+        vm.footerVue = renderContent('Footer', map);
+      }
+    }
+
+    /**
+     * Spins up VUE js with the node markup
+     * @argument {any} node HTML
+     * @returns {undefined} 
+     */
+    function renderNodeContent(node) {
+
+      vm.nodeVue = renderContent('Node', node ); 
+
+      // if any node annotations, add them to markup DIV
+      if (node.annotation != null) {
+
+        if (node.annotation.length > 0) {
+
+          jQuery("#olabAnnotationContent").html(node.annotation);
+          // add the annotation CSS style class so we don't 
+          // see the annotation style if there nothing to display
+          jQuery("#olabAnnotationContent").addClass("annotation");
+
+        }
+      }
+    }
+
+    function testLoad( hrefArray ) {
+
+      jsuLoader
+        .reset()
+        .addScript( hrefArray )
+        .onComplete(() => console.info("* ALL SCRIPTS LOADED *"))
+        .load();
     }
 
 };

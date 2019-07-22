@@ -54,28 +54,28 @@ var OlabMRTag = function(olabNodePlayer) {
       var file = vm.olabNodePlayer.getFile(id);
 
       // test if image mime type
-      if (IsImageType(file.item["mime"])) {
+      if (IsImageType(file["mime"])) {
         tag = "olab-image";
       }
       // test if audio mime type
-      else if (IsAudioType(file.item["mime"])) {
+      else if (IsAudioType(item["mime"])) {
         tag = "olab-audio";
       }
       // test if video mime type
-      else if (IsVideoType(file.item["mime"])) {
+      else if (IsVideoType(file["mime"])) {
         tag = "olab-video";
       }
 
       // test if file has embedded content that will be put inline
       // in the HTML.  otherwise its a public-accessible URL for the src
-      if ( file.item['is_embedded'] == 1 ) {
+      if ( file['is_embedded'] == 1 ) {
 
         // handle special case of PDF file
-          if (file.item["mime"] == "application/pdf") {
+          if (file["mime"] == "application/pdf") {
 
               element = "<embed src = '" +
                   vm.olabNodePlayer.mediaUrl +
-                  file.item["path"] +
+                  file["path"] +
                   "' " +
                   " width = \"500\" height = \"375\" type = 'application/pdf' >";
           }
@@ -83,16 +83,16 @@ var OlabMRTag = function(olabNodePlayer) {
 
             element = "<" + tag + " class='" + tag + "'" +
               " id='" + tag + id + "'" +
-              " filename='" + file.item['name'] + "'" +
-              " src='" + file.item["encodedContent"] + "'></" + tag + ">";
+              " filename='" + file['name'] + "'" +
+              " src='" + file["encodedContent"] + "'></" + tag + ">";
           }
 
       } else {
 
           element = "<" + tag + " class='" + tag + "'" +
             " id='" + tag + id + "'" +
-            " filename='" + file.item['name'] + "'" +
-            " src='" + vm.olabNodePlayer.mediaUrl + file.item["path"] + "'></" + tag + ">";
+            " filename='" + file['name'] + "'" +
+            " src='" + vm.olabNodePlayer.mediaUrl + file["path"] + "'></" + tag + ">";
       }
 
       vm.olabNodePlayer.log.debug(element);

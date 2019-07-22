@@ -259,7 +259,7 @@ var OlabQUTag = function(olabNodePlayer) {
                 throw new Error("not found.");
             }
 
-            var questionType = question.item['QuestionTypes']['value'];
+            var questionType = question['QuestionTypes']['value'];
             var questionTag = vm.OLAB_HTML_TAG + questionType;
             var changeHandler = "";
 

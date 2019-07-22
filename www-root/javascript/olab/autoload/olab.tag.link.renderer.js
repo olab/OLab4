@@ -2,7 +2,7 @@
 Vue.component('olab-node-link', {
 
     template: `<div class='olab-node-link'>
-                 <a v-bind:class ='classes' v-bind:onclick='"olab.navigate(" + link.DestinationNode.id + ");"'>{{link.DestinationNode.title}}</a>
+                 <a v-bind:class ='classes' v-bind:onclick='"olabPlayer.navigate(" + link.DestinationNode.id + ", " + link.id );"'>{{link.DestinationNode.title}}</a>
                </div>`,
     props: ['link'],
     computed: {

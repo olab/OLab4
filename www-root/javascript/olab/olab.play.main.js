@@ -9,7 +9,7 @@
 
 "use strict";
 // main view class
-var olab = null;
+var olabPlayer = null;
 
 /**
  * Document onloaded function
@@ -27,8 +27,8 @@ jQuery(document).ready(function ($) {
     };
 
     // spin up class that does all the work
-    olab = new OlabNodePlayer(params);
-    olab.play();
+    olabPlayer = new OlabNodePlayer(params);
+    olabPlayer.play();
 
   } catch (e) {
     alert(e.name + ":" + e.message);
