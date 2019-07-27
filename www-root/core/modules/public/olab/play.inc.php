@@ -43,16 +43,18 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_OLAB"))) {
     exit;
 } else {
 
+    $script_version = OLabUtilities::get_script_version();
+    
     OLabUtilities::addToHead( "<script>var WEBSITE_ROOT = \"" . HostSystemApi::getRootUrl() . "\";</script>" );
-    OLabUtilities::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/vue/vue.js\"></script>" );
-    OLabUtilities::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/vee-validate/vee-validate.min.js\"></script>" );
-    OLabUtilities::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/axios/axios.min.js\"></script>" );
-    OLabUtilities::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/olab.utilities.js\"></script>" );
-    OLabUtilities::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/olab.client.api.js\"></script>" );
-    OLabUtilities::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/olab.play.components.js\"></script>" );
-    OLabUtilities::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/olab.node.player.js\"></script>" );
-    OLabUtilities::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/olab.play.main.js\"></script>" );
-    OLabUtilities::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/loader.js\"></script>" );
+    OLabUtilities::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/vue/vue.js?ver=" . $script_version . "\"></script>" );
+    OLabUtilities::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/vee-validate/vee-validate.min.js?ver=" . $script_version . "\"></script>" );
+    OLabUtilities::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/axios/axios.min.js?ver=" . $script_version . "\"></script>" );
+    OLabUtilities::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/olab.utilities.js?ver=" . $script_version . "\"></script>" );
+    OLabUtilities::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/olab.client.api.js?ver=" . $script_version . "\"></script>" );
+    OLabUtilities::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/olab.play.components.js?ver=" . $script_version . "\"></script>" );
+    OLabUtilities::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/olab.node.player.js?ver=" . $script_version . "\"></script>" );
+    OLabUtilities::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/olab.play.main.js?ver=" . $script_version . "\"></script>" );
+    OLabUtilities::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/loader.js?ver=" . $script_version . "\"></script>" );
 
     OLabUtilities::addToHead( "<link href=\"". HostSystemApi::getRootUrl() ."/css/olab/olab.css\" rel=\"stylesheet\" type=\"text/css\" media=\"all\" />" );
 
@@ -62,7 +64,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_OLAB"))) {
     foreach ( $asJsFiles as $sJsFile )
     {
         OLabUtilities::addToHead( "<script class=\"olab\" type=\"text/javascript\" src=\"" .
-        HostSystemApi::getRelativePath() . "/javascript/olab/autoload" . $sJsFile . "\"></script>" );
+        HostSystemApi::getRelativePath() . "/javascript/olab/autoload" . $sJsFile . "?ver=" . $script_version . "\"></script>" );
     }
     HostSystemApi::UpdateBreadCrumb( HostSystemApi::getRootUrl()  . "/" . $MODULE, "Play " );
 }
