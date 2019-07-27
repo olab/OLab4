@@ -10,7 +10,7 @@ Vue.component('olab-node-links', {
     methods: {
         classes: function( link ) {
             var classes= 'olab-node-link';
-            if (this.$props.node.link_style_id === 5) {
+            if (this.$props.node.linkStyleId === 5) {
                 classes += " btn";
             }
             return classes;
