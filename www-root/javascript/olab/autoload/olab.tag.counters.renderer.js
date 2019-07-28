@@ -21,7 +21,7 @@ Vue.component('olab-counters', {
     props: ['server', 'map', 'node']
 });
 
-var OlabCOUNTERTag = function(olabNodePlayer) {
+var OlabCOUNTERSTag = function(olabNodePlayer) {
 
     var vm = this;
     vm.olabNodePlayer = olabNodePlayer;
@@ -45,7 +45,7 @@ var OlabCOUNTERTag = function(olabNodePlayer) {
                 " class='" +
                 vm.OLAB_HTML_TAG +
                 "'" +
-                " v-bind:server='server.Counters' v-bind:map='map.Counters' v-bind:node='node.Counters'>" +
+                " v-bind:server='server.counters' v-bind:map='map.counters' v-bind:node='node.counters'>" +
                 "</" +
                 vm.OLAB_HTML_TAG +
                 ">";
