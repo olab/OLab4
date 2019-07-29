@@ -180,7 +180,7 @@ Vue.component('olab-question-radio',
                     <span v-bind:id="'click' + response.id">
                       <input class="lightning-choice"
                              v-bind:id="'QU_' + question.id + '_' + response.id"
-                             v-bind:name="'QU_' + question.id + '_' + response.id"
+                             v-bind:name="'QU_' + question.id"
                              v-bind:response="response.id"
                              v-on:click="changed"
                              data-tries="1"
