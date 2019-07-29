@@ -7,9 +7,6 @@ Vue.component('olab-counter', {
 // counters
 Vue.component('olab-counters', {
     template: `<ul class="navigation">
-              <li v-for='counter in server'>
-                <a data-toggle="modal" href="#" data-target="#counter-debug">{{counter.name}}</a>&nbsp;{{counter.value}}
-              </li>
               <li v-for='counter in map'>
                 <a data-toggle="modal" href="#" data-target="#counter-debug">{{counter.name}}</a>&nbsp;{{counter.value}}
               </li>
