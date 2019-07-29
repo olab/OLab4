@@ -458,7 +458,7 @@ var OlabNodePlayer = function(params) {
      * @param {} node markup
      * @returns {string} markup
      */
-    function dewikifyMarkup(markup) {
+    function dewikifyMarkup(show_wiki, markup) {
 
         // get a list of Wiki tags
         var tags = vm.Utilities.getWikiTags(markup);
@@ -477,7 +477,15 @@ var OlabNodePlayer = function(params) {
 
                     // pass all the parts into the handler for processing and store the rendered
                     // contents back to the main markup
-                    markup = String(markup).replace("[[" + value + "]]", renderer.render(tagParts));
+                    var text = renderer.render(tagParts);
+                    var wikiTag = "[[" + value + "]]";
+
+                    if (show_wiki === "0") {
+                      markup = String(markup).replace(wikiTag, text);
+                    }
+                    else if (show_wiki === "2") {
+                      markup = String(markup).replace(wikiTag, wikiTag + text);
+                    }
 
                 } catch (e) {
 
@@ -1042,8 +1050,14 @@ var OlabNodePlayer = function(params) {
         source.text = encapsulateNodeMarkup( contentName, source.text);
 
         // test if bypassing Wiki tag rendering
-        if (vm.qs["showWiki"] !== "1")
-          source.text = dewikifyMarkup(source.text);
+        var show_wiki = vm.qs["showWiki"];
+        // test if not set
+        if (typeof show_wiki === 'undefined') {
+          show_wiki = "0";
+        }
+
+        if (show_wiki !== "1")
+          source.text = dewikifyMarkup(show_wiki, source.text);
 
         return createNodeVue('#olab' + contentName + 'Content', source);
       }
