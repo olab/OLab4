@@ -171,12 +171,12 @@ Vue.component('olab-question-multiplechoice',
 // radio button question
 Vue.component('olab-question-radio',
     {
-        template:`<div v-bind:id="'QU_' + question.id" class="questions olab-question-radio" >
+        template:`<div v-bind:id="'QU_' + question.id" class="questions" >
               <p>{{question.stem}}</p>
               <div v-bind:class="'questionResponses questionForm_' + question.id + ' horizontal'">
                 <ul class="navigation">
 
-                  <li v-for='response in question.QuestionResponses'>
+                  <li v-for='response in question.QuestionResponses' v-bind:id="'QU_' + question.id + '_' + response.id">
                     <span v-bind:id="'click' + response.id">
                       <input class="lightning-choice"
                              v-bind:id="'QU_' + question.id + '_' + response.id"
@@ -274,9 +274,12 @@ var OlabQUTag = function(olabNodePlayer) {
                 questionTag +
                 " class='question " +
                 questionTag +
+                "' " +
+                " name='" +
+                question.name + 
                 "'" +
                 " id='" +
-                questionType +
+                "QU_" +
                 id +
                 "'" +
                 changeHandler +

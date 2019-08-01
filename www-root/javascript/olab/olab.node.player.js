@@ -162,7 +162,7 @@ var OlabNodePlayer = function(params) {
     function buildNodeUrls(data) {
         jQuery.each(data,
             function(index, value) {
-                value.url = vm.moduleUrl + '/play#' + value.map_id + ":" + value.DestinationNode.id;
+                value.url = vm.moduleUrl + '/play#' + value.mapId + ":" + value.destinationId;
             });
         return data;
     }
@@ -951,9 +951,6 @@ var OlabNodePlayer = function(params) {
 
             }
 
-            // autoload any server, map, or node-level scripts
-            // autoloadScripts();
-
             // save state data to model
             vm.state = data.state;
             vm.state.state_data = JSON.parse(vm.state.state_data);
@@ -969,15 +966,11 @@ var OlabNodePlayer = function(params) {
 
             vm.nodeVue.node = vm.node;
           
-            //injectScriptAssets(data.scripts_stack || [] );
             injectRawScriptAssets(data.raw_scripts_stack || [] );
 
             // load document-level H5P infrastructure, if there
             // is any.
             injectH5P();
-
-            //injectCssAssets(data.styles_stack);
-            //injectScriptAssets(data.scripts_stack);
 
             // set the browser page title to the node title
             document.title = vm.node.title;
@@ -1059,10 +1052,10 @@ var OlabNodePlayer = function(params) {
         if (show_wiki !== "1")
           source.text = dewikifyMarkup(show_wiki, source.text);
 
-        return createNodeVue('#olab' + contentName + 'Content', source);
       }
 
-      return null;
+      return createNodeVue('#olab' + contentName + 'Content', source);
+
     }
 
     /**

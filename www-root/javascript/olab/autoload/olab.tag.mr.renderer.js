@@ -58,7 +58,7 @@ var OlabMRTag = function(olabNodePlayer) {
         tag = "olab-image";
       }
       // test if audio mime type
-      else if (IsAudioType(item["mime"])) {
+      else if (IsAudioType(file["mime"])) {
         tag = "olab-audio";
       }
       // test if video mime type
