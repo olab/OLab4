@@ -122,17 +122,16 @@ Vue.component('olab-question-multiplechoice',
     {
         template:`<div class='questions olab-question-multiplechoice' >
                <p>{{question.stem}}</p>
-               <div class="questionResponses">
+               <div v-bind:id="question.name + '_responses'" class="questionResponses" v-bind:class="orientation">
                  <ul class="navigation">
 
-                   <li v-for='response in question.QuestionResponses'>
-                     <span v-bind:id="'click' + response.id">
+                   <li v-for='response in question.QuestionResponses' v-bind:id="'QU_' + question.name + '_' + response.name">
+                     <span v-bind:id="'QU_' + question.name + '_' + response.name + '_response'">
                        <input class="lightning-choice"
-                              v-bind:id="'QU_' + question.id + '_' + response.id"
-                              v-bind:name="'QU_' + question.id + '_' + response.id"
-                              v-bind:question="response.question_id"
+                              v-bind:id="'QU_' + question.name + '_' + response.name + '_input'"
+                              v-bind:name="'QU_' + question.name"
                               v-bind:response="response.id"
-                              v-on:change="changed"
+                              v-on:click="changed"
                               data-tries="-1"
                               v-bind:data-val="response.response"
                               type="checkbox">
@@ -148,6 +147,20 @@ Vue.component('olab-question-multiplechoice',
               </div>
             </div>`,
         props:['question'],
+
+        computed: {
+
+          orientation: function() {
+
+            return {
+              'vertical': this.question.layoutType == 0,
+              'horizontal': this.question.layoutType == 1,
+            }
+
+          }
+
+        },
+
         methods:{
             // provides the website root url from vue.js
             webRoot:function(event) {
@@ -171,16 +184,16 @@ Vue.component('olab-question-multiplechoice',
 // radio button question
 Vue.component('olab-question-radio',
     {
-        template:`<div v-bind:id="'QU_' + question.id" class="questions" >
+        template:`<div v-bind:id="'QU_' + question.name" class="questions olab-question-radio" >
               <p>{{question.stem}}</p>
-              <div v-bind:class="'questionResponses questionForm_' + question.id + ' horizontal'">
+                <div v-bind:id="question.name + '_responses'" class="questionResponses" v-bind:class="orientation">
                 <ul class="navigation">
 
-                  <li v-for='response in question.QuestionResponses' v-bind:id="'QU_' + question.id + '_' + response.id">
-                    <span v-bind:id="'click' + response.id">
+                  <li v-for='response in question.QuestionResponses' v-bind:id="'QU_' + question.name + '_' + response.name">
+                    <span v-bind:id="'QU_' + question.name + '_' + response.name + '_response'">
                       <input class="lightning-choice"
-                             v-bind:id="'QU_' + question.id + '_' + response.id"
-                             v-bind:name="'QU_' + question.id"
+                             v-bind:id="'QU_' + question.name + '_' + response.name + '_input'"
+                             v-bind:name="'QU_' + question.name"
                              v-bind:response="response.id"
                              v-on:click="changed"
                              data-tries="1"
@@ -194,25 +207,41 @@ Vue.component('olab-question-radio',
                      </span>
                   </li>
 
-                  <input type="hidden"
-                         v-bind:id="'QU_' + question.id + '_previous'" />
+                  <input type="hidden" v-bind:id="'QU_' + question.name + '_previous'" />
+
                 </ul>
               </div>
             </div>`,
         props:['question'],
+
+        computed: {
+
+          orientation: function() {
+
+            return {
+              'vertical': this.question.layoutType == 0,
+              'horizontal': this.question.layoutType == 1,
+            }
+
+          }
+
+        },
+
         methods:{
+
             // provides the website root url from vue.js
             webRoot:function(event) {
                 return this.$parent.websiteRoot;
             },
+
             changed:function(event) {
 
-                var prevId = "#QU_" + this.question.id + "_previous";
+                var prevId = "#QU_" + this.question.name + "_previous"; 
 
                 var payload = {};
 
                 var idParts = event.target.id.split("_");
-                payload.responseId = idParts[2];
+                payload.responseId = Number( event.target.attributes['response'].value );
                 payload.questionId = this.question.id;
                 payload.questionShowSubmit = this.question.show_submit;
                 payload.value = event.target.value;

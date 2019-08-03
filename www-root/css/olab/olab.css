@@ -273,11 +273,11 @@ div.scroll {
     padding: 8px;
 }
 
-.questionResponces span { margin-right: 5px; }
+.questionResponses span { margin-right: 5px; }
 
-.questionResponces.horizontal li { display: inline-block; }
+.questionResponses.horizontal li { display: inline-block; }
 
-.questionResponces .questionSubmitButton { margin-top: 15px; }
+.questionResponses .questionSubmitButton { margin-top: 15px; }
 
 .btn {
     margin-bottom: 10px;
