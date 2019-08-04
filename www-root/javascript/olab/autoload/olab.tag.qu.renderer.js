@@ -169,7 +169,7 @@ Vue.component('olab-question-multiplechoice',
           changed: function (event) {
 
             var payload = {};
-
+            
             var idParts = event.target.id.split("_");
             payload.responseId = Number(event.target.attributes['response'].value);
             payload.questionId = this.question.id;
