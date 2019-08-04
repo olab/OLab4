@@ -166,18 +166,18 @@ Vue.component('olab-question-multiplechoice',
             webRoot:function(event) {
                 return this.$parent.websiteRoot;
             },
-            changed:function(event) {
+          changed: function (event) {
 
-                var payload = {};
+            var payload = {};
 
-                var idParts = event.target.id.split("_");
-                payload.responseId = idParts[2];
-                payload.questionId = this.question.id;
-                payload.questionShowSubmit = this.question.show_submit;
-                payload.value = event.target.checked;
+            var idParts = event.target.id.split("_");
+            payload.responseId = Number(event.target.attributes['response'].value);
+            payload.questionId = this.question.id;
+            payload.questionShowSubmit = this.question.show_submit;
+            payload.value = event.target.value;
 
-                this.$parent.onMultichoiceResponseChanged(payload);
-            }
+            this.$parent.onMultichoiceResponseChanged(payload);
+          }
         }
     });
 
