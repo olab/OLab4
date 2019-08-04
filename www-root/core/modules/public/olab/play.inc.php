@@ -56,7 +56,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_OLAB"))) {
     OLabUtilities::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/olab.play.main.js?ver=" . $script_version . "\"></script>" );
     OLabUtilities::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/loader.js?ver=" . $script_version . "\"></script>" );
 
-    OLabUtilities::addToHead( "<link href=\"". HostSystemApi::getRootUrl() ."/css/olab/olab.css\" rel=\"stylesheet\" type=\"text/css\" media=\"all\" />" );
+    OLabUtilities::addToHead( "<link href=\"". HostSystemApi::getRootUrl() ."/css/olab/olab.css?ver=" . $script_version . "\" rel=\"stylesheet\" type=\"text/css\" media=\"all\" />" );
 
     // autoload any kernel-level javascript extensions
     $jsPath = HostSystemApi::getFileRoot() . "/javascript/olab/autoload";

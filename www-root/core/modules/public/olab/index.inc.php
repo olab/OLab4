@@ -5,12 +5,14 @@
 use Entrada\Modules\Olab\Classes\HostSystemApi;
 use Entrada\Modules\Olab\Classes\OLabUtilities;
 
+$script_version = OLabUtilities::get_script_version();
+
 OLabUtilities::addToHead( "<script>var WEBSITE_ROOT = \"" . HostSystemApi::getRootUrl() . "\";</script>" );
 OLabUtilities::addToHead( "<script type=\"text/javascript\" src=\"". HostSystemApi::getRelativePath() ."/javascript/olab/jquery.datatables/datatables.min.js\" defer></script>" );
 OLabUtilities::addToHead( "<script type=\"text/javascript\" src=\"". HostSystemApi::getRelativePath() ."/javascript/vue/vue.js\" defer></script>" );
-OLabUtilities::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/olab.utilities.js\"></script>" );
-OLabUtilities::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/olab.list.main.js\"></script>" );
-OLabUtilities::addToHead( "<link href=\"". HostSystemApi::getRootUrl() ."/css/olab/olab.css\" rel=\"stylesheet\" type=\"text/css\" media=\"all\" />" );
+OLabUtilities::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/olab.utilities.js?ver=" . $script_version . "\"></script>" );
+OLabUtilities::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/olab.list.main.js?ver=" . $script_version . "\"></script>" );
+OLabUtilities::addToHead( "<link href=\"". HostSystemApi::getRootUrl() ."/css/olab/olab.css?ver=" . $script_version . "\" rel=\"stylesheet\" type=\"text/css\" media=\"all\" />" );
 OLabUtilities::addToHead( "<link href=\"". HostSystemApi::getRootUrl() ."/css/olab/scrollingtable.css\" rel=\"stylesheet\" type=\"text/css\" media=\"all\" />" );
 
 if (!defined("PARENT_INCLUDED")) {
