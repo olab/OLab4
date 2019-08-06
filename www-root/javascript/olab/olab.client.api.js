@@ -1,15 +1,6 @@
 ﻿"use strict";
 
-/**
- * Main olab client api class
- * @param {} authToken = current auth token
- * @param {} targetId = main content view div name for data binding
- * @param {} websiteRootUrl = root url for web site
- * @param {} pageUrl = current page url (document.location)
- * @returns {} Service definition
- */
-
-var OlabApiQuestion = function(clientApi, params) {
+var OLabApiQuestion = function(clientApi, params) {
 
   var vm = this;
   vm.clientApi = clientApi;
@@ -17,15 +8,74 @@ var OlabApiQuestion = function(clientApi, params) {
   vm.target = null;
 
   vm.service = {
-    getRadioValueId: getRadioValueId,
-    getRadioValueText: getRadioValueText
-  };
+    hide: hideObject,
+    show: showObject,
+    getObject: getObject
+  }
 
-  vm.target = jQuery("div#" + params);
+  vm.target = jQuery("div#" + "QU_" + params).first();
   if (vm.target.length > 0) {
     return vm.service;
   } else {
     return null;
+  }
+
+  function hideObject() {
+    vm.target.hide();
+  }
+
+  function showObject() {
+    vm.target.show();
+  }
+
+  function getObject() {
+    return vm.target;
+  }
+}
+
+var OlabApiQuestionXXX = function(clientApi, params) {
+
+  var vm = this;
+  vm.clientApi = clientApi;
+  vm.params = params;
+  vm.target = null;
+
+  vm.service = {
+    hide: hideObject,
+    show: showObject,
+    getRadioValueId: getRadioValueId,
+    getRadioValueText: getRadioValueText,
+    getSingleText: getSingleText,
+    getMultiText: getMultiText,
+    getRawObject: getRawObject
+  };
+
+  vm.target = jQuery("div#" + "QU_" + params).first();
+  if (vm.target.length > 0) {
+    return vm.service;
+  } else {
+    return null;
+  }
+
+  function hideObject() {
+    vm.target.hide();
+  }
+
+  function showObject() {
+    vm.target.show();
+  }
+
+  function getRawObject() {
+    return vm.target;
+  }
+
+  function getMultiText() {
+
+  }
+
+  function getSingleText() {
+    var selected = vm.target.find("input");
+    return selected.value();
   }
 
   function getRadioValueId() {
@@ -56,7 +106,7 @@ var OlabClientAPI = function(params) {
     return vm.service;
 
     function getQuestion(id) {
-      return new OlabApiQuestion(vm, id);
+      return new OLabApiQuestion(vm, id);
     }
 
     function hello() {

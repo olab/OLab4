@@ -100,6 +100,37 @@ Vue.component('olab-question-slider',
         }
     });
 
+// single-line text entry question
+// multi-line text entry question
+Vue.component('olab-question-singlelinetext',
+  {
+    template:`<div v-bind:id="'QU_' + question.name" class="questions olab-question-singlelinetext" >
+
+               <p>{{question.stem}}</p>
+
+               <input 
+                 v-bind:id="'QU_' + question.name + '_input'"
+                 v-bind:name="'QU_' + question.name"
+                 v-bind:size="question.width" 
+                 v-bind:placeholder="question.prompt" 
+                 value="" 
+                 autocomplete="off" 
+                 data-validator="isAlpha" 
+                 data-errormsg="" 
+                 data-parameter="" 
+                 class="lightning-single" 
+                 type="text" 
+                 onkeyup="if (event.keyCode == 13) {$('#questionSubmit4752').show(); $('#qresponse_4752').attr('disabled', 'disabled'); }"
+               />
+
+               <span style='display:none' v-if='question.show_submit' v-bind:id="'submit_' + question.id + '_' + response.id">
+                   <img v-bind:src="webRoot(null) + '/images/loading_small.gif'"/>
+               </span>
+               
+            </div>`,
+    props:['question']
+  });
+
 // multi-line text entry question
 Vue.component('olab-question-multilinetext',
     {
@@ -119,8 +150,8 @@ Vue.component('olab-question-multilinetext',
 
 // multiple choice question
 Vue.component('olab-question-multiplechoice',
-    {
-        template:`<div class='questions olab-question-multiplechoice' >
+  {
+    template: `<div class='questions olab-question-multiplechoice' >
                <p>{{question.stem}}</p>
                <div v-bind:id="question.name + '_responses'" class="questionResponses" v-bind:class="orientation">
                  <ul class="navigation">
@@ -146,40 +177,41 @@ Vue.component('olab-question-multiplechoice',
                 </ul>
               </div>
             </div>`,
-        props:['question'],
+    props: ['question'],
 
-        computed: {
+    computed: {
+      orientation: function() {
 
-          orientation: function() {
-
-            return {
-              'vertical': this.question.layoutType == 0,
-              'horizontal': this.question.layoutType == 1,
-            }
-
-          }
-
-        },
-
-        methods:{
-            // provides the website root url from vue.js
-            webRoot:function(event) {
-                return this.$parent.websiteRoot;
-            },
-          changed: function (event) {
-
-            var payload = {};
-            
-            var idParts = event.target.id.split("_");
-            payload.responseId = Number(event.target.attributes['response'].value);
-            payload.questionId = this.question.id;
-            payload.questionShowSubmit = this.question.show_submit;
-            payload.value = event.target.value;
-
-            this.$parent.onMultichoiceResponseChanged(payload);
-          }
+        return {
+          'vertical': this.question.layoutType == 0,
+          'horizontal': this.question.layoutType == 1,
         }
-    });
+
+      }
+
+    },
+
+    methods: {
+
+      // provides the website root url from vue.js
+      webRoot: function(event) {
+        return this.$parent.websiteRoot;
+      },
+
+      changed: function(event) {
+
+        var payload = {};
+
+        var idParts = event.target.id.split("_");
+        payload.responseId = Number(event.target.attributes['response'].value);
+        payload.questionId = this.question.id;
+        payload.questionShowSubmit = this.question.show_submit;
+        payload.value = event.target.value;
+
+        this.$parent.onMultichoiceResponseChanged(payload);
+      }
+    }
+  });
 
 // radio button question
 Vue.component('olab-question-radio',
