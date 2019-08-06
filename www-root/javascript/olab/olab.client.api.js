@@ -1,6 +1,48 @@
 ﻿"use strict";
 
-var OLabApiQuestion = function(clientApi, params) {
+class OLabQuestion {
+
+  constructor(clientApi, params) {
+
+    this.clientApi = clientApi;
+    this.params = params;
+    this.basePath = "div#" + "QU_" + params;
+
+    this.target = jQuery( this.basePath );
+    if (this.target.length === 1) {
+      this.target = this.target[0];
+    }
+    else {
+      throw "Object '" + params + "' multiple instances or not found.";
+    }
+
+  }
+
+  hide() {
+    this.target.hide();
+  }
+
+  show() {
+    this.target.show();
+  }
+
+}
+
+class OLabQuestionRadio extends OLabQuestion {
+
+  constructor(clientApi, params) {
+    super(clientApi, params); 
+  }
+
+  get choices() {
+
+    var choices = this.target.find("input[type='radio']");
+    var t = choices.length;
+  }
+
+}
+
+var OLabApiQuestionXX = function(clientApi, params) {
 
   var vm = this;
   vm.clientApi = clientApi;
@@ -106,7 +148,7 @@ var OlabClientAPI = function(params) {
     return vm.service;
 
     function getQuestion(id) {
-      return new OLabApiQuestion(vm, id);
+      return new OLabQuestionRadio(vm, id);
     }
 
     function hello() {
