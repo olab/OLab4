@@ -11,7 +11,7 @@ Vue.component('olab-node-links', {
 
         name: function(link) {
 
-          if ( (link.text != null ) || ( link.text.length !== 0 ) ) {
+          if ( (link.text != null ) && ( link.text.length !== 0 ) ) {
             return link.text;
           } else {
             return link.DestinationNode.title;
