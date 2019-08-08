@@ -22,7 +22,7 @@ var OlabNodePlayer = function(params) {
     vm.urlParameters.nodeId = paramArray[1];
     vm.urlParameters.linkId = null;
 
-    vm.targetId = vm.Utilities.normalizeDivId(params.targetId);
+    vm.targetId = vm.Utilities.normalizeIdAttribute(params.targetId);
     vm.websiteUrl = params.siteRoot;
     vm.mediaUrl = vm.websiteUrl + "/images/olab/files";
     vm.moduleUrl = params.siteRoot + '/olab';
@@ -327,8 +327,8 @@ var OlabNodePlayer = function(params) {
                         vm.Utilities.log.debug('Xmit: ' + data.responseId + "= selected");
                         data.state_data = vm.state.state_data;
                         data.submitId = "#submit_" + data.questionId;
-                        if (data.questionshowSubmit) {
-                            jQuery( data.submitId ).show();
+                        if (data.questionShowSubmit) {
+                            jQuery( vm.Utilities.normalizeIdAttribute( data.submitId ) ).show();
                         }
 
                         var url = vm.restApiUrl + '/question/dropdown/' + this.node.id;
@@ -349,7 +349,7 @@ var OlabNodePlayer = function(params) {
                     data.state_data = vm.state.state_data;
                     data.value = data.value;
                     data.submitId = "#submit_" + questionId;
-                    if (data.questionshowSubmit) {
+                    if (data.questionShowSubmit) {
                       jQuery( data.submitId ).show();
                     }
 
@@ -371,8 +371,8 @@ var OlabNodePlayer = function(params) {
                         data.state_data = vm.state.state_data;
                         data.value = data.value;
                         data.submitId = "#submit_" + data.questionId + "_" + data.responseId;
-                        if (data.questionshowSubmit) {
-                            jQuery( data.submitId ).show();
+                        if (data.questionShowSubmit) {
+                            jQuery( vm.Utilities.normalizeIdAttribute( data.submitId ) ).show();
                         }
 
                         var url = vm.restApiUrl + '/question/multichoice/' + this.node.id;
@@ -391,9 +391,8 @@ var OlabNodePlayer = function(params) {
                     
                         vm.Utilities.log.debug('Xmit: ' + data.responseId + "=" + data.value);
                         data.state_data = vm.state.state_data;
-                        data.submitId = "#submit_" + data.questionId + "_" + data.responseId;
-                        if (data.questionshowSubmit) {
-                            jQuery( data.submitId ).show();
+                        if (data.questionShowSubmit) {
+                            jQuery( vm.Utilities.normalizeIdAttribute( data.submitId ) ).show();
                         }
 
                         var url = vm.restApiUrl + '/question/radio/' + this.node.id;
@@ -911,8 +910,8 @@ var OlabNodePlayer = function(params) {
     function onQuestionResponseSucceeded(data) {
 
         // turn off any spinning img's for REST call
-        if (data.parameters.questionshowSubmit) {
-            jQuery(data.parameters.submitId).hide();
+        if (data.parameters.questionShowSubmit) {
+            jQuery( vm.Utilities.normalizeIdAttribute( data.parameters.submitId ) ).hide();
         }
 
         // save state data to model
@@ -1088,10 +1087,10 @@ var OlabNodePlayer = function(params) {
 
         if (node.annotation.length > 0) {
 
-          jQuery("#olabAnnotationContent").html(node.annotation);
+          jQuery( vm.Utilities.normalizeIdAttribute( "olabAnnotationContent") ).html(node.annotation);
           // add the annotation CSS style class so we don't 
           // see the annotation style if there nothing to display
-          jQuery("#olabAnnotationContent").addClass("annotation");
+          jQuery( vm.Utilities.normalizeIdAttribute( "olabAnnotationContent") ).addClass("annotation");
 
         }
       }

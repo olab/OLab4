@@ -16,10 +16,10 @@ var OlabSecurity = function(params) {
 
     vm.Utilities = new OLabUtilities(params.siteRoot, params.location, params.authToken);
 
-    vm.targetUserTableId = vm.Utilities.normalizeDivId(params.targetUserTableId);
-    vm.targetRoleTableId = vm.Utilities.normalizeDivId(params.targetRoleTableId);
-    vm.targetObjectTableId = vm.Utilities.normalizeDivId(params.targetObjectTableId);
-    vm.targetInfoId = vm.Utilities.normalizeDivId(params.targetInfoId);
+    vm.targetUserTableId = vm.Utilities.normalizeIdAttribute(params.targetUserTableId);
+    vm.targetRoleTableId = vm.Utilities.normalizeIdAttribute(params.targetRoleTableId);
+    vm.targetObjectTableId = vm.Utilities.normalizeIdAttribute(params.targetObjectTableId);
+    vm.targetInfoId = vm.Utilities.normalizeIdAttribute(params.targetInfoId);
 
     // get the map and nodeId from the url location hash
     var paramArray = vm.Utilities.getUrlParameters(params.location.hash);

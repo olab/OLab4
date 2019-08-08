@@ -97,7 +97,7 @@ var OLabUtilities = function(siteRoot, pageUrl, authToken) {
         getUrlParameters:getUrlParameters,
         imageUrlBase:vm.imageUrlBase,
         log:vm.logger,
-        normalizeDivId:normalizeDivId,
+        normalizeIdAttribute:normalizeIdAttribute,
         postJson:postJson,
         postData:postData,
         readCookie:readCookie,
@@ -545,12 +545,12 @@ var OLabUtilities = function(siteRoot, pageUrl, authToken) {
     /*
      * Helper class to normallize html ids to jquery selectors
      */
-    function normalizeDivId(divId) {
+    function normalizeIdAttribute(id) {
 
-        if (divId.indexOf('#') !== 0)
-            return '#' + divId;
+        if (id.indexOf('#') !== 0)
+            return '#' + id;
 
-        return divId;
+        return id;
     }
 
     /**

@@ -21,8 +21,8 @@ var OlabMapList= function(params) {
     vm.urlParameters.mapId = paramArray[0];
     vm.urlParameters.nodeId = paramArray[1];
 
-    vm.targetTableId = vm.Utilities.normalizeDivId(params.targetTableId);
-    vm.targetInfoId = vm.Utilities.normalizeDivId(params.targetInfoId);
+    vm.targetTableId = vm.Utilities.normalizeIdAttribute(params.targetTableId);
+    vm.targetInfoId = vm.Utilities.normalizeIdAttribute(params.targetInfoId);
     vm.websiteUrl = params.siteRoot;
     vm.moduleUrl = params.siteRoot + '/olab';
     vm.mapDataTable = null;
