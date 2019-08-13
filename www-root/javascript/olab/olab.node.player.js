@@ -448,7 +448,9 @@ var OlabNodePlayer = function(params) {
      * @returns {string} HTML div string
      */
     function encapsulateNodeMarkup(type, nodeText) {
-        return '<div id="olab' + type + 'Content">' + nodeText + '</div>';
+        return '<div id="olab' + type + 'Content">' + 
+               nodeText + 
+               '</div>';
     }
 
     /**
@@ -1024,6 +1026,8 @@ var OlabNodePlayer = function(params) {
       }
 
       vm.Utilities.log.debug('play url: ' + url);
+
+      //vm.nodeVue.loadingList = true;
 
       vm.Utilities.getJson(url, null, onNodeLoadSucceeded, onLoadError);
     }
