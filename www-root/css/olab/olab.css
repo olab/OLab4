@@ -631,3 +631,14 @@ a.file-link:visited { color: #0088cc; }
     display: inline-block;
     margin-right: 10px;
 }
+
+div#QU_SingleLiner {
+  background-color: #006699;
+  width: 25%;
+}
+
+div#QU_BigMultiText{
+  background-color: #468847;
+  font-family: courier;
+  font-size: larger;
+}
