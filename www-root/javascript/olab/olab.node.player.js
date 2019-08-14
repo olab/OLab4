@@ -948,15 +948,15 @@ var OlabNodePlayer = function(params) {
             vm.node = data.node;
 
             // save map data
-            if (vm.haveMapData === false) {
+            //if (vm.haveMapData === false) {
 
                 vm.server = data.server;
                 vm.map = data.map;
 
                 // flag that we have map data so subsequent 'play' calls don't re-ask for it.
-                vm.haveMapData = true;
+            //    vm.haveMapData = true;
 
-            }
+            //}
 
             // save state data to model
             vm.state = data.state;

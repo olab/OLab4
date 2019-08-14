@@ -82,96 +82,6 @@ class OLabQuestionRadio extends OLabQuestion {
 
 }
 
-var OLabApiQuestionXX = function(clientApi, params) {
-
-  var vm = this;
-  vm.clientApi = clientApi;
-  vm.params = params;
-  vm.target = null;
-
-  vm.service = {
-    hide: hideObject,
-    show: showObject,
-    getObject: getObject
-  }
-
-  vm.target = jQuery("div#" + "QU_" + params).first();
-  if (vm.target.length > 0) {
-    return vm.service;
-  } else {
-    return null;
-  }
-
-  function hideObject() {
-    vm.target.hide();
-  }
-
-  function showObject() {
-    vm.target.show();
-  }
-
-  function getObject() {
-    return vm.target;
-  }
-}
-
-var OlabApiQuestionXXX = function(clientApi, params) {
-
-  var vm = this;
-  vm.clientApi = clientApi;
-  vm.params = params;
-  vm.target = null;
-
-  vm.service = {
-    hide: hideObject,
-    show: showObject,
-    getRadioValueId: getRadioValueId,
-    getRadioValueText: getRadioValueText,
-    getSingleText: getSingleText,
-    getMultiText: getMultiText,
-    getRawObject: getRawObject
-  };
-
-  vm.target = jQuery("div#" + "QU_" + params).first();
-  if (vm.target.length > 0) {
-    return vm.service;
-  } else {
-    return null;
-  }
-
-  function hideObject() {
-    vm.target.hide();
-  }
-
-  function showObject() {
-    vm.target.show();
-  }
-
-  function getRawObject() {
-    return vm.target;
-  }
-
-  function getMultiText() {
-
-  }
-
-  function getSingleText() {
-    var selected = vm.target.find("input");
-    return selected.value();
-  }
-
-  function getRadioValueId() {
-    var selected = vm.target.find("input:checked");
-    return selected.attr("response");
-  }
-
-  function getRadioValueText() {
-    var selected = vm.target.find("input:checked");
-    return selected.attr("data-val");
-  }
-
-}
-
 // main view class
 var OlabClientAPI = function(params) {
 
@@ -182,12 +92,30 @@ var OlabClientAPI = function(params) {
     // these are the methods/properties we expose to the outside
     vm.service = {
       hello: hello,
-      getQuestion: getQuestion
+      getQuestion: getQuestion,
+      getCounter: getCounter
     };
 
     vm.player.utilities.log.debug("Created OlabClientAPI.");
 
     return vm.service;
+
+    function getCounter(id) {
+
+      try {
+
+        var counter = vm.player.getCounter(id);
+        return counter;
+
+      } catch (e) {
+
+        vm.player.utilities.log.error( e.message );
+
+      }
+
+      return null;
+
+    }
 
     function getQuestion(id) {
 
