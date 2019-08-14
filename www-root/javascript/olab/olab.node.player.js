@@ -398,11 +398,14 @@ var OlabNodePlayer = function(params) {
                             jQuery( vm.Utilities.normalizeIdAttribute( data.submitId ) ).show();
                         }
 
+                        var payload = { "data": data };
                         var url = vm.restApiUrl + '/question/radio/' + this.node.id;
-                        vm.Utilities.postJson(url, data, onQuestionResponseSucceeded, onQuestionResponseFailed);
+
+                        vm.Utilities.postJson(url, payload, onQuestionResponseSucceeded, 
+                                              onQuestionResponseFailed);
 
                     } catch (e) {
-                        vm.Utilities.log.fatal('onMultichoiceResponseChanged: ' + e.message );
+                        vm.Utilities.log.fatal('onRadioResponseChanged: ' + e.message );
                     } 
                     
                 },
