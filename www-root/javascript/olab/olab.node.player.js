@@ -375,8 +375,11 @@ var OlabNodePlayer = function(params) {
                             jQuery( vm.Utilities.normalizeIdAttribute( data.submitId ) ).show();
                         }
 
+                        var payload = { "data": data };
                         var url = vm.restApiUrl + '/question/multichoice/' + this.node.id;
-                        vm.Utilities.postJson(url, data, onQuestionResponseSucceeded, onQuestionResponseFailed);
+
+                        vm.Utilities.postJson(url, payload, onQuestionResponseSucceeded, 
+                                              onQuestionResponseFailed);
                         
                     } catch (e) {
                         vm.Utilities.log.fatal('onMultichoiceResponseChanged: ' + e.message );

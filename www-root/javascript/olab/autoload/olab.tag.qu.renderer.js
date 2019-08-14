@@ -206,7 +206,7 @@ Vue.component('olab-question-multiplechoice',
         payload.responseId = Number(event.target.attributes['response'].value);
         payload.questionId = this.question.id;
         payload.questionShowSubmit = this.question.showSubmit;
-        payload.value = event.target.value;
+        payload.value = ( event.target.checked ? "on" : "off" );
 
         this.$parent.onMultichoiceResponseChanged(payload);
       }
