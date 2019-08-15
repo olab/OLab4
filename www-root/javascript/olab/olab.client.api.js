@@ -6,13 +6,13 @@ class OLabQuestion {
 
     this.clientApi = clientApi;
     this.params = params;
-    this.basePath = "div#" + "QU_" + params;
+    this.basePath = "div#" + "QU_" + params.id;
 
     this.target = jQuery(this.basePath);
     if (this.target.length === 1) {
       this.target = this.target[0];
     } else {
-      throw "Object '" + params + "' multiple instances or not found.";
+      throw "Object '" + params.id + "' multiple instances or not found.";
     }
 
   }
@@ -35,6 +35,86 @@ class OLabQuestionSingleLine extends OLabQuestion {
 
   get value() {
     return this.target.value();
+  }
+
+}
+
+class OLabChoicesQuestion extends OLabQuestion {
+
+  constructor(clientApi, params) {
+    super(clientApi, params);
+
+    this.choiceObjs = jQuery(this.target).find("input[type='" + params.inputType + "']");   
+  }
+
+  get rawChoices() {
+    return this.choiceObjs;
+  }
+
+  disable() {
+
+    try {
+
+      jQuery.each( this.choiceObjs, function(index, value) {
+        jQuery(value).prop('disabled', true);
+      });
+
+    } catch (e) {
+      alert(e.message);
+    }
+  }
+
+  enable() {
+
+    try {
+
+      jQuery.each( this.choices, function(index, value) {
+        jQuery(value).prop('disabled', true);
+      });
+
+    } catch (e) {
+      alert(e.message);
+    }
+
+  }
+
+}
+
+class OLabQuestionMultipleChoice extends OLabChoicesQuestion {
+
+  constructor(clientApi, params) {
+    params['inputType'] = 'checkbox';
+    super(clientApi, params);
+  }
+
+  get choices() {
+
+    var choiceObjs = this.rawChoices();
+    for (var i = 0; i < choiceObjs.length; i++) {
+      var item = choiceObjs[i];
+      choices.push({ id: parseInt(item.attributes['response'].value),
+        name: item.name, 
+        text: item.attributes['data-val'].value });
+    }
+
+    return choices;
+  }
+
+  get selected() {
+
+    var choiceObjs = this.rawChoices();
+    for (var i = 0; i < choiceObjs.length; i++) {
+      var item = items[i];
+      choices.push({ id: parseInt(item.attributes['response'].value),
+        name: item.name, 
+        text: item.attributes['data-val'].value });
+    }
+
+    return choices;
+  }
+
+  onChanged( func ) {
+    this.choiceObjs.click(func);
   }
 
 }
@@ -74,6 +154,35 @@ class OLabQuestionRadio extends OLabQuestion {
     }
 
     return choices;
+  }
+
+  disable() {
+
+    try {
+
+      var choiceObjs = jQuery(this.target).find("input[type='radio']");
+      jQuery.each( choiceObjs, function(index, value) {
+        jQuery(value).prop('disabled', true);
+      });
+
+    } catch (e) {
+      alert(e.message);
+    }
+  }
+
+  enable() {
+
+    try {
+
+      var choiceObjs = jQuery(this.target).find("input[type='radio']");
+      jQuery.each( choiceObjs, function(index, value) {
+        jQuery(value).prop('disabled', true);
+      });
+
+    } catch (e) {
+      alert(e.message);
+    }
+
   }
 
   onChanged( func ) {
@@ -121,14 +230,20 @@ var OlabClientAPI = function(params) {
 
       try {
 
-        var question = vm.player.getQuestion(id);
+        var params = [];
+        params.id = id;
+
+        var question = vm.player.getQuestion( params.id );
         var questionType = question.questionType;
 
         if (questionType === 1) {
-          return new OLabQuestionSingleLine(vm, id);
+          return new OLabQuestionSingleLine(vm, params);
+        } 
+        else if (questionType === 3) {
+          return new OLabQuestionMultipleChoice(vm, params);
         } 
         else if (questionType === 4) {
-          return new OLabQuestionRadio(vm, id);
+          return new OLabQuestionRadio(vm, params);
         } 
 
       } catch (e) {

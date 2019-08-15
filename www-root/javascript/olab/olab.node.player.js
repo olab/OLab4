@@ -29,6 +29,7 @@ var OlabNodePlayer = function(params) {
 
     vm.qs = vm.Utilities.convertQSToArray(window.location.href);
 
+    vm.counters = [];
     vm.server = [];
     vm.map = [];
     vm.node = [];
@@ -73,26 +74,41 @@ var OlabNodePlayer = function(params) {
     return vm.service;
 
     /**
+     * Applies new counter values from the server to local store
+     */
+    function applyServerValuesToCounters(source) {
+
+      // update the counter data values
+      for (var i = 0; i < source.server.length; i++) {
+        var item = source.server[i];
+        var counter = vm.getCounter(item.id);
+        counter.value = item.value;
+      }
+
+      for (var i = 0; i < source.node.length; i++) {
+        var item = source.node[i];
+        var counter = vm.getCounter(item.id);
+        counter.value = item.value;
+      }
+
+      for (var i = 0; i < source.map.length; i++) {
+        var item = source.map[i];
+        var counter = vm.getCounter(item.id);
+        counter.value = item.value;
+      }
+
+    }
+
+    /**
     * Applies the current node state to the view model
     */
     function applyStateToCounters() {
-
-        jQuery.each(vm.state.state_data.server,
-            function(index, value) {
-
-                // search for counter at server level
-                var counter = vm.Utilities.searchObjectArray(vm.server.counters, value.id);
-
-                if (counter !== null) {
-                    counter.item.value = value.value;
-                }
-            });
 
         jQuery.each(vm.state.state_data.map,
             function(index, value) {
 
                 // search for counter at server level
-                var counter = vm.Utilities.searchObjectArray(vm.map.counters, value.id);
+                var counter = vm.Utilities.searchObjectArray(vm.counters.map, value.id);
 
                 if (counter !== null) {
                     counter.item.value = value.value;
@@ -103,7 +119,7 @@ var OlabNodePlayer = function(params) {
             function(index, value) {
 
                 // search for counter at map level
-                var counter = vm.Utilities.searchObjectArray(vm.node.counters, value.id);
+                var counter = vm.Utilities.searchObjectArray(vm.counters.node, value.id);
 
                 if (counter !== null) {
                     counter.item.value = value.value;
@@ -183,6 +199,7 @@ var OlabNodePlayer = function(params) {
             el:targetId,
             data:{
                 websiteRoot:vm.websiteUrl,
+                counters: vm.counters,
                 server:vm.server,
                 map:vm.map,
                 node:vm.node,
@@ -368,14 +385,16 @@ var OlabNodePlayer = function(params) {
                     try {
 
                         vm.Utilities.log.debug('Xmit: ' + data.responseId + "=" + data.value);
-                        data.state_data = vm.state.state_data;
+
                         data.value = data.value;
                         data.submitId = "#submit_" + data.questionId + "_" + data.responseId;
-                        if (data.questionShowSubmit) {
-                            jQuery( vm.Utilities.normalizeIdAttribute( data.submitId ) ).show();
-                        }
+
+                        // show the spinning rose icon
+                        jQuery( vm.Utilities.normalizeIdAttribute( data.submitId ) ).show();
 
                         var payload = { "data": data };
+                        payload.data.state_data = JSON.stringify( vm.state.state_data );
+
                         var url = vm.restApiUrl + '/question/multichoice/' + this.node.id;
 
                         vm.Utilities.postJson(url, payload, onQuestionResponseSucceeded, 
@@ -393,12 +412,13 @@ var OlabNodePlayer = function(params) {
                     try {
                     
                         vm.Utilities.log.debug('Xmit: ' + data.responseId + "=" + data.value);
-                        data.state_data = vm.state.state_data;
-                        if (data.questionShowSubmit) {
-                            jQuery( vm.Utilities.normalizeIdAttribute( data.submitId ) ).show();
-                        }
+
+                        // show the spinning rose icon
+                        jQuery( vm.Utilities.normalizeIdAttribute( data.submitId ) ).show();
 
                         var payload = { "data": data };
+                        payload.data.state_data = JSON.stringify( vm.state.state_data );
+
                         var url = vm.restApiUrl + '/question/radio/' + this.node.id;
 
                         vm.Utilities.postJson(url, payload, onQuestionResponseSucceeded, 
@@ -559,19 +579,19 @@ var OlabNodePlayer = function(params) {
 
         // if no id, return everything
         if (id === null) {
-            var items = vm.server.counters;
-            items = items.concat(vm.map.counters);
-            items = items.concat(vm.node.counters);
+            var items = vm.counters.server;
+            items = items.concat(vm.counters.map);
+            items = items.concat(vm.counters.node);
             return items;
         }
 
-        var item = vm.Utilities.searchObjectArray(vm.server.counters, id);
+        var item = vm.Utilities.searchObjectArray(vm.counters.server, id);
 
         if (item === null)
-            item = vm.Utilities.searchObjectArray(vm.map.counters, id);
+            item = vm.Utilities.searchObjectArray(vm.counters.map, id);
 
         if (item === null)
-            item = vm.Utilities.searchObjectArray(vm.node.counters, id);
+            item = vm.Utilities.searchObjectArray(vm.counters.node, id);
 
         if (item !== null) {
             return item.item;
@@ -587,19 +607,19 @@ var OlabNodePlayer = function(params) {
      */
     function getCounterBindingVariable(id) {
 
-        var item = vm.Utilities.searchObjectArray(vm.server.counters, id);
+        var item = vm.Utilities.searchObjectArray(vm.counters.server, id);
         if (item !== null) {
-            return "server.counters[" + item.index + "]";
+            return "counters.server[" + item.index + "]";
         }
 
-        item = vm.Utilities.searchObjectArray(vm.map.counters, id);
+        item = vm.Utilities.searchObjectArray(vm.counters.map, id);
         if (item !== null) {
-            return "map.counters[" + item.index + "]";
+            return "counters.map[" + item.index + "]";
         }
 
-        item = vm.Utilities.searchObjectArray(vm.node.counters, id);
+        item = vm.Utilities.searchObjectArray(vm.counters.node, id);
         if (item !== null) {
-            return "node.counters[" + item.index + "]";
+            return "counters.node[" + item.index + "]";
         }
 
         return null;
@@ -918,9 +938,10 @@ var OlabNodePlayer = function(params) {
     function onQuestionResponseSucceeded(data) {
 
         // turn off any spinning img's for REST call
-        if (data.parameters.questionShowSubmit) {
-            jQuery( vm.Utilities.normalizeIdAttribute( data.parameters.submitId ) ).hide();
-        }
+        jQuery( vm.Utilities.normalizeIdAttribute( data.parameters.submitId ) ).hide();
+
+        // apply new data to counters
+        applyServerValuesToCounters( data.counters );
 
         // save state data to model
         vm.state = data.state;
@@ -939,6 +960,9 @@ var OlabNodePlayer = function(params) {
 
         if (data.node !== null) {
 
+            // extract/save all counters
+            vm.counters = data.counters;
+
             // save the current node id (since root nodes are requested with id = 0
             // and we need to know/save the actual node id)
             vm.urlParameters.nodeId = data.node.id;
@@ -948,15 +972,15 @@ var OlabNodePlayer = function(params) {
             vm.node = data.node;
 
             // save map data
-            //if (vm.haveMapData === false) {
+            if (vm.haveMapData === false) {
 
                 vm.server = data.server;
                 vm.map = data.map;
 
                 // flag that we have map data so subsequent 'play' calls don't re-ask for it.
-            //    vm.haveMapData = true;
+                vm.haveMapData = true;
 
-            //}
+            }
 
             // save state data to model
             vm.state = data.state;

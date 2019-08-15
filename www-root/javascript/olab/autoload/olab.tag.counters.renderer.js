@@ -37,11 +37,7 @@ var OlabCOUNTERSTag = function(olabNodePlayer) {
         try {
 
             // build the vue.js component tag markup
-            element = "<" +
-                vm.OLAB_HTML_TAG +
-                " class='" +
-                vm.OLAB_HTML_TAG +
-                "'" +
+            element = "<" + vm.OLAB_HTML_TAG + " class='" + vm.OLAB_HTML_TAG + "'" +
                 " v-bind:server='server.counters' v-bind:map='map.counters' v-bind:node='node.counters'>" +
                 "</" +
                 vm.OLAB_HTML_TAG +

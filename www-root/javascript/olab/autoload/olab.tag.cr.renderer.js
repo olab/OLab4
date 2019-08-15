@@ -1,6 +1,6 @@
 ﻿// counter
 Vue.component('olab-counter', {
-    template: `<span v-html='counter.value'></span>`,
+    template: `<span v-bind:id='counter.id' v-html='counter.value'></span>`,
     props: ['counter']
 });
 
@@ -28,17 +28,9 @@ var OlabCRTag = function(olabNodePlayer) {
 
             if (varName !== null) {
                 // build the vue.js component tag markup
-                element = "<" +
-                    vm.OLAB_HTML_TAG +
-                    " class='" +
-                    vm.OLAB_HTML_TAG +
-                    "'" +
-                    " v-bind:counter=\"" +
-                    varName +
-                    "\">" +
-                    "</" +
-                    vm.OLAB_HTML_TAG +
-                    ">";
+                element = "<" + vm.OLAB_HTML_TAG + " class='" + vm.OLAB_HTML_TAG +
+                              "'" + " v-bind:counter=\"" + varName + "\">" +
+                          "</" + vm.OLAB_HTML_TAG + ">";
             } else {
                 throw new Error("not found.");
             }

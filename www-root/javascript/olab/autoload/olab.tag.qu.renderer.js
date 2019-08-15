@@ -142,7 +142,8 @@ Vue.component('olab-question-multilinetext',
                   v-bind:cols="question.width"
                   v-bind:rows="question.height"
                   v-bind:id="'QU_' + question.id"
-                  v-bind:name="'QU_' + question.id">
+                  v-bind:name="'QU_' + question.id"
+                  style="width: auto;">
                 </textarea>
             </div>`,
       props: ['question']
@@ -169,7 +170,7 @@ Vue.component('olab-question-multiplechoice',
                      </span>
                      <span class="text">{{response.response}}</span>
                      <span v-bind:id="'AJAXresponse' + response.id"></span>
-                     <span style='display:none' v-if='question.showSubmit' v-bind:id="'submit_' + question.id + '_' + response.id">
+                     <span style='display:none' v-bind:id="'submit_' + question.id + '_' + response.id">
                          <img v-bind:src="webRoot(null) + '/images/loading_small.gif'"/>
                      </span>
                    </li>
@@ -230,12 +231,13 @@ Vue.component('olab-question-radio',
                              v-on:click="changed"
                              data-tries="1"
                              v-bind:data-val="response.response"
+                             v-bind:disabled="question.isDisabled == true"
                              type="radio">
                     </span>
                     <span>{{response.response}}</span>
                     <span v-bind:id="'AJAXresponse' + response.id"></span>
 
-                     <span style='display:none' v-if='question.showSubmit' v-bind:id="'submit_' + question.id + '_' + response.id">
+                     <span style='display:none' v-bind:id="'submit_' + question.id + '_' + response.id">
                          <img v-bind:src="webRoot(null) + '/images/loading_small.gif'"/>
                      </span>
                   </li>
