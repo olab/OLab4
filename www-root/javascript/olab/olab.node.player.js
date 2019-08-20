@@ -505,13 +505,17 @@ var OlabNodePlayer = function(params) {
                     // pass all the parts into the handler for processing and store the rendered
                     // contents back to the main markup
                     var text = renderer.render(tagParts);
-                    var wikiTag = "[[" + value + "]]";
 
-                    if (show_wiki === "0") {
-                      markup = String(markup).replace(wikiTag, text);
-                    }
-                    else if (show_wiki === "2") {
-                      markup = String(markup).replace(wikiTag, wikiTag + text);
+                    if (text !== "") {
+
+                      var wikiTag = "[[" + value + "]]";
+
+                      if (show_wiki === "0") {
+                        markup = String(markup).replace(wikiTag, text);
+                      } else if (show_wiki === "2") {
+                        markup = String(markup).replace(wikiTag, wikiTag + text);
+                      }
+
                     }
 
                 } catch (e) {

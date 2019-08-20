@@ -68,7 +68,7 @@ var OlabMRTag = function(olabNodePlayer) {
 
       // test if file has embedded content that will be put inline
       // in the HTML.  otherwise its a public-accessible URL for the src
-      if ( file['is_embedded'] == 1 ) {
+      if ( file['isEmbedded'] == 1 ) {
 
         // handle special case of PDF file
           if (file["mime"] == "application/pdf") {
@@ -79,13 +79,13 @@ var OlabMRTag = function(olabNodePlayer) {
                   "' " +
                   " width = \"500\" height = \"375\" type = 'application/pdf' >";
           }
-          else {
+          //else {
 
-            element = "<" + tag + " class='" + tag + "'" +
-              " id='" + tag + id + "'" +
-              " filename='" + file['name'] + "'" +
-              " src='" + file["encodedContent"] + "'></" + tag + ">";
-          }
+          //  element = "<" + tag + " class='" + tag + "'" +
+          //    " id='" + tag + id + "'" +
+          //    " filename='" + file['name'] + "'" +
+          //    " src='" + file["encodedContent"] + "'></" + tag + ">";
+          //}
 
       } else {
 

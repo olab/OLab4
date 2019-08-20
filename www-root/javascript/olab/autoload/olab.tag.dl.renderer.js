@@ -3,7 +3,7 @@
                <div style="display:none">
                  <a v-bind:id="'file-link-' + file.id"></a>
                </div>
-               <a v-bind:onclick="'olab.downloadFile(' + file.id + ')'">
+               <a v-bind:onclick="'olabPlayer.downloadFile(' + file.id + ')'">
                 {{file.name}}
                </a>
              </div>`,
@@ -36,7 +36,7 @@ var OlabDLTag = function ( olabNodePlayer ) {
       element = "<" + vm.OLAB_HTML_TAG +
                 " class='" + vm.OLAB_HTML_TAG + "'" +
                 " id='" + vm.OLAB_HTML_TAG + id +
-                "' v-bind:file='file(" + id + ")'></" +
+                "' v-bind:file='file(\"" + id + "\")'></" +
                 vm.OLAB_HTML_TAG + ">";
 
       vm.olabNodePlayer.log.debug(element);
