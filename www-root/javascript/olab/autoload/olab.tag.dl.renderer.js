@@ -35,7 +35,7 @@ var OlabDLTag = function ( olabNodePlayer ) {
       // build the vue.js component tag markup
       element = "<" + vm.OLAB_HTML_TAG +
                 " class='" + vm.OLAB_HTML_TAG + "'" +
-                " id='" + vm.OLAB_HTML_TAG + id +
+                " id='" + vm.OLAB_HTML_TAG + id + 
                 "' v-bind:file='file(\"" + id + "\")'></" +
                 vm.OLAB_HTML_TAG + ">";
 
