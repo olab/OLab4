@@ -85,18 +85,6 @@ var OlabNodePlayer = function(params) {
         counter.value = item.value;
       }
 
-      for (var i = 0; i < source.node.length; i++) {
-        var item = source.node[i];
-        var counter = vm.getCounter(item.id);
-        counter.value = item.value;
-      }
-
-      for (var i = 0; i < source.map.length; i++) {
-        var item = source.map[i];
-        var counter = vm.getCounter(item.id);
-        counter.value = item.value;
-      }
-
     }
 
     /**
