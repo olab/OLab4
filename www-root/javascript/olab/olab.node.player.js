@@ -309,12 +309,13 @@ var OlabNodePlayer = function(params) {
 
                     try {
 
-                        for (var key in this.node.MapNodeLinks) {
+                        for ( var i = 0; i < this.node.MapNodeLinks.length; i++ ) {
 
-                            var data = this.node.MapNodeLinks[key];
+                            var data = this.node.MapNodeLinks[i];
                             if (data.DestinationNode.id === id) {
                                 return data;
                             }
+
                         }
 
                     } catch (e) {
