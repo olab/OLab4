@@ -1109,15 +1109,24 @@ var OlabNodePlayer = function(params) {
 
       vm.nodeVue = renderContent('Node', node ); 
 
+      var anno_id = vm.Utilities.normalizeIdAttribute( "olabAnnotationContent");
+
+      // hide and clear out any existing annotation text 
+      jQuery( anno_id ).html("");
+      jQuery( anno_id ).hide("");
+
       // if any node annotations, add them to markup DIV
       if (node.annotation != null) {
 
         if (node.annotation.length > 0) {
 
-          jQuery( vm.Utilities.normalizeIdAttribute( "olabAnnotationContent") ).html(node.annotation);
+          // show since there is indeed something in anno text
+          jQuery( anno_id ).show("");
+
+          jQuery( anno_id ).html(node.annotation);
           // add the annotation CSS style class so we don't 
           // see the annotation style if there nothing to display
-          jQuery( vm.Utilities.normalizeIdAttribute( "olabAnnotationContent") ).addClass("annotation");
+          jQuery( anno_id ).addClass("annotation");
 
         }
       }
