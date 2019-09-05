@@ -1,71 +1,94 @@
 ﻿// node link
 Vue.component('olab-node-link', {
 
-    template: `<div class='olab-node-link'>
-                 <a v-bind:class='classes' v-bind:onclick='"olabPlayer.navigate(" + link.DestinationNode.id + ", " + link.id + ");"'>{{link.DestinationNode.title}}</a>
-               </div>`,
-    props: ['link'],
-    computed: {
-        classes: function() {
-            var classes= 'olab-node-link';
-            if (this.link.linkStyleId === 5) {
-                classes += " btn";
-            }
-            return classes;
-        }
+  template: `<div class='olab-node-link' v-bind:id='"link" + link.DestinationNode.id' v-bind:style='visibility(link)'>
+               <a v-bind:class='classes(link)' v-bind:onclick='"olabPlayer.navigate(" + link.DestinationNode.id + ", " + link.id + " );"'>{{name(link)}}</a>
+             </div>`,
+  props: ['link'],
+  methods: {
+
+    name: function (link) {
+
+      if ((link.text != null) && (link.text.length !== 0)) {
+        return link.text;
+      } else {
+        return link.DestinationNode.title;
+      }
     },
-    data() {
 
-        return {
-            isButton: this.type === 'button'
-        };
+    visibility: function (link) {
 
+      if (link.hidden == "0") {
+        return "display:inline;"
+      }
+
+      return "display:none;"
+
+    },
+
+    classes: function (link) {
+
+      var classes = 'olab-node-link';
+      if (this.$props.link.linkStyleId === 5) {
+        classes += " btn";
+      }
+
+      return classes;
     }
+
+  },
+  data() {
+
+    return {
+      isButton: this.type === 'button'
+    };
+
+  }
 
 });
 
-var OlabLINKTag = function(olabNodePlayer) {
+var OlabLINKTag = function (olabNodePlayer) {
 
-    var vm = this;
-    vm.olabNodePlayer = olabNodePlayer;
-    vm.OLAB_HTML_TAG = "olab-node-link";
+  var vm = this;
+  vm.olabNodePlayer = olabNodePlayer;
+  vm.OLAB_HTML_TAG = "olab-node-link";
 
-    var service = {
-        render:render
-    };
+  var service = {
+    render: render
+  };
 
-    return service;
+  return service;
 
-    function render(wikiTagParts) {
+  function render(wikiTagParts) {
 
-        var element = "";
+    var element = "";
 
-        try {
+    try {
 
-            var id = wikiTagParts[2];
+      var id = wikiTagParts[2];
 
-            // build the vue.js component tag markup
-            element = "<" +
-                vm.OLAB_HTML_TAG +
-                " class='" +
-                vm.OLAB_HTML_TAG +
-                "'" +
-                " v-bind:link='link(" +
-                id +
-                ")'>" +
-                "</" +
-                vm.OLAB_HTML_TAG +
-                ">";
+      // build the vue.js component tag markup
+      element = "<" +
+          vm.OLAB_HTML_TAG +
+          " class='" +
+          vm.OLAB_HTML_TAG +
+          "'" +
+          " v-bind:link='link(" +
+          id +
+          ")'>" +
+          "</" +
+          vm.OLAB_HTML_TAG +
+          ">";
 
-            vm.olabNodePlayer.log.debug(element);
+      vm.olabNodePlayer.log.debug(element);
 
-        } catch (e) {
-            element = "[[" + wikiTagParts.join("") + " ERROR: '" + e.message + "']]";
-            vm.olabNodePlayer.log.error(element);
-        }
-
-        return element;
+    } catch (e) {
+      element = "[[" + wikiTagParts.join("") + " ERROR: '" + e.message + "']]";
+      vm.olabNodePlayer.log.error(element);
     }
+
+    return element;
+  }
 
 };
 
