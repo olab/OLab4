@@ -81,7 +81,7 @@ var OlabLINKTag = function (olabNodePlayer) {
       // build the vue.js component tag markup
       element = "<" + vm.OLAB_HTML_TAG +
                   " class='" + vm.OLAB_HTML_TAG + "'" +
-                  " v-bind:link='link(" + id + ")'" +
+                  " v-bind:link='link(\"" + id + "\")'" +
                   " node-link-style-id='" + vm.olabNodePlayer.node.linkStyleId + "'>" +
                 "</" + vm.OLAB_HTML_TAG + ">";
 

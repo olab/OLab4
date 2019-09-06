@@ -312,7 +312,10 @@ var OlabNodePlayer = function(params) {
                         for ( var i = 0; i < this.node.MapNodeLinks.length; i++ ) {
 
                             var data = this.node.MapNodeLinks[i];
-                            if (data.DestinationNode.id === id) {
+                            if (data.DestinationNode.id == id) {
+                                return data;
+                            }
+                            if (data.DestinationNode.title == id) {
                                 return data;
                             }
 
