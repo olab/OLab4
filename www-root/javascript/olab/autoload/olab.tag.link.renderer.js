@@ -28,6 +28,8 @@ Vue.component('olab-node-link', {
     classes: function (link) {
 
       var classes = 'olab-node-link';
+
+      // if link has btn style, then add btn class
       if (this.$props.link.linkStyleId === 5) {
         classes += " btn";
       }
