@@ -305,6 +305,30 @@ var OlabNodePlayer = function(params) {
                     return item;
                 },
 
+                jump:function(id) {
+
+                    try {
+
+                        for ( var i = 0; i < this.map.jumps.length; i++ ) {
+
+                            var data = this.map.jumps[i];
+                            if (data.DestinationNode.id == id) {
+                                return data;
+                            }
+                            if (data.DestinationNode.title == id) {
+                                return data;
+                            }
+
+                        }
+
+                    } catch (e) {
+                        vm.Utilities.log.fatal('jump: ' + e.message );
+                    } 
+
+                    return null;
+
+                },
+
                 link:function(id) {
 
                     try {
@@ -969,6 +993,9 @@ var OlabNodePlayer = function(params) {
 
             // save map data
             if (vm.haveMapData === false) {
+
+                // translate map link jumps to get valid urls for this server/site     
+                data.map.jumps = buildNodeUrls(data.map.jumps);
 
                 vm.server = data.server;
                 vm.map = data.map;
