@@ -7,7 +7,7 @@ Vue.component('olab-node-link', {
                <a v-bind:class='classes(link)' 
                   v-bind:onclick='"olabPlayer.navigate(" + link.DestinationNode.id + ", " + link.id + " );"'>{{name(link)}}</a>
              </div>`,
-  props: ['link'],
+  props: ['nodeLinkStyleId', 'link'],
   methods: {
 
     name: function (link) {
@@ -29,8 +29,18 @@ Vue.component('olab-node-link', {
 
       var classes = 'olab-node-link';
 
+      // if link has hyperlink style, then done
+      if (link.linkStyleId === 1) {
+        return classes;
+      }
+
       // if link has btn style, then add btn class
-      if (this.$props.link.linkStyleId === 5) {
+      if (link.linkStyleId === 5) {
+        classes += " btn";
+      }
+
+      // if node has default links btn style, then add btn class
+      else if (this.$props.nodeLinkStyleId == 5) {
         classes += " btn";
       }
 
@@ -69,17 +79,11 @@ var OlabLINKTag = function (olabNodePlayer) {
       var id = wikiTagParts[2];
 
       // build the vue.js component tag markup
-      element = "<" +
-          vm.OLAB_HTML_TAG +
-          " class='" +
-          vm.OLAB_HTML_TAG +
-          "'" +
-          " v-bind:link='link(" +
-          id +
-          ")'>" +
-          "</" +
-          vm.OLAB_HTML_TAG +
-          ">";
+      element = "<" + vm.OLAB_HTML_TAG +
+                  " class='" + vm.OLAB_HTML_TAG + "'" +
+                  " v-bind:link='link(" + id + ")'" +
+                  " node-link-style-id='" + vm.olabNodePlayer.node.linkStyleId + "'>" +
+                "</" + vm.OLAB_HTML_TAG + ">";
 
       vm.olabNodePlayer.log.debug(element);
 
