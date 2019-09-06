@@ -1,8 +1,11 @@
 ﻿// node link
 Vue.component('olab-node-link', {
 
-  template: `<div class='olab-node-link' v-bind:id='"link" + link.DestinationNode.id' v-bind:style='visibility(link)'>
-               <a v-bind:class='classes(link)' v-bind:onclick='"olabPlayer.navigate(" + link.DestinationNode.id + ", " + link.id + " );"'>{{name(link)}}</a>
+  template: `<div class='olab-node-link' 
+                  v-bind:id='"link" + link.DestinationNode.id' 
+                  v-bind:style='visibility(link)'>
+               <a v-bind:class='classes(link)' 
+                  v-bind:onclick='"olabPlayer.navigate(" + link.DestinationNode.id + ", " + link.id + " );"'>{{name(link)}}</a>
              </div>`,
   props: ['link'],
   methods: {
@@ -18,11 +21,7 @@ Vue.component('olab-node-link', {
 
     visibility: function (link) {
 
-      if (link.hidden == "0") {
-        return "display:inline;"
-      }
-
-      return "display:none;"
+      return "display:inline;"
 
     },
 
