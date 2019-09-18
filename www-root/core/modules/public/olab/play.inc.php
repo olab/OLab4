@@ -27,46 +27,49 @@ use Entrada\Modules\Olab\Classes\OLabUtilities;
 
 // loads any system-level script files
 function getKernelScripts($dir, &$results = array()){
-    $files = scandir($dir);
-    foreach($files as $key => $value){
-        $path = $dir.DIRECTORY_SEPARATOR.$value;
-        if(!is_dir($path)) {
-            $results[] = str_replace( $dir, "", $path );
-        }
+  $files = scandir($dir);
+  foreach($files as $key => $value){
+    $path = $dir.DIRECTORY_SEPARATOR.$value;
+    if(!is_dir($path)) {
+      $results[] = str_replace( $dir, "", $path );
     }
-    return $results;
+  }
+  return $results;
 }
 if((!defined("PARENT_INCLUDED")) || (!defined("IN_OLAB"))) {
-    exit;
+  exit;
 } elseif ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
-    header("Location: ".ENTRADA_URL);
-    exit;
+  header("Location: ".ENTRADA_URL);
+  exit;
 } else {
 
-    $script_version = OLabUtilities::get_script_version();
-    
-    OLabUtilities::addToHead( "<script>var WEBSITE_ROOT = \"" . HostSystemApi::getRootUrl() . "\";</script>" );
-    OLabUtilities::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/vue/vue.js?ver=" . $script_version . "\"></script>" );
-    OLabUtilities::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/vee-validate/vee-validate.min.js?ver=" . $script_version . "\"></script>" );
-    OLabUtilities::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/axios/axios.min.js?ver=" . $script_version . "\"></script>" );
-    OLabUtilities::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/olab.utilities.js?ver=" . $script_version . "\"></script>" );
-    OLabUtilities::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/olab.client.api.js?ver=" . $script_version . "\"></script>" );
-    OLabUtilities::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/olab.play.components.js?ver=" . $script_version . "\"></script>" );
-    OLabUtilities::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/olab.node.player.js?ver=" . $script_version . "\"></script>" );
-    OLabUtilities::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/olab.play.main.js?ver=" . $script_version . "\"></script>" );
-    OLabUtilities::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/loader.js?ver=" . $script_version . "\"></script>" );
+  $script_version = OLabUtilities::get_script_version();
 
-    OLabUtilities::addToHead( "<link href=\"". HostSystemApi::getRootUrl() ."/css/olab/olab.css?ver=" . $script_version . "\" rel=\"stylesheet\" type=\"text/css\" media=\"all\" />" );
+  OLabUtilities::addToHead( "<script>var WEBSITE_ROOT = \"" . HostSystemApi::getRootUrl() . "\";</script>" );
+  OLabUtilities::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/vue/vue.js?ver=" . $script_version . "\"></script>" );
+  OLabUtilities::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/vee-validate/vee-validate.min.js?ver=" . $script_version . "\"></script>" );
+  OLabUtilities::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/axios/axios.min.js?ver=" . $script_version . "\"></script>" );
+  OLabUtilities::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/olab.utilities.js?ver=" . $script_version . "\"></script>" );
+  OLabUtilities::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/olab.client.api.js?ver=" . $script_version . "\"></script>" );
+  OLabUtilities::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/olab.play.components.js?ver=" . $script_version . "\"></script>" );
+  OLabUtilities::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/olab.node.player.js?ver=" . $script_version . "\"></script>" );
+  OLabUtilities::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/olab.play.main.js?ver=" . $script_version . "\"></script>" );
+  OLabUtilities::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/loader.js?ver=" . $script_version . "\"></script>" );
 
-    // autoload any kernel-level javascript extensions
-    $jsPath = HostSystemApi::getFileRoot() . "/javascript/olab/autoload";
-    $asJsFiles = getKernelScripts( $jsPath );
-    foreach ( $asJsFiles as $sJsFile )
-    {
-        OLabUtilities::addToHead( "<script class=\"olab\" type=\"text/javascript\" src=\"" .
-        HostSystemApi::getRelativePath() . "/javascript/olab/autoload" . $sJsFile . "?ver=" . $script_version . "\"></script>" );
-    }
-    HostSystemApi::UpdateBreadCrumb( HostSystemApi::getRootUrl()  . "/" . $MODULE, "Play " );
+  OLabUtilities::addToHead( "<link href=\"". HostSystemApi::getRootUrl() ."/css/olab/olab.css?ver=" . $script_version . "\" rel=\"stylesheet\" type=\"text/css\" media=\"all\" />" );
+
+  //OLabUtilities::addToHead( "<link href=\"". HostSystemApi::getRootUrl() ."/javascript/olab/bootstrap-4.3.1-dist/css/bootstrap.min.css?ver=" . $script_version . "\" rel=\"stylesheet\" type=\"text/css\" media=\"all\" />" );
+  //OLabUtilities::addToHead( "<script type=\"text/javascript\" src=\"" . HostSystemApi::getRelativePath() . "/javascript/olab/bootstrap-4.3.1-dist/js/bootstrap.min.js?ver=" . $script_version . "\"></script>" );
+
+  // autoload any kernel-level javascript extensions
+  $jsPath = HostSystemApi::getFileRoot() . "/javascript/olab/autoload";
+  $asJsFiles = getKernelScripts( $jsPath );
+  foreach ( $asJsFiles as $sJsFile )
+  {
+    OLabUtilities::addToHead( "<script class=\"olab\" type=\"text/javascript\" src=\"" .
+    HostSystemApi::getRelativePath() . "/javascript/olab/autoload" . $sJsFile . "?ver=" . $script_version . "\"></script>" );
+  }
+  HostSystemApi::UpdateBreadCrumb( HostSystemApi::getRootUrl()  . "/" . $MODULE, "Play " );
 }
 ?>
 
@@ -75,16 +78,42 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_OLAB"))) {
 </script>
 
 <!-- DIVs for Olab content binding.  DO NOT EDIT. -->
-<div id="olabHeaderContent" align="center"></div>
-<div id="olabNodeContent" align="center">
-  <div v-show="loadingList">
-      <center>
-          <img id="loading" src="<?php echo HostSystemApi::getRelativePath(); ?>/images/loading.gif" /><p/>
-      </center>
+<div class="container">
+
+  <div class="row">
+    <div class="span12" id="olabHeaderContent" align="center"></div>
   </div>
+
+  <div class="row">
+
+<!--    <div class="span1" id="olabLeftContainer">
+      <div id="olabLeftContent">left</div>
+    </div>-->
+
+    <div class="span12">
+      <div id="olabNodeContent" align="center">
+        <div v-show="loadingList">
+          <center>
+            <img id="loading" src="<?php echo HostSystemApi::getRelativePath(); ?>/images/loading.gif" />
+            <p></p>
+          </center>
+        </div>
+      </div>
+    </div>
+
+<!--
+    <div class="span1" id="olabRightContainer">
+      <div id="olabRightContent">right</div>
+    </div>-->
+
+  </div>
+
+  <div class="row">
+    <div class="span12" id="olabAnnotationContent" class=""></div>
+    <div class="span12" id="olabFooterContent" align="center"></div>
+  </div>
+
 </div>
-<div id="olabAnnotationContent" class=""></div>
-<div id="olabFooterContent" align="center"></div>
 
 
 
