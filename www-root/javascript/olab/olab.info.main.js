@@ -26,6 +26,13 @@ jQuery(document).ready(function ($) {
       authToken: JWT
     };
 
+    // hide existing header to clean up page.
+    jQuery("#main-header").hide();
+    jQuery("#main-footer").hide();
+
+    jQuery("#content").removeClass();
+    jQuery("#content").addClass("span6");
+
     // spin up class that does all the work
     olab = new OlabNodePlayer(params);
     olab.info();

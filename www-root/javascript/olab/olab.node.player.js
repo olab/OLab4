@@ -903,6 +903,8 @@ var OlabNodePlayer = function(params) {
      */
     function onInfoLoadSucceeded(data) {
 
+      jQuery("#loadingRow").hide();
+      jQuery("#olabNodeContent").html(data.node.info);
     }
 
     /**
