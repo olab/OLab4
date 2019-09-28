@@ -52,7 +52,8 @@ var OlabMapList= function(params) {
         showDetail:showDetail,
         convertMap:convertMap,
         load:load,
-        play:play
+        play:play,
+        resume: resume
     };
 
     return service;
@@ -113,7 +114,7 @@ var OlabMapList= function(params) {
                                 ',0 )" class="btn btn-primary"><i class="fa fa-play"></i></a> ';
 
                             if (typeof full[4] !== "undefined") {
-                                html += '<a title="Resume from Checkpoint" onclick="view.play(' +
+                                html += '<a title="Resume from Checkpoint" onclick="view.resume(' +
                                     full[3] +
                                     ',' +
                                     full[4]["map_node_id"] +
@@ -213,6 +214,29 @@ var OlabMapList= function(params) {
      * Handle map access server call success
      * @param {any} data
      */
+    function onMapResumeSuccess(data) {
+        if (data.result) {
+            var url = vm.moduleUrl + "/play#" + data.mapId + ":" + data.nodeId + "?resume=1";
+            window.location.href = url;
+        } else {
+            alert(data.message);
+        }
+    }
+    
+    /**
+     * Handle Map access server call failure
+     * @param {} data 
+     * @returns {} 
+     */
+    function onMapResumeFailure(data) {
+        alert(data);
+
+    }
+
+      /**
+     * Handle map access server call success
+     * @param {any} data
+     */
     function onMapPlaySuccess(data) {
         if (data.result) {
             var url = vm.moduleUrl + "/play#" + data.mapId + ":" + data.nodeId;
@@ -232,6 +256,7 @@ var OlabMapList= function(params) {
 
     }
 
+
     /**
      * Play a new map/node
      * @param {} mapId 
@@ -244,6 +269,24 @@ var OlabMapList= function(params) {
 
             var url = vm.restApiUrl + '/map/canopen/' + mapId + '/' + nodeId;
             vm.Utilities.getJson(url, null, onMapPlaySuccess, onMapPlayFailure);
+
+        } catch (e) {
+            vm.Utilities.testJavascriptError(e);
+        }
+    }
+
+    /**
+     * Resume a new map/node
+     * @param {} mapId 
+     * @param {} nodeId 
+     * @returns {} 
+     */
+    function resume(mapId, nodeId) {
+
+        try {
+
+            var url = vm.restApiUrl + '/map/canopen/' + mapId + '/' + nodeId;
+            vm.Utilities.getJson(url, null, onMapResumeSuccess, onMapResumeFailure);
 
         } catch (e) {
             vm.Utilities.testJavascriptError(e);
