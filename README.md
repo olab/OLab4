@@ -21,8 +21,6 @@ Prerequisites:
 
 •	Kitematic installed on the host system
 
-•	Read-access to the OLab4 git repository (contact David for permission)
-
 •	(Windows) GIT for Windows, inclunding GIT Bash shell
 
 •	(Linux) GIT
