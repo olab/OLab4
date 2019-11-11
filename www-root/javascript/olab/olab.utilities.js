@@ -98,6 +98,7 @@ var OLabUtilities = function(siteRoot, pageUrl, authToken) {
         imageUrlBase:vm.imageUrlBase,
         log:vm.logger,
         normalizeIdAttribute:normalizeIdAttribute,
+        parsePlayUrl: parsePlayUrl,
         postJson:postJson,
         postData:postData,
         readCookie:readCookie,
@@ -325,6 +326,65 @@ var OLabUtilities = function(siteRoot, pageUrl, authToken) {
         } catch (e) {
             alert("getFile error: " + e.message);
         }
+    }
+
+    /**
+     * Routine to extract the mapId and nodeId from the play url
+     */
+    function parsePlayUrl( params ) {
+
+      var urlParameters = {};
+      urlParameters.linkId = null;
+      urlParameters.nodeId = "0";
+
+      var urlParts = window.location.pathname.split('/');
+      var hashParts = getUrlParameters(params.location.hash);
+
+      // test for case when url hash holds nodeId (hash not empty)
+      // http://<url>/play/<mapId>#<nodeId>
+      // urls in this form are for SPA - preventing roundtrips
+      // to server on node change
+      if ( params.location.hash != "" ) {
+
+        // get the mapId, which should be the last url part
+        urlParameters.mapId = urlParts[urlParts.length - 1];
+        // get the nodeId, which should be the only hash part
+        urlParameters.nodeId = hashParts[hashParts.length - 1];
+      }
+
+      // else assume mapId and nodeId are exclusively in the url (no hash)
+      // http://<url>/play/<mapId>/<nodeId>
+      // urls in this form are for so url bookmarks work
+      else {
+
+        var playPartIndex = -1;
+        for (var i = 0; i < urlParts.length; i++) {
+
+          if ( ( urlParts[i] !== "play" ) && ( playPartIndex == -1 ) ) {
+            continue;
+          }
+
+          if ( urlParts[i] === "play" ) {
+            playPartIndex = i;
+            continue;
+          }
+
+          // first part after 'play' is the mapId
+          if ( i == playPartIndex + 1 ) {
+            urlParameters.mapId = urlParts[i];
+            continue;
+          }
+
+          // seond part after 'play' (if it exist) is the nodeId
+          else if ( i == playPartIndex + 2 ) {
+            urlParameters.nodeId = urlParts[i];
+          }
+
+        }
+
+      }
+
+      return urlParameters;
     }
 
     /**

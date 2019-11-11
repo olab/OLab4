@@ -14,14 +14,8 @@ var OlabNodePlayer = function(params) {
     var vm = this;
 
     vm.Utilities = new OLabUtilities(params.siteRoot, params.location, params.authToken);
-
-    // get the map and nodeId from the url location hash
-    var paramArray = vm.Utilities.getUrlParameters(params.location.hash);
-    vm.urlParameters = {};
-    vm.urlParameters.mapId = paramArray[0];
-    vm.urlParameters.nodeId = paramArray[1];
-    vm.urlParameters.linkId = null;
-
+    vm.urlParameters = vm.Utilities.parsePlayUrl( params );
+      
     vm.targetId = vm.Utilities.normalizeIdAttribute(params.targetId);
     vm.websiteUrl = params.siteRoot;
     vm.mediaUrl = vm.websiteUrl + "/images/olab/files";
@@ -872,15 +866,13 @@ var OlabNodePlayer = function(params) {
      * @param {} node id
      * @returns { } 
      */
-    function navigate(nodeId, linkId) {
+    function navigate(nodeId, previousNodeId) {
 
         vm.log.debug("navigate from node " + vm.urlParameters.nodeId + " to node: " + nodeId );
 
         // save previous node
-        vm.urlParameters.linkId = linkId;
-
-        var param = vm.urlParameters.mapId + ":" + nodeId;
-        window.location.hash = param;
+        vm.urlParameters.linkId = previousNodeId;
+        window.location.hash = nodeId;
     }
 
     /**
@@ -890,8 +882,7 @@ var OlabNodePlayer = function(params) {
     function onHashChanged() {
 
         var paramArray = vm.Utilities.getUrlParameters(window.location.hash);
-        vm.urlParameters.mapId = paramArray[0];
-        vm.urlParameters.nodeId = paramArray[1];
+        vm.urlParameters.nodeId = paramArray[0];
 
         play(vm.urlParameters.nodeId);
     }

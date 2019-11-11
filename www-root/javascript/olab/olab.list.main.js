@@ -239,7 +239,7 @@ var OlabMapList= function(params) {
      */
     function onMapPlaySuccess(data) {
         if (data.result) {
-            var url = vm.moduleUrl + "/play#" + data.mapId + ":" + data.nodeId;
+            var url = vm.moduleUrl + "/play/" + data.mapId + "#" + data.nodeId;
             window.location.href = url;
         } else {
             alert(data.message);

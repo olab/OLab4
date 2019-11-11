@@ -59,7 +59,8 @@
         "smalot/pdfparser": "0.11",
         "ramsey/uuid": "^3.8",
         "h5p/h5p-core": "^1.22",
-        "h5p/h5p-editor": "^1.22"
+        "h5p/h5p-editor": "^1.22",
+        "reliese/laravel": "^0.0.13"
     },
     "require-dev": {
         "phpunit/dbunit": "^1.3",
