@@ -92,7 +92,7 @@ var OlabMRTag = function(olabNodePlayer) {
           element = "<" + tag + " class='" + tag + "'" +
             " id='" + tag + id + "'" +
             " filename='" + file['name'] + "'" +
-            " src='" + vm.olabNodePlayer.mediaUrl + file["path"] + "'></" + tag + ">";
+            " src='" + file["resourceUrl"] + "'></" + tag + ">";
       }
 
       vm.olabNodePlayer.log.debug(element);

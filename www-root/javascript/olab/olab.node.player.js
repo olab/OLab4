@@ -1053,10 +1053,10 @@ var OlabNodePlayer = function(params) {
       // if don't have map data yet, signal server to get and return it with request
       if (vm.haveMapData === false) {
 
-        if (url.indexOf("?") === -1) {
+        if (window.location.search.indexOf("?") === -1) {
           url += '?includeMapData=1';
         } else {
-          url += '&includeMapData=1';
+          url += window.location.search + '&includeMapData=1';
         }
       }
 
