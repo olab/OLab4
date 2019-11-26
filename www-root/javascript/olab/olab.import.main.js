@@ -76,6 +76,8 @@ var OlabImportUpload = function(params) {
 
         uploadBtn.onclick = function (evt) {
 
+            jQuery("#spinner").show();
+
             var formData = new FormData();
             // Since this is the file only, we send it to a specific location
             var action = vm.restApiUrl + '/import/upload';
@@ -190,9 +192,9 @@ jQuery(document).ready(function ($) {
 
         }
 
-        //var contentType = evt.target.getAllResponseHeaders();
-
         if (readyState == 4 && status == '200' && evt.target.responseText) {
+
+            jQuery("#spinner").hide();
 
             var current = '<br>Import request completed.';
 
@@ -208,13 +210,13 @@ jQuery(document).ready(function ($) {
 
                 jQuery("#copyToClipboard").show();
 
-                var diagnosticsInfo = result.message + "\n\nConversion stack:\n";
+                var diagnosticsInfo = result.message + "\n\Messages:\n";
 
-                var message = "Conversion error.<br>" + result.message + "<br>";
-                message += "Conversion stack:<br>";
-                for (var i = 0; i < result.conversionStack.length; i++) {
-                    message += " " + result.conversionStack[ i ] + "<br>";
-                    diagnosticsInfo += " " + result.conversionStack[i] + "\n";
+                var message = "Conversion errors.<br>";
+                message += "Messages:<br>";
+                for (var i = 0; i < result.errors.length; i++) {
+                    message += " " + result.errors[ i ] + "<br>";
+                    diagnosticsInfo += " " + result.errors[i] + "\n";
                 }
 
                 diagnosticsInfo += "\nCallStack:\n";

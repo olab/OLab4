@@ -62,6 +62,12 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_OLAB"))) {
         <input type="button" value="Upload" id="upload-button-id" disabled="disabled" />
     </p>
 
+    <div id="spinner" style="display:none">
+        <center>
+            <img src="<?php echo HostSystemApi::getRelativePath(); ?>/images/loading.gif" />
+        </center>
+    </div>
+
     <!-- Placeholders for messages set by event handlers -->
     <p id="uploadStatus"></p>
     <p id="progress"></p>
