@@ -44,10 +44,50 @@ $PROCEED_TO = ((isset($_GET["url"])) ? clean_input($_GET["url"], "trim") : (isse
 $PATH_INFO = ((isset($_SERVER["PATH_INFO"])) ? clean_input($_SERVER["PATH_INFO"], array("url", "lowercase")) : "");
 $PATH_SEPARATED = explode("/", $PATH_INFO);
 
+$localPOST = $_POST;
+
+$parms = array(
+  'postSize' => sizeof($localPOST),
+  'requestSize' => sizeof($_REQUEST),
+  'ssobypass' => (empty($localPOST["ssobypass"]) ? null : $localPOST["ssobypass"]),
+  'username' => (empty($localPOST["username"]) ? null : $localPOST["username"]),
+  'password' => (empty($localPOST["password"]) ? null : $localPOST["password"]),
+  'isAuthorized' => (empty($_SESSION["isAuthorized"]) ? null : $_SESSION["isAuthorized"]),
+  'pathInfo' => $PATH_INFO,
+  'module' => (empty($PATH_SEPARATED[1]) ? null : $PATH_SEPARATED[1]),
+  'proceedTo' => $PROCEED_TO
+);
+
+/**/
+if ( empty( $_SESSION['isAuthorized'] ) && 
+     ( !empty($PATH_SEPARATED[1]) && $PATH_SEPARATED[1] === "olab" ) &&
+     ( !empty($PATH_SEPARATED[2]) && $PATH_SEPARATED[2] === "play" ) ) {
+  $localPOST = array();
+  $localPOST['action'] = 'login';
+  $localPOST['ssobypass'] = '1';
+  $localPOST['username'] = empty($config->service_account->username) ? "" : $config->service_account->username; // 'service';
+  $localPOST['password'] = empty($config->service_account->password) ? "" : $config->service_account->password; // 'account001';
+  $ACTION = "login";
+}
+/**/
+
+$parms = array(
+  'postSize' => sizeof($localPOST),
+  'requestSize' => sizeof($_REQUEST),
+  'ssobypass' => (empty($localPOST["ssobypass"]) ? null : $localPOST["ssobypass"]),
+  'username' => (empty($localPOST["username"]) ? null : $localPOST["username"]),
+  'password' => (empty($localPOST["password"]) ? null : $localPOST["password"]),
+  'isAuthorized' => (empty($_SESSION["isAuthorized"]) ? null : $_SESSION["isAuthorized"]),
+  'pathInfo' => $PATH_INFO,
+  'module' => (empty($PATH_SEPARATED[1]) ? null : $PATH_SEPARATED[1]),
+  'proceedTo' => $PROCEED_TO,
+  'action' => $ACTION
+);
+
 /**
  * If we are here because of a submit on the login form, the ssobypass POST variable will be set
  */
-$sso_bypass = (!empty($_POST["ssobypass"]) ? true : false);
+$sso_bypass = (!empty($localPOST["ssobypass"]) ? true : false);
 $sso = false;
 
 /**
@@ -91,8 +131,8 @@ if ($ACTION == "login") {
      * Only check for locked out users if they are not using SSO
      */
 	if (!$SSO_AUTHENTICATED) {
-		$username = clean_input($_POST["username"], "credentials");
-		$password = clean_input($_POST["password"], "trim");
+		$username = clean_input($localPOST["username"], "credentials");
+		$password = clean_input($localPOST["password"], "trim");
 
 		// Check for locked-out-edness before doing anything else
 		$lockout_query = "SELECT a.`id`, a.`login_attempts`, a.`locked_out_until`
@@ -389,7 +429,7 @@ if (!isset($_SESSION["isAuthorized"]) || !(bool) $_SESSION["isAuthorized"]) {
 	 * The real work is actually done in modules/public/profile.inc.php; however, I need the
 	 * session data to be properly set so the page tabs display the correct information.
 	 */
-	if (isset($_POST["privacy_level"]) && ($privacy_level = (int) trim($_POST["privacy_level"]))) {
+	if (isset($localPOST["privacy_level"]) && ($privacy_level = (int) trim($localPOST["privacy_level"]))) {
 		if ($privacy_level > MAX_PRIVACY_LEVEL) {
 			$privacy_level = MAX_PRIVACY_LEVEL;
 		}

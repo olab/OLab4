@@ -89,6 +89,10 @@ define("DATABASE_PASS", $config->database->password);							// The password for 
 // CMW: added
 define("OLAB_DATABASE",        $config->database->openlabyrinth_database);     // The name of the database to connect to.
 
+// user name and account to use for public OLab map plays
+define("OLAB_SERVICE_USERNAME", $config->service_account->username );     
+define("OLAB_SERVICE_PASSWORD", $config->service_account->password );     
+
 if (!defined('ADODB_DIR')) {    define("ADODB_DIR", ENTRADA_ABSOLUTE."/../vendor/adodb/adodb-php"); }
 
 define("ACADEMIC_YEAR_START_DATE", "September 1");								// The start month and day of your academic year.
