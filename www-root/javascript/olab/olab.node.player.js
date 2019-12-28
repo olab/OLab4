@@ -55,6 +55,7 @@ var OlabNodePlayer = function(params) {
         app:vm.nodeVue,
         downloadFile:downloadFile,
         info:info,
+        instance: vm,
         navigate:navigate,
         parameters: vm.urlParameters,
         play:play,
@@ -359,7 +360,8 @@ var OlabNodePlayer = function(params) {
                         }
 
                         var url = vm.restApiUrl + '/question/dropdown/' + this.node.id;
-                        vm.Utilities.postJson(url, data, onQuestionResponseSucceeded, onQuestionResponseFailed);
+                        vm.Utilities.postJson(url, data, this, 
+                          onQuestionResponseSucceeded, onQuestionResponseFailed);
 
                     } catch (e) {
                         vm.Utilities.log.fatal('onDropdownResponseChanged: ' + e.message );
@@ -381,7 +383,7 @@ var OlabNodePlayer = function(params) {
                     }
 
                     var url = vm.restApiUrl + '/question/slider/' + this.node.id;
-                    vm.Utilities.postJson(url, data, onQuestionResponseSucceeded, onQuestionResponseFailed);
+                    vm.Utilities.postJson(url, data, this, onQuestionResponseSucceeded, onQuestionResponseFailed);
                         
                   } catch (e) {
                     vm.Utilities.log.fatal('onSliderResponseChanged: ' + e.message );
@@ -407,7 +409,7 @@ var OlabNodePlayer = function(params) {
 
                         var url = vm.restApiUrl + '/question/multichoice/' + this.node.id;
 
-                        vm.Utilities.postJson(url, payload, onQuestionResponseSucceeded, 
+                        vm.Utilities.postJson(url, payload, this, onQuestionResponseSucceeded, 
                                               onQuestionResponseFailed);
                         
                     } catch (e) {
@@ -431,7 +433,7 @@ var OlabNodePlayer = function(params) {
 
                         var url = vm.restApiUrl + '/question/radio/' + this.node.id;
 
-                        vm.Utilities.postJson(url, payload, onQuestionResponseSucceeded, 
+                        vm.Utilities.postJson(url, payload, this, onQuestionResponseSucceeded, 
                                               onQuestionResponseFailed);
 
                     } catch (e) {
@@ -446,7 +448,7 @@ var OlabNodePlayer = function(params) {
                     
                     vm.Utilities.log.debug('Xmit: suspend');
                     var url = vm.restApiUrl + '/suspend/' + this.map.id + '/' + this.node.id;
-                    vm.Utilities.postJson(url, data, onSuspendSucceeded, onSuspendFailed);
+                    vm.Utilities.postJson(url, data, this, onSuspendSucceeded, onSuspendFailed);
 
                   } catch (e) {
                     vm.Utilities.log.fatal('onSuspendClicked: ' + e.message );

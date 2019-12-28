@@ -412,10 +412,9 @@ var OLabUtilities = function(siteRoot, pageUrl, authToken) {
     /*
      * Centralized method to post/recieve JSON data. 
      */
-    function postJson(url, data, onSuccess, onError ) {
+    function postJson(url, data, context, onSuccess, onError ) {
 
         var options = {
-            url:url,
             type:'POST',
             data:data,
             dataType:'json',
@@ -425,7 +424,7 @@ var OLabUtilities = function(siteRoot, pageUrl, authToken) {
                     return;
 
                 if (onSuccess !== null) {
-                    onSuccess(data);
+                    onSuccess(data, context);
                 }
 
             },
@@ -455,7 +454,7 @@ var OLabUtilities = function(siteRoot, pageUrl, authToken) {
 
         };
 
-        var jqxhr = jQuery.ajax(options);
+        var jqxhr = jQuery.ajax(url, options);
     }
 
     function getJsonAsyc( url, data ) {
