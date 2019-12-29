@@ -14,6 +14,24 @@ class OLabClientObject {
 
 }
 
+class OLabConstant extends OLabClientObject {
+
+  constructor(clientApi, params) {
+
+    super(clientApi, params);
+    this.target = this.clientApi.player.getConstant(this.params.id);
+  }
+
+  getValue() {
+
+    if ( this.target == null ) {
+      throw "Object '" + params.id + "' not found.";
+    }
+
+    return this.target['value'];
+  }
+}
+
 class OLabCounter extends OLabClientObject {
 
   constructor(clientApi, params) {
@@ -327,6 +345,7 @@ var OlabClientAPI = function(params) {
     // these are the methods/properties we expose to the outside
     vm.service = {
       hello: hello,
+      getConstant: getConstant,
       getQuestion: getQuestion,
       getCounter: getCounter,
       log: vm.player.instance.log
@@ -335,6 +354,25 @@ var OlabClientAPI = function(params) {
     vm.player.utilities.log.debug("Created OlabClientAPI.");
 
     return vm.service;
+
+    function getConstant(id) {
+
+      try {
+
+        var params = [];
+        params.id = id;
+
+        return new OLabConstant(vm, params);
+
+      } catch (e) {
+
+        vm.player.utilities.log.error( e.message );
+
+      }
+
+      return null;
+
+    }
 
     function getCounter(id) {
 
