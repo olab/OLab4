@@ -20,7 +20,7 @@ class OLabCounter extends OLabClientObject {
 
     super(clientApi, params);
     this.target = this.clientApi.player.getCounter(this.params.id);
-    this.progressTarget = null;
+    this.setProgressObject( "progressSpinner" );
   }
 
   getValue() {
@@ -115,13 +115,13 @@ class OLabCounter extends OLabClientObject {
 
   setProgressObject( divId ) {
 
-    this.basePath = "div#" + divId;
+    this.basePath = "img#" + divId;
     this.progressTarget = jQuery(this.basePath);
     if (this.progressTarget.length >= 1) {
       this.progressTarget = this.progressTarget[0];
     }
-    else { 
-      throw "Progress object '" + divId + "' not found.";
+    else {
+      this.progressTarget = null;
     }
   }
 
