@@ -52,17 +52,23 @@ class OLabCounter extends OLabClientObject {
 
   setValue( value, onStarted, onCompleted ) {
 
-    this.onStartedUser = onStarted;
-    this.onCompletedUser = onCompleted;
+    try {
+      this.onStartedUser = onStarted;
+      this.onCompletedUser = onCompleted;
 
-    this.player.instance.log.debug("Setting counter " + this.target.id + " = " + value );
+      this.player.instance.log.debug("Setting counter " + this.target.id + " = " + value );
 
-    var url = this.player.instance.restApiUrl + "/counters/value/" + this.target.id;
-    var payload = { "data": { "value": value } };
+      var url = this.player.instance.restApiUrl + "/counters/value/" + this.target.id;
+      var payload = { "data": { "value": value } };
 
-    this.onUpdateStarted();
+      this.onUpdateStarted();
 
-    this.player.utilities.postJson( url, payload, this, this.onUpdateCompleted, this.onUpdateError );
+      this.player.utilities.postJson( url, payload, this, this.onUpdateCompleted, this.onUpdateError );
+
+    } catch (e) {
+      alert(e.message);
+    }
+
   }
 
   onUpdateStarted( data ) {
@@ -84,7 +90,6 @@ class OLabCounter extends OLabClientObject {
       alert(e.message);
     }
 
-
   }
 
   onUpdateCompleted( data, context ) {
@@ -96,12 +101,15 @@ class OLabCounter extends OLabClientObject {
         context.progressTarget.hide();
       }  
 
+      context.player.instance.log.debug("Counter " + context.target.id + 
+        " set successfully. value = " + data.data.value );
+
+      var counter = context.player.getCounter( context.target.id );
+      counter.value = data.data.value;
+
       if ( context.onCompletedUser != null ) {
         context.onCompletedUser();
       }
-
-      context.player.instance.log.debug("Counter " + context.target.id + 
-        " set successfully. value = " + data.data.value );
 
     } catch (e) {
       alert(e.message);
