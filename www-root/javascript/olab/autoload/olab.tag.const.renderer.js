@@ -27,15 +27,10 @@ var OlabCONSTTag = function(olabNodePlayer) {
             // build the vue.js component tag markup
             element = "<" +
                 vm.OLAB_HTML_TAG +
-                " class='" +
-                vm.OLAB_HTML_TAG +
-                "'" +
-                " v-bind:constant='constant(" +
-                id +
-                ")'>" +
-                "</" +
-                vm.OLAB_HTML_TAG +
-                ">";
+                " id='CONST_" + wikiTagParts[2] + "'" +
+                " class='" + vm.OLAB_HTML_TAG + "'" +
+                " v-bind:constant='constant(" + id + ")'>" +
+                "</" + vm.OLAB_HTML_TAG + ">";
 
             vm.olabNodePlayer.log.debug(element);
 
