@@ -7,6 +7,6 @@
         }
     ],
     "require": {
-        "entradapackages/entrada-1x-api": "dev-4.1dev"
+        "entradapackages/entrada-1x-api": "dev-4.0dev"
     }
 }
