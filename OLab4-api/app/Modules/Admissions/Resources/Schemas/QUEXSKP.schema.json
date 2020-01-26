@@ -1,0 +1,68 @@
+[
+  {
+    "id" : "CONYY8",
+    "name" : "year",
+    "position" : 0,
+    "length" : 4
+  },
+  {
+    "id" : "REFNO",
+    "name" : "reference_number",
+    "position" : 4,
+    "length" : 6
+  },
+  {
+    "id" : "SEQ",
+    "name" : "sketch_sequence",
+    "position" : 10,
+    "length" : 1
+  },
+  {
+    "id" : "CATGRY",
+    "name" : "sketch_category",
+    "position" : 11,
+    "length" : 1
+  },
+  {
+    "id" : "SUBSEQ",
+    "name" : "sub_sequence",
+    "position" : 12,
+    "length" : 2
+  },
+  {
+    "id" : "TIME",
+    "name" : "time_of_life",
+    "position" : 14,
+    "length" : 30
+  },
+  {
+    "id" : "HRS",
+    "name" : "hours",
+    "position" : 44,
+    "length" : 60
+  },
+  {
+    "id" : "LRND",
+    "name" : "learned",
+    "position" : 104,
+    "length" : 100
+  },
+  {
+    "id" : "RESP",
+    "name" : "responsibilities",
+    "position" : 204,
+    "length" : 150
+  },
+  {
+    "id" : "VERF#",
+    "name" : "verifier_number",
+    "position" : 354,
+    "length" : 3
+  },
+  {
+    "id" : "FILLLER",
+    "name" : "filler",
+    "position" : 357,
+    "length" : 1
+  }
+]

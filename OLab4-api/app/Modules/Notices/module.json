@@ -1,0 +1,6 @@
+{
+    "name": "Notices",
+    "slug": "notices",
+    "version": "1.0",
+    "description": "REST API Endpoints for Notices"
+}

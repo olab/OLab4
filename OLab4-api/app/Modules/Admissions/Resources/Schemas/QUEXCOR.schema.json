@@ -1,0 +1,104 @@
+[
+  {
+    "id": "CONYY8",
+    "name": "year",
+    "position": 0,
+    "length": 4
+  },
+  {
+    "id": "REFNO",
+    "name": "reference_number",
+    "position": 4,
+    "length": 6
+  },
+  {
+    "id": "CRSEQ",
+    "name": "corrob_sequence",
+    "position": 10,
+    "length": 3
+  },
+  {
+    "id": "CTITLE",
+    "name": "corrob_title",
+    "position": 13,
+    "length": 4
+  },
+  {
+    "id": "CGIVENM",
+    "name": "corrob_given_name",
+    "position": 17,
+    "length": 30
+  },
+  {
+    "id": "CSURNAM",
+    "name": "corrob_surname",
+    "position": 47,
+    "length": 30
+  },
+  {
+    "id": "CADD1",
+    "name": "corrob_address1",
+    "position": 77,
+    "length": 30
+  },
+  {
+    "id": "CADD2",
+    "name": "corrob_address2",
+    "position": 107,
+    "length": 30
+  },
+  {
+    "id": "CCITY",
+    "name": "corrob_city",
+    "position": 137,
+    "length": 29
+  },
+  {
+    "id": "CPROV",
+    "name": "corrob_province",
+    "position": 166,
+    "length": 4
+  },
+  {
+    "id": "CCOUNTRY",
+    "name": "corrob_country",
+    "position": 170,
+    "length": 25
+  },
+  {
+    "id": "CPOSTCD",
+    "name": "corrob_postal",
+    "position": 195,
+    "length": 6
+  },
+  {
+    "id": "CZIP",
+    "name": "corrob_zip",
+    "position": 201,
+    "length": 4
+  },
+  {
+    "id": "CTEL",
+    "name": "corrob_phone",
+    "position": 205,
+    "length": 20
+  },
+  {
+    "id": "CTELEX",
+    "name": "corrob_phone_ext",
+    "position": 225,
+    "length": 6
+  },
+  {
+    "id": "CCOMNT",
+    "name": "corrob_comment",
+    "position": 231,
+    "length": 70
+  },
+  {
+    "id": "FILLER",
+    "name": "filler",
+    "position": 301,
+    "length": 1
+  }
+]
