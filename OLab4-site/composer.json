@@ -16,23 +16,8 @@
     },
     "repositories": [
         {
-            "type": "package",
-            "package": {
-                "name": "entradapackages/mysqldump-php",
-                "version": "dev-master",
-                "source": {
-                    "type": "git",
-                    "url": "https://github.com/EntradaPackages/mysqldump-php.git",
-                    "reference": "origin/master"
-                },
-                "autoload": {
-                    "psr-4": {"Ifsnop\\": "src/Ifsnop/"}
-                }
-            }
-        },
-        {
-            "type": "git",
-            "url": "git@github.com:olab/OLab4-api.git",
+            "type": "path",
+            "url": "../Olab4-api",
             "autoload": {
                 "psr-4": {"Entrada\\": "app"}
             }
@@ -47,7 +32,6 @@
         "jasig/phpcas": "~1.3.4",
         "google/apiclient": "~1.1.6",
         "zendframework/zendframework1": "~1.12.17",
-        "entradapackages/mysqldump-php": "dev-master",
         "mikehaertl/phpwkhtmltopdf": "^2.2",
         "league/flysystem" : "1.0.*",
         "laravel/laravel": "5.4.*",
