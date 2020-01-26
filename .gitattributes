@@ -44,7 +44,16 @@
 *.png   binary
 *.gif   binary
 *.aif	binary
-###############################################################################
+*.ttf	binary
+*.pdf	binary
+*.doc*	binary
+*.mp*	binary
+*.wav	binary
+*.otf	binary
+*.wof*	binary
+*.eot	binary
+
+#v##############################################################################
 # diff behavior for common document formats
 # 
 # Convert binary document formats to text before diffing them. This feature

@@ -7,6 +7,6 @@
         }
     ],
     "require": {
-        "entradapackages/entrada-1x-api": "4.1"
+        "entradapackages/entrada-1x-api": "4.0"
     }
 }
