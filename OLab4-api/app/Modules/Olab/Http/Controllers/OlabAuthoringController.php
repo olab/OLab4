@@ -331,7 +331,7 @@ abstract class OlabAuthoringController extends OlabController
     }
 
     // test for access, throws exception if not
-    $this->test_access( $oObj, AccessControlBase::ACL_AUTHORABLE_ACCESS );
+    $this->test_access( $oMap, AccessControlBase::ACL_AUTHORABLE_ACCESS );
 
     return $oObj;
   }

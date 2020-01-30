@@ -31,7 +31,7 @@ class MapNodesAccessControl extends ObjectAccessControlBase
 
     public function __construct( $oObject ) {
 
-        $oParentObject = OLabUtilities::get_parent_object( $this->oObject );
+        $oParentObject = OLabUtilities::get_parent_object( $oObject );
         parent::__construct( "Maps", $oObject, $oParentObject );
     }
 
