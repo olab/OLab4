@@ -330,7 +330,7 @@ abstract class OlabAuthoringController extends OlabController
       throw new OlabObjectNotFoundException("MapNode", $id );
     }
 
-    // test for access, throws exception if not
+    // test for access on owning map, throws exception if not
     $this->test_access( $oMap, AccessControlBase::ACL_AUTHORABLE_ACCESS );
 
     return $oObj;

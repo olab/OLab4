@@ -410,7 +410,7 @@ class OlabNodeAuthoringController extends OlabAuthoringController
     // which is malformed.
     $this->fix_node_text( $oObj );
 
-    $this->test_access( $oMap, AccessControlBase::ACL_AUTHORABLE_ACCESS );
+    // already have tested to access so go ahead with save
     $oObj->save();
 
   }
