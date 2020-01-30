@@ -1,0 +1,5 @@
+{
+    "require": {
+        "chumper/zipper": "1.0.x"
+    }
+}

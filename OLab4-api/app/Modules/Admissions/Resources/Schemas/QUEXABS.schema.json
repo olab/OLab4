@@ -1,0 +1,62 @@
+[
+  {
+    "id": "CONYY8",
+    "name": "year",
+    "position": 0,
+    "length": 4
+  },
+  {
+    "id": "REFNO",
+    "name": "reference_number",
+    "position": 4,
+    "length": 6
+  },
+  {
+    "id": "SKSEQ",
+    "name": "sequence",
+    "position": 10,
+    "length": 1
+  },
+  {
+    "id": "SKCAT",
+    "name": "category",
+    "position": 11,
+    "length": 1
+  },
+  {
+    "id": "SKFRDT",
+    "name": "from_date",
+    "position": 12,
+    "length": 6
+  },
+  {
+    "id": "SKTODT",
+    "name": "to_date",
+    "position": 18,
+    "length": 6
+  },
+  {
+    "id": "SKDSEQ",
+    "name": "sketch_sequence_number",
+    "position": 24,
+    "length": 2
+  },
+  {
+    "id": "SKDESC",
+    "name": "description",
+    "position": 26,
+    "length": 48
+  },
+  {
+    "id": "SKLOC",
+    "name": "location",
+    "position": 74,
+    "length": 12
+  },
+  {
+    "id": "FILLER",
+    "name": "filler",
+    "position": 86,
+    "length": 1
+  }
+]

@@ -1,0 +1,62 @@
+[
+  {
+    "id": "CONYY8",
+    "name": "year",
+    "position": 0,
+    "length": 4
+  },
+  {
+    "id": "REFNO",
+    "name": "reference_number",
+    "position": 4,
+    "length": 6
+  },
+  {
+    "id": "HOMAD1",
+    "name": "address1",
+    "position": 10,
+    "length": 32
+  },
+  {
+    "id": "HOMAD2",
+    "name": "address2",
+    "position": 42,
+    "length": 32
+  },
+  {
+    "id": "HOMAD3",
+    "name": "address3",
+    "position": 74,
+    "length": 32
+  },
+  {
+    "id": "HOMAD4",
+    "name": "address4",
+    "position": 106,
+    "length": 19
+  },
+  {
+    "id": "HOMTEL",
+    "name": "phone",
+    "position": 125,
+    "length": 10
+  },
+  {
+    "id": "HOMCUE",
+    "name": "county",
+    "position": 135,
+    "length": 16
+  },
+  {
+    "id": "HOMCNE",
+    "name": "country",
+    "position": 151,
+    "length": 15
+  },
+  {
+    "id": "HIPOST",
+    "name": "postal",
+    "position": 166,
+    "length": 12
+  }
+]

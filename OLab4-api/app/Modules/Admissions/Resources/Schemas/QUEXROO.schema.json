@@ -1,0 +1,524 @@
+[
+  {
+    "id": "CONYY8",
+    "name": "year",
+    "position": 0,
+    "length": 4
+  },
+  {
+    "id": "REFNO",
+    "name": "reference_number",
+    "position": 4,
+    "length": 6
+  },
+  {
+    "id": "SURNAM",
+    "name": "surname",
+    "position": 10,
+    "length": 30
+  },
+  {
+    "id": "GIVENM",
+    "name": "given_name",
+    "position": 40,
+    "length": 30
+  },
+  {
+    "id": "TITLE",
+    "name": "title",
+    "position": 70,
+    "length": 4
+  },
+  {
+    "id": "SPARE",
+    "name": "spare",
+    "position": 74,
+    "length": 9
+  },
+  {
+    "id": "LOCAD1",
+    "name": "local_address1",
+    "position": 83,
+    "length": 32
+  },
+  {
+    "id": "LOCAD2",
+    "name": "local_address2",
+    "position": 115,
+    "length": 32
+  },
+  {
+    "id": "LOCAD3",
+    "name": "local_address3",
+    "position": 147,
+    "length": 32
+  },
+  {
+    "id": "LOCAD4",
+    "name": "local_address4",
+    "position": 179,
+    "length": 19
+  },
+  {
+    "id": "LOCTEL",
+    "name": "local_telephone",
+    "position": 198,
+    "length": 10
+  },
+  {
+    "id": "LOCOUE",
+    "name": "local_county",
+    "position": 208,
+    "length": 16
+  },
+  {
+    "id": "LOCUNE",
+    "name": "local_country",
+    "position": 224,
+    "length": 15
+  },
+  {
+    "id": "USEHAD",
+    "name": "use_home_address",
+    "position": 239,
+    "length": 1
+  },
+  {
+    "id": "SEX",
+    "name": "sex",
+    "position": 240,
+    "length": 1
+  },
+  {
+    "id": "BIRTHD",
+    "name": "birthdate",
+    "position": 241,
+    "length": 8
+  },
+  {
+    "id": "AGE",
+    "name": "age",
+    "position": 249,
+    "length": 2
+  },
+  {
+    "id": "Q1",
+    "name": "previously_enrolled_meds",
+    "position": 251,
+    "length": 1
+  },
+  {
+    "id": "SPARE2",
+    "name": "SPARE2",
+    "position": 252,
+    "length": 3
+  },
+  {
+    "id": "Q4",
+    "name": "failed_year_university",
+    "position": 255,
+    "length": 1
+  },
+  {
+    "id": "Q5",
+    "name": "undergrad_program_interrupted",
+    "position": 256,
+    "length": 1
+  },
+  {
+    "id": "LSTMCT",
+    "name": "last_mcat_test_date",
+    "position": 257,
+    "length": 4
+  },
+  {
+    "id": "MCATVR",
+    "name": "mcat_verbal_reasoning",
+    "position": 261,
+    "length": 2
+  },
+  {
+    "id": "MCATPS",
+    "name": "mcat_physical_science",
+    "position": 263,
+    "length": 2
+  },
+  {
+    "id": "MCATWS",
+    "name": "mcat_writing_sample",
+    "position": 265,
+    "length": 1
+  },
+  {
+    "id": "MCATBS",
+    "name": "mcat_biological_science",
+    "position": 266,
+    "length": 2
+  },
+  {
+    "id": "MCATSC",
+    "name": "mcat_accommodation",
+    "position": 268,
+    "length": 1
+  },
+  {
+    "id": "CURACA",
+    "name": "post_secondary_status",
+    "position": 269,
+    "length": 1
+  },
+  {
+    "id": "SPARE3",
+    "name": "SPARE3",
+    "position": 270,
+    "length": 12
+  },
+  {
+    "id": "ARVERF",
+    "name": "academic_verification",
+    "position": 282,
+    "length": 1
+  },
+  {
+    "id": "GRVERF",
+    "name": "graduate_verification",
+    "position": 283,
+    "length": 1
+  },
+  {
+    "id": "SPARE4",
+    "name": "SPARE4",
+    "position": 284,
+    "length": 1
+  },
+  {
+    "id": "TOTLEN",
+    "name": "total_length_of_academic_records",
+    "position": 285,
+    "length": 4
+  },
+  {
+    "id": "TOTVAL",
+    "name": "total_value_of_academic_records",
+    "position": 289,
+    "length": 5
+  },
+  {
+    "id": "CUMAVG",
+    "name": "cumulative_avg",
+    "position": 294,
+    "length": 3
+  },
+  {
+    "id": "ASMNT1",
+    "name": "assessment1",
+    "position": 297,
+    "length": 2
+  },
+  {
+    "id": "ASMNT2",
+    "name": "assessment2",
+    "position": 299,
+    "length": 2
+  },
+  {
+    "id": "ASMNT3",
+    "name": "assessment3",
+    "position": 301,
+    "length": 2
+  },
+  {
+    "id": "ACACTR",
+    "name": "academic_record_count",
+    "position": 303,
+    "length": 1
+  },
+  {
+    "id": "HOMCTR",
+    "name": "home_address_count",
+    "position": 304,
+    "length": 1
+  },
+  {
+    "id": "REGDMS",
+    "name": "med_school_registered_at",
+    "position": 305,
+    "length": 1
+  },
+  {
+    "id": "REGYRL",
+    "name": "registered_year_level",
+    "position": 306,
+    "length": 1
+  },
+  {
+    "id": "QAVGL2",
+    "name": "average_last_2_years",
+    "position": 307,
+    "length": 4
+  },
+  {
+    "id": "QLSTAV",
+    "name": "last_average",
+    "position": 311,
+    "length": 4
+  },
+  {
+    "id": "QMCSUM",
+    "name": "mcat_sum_numeric_scores",
+    "position": 315,
+    "length": 2
+  },
+  {
+    "id": "QSUM2V",
+    "name": "mcat_sum_double_verbal",
+    "position": 317,
+    "length": 2
+  },
+  {
+    "id": "QMCLE7",
+    "name": "mcat_score_lt_7",
+    "position": 319,
+    "length": 1
+  },
+  {
+    "id": "QMCLE8",
+    "name": "mcat_score_lt_8",
+    "position": 320,
+    "length": 1
+  },
+  {
+    "id": "QWSLEM",
+    "name": "mcat_writing_lt_m",
+    "position": 321,
+    "length": 1
+  },
+  {
+    "id": "QDECSN",
+    "name": "med_school_decision",
+    "position": 322,
+    "length": 1
+  },
+  {
+    "id": "SPARE5",
+    "name": "SPARE5",
+    "position": 323,
+    "length": 5
+  },
+  {
+    "id": "ABSTAT",
+    "name": "aboriginal_status",
+    "position": 328,
+    "length": 1
+  },
+  {
+    "id": "SPARE6",
+    "name": "SPARE6",
+    "position": 329,
+    "length": 6
+  },
+  {
+    "id": "INET",
+    "name": "email_address",
+    "position": 335,
+    "length": 60
+  },
+  {
+    "id": "CURUNM",
+    "name": "last_university_name",
+    "position": 395,
+    "length": 25
+  },
+  {
+    "id": "SPARE7",
+    "name": "SPARE7",
+    "position": 420,
+    "length": 170
+  },
+  {
+    "id": "TSUPLN",
+    "name": "total_supplementary_length",
+    "position": 590,
+    "length": 4
+  },
+  {
+    "id": "TSUPVL",
+    "name": "total_supplementary_value",
+    "position": 594,
+    "length": 5
+  },
+  {
+    "id": "TSUPAV",
+    "name": "total_supplementary_avg",
+    "position": 599,
+    "length": 3
+  },
+  {
+    "id": "GRVIND",
+    "name": "grad_indicator",
+    "position": 602,
+    "length": 1
+  },
+  {
+    "id": "MAPPLN",
+    "name": "applied_to_mcmaster",
+    "position": 603,
+    "length": 1
+  },
+  {
+    "id": "NAPPLN",
+    "name": "applied_to_noms",
+    "position": 604,
+    "length": 1
+  },
+  {
+    "id": "OAPPLN",
+    "name": "applied_to_ottawa",
+    "position": 605,
+    "length": 1
+  },
+  {
+    "id": "QAPPLN",
+    "name": "applied_to_queens",
+    "position": 606,
+    "length": 1
+  },
+  {
+    "id": "TAPPLN",
+    "name": "applied_to_toronto",
+    "position": 607,
+    "length": 1
+  },
+  {
+    "id": "WAPPLN",
+    "name": "applied_to_western",
+    "position": 608,
+    "length": 1
+  },
+  {
+    "id": "IPOSTAL",
+    "name": "international_postal_code",
+    "position": 610,
+    "length": 12
+  },
+  {
+    "id": "CUNAME",
+    "name": "common_name",
+    "position": 621,
+    "length": 20
+  },
+  {
+    "id": "MCATDATE",
+    "name": "mcat_score_report_date",
+    "position": 641,
+    "length": 8
+  },
+  {
+    "id": "MCINVST",
+    "name": "mcat_investigation_report_filed",
+    "position": 649,
+    "length": 1
+  },
+  {
+    "id": "QSTUD1",
+    "name": "queens_student_number1",
+    "position": 650,
+    "length": 12
+  },
+  {
+    "id": "QSTUD2",
+    "name": "queens_student_number2",
+    "position": 662,
+    "length": 12
+  },
+  {
+    "id": "QSTUD3",
+    "name": "queens_student_number3",
+    "position": 674,
+    "length": 12
+  },
+  {
+    "id": "QOTHRPGM",
+    "name": "apply_to_mdphd",
+    "position": 686,
+    "length": 1
+  },
+  {
+    "id": "QOFRDT",
+    "name": "date_of_offer",
+    "position": 687,
+    "length": 5
+  },
+  {
+    "id": "QSRESP",
+    "name": "response_to_offer",
+    "position": 692,
+    "length": 1
+  },
+  {
+    "id": "QRESPD",
+    "name": "response_to_offer_date",
+    "position": 693,
+    "length": 5
+  },
+  {
+    "id": "QCANCD",
+    "name": "offer_cancel_date",
+    "position": 698,
+    "length": 5
+  },
+  {
+    "id": "QWDATE",
+    "name": "offer_withdraw_date",
+    "position": 703,
+    "length": 6
+  },
+  {
+    "id": "CUNCTE",
+    "name": "citizenship",
+    "position": 709,
+    "length": 15
+  },
+  {
+    "id": "IMSTAT",
+    "name": "immigration_status",
+    "position": 724,
+    "length": 1
+  },
+  {
+    "id": "ENTRYD",
+    "name": "date_of_entry",
+    "position": 725,
+    "length": 6
+  },
+  {
+    "id": "FMRNAM",
+    "name": "former_surname",
+    "position": 731,
+    "length": 30
+  },
+  {
+    "id": "LTFLLD",
+    "name": "course_load_lt_full",
+    "position": 761,
+    "length": 1
+  },
+  {
+    "id": "MTFLLD",
+    "name": "course_load_gt_full",
+    "position": 762,
+    "length": 1
+  },
+  {
+    "id": "TONGUE",
+    "name": "first_spoken_language",
+    "position": 763,
+    "length": 1
+  },
+  {
+    "id": "LANSPN",
+    "name": "spoken_language",
+    "position": 764,
+    "length": 1
+  }
+]

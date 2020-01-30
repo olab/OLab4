@@ -1,0 +1,6 @@
+{
+    "name": "Assessments",
+    "slug": "assessments",
+    "version": "1.0",
+    "description": "API Endpoints for the Entrada Assessments"
+}

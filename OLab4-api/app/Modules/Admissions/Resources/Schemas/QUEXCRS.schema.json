@@ -1,0 +1,80 @@
+[
+  {
+    "id": "YEAR",
+    "name": "year",
+    "position": 0,
+    "length": 4
+  },
+  {
+    "id": "REFNO",
+    "name": "reference_number",
+    "position": 4,
+    "length": 6
+  },
+  {
+    "id": "PSSEQ",
+    "name": "postsec_sequence_number",
+    "position": 10,
+    "length": 3
+  },
+  {
+    "id": "YRSEQ",
+    "name": "year_sequence_number",
+    "position": 13,
+    "length": 3
+  },
+  {
+    "id": "CRSSEQ",
+    "name": "course_sequence_number",
+    "position": 16,
+    "length": 3
+  },
+  {
+    "id": "CRSNUM",
+    "name": "course_number",
+    "position": 19,
+    "length": 15
+  },
+  {
+    "id": "CRGRDN",
+    "name": "course_numeric_grade",
+    "position": 34,
+    "length": 3
+  },
+  {
+    "id": "CRGRDA",
+    "name": "course_alpha_grade",
+    "position": 37,
+    "length": 2
+  },
+  {
+    "id": "CRSCL",
+    "name": "course_scale",
+    "position": 39,
+    "length": 1
+  },
+  {
+    "id": "CRSLEN",
+    "name": "course_length",
+    "position": 40,
+    "length": 4
+  },
+  {
+    "id": "CRVAL",
+    "name": "converted_value",
+    "position": 44,
+    "length": 5
+  },
+  {
+    "id": "CRGPA",
+    "name": "gpa",
+    "position": 49,
+    "length": 3
+  },
+  {
+    "id": "FILLER",
+    "name": "filler",
+    "position": 52,
+    "length": 1
+  }
+]

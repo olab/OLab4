@@ -14,12 +14,15 @@ However, OLab4 remains a standalone project. You do not have to buy Entrada, or 
 ## Installing OLab
 
 OLab does not have a production-grade release (yet).  This note describes the step-by-step instructions for setting up the OLab4 demo Docker container on a host system.
+
 Prerequisites:
 •	Windows/Mac/Linux host system
 
 •	Docker CE installed on host system
 
 •	Kitematic installed on the host system
+
+•	Read-access to the OLab4 git repository (contact David for permission)
 
 •	(Windows) GIT for Windows, inclunding GIT Bash shell
 

@@ -1,0 +1,6 @@
+{
+    "name": "Admissions",
+    "slug": "admissions",
+    "version": "1.0",
+    "description": "API Endpoints for the ADM flavor of Entrada"
+}

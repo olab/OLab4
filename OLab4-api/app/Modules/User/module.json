@@ -1,0 +1,6 @@
+{
+    "name": "User",
+    "slug": "user",
+    "version": "1.0",
+    "description": "REST API endpoints for the current user"
+}

@@ -1,0 +1,10 @@
+.DS_Store
+.idea
+composer.lock
+
+/vendor
+/bootstrap/cache/*
+/storage
+/index.php
+/.htaccess
+/.env

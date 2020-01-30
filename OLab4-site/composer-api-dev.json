@@ -1,0 +1,12 @@
+{
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../OLab4-api",
+            "options": { "symlink" :  true } 
+        }
+    ],
+    "require": {
+        "entradapackages/entrada-1x-api": "4.0"
+    }
+}

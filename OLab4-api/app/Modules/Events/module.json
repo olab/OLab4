@@ -1,0 +1,6 @@
+{
+    "name": "Events",
+    "slug": "events",
+    "version": "1.0",
+    "description": "Endpoint for events"
+}

@@ -1,0 +1,188 @@
+[
+  {
+    "id": "CONYY8",
+    "name": "year",
+    "position": 0,
+    "length": 4
+  },
+  {
+    "id": "REFNO",
+    "name": "reference_number",
+    "position": 4,
+    "length": 6
+  },
+  {
+    "id": "PSSEQ",
+    "name": "sequence_number",
+    "position": 10,
+    "length": 3
+  },
+  {
+    "id": "ACADFR",
+    "name": "from_date",
+    "position": 13,
+    "length": 6
+  },
+  {
+    "id": "ACADTO",
+    "name": "to_date",
+    "position": 19,
+    "length": 6
+  },
+  {
+    "id": "PSNAME",
+    "name": "institution_name",
+    "position": 25,
+    "length": 25
+  },
+  {
+    "id": "FACNAM",
+    "name": "faculty_name",
+    "position": 50,
+    "length": 4
+  },
+  {
+    "id": "DGTYP",
+    "name": "degree_type",
+    "position": 54,
+    "length": 1
+  },
+  {
+    "id": "DEGCD",
+    "name": "degree_code",
+    "position": 55,
+    "length": 1
+  },
+  {
+    "id": "DEGDATE",
+    "name": "degree_date",
+    "position": 56,
+    "length": 6
+  },
+  {
+    "id": "DEXPCNF",
+    "name": "degree_diploma",
+    "position": 62,
+    "length": 1
+  },
+  {
+    "id": "INSLEN",
+    "name": "institution_length",
+    "position": 63,
+    "length": 5
+  },
+  {
+    "id": "INSVAL",
+    "name": "institution_value",
+    "position": 68,
+    "length": 5
+  },
+  {
+    "id": "INSGPA",
+    "name": "institution_gpa",
+    "position": 73,
+    "length": 3
+  },
+  {
+    "id": "SPARE",
+    "name": "spare_field",
+    "position": 76,
+    "length": 4
+  },
+  {
+    "id": "ACADEX",
+    "name": "exception_noted",
+    "position": 80,
+    "length": 1
+  },
+  {
+    "id": "VERFCD",
+    "name": "verification_code",
+    "position": 81,
+    "length": 1
+  },
+  {
+    "id": "SPARE",
+    "name": "spare_field2",
+    "position": 82,
+    "length": 20
+  },
+  {
+    "id": "ADDL1",
+    "name": "additional_details1",
+    "position": 102,
+    "length": 35
+  },
+  {
+    "id": "ADDL2",
+    "name": "additional_details2",
+    "position": 137,
+    "length": 35
+  },
+  {
+    "id": "ADDL3",
+    "name": "additional_details3",
+    "position": 172,
+    "length": 35
+  },
+  {
+    "id": "ADDL4",
+    "name": "additional_details4",
+    "position": 207,
+    "length": 35
+  },
+  {
+    "id": "ADDL5",
+    "name": "additional_details5",
+    "position": 242,
+    "length": 35
+  },
+  {
+    "id": "ADDL6",
+    "name": "additional_details6",
+    "position": 277,
+    "length": 35
+  },
+  {
+    "id": "ADDL7",
+    "name": "additional_details7",
+    "position": 312,
+    "length": 35
+  },
+  {
+    "id": "ADDL8",
+    "name": "additional_details8",
+    "position": 347,
+    "length": 35
+  },
+  {
+    "id": "ADDL9",
+    "name": "additional_details9",
+    "position": 382,
+    "length": 35
+  },
+  {
+    "id": "ADDL10",
+    "name": "additional_details10",
+    "position": 417,
+    "length": 35
+  },
+  {
+    "id": "ADDL11",
+    "name": "additional_details11",
+    "position": 452,
+    "length": 35
+  },
+  {
+    "id": "ADDL12",
+    "name": "additional_details12",
+    "position": 487,
+    "length": 35
+  },
+  {
+    "id": "Filler",
+    "name": "filler",
+    "position": 522,
+    "length": 1
+  }
+]
