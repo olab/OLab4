@@ -1,8 +1,8 @@
 RedirectMatch 404 /\\.git(/|$)
-
+	
 <IfModule mod_rewrite.c>
 	RewriteEngine On
-	RewriteBase /player
+	RewriteBase /apidev/
 
 	RewriteCond %{HTTP:Authorization} ^(.*)
 	RewriteRule .* - [e=HTTP_AUTHORIZATION:%1]
@@ -13,6 +13,7 @@ RedirectMatch 404 /\\.git(/|$)
 	RewriteRule ^.* - [L,QSA]
 
 # Default Entrada Rules
+
 	RewriteRule ^api/v2/(.*)$ api/v2/index.php/$1 [L,QSA]
 	RewriteRule ^admin/(.*)$ admin.php/$1 [L,QSA]
 

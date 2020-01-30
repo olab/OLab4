@@ -74,6 +74,7 @@ $PROCESSED = array(
 	"database_password" => "",
 	"entrada_database" => "",
 	"auth_database" => "",
+	"openlabyrinth_database" => "",
 	"clerkship_database" => "",
 	"admin_username" => "",
 	"admin_password_hash" => "",
@@ -184,6 +185,13 @@ switch ($STEP) {
 			$ERRORSTR[] = "The name of the Entrada Authentication database must be entered before continuing.";
 		}
 
+		if (isset($_POST["openlabyrinth_database"]) && ($openlabyrinth_database = clean_input($_POST["openlabyrinth_database"], "credentials"))) {
+			$PROCESSED["openlabyrinth_database"] = $openlabyrinth_database;
+		} else {
+			$ERROR++;
+			$ERRORSTR[] = "The name of the primary OLab4 database must be entered before continuing.";
+		}
+
 		if (isset($_POST["clerkship_database"]) && ($clerkship_database = clean_input($_POST["clerkship_database"], "credentials"))) {
 			$PROCESSED["clerkship_database"] = $clerkship_database;
 		} else {
@@ -191,6 +199,7 @@ switch ($STEP) {
 			$ERRORSTR[] = "The name of the Entrada Clerkship database must be edntered before continuing.";
 		}
 
+		
 		if ($ERROR && ($ERROR > $TOTAL_ERRORS)) {
 			$TOTAL_ERRORS = $ERROR;
 
@@ -375,11 +384,16 @@ switch ($STEP) {
 			$ERRORSTR[] = "We were unable to connect to your <strong>Authentication Database</strong> [".(isset($PROCESSED["auth_database"]) ? $PROCESSED["auth_database"] : "")."].";
 		}
 
+		if (!$setup->checkOLab4DBConnection()) {
+			$ERROR++;
+			$ERRORSTR[] = "We were unable to connect to your <strong>OLab4 Database</strong> [".(isset($PROCESSED["openlabyrinth_database"]) ? $PROCESSED["openlabyrinth_database"] : "")."].";
+		}
+
 		if (!$setup->checkClerkshipDBConnection()) {
 			$ERROR++;
 			$ERRORSTR[] = "We were unable to connect to your <strong>Clerkship Database</strong> [".(isset($PROCESSED["clerkship_database"]) ? $PROCESSED["clerkship_database"] : "")."].";
 		}
-
+	
 		if ($ERROR && ($ERROR > $TOTAL_ERRORS)) {
 			$TOTAL_ERRORS = $ERROR;
 
@@ -834,7 +848,7 @@ $storage_path = implode(DIRECTORY_SEPARATOR, array_slice(explode(DIRECTORY_SEPAR
                                             <tr>
                                                 <td>&nbsp;</td>
                                                 <td class="content-small" style="padding-bottom: 15px">
-                                                    1 of 3: The name of your primary Entrada database.
+                                                    1 of 4: The name of your primary Entrada database.
                                                 </td>
                                             </tr>
                                             <tr>
@@ -852,7 +866,7 @@ $storage_path = implode(DIRECTORY_SEPARATOR, array_slice(explode(DIRECTORY_SEPAR
                                             <tr>
                                                 <td>&nbsp;</td>
                                                 <td class="content-small" style="padding-bottom: 15px">
-                                                    2 of 3: The name of your Entrada authentication database.
+                                                    2 of 4: The name of your Entrada authentication database.
                                                 </td>
                                             </tr>
                                             <tr>
@@ -870,9 +884,27 @@ $storage_path = implode(DIRECTORY_SEPARATOR, array_slice(explode(DIRECTORY_SEPAR
                                             <tr>
                                                 <td>&nbsp;</td>
                                                 <td class="content-small" style="padding-bottom: 15px">
-                                                    3 of 3: The name of your Entrada Clerkship database.
+                                                    3 of 4: The name of your Entrada Clerkship database.
                                                 </td>
                                             </tr>
+                                            <tr>
+                                                <td>
+                                                    <div class="valign">
+                                                        <label for="openlabyrinth_database">OLab4 Database</label>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div class="valign">
+                                                        <input type="text" id="openlabyrinth_database" name="openlabyrinth_database" value="<?php echo (isset($PROCESSED["openlabyrinth_database"]) && $PROCESSED["openlabyrinth_database"] ? $PROCESSED["openlabyrinth_database"] : "openlabyrinth"); ?>" />
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>&nbsp;</td>
+                                                <td class="content-small" style="padding-bottom: 15px">
+                                                    4 of 4: The name of your OLab4 database.
+                                                </td>
+                                            </tr>											
                                         </tbody>
                                     </table>
                                 </div>

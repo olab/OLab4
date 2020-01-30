@@ -19,6 +19,7 @@
 class Entrada_Setup extends Entrada_Base {
     public $sql_dump_entrada = "install/sql/entrada.sql";
     public $sql_dump_auth = "install/sql/entrada_auth.sql";
+    public $sql_dump_openlabyrinth = "install/sql/openlabyrinth.sql";
     public $sql_dump_clerkship = "install/sql/entrada_clerkship.sql";
     public $htaccess_file = "/setup/install/dist-htaccess.txt";
 
@@ -34,6 +35,7 @@ class Entrada_Setup extends Entrada_Base {
     public $entrada_database;
 
     public $auth_database;
+    public $openlabyrinth_database;
 
     public $clerkship_database;
 
@@ -64,6 +66,7 @@ class Entrada_Setup extends Entrada_Base {
         $this->database_password = (isset($processed_array["database_password"]) ? $processed_array["database_password"] : "");
         $this->entrada_database = (isset($processed_array["entrada_database"]) ? $processed_array["entrada_database"] : "");
         $this->auth_database = (isset($processed_array["auth_database"]) ? $processed_array["auth_database"] : "");
+        $this->openlabyrinth_database = (isset($processed_array["openlabyrinth_database"]) ? $processed_array["openlabyrinth_database"] : "");
         $this->clerkship_database = (isset($processed_array["clerkship_database"]) ? $processed_array["clerkship_database"] : "");
 
         $this->admin_username = (isset($processed_array["admin_username"]) ? $processed_array["admin_username"] : "");
@@ -93,6 +96,15 @@ class Entrada_Setup extends Entrada_Base {
         try {
             $db = NewADOConnection($this->database_adapter);
             return @$db->Connect($this->database_host, $this->database_username, $this->database_password, $this->auth_database);
+        } catch(Exception $e) {
+            return false;
+        }
+    }
+
+    public function checkOLab4DBConnection() {
+        try {
+            $db = NewADOConnection($this->database_adapter);
+            return @$db->Connect($this->database_host, $this->database_username, $this->database_password, $this->openlabyrinth_database);
         } catch(Exception $e) {
             return false;
         }
@@ -142,7 +154,8 @@ class Entrada_Setup extends Entrada_Base {
                     "password" => $this->database_password,
                     "entrada_database" => $this->entrada_database,
                     "auth_database" => $this->auth_database,
-                    "clerkship_database" => $this->clerkship_database,
+                    "openlabyrinth_database" => $this->openlabyrinth_database,
+                    "clerkship_database" => $this->clerkship_database
                 ),
                 "admin" => array(
                     "firstname" => $this->admin_firstname,
@@ -177,7 +190,8 @@ return array (
     'password' => '{$this->database_password}',
     'entrada_database' => '{$this->entrada_database}',
     'auth_database' => '{$this->auth_database}',
-    'clerkship_database' => '{$this->clerkship_database}',
+    'openlabyrinth_database' => '{$this->openlabyrinth_database}',
+    'clerkship_database' => '{$this->clerkship_database}'
   ),
   'admin' => array (
     'firstname' => '{$this->admin_firstname}',
@@ -204,6 +218,7 @@ CONFIGTEXT;
         $db_dump_files = array(
             $this->entrada_database => $this->sql_dump_entrada,
             $this->auth_database => $this->sql_dump_auth,
+            $this->openlabyrinth_database => $this->sql_dump_openlabyrinth,
             $this->clerkship_database => $this->sql_dump_clerkship
         );
 
@@ -269,7 +284,7 @@ CONFIGTEXT;
      * @return boolean Success of truncation
      */
     public function recreateDatabases() {
-        $dbs = array($this->entrada_database, $this->auth_database, $this->clerkship_database);
+        $dbs = array($this->entrada_database, $this->auth_database, $this->clerkship_database, $this->openlabyrinth_database );
         try {
             foreach ($dbs as $database_name) {
                 $db = NewADOConnection($this->database_adapter);
@@ -290,7 +305,7 @@ CONFIGTEXT;
      * @return boolean Success of truncation
      */
     public function truncateDatabases() {
-        $dbs = array($this->entrada_database, $this->auth_database, $this->clerkship_database);
+        $dbs = array($this->entrada_database, $this->auth_database, $this->clerkship_database, $this->openlabyrinth_database);
         try {
             foreach ($dbs as $database_name) {
                 $db = NewADOConnection($this->database_adapter);
