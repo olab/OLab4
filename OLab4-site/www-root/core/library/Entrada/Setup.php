@@ -26,6 +26,7 @@ class Entrada_Setup extends Entrada_Base {
     public $entrada_url;
     public $entrada_relative;
     public $entrada_absolute;
+    public $entrada_api_absolute;
     public $entrada_storage;
 
     public $database_adapter;
@@ -33,6 +34,9 @@ class Entrada_Setup extends Entrada_Base {
     public $database_username;
     public $database_password;
     public $entrada_database;
+
+    public $service_username;
+    public $service_password;
 
     public $auth_database;
     public $openlabyrinth_database;
@@ -58,12 +62,17 @@ class Entrada_Setup extends Entrada_Base {
         $this->entrada_url = (isset($processed_array["entrada_url"]) ? $processed_array["entrada_url"] : "");
         $this->entrada_relative = (isset($processed_array["entrada_relative"]) ? $processed_array["entrada_relative"] : "");
         $this->entrada_absolute = (isset($processed_array["entrada_absolute"]) ? $processed_array["entrada_absolute"] : "");
+        $this->entrada_api_absolute = (isset($processed_array["entrada_api_absolute"]) ? $processed_array["entrada_api_absolute"] : "");
         $this->entrada_storage = (isset($processed_array["entrada_storage"]) ? $processed_array["entrada_storage"] : "");
 
         $this->database_adapter = (isset($processed_array["database_adapter"]) ? $processed_array["database_adapter"] : "mysql");
         $this->database_host = (isset($processed_array["database_host"]) ? $processed_array["database_host"] : "");
         $this->database_username = (isset($processed_array["database_username"]) ? $processed_array["database_username"] : "");
         $this->database_password = (isset($processed_array["database_password"]) ? $processed_array["database_password"] : "");
+
+        $this->service_username = (isset($processed_array["service_username"]) ? $processed_array["service_username"] : "");
+        $this->service_password = (isset($processed_array["service_password"]) ? $processed_array["service_password"] : "");
+
         $this->entrada_database = (isset($processed_array["entrada_database"]) ? $processed_array["entrada_database"] : "");
         $this->auth_database = (isset($processed_array["auth_database"]) ? $processed_array["auth_database"] : "");
         $this->openlabyrinth_database = (isset($processed_array["openlabyrinth_database"]) ? $processed_array["openlabyrinth_database"] : "");
@@ -146,6 +155,7 @@ class Entrada_Setup extends Entrada_Base {
                 "entrada_url"  => $this->entrada_url,
                 "entrada_relative"  => $this->entrada_relative,
                 "entrada_absolute" => $this->entrada_absolute,
+                "entrada_api_absolute" => $this->entrada_api_absolute,
                 "entrada_storage" => $this->entrada_storage,
                 "database" => array(
                     "adapter" => $this->database_adapter,
@@ -154,13 +164,17 @@ class Entrada_Setup extends Entrada_Base {
                     "password" => $this->database_password,
                     "entrada_database" => $this->entrada_database,
                     "auth_database" => $this->auth_database,
-                    "openlabyrinth_database" => $this->openlabyrinth_database,
-                    "clerkship_database" => $this->clerkship_database
+                    "clerkship_database" => $this->clerkship_database,
+                    "openlabyrinth_database" => $this->openlabyrinth_database
                 ),
                 "admin" => array(
                     "firstname" => $this->admin_firstname,
                     "lastname" => $this->admin_lastname,
                     "email" => $this->admin_email,
+                ),
+                "service_account" => array(
+                    "username" => $this->service_username,
+                    "password" => $this->service_password
                 ),
                 "auth_username" => $this->auth_username,
                 "auth_password" => $this->auth_password,
@@ -182,6 +196,7 @@ return array (
   'entrada_url' => '{$this->entrada_url}',
   'entrada_relative' => '{$this->entrada_relative}',
   'entrada_absolute' => '{$this->entrada_absolute}',
+  'entrada_api_absolute' => '{$this->entrada_api_absolute}',
   'entrada_storage' => '{$this->entrada_storage}',
   'database' => array (
     'adapter' => '{$this->database_adapter}',
@@ -190,13 +205,17 @@ return array (
     'password' => '{$this->database_password}',
     'entrada_database' => '{$this->entrada_database}',
     'auth_database' => '{$this->auth_database}',
-    'openlabyrinth_database' => '{$this->openlabyrinth_database}',
-    'clerkship_database' => '{$this->clerkship_database}'
+    'clerkship_database' => '{$this->clerkship_database}',
+    'openlabyrinth_database' => '{$this->openlabyrinth_database}'
   ),
   'admin' => array (
     'firstname' => '{$this->admin_firstname}',
     'lastname' => '{$this->admin_lastname}',
     'email' => '{$this->admin_email}',
+  ),
+  'service_account' => array(
+    'username' => '{$this->service_username}',
+    'password' => '{$this->service_password}'
   ),
   'auth_username' => '{$this->auth_username}',
   'auth_password' => '{$this->auth_password}'

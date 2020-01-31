@@ -67,6 +67,7 @@ $PROCESSED = array(
 	"entrada_url" => "",
 	"entrada_relative" => "",
 	"entrada_absolute" => "",
+	"entrada_api_absolute" => "",    
 	"entrada_storage" => "",
 	"database_adapter" => "",
 	"database_host" => "",
@@ -137,6 +138,27 @@ switch ($STEP) {
 			$ERRORSTR[] = "The password of the administrator for your install of Entrada must be entered before continuing.";
 		}
 
+
+		if (isset($_POST["service_username"]) && ($service_username = clean_input($_POST["service_username"], "credentials"))) {
+			$PROCESSED["service_username"] = $service_username;
+		} else {
+			$ERROR++;
+			$ERRORSTR[] = "The username of the service account for your install of Entrada must be entered before continuing.";
+		}
+
+		if (isset($_POST["service_password"]) && ($service_password = $_POST["service_password"])) {
+			if (isset($_POST["re_service_password"]) && ($re_service_password = $_POST["re_service_password"]) && $re_service_password == $service_password) {
+			    $PROCESSED["service_password"] = $service_password;
+			} else {
+				$ERROR++;
+				$ERRORSTR[] = "The two passwords you have entered for the service accountof your install of Entrada must match before continuing, please re-enter them now.";
+			}
+		} else {
+			$ERROR++;
+			$ERRORSTR[] = "The password of the service account for your install of Entrada must be entered before continuing.";
+		}
+
+               
 		if ($ERROR && ($ERROR > $TOTAL_ERRORS)) {
 			$TOTAL_ERRORS = $ERROR;
 
@@ -196,7 +218,7 @@ switch ($STEP) {
 			$PROCESSED["clerkship_database"] = $clerkship_database;
 		} else {
 			$ERROR++;
-			$ERRORSTR[] = "The name of the Entrada Clerkship database must be edntered before continuing.";
+			$ERRORSTR[] = "The name of the Entrada Clerkship database must be entered before continuing.";
 		}
 
 		
@@ -224,6 +246,13 @@ switch ($STEP) {
 		} else {
 			$ERROR++;
 			$ERRORSTR[] = "The absolute directory path on the server where Entrada will be installed must be entered before continuing.";
+		}
+
+		if (isset($_POST["entrada_api_absolute"]) && ($entrada_api_absolute = clean_input($_POST["entrada_api_absolute"], "dir"))) {
+			$PROCESSED["entrada_api_absolute"] = $entrada_api_absolute;
+		} else {
+			$ERROR++;
+			$ERRORSTR[] = "The absolute directory path on the server where the OLab4 REST API is installed must be entered before continuing.";
 		}
 
 		if (isset($_POST["entrada_storage"]) && ($entrada_storage = clean_input($_POST["entrada_storage"], "dir")) && (@is_dir($entrada_storage))) {
@@ -421,6 +450,14 @@ $relative_url = implode("/", array_slice(explode("/", $_SERVER["REQUEST_URI"]), 
 $absolute_path = implode(DIRECTORY_SEPARATOR, array_slice(explode(DIRECTORY_SEPARATOR, $_SERVER['SCRIPT_FILENAME']), 0, (count(explode(DIRECTORY_SEPARATOR, $_SERVER['SCRIPT_FILENAME'])) - 2)) );
 
 $storage_path = implode(DIRECTORY_SEPARATOR, array_slice(explode(DIRECTORY_SEPARATOR, $_SERVER['SCRIPT_FILENAME']), 0, (count(explode(DIRECTORY_SEPARATOR, $_SERVER['SCRIPT_FILENAME'])) - 2)) )."/core/storage";
+
+$path_parts = explode( DIRECTORY_SEPARATOR, $absolute_path );
+array_pop( $path_parts );
+array_pop( $path_parts );
+array_push( $path_parts, "OLab4-api");
+
+$absolute_api_path = implode( DIRECTORY_SEPARATOR, $path_parts );
+
 ?>
 <!doctype html>
 <!--[if lt IE 7]> <html class="no-js lt-ie9 lt-ie8 lt-ie7" lang="en"> <![endif]-->
@@ -616,7 +653,7 @@ $storage_path = implode(DIRECTORY_SEPARATOR, array_slice(explode(DIRECTORY_SEPAR
                                     <div class="alert alert-info">
                                         Please create a new <strong>system administrator account</strong> that you will use to manage your Entrada installation. Additional accounts can be created later in the <strong>Admin &gt; Manage Users</strong> section.
                                     </div>
-                                    <h2>Step 4: System Administrator Account</h2>
+                                    <h2>Step 4: System Administration Accounts</h2>
                                     <table class="setup-list" summary="Step 4: System Administrator Account">
                                         <colgroup>
                                             <col width="25%" />
@@ -680,6 +717,7 @@ $storage_path = implode(DIRECTORY_SEPARATOR, array_slice(explode(DIRECTORY_SEPAR
                                             <tr>
                                                 <td colspan="2">&nbsp;</td>
                                             </tr>
+
                                             <tr>
                                                 <td>
                                                     <div class="valign">
@@ -739,6 +777,71 @@ $storage_path = implode(DIRECTORY_SEPARATOR, array_slice(explode(DIRECTORY_SEPAR
                                                     Please re-type the new administrator password from above.
                                                 </td>
                                             </tr>
+
+
+                                            <tr>
+                                                <td colspan="2">&nbsp;</td>
+                                            </tr>
+
+                                            <tr>
+                                                <td>
+                                                    <div class="valign">
+                                                        <label for="service_username">Service Account Username</label>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div class="valign">
+                                                        <input type="text" id="service_username" name="service_username" value="<?php echo (isset($PROCESSED["service_username"]) && $PROCESSED["service_username"] ? $PROCESSED["service_username"] : ""); ?>" />
+                                                    </div>
+                                                </td>
+                                                <td class="right">
+                                                    <span></span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>&nbsp;</td>
+                                                <td class="content-small" style="padding-bottom: 15px">
+                                                    A username for the unattended map play service account.
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>
+                                                    <div class="valign">
+                                                        <label for="service_password">Password</label>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div class="valign">
+                                                        <input type="password" id="service_password" name="service_password" value="" />
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>&nbsp;</td>
+                                                <td class="content-small" style="padding-bottom: 15px">
+                                                    A secure password for the service account account.
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>
+                                                    <div class="valign">
+                                                        <label for="re_service_password">Confirm Password</label>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div class="valign">
+                                                        <input type="password" id="re_service_password" name="re_service_password" value="" />
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>&nbsp;</td>
+                                                <td class="content-small" style="padding-bottom: 15px">
+                                                    Please re-type the new service account password from above.
+                                                </td>
+                                            </tr>
+
+
                                         </tbody>
                                     </table>
                                 </div>
@@ -979,6 +1082,26 @@ $storage_path = implode(DIRECTORY_SEPARATOR, array_slice(explode(DIRECTORY_SEPAR
                                                     Full absolute filesystem path to Entrada (without trailing slash).
                                                 </td>
                                             </tr>
+
+                                            <tr>
+                                                <td>
+                                                    <div class="valign">
+                                                        <label for="entrada_api_absolute">Entrada REST API Absolute Path</label>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div class="valign">
+                                                        <input type="text" id="entrada_api_absolute" name="entrada_api_absolute" value="<?php echo (isset($PROCESSED["entrada_api_absolute"]) && $PROCESSED["entrada_api_absolute"] ? $PROCESSED["entrada_api_absolute"] : $absolute_api_path); ?>" />
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>&nbsp;</td>
+                                                <td class="content-small" style="padding-bottom: 15px">
+                                                    Full absolute filesystem path to Entrada REST API (without trailing slash).
+                                                </td>
+                                            </tr>
+
                                             <tr>
                                                 <td>
                                                     <div class="valign">
