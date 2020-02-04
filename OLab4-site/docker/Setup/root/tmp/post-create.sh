@@ -20,22 +20,22 @@ runcomposer() {
 
 loadscript() {
 
-	echo "Loading for $2"
+	echo "Loading database $1"
 	
 	if [ ! -f $1 ]; then  
 		if [ ! -f $1.gz ]; then  
-			echo "Retrieving $1"
-			wget https://demo.olab.ca/player/demo-files/$1.gz
+			echo "Retrieving $1_data.sql.gz"
+			wget https://demo.olab.ca/player/demo-files/$1_data.sql.gz
 		fi
 		
-		echo "Unzipping $1"		
-		gunzip -v $1.gz
+		echo "Unzipping $1_data.sql.gz"		
+		gunzip -v $1_data.sql.gz
 	fi
 
-	echo "Loading $1"
+	echo "Loading $1_data.sql"
 	
 	touch /tmp/$1.start
-	mysql -uroot -ppassword $2 < $1
+	mysql -uroot -ppassword $1 < $1_data.sql
 	touch /tmp/$1.finished
 
 }
@@ -44,8 +44,8 @@ runcomposer "/var/www/vhosts/OLab4-api"
 runcomposer "/var/www/vhosts/OLab4-site"
 
 pushd /var/lib/mysql
-loadscript "entrada_auth_data.sql" "entrada_auth"
-loadscript "entrada_clerkship_data.sql" "entrada_clerkship"
-loadscript "entrada_data.sql" "entrada"
-loadscript "openlabyrinth_data.sql" "openlabyrinth"
+loadscript "entrada_auth"
+loadscript "entrada_clerkship"
+loadscript "entrada"
+loadscript "openlabyrinth"
 popd
