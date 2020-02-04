@@ -22,8 +22,8 @@ loadscript() {
 
 	echo "Loading database $1"
 	
-	if [ ! -f $1 ]; then  
-		if [ ! -f $1.gz ]; then  
+	if [ ! -f $1_data.sql ]; then  
+		if [ ! -f $1_data.sql.gz ]; then  
 			echo "Retrieving $1_data.sql.gz"
 			wget https://demo.olab.ca/player/demo-files/$1_data.sql.gz
 		fi
