@@ -15,7 +15,7 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime
 RUN echo "NETWORKING=yes" > /etc/sysconfig/network
 
 # Sets CentOS root password.
-RUN echo root:password | chpasswd && yum install -y passwd
+RUN echo root:password | chpasswd
 
 # Install Inline with Upstream Stable (IUS), which also enables EPEL.
 RUN yum -y install https://centos7.iuscommunity.org/ius-release.rpm
@@ -25,7 +25,6 @@ RUN yum-config-manager --enable remi-php72
 # Install Python and Supervisor.
 RUN yum -y install python-setuptools deltarpm python-pip
 RUN mkdir -p /var/log/supervisor
-#RUN easy_install supervisor
 RUN pip install --upgrade pip
 RUN pip install supervisor
 
@@ -74,7 +73,9 @@ RUN yum -y install git \
 	mariadb-client \
 	mariadb-server \
 	pecl \
-	php-pecl-ds
+	php-pecl-ds \
+	php-pecl-zip \ 
+	phpMyAdmin
 
 # Update PHP's configuration
 RUN sed -i 's@;date.timezone =@date.timezone = '"$TZ"'@g' /etc/php.ini
@@ -101,10 +102,8 @@ RUN sed -i 's@mysqli.default_socket =@mysqli.default_socket = /var/run/mariadb/m
 # Set the container volumes.
 VOLUME /var/lib/mysql
 VOLUME /var/www/vhosts
-VOLUME /etc/httpd/vhosts.d
 
 # Install Composer
-# RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
 RUN php -r "if (hash_file('sha384', 'composer-setup.php') === 'c5b9b6d368201a9db6f74e2611495f369991b72d9c8cbd3ffbc63edff210eb73d46ffbfce88669ad33695ef77dc76976') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;"
 RUN php composer-setup.php --install-dir=/usr/local/bin --filename=composer
@@ -116,12 +115,6 @@ RUN echo "IncludeOptional vhosts.d/*.conf" >> /etc/httpd/conf/httpd.conf
 # Stage any configuration files to container file system
 COPY ./root/. /
 
-# Install PHPMyAdmin
-RUN yum -y install php-pecl-zip phpMyAdmin
-# COPY apache/phpmyadmin.conf /etc/httpd/conf.d/phpmyadmin.conf
-# COPY apache/90-xdebug.ini /etc/php.d
-# COPY apache/hostname /etc/hostname
-
 # Install Capistrano for deployment recipes.
 RUN gem install net-ssh -v "<5.0" --no-ri --no-rdoc  
 RUN gem install capistrano -v 2.15.9 --no-ri --no-rdoc
@@ -132,22 +125,8 @@ EXPOSE 80
 EXPOSE 443
 EXPOSE 3306
 
-# Copy Supervisor configuration.
-# COPY supervisor/supervisord.conf /etc/supervisord.conf
-
-# Create the MariaDB entrada user account and default databases.
-# COPY mariadb/entrada.cnf /etc/my.cnf.d
-# COPY mariadb/create-entrada-db.sql /tmp
-# COPY mariadb/create-olab-db.sql /tmp
-# COPY mariadb/reset-data-db.sh /tmp
-# COPY mariadb/reset-data-db.sql /tmp
-# COPY mariadb/dump-data-db.sh /tmp
-
 # Run any code set up steps
-# COPY post-create/post-create.sh /tmp
 RUN chmod +x /tmp/post-create.sh 
-
-# COPY mariadb/mariadb-start.sh /usr/bin
 RUN chmod +x /usr/bin/mariadb-start.sh
 
 CMD ["/usr/bin/supervisord"]
