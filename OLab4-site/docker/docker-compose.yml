@@ -3,6 +3,7 @@ services:
   web:
     build: Setup
     container_name: olab4-developer
+    hostname: olab4docker
     ports:
       - 80:80
       - 443:443
@@ -14,3 +15,4 @@ services:
     restart: always
     extra_hosts:
       - "database:127.0.0.1"
+

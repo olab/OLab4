@@ -31,50 +31,50 @@ RUN pip install supervisor
 
 # Install Entrada Developer dependancies.
 RUN yum -y install git \
-                pv \
-                htmldoc \
-                wkhtmltopdf \
-                curl \
-                wget \
-                unzip \
-                vim \
-                nano \
-                iproute \
-                python-setuptools \
-		file \
-                hostname \
-                inotify-tools \
-		npm \
-                yum-utils \
-                which \
-                ruby \
-                rubygems \
-                exim \
-                openssl \
-                httpd \
-                dos2unix \
-                mod_ssl \
-                php \
-                php-mcrypt \
-                php-gd \
-                php-devel \
-                php-mysql \
-                php-intl \
-                php-mbstring \
-                php-pecl-xdebug \
-                php-bcmath \
-                php-ldap \
-                php-imap \
-                php-pspell \
-                php-soap \
-                php-xmlrpc \
-                php-tidy \
-                php-opcache \
-                mariadb-client \
-                mariadb-server \
-                pecl \
-                php-pecl-ds
-
+	supervisor \
+	pv \
+	htmldoc \
+	wkhtmltopdf \
+	curl \
+	wget \
+	unzip \
+	vim \
+	nano \
+	iproute \
+	python-setuptools \
+	file \
+	hostname \
+	inotify-tools \
+	npm \
+	yum-utils \
+	which \
+	ruby \
+	rubygems \
+	exim \
+	openssl \
+	httpd \
+	dos2unix \
+	mod_ssl \
+	php \
+	php-mcrypt \
+	php-gd \
+	php-devel \
+	php-mysql \
+	php-intl \
+	php-mbstring \
+	php-pecl-xdebug \
+	php-bcmath \
+	php-ldap \
+	php-imap \
+	php-pspell \
+	php-soap \
+	php-xmlrpc \
+	php-tidy \
+	php-opcache \
+	mariadb-client \
+	mariadb-server \
+	pecl \
+	php-pecl-ds
 
 # Update PHP's configuration
 RUN sed -i 's@;date.timezone =@date.timezone = '"$TZ"'@g' /etc/php.ini
@@ -86,16 +86,16 @@ RUN sed -i 's@memory_limit = 128M@memory_limit = 2512M@g' /etc/php.ini
 RUN sed -i 's@mysqli.default_socket =@mysqli.default_socket = /var/run/mariadb/mysql.sock@g' /etc/php.ini
 
 #RUN { \
-        #echo 'date.timezone = "$TZ"'; \
-        #echo 'display_errors = On'; \
-        #echo 'error_reporting = E_ALL \& ~E_NOTICE \& ~E_STRICT \& ~E_DEPRECATED'; \
-        #echo 'upload_max_filesize = 512M'; \
-        #echo 'post_max_size = 512M'; \
-        #echo 'memory_limit = 512M'; \
-        #echo 'opcache.validate_timestamps=on'; \
-        #echo 'opcache.revalidate_freq=0'; \
-        #echo 'opcache.enable_cli=0'; \
-        #echo 'opcache.enable=0'; \
+	#echo 'date.timezone = "$TZ"'; \
+	#echo 'display_errors = On'; \
+	#echo 'error_reporting = E_ALL \& ~E_NOTICE \& ~E_STRICT \& ~E_DEPRECATED'; \
+	#echo 'upload_max_filesize = 512M'; \
+	#echo 'post_max_size = 512M'; \
+	#echo 'memory_limit = 512M'; \
+	#echo 'opcache.validate_timestamps=on'; \
+	#echo 'opcache.revalidate_freq=0'; \
+	#echo 'opcache.enable_cli=0'; \
+	#echo 'opcache.enable=0'; \
     #} > /etc/php.d/90-olab.ini
 
 # Set the container volumes.
@@ -113,11 +113,14 @@ RUN php -r "unlink('composer-setup.php');"
 # Tell Apache to include all of the virtual hosts
 RUN echo "IncludeOptional vhosts.d/*.conf" >> /etc/httpd/conf/httpd.conf
 
+# Stage any configuration files to container file system
+COPY ./root/. /
+
 # Install PHPMyAdmin
 RUN yum -y install php-pecl-zip phpMyAdmin
-COPY apache/phpmyadmin.conf /etc/httpd/conf.d/phpmyadmin.conf
-COPY apache/90-xdebug.ini /etc/php.d
-COPY apache/hostname /etc/hostname
+# COPY apache/phpmyadmin.conf /etc/httpd/conf.d/phpmyadmin.conf
+# COPY apache/90-xdebug.ini /etc/php.d
+# COPY apache/hostname /etc/hostname
 
 # Install Capistrano for deployment recipes.
 RUN gem install net-ssh -v "<5.0" --no-ri --no-rdoc  
@@ -130,21 +133,21 @@ EXPOSE 443
 EXPOSE 3306
 
 # Copy Supervisor configuration.
-COPY supervisor/supervisord.conf /etc/supervisord.conf
+# COPY supervisor/supervisord.conf /etc/supervisord.conf
 
 # Create the MariaDB entrada user account and default databases.
-COPY mariadb/entrada.cnf /etc/my.cnf.d
-COPY mariadb/create-entrada-db.sql /tmp
-COPY mariadb/create-olab-db.sql /tmp
-COPY mariadb/reset-data-db.sh /tmp
-COPY mariadb/reset-data-db.sql /tmp
-COPY mariadb/dump-data-db.sh /tmp
+# COPY mariadb/entrada.cnf /etc/my.cnf.d
+# COPY mariadb/create-entrada-db.sql /tmp
+# COPY mariadb/create-olab-db.sql /tmp
+# COPY mariadb/reset-data-db.sh /tmp
+# COPY mariadb/reset-data-db.sql /tmp
+# COPY mariadb/dump-data-db.sh /tmp
 
 # Run any code set up steps
-COPY post-create/post-create.sh /tmp
+# COPY post-create/post-create.sh /tmp
 RUN chmod +x /tmp/post-create.sh 
 
-COPY mariadb/mariadb-start.sh /usr/bin
+# COPY mariadb/mariadb-start.sh /usr/bin
 RUN chmod +x /usr/bin/mariadb-start.sh
 
 CMD ["/usr/bin/supervisord"]
