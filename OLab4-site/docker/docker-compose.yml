@@ -1,7 +1,7 @@
 version: '3'
 services:
   web:
-    build: Setup
+    build: ./Setup
     container_name: olab4-developer
     hostname: olab4docker
     ports:
