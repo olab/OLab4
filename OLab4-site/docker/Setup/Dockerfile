@@ -113,7 +113,7 @@ RUN php -r "unlink('composer-setup.php');"
 RUN echo "IncludeOptional vhosts.d/*.conf" >> /etc/httpd/conf/httpd.conf
 
 # Stage any configuration files to container file system
-COPY ./root/. /
+COPY ./root /
 
 # Install Capistrano for deployment recipes.
 RUN gem install net-ssh -v "<5.0" --no-ri --no-rdoc  
