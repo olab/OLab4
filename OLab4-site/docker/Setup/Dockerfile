@@ -132,7 +132,7 @@ EXPOSE 80
 EXPOSE 443
 EXPOSE 3306
 
-# Run any code set up steps
+# Configure the set up step scripts so they can be run
 RUN chmod +x /tmp/post-create.sh 
 RUN chmod +x /usr/bin/mariadb-start.sh
 
