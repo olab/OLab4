@@ -23,13 +23,14 @@ RUN yum -y install http://rpms.remirepo.net/enterprise/remi-release-7.rpm
 RUN yum-config-manager --enable remi-php72
 
 # Install Python and Supervisor.
-RUN yum -y install python-setuptools deltarpm python-pip
+# RUN yum -y install python-setuptools deltarpm python-pip
 RUN mkdir -p /var/log/supervisor
-RUN pip install --upgrade pip
-RUN pip install supervisor
+# RUN pip install --upgrade pip
+# RUN pip install supervisor
 
 # Install Entrada Developer dependancies.
 RUN yum -y install git \
+	python-setuptools deltarpm python-pip \
 	supervisor \
 	pv \
 	htmldoc \
@@ -77,6 +78,8 @@ RUN yum -y install git \
 	php-pecl-zip \ 
 	phpMyAdmin
 
+RUN pip install --upgrade pip
+
 # Update PHP's configuration
 RUN sed -i 's@;date.timezone =@date.timezone = '"$TZ"'@g' /etc/php.ini
 RUN sed -i 's@display_errors = Off@display_errors = On@g' /etc/php.ini
@@ -104,10 +107,14 @@ VOLUME /var/lib/mysql
 VOLUME /var/www/vhosts
 
 # Install Composer
-RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
-RUN php -r "if (hash_file('sha384', 'composer-setup.php') === 'c5b9b6d368201a9db6f74e2611495f369991b72d9c8cbd3ffbc63edff210eb73d46ffbfce88669ad33695ef77dc76976') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;"
-RUN php composer-setup.php --install-dir=/usr/local/bin --filename=composer
-RUN php -r "unlink('composer-setup.php');"
+RUN export COMPOSER_INSTALLER_SHA384=$(curl https://composer.github.io/installer.sig) \
+  && php -r "readfile('https://getcomposer.org/installer');" > /tmp/composer-setup.php \
+  && php -r "if (hash('SHA384', file_get_contents('/tmp/composer-setup.php')) !== '${COMPOSER_INSTALLER_SHA384}') { unlink('/tmp/composer-setup.php'); echo 'Invalid installer' . PHP_EOL; exit(1); }"
+  
+# RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+#RUN php -r "if (hash_file('sha384', 'composer-setup.php') === #'c5b9b6d368201a9db6f74e2611495f369991b72d9c8cbd3ffbc63edff210eb73d46ffbfce88669ad33695ef77dc76976') { echo 'Installer verified'; } else { echo #'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;"
+RUN php /tmp/composer-setup.php --install-dir=/usr/local/bin --filename=composer
+RUN php -r "unlink('/tmp/composer-setup.php');"
 
 # Tell Apache to include all of the virtual hosts
 RUN echo "IncludeOptional vhosts.d/*.conf" >> /etc/httpd/conf/httpd.conf
