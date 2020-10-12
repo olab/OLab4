@@ -123,17 +123,17 @@ RUN echo "IncludeOptional vhosts.d/*.conf" >> /etc/httpd/conf/httpd.conf
 COPY ./root /
 
 # Install Capistrano for deployment recipes.
-RUN gem install net-ssh -v "<5.0" --no-ri --no-rdoc  
-RUN gem install capistrano -v 2.15.9 --no-ri --no-rdoc
-RUN gem install colorize --no-ri --no-rdoc
-RUN gem install sshkit --no-ri --no-rdoc
+#RUN gem install net-ssh -v "<5.0" --no-ri --no-rdoc  
+#RUN gem install capistrano -v 2.15.9 --no-ri --no-rdoc
+#RUN gem install colorize --no-ri --no-rdoc
+#RUN gem install sshkit --no-ri --no-rdoc
 
 EXPOSE 80
 EXPOSE 443
 EXPOSE 3306
 
 # Configure the set up step scripts so they can be run
-RUN chmod +x /tmp/post-create.sh 
-RUN chmod +x /usr/bin/mariadb-start.sh
+#RUN chmod +x /tmp/post-create.sh 
+#RUN chmod +x /usr/bin/mariadb-start.sh
 
 CMD ["/usr/bin/supervisord"]
