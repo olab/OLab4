@@ -18,7 +18,7 @@ RUN echo "NETWORKING=yes" > /etc/sysconfig/network
 RUN echo root:password | chpasswd
 
 # Install Inline with Upstream Stable (IUS), which also enables EPEL.
-RUN yum -y install https://centos7.iuscommunity.org/ius-release.rpm
+RUN yum -y install  https://repo.ius.io/ius-release-el7.rpm 
 RUN yum -y install http://rpms.remirepo.net/enterprise/remi-release-7.rpm
 RUN yum-config-manager --enable remi-php72
 
