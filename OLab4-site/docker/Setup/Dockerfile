@@ -122,18 +122,51 @@ RUN echo "IncludeOptional vhosts.d/*.conf" >> /etc/httpd/conf/httpd.conf
 # Stage any configuration files to container file system
 COPY ./root /
 
+RUN yum -y install \
+	git-core \
+	zlib \
+	zlib-devel \
+	gcc-c++ \
+	patch \
+	readline \
+	readline-devel \
+	libyaml-devel \
+	libffi-devel \
+	openssl-devel \
+	make \
+	bzip2 \
+	autoconf \
+	automake \
+	libtool \
+	bison \
+	curl \
+	sqlite-devel
+
+# Clean up yum cache
+RUN yum clean all
+
+# Setup unprivileged user environmental variables
+ENV RBENV_ROOT /root/.rbenv
+ENV PATH ${RBENV_ROOT}/bin:${RBENV_ROOT}/shims:$PATH
+RUN curl -sL https://github.com/rbenv/rbenv-installer/raw/master/bin/rbenv-installer | bash -
+
+RUN rbenv install 2.5.1
+RUN rbenv global 2.5.1
+RUN ruby -v
+
 # Install Capistrano for deployment recipes.
-#RUN gem install net-ssh -v "<5.0" --no-ri --no-rdoc  
-#RUN gem install capistrano -v 2.15.9 --no-ri --no-rdoc
-#RUN gem install colorize --no-ri --no-rdoc
-#RUN gem install sshkit --no-ri --no-rdoc
+
+RUN gem install net-ssh -v "<5.0" --no-ri --no-rdoc
+RUN gem install capistrano -v 2.15.9 --no-ri --no-rdoc
+RUN gem install colorize --no-ri --no-rdoc
+RUN gem install sshkit --no-ri --no-rdoc
 
 EXPOSE 80
 EXPOSE 443
 EXPOSE 3306
 
 # Configure the set up step scripts so they can be run
-#RUN chmod +x /tmp/post-create.sh 
-#RUN chmod +x /usr/bin/mariadb-start.sh
+RUN chmod +x /tmp/post-create.sh 
+RUN chmod +x /usr/bin/mariadb-start.sh
 
 CMD ["/usr/bin/supervisord"]
