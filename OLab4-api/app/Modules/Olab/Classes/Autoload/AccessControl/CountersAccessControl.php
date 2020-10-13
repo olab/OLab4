@@ -30,7 +30,6 @@ use \Ds\Map;
 class CountersAccessControl extends ObjectAccessControlBase
 {
     public function __construct( $oObject ) {
-
         $oParentObject = OLabUtilities::get_parent_object( $oObject );
         parent::__construct( "Counters", $oObject, $oParentObject );
     }

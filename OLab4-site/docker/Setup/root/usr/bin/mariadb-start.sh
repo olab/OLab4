@@ -4,7 +4,7 @@ if [ ! -f /var/lib/mysql/ibdata1 ]; then
 
 	/usr/bin/mysql_install_db  --force
 
-	/usr/bin/mysqld_safe &
+	/usr/bin/mysqld_safe --user=root &
 	sleep 5s
 
 	/usr/bin/mysqladmin -u root password password
@@ -21,4 +21,4 @@ if [ ! -f /var/lib/mysql/ibdata1 ]; then
 	sleep 5s
 fi
 
-/usr/bin/mysqld_safe
+/usr/bin/mysqld_safe --user=root

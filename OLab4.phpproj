@@ -19,7 +19,7 @@
     <DebugMappingMethod>Automatic</DebugMappingMethod>
     <DBGpProxyEnabled>false</DBGpProxyEnabled>
     <DBGpProxyPort>9001</DBGpProxyPort>
-    <DebugPathMapping>D:\Devel\Development\Docker\OLab\OLab.dev.repo;/var/www/vhosts</DebugPathMapping>
+    <DebugPathMapping>D:\Client\Devel\olab\repos\OLab4;/var/www/vhosts</DebugPathMapping>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <IncludeDebugInformation>true</IncludeDebugInformation>
@@ -1348,6 +1348,7 @@
     <Folder Include="OLab4-api\config" />
     <Folder Include="OLab4-api\routes" />
     <Folder Include="OLab4-api" />
+    <Folder Include="Properties\" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="OLab4-api\vendor\h5p\h5p-core\.gitignore" />

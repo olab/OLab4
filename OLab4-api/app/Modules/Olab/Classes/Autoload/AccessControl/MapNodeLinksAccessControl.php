@@ -5,6 +5,7 @@ namespace Entrada\Modules\Olab\Classes\Autoload\AccessControl;
 use Illuminate\Support\Facades\Log;
 use \Exception;
 use Entrada\Modules\Olab\Classes\Autoload\AccessControl\AccessControlBase;
+use Entrada\Modules\Olab\Classes\OLabUtilities;
 use Entrada\Modules\Olab\Models\SystemSettings;
 use Entrada\Modules\Olab\Models\MapNodes;
 use Entrada\Modules\Olab\Models\MapNodeLinks;
@@ -30,7 +31,8 @@ class MapNodeLinksAccessControl extends ObjectAccessControlBase
 {
 
     public function __construct( $oObject ) {
-        parent::__construct( "MapNodeLinks", $oObject );
+        $oParentObject = OLabUtilities::get_parent_object( $oObject );
+        parent::__construct( "MapNodeLinks", $oObject, $oParentObject );
     }
 
 }

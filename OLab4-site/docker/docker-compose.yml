@@ -14,3 +14,4 @@ services:
     restart: always
     extra_hosts:
       - "database:127.0.0.1"
+      - "debugger:10.168.1.99"
