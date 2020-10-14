@@ -18,7 +18,7 @@ RUN echo "NETWORKING=yes" > /etc/sysconfig/network
 RUN echo root:password | chpasswd
 
 # Install Inline with Upstream Stable (IUS), which also enables EPEL.
-RUN yum -y install https://centos7.iuscommunity.org/ius-release.rpm
+RUN yum -y install  https://repo.ius.io/ius-release-el7.rpm 
 RUN yum -y install http://rpms.remirepo.net/enterprise/remi-release-7.rpm
 RUN yum-config-manager --enable remi-php72
 
@@ -122,8 +122,41 @@ RUN echo "IncludeOptional vhosts.d/*.conf" >> /etc/httpd/conf/httpd.conf
 # Stage any configuration files to container file system
 COPY ./root /
 
+RUN yum -y install \
+	git-core \
+	zlib \
+	zlib-devel \
+	gcc-c++ \
+	patch \
+	readline \
+	readline-devel \
+	libyaml-devel \
+	libffi-devel \
+	openssl-devel \
+	make \
+	bzip2 \
+	autoconf \
+	automake \
+	libtool \
+	bison \
+	curl \
+	sqlite-devel
+
+# Clean up yum cache
+RUN yum clean all
+
+# Setup unprivileged user environmental variables
+ENV RBENV_ROOT /root/.rbenv
+ENV PATH ${RBENV_ROOT}/bin:${RBENV_ROOT}/shims:$PATH
+RUN curl -sL https://github.com/rbenv/rbenv-installer/raw/master/bin/rbenv-installer | bash -
+
+RUN rbenv install 2.5.1
+RUN rbenv global 2.5.1
+RUN ruby -v
+
 # Install Capistrano for deployment recipes.
-RUN gem install net-ssh -v "<5.0" --no-ri --no-rdoc  
+
+RUN gem install net-ssh -v "<5.0" --no-ri --no-rdoc
 RUN gem install capistrano -v 2.15.9 --no-ri --no-rdoc
 RUN gem install colorize --no-ri --no-rdoc
 RUN gem install sshkit --no-ri --no-rdoc

@@ -5,6 +5,7 @@ namespace Entrada\Modules\Olab\Classes\Autoload\AccessControl;
 use Illuminate\Support\Facades\Log;
 use \Exception;
 use Entrada\Modules\Olab\Classes\Autoload\AccessControl\AccessControlBase;
+use Entrada\Modules\Olab\Classes\OLabUtilities;
 use Entrada\Modules\Olab\Models\SystemSettings;
 use Entrada\Modules\Olab\Models\MapNodes;
 use Entrada\Modules\Olab\Models\Maps;
