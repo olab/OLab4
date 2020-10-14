@@ -1,0 +1,9 @@
+<svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect opacity="0.01" width="22" height="22" fill="#03B595"/>
+  <mask id="add_icon" masktype="alpha" maskUnits="userSpaceOnUse" x="0" y="0" width="22" height="22">
+    <path fill-rule="evenodd" clip-rule="evenodd" d="M3 0C1.34315 0 0 1.34315 0 3V19C0 20.6569 1.34315 22 3 22H19C20.6569 22 22 20.6569 22 19V3C22 1.34315 20.6569 0 19 0H3ZM2 3C2 2.44772 2.44772 2 3 2H19C19.5523 2 20 2.44772 20 3V19C20 19.5523 19.5523 20 19 20H3C2.44772 20 2 19.5523 2 19V3ZM12 8C12 7.44772 11.5523 7 11 7C10.4477 7 10 7.44772 10 8V10H8C7.44772 10 7 10.4477 7 11C7 11.5523 7.44772 12 8 12H10V14C10 14.5523 10.4477 15 11 15C11.5523 15 12 14.5523 12 14V12H14C14.5523 12 15 11.5523 15 11C15 10.4477 14.5523 10 14 10H12V8Z" fill="#03B595"/>
+  </mask>
+  <g mask="url(#add_icon)">
+    <rect width="22" height="22" fill="#03B595"/>
+  </g>
+</svg>

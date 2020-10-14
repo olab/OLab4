@@ -1,0 +1,21 @@
+{
+  "extends": [
+    "airbnb",
+    "plugin:flowtype/recommended"
+  ],
+  "parser": "babel-eslint",
+  "plugins": [
+    "flowtype"
+  ],
+  "env": {
+    "browser": true,
+    "jest": true
+  },
+  "rules": {
+    "react/prefer-stateless-function": "off",
+    "no-param-reassign": 0,
+    "react/sort-comp": [0, {}],
+    "import/no-named-as-default": 0,
+    "no-bitwise": ["error", { "allow": ["<<"] }]
+  }
+}

@@ -1,0 +1,27 @@
+<svg
+  width="12px"
+  height="14px"
+  viewBox="0 0 12 14"
+  fill="none"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <mask
+    id="lock_icon"
+    masktype="alpha"
+    maskUnits="userSpaceOnUse"
+    x="0"
+    y="0"
+    width="12"
+    height="14"
+  >
+    <path
+      fillRule="evenodd"
+      clipRule="evenodd"
+      d="M6 0C3.79086 0 2 1.79086 2 4V6H1C0.447715 6 0 6.44772 0 7V13C0 13.5523 0.447715 14 1 14H11C11.5523 14 12 13.5523 12 13V7C12 6.44772 11.5523 6 11 6H4V4C4 2.89543 4.89543 2 6 2C7.10457 2 8 2.89543 8 4H10C10 1.79086 8.20914 0 6 0Z"
+      fill="white"
+    />
+  </mask>
+  <g mask="url(#lock_icon)">
+    <rect x="-6" y="-5" width="24" height="24" fill="white" />
+  </g>
+</svg>

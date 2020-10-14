@@ -1,0 +1,9 @@
+<svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect opacity="0.01" width="22" height="22" fill="#7C8FA6"/>
+  <mask id="vertical_tree" masktype="alpha" maskUnits="userSpaceOnUse" x="0" y="0" width="22" height="22">
+    <path fill-rule="evenodd" clip-rule="evenodd" d="M9 6V2H13V6H11H9ZM13.2038 8H14C14.5523 8 15 7.55228 15 7V1C15 0.447715 14.5523 0 14 0H8C7.44772 0 7 0.447715 7 1V7C7 7.55228 7.44772 8 8 8H8.79623L3.54623 14H1C0.447715 14 0 14.4477 0 15V21C0 21.5523 0.447715 22 1 22H7C7.55228 22 8 21.5523 8 21V15C8 14.4477 7.55228 14 7 14H6.20377L11 8.51859L15.7962 14H15C14.4477 14 14 14.4477 14 15V21C14 21.5523 14.4477 22 15 22H21C21.5523 22 22 21.5523 22 21V15C22 14.4477 21.5523 14 21 14H18.4538L13.2038 8ZM18.0056 16C18.0021 16 17.9987 16 17.9952 16H16V20H20V16H18.0056ZM4.00479 16C4.00133 16 3.99786 16 3.9944 16H2V20H6V16H4.00479Z" fill="#ffffff"/>
+  </mask>
+  <g mask="url(#vertical_tree)">
+    <rect width="22" height="22" fill="#7C8FA6"/>
+  </g>
+</svg>

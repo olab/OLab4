@@ -1,0 +1,9 @@
+<svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect opacity="0.01" width="22" height="22" fill="#7C8FA6"/>
+  <mask id="toolbar_template" masktype="alpha" maskUnits="userSpaceOnUse" x="0" y="0" width="22" height="22">
+    <path fill-rule="evenodd" clip-rule="evenodd" d="M22 8C22 9.10457 21.1046 10 20 10H14C12.8954 10 12 9.10457 12 8V2C12 0.895431 12.8954 0 14 0H20C21.1046 0 22 0.895431 22 2V8ZM14 8H20V2H14V8ZM2 12C0.895431 12 0 12.8954 0 14V20C0 21.1046 0.895431 22 2 22H8C9.10457 22 10 21.1046 10 20V14C10 12.8954 9.10457 12 8 12H2ZM2 14H8V20H2V14ZM20 12C21.1046 12 22 12.8954 22 14V20C22 21.1046 21.1046 22 20 22H14C12.8954 22 12 21.1046 12 20V14C12 12.8954 12.8954 12 14 12H20ZM20 14H14V20H20V14ZM2 10C0.895431 10 0 9.10457 0 8V2C0 0.895431 0.895431 0 2 0H8C9.10457 0 10 0.895431 10 2V8C10 9.10457 9.10457 10 8 10H2ZM2 8H8V2H2V8Z" fill="#ffffff"/>
+  </mask>
+  <g mask="url(#toolbar_template)">
+    <rect width="22" height="22" fill="#7C8FA6"/>
+  </g>
+</svg>
