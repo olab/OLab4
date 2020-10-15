@@ -3,7 +3,7 @@
 
 # initialize any support/config file and put them in 
 # their rightful places
-/bin/cp -r /var/www/vhosts/OLab4-site/docker/Setup/root/* /
+/bin/cp -r /var/www/vhosts/docker/Setup/root/* /
 rm -Rf /var/www/vhosts/OLab4-site/www-root/core/storage/cache/*
 
 runcomposer() {

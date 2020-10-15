@@ -1,4 +1,4 @@
-FROM centos:centos7
+FROM centos:centos7 as centos
 
 LABEL maintainer "Corey Wirun <corey@cardinalcreek.ca>"
 
@@ -18,9 +18,8 @@ RUN echo "NETWORKING=yes" > /etc/sysconfig/network
 RUN echo root:password | chpasswd
 
 # Install Inline with Upstream Stable (IUS), which also enables EPEL.
-RUN yum -y install  https://repo.ius.io/ius-release-el7.rpm 
-RUN yum -y install http://rpms.remirepo.net/enterprise/remi-release-7.rpm
-RUN yum-config-manager --enable remi-php72
+RUN yum -y install  https://repo.ius.io/ius-release-el7.rpm http://rpms.remirepo.net/enterprise/remi-release-7.rpm && \
+	yum-config-manager --enable remi-php72
 
 # Install Python and Supervisor.
 # RUN yum -y install python-setuptools deltarpm python-pip
@@ -30,55 +29,54 @@ RUN mkdir -p /var/log/supervisor
 
 # Install Entrada Developer dependancies.
 RUN yum -y install git \
-	python-setuptools deltarpm python-pip \
-	supervisor \
-	pv \
-	htmldoc \
-	wkhtmltopdf \
 	curl \
-	wget \
-	unzip \
-	vim \
-	nano \
-	iproute \
-	python-setuptools \
+	dos2unix \
+	exim \
 	file \
 	hostname \
-	inotify-tools \
-	npm \
-	yum-utils \
-	which \
-	ruby \
-	rubygems \
-	exim \
-	openssl \
+	htmldoc \
 	httpd \
-	dos2unix \
-	mod_ssl \
-	php \
-	php-mcrypt \
-	php-gd \
-	php-devel \
-	php-mysql \
-	php-intl \
-	php-mbstring \
-	php-pecl-xdebug \
-	php-bcmath \
-	php-ldap \
-	php-imap \
-	php-pspell \
-	php-soap \
-	php-xmlrpc \
-	php-tidy \
-	php-opcache \
+	inotify-tools \
+	iproute \
 	mariadb-client \
 	mariadb-server \
+	mod_ssl \
+	nano \
+	npm \
+	openssl \
 	pecl \
+	php \
+	php-bcmath \
+	php-devel \
+	php-gd \
+	php-imap \
+	php-intl \
+	php-ldap \
+	php-mbstring \
+	php-mcrypt \
+	php-mysql \
+	php-opcache \
 	php-pecl-ds \
+	php-pecl-xdebug \
 	php-pecl-zip \ 
-	phpMyAdmin
-
-RUN pip install --upgrade pip
+	php-pspell \
+	php-soap \
+	php-tidy \
+	php-xmlrpc \
+	phpMyAdmin \
+	pv \
+	python-setuptools \
+	python-setuptools deltarpm python-pip \
+	ruby \
+	rubygems \
+	supervisor \
+	unzip \
+	vim \
+	wget \
+	which \
+	wkhtmltopdf \
+	yum-utils && \
+    pip install --upgrade pip
 
 # Update PHP's configuration
 RUN sed -i 's@;date.timezone =@date.timezone = '"$TZ"'@g' /etc/php.ini
@@ -88,19 +86,6 @@ RUN sed -i 's@upload_max_filesize = 2M@upload_max_filesize = 512M@g' /etc/php.in
 RUN sed -i 's@post_max_size = 8M@post_max_size = 512M@g' /etc/php.ini
 RUN sed -i 's@memory_limit = 128M@memory_limit = 2512M@g' /etc/php.ini
 RUN sed -i 's@mysqli.default_socket =@mysqli.default_socket = /var/run/mariadb/mysql.sock@g' /etc/php.ini
-
-#RUN { \
-	#echo 'date.timezone = "$TZ"'; \
-	#echo 'display_errors = On'; \
-	#echo 'error_reporting = E_ALL \& ~E_NOTICE \& ~E_STRICT \& ~E_DEPRECATED'; \
-	#echo 'upload_max_filesize = 512M'; \
-	#echo 'post_max_size = 512M'; \
-	#echo 'memory_limit = 512M'; \
-	#echo 'opcache.validate_timestamps=on'; \
-	#echo 'opcache.revalidate_freq=0'; \
-	#echo 'opcache.enable_cli=0'; \
-	#echo 'opcache.enable=0'; \
-    #} > /etc/php.d/90-olab.ini
 
 # Set the container volumes.
 VOLUME /var/lib/mysql
@@ -123,50 +108,46 @@ RUN echo "IncludeOptional vhosts.d/*.conf" >> /etc/httpd/conf/httpd.conf
 COPY ./root /
 
 RUN yum -y install \
-	git-core \
-	zlib \
-	zlib-devel \
+	autoconf \
+	automake \
+	bison \
+	bzip2 \
+	curl \
 	gcc-c++ \
+	git-core \
+	libffi-devel \
+	libtool \
+	libyaml-devel \
+	make \
+	openssl-devel \
 	patch \
 	readline \
 	readline-devel \
-	libyaml-devel \
-	libffi-devel \
-	openssl-devel \
-	make \
-	bzip2 \
-	autoconf \
-	automake \
-	libtool \
-	bison \
-	curl \
-	sqlite-devel
-
-# Clean up yum cache
-RUN yum clean all
+	sqlite-devel \
+	zlib \
+	zlib-devel && yum clean all
 
 # Setup unprivileged user environmental variables
 ENV RBENV_ROOT /root/.rbenv
 ENV PATH ${RBENV_ROOT}/bin:${RBENV_ROOT}/shims:$PATH
 RUN curl -sL https://github.com/rbenv/rbenv-installer/raw/master/bin/rbenv-installer | bash -
 
-RUN rbenv install 2.5.1
-RUN rbenv global 2.5.1
-RUN ruby -v
+RUN rbenv install 2.5.1 && \
+	rbenv global 2.5.1 && \
+	ruby -v
 
 # Install Capistrano for deployment recipes.
 
-RUN gem install net-ssh -v "<5.0" --no-ri --no-rdoc
-RUN gem install capistrano -v 2.15.9 --no-ri --no-rdoc
-RUN gem install colorize --no-ri --no-rdoc
-RUN gem install sshkit --no-ri --no-rdoc
+RUN gem install net-ssh -v "<5.0" --no-ri --no-rdoc  && \
+	gem install capistrano -v 2.15.9 --no-ri --no-rdoc && \
+	gem install colorize --no-ri --no-rdoc && \
+	gem install sshkit --no-ri --no-rdoc
 
 EXPOSE 80
 EXPOSE 443
 EXPOSE 3306
 
 # Configure the set up step scripts so they can be run
-RUN chmod +x /tmp/post-create.sh 
-RUN chmod +x /usr/bin/mariadb-start.sh
+RUN chmod +x /tmp/post-create.sh && chmod +x /usr/bin/mariadb-start.sh
 
 CMD ["/usr/bin/supervisord"]

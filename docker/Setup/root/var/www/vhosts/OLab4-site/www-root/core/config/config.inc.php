@@ -1,8 +1,8 @@
 <?php
 
 return array (
-  'entrada_url' => 'http://olab4.localhost/apidev',
-  'entrada_relative' => '/apidev',
+  'entrada_url' => 'http://olab4.localhost/player',
+  'entrada_relative' => '/player',
   'entrada_absolute' => '/var/www/vhosts/OLab4-site/www-root',
    // CMW: added
   'entrada_api_absolute' => '/var/www/vhosts/OLab4-api',

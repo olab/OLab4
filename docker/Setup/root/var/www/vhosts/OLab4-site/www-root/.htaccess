@@ -2,7 +2,7 @@ RedirectMatch 404 /\\.git(/|$)
 	
 <IfModule mod_rewrite.c>
 	RewriteEngine On
-	RewriteBase /apidev/
+	RewriteBase /player/
 
 	RewriteCond %{HTTP:Authorization} ^(.*)
 	RewriteRule .* - [e=HTTP_AUTHORIZATION:%1]
