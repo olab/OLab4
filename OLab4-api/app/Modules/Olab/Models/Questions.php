@@ -92,7 +92,7 @@ class Questions extends PolymorphicModel {
                             'imageable_id' => 'integer|required',
                             'imageable_type' => 'max:45|string'];
 
-    protected $post_to_db_column_translation = [ 
+    protected $post_to_db_column_translation = [
 
       // alias => raw
       'questionType' => 'entry_type_id',
@@ -118,7 +118,7 @@ class Questions extends PolymorphicModel {
                           );
 
     public function toArray() {
-      
+
       $aObj = parent::toArray();
 
       OLabUtilities::safe_rename( $aObj, 'parent_id' );
@@ -140,6 +140,7 @@ class Questions extends PolymorphicModel {
       OLabUtilities::safe_rename( $aObj, 'type_display', 'layoutType');
       OLabUtilities::safe_rename( $aObj, 'is_private', 'isPrivate');
       OLabUtilities::safe_rename( $aObj, 'external_source_id', 'externalSourceId');
+      OLabUtilities::safe_rename( $aObj, 'QuestionResponses', 'responses');
 
       OLabUtilities::safe_rename( $aObj, 'imageable_type', 'scopeLevel' );
       OLabUtilities::safe_rename( $aObj, 'imageable_id', "parentId" );
@@ -166,7 +167,7 @@ class Questions extends PolymorphicModel {
     public function Counter() {
         return $this->belongsTo('Entrada\Modules\Olab\Models\Counters', 'counter_id');
     }
-    
+
     public function QuestionTypes() {
         return $this->belongsTo('Entrada\Modules\Olab\Models\QuestionTypes', 'entry_type_id');
     }
@@ -177,7 +178,7 @@ class Questions extends PolymorphicModel {
 
     /**
      * Create object from legacy source object
-     * @param mixed $nParentId 
+     * @param mixed $nParentId
      * @param mixed $oSourceObj map_node record
      * @return Questions|null new Question, or null is source not of expected type
      */
@@ -221,7 +222,7 @@ class Questions extends PolymorphicModel {
     /**
      * Import from xml file
      * @param mixed $import_directory Base import directory
-     * @throws Exception 
+     * @throws Exception
      * @return array Maps
      */
     public static function import( $import_directory, $parent_id ) {
@@ -273,7 +274,7 @@ class Questions extends PolymorphicModel {
 
             $instance->imageable_id         = $parent_id                      ;
             $instance->imageable_type       = Maps::IMAGEABLE_TYPE;
-            
+
             array_push( $items, $instance );
 
             // update element to next record in sequence

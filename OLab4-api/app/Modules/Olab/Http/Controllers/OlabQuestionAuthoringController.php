@@ -182,7 +182,7 @@ class OlabQuestionAuthoringController extends OlabScopedObjectAuthoringControlle
 
       $aData = array();
 
-      $oObj = $this->get_question( $id );
+      $oObj = $this->get_question_deep( $id );
 
       // test access control context based on object type to evaluate.
       $oAccessControl = AccessControlBase::classFactory( $oObj );
