@@ -17,7 +17,7 @@
     "repositories": [
         {
             "type": "path",
-            "url": "../Olab4-api",
+            "url": "../OLab4-api",
             "autoload": {
                 "psr-4": {"Entrada\\": "app"}
             }
