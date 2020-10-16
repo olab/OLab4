@@ -46,16 +46,16 @@ class OlabCounterAuthoringController extends OlabScopedObjectAuthoringController
   // override for abstract class to provide url subpath
   public function get_object_url_subpath() { return "counters"; }
 
-  private function get_counter( int $id ) {
+  // private function get_counter( int $id ) {
     
-    $oObj = Counters::find( $id );
+  //   $oObj = Counters::find( $id );
 
-    if ( $oObj == null ) {
-      throw new OlabObjectNotFoundException("Counter", $id );
-    }
+  //   if ( $oObj == null ) {
+  //     throw new OlabObjectNotFoundException("Counter", $id );
+  //   }
 
-    return $oObj;
-  }
+  //   return $oObj;
+  // }
 
   public function create( Request $request ) {
     
@@ -169,13 +169,13 @@ class OlabCounterAuthoringController extends OlabScopedObjectAuthoringController
 
       $aData = array();
 
-      $oObj = $this->get_counter( $id );
+      $oObj = $this->get_counter( $id, AccessControlBase::ACL_READ_ACCESS );
 
       // test access control context based on object type to evaluate.
-      $oAccessControl = AccessControlBase::classFactory( $oObj );
-      if ( !$oAccessControl->isListable( $id )) {
-        throw new OlabAccessDeniedException("counter_id = $id");
-      }
+      // $oAccessControl = AccessControlBase::classFactory( $oObj );
+      // if ( !$oAccessControl->isListable( $id )) {
+      //   throw new OlabAccessDeniedException("counter_id = $id");
+      // }
 
       $aItem = $oObj->toArray();
       $this->build_scoped_object( $aItem, Counters::WIKI_TAG_COUNTER, "scopedobjects/counters" );    
@@ -203,7 +203,7 @@ class OlabCounterAuthoringController extends OlabScopedObjectAuthoringController
       // run common controller initialization
       $this->initialize( $request );
 
-      $oObj = $this->get_counter( $id );
+      $oObj = $this->get_counter($id, AccessControlBase::ACL_DELETE_ACCESS );
 
       $this->delete_scoped_object( $oObj );    
 
@@ -229,7 +229,7 @@ class OlabCounterAuthoringController extends OlabScopedObjectAuthoringController
       // run common controller initialization
       $this->initialize( $request );
 
-      $oObj = $this->get_counter( $id );
+      $oObj = $this->get_counter( $id, AccessControlBase::ACL_AUTHORABLE_ACCESS );
 
       // get/update title field
       $this->oPostData->get_text_optional( $oObj, 'name');
