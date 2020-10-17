@@ -1,8 +1,9 @@
 // @flow
 import React from 'react';
 import { withStyles } from '@material-ui/core/styles';
-import { TextField } from '@material-ui/core';
-
+import {
+  TextField,
+} from '@material-ui/core';
 import Switch from '../../../../shared/components/Switch';
 import OutlinedSelect from '../../../../shared/components/OutlinedSelect';
 
@@ -16,14 +17,14 @@ import { FieldLabel } from '../../styles';
 
 const MultiChoiceLayout = ({
   classes,
-  layoutType,
   feedback,
+  isFieldsDisabled,
   isShowAnswer,
   isShowSubmit,
-  isFieldsDisabled,
-  onSwitchChange,
+  layoutType,
   onInputChange,
   onSelectChange,
+  onSwitchChange,
 }: IMultiChoiceLayoutProps) => (
   <>
     <FieldLabel>

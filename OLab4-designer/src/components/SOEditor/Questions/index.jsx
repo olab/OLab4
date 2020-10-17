@@ -5,6 +5,7 @@ import { TextField, Chip } from '@material-ui/core';
 import ScopedObjectService, { withSORedux } from '../index.service';
 
 import MultiChoiceLayout from './MultiChoiceLayout';
+import MultiChoiceLayoutTest from './MultiChoiceLayoutTest';
 import MultiLineLayout from './MultiLineLayout';
 import OutlinedInput from '../../../shared/components/OutlinedInput';
 import OutlinedSelect from '../../../shared/components/OutlinedSelect';
@@ -26,20 +27,21 @@ class Questions extends ScopedObjectService {
   constructor(props: IScopedObjectProps) {
     super(props, SCOPED_OBJECTS.QUESTION);
     this.state = {
-      name: '',
       description: '',
-      scopeLevel: SCOPE_LEVELS[0],
-      width: DEFAULT_WIDTH.MIN,
-      height: DEFAULT_HEIGHT.MIN,
-      stem: '',
       feedback: '',
-      placeholder: '',
-      layoutType: 0,
-      questionType: Number(Object.keys(QUESTION_TYPES)[0]),
-      isShowAnswer: false,
-      isShowSubmit: false,
-      isShowModal: false,
+      height: DEFAULT_HEIGHT.MIN,
       isFieldsDisabled: false,
+      isShowAnswer: false,
+      isShowModal: false,
+      isShowSubmit: false,
+      layoutType: 0,
+      name: '',
+      placeholder: '',
+      questionType: Number(Object.keys(QUESTION_TYPES)[0]),
+      responses: [],
+      scopeLevel: SCOPE_LEVELS[0],
+      stem: '',
+      width: DEFAULT_WIDTH.MIN,
     };
   }
 
@@ -61,25 +63,35 @@ class Questions extends ScopedObjectService {
 
   render() {
     const {
-      name,
       description,
+      feedback,
+      height,
+      id,
+      isFieldsDisabled,
+      isShowAnswer,
+      isShowModal,
+      isShowSubmit,
+      layoutType,
+      name,
+      placeholder,
+      questionType,
+      responses,
+      scopeLevel,
       stem,
       width,
-      height,
-      placeholder,
-      feedback,
-      layoutType,
-      questionType,
-      scopeLevel,
-      isShowAnswer,
-      isShowSubmit,
-      isShowModal,
-      isFieldsDisabled,
     } = this.state;
+
     const { classes, scopeLevels } = this.props;
     const { iconEven: IconEven, iconOdd: IconOdd } = this.icons;
 
     const isMultiLineType = Number(Object.keys(QUESTION_TYPES)[0]) === questionType;
+    const isMultiChoiceType = Number(Object.keys(QUESTION_TYPES)[1]) === questionType;
+    const isSingleChoiceType = Number(Object.keys(QUESTION_TYPES)[2]) === questionType;
+
+    let questionInfo = '';
+    if (id > 0) {
+      questionInfo = ` (Id: ${id})`;
+    }
 
     return (
       <EditorWrapper
@@ -90,6 +102,9 @@ class Questions extends ScopedObjectService {
       >
         <FieldLabel>
           {EDITORS_FIELDS.NAME}
+          <small>
+            {questionInfo}
+          </small>
           <OutlinedInput
             name="name"
             placeholder={EDITORS_FIELDS.NAME}
@@ -103,7 +118,7 @@ class Questions extends ScopedObjectService {
           {EDITORS_FIELDS.DESCRIPTION}
           <TextField
             multiline
-            rows="3"
+            rows="1"
             name="description"
             placeholder={EDITORS_FIELDS.DESCRIPTION}
             className={classes.textField}
@@ -119,7 +134,7 @@ class Questions extends ScopedObjectService {
           {EDITORS_FIELDS.STEM}
           <TextField
             multiline
-            rows="3"
+            rows="1"
             name="stem"
             placeholder={EDITORS_FIELDS.STEM}
             className={classes.textField}
@@ -141,26 +156,33 @@ class Questions extends ScopedObjectService {
           onChange={this.handleQuestionTypeChange}
           disabled={isFieldsDisabled}
         />
-        {isMultiLineType ? (
+        {isMultiLineType && (
           <MultiLineLayout
-            placeholder={placeholder}
-            width={width}
             height={height}
             isFieldsDisabled={isFieldsDisabled}
             onInputChange={this.handleInputChange}
             onSliderChange={this.handleSliderOrSwitchChange}
+            placeholder={placeholder}
+            width={width}
           />
-        ) : (
-          <MultiChoiceLayout
-            layoutType={layoutType}
-            feedback={feedback}
-            isShowAnswer={isShowAnswer}
-            isShowSubmit={isShowSubmit}
-            isFieldsDisabled={isFieldsDisabled}
-            onInputChange={this.handleInputChange}
-            onSwitchChange={this.handleSliderOrSwitchChange}
-            onSelectChange={this.handleLayoutTypeChange}
-          />
+        )}
+        {(isMultiChoiceType || isSingleChoiceType) && (
+          <>
+            <MultiChoiceLayoutTest
+              responses={responses}
+            />
+            <MultiChoiceLayout
+              data={responses}
+              feedback={feedback}
+              isFieldsDisabled={isFieldsDisabled}
+              isShowAnswer={isShowAnswer}
+              isShowSubmit={isShowSubmit}
+              layoutType={layoutType}
+              onInputChange={this.handleInputChange}
+              onSelectChange={this.handleLayoutTypeChange}
+              onSwitchChange={this.handleSliderOrSwitchChange}
+            />
+          </>
         )}
 
         {!this.isEditMode && (
