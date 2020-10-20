@@ -11,8 +11,16 @@
             "port": 9000,
             "pathMappings": {
                 "/var/www/vhosts/OLab4-api": "${workspaceRoot}/OLab4-api"
-            }            
+            },
+            "log": true            
         },
+        {
+            "name": "Launch index.html",
+            "type": "firefox",
+            "request": "attach",
+            "url": "http://localhost:4000",
+            "webRoot": "${workspaceFolder}/OLab4-designer/build"            
+        },  
         {
             "name": "Launch currently open script",
             "type": "php",

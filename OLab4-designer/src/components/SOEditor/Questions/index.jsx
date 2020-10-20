@@ -5,7 +5,6 @@ import { TextField, Chip } from '@material-ui/core';
 import ScopedObjectService, { withSORedux } from '../index.service';
 
 import MultiChoiceLayout from './MultiChoiceLayout';
-import MultiChoiceLayoutTest from './MultiChoiceLayoutTest';
 import MultiLineLayout from './MultiLineLayout';
 import OutlinedInput from '../../../shared/components/OutlinedInput';
 import OutlinedSelect from '../../../shared/components/OutlinedSelect';
@@ -168,11 +167,7 @@ class Questions extends ScopedObjectService {
         )}
         {(isMultiChoiceType || isSingleChoiceType) && (
           <>
-            <MultiChoiceLayoutTest
-              responses={responses}
-            />
             <MultiChoiceLayout
-              data={responses}
               feedback={feedback}
               isFieldsDisabled={isFieldsDisabled}
               isShowAnswer={isShowAnswer}
@@ -181,6 +176,7 @@ class Questions extends ScopedObjectService {
               onInputChange={this.handleInputChange}
               onSelectChange={this.handleLayoutTypeChange}
               onSwitchChange={this.handleSliderOrSwitchChange}
+              responses={responses}
             />
           </>
         )}

@@ -11,5 +11,5 @@ export type IMultiChoiceLayoutProps = {
   onSwitchChange: Function,
   onInputChange: Function,
   onSelectChange: Function,
-  data: Array,
+  responses: Array,
 };

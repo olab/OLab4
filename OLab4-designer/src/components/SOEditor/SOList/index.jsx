@@ -135,6 +135,7 @@ class SOList extends PureComponent<ISOListProps, ISOListState> {
 
     const isHideSearch = isScopedObjectsFetching && !scopedObjects.length;
     const isMedia = scopedObjectType === SCOPED_OBJECTS.FILE.toLowerCase();
+    const searchLabel = `Search for ${scopedObjectType}`;
 
     return (
       <Grid container component="main" className={classes.root}>
@@ -160,7 +161,7 @@ class SOList extends PureComponent<ISOListProps, ISOListState> {
           <Divider />
           <ListWithSearchWrapper>
             <ListWithSearch
-              label="Search for object"
+              label={searchLabel}
               innerRef={this.setListWithSearchRef}
               onSearch={this.handleItemsSearch}
               onClear={this.clearSearchInput}
