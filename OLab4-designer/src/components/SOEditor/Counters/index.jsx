@@ -19,7 +19,7 @@ import { FieldLabel } from '../styles';
 
 class Counters extends ScopedObjectService {
   constructor(props: IScopedObjectProps) {
-    super(props, SCOPED_OBJECTS.COUNTER);
+    super(props, SCOPED_OBJECTS.COUNTER.name);
     this.state = {
       name: '',
       description: '',
@@ -191,4 +191,4 @@ class Counters extends ScopedObjectService {
   }
 }
 
-export default withSORedux(Counters, SCOPED_OBJECTS.COUNTER);
+export default withSORedux(Counters, SCOPED_OBJECTS.COUNTER.name);

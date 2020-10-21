@@ -18,7 +18,7 @@ import { FieldLabel } from '../styles';
 
 class Constant extends ScopedObjectService {
   constructor(props: IScopedObjectProps) {
-    super(props, SCOPED_OBJECTS.CONSTANT);
+    super(props, SCOPED_OBJECTS.CONSTANT.name);
     this.state = {
       name: '',
       description: '',
@@ -141,4 +141,4 @@ class Constant extends ScopedObjectService {
   }
 }
 
-export default withSORedux(Constant, SCOPED_OBJECTS.CONSTANT);
+export default withSORedux(Constant, SCOPED_OBJECTS.CONSTANT.name);

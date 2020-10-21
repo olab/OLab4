@@ -134,7 +134,7 @@ class SOList extends PureComponent<ISOListProps, ISOListState> {
     } = this.props;
 
     const isHideSearch = isScopedObjectsFetching && !scopedObjects.length;
-    const isMedia = scopedObjectType === SCOPED_OBJECTS.FILE.toLowerCase();
+    const isMedia = scopedObjectType === SCOPED_OBJECTS.FILE.name.toLowerCase();
     const searchLabel = `Search for ${scopedObjectType}`;
 
     return (

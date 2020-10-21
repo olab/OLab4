@@ -12,7 +12,7 @@ export type IMultiChoiceLayoutProps = {
   onInputChange: Function,
   onSelectChange: Function,
   onSwitchChange: Function,
-  pathName: string,
+  questionId: number,
   responses: Array,
 };
 

@@ -28,11 +28,11 @@ function MultiChoiceLayout({
   onInputChange,
   onSelectChange,
   onSwitchChange,
-  pathName,
+  questionId,
   responses,
 }: IMultiChoiceLayoutProps) {
   const handleScopedObjectClick = (scopedObject: ScopedObjectListItemType): void => {
-    history.push(`${pathName}/${scopedObject.id}`);
+    history.push(`${questionId}/questionResponses/${scopedObject.id}`);
   };
 
   return (

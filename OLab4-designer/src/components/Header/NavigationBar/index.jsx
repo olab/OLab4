@@ -99,15 +99,16 @@ class NavigationBar extends PureComponent<INavigationProps, INavigationState> {
           onClose={this.handleClose}
           className={classes.menu}
         >
-          {Object.values(SCOPED_OBJECTS).map(SOName => (
+          {Object.values(SCOPED_OBJECTS).filter(item => item.showInNavBar).map(SOName => (
             <MenuItem
-              key={SOName}
+              disabled={!SOName.showInNavBar}
+              key={SOName.name}
               onClick={this.handleClose}
               className={classes.menuItem}
               component={Link}
-              to={`/scopedObject/${SOName.toLowerCase()}`}
+              to={`/scopedObject/${SOName.name.toLowerCase()}`}
             >
-              {`${SOName}s`}
+              {`${SOName.name}s`}
             </MenuItem>
           ))}
         </Menu>

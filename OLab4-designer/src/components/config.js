@@ -13,10 +13,11 @@ export const MAP_MENU_ITEMS = {
 };
 
 export const SCOPED_OBJECTS = {
-  FILE: 'File',
-  COUNTER: 'Counter',
-  CONSTANT: 'Constant',
-  QUESTION: 'Question',
+  FILE: { name: 'File', showInNavBar: true },
+  COUNTER: { name: 'Counter', showInNavBar: true },
+  CONSTANT: { name: 'Constant', showInNavBar: true },
+  QUESTION: { name: 'Question', showInNavBar: true },
+  QUESTIONRESPONSES: { name: 'Question Response', showInNavBar: false },
 };
 
 export const PAGE_TITLES = {

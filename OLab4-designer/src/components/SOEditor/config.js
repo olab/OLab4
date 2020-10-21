@@ -4,6 +4,7 @@ import Files from './Files';
 import Counters from './Counters';
 import Constants from './Constants';
 import Questions from './Questions';
+import QuestionResponses from './QuestionResponses';
 
 export const EDITORS_FIELDS = {
   COPYRIGHT: 'Copyright',
@@ -36,8 +37,9 @@ export const EDITORS_FIELDS = {
 };
 
 export const SCOPED_OBJECTS_MAPPING = {
-  [SCOPED_OBJECTS.FILE.toLowerCase()]: Files,
-  [SCOPED_OBJECTS.COUNTER.toLowerCase()]: Counters,
-  [SCOPED_OBJECTS.CONSTANT.toLowerCase()]: Constants,
-  [SCOPED_OBJECTS.QUESTION.toLowerCase()]: Questions,
+  [SCOPED_OBJECTS.FILE.name.toLowerCase()]: Files,
+  [SCOPED_OBJECTS.COUNTER.name.toLowerCase()]: Counters,
+  [SCOPED_OBJECTS.CONSTANT.name.toLowerCase()]: Constants,
+  [SCOPED_OBJECTS.QUESTION.name.toLowerCase()]: Questions,
+  ['QuestionResponses'.toLowerCase()]: QuestionResponses,
 };

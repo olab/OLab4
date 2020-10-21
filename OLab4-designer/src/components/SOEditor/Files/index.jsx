@@ -25,7 +25,7 @@ import {
 
 class File extends ScopedObjectService {
   constructor(props: IProps) {
-    super(props, SCOPED_OBJECTS.FILE);
+    super(props, SCOPED_OBJECTS.FILE.name);
     this.state = {
       id: 0,
       type: 0,
@@ -266,4 +266,4 @@ class File extends ScopedObjectService {
   }
 }
 
-export default withSORedux(withStyles(styles)(File), SCOPED_OBJECTS.FILE);
+export default withSORedux(withStyles(styles)(File), SCOPED_OBJECTS.FILE.name);

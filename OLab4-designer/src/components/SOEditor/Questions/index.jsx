@@ -24,7 +24,7 @@ import { FieldLabel } from '../styles';
 
 class Questions extends ScopedObjectService {
   constructor(props: IScopedObjectProps) {
-    super(props, SCOPED_OBJECTS.QUESTION);
+    super(props, SCOPED_OBJECTS.QUESTION.name);
     this.state = {
       description: '',
       feedback: '',
@@ -177,6 +177,8 @@ class Questions extends ScopedObjectService {
               onSelectChange={this.handleLayoutTypeChange}
               onSwitchChange={this.handleSliderOrSwitchChange}
               responses={responses}
+              history={this.props.history}
+              questionId={id}
             />
           </>
         )}
@@ -236,4 +238,4 @@ class Questions extends ScopedObjectService {
   }
 }
 
-export default withSORedux(Questions, SCOPED_OBJECTS.QUESTION);
+export default withSORedux(Questions, SCOPED_OBJECTS.QUESTION.name);
