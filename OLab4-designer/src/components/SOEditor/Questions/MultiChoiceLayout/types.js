@@ -5,7 +5,6 @@ export type IMultiChoiceLayoutProps = {
   },
   feedback: string,
   history: Object,
-  isFieldsDisabled: boolean,
   isShowAnswer: boolean,
   isShowSubmit: boolean,
   layoutType: number,

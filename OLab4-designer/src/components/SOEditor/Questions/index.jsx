@@ -14,7 +14,7 @@ import SearchModal from '../../../shared/components/SearchModal';
 import type { IScopedObjectProps } from '../types';
 
 import {
-  LAYOUT_TYPES, QUESTION_TYPES, DEFAULT_WIDTH, DEFAULT_HEIGHT,
+  LAYOUT_TYPES, PICKER_QUESTION_TYPES, QUESTION_TYPES, DEFAULT_WIDTH, DEFAULT_HEIGHT,
 } from './config';
 import { EDITORS_FIELDS } from '../config';
 import { SCOPE_LEVELS, SCOPED_OBJECTS } from '../../config';
@@ -145,16 +145,22 @@ class Questions extends ScopedObjectService {
             fullWidth
           />
         </FieldLabel>
-        <FieldLabel>
-          {EDITORS_FIELDS.QUESTION_TYPES}
-        </FieldLabel>
-        <OutlinedSelect
-          name="questionType"
-          value={QUESTION_TYPES[questionType]}
-          values={Object.values(QUESTION_TYPES)}
-          onChange={this.handleQuestionTypeChange}
-          disabled={isFieldsDisabled}
-        />
+
+        {(!isMultiChoiceType && !isSingleChoiceType) && (
+          <>
+            <FieldLabel>
+              {EDITORS_FIELDS.QUESTION_TYPES}
+            </FieldLabel>
+            <OutlinedSelect
+              name="questionType"
+              value={QUESTION_TYPES[questionType]}
+              values={Object.values(QUESTION_TYPES)}
+              onChange={this.handleQuestionTypeChange}
+              disabled={isFieldsDisabled}
+            />
+          </>
+        )}
+
         {isMultiLineType && (
           <MultiLineLayout
             height={height}
@@ -165,20 +171,31 @@ class Questions extends ScopedObjectService {
             width={width}
           />
         )}
+
         {(isMultiChoiceType || isSingleChoiceType) && (
           <>
+            <FieldLabel>
+              {EDITORS_FIELDS.QUESTION_TYPES}
+            </FieldLabel>
+            <OutlinedSelect
+              name="questionType"
+              value={PICKER_QUESTION_TYPES[questionType]}
+              values={Object.values(PICKER_QUESTION_TYPES)}
+              onChange={this.handleQuestionTypeChange}
+              disabled={isFieldsDisabled}
+            />
             <MultiChoiceLayout
+              classes={this.props.classes}
               feedback={feedback}
-              isFieldsDisabled={isFieldsDisabled}
+              history={this.props.history}
               isShowAnswer={isShowAnswer}
               isShowSubmit={isShowSubmit}
               layoutType={layoutType}
               onInputChange={this.handleInputChange}
               onSelectChange={this.handleLayoutTypeChange}
               onSwitchChange={this.handleSliderOrSwitchChange}
-              responses={responses}
-              history={this.props.history}
               questionId={id}
+              responses={responses}
             />
           </>
         )}

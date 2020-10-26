@@ -2,6 +2,11 @@ export const LAYOUT_TYPES = [
   'Vertical', 'Horizontal',
 ];
 
+export const PICKER_QUESTION_TYPES = {
+  3: 'Multiple Choice',
+  4: 'Single Choice',
+};
+
 export const QUESTION_TYPES = {
   // 1: 'Single Line Text',
   2: 'Multi-Line Text',
