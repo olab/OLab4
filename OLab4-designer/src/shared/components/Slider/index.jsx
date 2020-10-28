@@ -1,8 +1,7 @@
 // @flow
 import React from 'react';
 import { withStyles } from '@material-ui/core/styles';
-import { InputLabel } from '@material-ui/core';
-import { Slider as MaterialSlider } from '@material-ui/lab';
+import { InputLabel, Slider as MaterialSlider } from '@material-ui/core';
 
 import type { ISliderProps } from './types';
 

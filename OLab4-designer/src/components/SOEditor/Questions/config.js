@@ -7,6 +7,8 @@ export const PICKER_QUESTION_TYPES = {
   4: 'Single Choice',
 };
 
+// NOTE: as more types come online, the relative in-array
+// indexes will change and code has to be modified to accomodate
 export const QUESTION_TYPES = {
   // 1: 'Single Line Text',
   2: 'Multi-Line Text',

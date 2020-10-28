@@ -20,7 +20,6 @@ const isHideSearch = true;
 function MultiChoiceLayout({
   classes,
   feedback,
-  history,
   isFieldsDisabled,
   isShowAnswer,
   isShowSubmit,
@@ -28,11 +27,10 @@ function MultiChoiceLayout({
   onInputChange,
   onSelectChange,
   onSwitchChange,
-  questionId,
   responses,
 }: IMultiChoiceLayoutProps) {
   const handleScopedObjectClick = (scopedObject: ScopedObjectListItemType): void => {
-    history.push(`${questionId}/questionResponses/${scopedObject.id}`);
+    window.open(`/scopedObject/questionresponses/${scopedObject.id}`);
   };
 
   return (
@@ -99,81 +97,5 @@ function MultiChoiceLayout({
     </>
   );
 }
-
-/*
-const MultiChoiceLayout = ({
-  classes,
-  feedback,
-  isFieldsDisabled,
-  isShowAnswer,
-  isShowSubmit,
-  layoutType,
-  onInputChange,
-  onSelectChange,
-  onSwitchChange,
-  responses,
-}: IMultiChoiceLayoutProps) => (
-    <>
-      <FieldLabel>
-        {EDITORS_FIELDS.RESPONSES}
-      </FieldLabel>
-
-      <ListWithSearchWrapper>
-        <ListWithSearch
-          onItemClick={this.handleScopedObjectClick}
-          list={responses}
-          isHideSearch={isHideSearch}
-          isWithSpinner={false}
-        />
-      </ListWithSearchWrapper>
-
-      <FieldLabel>
-        {EDITORS_FIELDS.LAYOUT_TYPE}
-      </FieldLabel>
-      <OutlinedSelect
-        name="layoutType"
-        value={LAYOUT_TYPES[layoutType]}
-        values={LAYOUT_TYPES}
-        onChange={onSelectChange}
-        disabled={isFieldsDisabled}
-      />
-      <FieldLabel>
-        {EDITORS_FIELDS.FEEDBACK}
-        <TextField
-          multiline
-          rows="3"
-          name="feedback"
-          placeholder={EDITORS_FIELDS.FEEDBACK}
-          className={classes.textField}
-          margin="normal"
-          variant="outlined"
-          value={feedback}
-          onChange={onInputChange}
-          disabled={isFieldsDisabled}
-          fullWidth
-        />
-      </FieldLabel>
-      <SwitchWrapper>
-        <Switch
-          name="isShowAnswer"
-          label={EDITORS_FIELDS.SHOW_ANSWER}
-          labelPlacement="start"
-          checked={isShowAnswer}
-          onChange={onSwitchChange}
-          disabled={isFieldsDisabled}
-        />
-        <Switch
-          name="isShowSubmit"
-          label={EDITORS_FIELDS.SHOW_SUBMIT}
-          labelPlacement="start"
-          checked={isShowSubmit}
-          onChange={onSwitchChange}
-          disabled={isFieldsDisabled}
-        />
-      </SwitchWrapper>
-    </>
-);
-
-*/
 
 export default withStyles(styles)(MultiChoiceLayout);

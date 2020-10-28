@@ -3,6 +3,8 @@ import React from 'react';
 import { SCOPE_LEVELS, SCOPED_OBJECTS } from '../../config';
 import type { IQuestionResponseProps } from './types';
 import ScopedObjectService, { withSORedux } from '../index.service';
+import { FieldLabel } from '../styles';
+import { EDITORS_FIELDS } from '../config';
 
 class QuestionResponses extends ScopedObjectService {
   constructor(props: IQuestionResponseProps) {
@@ -14,7 +16,11 @@ class QuestionResponses extends ScopedObjectService {
 
   render() {
     return (
-      <div id="test">responses</div>
+      <>
+        <FieldLabel>
+          {EDITORS_FIELDS.LAYOUT_TYPE}
+        </FieldLabel>
+      </>
     );
   }
 }

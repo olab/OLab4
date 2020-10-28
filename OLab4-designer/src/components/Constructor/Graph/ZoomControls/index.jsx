@@ -1,9 +1,14 @@
 // @flow
 import React, { Fragment } from 'react';
 import { withStyles } from '@material-ui/core/styles';
-import { Slider } from '@material-ui/lab';
 import {
-  Button, ClickAwayListener, Grow, Paper, Popper, MenuList,
+  Button,
+  ClickAwayListener,
+  Grow,
+  Paper,
+  Popper,
+  MenuList,
+  Slider,
 } from '@material-ui/core';
 
 import DropDownIcon from '../../../../shared/assets/icons/dropdown.svg';

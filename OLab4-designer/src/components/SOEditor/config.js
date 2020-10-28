@@ -41,5 +41,5 @@ export const SCOPED_OBJECTS_MAPPING = {
   [SCOPED_OBJECTS.COUNTER.name.toLowerCase()]: Counters,
   [SCOPED_OBJECTS.CONSTANT.name.toLowerCase()]: Constants,
   [SCOPED_OBJECTS.QUESTION.name.toLowerCase()]: Questions,
-  ['QuestionResponses'.toLowerCase()]: QuestionResponses,
+  [SCOPED_OBJECTS.QUESTIONRESPONSES.name.toLowerCase()]: QuestionResponses,
 };

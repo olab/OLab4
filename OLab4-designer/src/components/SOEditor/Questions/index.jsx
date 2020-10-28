@@ -1,6 +1,15 @@
 // @flow
 import React from 'react';
-import { TextField, Chip } from '@material-ui/core';
+
+import {
+  TextField,
+  Chip,
+} from '@material-ui/core';
+
+import {
+  ToggleButtonGroup,
+  ToggleButton,
+} from '@material-ui/lab';
 
 import ScopedObjectService, { withSORedux } from '../index.service';
 
@@ -86,6 +95,8 @@ class Questions extends ScopedObjectService {
     const isMultiLineType = Number(Object.keys(QUESTION_TYPES)[0]) === questionType;
     const isMultiChoiceType = Number(Object.keys(QUESTION_TYPES)[1]) === questionType;
     const isSingleChoiceType = Number(Object.keys(QUESTION_TYPES)[2]) === questionType;
+    // const isSCTType = Number(Object.keys(QUESTION_TYPES)[3]) === questionType;
+    // const isResponseQuestion = isMultiChoiceType || isSingleChoiceType || isSCTType;
 
     let questionInfo = '';
     if (id > 0) {
@@ -99,6 +110,25 @@ class Questions extends ScopedObjectService {
         scopedObject={this.scopedObjectType}
         onSubmit={this.handleSubmitScopedObject}
       >
+        <FieldLabel>
+          {EDITORS_FIELDS.QUESTION_TYPES}
+        </FieldLabel>
+        {(isMultiChoiceType || isSingleChoiceType) && (
+          <>
+            <ToggleButtonGroup orientation="horizontal" value={QUESTION_TYPES[questionType]} exclusive onChange={this.handleQuestionTypeChange}>
+              <ToggleButton value="3" aria-label="list">
+                Multiple Choice
+              </ToggleButton>
+              <ToggleButton value="Single Choice" aria-label="module">
+                Single Choice
+              </ToggleButton>
+              <ToggleButton value="5" aria-label="quilt">
+                SCT
+              </ToggleButton>
+            </ToggleButtonGroup>
+          </>
+        )}
+
         <FieldLabel>
           {EDITORS_FIELDS.NAME}
           <small>

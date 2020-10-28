@@ -17,7 +17,7 @@ export const SCOPED_OBJECTS = {
   COUNTER: { name: 'Counter', showInNavBar: true },
   CONSTANT: { name: 'Constant', showInNavBar: true },
   QUESTION: { name: 'Question', showInNavBar: true },
-  QUESTIONRESPONSES: { name: 'Question Response', showInNavBar: false },
+  QUESTIONRESPONSES: { name: 'QuestionResponse', showInNavBar: false },
 };
 
 export const PAGE_TITLES = {

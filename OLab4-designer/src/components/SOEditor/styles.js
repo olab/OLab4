@@ -9,7 +9,7 @@ export const FieldLabel = styled.label`
   margin-top: 0.7rem;
 `;
 
-const styles = () => ({
+export const styles = () => ({
   label: {
     color: DARK_BLUE,
     fontStyle: 'bold',
@@ -35,6 +35,9 @@ const styles = () => ({
     width: '99%',
     bottom: 3,
     left: 3,
+  },
+  toggleButton: {
+    border: '2px',
   },
 });
 
