@@ -23,7 +23,7 @@ import SearchModal from '../../../shared/components/SearchModal';
 import type { IScopedObjectProps } from '../types';
 
 import {
-  LAYOUT_TYPES, PICKER_QUESTION_TYPES, QUESTION_TYPES, DEFAULT_WIDTH, DEFAULT_HEIGHT,
+  LAYOUT_TYPES, QUESTION_TYPES, DEFAULT_WIDTH, DEFAULT_HEIGHT,
 } from './config';
 import { EDITORS_FIELDS } from '../config';
 import { SCOPE_LEVELS, SCOPED_OBJECTS } from '../../config';
@@ -92,11 +92,12 @@ class Questions extends ScopedObjectService {
     const { classes, scopeLevels } = this.props;
     const { iconEven: IconEven, iconOdd: IconOdd } = this.icons;
 
-    const isMultiLineType = Number(Object.keys(QUESTION_TYPES)[0]) === questionType;
-    const isMultiChoiceType = Number(Object.keys(QUESTION_TYPES)[1]) === questionType;
-    const isSingleChoiceType = Number(Object.keys(QUESTION_TYPES)[2]) === questionType;
-    // const isSCTType = Number(Object.keys(QUESTION_TYPES)[3]) === questionType;
-    // const isResponseQuestion = isMultiChoiceType || isSingleChoiceType || isSCTType;
+    const isMultiLineType = QUESTION_TYPES[questionType] === QUESTION_TYPES[2];
+
+    const isMultiChoiceType = QUESTION_TYPES[questionType] === QUESTION_TYPES[3];
+    const isSingleChoiceType = QUESTION_TYPES[questionType] === QUESTION_TYPES[4];
+    const isSCTType = QUESTION_TYPES[questionType] === QUESTION_TYPES[7];
+    const isResponseQuestion = isMultiChoiceType || isSingleChoiceType || isSCTType;
 
     let questionInfo = '';
     if (id > 0) {
@@ -113,22 +114,32 @@ class Questions extends ScopedObjectService {
         <FieldLabel>
           {EDITORS_FIELDS.QUESTION_TYPES}
         </FieldLabel>
-        {(isMultiChoiceType || isSingleChoiceType) && (
+        {(isResponseQuestion) && (
           <>
             <ToggleButtonGroup orientation="horizontal" value={QUESTION_TYPES[questionType]} exclusive onChange={this.handleQuestionTypeChange}>
-              <ToggleButton value="3" aria-label="list">
-                Multiple Choice
+              <ToggleButton classes={{ root: this.props.classes.toggleButton }} value={QUESTION_TYPES[3]} aria-label="list">
+                {QUESTION_TYPES[3]}
               </ToggleButton>
-              <ToggleButton value="Single Choice" aria-label="module">
-                Single Choice
+              <ToggleButton classes={{ root: this.props.classes.toggleButton }} value={QUESTION_TYPES[4]} aria-label="module">
+                {QUESTION_TYPES[4]}
               </ToggleButton>
-              <ToggleButton value="5" aria-label="quilt">
-                SCT
+              <ToggleButton classes={{ root: this.props.classes.toggleButton }} value={QUESTION_TYPES[7]} aria-label="quilt">
+                {QUESTION_TYPES[7]}
               </ToggleButton>
             </ToggleButtonGroup>
           </>
         )}
-
+        {(!isResponseQuestion) && (
+          <>
+            <OutlinedSelect
+              name="questionType"
+              value={QUESTION_TYPES[questionType]}
+              values={Object.values(QUESTION_TYPES)}
+              onChange={this.handleQuestionTypeChange}
+              disabled={isFieldsDisabled}
+            />
+          </>
+        )}
         <FieldLabel>
           {EDITORS_FIELDS.NAME}
           <small>
@@ -176,21 +187,6 @@ class Questions extends ScopedObjectService {
           />
         </FieldLabel>
 
-        {(!isMultiChoiceType && !isSingleChoiceType) && (
-          <>
-            <FieldLabel>
-              {EDITORS_FIELDS.QUESTION_TYPES}
-            </FieldLabel>
-            <OutlinedSelect
-              name="questionType"
-              value={QUESTION_TYPES[questionType]}
-              values={Object.values(QUESTION_TYPES)}
-              onChange={this.handleQuestionTypeChange}
-              disabled={isFieldsDisabled}
-            />
-          </>
-        )}
-
         {isMultiLineType && (
           <MultiLineLayout
             height={height}
@@ -202,18 +198,8 @@ class Questions extends ScopedObjectService {
           />
         )}
 
-        {(isMultiChoiceType || isSingleChoiceType) && (
+        {(isResponseQuestion) && (
           <>
-            <FieldLabel>
-              {EDITORS_FIELDS.QUESTION_TYPES}
-            </FieldLabel>
-            <OutlinedSelect
-              name="questionType"
-              value={PICKER_QUESTION_TYPES[questionType]}
-              values={Object.values(PICKER_QUESTION_TYPES)}
-              onChange={this.handleQuestionTypeChange}
-              disabled={isFieldsDisabled}
-            />
             <MultiChoiceLayout
               classes={this.props.classes}
               feedback={feedback}

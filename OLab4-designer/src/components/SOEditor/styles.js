@@ -37,7 +37,9 @@ export const styles = () => ({
     left: 3,
   },
   toggleButton: {
-    border: '2px',
+    borderRadius: 3,
+    borderColor: 'rgb(0,0,0.87)',
+    color: 'black',
   },
 });
 
