@@ -47,7 +47,19 @@ export const edgeDefaultsFromServer = (edgeDefault: DefaultEdge): DefaultEdge =>
   isFollowOnce: Boolean(edgeDefault.followOnce),
 });
 
-export const nodeToServer = (nodeData: Node): Node => ({
+export const questionResponseToServer = (
+  questionResponseData: QuestionResponse,
+): QuestionResponse => ({
+  id: questionResponseData.id,
+});
+
+export const questionResponseFromServer = (
+  questionResponseData: QuestionResponse,
+): QuestionResponse => ({
+  id: questionResponseData.id,
+});
+
+export const nodeToServer = (questionResponseData: QuestionResponse): QuestionResponse => ({
   id: nodeData.id,
   mapId: nodeData.mapId,
   title: nodeData.title,

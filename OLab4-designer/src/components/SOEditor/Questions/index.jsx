@@ -13,7 +13,7 @@ import {
 
 import ScopedObjectService, { withSORedux } from '../index.service';
 
-import MultiChoiceLayout from './MultiChoiceLayout';
+import QuestionResponsesLayout from './QuestionResponsesLayout';
 import MultiLineLayout from './MultiLineLayout';
 import OutlinedInput from '../../../shared/components/OutlinedInput';
 import OutlinedSelect from '../../../shared/components/OutlinedSelect';
@@ -200,7 +200,7 @@ class Questions extends ScopedObjectService {
 
         {(isResponseQuestion) && (
           <>
-            <MultiChoiceLayout
+            <QuestionResponsesLayout
               classes={this.props.classes}
               feedback={feedback}
               history={this.props.history}

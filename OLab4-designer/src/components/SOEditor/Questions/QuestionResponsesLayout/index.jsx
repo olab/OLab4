@@ -10,14 +10,14 @@ import type { ScopedObjectListItem as ScopedObjectListItemType } from '../../../
 import { LAYOUT_TYPES } from '../config';
 import { EDITORS_FIELDS } from '../../config';
 
-import type { IMultiChoiceLayoutProps } from './types';
+import type { IQuestionResponsesLayoutProps } from './types';
 
 import styles, { SwitchWrapper, ListWithSearchWrapper } from './styles';
 import { FieldLabel } from '../../styles';
 
 const isHideSearch = true;
 
-function MultiChoiceLayout({
+function QuestionResponsesLayout({
   classes,
   feedback,
   isFieldsDisabled,
@@ -28,7 +28,7 @@ function MultiChoiceLayout({
   onSelectChange,
   onSwitchChange,
   responses,
-}: IMultiChoiceLayoutProps) {
+}: IQuestionResponsesLayoutProps) {
   const handleScopedObjectClick = (scopedObject: ScopedObjectListItemType): void => {
     window.open(`/scopedObject/questionresponses/${scopedObject.id}`);
   };
@@ -98,4 +98,4 @@ function MultiChoiceLayout({
   );
 }
 
-export default withStyles(styles)(MultiChoiceLayout);
+export default withStyles(styles)(QuestionResponsesLayout);

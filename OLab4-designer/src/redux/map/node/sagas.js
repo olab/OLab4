@@ -3,16 +3,19 @@ import {
 } from 'redux-saga/effects';
 
 import {
-  createNode, deleteNode, updateNode, getNode,
+  createNode, 
+  deleteNode, 
+  getNode,
+  updateNode, 
 } from '../../../services/api/node';
 import generateTmpId from '../../../helpers/generateTmpId';
 
 import {
-  CREATE_NODE,
-  UPDATE_NODE,
-  GET_NODE_REQUESTED,
-  DELETE_NODE_REQUESTED,
   CREATE_NODE_WITH_EDGE,
+  CREATE_NODE,
+  DELETE_NODE_REQUESTED,
+  GET_NODE_REQUESTED,
+  UPDATE_NODE,
 } from '../types';
 
 import {
@@ -21,6 +24,7 @@ import {
   ACTION_GET_NODE_FULLFILLED,
   ACTION_DELETE_NODE_FULLFILLED,
 } from '../action';
+
 import {
   ACTION_NOTIFICATION_ERROR,
   ACTION_NOTIFICATION_SUCCESS,

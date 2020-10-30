@@ -1,5 +1,5 @@
 // @flow
-export type IMultiChoiceLayoutProps = {
+export type IQuestionResponsesLayoutProps = {
   classes: {
     [props: string]: any,
   },

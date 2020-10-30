@@ -6,12 +6,12 @@ import { getMap, createMap, extendMap } from '../../services/api/map';
 import { GET_MAP_REQUESTED, CREATE_MAP_REQUESTED, EXTEND_MAP_REQUESTED } from './types';
 
 import {
-  ACTION_GET_MAP_FAILED,
-  ACTION_GET_MAP_SUCCEEDED,
   ACTION_CREATE_MAP_FAILED,
   ACTION_CREATE_MAP_SUCCEEDED,
   ACTION_EXTEND_MAP_FAILED,
   ACTION_EXTEND_MAP_SUCCEEDED,
+  ACTION_GET_MAP_FAILED,
+  ACTION_GET_MAP_SUCCEEDED,
 } from './action';
 import { ACTION_NOTIFICATION_ERROR } from '../notifications/action';
 import { ACTION_GET_MAP_DETAILS_SUCCEEDED } from '../mapDetails/action';
