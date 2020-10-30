@@ -79,15 +79,12 @@ class QuestionResponses extends BaseModel {
       
       $aObj = parent::toArray();
 
-      OLabUtilities::safe_rename( $aObj, 'question_id' );
+      OLabUtilities::safe_rename( $aObj, 'question_id', 'questionId' );
       OLabUtilities::safe_rename( $aObj, 'parent_id' );
       OLabUtilities::safe_rename( $aObj, 'feedback' );
       OLabUtilities::safe_rename( $aObj, 'from' );
       OLabUtilities::safe_rename( $aObj, 'to' );
       OLabUtilities::safe_rename( $aObj, 'is_correct', 'isCorrect');
-
-      OLabUtilities::safe_rename( $aObj, 'imageable_type', 'scopeLevel' );
-      OLabUtilities::safe_rename( $aObj, 'imageable_id', "parentId" );
 
       return $aObj;
 
