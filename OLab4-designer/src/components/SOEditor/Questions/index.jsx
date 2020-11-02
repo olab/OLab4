@@ -21,6 +21,7 @@ import EditorWrapper from '../../../shared/components/EditorWrapper';
 import SearchModal from '../../../shared/components/SearchModal';
 
 import type { IScopedObjectProps } from '../types';
+import CircularSpinnerWithText from '../../../shared/components/CircularSpinnerWithText';
 
 import {
   LAYOUT_TYPES, QUESTION_TYPES, DEFAULT_WIDTH, DEFAULT_HEIGHT,
@@ -38,6 +39,7 @@ class Questions extends ScopedObjectService {
       description: '',
       feedback: '',
       height: DEFAULT_HEIGHT.MIN,
+      id: 0,
       isFieldsDisabled: false,
       isShowAnswer: false,
       isShowModal: false,
@@ -45,6 +47,7 @@ class Questions extends ScopedObjectService {
       layoutType: 0,
       name: '',
       placeholder: '',
+      questionId: 0,
       questionType: Number(Object.keys(QUESTION_TYPES)[0]),
       responses: [],
       scopeLevel: SCOPE_LEVELS[0],
@@ -99,10 +102,12 @@ class Questions extends ScopedObjectService {
     const isSCTType = QUESTION_TYPES[questionType] === QUESTION_TYPES[7];
     const isResponseQuestion = isMultiChoiceType || isSingleChoiceType || isSCTType;
 
-    let questionInfo = '';
-    if (id > 0) {
-      questionInfo = ` (Id: ${id})`;
+    if (id === 0) {
+      return <CircularSpinnerWithText text="Data is being fetched..." large centered />;
     }
+
+    let questionInfo = '';
+    questionInfo = ` (Id: ${id})`;
 
     return (
       <EditorWrapper
@@ -210,7 +215,6 @@ class Questions extends ScopedObjectService {
               onInputChange={this.handleInputChange}
               onSelectChange={this.handleLayoutTypeChange}
               onSwitchChange={this.handleSliderOrSwitchChange}
-              questionId={id}
               responses={responses}
             />
           </>
