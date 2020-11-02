@@ -35,7 +35,7 @@ class SOEditor extends PureComponent<ISOEditorProps> {
         <Route
           key={[SCOPED_OBJECTS.QUESTIONRESPONSES.name.toLowerCase()]}
           exact
-          path="/scopedObject/questionresponses/:questionResponseId"
+          path="/scopedObject/question/:questionId/questionresponse/:questionResponseId"
           component={SCOPED_OBJECTS_MAPPING[SCOPED_OBJECTS.QUESTIONRESPONSES.name.toLowerCase()]}
         />
         {Object.keys(SCOPED_OBJECTS_MAPPING).map(scopedObjectType => (

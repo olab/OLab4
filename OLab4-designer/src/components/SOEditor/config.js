@@ -4,7 +4,7 @@ import Files from './Files';
 import Counters from './Counters';
 import Constants from './Constants';
 import Questions from './Questions';
-import QuestionResponses from './QuestionResponses';
+import QuestionResponseEditor from './QuestionResponses';
 
 export const EDITORS_FIELDS = {
   COPYRIGHT: 'Copyright',

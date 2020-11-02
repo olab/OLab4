@@ -2,6 +2,8 @@
 import { isBoolean, isNumber } from './dataTypes';
 import { QUESTION_TYPES } from '../components/SOEditor/Questions/config';
 
+
+import type { QuestionResponse } from '../redux/questionResponses/types';
 import type { MapItem } from '../redux/map/types';
 import type { MapDetails } from '../redux/mapDetails/types';
 import type { CounterActions } from '../redux/counterGrid/types';
@@ -48,61 +50,87 @@ export const edgeDefaultsFromServer = (edgeDefault: DefaultEdge): DefaultEdge =>
 });
 
 export const questionResponseToServer = (
-  questionResponseData: QuestionResponse,
+  data: QuestionResponse,
 ): QuestionResponse => ({
-  id: questionResponseData.id,
+  created_at: data.created_at,
+  description: data.description,
+  feedback: data.feedback,
+  from: data.from,
+  id: data.id,
+  is_correct: Boolean(data.is_correct),
+  name: data.name,
+  order: data.order,
+  parent_id: data.parent_id,
+  question_id: data.question_id,
+  response: data.response,
+  score: data.score,
+  to: data.to,
+  updated_At: data.updated_At,
 });
 
 export const questionResponseFromServer = (
-  questionResponseData: QuestionResponse,
+  data: QuestionResponse,
 ): QuestionResponse => ({
-  id: questionResponseData.id,
+  created_at: data.created_at,
+  description: data.description,
+  feedback: data.feedback,
+  from: data.from,
+  id: data.id,
+  is_correct: Boolean(data.is_correct),
+  name: data.name,
+  order: data.order,
+  parent_id: data.parent_id,
+  question_id: data.question_id,
+  response: data.response,
+  score: data.score,
+  to: data.to,
+  updated_At: data.updated_At,
 });
 
-export const nodeToServer = (questionResponseData: QuestionResponse): QuestionResponse => ({
-  id: nodeData.id,
-  mapId: nodeData.mapId,
-  title: nodeData.title,
-  text: nodeData.text,
-  typeId: nodeData.type,
-  x: nodeData.x,
-  y: nodeData.y,
-  height: nodeData.height,
-  width: nodeData.width,
-  locked: Number(nodeData.isLocked),
-  collapsed: Number(nodeData.isCollapsed),
-  color: nodeData.color,
-  visitOnce: Number(nodeData.isVisitOnce),
-  isEnd: Number(nodeData.isEnd),
-  linkStyleId: nodeData.linkStyle,
-  priorityId: nodeData.priorityId,
-  linkTypeId: nodeData.linkType,
-  annotation: nodeData.annotation,
-  info: nodeData.info,
+export const nodeToServer = (data: Node): Node => ({
+  id: data.id,
+  mapId: data.mapId,
+  title: data.title,
+  text: data.text,
+  typeId: data.type,
+  x: data.x,
+  y: data.y,
+  height: data.height,
+  width: data.width,
+  locked: Number(data.isLocked),
+  collapsed: Number(data.isCollapsed),
+  color: data.color,
+  visitOnce: Number(data.isVisitOnce),
+  isEnd: Number(data.isEnd),
+  linkStyleId: data.linkStyle,
+  priorityId: data.priorityId,
+  linkTypeId: data.linkType,
+  annotation: data.annotation,
+  info: data.info,
 });
 
-export const nodeFromServer = (nodeData: Node): Node => ({
-  id: nodeData.id,
-  mapId: nodeData.mapId,
-  title: nodeData.title,
-  x: nodeData.x,
-  y: nodeData.y,
-  width: nodeData.width || 0,
-  height: nodeData.height || 0,
-  color: nodeData.color,
-  type: nodeData.typeId,
-  text: nodeData.text,
-  linkStyle: nodeData.linkStyleId,
-  priorityId: nodeData.priorityId,
-  linkType: nodeData.linkTypeId,
-  isCollapsed: Boolean(nodeData.collapsed),
-  isLocked: Boolean(nodeData.locked),
-  isVisitOnce: Boolean(nodeData.visitOnce),
-  isEnd: Boolean(nodeData.isEnd),
+export const nodeFromServer = (data: Node): Node => ({
+  id: data.id,
+  mapId: data.mapId,
+  title: data.title,
+  x: data.x,
+  y: data.y,
+  width: data.width || 0,
+  height: data.height || 0,
+  color: data.color,
+  type: data.typeId,
+  text: data.text,
+  linkStyle: data.linkStyleId,
+  priorityId: data.priorityId,
+  linkType: data.linkTypeId,
+  isCollapsed: Boolean(data.collapsed),
+  isLocked: Boolean(data.locked),
+  isVisitOnce: Boolean(data.visitOnce),
+  isEnd: Boolean(data.isEnd),
   isSelected: false,
   isFocused: false,
-  annotation: nodeData.annotation,
-  info: nodeData.info,
+  annotation: data.annotation,
+  info: data.info,
 });
 
 export const nodeDefaultsFromServer = (nodeDefault: DefaultNode): DefaultNode => ({
