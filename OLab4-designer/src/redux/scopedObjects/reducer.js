@@ -22,14 +22,15 @@ import {
 } from './types';
 
 export const initialScopedObjectsState: ScopedObjectsType = {
-  questions: [],
   constants: [],
   counters: [],
   files: [],
-  isFetching: false,
   isCreating: false,
-  isUpdating: false,
   isDeleting: false,
+  isFetching: false,
+  isUpdating: false,
+  questionresponses: [],
+  questions: [],
 };
 
 const scopedObjects = (
