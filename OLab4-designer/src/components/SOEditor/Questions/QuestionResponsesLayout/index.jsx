@@ -30,7 +30,7 @@ function QuestionResponsesLayout({
   responses,
 }: IQuestionResponsesLayoutProps) {
   const handleScopedObjectClick = (scopedObject: ScopedObjectListItemType): void => {
-    window.open(`/scopedObject/questionresponses/${scopedObject.id}`);
+    window.open(`/scopedObject/question/${scopedObject.questionId}/questionresponse/${scopedObject.id}`);
   };
 
   return (

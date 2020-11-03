@@ -15,6 +15,7 @@ import Header from './Header';
 import SOEditor from './SOEditor';
 import MapDetails from './MapDetails';
 import AdvancedNodeEditor from './AdvancedNodeEditor';
+import QuestionResponses from './SOEditor/QuestionResponses';
 
 import * as wholeMapActions from '../middlewares/app/action';
 
@@ -65,6 +66,7 @@ export class App extends PureComponent<IAppProps> {
             <ProtectedRoute exact isAuth={isAuth} path="/:mapId/countergrid" component={CounterGrid} />
             <ProtectedRoute exact isAuth={isAuth} path="/:mapId/:nodeId/ane" component={AdvancedNodeEditor} />
             <ProtectedRoute isAuth={isAuth} path="/scopedObject/:scopedObjectType" component={SOEditor} />
+            <ProtectedRoute isAuth={isAuth} path="/scopedObject/question/:questionId/questionresponse/:questionResponseId" component={QuestionResponses} />
             <ProtectedRoute exact isAuth={isAuth} path="*" component={PageNotFound} />
           </Switch>
           <Notify />

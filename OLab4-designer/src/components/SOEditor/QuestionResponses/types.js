@@ -1,14 +1,20 @@
 // @flow
 import type { QuestionResponse } from '../../../redux/questionResponses/types';
 
-export type QuestionResponseEditorProps = {
-    classes: {
-      [props: string]: any,
-    },
-    questionId: number,
-    questionResponseId: Number,
-    questionResponse: QuestionResponse,
-    ACTION_UPDATE_QUESTION_RESPONSE: Function,
-    ACTION_GET_QUESTION_RESPONSE_REQUESTED: Function,
-    ACTION_DELETE_QUESTION_RESPONSE_MIDDLEWARE: Function,    
-  };
+export type IQuestionResponseEditorProps = {
+  classes: {
+    [props: string]: any,
+  },
+  ACTION_SCOPE_LEVELS_REQUESTED: Function,
+  ACTION_SCOPED_OBJECT_CREATE_REQUESTED: Function,
+  ACTION_SCOPED_OBJECT_DETAILS_REQUESTED: Function,
+  ACTION_SCOPED_OBJECT_UPDATE_REQUESTED: Function,
+  history: any,
+  isScopedObjectCreating: boolean,
+  isScopedObjectUpdating: boolean,
+  match: any,
+  questionId: Number,
+  questionResponseId: Number,
+  scopedObjects: Array<ScopedObjectType>,
+  scopeLevels: ScopeLevelsType,
+};

@@ -3,10 +3,10 @@ import {
 } from 'redux-saga/effects';
 
 import {
-  createNode, 
-  deleteNode, 
+  createNode,
+  deleteNode,
   getNode,
-  updateNode, 
+  updateNode,
 } from '../../../services/api/node';
 import generateTmpId from '../../../helpers/generateTmpId';
 

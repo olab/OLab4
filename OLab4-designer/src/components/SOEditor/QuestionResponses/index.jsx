@@ -1,35 +1,58 @@
 // @flow
 import React, { PureComponent } from 'react';
-import { withRouter } from 'react-router-dom';
-import { connect } from 'react-redux';
-import { withStyles } from '@material-ui/core/styles';
+// import { withRouter } from 'react-router-dom';
+// import { connect } from 'react-redux';
+// import { withStyles } from '@material-ui/core/styles';
 
-import * as actions from '../../../redux/questionResponses/action';
+import { withQuestionResponseRedux } from './index.service';
+import CircularSpinnerWithText from '../../../shared/components/CircularSpinnerWithText';
 
-import type { QuestionResponseEditorProps as IProps } from './types';
+import { PAGE_TITLES } from '../../config';
+
+import type { IQuestionResponseEditorProps } from './types';
 import type { QuestionResponse } from '../../../redux/questionResponses/types';
 
-import styles from './styles';
+// import styles from './styles';
 
 import { FieldLabel } from '../styles';
 import { EDITORS_FIELDS } from '../config';
 
-class QuestionResponseEditor extends PureComponent<IProps, QuestionResponse> {
-  constructor(props) {
+class QuestionResponses extends PureComponent<IQuestionResponseEditorProps, QuestionResponse> {
+  constructor(props: IQuestionResponseEditorProps) {
     super(props);
+
+    this.checkIfEditMode();
+    this.setPageTitle();
+  }
+
+  setPageTitle = (): void => {
+    const title = this.isEditMode ? PAGE_TITLES.EDIT_SO : PAGE_TITLES.ADD_SO;
+    document.title = title(this.scopedObjectType);
+  }
+
+  checkIfEditMode = (): void => {
     const {
       questionId,
       questionResponseId,
-      questionResponse,
-      ACTION_GET_QUESTION_RESPONSE_REQUESTED,
+      ACTION_SCOPED_OBJECT_DETAILS_REQUESTED,
     } = this.props;
 
-    ACTION_GET_QUESTION_RESPONSE_REQUESTED(questionId, questionResponseId);
+    if (questionResponseId) {
+      ACTION_SCOPED_OBJECT_DETAILS_REQUESTED(Number(questionId), Number(questionResponseId));
 
-    this.state = { ...questionResponse };
+      this.isEditMode = true;
+    }
   }
 
   render() {
+    const {
+      questionResponse,
+    } = this.props;
+
+    if (!questionResponse) {
+      return <CircularSpinnerWithText text="Data is being fetched..." large centered />;
+    }
+
     return (
       <>
         <FieldLabel>
@@ -40,40 +63,4 @@ class QuestionResponseEditor extends PureComponent<IProps, QuestionResponse> {
   }
 }
 
-const mapStateToProps = ({
-  questionResponse: { questionResponses, isDeleting },
-}, {
-  match: { params: { questionId, questionResponseId } },
-}) => ({
-  questionResponse: questionResponses[0],
-  questionId: Number(questionId),
-  questionResponseId: Number(questionResponseId),
-  isDeleting,
-});
-
-const mapDispatchToProps = dispatch => ({
-  ACTION_GET_QUESTION_RESPONSE_REQUESTED: (questionId: number, questionResponseId: number) => {
-    dispatch(actions.ACTION_GET_QUESTION_RESPONSE_REQUESTED(
-      questionId,
-      questionResponseId,
-    ));
-  },
-  ACTION_UPDATE_QUESTION_RESPONSE: (
-    questionResponseData: QuestionResponse,
-    isShowNotification: boolean,
-    mapIdFromURL: number,
-  ) => {
-    dispatch(actions.ACTION_UPDATE_QUESTION_RESPONSE(nodeData, isShowNotification, mapIdFromURL));
-  },
-  ACTION_DELETE_QUESTION_RESPONSE_MIDDLEWARE: (
-    questionId: number,
-    questionResponseId: number,
-  ) => {
-    dispatch(wholeMapActions.ACTION_DELETE_NODE_MIDDLEWARE(questionId, questionResponseId));
-  },
-});
-
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps,
-)(withStyles(styles)(withRouter(QuestionResponseEditor)));
+export default withQuestionResponseRedux(QuestionResponses);

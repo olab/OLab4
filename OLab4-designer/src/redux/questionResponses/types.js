@@ -23,86 +23,84 @@ export type QuestionResponseListItem = {
   ...QuestionResponse,
 }
 
-const EXCHANGE_QUESTION_RESPONSE_ID = 'EXCHANGE_QUESTION_RESPONSE_ID';
-type ExchangeQuestionResponseId = {
-  type: 'EXCHANGE_QUESTION_RESPONSE_ID',
-  questionResponseIndex: number,
-  questionResponse: QuestionResponse,
+const SCOPED_OBJECT_DETAILS_FULFILLED = 'RESPONSE_DETAILS_FULFILLED';
+type ScopedObjectsDetailsFulfilled = {
+  type: 'RESPONSE_DETAILS_FULFILLED',
+  scopedObjectIndex: number,
+  scopedObject: QuestionResponse,
 };
 
-const CREATE_QUESTION_RESPONSE_FAILED = 'CREATE_QUESTION_RESPONSE_FAILED';
-type CreateQuestionResponseFailed = {
-  type: 'CREATE_QUESTION_RESPONSE_FAILED',
-};
-
-const SELECT_QUESTION_RESPONSE = 'SELECT_QUESTION_RESPONSE';
-type SelectQuestionResponse = {
-  type: 'SELECT_QUESTION_RESPONSE',
-  nodes: Array<QuestionResponse>,
-};
-
-const DELETE_QUESTION_RESPONSE_SYNC = 'DELETE_QUESTION_RESPONSE_SYNC';
-type DeleteQuestionResponseSync = {
-  type: 'DELETE_QUESTION_RESPONSE_SYNC',
-  questionResponseIndex: number,
-};
-
-const CREATE_QUESTION_RESPONSE = 'CREATE_QUESTION_RESPONSE';
-type CreateQuestionResponse = {
-  type: 'CREATE_QUESTION_RESPONSE',
-  questionResponse: QuestionResponse,
-};
-
-const UPDATE_QUESTION_RESPONSE = 'UPDATE_QUESTION_RESPONSE';
-type UpdateQuestionResponse = {
-  type: 'UPDATE_QUESTION_RESPONSE',
-  index: number,
-  questionResponse: QuestionResponse,
-  isShowNotification: boolean,
-};
-
-const DELETE_QUESTION_RESPONSE_REQUESTED = 'DELETE_QUESTION_RESPONSE_REQUESTED';
-type DeleteQuestionResponseRequested = {
-  type: 'DELETE_QUESTION_RESPONSE_REQUESTED',
-  questionId: number,
+const SCOPED_OBJECT_DETAILS_REQUESTED = 'RESPONSE_DETAILS_REQUESTED';
+type ScopedObjectsDetailsRequested = {
+  type: 'RESPONSE_DETAILS_REQUESTED',
   questionResponseId: number,
   questionResponseIndex: number,
+  scopedObject: QuestionResponse,
 };
 
-const GET_QUESTION_RESPONSE_REQUESTED = 'GET_QUESTION_RESPONSE_REQUESTED';
-type GetQuestionResponseRequested = {
-  type: 'GET_QUESTION_RESPONSE_REQUESTED',
-  questionId: number,
+const SCOPED_OBJECT_CREATE_REQUESTED = 'RESPONSE_CREATE_REQUESTED';
+type ScopedObjectsCreateRequested = {
+  type: 'RESPONSE_CREATE_REQUESTED',
+  scopedObjectData: QuestionResponse,
+};
+
+const SCOPED_OBJECT_CREATE_FAILED = 'RESPONSE_CREATE_FAILED';
+type ScopedObjectsCreateFailed = {
+  type: 'RESPONSE_CREATE_FAILED',
+};
+
+const SCOPED_OBJECT_CREATE_SUCCEEDED = 'RESPONSE_CREATE_SUCCEEDED';
+type ScopedObjectsCreateSucceeded = {
+  type: 'RESPONSE_CREATE_SUCCEEDED',
+  scopedObjectId: number,
+  scopedObjectData: ScopedObjects,
+};
+
+const SCOPED_OBJECT_DELETE_REQUESTED = 'RESPONSE_DELETE_REQUESTED';
+type ScopedObjectDeleteRequested = {
+  type: 'RESPONSE_DELETE_REQUESTED',
+  scopedObjectId: number,
+};
+
+const SCOPED_OBJECT_DELETE_SUCCEEDED = 'RESPONSE_DELETE_SUCCEEDED';
+type ScopedObjectDeleteSucceeded = {
+  type: 'RESPONSE_DELETE_SUCCEEDED',
+  scopedObjectIndex: number,
+};
+
+const SCOPED_OBJECT_DELETE_FAILED = 'RESPONSE_DELETE_FAILED';
+type ScopedObjectDeleteFailed = {
+  type: 'RESPONSE_DELETE_FAILED',
+};
+
+const SCOPED_OBJECT_UPDATE_REQUESTED = 'RESPONSE_UPDATE_REQUESTED';
+type ScopedObjectUpdateRequested = {
+  type: 'RESPONSE_UPDATE_REQUESTED',
   questionResponseId: number,
+  scopedObjectData: QuestionResponse,
 };
 
-const GET_QUESTION_RESPONSE_FULLFILLED = 'GET_QUESTION_RESPONSE_FULLFILLED';
-type GetQuestionResponseFullfilled = {
-  type: 'GET_QUESTION_RESPONSE_FULLFILLED',
-  index: number,
-  questionResponse: QuestionResponse,
-};
-
-const DELETE_QUESTION_RESPONSE_FULLFILLED = 'DELETE_QUESTION_RESPONSE_FULLFILLED';
-type DeleteQuestionResponseFullFilled = {
-  type: 'DELETE_QUESTION_RESPONSE_FULLFILLED',
+const SCOPED_OBJECT_UPDATE_FULFILLED = 'RESPONSE_UPDATE_FULFILLED';
+type ScopedObjectUpdateFulfilled = {
+  type: 'RESPONSE_UPDATE_FULFILLED',
 };
 
 export type QuestionResponseActions =
-  SelectQuestionResponse | ExchangeQuestionResponseId | CreateQuestionResponseFailed |
-  CreateQuestionResponse | UpdateQuestionResponse | DeleteQuestionResponseRequested |
-  GetQuestionResponseRequested | GetQuestionResponseFullfilled | DeleteQuestionResponseFullFilled |
-  DeleteQuestionResponseSync;
+  ScopedObjectsDetailsRequested | ScopedObjectsCreateRequested |
+  ScopedObjectUpdateRequested | ScopedObjectsDetailsFulfilled |
+  ScopedObjectDeleteSucceeded | ScopedObjectDeleteRequested |
+  ScopedObjectsCreateSucceeded | ScopedObjectsCreateFailed |
+  ScopedObjectDeleteFailed | ScopedObjectUpdateFulfilled;
 
 export {
-  CREATE_QUESTION_RESPONSE_FAILED,
-  CREATE_QUESTION_RESPONSE,
-  DELETE_QUESTION_RESPONSE_FULLFILLED,
-  DELETE_QUESTION_RESPONSE_REQUESTED,
-  DELETE_QUESTION_RESPONSE_SYNC,
-  EXCHANGE_QUESTION_RESPONSE_ID,
-  GET_QUESTION_RESPONSE_FULLFILLED,
-  GET_QUESTION_RESPONSE_REQUESTED,
-  SELECT_QUESTION_RESPONSE,
-  UPDATE_QUESTION_RESPONSE,
+  SCOPED_OBJECT_CREATE_FAILED,
+  SCOPED_OBJECT_CREATE_REQUESTED,
+  SCOPED_OBJECT_CREATE_SUCCEEDED,
+  SCOPED_OBJECT_DELETE_FAILED,
+  SCOPED_OBJECT_DELETE_REQUESTED,
+  SCOPED_OBJECT_DELETE_SUCCEEDED,
+  SCOPED_OBJECT_DETAILS_FULFILLED,
+  SCOPED_OBJECT_DETAILS_REQUESTED,
+  SCOPED_OBJECT_UPDATE_FULFILLED,
+  SCOPED_OBJECT_UPDATE_REQUESTED,
 };

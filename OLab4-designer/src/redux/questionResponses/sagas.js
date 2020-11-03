@@ -1,25 +1,29 @@
 import {
-  call, put, select, takeEvery,
+  call, put, takeLatest, takeEvery,
 } from 'redux-saga/effects';
 
 import {
-  createQuestionResponse,
-  deleteQuestionResponse,
-  getQuestionResponse,
-  updateQuestionResponse,
+  getResponseDetails,
+  createResponse,
+  editResponse,
+  deleteResponse,
 } from '../../services/api/questionResponses';
 
 import {
-  CREATE_QUESTION_RESPONSE,
-  DELETE_QUESTION_RESPONSE_REQUESTED,
-  GET_QUESTION_RESPONSE_REQUESTED,
-  UPDATE_QUESTION_RESPONSE,
+  SCOPED_OBJECT_DETAILS_REQUESTED,
+  SCOPED_OBJECT_CREATE_REQUESTED,
+  SCOPED_OBJECT_UPDATE_REQUESTED,
+  SCOPED_OBJECT_DELETE_REQUESTED,
 } from './types';
 
 import {
-  ACTION_EXCHANGE_QUESTION_RESPONSE_ID,
-  ACTION_GET_QUESTION_RESPONSE_FULLFILLED,
-  ACTION_DELETE_QUESTION_RESPONSE_FULLFILLED,
+  ACTION_SCOPED_OBJECT_DETAILS_FAILED,
+  ACTION_SCOPED_OBJECT_DETAILS_SUCCEEDED,
+  ACTION_SCOPED_OBJECT_CREATE_SUCCEEDED,
+  ACTION_SCOPED_OBJECT_CREATE_FAILED,
+  ACTION_SCOPED_OBJECT_UPDATE_FULFILLED,
+  ACTION_SCOPED_OBJECT_DELETE_SUCCEEDED,
+  ACTION_SCOPED_OBJECT_DELETE_FAILED,
 } from './action';
 
 import {
@@ -29,120 +33,98 @@ import {
 
 import {
   MESSAGES,
-  ERROR_MESSAGES,
 } from '../notifications/config';
 
-function* getQuestionResponseSaga({ questionId, questionResponseId }) {
+function* createResponseSaga({ questionId, scopedObjectData }) {
   try {
-    const node = yield call(getQuestionResponse, questionId, questionResponseId);
-
-    yield put(ACTION_GET_QUESTION_RESPONSE_FULLFILLED(node));
-  } catch (error) {
-    const { response, message } = error;
-    const errorMessage = response ? response.statusText : message;
-
-    yield put(ACTION_NOTIFICATION_ERROR(errorMessage));
-  }
-}
-
-function* createQuestionResponseSaga({ node: { id: oldQuestionResponseId, x, y } }) {
-  try {
-    const questionId = yield select(({ mapDetails }) => mapDetails.id);
-    const newQuestionResponseId = yield call(createQuestionResponse, questionId, { x, y });
-
-    yield put(ACTION_EXCHANGE_QUESTION_RESPONSE_ID(oldQuestionResponseId, newQuestionResponseId));
-  } catch (error) {
-    const { response, message } = error;
-    const errorMessage = response ? response.statusText : message;
-
-    yield put(ACTION_NOTIFICATION_ERROR(errorMessage));
-  }
-}
-
-function* createQuestionResponseWithEdgeSaga({
-  sourceQuestionResponseId,
-  node: { x, y, id: oldQuestionResponseId },
-  edge: { id: oldEdgeId },
-}) {
-  try {
-    const questionId = yield select(({ mapDetails }) => mapDetails.id);
-    const { newQuestionResponseId, newEdgeId } = yield call(createQuestionResponse, questionId, { x, y }, sourceQuestionResponseId);
-
-    yield put(ACTION_EXCHANGE_QUESTION_RESPONSE_ID(oldQuestionResponseId, newQuestionResponseId));
-    yield put(ACTION_EXCHANGE_EDGE_ID(oldEdgeId, newEdgeId));
-  } catch (error) {
-    const { response, message } = error;
-    const errorMessage = response ? response.statusText : message;
-
-    yield put(ACTION_NOTIFICATION_ERROR(errorMessage));
-  }
-}
-
-function* updateQuestionResponseSaga({
-  node, isShowNotification, questionIdFromURL, type: actionType,
-}) {
-  try {
-    const questionIdFromStore = yield select(({ mapDetails }) => mapDetails.id);
-    const questionId = questionIdFromURL || questionIdFromStore;
-
-    yield call(updateQuestionResponse, questionId, node);
-
-    const editorPayload = {
-      id: generateTmpId(),
-      questionResponseId: node.id,
+    const scopedObjectId = yield call(
+      createResponse,
       questionId,
-      actionType,
-    };
-    const editorPayloadString = JSON.stringify(editorPayload);
-    localStorage.setItem('node', editorPayloadString);
+      scopedObjectData,
+    );
 
-    if (isShowNotification) {
-      yield put(ACTION_NOTIFICATION_SUCCESS(MESSAGES.ON_UPDATE.QUESTION_RESPONSE));
-    }
+    yield put(ACTION_SCOPED_OBJECT_CREATE_SUCCEEDED(
+      scopedObjectId,
+      scopedObjectData,
+    ));
+    yield put(ACTION_NOTIFICATION_SUCCESS(MESSAGES.ON_CREATE.SCOPED_OBJECT));
   } catch (error) {
-    const { response, message, name } = error;
+    const { response, message } = error;
     const errorMessage = response ? response.statusText : message;
 
-    if (name === 'QuotaExceededError') {
-      yield put(ACTION_NOTIFICATION_ERROR(ERROR_MESSAGES.LOCAL_STORAGE.FULL_MEMORY));
-
-      return;
-    }
-
+    yield put(ACTION_SCOPED_OBJECT_CREATE_FAILED());
     yield put(ACTION_NOTIFICATION_ERROR(errorMessage));
   }
 }
 
-function* deleteQuestionResponseSaga({ questionResponseId, questionId: questionIdFromURL, type: actionType }) {
+function* getResponseDetailsSaga({ questionId, questionResponseId }) {
   try {
-    const questionIdFromStore = yield select(({ mapDetails }) => mapDetails.id);
-    const questionId = questionIdFromStore || questionIdFromURL;
-    yield call(deleteQuestionResponse, questionId, questionResponseId);
-
-    const editorPayload = {
-      id: generateTmpId(),
+    const scopedObjectDetails = yield call(
+      getResponseDetails,
       questionId,
       questionResponseId,
-      actionType,
-    };
+    );
 
-    const editorPayloadString = JSON.stringify(editorPayload);
-    localStorage.setItem('node', editorPayloadString);
+    yield put(ACTION_SCOPED_OBJECT_DETAILS_SUCCEEDED(
+      questionResponseId,
+      scopedObjectDetails,
+    ));
+  } catch (error) {
+    const { response, message } = error;
+    const errorMessage = response ? response.statusText : message;
+
+    yield put(ACTION_SCOPED_OBJECT_DETAILS_FAILED(questionResponseId));
+    yield put(ACTION_NOTIFICATION_ERROR(errorMessage));
+  }
+}
+
+function* deleteResponseSaga({
+  questionId,
+  scopedObjectId,
+}) {
+  try {
+    yield call(
+      deleteResponse,
+      questionId,
+      scopedObjectId,
+    );
+
+    yield put(ACTION_SCOPED_OBJECT_DELETE_SUCCEEDED(scopedObjectId));
+    yield put(ACTION_NOTIFICATION_SUCCESS(MESSAGES.ON_DELETE.SCOPED_OBJECT));
+  } catch (error) {
+    const { response, message } = error;
+    const errorMessage = response ? response.statusText : message;
+
+    yield put(ACTION_SCOPED_OBJECT_DELETE_FAILED());
+    yield put(ACTION_NOTIFICATION_ERROR(errorMessage));
+  }
+}
+
+function* updateResponseSaga({
+  scopedObjectData,
+}) {
+  try {
+    yield call(
+      editResponse,
+      scopedObjectData,
+    );
+
+    yield put(ACTION_NOTIFICATION_SUCCESS(MESSAGES.ON_UPDATE.SCOPED_OBJECT));
   } catch (error) {
     const { response, message } = error;
     const errorMessage = response ? response.statusText : message;
 
     yield put(ACTION_NOTIFICATION_ERROR(errorMessage));
   }
-  yield put(ACTION_DELETE_QUESTION_RESPONSE_FULLFILLED());
+
+  yield put(ACTION_SCOPED_OBJECT_UPDATE_FULFILLED());
 }
 
-function* nodeSaga() {
-  yield takeEvery(GET_QUESTION_RESPONSE_REQUESTED, getQuestionResponseSaga);
-  yield takeEvery(CREATE_QUESTION_RESPONSE, createQuestionResponseSaga);
-  yield takeEvery(UPDATE_QUESTION_RESPONSE, updateQuestionResponseSaga);
-  yield takeEvery(DELETE_QUESTION_RESPONSE_REQUESTED, deleteQuestionResponseSaga);
-  yield takeEvery(CREATE_QUESTION_RESPONSE_WITH_EDGE, createQuestionResponseWithEdgeSaga);
+function* questionResponseSaga() {
+  yield takeLatest(SCOPED_OBJECT_CREATE_REQUESTED, createResponseSaga);
+  yield takeLatest(SCOPED_OBJECT_UPDATE_REQUESTED, updateResponseSaga);
+  yield takeLatest(SCOPED_OBJECT_DELETE_REQUESTED, deleteResponseSaga);
+  yield takeEvery(SCOPED_OBJECT_DETAILS_REQUESTED, getResponseDetailsSaga);
 }
 
-export default nodeSaga;
+export default questionResponseSaga;

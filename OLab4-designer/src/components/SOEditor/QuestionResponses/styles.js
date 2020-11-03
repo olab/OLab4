@@ -1,3 +1,5 @@
+import { BLUE_GREY } from '../../../shared/colors';
+
 const styles = () => ({
   paper: {
     margin: '0 auto',
