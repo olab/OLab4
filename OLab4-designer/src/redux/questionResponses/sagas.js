@@ -35,6 +35,8 @@ import {
   MESSAGES,
 } from '../notifications/config';
 
+// import { SCOPED_OBJECTS } from '../../components/config';
+
 function* createResponseSaga({ questionId, scopedObjectData }) {
   try {
     const scopedObjectId = yield call(
@@ -57,23 +59,26 @@ function* createResponseSaga({ questionId, scopedObjectData }) {
   }
 }
 
-function* getResponseDetailsSaga({ questionId, questionResponseId }) {
+// function* getResponseDetailsSaga({ questionId, questionResponseId }) {
+function* getResponseDetailsSaga(arg) {
+  const { questionId, scopedObjectId } = arg;
   try {
     const scopedObjectDetails = yield call(
       getResponseDetails,
       questionId,
-      questionResponseId,
+      scopedObjectId,
     );
 
     yield put(ACTION_SCOPED_OBJECT_DETAILS_SUCCEEDED(
-      questionResponseId,
+      scopedObjectId,
+      'questionresponses',
       scopedObjectDetails,
     ));
   } catch (error) {
     const { response, message } = error;
     const errorMessage = response ? response.statusText : message;
 
-    yield put(ACTION_SCOPED_OBJECT_DETAILS_FAILED(questionResponseId));
+    yield put(ACTION_SCOPED_OBJECT_DETAILS_FAILED(scopedObjectId));
     yield put(ACTION_NOTIFICATION_ERROR(errorMessage));
   }
 }

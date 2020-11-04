@@ -13,8 +13,5 @@ export type IQuestionResponseEditorProps = {
   isScopedObjectCreating: boolean,
   isScopedObjectUpdating: boolean,
   match: any,
-  questionId: Number,
-  questionResponseId: Number,
-  scopedObjects: Array<ScopedObjectType>,
-  scopeLevels: ScopeLevelsType,
+  scopedObjects: Array<QuestionResponse>,
 };

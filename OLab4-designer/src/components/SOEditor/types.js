@@ -16,16 +16,16 @@ export type IScopedObjectProps = {
   classes: {
     [props: string]: any,
   },
-  match: any,
-  history: any,
-  scopedObjects: Array<ScopedObjectType>,
-  scopeLevels: ScopeLevelsType,
-  isScopedObjectCreating: boolean,
-  isScopedObjectUpdating: boolean,
   ACTION_SCOPE_LEVELS_REQUESTED: Function,
   ACTION_SCOPED_OBJECT_CREATE_REQUESTED: Function,
   ACTION_SCOPED_OBJECT_DETAILS_REQUESTED: Function,
   ACTION_SCOPED_OBJECT_UPDATE_REQUESTED: Function,
+  history: any,
+  isScopedObjectCreating: boolean,
+  isScopedObjectUpdating: boolean,
+  match: any,
+  scopedObjects: Array<ScopedObjectType>,
+  scopeLevels: ScopeLevelsType,
 };
 
 export type Icons = {

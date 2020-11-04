@@ -11,15 +11,16 @@ import {
   SCOPED_OBJECT_DETAILS_REQUESTED,
   SCOPED_OBJECT_UPDATE_FULFILLED,
   SCOPED_OBJECT_UPDATE_REQUESTED,
-  QuestionResponse,
+  type QuestionResponse as ScopedObjectType,
 } from './types';
 
 export const ACTION_SCOPED_OBJECT_DETAILS_SUCCEEDED = (
   scopedObjectId: number,
-  scopedObjectDetails: QuestionResponse,
+  scopedObjectType: string,
+  scopedObjectDetails: ScopedObjectType,
 ) => {
   const { scopedObjects } = store.getState();
-  const scopedObjectsList = scopedObjects.questionresponses;
+  const scopedObjectsList = scopedObjects[scopedObjectType];
   const scopedObjectIndex = scopedObjectsList.findIndex(({ id }) => id === scopedObjectId);
   const clonedScopedObject = {
     ...scopedObjectsList[scopedObjectIndex],
@@ -29,6 +30,7 @@ export const ACTION_SCOPED_OBJECT_DETAILS_SUCCEEDED = (
 
   return {
     type: SCOPED_OBJECT_DETAILS_FULFILLED,
+    scopedObjectType,
     scopedObjectIndex,
     scopedObject: clonedScopedObject,
   };
@@ -36,29 +38,36 @@ export const ACTION_SCOPED_OBJECT_DETAILS_SUCCEEDED = (
 
 export const ACTION_SCOPED_OBJECT_DETAILS_REQUESTED = (
   questionId: number,
-  questionResponseId: number,
+  scopedObjectId: number,
+  scopedObjectType: string,
 ) => {
-  const { scopedObjects } = store.getState();
-  const scopedObjectsList = scopedObjects.questionresponses;
-  const scopedObjectIndex = scopedObjectsList.findIndex(({ id }) => id === questionResponseId);
+  const state = store.getState();
+  const { questionResponses: { questionresponses } } = state;
+  const scopedObjectsList = questionresponses;
+  const scopedObjectIndex = scopedObjectsList.findIndex(({ id }) => id === scopedObjectId);
   const clonedScopedObject = {
     ...scopedObjectsList[scopedObjectIndex],
     isDetailsFetching: true,
   };
 
-  return {
+  const response = {
     type: SCOPED_OBJECT_DETAILS_REQUESTED,
     questionId,
-    questionResponseId,
+    scopedObjectId,
+    scopedObjectType,
+    scopedObjectIndex,
     scopedObject: clonedScopedObject,
   };
+
+  return response;
 };
 
 export const ACTION_SCOPED_OBJECT_DETAILS_FAILED = (
   scopedObjectId: number,
+  scopedObjectType: string,
 ) => {
   const { scopedObjects } = store.getState();
-  const scopedObjectsList = scopedObjects.questionresponses;
+  const scopedObjectsList = scopedObjects[scopedObjectType];
   const scopedObjectIndex = scopedObjectsList.findIndex(({ id }) => id === scopedObjectId);
   const clonedScopedObject = {
     ...scopedObjectsList[scopedObjectIndex],
@@ -67,6 +76,7 @@ export const ACTION_SCOPED_OBJECT_DETAILS_FAILED = (
 
   return {
     type: SCOPED_OBJECT_DETAILS_FULFILLED,
+    scopedObjectType,
     scopedObjectIndex,
     scopedObject: clonedScopedObject,
   };
@@ -74,10 +84,12 @@ export const ACTION_SCOPED_OBJECT_DETAILS_FAILED = (
 
 export const ACTION_SCOPED_OBJECT_CREATE_SUCCEEDED = (
   scopedObjectId: number,
-  scopedObjectData: QuestionResponse,
+  scopedObjectType: string,
+  scopedObjectData: ScopedObjectType,
 ) => ({
   type: SCOPED_OBJECT_CREATE_SUCCEEDED,
   scopedObjectId,
+  scopedObjectType,
   scopedObjectData,
 });
 
@@ -86,9 +98,11 @@ export const ACTION_SCOPED_OBJECT_CREATE_FAILED = () => ({
 });
 
 export const ACTION_SCOPED_OBJECT_CREATE_REQUESTED = (
-  scopedObjectData: QuestionResponse,
+  scopedObjectType: string,
+  scopedObjectData: ScopedObjectType,
 ) => ({
   type: SCOPED_OBJECT_CREATE_REQUESTED,
+  scopedObjectType,
   scopedObjectData,
 });
 
@@ -98,14 +112,16 @@ export const ACTION_SCOPED_OBJECT_DELETE_FAILED = () => ({
 
 export const ACTION_SCOPED_OBJECT_DELETE_SUCCEEDED = (
   scopedObjectId: number,
+  scopedObjectType: string,
 ) => {
   const { scopedObjects } = store.getState();
-  const scopedObjectsList = scopedObjects.questionresponses;
+  const scopedObjectsList = scopedObjects[scopedObjectType];
   const scopedObjectIndex = scopedObjectsList.findIndex(({ id }) => id === scopedObjectId);
 
   return {
     type: SCOPED_OBJECT_DELETE_SUCCEEDED,
     scopedObjectIndex,
+    scopedObjectType,
   };
 };
 

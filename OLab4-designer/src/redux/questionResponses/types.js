@@ -23,9 +23,22 @@ export type QuestionResponseListItem = {
   ...QuestionResponse,
 }
 
+export type ScopedObjects = {
+  [type: string]: Array<QuestionResponse | QuestionResponseListItem>,
+};
+
+export type ScopedObjectsState = {
+  ...ScopedObjects,
+  isFetching: boolean,
+  isCreating: boolean,
+  isUpdating: boolean,
+  isDeleting: boolean,
+};
+
 const SCOPED_OBJECT_DETAILS_FULFILLED = 'RESPONSE_DETAILS_FULFILLED';
 type ScopedObjectsDetailsFulfilled = {
   type: 'RESPONSE_DETAILS_FULFILLED',
+  scopedObjectType: string,
   scopedObjectIndex: number,
   scopedObject: QuestionResponse,
 };

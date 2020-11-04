@@ -4,15 +4,21 @@ import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/core/styles';
 
 import type { QuestionResponse } from '../../../redux/questionResponses/types';
+import { toLowerCaseAndPlural } from '../utils';
+
 import * as actions from '../../../redux/questionResponses/action';
 import styles from './styles';
 
 export const withQuestionResponseRedux = (
   Component: ReactElement<IQuestionResponseEditorProps>,
+  scopedObjectType: string,
 ) => {
-  const mapStateToProps = (state, ownProps) => ({
-    questionId: Number(ownProps.match.params.questionId),
-    questionResponseId: Number(ownProps.match.params.questionResponseId),
+  const mapStateToProps = ({ scopedObjects }) => ({
+    scopedObjects: scopedObjectType.scopedObjectType,
+    isCreating: scopedObjectType.isCreating,
+    isUpdating: scopedObjectType.isUpdating,
+    isFetching: scopedObjectType.isFetching,
+    temp: scopedObjects,
   });
 
   const mapDispatchToProps = dispatch => ({
@@ -20,19 +26,22 @@ export const withQuestionResponseRedux = (
       dispatch(actions.ACTION_SCOPED_OBJECT_DETAILS_REQUESTED(
         questionId,
         questionResponseId,
+        toLowerCaseAndPlural(scopedObjectType),
       ));
     },
     ACTION_SCOPED_OBJECT_CREATE_REQUESTED: (scopedObjectData: QuestionResponse) => {
       dispatch(actions.ACTION_SCOPED_OBJECT_CREATE_REQUESTED(
+        toLowerCaseAndPlural(scopedObjectType),
         scopedObjectData,
       ));
     },
     ACTION_SCOPED_OBJECT_UPDATE_REQUESTED: (
-      questionResponseId: number,
+      scopedObjectId: number,
       scopedObjectData: QuestionResponse,
     ) => {
       dispatch(actions.ACTION_SCOPED_OBJECT_UPDATE_REQUESTED(
-        questionResponseId,
+        scopedObjectId,
+        toLowerCaseAndPlural(scopedObjectType),
         scopedObjectData,
       ));
     },
