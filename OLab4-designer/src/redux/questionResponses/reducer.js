@@ -14,10 +14,10 @@ import {
 } from './types';
 
 export const initialScopedObjectsState: ScopedObjectsType = {
-  isCreating: false,
-  isDeleting: false,
-  isFetching: false,
-  isUpdating: false,
+  isCreating: null,
+  isDeleting: null,
+  isFetching: null,
+  isUpdating: null,
   questionresponses: [],
 };
 
@@ -46,8 +46,7 @@ const questionResponses = (
     //     ...state,
     //     isFetching: false,
     //   };
-    case SCOPED_OBJECT_DETAILS_FULFILLED:
-    case SCOPED_OBJECT_DETAILS_REQUESTED: {
+    case SCOPED_OBJECT_DETAILS_FULFILLED: {
       const { scopedObjectType, scopedObjectIndex, scopedObject } = action;
 
       const response = {
@@ -58,6 +57,21 @@ const questionResponses = (
           ...state[scopedObjectType].slice(scopedObjectIndex + 1),
         ],
         isFetching: false,
+      };
+
+      return response;
+    }
+    case SCOPED_OBJECT_DETAILS_REQUESTED: {
+      const { scopedObjectType, scopedObjectIndex, scopedObject } = action;
+
+      const response = {
+        ...state,
+        [scopedObjectType]: [
+          ...state[scopedObjectType].slice(0, scopedObjectIndex),
+          scopedObject,
+          ...state[scopedObjectType].slice(scopedObjectIndex + 1),
+        ],
+        isFetching: true,
       };
 
       return response;

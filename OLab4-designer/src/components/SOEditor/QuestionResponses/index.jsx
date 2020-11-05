@@ -6,9 +6,8 @@ import React, { PureComponent } from 'react';
 
 import { withQuestionResponseRedux } from './index.service';
 import CircularSpinnerWithText from '../../../shared/components/CircularSpinnerWithText';
-import { toLowerCaseAndPlural } from '../utils';
 
-import { SCOPED_OBJECTS, PAGE_TITLES } from '../../config';
+import { PAGE_TITLES } from '../../config';
 
 import type { IQuestionResponseEditorProps } from './types';
 import type { QuestionResponse } from '../../../redux/questionResponses/types';
@@ -48,10 +47,10 @@ class QuestionResponses extends PureComponent<IQuestionResponseEditorProps, Ques
 
   render() {
     const {
-      isFetching,
+      scopedObjects,
     } = this.props;
 
-    if (isFetching) {
+    if (scopedObjects.isFetching) {
       return <CircularSpinnerWithText text="Data is being fetched..." large centered />;
     }
 
@@ -67,5 +66,4 @@ class QuestionResponses extends PureComponent<IQuestionResponseEditorProps, Ques
 
 export default withQuestionResponseRedux(
   QuestionResponses,
-  toLowerCaseAndPlural(SCOPED_OBJECTS.QUESTIONRESPONSES.name),
 );

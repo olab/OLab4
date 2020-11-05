@@ -11,15 +11,30 @@ import styles from './styles';
 
 export const withQuestionResponseRedux = (
   Component: ReactElement<IQuestionResponseEditorProps>,
-  scopedObjectType: string,
 ) => {
-  const mapStateToProps = ({ scopedObjects }) => ({
-    scopedObjects: scopedObjectType.scopedObjectType,
-    isCreating: scopedObjectType.isCreating,
-    isUpdating: scopedObjectType.isUpdating,
-    isFetching: scopedObjectType.isFetching,
-    temp: scopedObjects,
-  });
+  const scopedObjectType = 'questionresponse';
+  const mapStateToProps = (state) => {
+    const {
+      questionResponses: {
+        isCreating,
+        isDeleting,
+        isFetching,
+        isUpdating,
+        questionresponses,
+      },
+    } = state;
+    const response = {
+      scopedObjects: {
+        isCreating,
+        isDeleting,
+        isFetching,
+        isUpdating,
+        questionresponses,
+      },
+    };
+
+    return response;
+  };
 
   const mapDispatchToProps = dispatch => ({
     ACTION_SCOPED_OBJECT_DETAILS_REQUESTED: (questionId: number, questionResponseId: number) => {

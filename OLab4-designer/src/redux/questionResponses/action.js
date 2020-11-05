@@ -25,15 +25,17 @@ export const ACTION_SCOPED_OBJECT_DETAILS_SUCCEEDED = (
   const clonedScopedObject = {
     ...scopedObjectsList[scopedObjectIndex],
     ...scopedObjectDetails,
-    isDetailsFetching: false,
   };
 
-  return {
+  const response = {
     type: SCOPED_OBJECT_DETAILS_FULFILLED,
     scopedObjectType,
     scopedObjectIndex,
+    isFetching: true,
     scopedObject: clonedScopedObject,
   };
+
+  return response;
 };
 
 export const ACTION_SCOPED_OBJECT_DETAILS_REQUESTED = (
@@ -47,7 +49,7 @@ export const ACTION_SCOPED_OBJECT_DETAILS_REQUESTED = (
   const scopedObjectIndex = scopedObjectsList.findIndex(({ id }) => id === scopedObjectId);
   const clonedScopedObject = {
     ...scopedObjectsList[scopedObjectIndex],
-    isDetailsFetching: true,
+    // isDetailsFetching: true,
   };
 
   const response = {
@@ -56,6 +58,7 @@ export const ACTION_SCOPED_OBJECT_DETAILS_REQUESTED = (
     scopedObjectId,
     scopedObjectType,
     scopedObjectIndex,
+    isFetching: true,
     scopedObject: clonedScopedObject,
   };
 
