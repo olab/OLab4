@@ -106,8 +106,8 @@ class Questions extends ScopedObjectService {
       return <CircularSpinnerWithText text="Data is being fetched..." large centered />;
     }
 
-    let questionInfo = '';
-    questionInfo = ` (Id: ${id})`;
+    let idInfo = '';
+    idInfo = ` (Id: ${id})`;
 
     return (
       <EditorWrapper
@@ -148,7 +148,7 @@ class Questions extends ScopedObjectService {
         <FieldLabel>
           {EDITORS_FIELDS.NAME}
           <small>
-            {questionInfo}
+            {idInfo}
           </small>
           <OutlinedInput
             name="name"

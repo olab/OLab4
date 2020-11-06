@@ -29,11 +29,6 @@ export const ProgressWrapper = styled.div`
   right: 1.2rem;
 `;
 
-export const ListWithSearchWrapper = styled.div`
-  padding: 0 1rem;
-  padding-top: 0.5rem;
-`;
-
 const styles = () => ({
   button: {
     margin: '1.2rem',

@@ -11,9 +11,7 @@ import { LAYOUT_TYPES } from '../config';
 import { EDITORS_FIELDS } from '../../config';
 
 import type { IQuestionResponsesLayoutProps } from './types';
-
-import styles, { SwitchWrapper, ListWithSearchWrapper } from './styles';
-import { FieldLabel } from '../../styles';
+import styles, { FieldLabel, SwitchWrapper, ListWithSearchWrapper } from '../../styles';
 
 const isHideSearch = true;
 

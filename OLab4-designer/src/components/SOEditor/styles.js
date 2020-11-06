@@ -9,6 +9,16 @@ export const FieldLabel = styled.label`
   margin-top: 0.7rem;
 `;
 
+export const ListWithSearchWrapper = styled.div`
+  padding: 0 1rem;
+  padding-top: 0.5rem;
+`;
+
+export const SwitchWrapper = styled.article`
+  display: flex;
+  justify-content: space-between;
+`;
+
 export const styles = () => ({
   label: {
     color: DARK_BLUE,

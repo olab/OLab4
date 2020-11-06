@@ -54,7 +54,7 @@ const questionResponses = (
         [scopedObjectType]: [
           ...state[scopedObjectType].slice(0, scopedObjectIndex),
           scopedObject,
-          ...state[scopedObjectType].slice(scopedObjectIndex + 1),
+          // ...state[scopedObjectType].slice(scopedObjectIndex + 1),
         ],
         isFetching: false,
       };
@@ -69,7 +69,7 @@ const questionResponses = (
         [scopedObjectType]: [
           ...state[scopedObjectType].slice(0, scopedObjectIndex),
           scopedObject,
-          ...state[scopedObjectType].slice(scopedObjectIndex + 1),
+          // ...state[scopedObjectType].slice(scopedObjectIndex + 1),
         ],
         isFetching: true,
       };

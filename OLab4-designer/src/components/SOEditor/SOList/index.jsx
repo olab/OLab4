@@ -23,8 +23,10 @@ import type { ISOListProps, ISOListState } from './types';
 import type { ScopedObjectListItem as ScopedObjectListItemType } from '../../../redux/scopedObjects/types';
 
 import styles, {
-  HeaderWrapper, ProgressWrapper, ListWithSearchWrapper,
+  HeaderWrapper, ProgressWrapper,
 } from './styles';
+
+import { ListWithSearchWrapper } from '../styles';
 
 class SOList extends PureComponent<ISOListProps, ISOListState> {
   listWithSearchRef: null | React.RefObject<any>;

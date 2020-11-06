@@ -11,10 +11,13 @@ import { PAGE_TITLES } from '../../config';
 
 import type { IQuestionResponseEditorProps } from './types';
 import type { QuestionResponse } from '../../../redux/questionResponses/types';
+import OutlinedInput from '../../../shared/components/OutlinedInput';
+import EditorWrapper from '../../../shared/components/EditorWrapper';
+import Switch from '../../../shared/components/Switch';
 
 // import styles from './styles';
 
-import { FieldLabel } from '../styles';
+import { FieldLabel, SwitchWrapper } from '../styles';
 import { EDITORS_FIELDS } from '../config';
 
 class QuestionResponses extends PureComponent<IQuestionResponseEditorProps, QuestionResponse> {
@@ -45,21 +48,107 @@ class QuestionResponses extends PureComponent<IQuestionResponseEditorProps, Ques
     this.isEditMode = true;
   }
 
+  onSwitchChange = (e: Event, value: number | boolean, name: string): void => {
+    this.setState({ [name]: value });
+  };
+
   render() {
     const {
       scopedObjects,
     } = this.props;
 
-    if (scopedObjects.isFetching) {
+    if ((scopedObjects.isFetching)
+      || (scopedObjects.isFetching === null)
+      || (scopedObjects.questionresponses.length === 0)) {
       return <CircularSpinnerWithText text="Data is being fetched..." large centered />;
     }
 
+    const questionResponse = scopedObjects.questionresponses[0];
+    const idInfo = ` (Id: ${questionResponse.id})`;
+    const isFieldsDisabled = false;
+    const isEditMode = true;
+    const scopedObjectType = 'question response';
+
     return (
-      <>
+      <EditorWrapper
+        isEditMode={isEditMode}
+        isDisabled={isFieldsDisabled}
+        scopedObject={scopedObjectType}
+        onSubmit={this.handleSubmitScopedObject}
+      >
         <FieldLabel>
-          {EDITORS_FIELDS.LAYOUT_TYPE}
+          {EDITORS_FIELDS.NAME}
+          <small>
+            {idInfo}
+          </small>
+          <OutlinedInput
+            name="name"
+            placeholder={EDITORS_FIELDS.NAME}
+            value={questionResponse.name}
+            onChange={this.handleInputChange}
+            disabled={isFieldsDisabled}
+            fullWidth
+          />
         </FieldLabel>
-      </>
+        <FieldLabel>
+          {EDITORS_FIELDS.DESCRIPTION}
+          <OutlinedInput
+            name="name"
+            placeholder={EDITORS_FIELDS.DESCRIPTION}
+            value={questionResponse.description}
+            onChange={this.handleInputChange}
+            disabled={isFieldsDisabled}
+            fullWidth
+          />
+        </FieldLabel>
+        <FieldLabel>
+          {EDITORS_FIELDS.DESCRIPTION}
+          <OutlinedInput
+            name="name"
+            placeholder={EDITORS_FIELDS.DESCRIPTION}
+            value={questionResponse.text}
+            onChange={this.handleInputChange}
+            disabled={isFieldsDisabled}
+            fullWidth
+          />
+        </FieldLabel>
+
+        <FieldLabel>
+          {EDITORS_FIELDS.SCORE}
+          <OutlinedInput
+            name="score"
+            placeholder={EDITORS_FIELDS.SCORE}
+            value={questionResponse.score}
+            onChange={this.handleInputChange}
+            disabled={isFieldsDisabled}
+            fullWidth
+          />
+        </FieldLabel>
+
+        <FieldLabel>
+          {EDITORS_FIELDS.ORDER}
+          <OutlinedInput
+            name="order"
+            placeholder={EDITORS_FIELDS.ORDER}
+            value={questionResponse.order}
+            onChange={this.handleInputChange}
+            disabled={isFieldsDisabled}
+            fullWidth
+          />
+        </FieldLabel>
+
+        <SwitchWrapper>
+          <Switch
+            name="isCorrect"
+            label={EDITORS_FIELDS.IS_CORRECT}
+            labelPlacement="start"
+            checked={questionResponse.isCorrect}
+            onChange={this.onSwitchChange}
+            disabled={isFieldsDisabled}
+          />
+        </SwitchWrapper>
+
+      </EditorWrapper>
     );
   }
 }
