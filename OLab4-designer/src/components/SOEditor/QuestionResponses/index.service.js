@@ -38,27 +38,30 @@ export const withQuestionResponseRedux = (
 
   const mapDispatchToProps = dispatch => ({
     ACTION_SCOPED_OBJECT_DETAILS_REQUESTED: (questionId: number, questionResponseId: number) => {
-      dispatch(actions.ACTION_SCOPED_OBJECT_DETAILS_REQUESTED(
+      const action = actions.ACTION_SCOPED_OBJECT_DETAILS_REQUESTED(
         questionId,
         questionResponseId,
         toLowerCaseAndPlural(scopedObjectType),
-      ));
+      );
+      dispatch(action);
     },
     ACTION_SCOPED_OBJECT_CREATE_REQUESTED: (scopedObjectData: QuestionResponse) => {
-      dispatch(actions.ACTION_SCOPED_OBJECT_CREATE_REQUESTED(
+      const action = actions.ACTION_SCOPED_OBJECT_CREATE_REQUESTED(
         toLowerCaseAndPlural(scopedObjectType),
         scopedObjectData,
-      ));
+      );
+      dispatch(action);
     },
     ACTION_SCOPED_OBJECT_UPDATE_REQUESTED: (
       scopedObjectId: number,
       scopedObjectData: QuestionResponse,
     ) => {
-      dispatch(actions.ACTION_SCOPED_OBJECT_UPDATE_REQUESTED(
+      const action = actions.ACTION_SCOPED_OBJECT_UPDATE_REQUESTED(
         scopedObjectId,
         toLowerCaseAndPlural(scopedObjectType),
         scopedObjectData,
-      ));
+      );
+      dispatch(action);
     },
   });
 
