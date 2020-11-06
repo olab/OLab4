@@ -19,7 +19,8 @@ export const ACTION_SCOPED_OBJECT_DETAILS_SUCCEEDED = (
   scopedObjectType: string,
   scopedObjectDetails: ScopedObjectType,
 ) => {
-  const { scopedObjects } = store.getState();
+  const storecopy = store.getState();
+  const { scopedObjects } = storecopy;
   const scopedObjectsList = scopedObjects[scopedObjectType];
   const scopedObjectIndex = scopedObjectsList.findIndex(({ id }) => id === scopedObjectId);
   const clonedScopedObject = {

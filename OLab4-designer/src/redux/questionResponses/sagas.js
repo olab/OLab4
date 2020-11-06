@@ -69,11 +69,12 @@ function* getResponseDetailsSaga(arg) {
       scopedObjectId,
     );
 
-    yield put(ACTION_SCOPED_OBJECT_DETAILS_SUCCEEDED(
+    const action = ACTION_SCOPED_OBJECT_DETAILS_SUCCEEDED(
       scopedObjectId,
       'questionresponses',
       scopedObjectDetails,
-    ));
+    );
+    yield put(action);
   } catch (error) {
     const { response, message } = error;
     const errorMessage = response ? response.statusText : message;
