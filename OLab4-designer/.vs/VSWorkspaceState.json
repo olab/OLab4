@@ -2,9 +2,17 @@
   "ExpandedNodes": [
     "",
     "\\src",
-    "\\src\\redux",
-    "\\src\\redux\\questionResponses"
+    "\\src\\components",
+    "\\src\\components\\AdvancedNodeEditor",
+    "\\src\\components\\AdvancedNodeEditor\\SecondaryTab",
+    "\\src\\components\\SOEditor",
+    "\\src\\components\\SOEditor\\Constants",
+    "\\src\\components\\SOEditor\\Counters",
+    "\\src\\components\\SOEditor\\Files",
+    "\\src\\shared",
+    "\\src\\shared\\components",
+    "\\src\\shared\\components\\EditorWrapper"
   ],
-  "SelectedNode": "\\src\\redux\\questionResponses\\action.js",
+  "SelectedNode": "\\src\\components\\SOEditor\\Constants\\index.jsx",
   "PreviewInSolutionExplorer": false
 }

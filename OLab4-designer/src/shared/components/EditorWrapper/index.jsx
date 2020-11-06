@@ -14,18 +14,22 @@ import type { IEditorWrapperProps } from './types';
 import styles, { HeadingWrapper, Paper, Container } from './styles';
 
 const EditorWrapper = ({
-  classes, children, history, scopedObject, onSubmit, isEditMode, isDisabled,
+  classes, children, history, scopedObject, onSubmit, isEditMode, isDisabled, hasBackButton,
 }: IEditorWrapperProps) => (
   <Grid container component="main" className={classes.root}>
     <HeadingWrapper>
       <div className={classes.headerLabel}>
-        <IconButton
-          aria-label="Back To Object List"
-          title="Back To Object List"
-          onClick={(): void => redirectToSO(history, scopedObject)}
-        >
-          <ArrowBackIcon className={classes.arrow} />
-        </IconButton>
+        {(hasBackButton) && (
+          <>
+            <IconButton
+              aria-label="Back To Object List"
+              title="Back To Object List"
+              onClick={(): void => redirectToSO(history, scopedObject)}
+            >
+              <ArrowBackIcon className={classes.arrow} />
+            </IconButton>
+          </>
+        )}
         <Typography variant="h4" className={classes.title}>
           {`${isEditMode ? 'EDIT' : 'ADD NEW'} ${scopedObject.toUpperCase()}`}
         </Typography>

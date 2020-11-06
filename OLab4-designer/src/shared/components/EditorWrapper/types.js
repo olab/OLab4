@@ -9,4 +9,5 @@ export type IEditorWrapperProps = {
   onSubmit: Function,
   isEditMode: boolean,
   isDisabled: boolean,
+  hasBackButton: boolean,
 };

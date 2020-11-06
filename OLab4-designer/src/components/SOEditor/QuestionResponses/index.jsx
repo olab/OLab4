@@ -25,12 +25,11 @@ class QuestionResponses extends PureComponent<IQuestionResponseEditorProps, Ques
     super(props);
 
     this.checkIfEditMode();
-    this.setPageTitle();
   }
 
-  setPageTitle = (): void => {
+  setPageTitle = (name): void => {
     const title = this.isEditMode ? PAGE_TITLES.EDIT_SO : PAGE_TITLES.ADD_SO;
-    document.title = title(this.scopedObjectType);
+    document.title = title(name);
   }
 
   checkIfEditMode = (): void => {
@@ -52,6 +51,11 @@ class QuestionResponses extends PureComponent<IQuestionResponseEditorProps, Ques
     this.setState({ [name]: value });
   };
 
+  handleInputChange = (e: Event): void => {
+    const { value, name } = (e.target: window.HTMLInputElement);
+    this.setState({ [name]: value });
+  }
+
   render() {
     const {
       scopedObjects,
@@ -69,12 +73,15 @@ class QuestionResponses extends PureComponent<IQuestionResponseEditorProps, Ques
     const isEditMode = true;
     const scopedObjectType = 'question response';
 
+    this.setPageTitle(questionResponse.name);
+
     return (
       <EditorWrapper
         isEditMode={isEditMode}
         isDisabled={isFieldsDisabled}
         scopedObject={scopedObjectType}
         onSubmit={this.handleSubmitScopedObject}
+        hasBackButton={false}
       >
         <FieldLabel>
           {EDITORS_FIELDS.NAME}
@@ -102,10 +109,10 @@ class QuestionResponses extends PureComponent<IQuestionResponseEditorProps, Ques
           />
         </FieldLabel>
         <FieldLabel>
-          {EDITORS_FIELDS.DESCRIPTION}
+          {EDITORS_FIELDS.TEXT}
           <OutlinedInput
             name="name"
-            placeholder={EDITORS_FIELDS.DESCRIPTION}
+            placeholder={EDITORS_FIELDS.TEXT}
             value={questionResponse.text}
             onChange={this.handleInputChange}
             disabled={isFieldsDisabled}
