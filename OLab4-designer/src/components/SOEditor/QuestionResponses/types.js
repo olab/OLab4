@@ -1,7 +1,18 @@
 // @flow
 import type { QuestionResponse } from '../../../redux/questionResponses/types';
+export type ScopedObject = {
+  id: number,
+  acl: string,
+  name: string,
+  wiki: string,
+  scopeLevel: string,
+  description: string,
+  isShowEyeIcon: boolean,
+  isDetailsFetching: boolean,
+  details: null | QuestionResponse,
+};
 
-export type IQuestionResponseEditorProps = {
+export type IScopedObjectProps = {
   classes: {
     [props: string]: any,
   },
@@ -12,5 +23,5 @@ export type IQuestionResponseEditorProps = {
   isScopedObjectCreating: boolean,
   isScopedObjectUpdating: boolean,
   match: any,
-  scopedObjects: Array<QuestionResponse>,
+  scopedObjects: Array<ScopedObjectType>,
 };

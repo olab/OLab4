@@ -32,7 +32,7 @@ export const editResponse = (scopedObjectData) => API
   });
 
 export const getResponseDetails = (questionId, questionResponseId) => API
-  .get(`/olab/questions/${questionId}/questionresponses/${questionResponseId}`)
+  .get(`/olab/questionresponses/${questionResponseId}`)
   .then(({ data: { data: questionResponse } }) => questionResponseFromServer(questionResponse))
   .catch((error) => {
     throw error;

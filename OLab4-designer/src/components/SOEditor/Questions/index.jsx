@@ -24,9 +24,9 @@ import type { IScopedObjectProps } from '../types';
 import CircularSpinnerWithText from '../../../shared/components/CircularSpinnerWithText';
 
 import {
-  LAYOUT_TYPES, QUESTION_TYPES, DEFAULT_WIDTH, DEFAULT_HEIGHT,
+  LAYOUT_TYPES, DEFAULT_WIDTH, DEFAULT_HEIGHT,
 } from './config';
-import { EDITORS_FIELDS } from '../config';
+import { QUESTION_TYPES, EDITORS_FIELDS } from '../config';
 import { SCOPE_LEVELS, SCOPED_OBJECTS } from '../../config';
 import { getKeyByValue } from './utils';
 
@@ -106,8 +106,7 @@ class Questions extends ScopedObjectService {
       return <CircularSpinnerWithText text="Data is being fetched..." large centered />;
     }
 
-    let idInfo = '';
-    idInfo = ` (Id: ${id})`;
+    const idInfo = ` (Id: ${id})`;
 
     return (
       <EditorWrapper

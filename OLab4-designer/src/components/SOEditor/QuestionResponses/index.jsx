@@ -1,16 +1,18 @@
 // @flow
-import React, { PureComponent } from 'react';
+import React from 'react';
+// import React, { PureComponent } from 'react';
 // import { withRouter } from 'react-router-dom';
 // import { connect } from 'react-redux';
 // import { withStyles } from '@material-ui/core/styles';
 
-import { withQuestionResponseRedux } from './index.service';
+// import { withQuestionResponseRedux } from './index.service';
 import CircularSpinnerWithText from '../../../shared/components/CircularSpinnerWithText';
+import ScopedObjectService, { withSORedux } from '../index.service';
 
-import { PAGE_TITLES } from '../../config';
+import { SCOPED_OBJECTS } from '../../config';
 
-import type { IQuestionResponseEditorProps } from './types';
-import type { QuestionResponse } from '../../../redux/questionResponses/types';
+import type { IScopedObjectProps } from './types';
+// import type { QuestionResponse } from '../../../redux/questionResponses/types';
 import OutlinedInput from '../../../shared/components/OutlinedInput';
 import EditorWrapper from '../../../shared/components/EditorWrapper';
 import Switch from '../../../shared/components/Switch';
@@ -18,68 +20,52 @@ import Switch from '../../../shared/components/Switch';
 // import styles from './styles';
 
 import { FieldLabel, SwitchWrapper } from '../styles';
-import { EDITORS_FIELDS } from '../config';
+import { EDITORS_FIELDS, QUESTION_TYPES } from '../config';
 
-class QuestionResponses extends PureComponent<IQuestionResponseEditorProps, QuestionResponse> {
-  constructor(props: IQuestionResponseEditorProps) {
-    super(props);
-
-    this.checkIfEditMode();
+class QuestionResponses extends ScopedObjectService {
+  constructor(props: IScopedObjectProps) {
+    super(props, SCOPED_OBJECTS.QUESTIONRESPONSES.name);
+    this.state = {
+      description: '',
+      id: 0,
+      isCorrect: false,
+      isFieldsDisabled: false,
+      name: '',
+      questionId: 0,
+      questionType: Number(Object.keys(QUESTION_TYPES)[0]),
+      score: 0,
+      text: '',
+    };
   }
 
-  setPageTitle = (name): void => {
-    const title = this.isEditMode ? PAGE_TITLES.EDIT_SO : PAGE_TITLES.ADD_SO;
-    document.title = title(name);
-  }
-
-  checkIfEditMode = (): void => {
-    const {
-      match: {
-        params: {
-          questionId,
-          questionResponseId,
-        },
-      },
-      ACTION_SCOPED_OBJECT_DETAILS_REQUESTED,
-    } = this.props;
-
-    ACTION_SCOPED_OBJECT_DETAILS_REQUESTED(Number(questionId), Number(questionResponseId));
-    this.isEditMode = true;
-  }
-
-  onSwitchChange = (e: Event, value: number | boolean, name: string): void => {
+  handleSliderOrSwitchChange = (e: Event, value: number | boolean, name: string): void => {
     this.setState({ [name]: value });
   };
 
-  handleInputChange = (e: Event): void => {
-    const { value, name } = (e.target: window.HTMLInputElement);
-    this.setState({ [name]: value });
-  }
-
   render() {
     const {
-      scopedObjects,
-    } = this.props;
+      description,
+      id,
+      isCorrect,
+      isFieldsDisabled,
+      name,
+      order,
+      score,
+      text,
+    } = this.state;
 
-    if ((scopedObjects.isFetching)
-      || (scopedObjects.isFetching === null)
-      || (scopedObjects.questionresponses.length === 0)) {
+
+    if (id === 0) {
       return <CircularSpinnerWithText text="Data is being fetched..." large centered />;
     }
 
-    const questionResponse = scopedObjects.questionresponses[0];
-    const idInfo = ` (Id: ${questionResponse.id})`;
-    const isFieldsDisabled = false;
-    const isEditMode = true;
-    const scopedObjectType = 'question response';
-
-    this.setPageTitle(questionResponse.name);
+    const idInfo = ` (Id: ${id})`;
 
     return (
       <EditorWrapper
-        isEditMode={isEditMode}
+        isEditMode={this.isEditMode}
         isDisabled={isFieldsDisabled}
-        scopedObject={scopedObjectType}
+        scopedObject={this.scopedObjectType}
         onSubmit={this.handleSubmitScopedObject}
         hasBackButton={false}
       >
@@ -91,7 +77,7 @@ class QuestionResponses extends PureComponent<IQuestionResponseEditorProps, Ques
           <OutlinedInput
             name="name"
             placeholder={EDITORS_FIELDS.NAME}
-            value={questionResponse.name}
+            value={name}
             onChange={this.handleInputChange}
             disabled={isFieldsDisabled}
             fullWidth
@@ -102,7 +88,7 @@ class QuestionResponses extends PureComponent<IQuestionResponseEditorProps, Ques
           <OutlinedInput
             name="name"
             placeholder={EDITORS_FIELDS.DESCRIPTION}
-            value={questionResponse.description}
+            value={description}
             onChange={this.handleInputChange}
             disabled={isFieldsDisabled}
             fullWidth
@@ -113,7 +99,7 @@ class QuestionResponses extends PureComponent<IQuestionResponseEditorProps, Ques
           <OutlinedInput
             name="name"
             placeholder={EDITORS_FIELDS.TEXT}
-            value={questionResponse.text}
+            value={text}
             onChange={this.handleInputChange}
             disabled={isFieldsDisabled}
             fullWidth
@@ -125,7 +111,7 @@ class QuestionResponses extends PureComponent<IQuestionResponseEditorProps, Ques
           <OutlinedInput
             name="score"
             placeholder={EDITORS_FIELDS.SCORE}
-            value={questionResponse.score}
+            value={score}
             onChange={this.handleInputChange}
             disabled={isFieldsDisabled}
             fullWidth
@@ -137,7 +123,7 @@ class QuestionResponses extends PureComponent<IQuestionResponseEditorProps, Ques
           <OutlinedInput
             name="order"
             placeholder={EDITORS_FIELDS.ORDER}
-            value={questionResponse.order}
+            value={order}
             onChange={this.handleInputChange}
             disabled={isFieldsDisabled}
             fullWidth
@@ -149,7 +135,7 @@ class QuestionResponses extends PureComponent<IQuestionResponseEditorProps, Ques
             name="isCorrect"
             label={EDITORS_FIELDS.IS_CORRECT}
             labelPlacement="start"
-            checked={questionResponse.isCorrect}
+            checked={isCorrect}
             onChange={this.onSwitchChange}
             disabled={isFieldsDisabled}
           />
@@ -160,6 +146,4 @@ class QuestionResponses extends PureComponent<IQuestionResponseEditorProps, Ques
   }
 }
 
-export default withQuestionResponseRedux(
-  QuestionResponses,
-);
+export default withSORedux(QuestionResponses, SCOPED_OBJECTS.QUESTIONRESPONSES.name);

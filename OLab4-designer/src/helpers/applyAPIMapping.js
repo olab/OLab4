@@ -1,6 +1,6 @@
 // @flow
 import { isBoolean, isNumber } from './dataTypes';
-import { QUESTION_TYPES } from '../components/SOEditor/Questions/config';
+import { QUESTION_TYPES } from '../components/SOEditor/config';
 
 
 import type { QuestionResponse } from '../redux/questionResponses/types';

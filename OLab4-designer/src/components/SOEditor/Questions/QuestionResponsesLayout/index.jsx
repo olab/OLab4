@@ -28,7 +28,7 @@ function QuestionResponsesLayout({
   responses,
 }: IQuestionResponsesLayoutProps) {
   const handleScopedObjectClick = (scopedObject: ScopedObjectListItemType): void => {
-    window.open(`/scopedObject/question/${scopedObject.questionId}/questionresponse/${scopedObject.id}`);
+    window.open(`/scopedObject/questionresponse/${scopedObject.id}`);
   };
 
   return (
