@@ -86,15 +86,15 @@ Route::get( 'olab/questions/{id}',                'OlabQuestionAuthoringControll
 Route::delete( 'olab/questions/{id}',             'OlabQuestionAuthoringController@delete');
 Route::put( 'olab/questions/{id}',                'OlabQuestionAuthoringController@edit');
 
-Route::post( 'olab/questions/{id}/questionresponses',
-                                                  'OlabQuestionResponseAuthoringController@create');
+// Route::post( 'olab/questions/{id}/questionresponses',
+//                                                  'OlabQuestionResponseAuthoringController@create');
 Route::get( 'olab/questions/{id}/questionresponses',
                                                   'OlabQuestionResponseAuthoringController@getMany');
-Route::get( 'olab/questions/{id}/questionresponses/{id2}',
+Route::get( 'olab/questionresponses/{id}',
                                                   'OlabQuestionResponseAuthoringController@getSingle');
-Route::delete( 'olab/questions/{id}/questionresponses/{id2}',
+Route::delete( 'olab/questionresponses/{id}',
                                                   'OlabQuestionResponseAuthoringController@delete');
-Route::put( 'olab/questions/{id}/questionresponses/{id2}',
+Route::put( 'olab/questionresponses/{id}',
                                                   'OlabQuestionResponseAuthoringController@edit');
 
 // map API calls

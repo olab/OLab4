@@ -298,9 +298,9 @@ abstract class OlabAuthoringController extends OlabController
    * @throws Exception 
    * @return MapNodes
    */
-  protected function get_question_response( Questions $oQuestion, $id ) {
+  protected function get_question_response( $id ) {
     
-    $oObj = $oQuestion->QuestionResponses()->find( $id );
+    $oObj = QuestionResponses::find( $id );
 
     if ( $oObj == null ) {
       throw new OlabObjectNotFoundException("QuestionResponse", $id );

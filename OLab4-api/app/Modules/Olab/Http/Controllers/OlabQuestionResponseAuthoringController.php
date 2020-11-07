@@ -41,13 +41,13 @@ use Entrada\Modules\Olab\Models\MapNodes;
 use Entrada\Modules\Olab\Classes\GlobalObjectManager;
 use Entrada\Modules\Olab\Classes\PostDataHandler;
 
-class OlabQuestionResponseAuthoringController extends OlabScopedObjectAuthoringController 
+class OlabQuestionResponseAuthoringController extends OlabScopedObjectAuthoringController
 {
   // override for abstract class to provide url subpath
   public function get_object_url_subpath() { return "questionresponses"; }
-  
+
   public function create( Request $request, int $question_id ) {
-    
+
     // spin up a function tracer.  Handles entry/exit/timing messages
     $tracer = new OlabCodeTracer(__CLASS__, __FUNCTION__ . "($question_id)" );
     $payload = array();
@@ -80,7 +80,7 @@ class OlabQuestionResponseAuthoringController extends OlabScopedObjectAuthoringC
       $oPostData->get_integer_optional( $oObj, 'score');
 
       $oObj->save();
-      
+
       $aData['id'] = $oObj->id;
 
       Log::info( "created new question_response. id = " . $oObj->id );
@@ -126,9 +126,9 @@ class OlabQuestionResponseAuthoringController extends OlabScopedObjectAuthoringC
         OLabUtilities::safe_rename( $item, 'order' );
         OLabUtilities::safe_rename( $item, 'isCorrect' );
 
-        $item['url'] = OLabUtilities::get_path_info()['apiBaseUrl'] . 
+        $item['url'] = OLabUtilities::get_path_info()['apiBaseUrl'] .
           "questions/$question_id/" . $this->get_object_url( $record->id );
-        
+
         array_push( $payload, $item );
 
         //}
@@ -150,10 +150,10 @@ class OlabQuestionResponseAuthoringController extends OlabScopedObjectAuthoringC
 
   }
 
-  public function getSingle( Request $request, int $question_id, int $response_id ) {
-    
+  public function getSingle( Request $request, int $response_id ) {
+
     // spin up a function tracer.  Handles entry/exit/timing messages
-    $tracer = new OlabCodeTracer(__CLASS__, __FUNCTION__ . "($question_id, $response_id)" );
+    $tracer = new OlabCodeTracer(__CLASS__, __FUNCTION__ . "($response_id)" );
     $payload = array();
 
     try {
@@ -161,6 +161,10 @@ class OlabQuestionResponseAuthoringController extends OlabScopedObjectAuthoringC
       // run common controller initialization
       $this->initialize( $request );
 
+      $oResponse = $this->get_question_response( $response_id );
+      $aResponse = $oResponse->toArray();
+
+      $question_id = $aResponse['questionId'];
       $oQuestion = $this->get_question( $question_id );
 
       // test access control context based on object type to evaluate.
@@ -169,10 +173,6 @@ class OlabQuestionResponseAuthoringController extends OlabScopedObjectAuthoringC
         throw new OlabAccessDeniedException("question = $question_id");
       }
 
-      $oResponse = $this->get_question_response( $oQuestion, $response_id );
-
-      $aResponse = $oResponse->toArray();
-      
       $payload = OLabUtilities::make_api_return( null, $tracer, $aResponse );
     }
     catch (Exception $exception) {
@@ -185,10 +185,10 @@ class OlabQuestionResponseAuthoringController extends OlabScopedObjectAuthoringC
 
   }
 
-  public function delete( Request $request, int $question_id, int $response_id ) {
-    
+  public function delete( Request $request, int $response_id ) {
+
     // spin up a function tracer.  Handles entry/exit/timing messages
-    $tracer = new OlabCodeTracer(__CLASS__, __FUNCTION__ . "($question_id, $response_id)" );
+    $tracer = new OlabCodeTracer(__CLASS__, __FUNCTION__ . "($response_id)" );
     $payload = array();
 
     try {
@@ -196,17 +196,19 @@ class OlabQuestionResponseAuthoringController extends OlabScopedObjectAuthoringC
       // run common controller initialization
       $this->initialize( $request );
 
+      $oResponse = $this->get_question_response( $response_id );
+      $aResponse = $oResponse->toArray();
+
+      $question_id = $aResponse['questionId'];
       $oQuestion = $this->get_question( $question_id );
 
       // test access control context based on object type to evaluate.
       $oAccessControl = AccessControlBase::classFactory( $oQuestion );
-      if ( !$oAccessControl->isDeletable( $question_id )) {
-        throw new OlabAccessDeniedException("question_response_id = $question_id");
+      if ( !$oAccessControl->isListable( $question_id )) {
+          throw new OlabAccessDeniedException("question = $question_id");
       }
 
-      $oObj = $this->get_question_response( $oQuestion, $response_id );
-
-      $this->delete_scoped_object( $oObj );    
+      $this->delete_scoped_object( $oResponse );
 
       $payload = OLabUtilities::make_api_return( null, $tracer );
 
@@ -219,10 +221,10 @@ class OlabQuestionResponseAuthoringController extends OlabScopedObjectAuthoringC
     return response()->json($payload);
   }
 
-  public function edit( Request $request, int $question_id, int $response_id ) {
-    
+  public function edit( Request $request, int $response_id ) {
+
     // spin up a function tracer.  Handles entry/exit/timing messages
-    $tracer = new OlabCodeTracer(__CLASS__, __FUNCTION__ . "($question_id, $response_id)" );
+    $tracer = new OlabCodeTracer(__CLASS__, __FUNCTION__ . "($response_id)" );
     $payload = array();
 
     try {
@@ -230,16 +232,25 @@ class OlabQuestionResponseAuthoringController extends OlabScopedObjectAuthoringC
       // run common controller initialization
       $this->initialize( $request );
 
+      $oResponse = $this->get_question_response( $response_id );
+      $aResponse = $oResponse->toArray();
+
+      $question_id = $aResponse['questionId'];
       $oQuestion = $this->get_question( $question_id );
-      $oObj = $this->get_question_response( $oQuestion, $response_id );
+
+      // test access control context based on object type to evaluate.
+      $oAccessControl = AccessControlBase::classFactory( $oQuestion );
+      if ( !$oAccessControl->isListable( $question_id )) {
+          throw new OlabAccessDeniedException("question = $question_id");
+      }
 
       // get/update title field
-      $this->oPostData->get_text_optional( $oObj, 'response');
-      $this->oPostData->get_integer_optional( $oObj, 'isCorrect');
-      $this->oPostData->get_integer_optional( $oObj, 'score');
-      $this->oPostData->get_integer_optional( $oObj, 'order');
+      $this->oPostData->get_text_optional( $oResponse, 'response');
+      $this->oPostData->get_integer_optional( $oResponse, 'isCorrect');
+      $this->oPostData->get_integer_optional( $oResponse, 'score');
+      $this->oPostData->get_integer_optional( $oResponse, 'order');
 
-      $this->write_object( $oObj );    
+      $this->write_object( $oResponse );
 
       $payload = OLabUtilities::make_api_return( null, $tracer );
 
