@@ -17,9 +17,9 @@ import OutlinedInput from '../../../shared/components/OutlinedInput';
 import EditorWrapper from '../../../shared/components/EditorWrapper';
 import Switch from '../../../shared/components/Switch';
 
-// import styles from './styles';
+import { OtherContent, FullContainerWidth } from './styles';
 
-import { FieldLabel, SwitchWrapper } from '../styles';
+import { FieldLabel } from '../styles';
 import { EDITORS_FIELDS, QUESTION_TYPES } from '../config';
 
 class QuestionResponses extends ScopedObjectService {
@@ -105,41 +105,46 @@ class QuestionResponses extends ScopedObjectService {
             fullWidth
           />
         </FieldLabel>
-
+        <OtherContent>
+          <FullContainerWidth>
+            <FieldLabel>
+              {EDITORS_FIELDS.SCORE}
+              <OutlinedInput
+                classes="fullWidth"
+                name="score"
+                placeholder={EDITORS_FIELDS.SCORE}
+                value={score}
+                onChange={this.handleInputChange}
+                disabled={isFieldsDisabled}
+                fullWidth
+              />
+            </FieldLabel>
+          </FullContainerWidth>
+          <FullContainerWidth>
+            <FieldLabel>
+              {EDITORS_FIELDS.ORDER}
+              <OutlinedInput
+                classes="fullWidth"
+                name="order"
+                placeholder={EDITORS_FIELDS.ORDER}
+                value={order}
+                onChange={this.handleInputChange}
+                disabled={isFieldsDisabled}
+                fullWidth
+              />
+            </FieldLabel>
+          </FullContainerWidth>
+        </OtherContent>
         <FieldLabel>
-          {EDITORS_FIELDS.SCORE}
-          <OutlinedInput
-            name="score"
-            placeholder={EDITORS_FIELDS.SCORE}
-            value={score}
-            onChange={this.handleInputChange}
-            disabled={isFieldsDisabled}
-            fullWidth
-          />
-        </FieldLabel>
-
-        <FieldLabel>
-          {EDITORS_FIELDS.ORDER}
-          <OutlinedInput
-            name="order"
-            placeholder={EDITORS_FIELDS.ORDER}
-            value={order}
-            onChange={this.handleInputChange}
-            disabled={isFieldsDisabled}
-            fullWidth
-          />
-        </FieldLabel>
-
-        <SwitchWrapper>
+          {EDITORS_FIELDS.IS_CORRECT}
           <Switch
             name="isCorrect"
-            label={EDITORS_FIELDS.IS_CORRECT}
             labelPlacement="start"
             checked={isCorrect}
             onChange={this.onSwitchChange}
             disabled={isFieldsDisabled}
           />
-        </SwitchWrapper>
+        </FieldLabel>
 
       </EditorWrapper>
     );

@@ -1,3 +1,4 @@
+import styled from 'styled-components';
 import { BLUE_GREY } from '../../../shared/colors';
 
 const styles = () => ({
@@ -16,5 +17,15 @@ const styles = () => ({
     height: '2.5rem',
   },
 });
+
+export const OtherContent = styled.div`
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 0.7rem;
+`;
+
+export const FullContainerWidth = styled.div`
+  width: 100%;
+`;
 
 export default styles;
