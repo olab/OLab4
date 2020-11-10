@@ -3,7 +3,7 @@ import {
 } from 'redux-saga/effects';
 import {
   getScopedObjects,
-  getScopedObject,
+  getScopedObjectDetails,
   getScopedObjectsByType,
   createScopedObject,
   editScopedObject,
@@ -69,7 +69,7 @@ function* getScopedObjectsByTypeSaga({ scopedObjectType }) {
 function* getScopedObjectDetailsSaga({ scopedObjectId, scopedObjectType }) {
   try {
     const scopedObjectDetails = yield call(
-      getScopedObject,
+      getScopedObjectDetails,
       scopedObjectId,
       scopedObjectType,
     );

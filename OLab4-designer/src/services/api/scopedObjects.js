@@ -29,7 +29,7 @@ export const getScopedObjectsByType = scopedObjectType => API
     throw error;
   });
 
-export const getScopedObject = (scopedObjectId, scopedObjectType) => API
+export const getScopedObjectDetails = (scopedObjectId, scopedObjectType) => API
   .get(`/olab/${scopedObjectType}/${scopedObjectId}`)
   .then(({
     data: { data: scopedObjectDetails },
@@ -61,6 +61,42 @@ export const editScopedObject = (scopedObjectId, scopedObjectType, editedScopedO
 
 export const deleteScopedObject = (scopedObjectId, scopedObjectType) => API
   .delete(`/olab/${scopedObjectType}/${scopedObjectId}`)
+  .catch((error) => {
+    throw error;
+  });
+
+export const getQuestionResponseDetails = (questionId, questionResponseId) => API
+  .get(`/olab/questions/${questionId}/questionResponses/${questionResponseId}`)
+  .then(({
+    data: { data: scopedObjectDetails },
+  }) => scopedObjectDetailsFromServer(scopedObjectDetails))
+  .catch((error) => {
+    throw error;
+  });
+
+export const createQuestionResponse = (questionId, questionResponseId, scopedObjectData) => API
+  .post(`/olab/questions/${questionId}/questionResponses/${questionResponseId}`, {
+    data: {
+      ...scopedObjectToServer(scopedObjectData),
+    },
+  })
+  .then(({ data: { data: { id: scopedObjectId } } }) => scopedObjectId)
+  .catch((error) => {
+    throw error;
+  });
+
+export const editQuestionResponse = (questionId, questionResponseId, editedScopedObjectData) => API
+  .put(`/olab/questions/${questionId}/questionResponses/${questionResponseId}`, {
+    data: {
+      ...scopedObjectToServer(editedScopedObjectData),
+    },
+  })
+  .catch((error) => {
+    throw error;
+  });
+
+export const deleteQuestionResponse = (questionId, questionResponseId) => API
+  .delete(`/olab/questions/${questionId}/questionResponses/${questionResponseId}`)
   .catch((error) => {
     throw error;
   });
