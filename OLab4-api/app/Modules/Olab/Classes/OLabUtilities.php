@@ -37,7 +37,7 @@ class OLabUtilities
 
   /**
    * Safe decode string, if base64 or not
-   * @param mixed $source 
+   * @param mixed $source
    * @return mixed
    */
   public static function safe_base64_decode( $source ) {
@@ -65,7 +65,7 @@ class OLabUtilities
   }
 
   public static function safe_rename( &$array, string $source_name, $new_name = null) {
-    
+
     // test if source key is set
     if ( array_key_exists( $source_name, $array )) {
 
@@ -76,7 +76,7 @@ class OLabUtilities
 
       }
       else {
-        
+
         unset( $array[$source_name] );
 
       }
@@ -105,7 +105,7 @@ class OLabUtilities
 
   /**
    * Adds a string to the <HEAD> section
-   * @param mixed $html 
+   * @param mixed $html
    */
   public static function addToHead( $html ) {
     global $HEAD;
@@ -114,7 +114,7 @@ class OLabUtilities
 
   /**
    * Add a cache-buster parameter
-   * @param mixed $file_location 
+   * @param mixed $file_location
    * @return string
    */
   public static function get( $file_location = null){
@@ -154,19 +154,19 @@ class OLabUtilities
         'siteRelativeUrl' => HostSystemApi::getRelativePath(),
         // e.g. 'http://olab4.localhost/apidev/api/v2/olab'
         'apiBaseUrl' => HostSystemApi::getRootUrl() . '/' . API_BASE_PATH . "/olab"
-    );    
+    );
   }
 
   public static function make_api_return( $exception = null, $tracer = null, $payload = "", $status = 0, $error_code = 0, $message = "" ) {
-    
+
     $data = array();
 
     $data['status'] = $status;
     $data['error_code'] = $error_code;
-    $data['message'] = "success";      
+    $data['message'] = "success";
 
     if ( strlen( $message ) > 0 ) {
-      $data['message'] = $message;      
+      $data['message'] = $message;
     }
 
     $diagnostics = array();
@@ -176,12 +176,12 @@ class OLabUtilities
       $data['message'] = $exception->getMessage();
 
       if ( $status == null ) {
-        $data['status'] = 1;          
+        $data['status'] = 1;
       }
 
       if ( $error_code == null ) {
-        $data['error_code'] = $exception->getCode();          
-      }       
+        $data['error_code'] = $exception->getCode();
+      }
 
       $exception_type = get_class( $exception );
 
@@ -208,10 +208,10 @@ class OLabUtilities
       }
 
       if ( $tracer != null ) {
-        $diagnostics['location'] = $tracer->sBlockName;      
+        $diagnostics['location'] = $tracer->sBlockName;
       }
 
-      $diagnostics['stack'] = $exception->getTrace();      
+      $diagnostics['stack'] = $exception->getTrace();
 
       // limit stack to only last 5 levels
       if ( sizeof( $diagnostics['stack'] ) > self::MAX_STACK_DEPTH ) {
@@ -220,7 +220,7 @@ class OLabUtilities
 
       // get rid of args from stack - too big
       foreach( $diagnostics['stack'] as &$item ) {
-      
+
         if ( isset( $item['args'])) {
           unset( $item['args'] );
         }
@@ -233,7 +233,7 @@ class OLabUtilities
     $data['diagnostics'] = $diagnostics;
     $data['data'] = array();
     if ( $payload != null ) {
-      $data['data'] = $payload;      
+      $data['data'] = $payload;
     }
 
     return $data;
@@ -399,46 +399,46 @@ class OLabUtilities
   }
 
   public static function get_script_version( ) {
-    
+
     //$script_version = date("H.i.Y.m.d");
     return self::$script_version;
 
   }
 
   public static function get_object_type( $oObj ) {
-      
-      $type = gettype( $oObj );
-      if ( $type != "object") {
-          return $type;
-      }
 
-      $ancestry = class_parents( $oObj );
-      
-      $string = get_class( $oObj) . '<-' .
-                implode('<-', array_reverse( $ancestry ));
+    $type = gettype( $oObj );
+    if ( $type != "object") {
+      return $type;
+    }
 
-      return $string;
+    $ancestry = class_parents( $oObj );
+
+    $string = get_class( $oObj) . '<-' .
+              implode('<-', array_reverse( $ancestry ));
+
+    return $string;
 
   }
 
   /**
    * Tests if an object is derived from a named type
-   * @param mixed $instance 
-   * @param mixed $target_type 
+   * @param mixed $oObj
+   * @param mixed $target_type
    * @return string
    */
-  public static function is_of_type( $instance, $target_type ) {
-    
-    if ( $instance == null ) {
+  public static function is_of_type( $oObj, $target_type ) {
+
+    if ( $oObj == null ) {
       return false;
     }
 
     // test special test if testing for array
-    if ( is_array( $instance ) ) {
+    if ( is_array( $oObj ) ) {
       return $target_type === "array";
     }
 
-    $string = self::get_object_type( $instance );
+    $string = self::get_object_type( $oObj );
     return strpos( $string, $target_type ) !== false;
 
   }
@@ -446,42 +446,54 @@ class OLabUtilities
 
   /**
    * Summary of get_parent_object
-   * @param mixed $oObj source model object 
-   * @param mixed $throw 
-   * @throws Exception 
+   * @param mixed $oObj source model object
+   * @param mixed $throw
+   * @throws Exception
    * @return mixed
    */
-   public static function get_parent_object( $oObj, $throw = true ) {
-    
-    $scope_level = $oObj->imageable_type;
-    $parent_id = $oObj->imageable_id;
+  public static function get_parent_object( $oObj, $throw = true ) {
 
-    $oObj = null;
-    if ( $scope_level == Servers::IMAGEABLE_TYPE ) {
-      $oObj = Servers::find( $parent_id );
+    $oParentObj = null;
+
+    // handle special case of question response, which tehnically
+    // isn't a scoped object
+    if ( self::is_of_type( $oObj, "QuestionResponses" ) ) {
+
+      $oParentObj = Questions::find( $oObj->question_id );
+
+    }
+    else {
+
+      $scope_level = $oObj->imageable_type;
+      $parent_id = $oObj->imageable_id;
+
+      if ( $scope_level == Servers::IMAGEABLE_TYPE ) {
+        $oParentObj = Servers::find( $parent_id );
+      }
+
+      else if ( $scope_level == Maps::IMAGEABLE_TYPE ) {
+        $oParentObj = Maps::find( $parent_id );
+      }
+
+      else if ( $scope_level == MapNodes::IMAGEABLE_TYPE ) {
+        $oParentObj = MapNodes::find( $parent_id );
+      }
+
+      else if ( $scope_level == Courses::IMAGEABLE_TYPE ) {
+        $oParentObj = Courses::find( $parent_id );
+      }
+
+      else if ( $scope_level == Globals::IMAGEABLE_TYPE ) {
+        $oParentObj = Globals::find( $parent_id );
+      }
+
     }
 
-    else if ( $scope_level == Maps::IMAGEABLE_TYPE ) {
-      $oObj = Maps::find( $parent_id );
-    }
-
-    else if ( $scope_level == MapNodes::IMAGEABLE_TYPE ) {
-      $oObj = MapNodes::find( $parent_id );
-    }
-
-    else if ( $scope_level == Courses::IMAGEABLE_TYPE ) {
-      $oObj = Courses::find( $parent_id );
-    }
-
-    else if ( $scope_level == Globals::IMAGEABLE_TYPE ) {
-      $oObj = Globals::find( $parent_id );
-    }
-
-    if ( ( $oObj == null ) && ( $throw ) ) {
+    if ( ( $oParentObj == null ) && ( $throw ) ) {
       throw new OlabObjectNotFoundException( $scope_level, $parent_id );
     }
 
-    return $oObj;
+    return $oParentObj;
 
   }
 }

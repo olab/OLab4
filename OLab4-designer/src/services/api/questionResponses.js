@@ -6,19 +6,19 @@ import {
 
 const API = createInstance();
 
-export const createResponse = (questionId, scopedObjectData) => API
-  .post(`/olab/questions/${questionId}/questionresponses`, {
+export const deleteResponse = (questionResponseId) => API
+  .delete(`/olab/questionresponses/${questionResponseId}`)
+  .catch((error) => {
+    throw error;
+  });
+
+export const createResponse = (scopedObjectData) => API
+  .post('/olab/questionresponses', {
     data: {
       ...questionResponseToServer(scopedObjectData),
     },
   })
   .then(({ data: { data: { id: scopedObjectId } } }) => scopedObjectId)
-  .catch((error) => {
-    throw error;
-  });
-
-export const deleteResponse = (questionId, questionResponseId) => API
-  .delete(`/olab/questions/${questionId}/questionresponses/${questionResponseId}`)
   .catch((error) => {
     throw error;
   });
@@ -31,7 +31,7 @@ export const editResponse = (scopedObjectData) => API
     throw error;
   });
 
-export const getResponseDetails = (questionId, questionResponseId) => API
+export const getResponseDetails = (questionResponseId) => API
   .get(`/olab/questionresponses/${questionResponseId}`)
   .then(({ data: { data: questionResponse } }) => questionResponseFromServer(questionResponse))
   .catch((error) => {

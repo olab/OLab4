@@ -1,13 +1,8 @@
 // @flow
 import React from 'react';
-// import React, { PureComponent } from 'react';
-// import { withRouter } from 'react-router-dom';
-// import { connect } from 'react-redux';
-// import { withStyles } from '@material-ui/core/styles';
-
-// import { withQuestionResponseRedux } from './index.service';
+import { withSORedux } from './index.service';
 import CircularSpinnerWithText from '../../../shared/components/CircularSpinnerWithText';
-import ScopedObjectService, { withSORedux } from '../index.service';
+import ScopedObjectService from '../index.service';
 
 import { SCOPED_OBJECTS } from '../../config';
 

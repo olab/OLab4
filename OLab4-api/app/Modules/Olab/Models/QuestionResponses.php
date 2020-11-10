@@ -46,143 +46,157 @@ use Entrada\Modules\Olab\Classes\OLabUtilities;
 
 class QuestionResponses extends BaseModel {
 
-    const XML_FILE = "map_question_response.xml";
-    const XML_ROOT_ELEMENT = "map_question_response_";
+  const XML_FILE = "map_question_response.xml";
+  const XML_ROOT_ELEMENT = "map_question_response_";
 
-    protected $table = 'system_question_responses';
-    protected $fillable = ['parent_id','name','description', 'question_id','response','feedback','is_correct','score',
-                           'from','to','order'];
-    protected $validations = ['parent_id' => 'exists:system_question_responses,id|integer|min:0',
-                            'name' => 'max:50|string',
-                            'description' => 'string',
-                            'question_id' => 'exists:system_questions,id|integer|min:0',
-                            'response' => 'max:250|string',
-                            'feedback' => 'string',
-                            'is_correct' => 'integer',
-                            'score' => 'integer',
-                            'from' => 'max:200|string',
-                            'to' => 'max:200|string',
-                            'order' => 'integer|min:0|required'];
+  protected $table = 'system_question_responses';
+  protected $fillable = [
+    'description',
+    'feedback',
+    'from',
+    'is_correct',
+    'name',
+    'order',
+    'parent_id',
+    'question_id',
+    'response',
+    'score',
+    'to',
+  ];
 
-    protected $attributes = array(
-      'response' => '',
-      'score' => 0 );
+  protected $validations = [
+    'description' => 'string',
+    'feedback' => 'string',
+    'from' => 'max:200|string',
+    'is_correct' => 'integer',
+    'name' => 'max:50|string',
+    'order' => 'integer|min:0|required',
+    'parent_id' => 'exists:system_question_responses,id|integer|min:0',
+    'question_id' => 'exists:system_questions,id|integer|min:0',
+    'response' => 'max:250|string',
+    'score' => 'integer',
+    'to' => 'max:200|string',
+  ];
 
-    protected $post_to_db_column_translation = [ 
+  protected $attributes = array(
+    'response' => '',
+    'score' => 0 );
 
-      // alias => raw
-      'questionId' => 'question_id',
-      'isCorrect' => 'is_correct'
-    ];
+  protected $post_to_db_column_translation = [
 
-    public function toArray() {
-      
-      $aObj = parent::toArray();
+    // alias => raw
+    'questionId' => 'question_id',
+    'isCorrect' => 'is_correct'
+  ];
 
-      OLabUtilities::safe_rename( $aObj, 'question_id', 'questionId' );
-      OLabUtilities::safe_rename( $aObj, 'parent_id' );
-      OLabUtilities::safe_rename( $aObj, 'feedback' );
-      OLabUtilities::safe_rename( $aObj, 'from' );
-      OLabUtilities::safe_rename( $aObj, 'to' );
-      OLabUtilities::safe_rename( $aObj, 'is_correct', 'isCorrect');
+  public function toArray() {
 
-      return $aObj;
+    $aObj = parent::toArray();
 
+    OLabUtilities::safe_rename( $aObj, 'question_id', 'questionId' );
+    OLabUtilities::safe_rename( $aObj, 'parent_id' );
+    OLabUtilities::safe_rename( $aObj, 'feedback' );
+    OLabUtilities::safe_rename( $aObj, 'from' );
+    OLabUtilities::safe_rename( $aObj, 'to' );
+    OLabUtilities::safe_rename( $aObj, 'is_correct', 'isCorrect');
+
+    return $aObj;
+
+  }
+
+  public function Question() {
+    return $this->belongsTo('Entrada\Modules\Olab\Models\Questions');
+  }
+
+  /**
+   * Create object from legacy source object
+   * @param mixed $nParentId
+   * @param mixed $oSourceObj map_node record
+   * @return QuestionResponses|null new question response, or null is source not of expected type
+   */
+  public static function Create( $nParentId, $oSourceObj ) {
+
+    // get class name to ensure the source is supported
+    $sClassName = get_class( $oSourceObj );
+    $parts = explode('\\', $sClassName );
+    $sClassName = array_pop( $parts );
+
+    // we can only create an object from MapQuestions,
+    // return if it's not what we expect
+    if ( $sClassName != "MapQuestionResponses")
+      throw new Exception("Unknown source type '" . $sClassName . ".");
+
+    $instance = new self();
+
+    $instance->parent_id    = $oSourceObj->parent_id  ;
+    $instance->question_id  = $nParentId              ;
+    $instance->response     = $oSourceObj->response   ;
+    $instance->feedback     = $oSourceObj->feedback   ;
+    $instance->is_correct   = $oSourceObj->is_correct ;
+    $instance->score        = $oSourceObj->score      ;
+    $instance->from         = $oSourceObj->from       ;
+    $instance->to           = $oSourceObj->to         ;
+    $instance->order        = $oSourceObj->order      ;
+
+    return $instance;
+  }
+
+  /**
+   * Import from xml file
+   * @param mixed $import_directory Base import directory
+   * @throws Exception
+   * @return Maps
+   */
+  public static function import( $import_directory, $parent_id ) {
+
+    $items = array();
+
+    $file_name = $import_directory . DIRECTORY_SEPARATOR . self::XML_FILE;
+
+    // file is optional
+    if ( !file_exists( $file_name ))
+      return $items;
+
+    $xmlReader = new XMLReader;
+    $xmlReader->open( $file_name );
+    $doc = new DOMDocument;
+
+    // build element to look for
+    $index = 0;
+    $current_root_name = self::XML_ROOT_ELEMENT . $index;
+
+    // move to the first record
+    while ($xmlReader->read() && $xmlReader->name !== $current_root_name );
+
+    // now that we're at the right depth, hop to the next record until the end of the tree
+    while ( $xmlReader->name === $current_root_name )
+    {
+      // either one should work
+      $node = simplexml_import_dom($doc->importNode($xmlReader->expand(), true));
+
+      $instance = new self();
+
+      $instance->id           = (int)$node->id                ;
+      $instance->parent_id    = null                          ;
+      $instance->question_id  = (int)$node->question_id       ;
+      $instance->response     = base64_decode( $node->response );
+      $instance->feedback     = $node->feedback               ;
+      $instance->is_correct   = (int)$node->is_correct        ;
+      $instance->score        = (int)$node->score             ;
+      $instance->from         = $node->from                   ;
+      $instance->to           = $node->to                     ;
+      $instance->order        = $node->order                  ;
+
+      array_push( $items, $instance );
+
+      // update element to next record in sequence
+      $index++;
+      $current_root_name = self::XML_ROOT_ELEMENT . $index;
+      $xmlReader->next( $current_root_name );
     }
 
-    public function Question() {
-        return $this->belongsTo('Entrada\Modules\Olab\Models\Questions');
-    }
+    return $items;
 
-    /**
-     * Create object from legacy source object
-     * @param mixed $nParentId 
-     * @param mixed $oSourceObj map_node record
-     * @return QuestionResponses|null new question response, or null is source not of expected type
-     */
-    public static function Create( $nParentId, $oSourceObj ) {
-
-        // get class name to ensure the source is supported
-        $sClassName = get_class( $oSourceObj );
-        $parts = explode('\\', $sClassName );
-        $sClassName = array_pop( $parts );
-
-        // we can only create an object from MapQuestions,
-        // return if it's not what we expect
-        if ( $sClassName != "MapQuestionResponses")
-            throw new Exception("Unknown source type '" . $sClassName . ".");
-
-        $instance = new self();
-
-        $instance->parent_id    = $oSourceObj->parent_id  ;
-        $instance->question_id  = $nParentId              ;
-        $instance->response     = $oSourceObj->response   ;
-        $instance->feedback     = $oSourceObj->feedback   ;
-        $instance->is_correct   = $oSourceObj->is_correct ;
-        $instance->score        = $oSourceObj->score      ;
-        $instance->from         = $oSourceObj->from       ;
-        $instance->to           = $oSourceObj->to         ;
-        $instance->order        = $oSourceObj->order      ;
-        
-        return $instance;
-    }
-
-    /**
-     * Import from xml file
-     * @param mixed $import_directory Base import directory
-     * @throws Exception 
-     * @return Maps
-     */
-    public static function import( $import_directory, $parent_id ) {
-
-        $items = array();
-
-        $file_name = $import_directory . DIRECTORY_SEPARATOR . self::XML_FILE;
-
-        // file is optional
-        if ( !file_exists( $file_name ))
-            return $items;
-
-        $xmlReader = new XMLReader;
-        $xmlReader->open( $file_name );
-        $doc = new DOMDocument;
-
-        // build element to look for
-        $index = 0;
-        $current_root_name = self::XML_ROOT_ELEMENT . $index;
-
-        // move to the first record
-        while ($xmlReader->read() && $xmlReader->name !== $current_root_name );
-
-        // now that we're at the right depth, hop to the next record until the end of the tree
-        while ( $xmlReader->name === $current_root_name )
-        {
-            // either one should work
-            $node = simplexml_import_dom($doc->importNode($xmlReader->expand(), true));
-
-            $instance = new self();
-
-            $instance->id           = (int)$node->id                ;
-            $instance->parent_id    = null                          ;
-            $instance->question_id  = (int)$node->question_id       ;
-            $instance->response     = base64_decode( $node->response );
-            $instance->feedback     = $node->feedback               ;
-            $instance->is_correct   = (int)$node->is_correct        ;
-            $instance->score        = (int)$node->score             ;
-            $instance->from         = $node->from                   ;
-            $instance->to           = $node->to                     ;
-            $instance->order        = $node->order                  ;
-
-            array_push( $items, $instance );
-
-            // update element to next record in sequence
-            $index++;
-            $current_root_name = self::XML_ROOT_ELEMENT . $index;
-            $xmlReader->next( $current_root_name );
-        }
-
-        return $items;
-
-    }
+  }
 
 }

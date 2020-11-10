@@ -245,10 +245,14 @@ class OlabQuestionResponseAuthoringController extends OlabScopedObjectAuthoringC
       }
 
       // get/update title field
-      $this->oPostData->get_text_optional( $oResponse, 'response');
       $this->oPostData->get_integer_optional( $oResponse, 'isCorrect');
-      $this->oPostData->get_integer_optional( $oResponse, 'score');
       $this->oPostData->get_integer_optional( $oResponse, 'order');
+      $this->oPostData->get_integer_optional( $oResponse, 'questionType');
+      $this->oPostData->get_integer_optional( $oResponse, 'score');
+      $this->oPostData->get_text_optional( $oResponse, 'description');
+      $this->oPostData->get_text_optional( $oResponse, 'name');
+      $this->oPostData->get_text_optional( $oResponse, 'response');
+      $this->oPostData->get_text_optional( $oResponse, 'text');
 
       $this->write_object( $oResponse );
 
