@@ -105,12 +105,12 @@ type ScopedObjectsDetailsFulfilled = {
 };
 
 const SCOPED_OBJECT_CREATE_FAILED = 'SCOPED_OBJECT_CREATE_FAILED';
-type ScopedObjectsCreateFailed = {
+type ScopedObjectCreateFailed = {
   type: 'SCOPED_OBJECT_CREATE_FAILED',
 };
 
 const SCOPED_OBJECT_CREATE_SUCCEEDED = 'SCOPED_OBJECT_CREATE_SUCCEEDED';
-type ScopedObjectsCreateSucceeded = {
+type ScopedObjectCreateSucceeded = {
   type: 'SCOPED_OBJECT_CREATE_SUCCEEDED',
   scopedObjectId: number,
   scopedObjectType: string,
@@ -118,7 +118,7 @@ type ScopedObjectsCreateSucceeded = {
 };
 
 const SCOPED_OBJECT_CREATE_REQUESTED = 'SCOPED_OBJECT_CREATE_REQUESTED';
-type ScopedObjectsCreateRequested = {
+type ScopedObjectCreateRequested = {
   type: 'SCOPED_OBJECT_CREATE_REQUESTED',
   scopedObjectType: string,
   scopedObjectData: ScopedObjects,
@@ -182,8 +182,8 @@ type ScopedObjectDeleteFailed = {
 export type ScopedObjectsActions = ScopedObjectsRequestSucceeded |
   ScopedObjectsRequested | ScopedObjectsRequestFailed |
   ScopedObjectsDetailsRequested | ScopedObjectsDetailsFulfilled |
-  ScopedObjectsCreateFailed | ScopedObjectsCreateSucceeded |
-  ScopedObjectsCreateRequested | ScopedObjectUpdateRequested |
+  ScopedObjectCreateFailed | ScopedObjectCreateSucceeded |
+  ScopedObjectCreateRequested | ScopedObjectUpdateRequested |
   ScopedObjectUpdateFulfilled | ScopedObjectsTypedRequested |
   ScopedObjectsTypedSucceeded | ScopedObjectsTypedFailed |
   ScopedObjectsClear | ScopedObjectDeleteRequested |
