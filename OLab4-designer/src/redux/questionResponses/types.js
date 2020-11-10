@@ -1,30 +1,66 @@
 // @flow
-export type QuestionResponse = {
-  acl: string,
-  created_at: string,
-  description: string,
-  feedback: string,
-  from: string,
-  id: number,
-  is_correct: boolean,
-  isDetailsFetching: boolean,
+export type ScopedObjectBase = {
+  id?: number,
+  width?: number,
+  height?: number,
+  status?: number,
+  visible?: number,
+  fileSize?: number,
+  layoutType?: number,
+  questionType?: number,
+  parentId: number | null,
+  url?: string,
   name: string,
-  order: number,
-  parent_id: number,
-  question_id: number,
-  response: string,
-  score: number,
-  to: string,
-  updated_At: string,
+  stem?: string,
+  path?: string,
+  mime?: string,
+  wiki?: string,
+  value?: string,
+  contents?: string,
+  feedback?: string,
+  widthType?: string,
+  copyright?: string,
+  scopeLevel: string,
+  originUrl?: string,
+  heightType?: string,
+  startValue?: string,
+  description: string,
+  resourceUrl?: string,
+  placeholder?: string,
+  isEmbedded?: boolean,
+  isShowAnswer?: boolean,
+  isShowSubmit?: boolean,
 };
 
-export type QuestionResponseListItem = {
+export type ScopedObjectDetails = {
+  outOf: number,
+  value: string,
+  prefix: string,
+  suffix: string,
+  scopeLevel: string,
+  startValue: string,
+  description: string,
+};
+
+export type ScopedObjectListItem = {
   id: number,
-  ...QuestionResponse,
+  ...ScopedObjectBase,
 }
 
+export type ScopedObject = {
+  id: number,
+  acl: string,
+  name: string,
+  wiki: string,
+  scopeLevel: string,
+  description: string,
+  isShowEyeIcon: boolean,
+  isDetailsFetching: boolean,
+  details: null | ScopedObjectDetails,
+};
+
 export type ScopedObjects = {
-  [type: string]: Array<QuestionResponse | QuestionResponseListItem>,
+  [type: string]: Array<ScopedObject | ScopedObjectListItem>,
 };
 
 export type ScopedObjectsState = {
@@ -35,85 +71,140 @@ export type ScopedObjectsState = {
   isDeleting: boolean,
 };
 
-const SCOPED_OBJECT_DETAILS_FULFILLED = 'RESPONSE_DETAILS_FULFILLED';
-type ScopedObjectsDetailsFulfilled = {
-  type: 'RESPONSE_DETAILS_FULFILLED',
+const SCOPED_OBJECTS_REQUEST_FAILED = 'SCOPED_OBJECTS_REQUEST_FAILED';
+type ScopedObjectsRequestFailed = {
+  type: 'SCOPED_OBJECTS_REQUEST_FAILED',
+};
+
+const SCOPED_OBJECTS_REQUEST_SUCCEEDED = 'SCOPED_OBJECTS_REQUEST_SUCCEEDED';
+type ScopedObjectsRequestSucceeded = {
+  type: 'SCOPED_OBJECTS_REQUEST_SUCCEEDED',
+  scopedObjectsData: ScopedObjects,
+};
+
+const SCOPED_OBJECTS_REQUESTED = 'SCOPED_OBJECTS_REQUESTED';
+type ScopedObjectsRequested = {
+  type: 'SCOPED_OBJECTS_REQUESTED',
+};
+
+const SCOPED_OBJECT_DETAILS_REQUESTED = 'SCOPED_OBJECT_DETAILS_REQUESTED';
+type ScopedObjectsDetailsRequested = {
+  type: 'SCOPED_OBJECT_DETAILS_REQUESTED',
+  scopedObjectId: number,
   scopedObjectType: string,
   scopedObjectIndex: number,
-  scopedObject: QuestionResponse,
+  scopedObject: ScopedObject,
 };
 
-const SCOPED_OBJECT_DETAILS_REQUESTED = 'RESPONSE_DETAILS_REQUESTED';
-type ScopedObjectsDetailsRequested = {
-  type: 'RESPONSE_DETAILS_REQUESTED',
-  questionResponseId: number,
-  questionResponseIndex: number,
-  scopedObject: QuestionResponse,
+const SCOPED_OBJECT_DETAILS_FULFILLED = 'SCOPED_OBJECT_DETAILS_FULFILLED';
+type ScopedObjectsDetailsFulfilled = {
+  type: 'SCOPED_OBJECT_DETAILS_FULFILLED',
+  scopedObjectType: string,
+  scopedObjectIndex: number,
+  scopedObject: ScopedObject,
 };
 
-const SCOPED_OBJECT_CREATE_REQUESTED = 'RESPONSE_CREATE_REQUESTED';
-type ScopedObjectsCreateRequested = {
-  type: 'RESPONSE_CREATE_REQUESTED',
-  scopedObjectData: QuestionResponse,
-};
-
-const SCOPED_OBJECT_CREATE_FAILED = 'RESPONSE_CREATE_FAILED';
+const SCOPED_OBJECT_CREATE_FAILED = 'SCOPED_OBJECT_CREATE_FAILED';
 type ScopedObjectsCreateFailed = {
-  type: 'RESPONSE_CREATE_FAILED',
+  type: 'SCOPED_OBJECT_CREATE_FAILED',
 };
 
-const SCOPED_OBJECT_CREATE_SUCCEEDED = 'RESPONSE_CREATE_SUCCEEDED';
+const SCOPED_OBJECT_CREATE_SUCCEEDED = 'SCOPED_OBJECT_CREATE_SUCCEEDED';
 type ScopedObjectsCreateSucceeded = {
-  type: 'RESPONSE_CREATE_SUCCEEDED',
+  type: 'SCOPED_OBJECT_CREATE_SUCCEEDED',
   scopedObjectId: number,
+  scopedObjectType: string,
   scopedObjectData: ScopedObjects,
 };
 
-const SCOPED_OBJECT_DELETE_REQUESTED = 'RESPONSE_DELETE_REQUESTED';
-type ScopedObjectDeleteRequested = {
-  type: 'RESPONSE_DELETE_REQUESTED',
-  scopedObjectId: number,
+const SCOPED_OBJECT_CREATE_REQUESTED = 'SCOPED_OBJECT_CREATE_REQUESTED';
+type ScopedObjectsCreateRequested = {
+  type: 'SCOPED_OBJECT_CREATE_REQUESTED',
+  scopedObjectType: string,
+  scopedObjectData: ScopedObjects,
 };
 
-const SCOPED_OBJECT_DELETE_SUCCEEDED = 'RESPONSE_DELETE_SUCCEEDED';
+const SCOPED_OBJECT_UPDATE_REQUESTED = 'SCOPED_OBJECT_UPDATE_REQUESTED';
+type ScopedObjectUpdateRequested = {
+  type: 'SCOPED_OBJECT_UPDATE_REQUESTED',
+  scopedObjectId: number,
+  scopedObjectType: string,
+  scopedObjectData: ScopedObjects,
+};
+
+const SCOPED_OBJECT_UPDATE_FULFILLED = 'SCOPED_OBJECT_UPDATE_FULFILLED';
+type ScopedObjectUpdateFulfilled = {
+  type: 'SCOPED_OBJECT_UPDATE_FULFILLED',
+};
+
+const SCOPED_OBJECTS_TYPED_REQUESTED = 'SCOPED_OBJECTS_TYPED_REQUESTED';
+type ScopedObjectsTypedRequested = {
+  type: 'SCOPED_OBJECTS_TYPED_REQUESTED',
+  scopedObjectType: string,
+};
+
+const SCOPED_OBJECTS_TYPED_SUCCEEDED = 'SCOPED_OBJECTS_TYPED_SUCCEEDED';
+type ScopedObjectsTypedSucceeded = {
+  type: 'SCOPED_OBJECTS_TYPED_SUCCEEDED',
+  scopedObjectType: string,
+  scopedObjects: Array<ScopedObjectListItem>,
+};
+
+const SCOPED_OBJECTS_TYPED_FAILED = 'SCOPED_OBJECTS_TYPED_FAILED';
+type ScopedObjectsTypedFailed = {
+  type: 'SCOPED_OBJECTS_TYPED_FAILED',
+};
+
+const SCOPED_OBJECTS_CLEAR = 'SCOPED_OBJECTS_CLEAR';
+type ScopedObjectsClear = {
+  type: 'SCOPED_OBJECTS_CLEAR',
+};
+
+const SCOPED_OBJECT_DELETE_REQUESTED = 'SCOPED_OBJECT_DELETE_REQUESTED';
+type ScopedObjectDeleteRequested = {
+  type: 'SCOPED_OBJECT_DELETE_REQUESTED',
+  scopedObjectId: number,
+  scopedObjectType: string,
+};
+
+const SCOPED_OBJECT_DELETE_SUCCEEDED = 'SCOPED_OBJECT_DELETE_SUCCEEDED';
 type ScopedObjectDeleteSucceeded = {
-  type: 'RESPONSE_DELETE_SUCCEEDED',
+  type: 'SCOPED_OBJECT_DELETE_SUCCEEDED',
+  scopedObjectType: string,
   scopedObjectIndex: number,
 };
 
-const SCOPED_OBJECT_DELETE_FAILED = 'RESPONSE_DELETE_FAILED';
+const SCOPED_OBJECT_DELETE_FAILED = 'SCOPED_OBJECT_DELETE_FAILED';
 type ScopedObjectDeleteFailed = {
-  type: 'RESPONSE_DELETE_FAILED',
+  type: 'SCOPED_OBJECT_DELETE_FAILED',
 };
 
-const SCOPED_OBJECT_UPDATE_REQUESTED = 'RESPONSE_UPDATE_REQUESTED';
-type ScopedObjectUpdateRequested = {
-  type: 'RESPONSE_UPDATE_REQUESTED',
-  questionResponseId: number,
-  scopedObjectData: QuestionResponse,
-};
-
-const SCOPED_OBJECT_UPDATE_FULFILLED = 'RESPONSE_UPDATE_FULFILLED';
-type ScopedObjectUpdateFulfilled = {
-  type: 'RESPONSE_UPDATE_FULFILLED',
-};
-
-export type QuestionResponseActions =
-  ScopedObjectsDetailsRequested | ScopedObjectsCreateRequested |
-  ScopedObjectUpdateRequested | ScopedObjectsDetailsFulfilled |
-  ScopedObjectDeleteSucceeded | ScopedObjectDeleteRequested |
-  ScopedObjectsCreateSucceeded | ScopedObjectsCreateFailed |
-  ScopedObjectDeleteFailed | ScopedObjectUpdateFulfilled;
+export type ScopedObjectsActions = ScopedObjectsRequestSucceeded |
+  ScopedObjectsRequested | ScopedObjectsRequestFailed |
+  ScopedObjectsDetailsRequested | ScopedObjectsDetailsFulfilled |
+  ScopedObjectsCreateFailed | ScopedObjectsCreateSucceeded |
+  ScopedObjectsCreateRequested | ScopedObjectUpdateRequested |
+  ScopedObjectUpdateFulfilled | ScopedObjectsTypedRequested |
+  ScopedObjectsTypedSucceeded | ScopedObjectsTypedFailed |
+  ScopedObjectsClear | ScopedObjectDeleteRequested |
+  ScopedObjectDeleteSucceeded | ScopedObjectDeleteFailed;
 
 export {
-  SCOPED_OBJECT_CREATE_FAILED,
-  SCOPED_OBJECT_CREATE_REQUESTED,
-  SCOPED_OBJECT_CREATE_SUCCEEDED,
-  SCOPED_OBJECT_DELETE_FAILED,
-  SCOPED_OBJECT_DELETE_REQUESTED,
-  SCOPED_OBJECT_DELETE_SUCCEEDED,
+  SCOPED_OBJECTS_REQUEST_FAILED,
+  SCOPED_OBJECTS_REQUEST_SUCCEEDED,
+  SCOPED_OBJECTS_REQUESTED,
+  SCOPED_OBJECTS_TYPED_REQUESTED,
+  SCOPED_OBJECTS_TYPED_SUCCEEDED,
+  SCOPED_OBJECTS_TYPED_FAILED,
+  SCOPED_OBJECTS_CLEAR,
   SCOPED_OBJECT_DETAILS_FULFILLED,
   SCOPED_OBJECT_DETAILS_REQUESTED,
-  SCOPED_OBJECT_UPDATE_FULFILLED,
+  SCOPED_OBJECT_CREATE_FAILED,
+  SCOPED_OBJECT_CREATE_SUCCEEDED,
+  SCOPED_OBJECT_CREATE_REQUESTED,
   SCOPED_OBJECT_UPDATE_REQUESTED,
+  SCOPED_OBJECT_UPDATE_FULFILLED,
+  SCOPED_OBJECT_DELETE_REQUESTED,
+  SCOPED_OBJECT_DELETE_SUCCEEDED,
+  SCOPED_OBJECT_DELETE_FAILED,
 };

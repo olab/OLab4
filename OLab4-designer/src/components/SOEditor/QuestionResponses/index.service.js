@@ -4,10 +4,10 @@ import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/core/styles';
 
 import type { IScopedObjectProps } from './types';
-import type { ScopedObjectBase as ScopedObjectBaseType } from '../../../redux/scopedObjects/types';
+import type { ScopedObjectBase as ScopedObjectBaseType } from '../../../redux/questionResponses/types';
 
 import { toLowerCaseAndPlural } from '../utils';
-import * as scopedObjectsActions from '../../../redux/scopedObjects/action';
+import * as scopedObjectsActions from '../../../redux/questionResponses/action';
 
 import styles from './styles';
 
