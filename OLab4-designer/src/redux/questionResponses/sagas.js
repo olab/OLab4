@@ -1,12 +1,13 @@
 import {
   call, put, takeLatest, takeEvery,
 } from 'redux-saga/effects';
+
 import {
-  getScopedObjectDetails,
-  createScopedObject,
-  editScopedObject,
-  deleteScopedObject,
-} from '../../services/api/scopedObjects';
+  getResponseDetails,
+  createResponse,
+  editResponse,
+  deleteResponse,
+} from '../../services/api/questionResponses';
 
 import {
   SCOPED_OBJECT_DETAILS_REQUESTED,
@@ -15,7 +16,6 @@ import {
   SCOPED_OBJECT_DELETE_REQUESTED,
 } from './types';
 
-import { ACTION_NOTIFICATION_ERROR, ACTION_NOTIFICATION_SUCCESS } from '../notifications/action';
 import {
   ACTION_SCOPED_OBJECT_DETAILS_FAILED,
   ACTION_SCOPED_OBJECT_DETAILS_SUCCEEDED,
@@ -26,41 +26,27 @@ import {
   ACTION_SCOPED_OBJECT_DELETE_FAILED,
 } from './action';
 
-import { MESSAGES } from '../notifications/config';
+import {
+  ACTION_NOTIFICATION_ERROR,
+  ACTION_NOTIFICATION_SUCCESS,
+} from '../notifications/action';
 
-function* getScopedObjectDetailsSaga({ scopedObjectId, scopedObjectType }) {
-  try {
-    const scopedObjectDetails = yield call(
-      getScopedObjectDetails,
-      scopedObjectId,
-      scopedObjectType,
-    );
+import {
+  MESSAGES,
+} from '../notifications/config';
 
-    yield put(ACTION_SCOPED_OBJECT_DETAILS_SUCCEEDED(
-      scopedObjectId,
-      scopedObjectType,
-      scopedObjectDetails,
-    ));
-  } catch (error) {
-    const { response, message } = error;
-    const errorMessage = response ? response.statusText : message;
+// import { SCOPED_OBJECTS } from '../../components/config';
 
-    yield put(ACTION_SCOPED_OBJECT_DETAILS_FAILED(scopedObjectId, scopedObjectType));
-    yield put(ACTION_NOTIFICATION_ERROR(errorMessage));
-  }
-}
-
-function* createScopedObjectSaga({ scopedObjectType, scopedObjectData }) {
+function* createResponseSaga({ questionId, scopedObjectData }) {
   try {
     const scopedObjectId = yield call(
-      createScopedObject,
-      scopedObjectType,
+      createResponse,
+      questionId,
       scopedObjectData,
     );
 
     yield put(ACTION_SCOPED_OBJECT_CREATE_SUCCEEDED(
       scopedObjectId,
-      scopedObjectType,
       scopedObjectData,
     ));
     yield put(ACTION_NOTIFICATION_SUCCESS(MESSAGES.ON_CREATE.SCOPED_OBJECT));
@@ -73,12 +59,59 @@ function* createScopedObjectSaga({ scopedObjectType, scopedObjectData }) {
   }
 }
 
-function* updateScopedObjectSaga({ scopedObjectId, scopedObjectType, scopedObjectData }) {
+// function* getResponseDetailsSaga({ questionId, questionResponseId }) {
+function* getResponseDetailsSaga(arg) {
+  const { questionId, scopedObjectId } = arg;
+  try {
+    const scopedObjectDetails = yield call(
+      getResponseDetails,
+      questionId,
+      scopedObjectId,
+    );
+
+    const action = ACTION_SCOPED_OBJECT_DETAILS_SUCCEEDED(
+      scopedObjectId,
+      'questionresponses',
+      scopedObjectDetails,
+    );
+    yield put(action);
+  } catch (error) {
+    const { response, message } = error;
+    const errorMessage = response ? response.statusText : message;
+
+    yield put(ACTION_SCOPED_OBJECT_DETAILS_FAILED(scopedObjectId));
+    yield put(ACTION_NOTIFICATION_ERROR(errorMessage));
+  }
+}
+
+function* deleteResponseSaga({
+  questionId,
+  scopedObjectId,
+}) {
   try {
     yield call(
-      editScopedObject,
+      deleteResponse,
+      questionId,
       scopedObjectId,
-      scopedObjectType,
+    );
+
+    yield put(ACTION_SCOPED_OBJECT_DELETE_SUCCEEDED(scopedObjectId));
+    yield put(ACTION_NOTIFICATION_SUCCESS(MESSAGES.ON_DELETE.SCOPED_OBJECT));
+  } catch (error) {
+    const { response, message } = error;
+    const errorMessage = response ? response.statusText : message;
+
+    yield put(ACTION_SCOPED_OBJECT_DELETE_FAILED());
+    yield put(ACTION_NOTIFICATION_ERROR(errorMessage));
+  }
+}
+
+function* updateResponseSaga({
+  scopedObjectData,
+}) {
+  try {
+    yield call(
+      editResponse,
       scopedObjectData,
     );
 
@@ -93,26 +126,11 @@ function* updateScopedObjectSaga({ scopedObjectId, scopedObjectType, scopedObjec
   yield put(ACTION_SCOPED_OBJECT_UPDATE_FULFILLED());
 }
 
-function* deleteScopedObjectSaga({ scopedObjectId, scopedObjectType }) {
-  try {
-    yield call(deleteScopedObject, scopedObjectId, scopedObjectType);
-
-    yield put(ACTION_SCOPED_OBJECT_DELETE_SUCCEEDED(scopedObjectId, scopedObjectType));
-    yield put(ACTION_NOTIFICATION_SUCCESS(MESSAGES.ON_DELETE.SCOPED_OBJECT));
-  } catch (error) {
-    const { response, message } = error;
-    const errorMessage = response ? response.statusText : message;
-
-    yield put(ACTION_SCOPED_OBJECT_DELETE_FAILED());
-    yield put(ACTION_NOTIFICATION_ERROR(errorMessage));
-  }
+function* questionResponseSaga() {
+  yield takeLatest(SCOPED_OBJECT_CREATE_REQUESTED, createResponseSaga);
+  yield takeLatest(SCOPED_OBJECT_UPDATE_REQUESTED, updateResponseSaga);
+  yield takeLatest(SCOPED_OBJECT_DELETE_REQUESTED, deleteResponseSaga);
+  yield takeEvery(SCOPED_OBJECT_DETAILS_REQUESTED, getResponseDetailsSaga);
 }
 
-function* scopedObjectsSaga() {
-  yield takeLatest(SCOPED_OBJECT_CREATE_REQUESTED, createScopedObjectSaga);
-  yield takeLatest(SCOPED_OBJECT_UPDATE_REQUESTED, updateScopedObjectSaga);
-  yield takeLatest(SCOPED_OBJECT_DELETE_REQUESTED, deleteScopedObjectSaga);
-  yield takeEvery(SCOPED_OBJECT_DETAILS_REQUESTED, getScopedObjectDetailsSaga);
-}
-
-export default scopedObjectsSaga;
+export default questionResponseSaga;
