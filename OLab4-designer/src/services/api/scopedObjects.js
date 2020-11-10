@@ -29,7 +29,7 @@ export const getScopedObjectsByType = scopedObjectType => API
     throw error;
   });
 
-export const getScopedObjectDetails = (scopedObjectId, scopedObjectType) => API
+export const getScopedObject = (scopedObjectId, scopedObjectType) => API
   .get(`/olab/${scopedObjectType}/${scopedObjectId}`)
   .then(({
     data: { data: scopedObjectDetails },

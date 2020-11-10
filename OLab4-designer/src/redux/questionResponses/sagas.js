@@ -2,7 +2,7 @@ import {
   call, put, takeLatest, takeEvery,
 } from 'redux-saga/effects';
 import {
-  getScopedObjectDetails,
+  getScopedObject,
   createScopedObject,
   editScopedObject,
   deleteScopedObject,
@@ -31,7 +31,7 @@ import { MESSAGES } from '../notifications/config';
 function* getScopedObjectDetailsSaga({ scopedObjectId, scopedObjectType }) {
   try {
     const scopedObjectDetails = yield call(
-      getScopedObjectDetails,
+      getScopedObject,
       scopedObjectId,
       scopedObjectType,
     );
