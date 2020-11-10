@@ -4,7 +4,6 @@ import {
 import {
   getScopedObjects,
   getScopedObjectDetails,
-  getScopedObjectsByType,
   createScopedObject,
   editScopedObject,
   deleteScopedObject,
@@ -12,7 +11,6 @@ import {
 
 import {
   SCOPED_OBJECTS_REQUESTED,
-  SCOPED_OBJECTS_TYPED_REQUESTED,
   SCOPED_OBJECT_DETAILS_REQUESTED,
   SCOPED_OBJECT_CREATE_REQUESTED,
   SCOPED_OBJECT_UPDATE_REQUESTED,
@@ -24,8 +22,6 @@ import { ACTION_NOTIFICATION_ERROR, ACTION_NOTIFICATION_SUCCESS } from '../notif
 import {
   ACTION_SCOPED_OBJECTS_REQUEST_SUCCEEDED,
   ACTION_SCOPED_OBJECTS_REQUEST_FAILED,
-  ACTION_SCOPED_OBJECTS_TYPED_SUCCEEDED,
-  ACTION_SCOPED_OBJECTS_TYPED_FAILED,
   ACTION_SCOPED_OBJECT_DETAILS_FAILED,
   ACTION_SCOPED_OBJECT_DETAILS_SUCCEEDED,
   ACTION_SCOPED_OBJECT_CREATE_SUCCEEDED,
@@ -48,20 +44,6 @@ function* getScopedObjectsSaga() {
     const errorMessage = response ? response.statusText : message;
 
     yield put(ACTION_SCOPED_OBJECTS_REQUEST_FAILED());
-    yield put(ACTION_NOTIFICATION_ERROR(errorMessage));
-  }
-}
-
-function* getScopedObjectsByTypeSaga({ scopedObjectType }) {
-  try {
-    const scopedObjects = yield call(getScopedObjectsByType, scopedObjectType);
-
-    yield put(ACTION_SCOPED_OBJECTS_TYPED_SUCCEEDED(scopedObjectType, scopedObjects));
-  } catch (error) {
-    const { response, message } = error;
-    const errorMessage = response ? response.statusText : message;
-
-    yield put(ACTION_SCOPED_OBJECTS_TYPED_FAILED());
     yield put(ACTION_NOTIFICATION_ERROR(errorMessage));
   }
 }
@@ -151,7 +133,6 @@ function* scopedObjectsSaga() {
     GET_MAP_DETAILS_SUCCEEDED,
     SCOPED_OBJECTS_REQUESTED,
   ], getScopedObjectsSaga);
-  yield takeLatest(SCOPED_OBJECTS_TYPED_REQUESTED, getScopedObjectsByTypeSaga);
   yield takeLatest(SCOPED_OBJECT_CREATE_REQUESTED, createScopedObjectSaga);
   yield takeLatest(SCOPED_OBJECT_UPDATE_REQUESTED, updateScopedObjectSaga);
   yield takeLatest(SCOPED_OBJECT_DELETE_REQUESTED, deleteScopedObjectSaga);

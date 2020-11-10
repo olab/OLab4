@@ -5,7 +5,6 @@ import {
   type ScopedObject as ScopedObjectType,
   type ScopedObjects as ScopedObjectsType,
   type ScopedObjectBase as ScopedObjectBaseType,
-  type ScopedObjectListItem as ScopedObjectListItemType,
   SCOPED_OBJECT_CREATE_FAILED,
   SCOPED_OBJECT_CREATE_REQUESTED,
   SCOPED_OBJECT_CREATE_SUCCEEDED,
@@ -20,9 +19,6 @@ import {
   SCOPED_OBJECTS_REQUEST_FAILED,
   SCOPED_OBJECTS_REQUEST_SUCCEEDED,
   SCOPED_OBJECTS_REQUESTED,
-  SCOPED_OBJECTS_TYPED_FAILED,
-  SCOPED_OBJECTS_TYPED_REQUESTED,
-  SCOPED_OBJECTS_TYPED_SUCCEEDED,
 } from './types';
 
 export const ACTION_SCOPED_OBJECTS_REQUEST_SUCCEEDED = (scopedObjectsData: ScopedObjectsType) => ({
@@ -138,24 +134,6 @@ export const ACTION_SCOPED_OBJECT_UPDATE_REQUESTED = (
 
 export const ACTION_SCOPED_OBJECT_UPDATE_FULFILLED = () => ({
   type: SCOPED_OBJECT_UPDATE_FULFILLED,
-});
-
-export const ACTION_SCOPED_OBJECTS_TYPED_REQUESTED = (scopedObjectType: string) => ({
-  type: SCOPED_OBJECTS_TYPED_REQUESTED,
-  scopedObjectType,
-});
-
-export const ACTION_SCOPED_OBJECTS_TYPED_SUCCEEDED = (
-  scopedObjectType: string,
-  scopedObjects: Array<ScopedObjectListItemType>,
-) => ({
-  type: SCOPED_OBJECTS_TYPED_SUCCEEDED,
-  scopedObjectType,
-  scopedObjects,
-});
-
-export const ACTION_SCOPED_OBJECTS_TYPED_FAILED = () => ({
-  type: SCOPED_OBJECTS_TYPED_FAILED,
 });
 
 export const ACTION_SCOPED_OBJECTS_CLEAR = () => ({
