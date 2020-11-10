@@ -3,7 +3,6 @@ import store from '../../store/store';
 
 import {
   type ScopedObject as ScopedObjectType,
-  type ScopedObjects as ScopedObjectsType,
   type ScopedObjectBase as ScopedObjectBaseType,
   SCOPED_OBJECT_CREATE_FAILED,
   SCOPED_OBJECT_CREATE_REQUESTED,
@@ -16,23 +15,7 @@ import {
   SCOPED_OBJECT_UPDATE_FULFILLED,
   SCOPED_OBJECT_UPDATE_REQUESTED,
   SCOPED_OBJECTS_CLEAR,
-  SCOPED_OBJECTS_REQUEST_FAILED,
-  SCOPED_OBJECTS_REQUEST_SUCCEEDED,
-  SCOPED_OBJECTS_REQUESTED,
 } from './types';
-
-export const ACTION_SCOPED_OBJECTS_REQUEST_SUCCEEDED = (scopedObjectsData: ScopedObjectsType) => ({
-  type: SCOPED_OBJECTS_REQUEST_SUCCEEDED,
-  scopedObjectsData,
-});
-
-export const ACTION_SCOPED_OBJECTS_REQUEST_FAILED = () => ({
-  type: SCOPED_OBJECTS_REQUEST_FAILED,
-});
-
-export const ACTION_SCOPED_OBJECTS_REQUESTED = () => ({
-  type: SCOPED_OBJECTS_REQUESTED,
-});
 
 export const ACTION_SCOPED_OBJECT_DETAILS_REQUESTED = (
   scopedObjectId: number,

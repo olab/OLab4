@@ -1,8 +1,7 @@
 import {
-  call, put, select, takeLatest, takeEvery,
+  call, put, takeLatest, takeEvery,
 } from 'redux-saga/effects';
 import {
-  getScopedObjects,
   getScopedObjectDetails,
   createScopedObject,
   editScopedObject,
@@ -10,18 +9,14 @@ import {
 } from '../../services/api/scopedObjects';
 
 import {
-  SCOPED_OBJECTS_REQUESTED,
   SCOPED_OBJECT_DETAILS_REQUESTED,
   SCOPED_OBJECT_CREATE_REQUESTED,
   SCOPED_OBJECT_UPDATE_REQUESTED,
   SCOPED_OBJECT_DELETE_REQUESTED,
 } from './types';
-import { GET_MAP_DETAILS_SUCCEEDED } from '../mapDetails/types';
 
 import { ACTION_NOTIFICATION_ERROR, ACTION_NOTIFICATION_SUCCESS } from '../notifications/action';
 import {
-  ACTION_SCOPED_OBJECTS_REQUEST_SUCCEEDED,
-  ACTION_SCOPED_OBJECTS_REQUEST_FAILED,
   ACTION_SCOPED_OBJECT_DETAILS_FAILED,
   ACTION_SCOPED_OBJECT_DETAILS_SUCCEEDED,
   ACTION_SCOPED_OBJECT_CREATE_SUCCEEDED,
@@ -32,21 +27,6 @@ import {
 } from './action';
 
 import { MESSAGES } from '../notifications/config';
-
-function* getScopedObjectsSaga() {
-  try {
-    const mapId = yield select(({ mapDetails }) => mapDetails.id);
-    const scopedObjects = yield call(getScopedObjects, mapId);
-
-    yield put(ACTION_SCOPED_OBJECTS_REQUEST_SUCCEEDED(scopedObjects));
-  } catch (error) {
-    const { response, message } = error;
-    const errorMessage = response ? response.statusText : message;
-
-    yield put(ACTION_SCOPED_OBJECTS_REQUEST_FAILED());
-    yield put(ACTION_NOTIFICATION_ERROR(errorMessage));
-  }
-}
 
 function* getScopedObjectDetailsSaga({ scopedObjectId, scopedObjectType }) {
   try {
@@ -129,10 +109,6 @@ function* deleteScopedObjectSaga({ scopedObjectId, scopedObjectType }) {
 }
 
 function* scopedObjectsSaga() {
-  yield takeLatest([
-    GET_MAP_DETAILS_SUCCEEDED,
-    SCOPED_OBJECTS_REQUESTED,
-  ], getScopedObjectsSaga);
   yield takeLatest(SCOPED_OBJECT_CREATE_REQUESTED, createScopedObjectSaga);
   yield takeLatest(SCOPED_OBJECT_UPDATE_REQUESTED, updateScopedObjectSaga);
   yield takeLatest(SCOPED_OBJECT_DELETE_REQUESTED, deleteScopedObjectSaga);

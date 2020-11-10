@@ -82,11 +82,6 @@ type ScopedObjectRequestSucceeded = {
   scopedObjectsData: ScopedObject,
 };
 
-const SCOPED_OBJECTS_REQUESTED = 'SCOPED_OBJECTS_REQUESTED';
-type ScopedObjectRequested = {
-  type: 'SCOPED_OBJECTS_REQUESTED',
-};
-
 const SCOPED_OBJECT_DETAILS_REQUESTED = 'SCOPED_OBJECT_DETAILS_REQUESTED';
 type ScopedObjectDetailsRequested = {
   type: 'SCOPED_OBJECT_DETAILS_REQUESTED',
@@ -192,7 +187,6 @@ export type ScopedObjectActions = ScopedObjectRequestSucceeded |
 export {
   SCOPED_OBJECTS_REQUEST_FAILED,
   SCOPED_OBJECTS_REQUEST_SUCCEEDED,
-  SCOPED_OBJECTS_REQUESTED,
   SCOPED_OBJECTS_TYPED_REQUESTED,
   SCOPED_OBJECTS_TYPED_SUCCEEDED,
   SCOPED_OBJECTS_TYPED_FAILED,
