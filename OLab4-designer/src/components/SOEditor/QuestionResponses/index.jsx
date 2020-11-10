@@ -1,8 +1,8 @@
 // @flow
 import React from 'react';
-import { withSORedux } from './index.service';
 import CircularSpinnerWithText from '../../../shared/components/CircularSpinnerWithText';
 import ScopedObjectService from '../index.service';
+import { withQuestionResponseRedux } from './index.service';
 
 import { SCOPED_OBJECTS } from '../../config';
 
@@ -146,4 +146,4 @@ class QuestionResponses extends ScopedObjectService {
   }
 }
 
-export default withSORedux(QuestionResponses, SCOPED_OBJECTS.QUESTIONRESPONSES.name);
+export default withQuestionResponseRedux(QuestionResponses, SCOPED_OBJECTS.QUESTIONRESPONSES.name);

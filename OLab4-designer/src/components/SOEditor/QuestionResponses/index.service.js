@@ -11,15 +11,14 @@ import * as scopedObjectsActions from '../../../redux/scopedObjects/action';
 
 import styles from './styles';
 
-export const withSORedux = (
+export const withQuestionResponseRedux = (
   Component: ReactElement<IScopedObjectProps>,
   scopedObjectType: string,
 ) => {
-  const mapStateToProps = ({ scopedObjects, scopeLevels }) => ({
+  const mapStateToProps = ({ scopedObjects }) => ({
     scopedObjects: scopedObjects[toLowerCaseAndPlural(scopedObjectType)],
     isScopedObjectCreating: scopedObjects.isCreating,
     isScopedObjectUpdating: scopedObjects.isUpdating,
-    scopeLevels,
   });
 
   const mapDispatchToProps = dispatch => ({
@@ -57,4 +56,4 @@ export const withSORedux = (
   );
 };
 
-export default withSORedux;
+export default withQuestionResponseRedux;
