@@ -54,37 +54,40 @@ class QuestionResponses extends ScopedObjectService {
         onSubmit={this.handleSubmitScopedObject}
         hasBackButton={false}
       >
-        <FieldLabel>
-          {EDITORS_FIELDS.RESPONSE}
-          <small>
-            {idInfo}
-          </small>
-          <OutlinedInput
-            name="response"
-            placeholder={EDITORS_FIELDS.RESPONSE}
-            value={response}
-            onChange={this.handleInputChange}
-            disabled={isFieldsDisabled}
-            fullWidth
-          />
-        </FieldLabel>
-        <FieldLabel>
-          {EDITORS_FIELDS.FEEDBACK}
-          <OutlinedInput
-            name="feedback"
-            placeholder={EDITORS_FIELDS.FEEDBACK}
-            value={feedback}
-            onChange={this.handleInputChange}
-            disabled={isFieldsDisabled}
-            fullWidth
-          />
-        </FieldLabel>
         <OtherContent>
+          <FullContainerWidth>
+            <FieldLabel>
+              {EDITORS_FIELDS.RESPONSE}
+              <small>
+                {idInfo}
+              </small>
+              <OutlinedInput
+                name="response"
+                placeholder={EDITORS_FIELDS.RESPONSE}
+                value={response}
+                onChange={this.handleInputChange}
+                disabled={isFieldsDisabled}
+                fullWidth
+              />
+            </FieldLabel>
+          </FullContainerWidth>
+          <FullContainerWidth>
+            <FieldLabel>
+              {EDITORS_FIELDS.FEEDBACK}
+              <OutlinedInput
+                name="feedback"
+                placeholder={EDITORS_FIELDS.FEEDBACK}
+                value={feedback}
+                onChange={this.handleInputChange}
+                disabled={isFieldsDisabled}
+                fullWidth
+              />
+            </FieldLabel>
+          </FullContainerWidth>
           <FullContainerWidth>
             <FieldLabel>
               {EDITORS_FIELDS.SCORE}
               <OutlinedInput
-                classes="fullWidth"
                 name="score"
                 placeholder={EDITORS_FIELDS.SCORE}
                 value={score}
@@ -98,7 +101,6 @@ class QuestionResponses extends ScopedObjectService {
             <FieldLabel>
               {EDITORS_FIELDS.ORDER}
               <OutlinedInput
-                classes="fullWidth"
                 name="order"
                 placeholder={EDITORS_FIELDS.ORDER}
                 value={order}
@@ -108,39 +110,42 @@ class QuestionResponses extends ScopedObjectService {
               />
             </FieldLabel>
           </FullContainerWidth>
+          <FullContainerWidth>
+            <FieldLabel>
+              {EDITORS_FIELDS.IS_CORRECT}
+            </FieldLabel>
+            <ToggleButtonGroup
+              size="small"
+              name="isCorrect"
+              orientation="horizontal"
+              value={Number(isCorrect)}
+              exclusive
+              onChange={this.handleToggleButtonChange}
+            >
+              <ToggleButton
+                classes={{ root: this.props.classes.toggleButton }}
+                value={0}
+                aria-label="list"
+              >
+                {CORRECTNESS_TYPES[0]}
+              </ToggleButton>
+              <ToggleButton
+                classes={{ root: this.props.classes.toggleButton }}
+                value={1}
+                aria-label="module"
+              >
+                {CORRECTNESS_TYPES[1]}
+              </ToggleButton>
+              <ToggleButton
+                classes={{ root: this.props.classes.toggleButton }}
+                value={2}
+                aria-label="quilt"
+              >
+                {CORRECTNESS_TYPES[2]}
+              </ToggleButton>
+            </ToggleButtonGroup>
+          </FullContainerWidth>
         </OtherContent>
-        <FieldLabel>
-          {EDITORS_FIELDS.IS_CORRECT}
-        </FieldLabel>
-        <ToggleButtonGroup
-          name="isCorrect"
-          orientation="horizontal"
-          value={Number(isCorrect)}
-          exclusive
-          onChange={this.handleToggleButtonChange}
-        >
-          <ToggleButton
-            classes={{ root: this.props.classes.toggleButton }}
-            value={0}
-            aria-label="list"
-          >
-            {CORRECTNESS_TYPES[0]}
-          </ToggleButton>
-          <ToggleButton
-            classes={{ root: this.props.classes.toggleButton }}
-            value={1}
-            aria-label="module"
-          >
-            {CORRECTNESS_TYPES[1]}
-          </ToggleButton>
-          <ToggleButton
-            classes={{ root: this.props.classes.toggleButton }}
-            value={2}
-            aria-label="quilt"
-          >
-            {CORRECTNESS_TYPES[2]}
-          </ToggleButton>
-        </ToggleButtonGroup>
       </EditorWrapper>
     );
   }

@@ -101,6 +101,7 @@ class Questions extends ScopedObjectService {
         {(isResponseQuestion) && (
           <>
             <ToggleButtonGroup
+              size="small"
               orientation="horizontal"
               value={Number(questionType)}
               exclusive

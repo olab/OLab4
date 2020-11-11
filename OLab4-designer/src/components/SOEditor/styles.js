@@ -50,6 +50,7 @@ export const styles = () => ({
     borderRadius: 3,
     borderColor: 'rgb(0,0,0.87)',
     color: 'black',
+    height: '25px',
   },
 });
 
