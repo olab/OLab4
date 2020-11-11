@@ -24,6 +24,7 @@ export const EDITORS_FIELDS = {
   PLACEHOLDER: 'Placeholder',
   QUESTION_TYPES: 'Question Types',
   RESOURCE_URL: 'Resource Url',
+  RESPONSE: 'Response',
   RESPONSES: 'Responses',
   SCOPE_LEVEL: 'Scope Level',
   SCOPED_OBJECT_STATUS: 'Status',

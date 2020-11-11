@@ -1,36 +1,22 @@
 // @flow
 import React from 'react';
+import { TextField, Chip } from '@material-ui/core';
+import { ToggleButtonGroup, ToggleButton } from '@material-ui/lab';
 
-import {
-  TextField,
-  Chip,
-} from '@material-ui/core';
-
-import {
-  ToggleButtonGroup,
-  ToggleButton,
-} from '@material-ui/lab';
-
-import ScopedObjectService, { withSORedux } from '../index.service';
-
-import QuestionResponsesLayout from './QuestionResponsesLayout';
+import { FieldLabel } from '../styles';
+// import { getKeyByValue } from './utils';
+import { LAYOUT_TYPES, DEFAULT_WIDTH, DEFAULT_HEIGHT } from './config';
+import { QUESTION_TYPES, EDITORS_FIELDS } from '../config';
+import { SCOPE_LEVELS, SCOPED_OBJECTS } from '../../config';
+import CircularSpinnerWithText from '../../../shared/components/CircularSpinnerWithText';
+import EditorWrapper from '../../../shared/components/EditorWrapper';
 import MultiLineLayout from './MultiLineLayout';
 import OutlinedInput from '../../../shared/components/OutlinedInput';
 import OutlinedSelect from '../../../shared/components/OutlinedSelect';
-import EditorWrapper from '../../../shared/components/EditorWrapper';
+import QuestionResponsesLayout from './QuestionResponsesLayout';
+import ScopedObjectService, { withSORedux } from '../index.service';
 import SearchModal from '../../../shared/components/SearchModal';
-
 import type { IScopedObjectProps } from '../types';
-import CircularSpinnerWithText from '../../../shared/components/CircularSpinnerWithText';
-
-import {
-  LAYOUT_TYPES, DEFAULT_WIDTH, DEFAULT_HEIGHT,
-} from './config';
-import { QUESTION_TYPES, EDITORS_FIELDS } from '../config';
-import { SCOPE_LEVELS, SCOPED_OBJECTS } from '../../config';
-import { getKeyByValue } from './utils';
-
-import { FieldLabel } from '../styles';
 
 class Questions extends ScopedObjectService {
   constructor(props: IScopedObjectProps) {
@@ -57,9 +43,10 @@ class Questions extends ScopedObjectService {
   }
 
   handleQuestionTypeChange = (e: Event): void => {
-    const { value, name } = (e.target: window.HTMLInputElement);
-    const key = Number(getKeyByValue(QUESTION_TYPES, value));
-    this.setState({ [name]: key });
+    let { value } = (e.target.parentNode: window.HTMLInputElement);
+    value = Number(value);
+    const name = 'questionType';
+    this.setState({ [name]: value });
   }
 
   handleSliderOrSwitchChange = (e: Event, value: number | boolean, name: string): void => {
@@ -120,14 +107,31 @@ class Questions extends ScopedObjectService {
         </FieldLabel>
         {(isResponseQuestion) && (
           <>
-            <ToggleButtonGroup orientation="horizontal" value={QUESTION_TYPES[questionType]} exclusive onChange={this.handleQuestionTypeChange}>
-              <ToggleButton classes={{ root: this.props.classes.toggleButton }} value={QUESTION_TYPES[3]} aria-label="list">
+            <ToggleButtonGroup
+              orientation="horizontal"
+              value={Number(questionType)}
+              exclusive
+              onChange={this.handleQuestionTypeChange}
+            >
+              <ToggleButton
+                classes={{ root: this.props.classes.toggleButton }}
+                value={3}
+                aria-label="list"
+              >
                 {QUESTION_TYPES[3]}
               </ToggleButton>
-              <ToggleButton classes={{ root: this.props.classes.toggleButton }} value={QUESTION_TYPES[4]} aria-label="module">
+              <ToggleButton
+                classes={{ root: this.props.classes.toggleButton }}
+                value={4}
+                aria-label="module"
+              >
                 {QUESTION_TYPES[4]}
               </ToggleButton>
-              <ToggleButton classes={{ root: this.props.classes.toggleButton }} value={QUESTION_TYPES[7]} aria-label="quilt">
+              <ToggleButton
+                classes={{ root: this.props.classes.toggleButton }}
+                value={7}
+                aria-label="quilt"
+              >
                 {QUESTION_TYPES[7]}
               </ToggleButton>
             </ToggleButtonGroup>

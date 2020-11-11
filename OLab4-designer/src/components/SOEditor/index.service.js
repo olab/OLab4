@@ -126,6 +126,10 @@ class ScopedObjectService extends PureComponent<IScopedObjectProps, IScopedObjec
     }));
   }
 
+  handleSliderOrSwitchChange = (e: Event, value: number | boolean, name: string): void => {
+    this.setState({ [name]: value });
+  };
+
   handleSubmitScopedObject = (): void => {
     const {
       isFieldsDisabled,

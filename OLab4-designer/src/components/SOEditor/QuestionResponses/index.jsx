@@ -1,21 +1,17 @@
 // @flow
 import React from 'react';
-import CircularSpinnerWithText from '../../../shared/components/CircularSpinnerWithText';
-import ScopedObjectService from '../index.service';
-import { withQuestionResponseRedux } from './index.service';
-
-import { SCOPED_OBJECTS } from '../../config';
-
-import type { IScopedObjectProps } from './types';
 // import type { QuestionResponse } from '../../../redux/questionResponses/types';
-import OutlinedInput from '../../../shared/components/OutlinedInput';
-import EditorWrapper from '../../../shared/components/EditorWrapper';
-import Switch from '../../../shared/components/Switch';
-
-import { OtherContent, FullContainerWidth } from './styles';
-
-import { FieldLabel } from '../styles';
 import { EDITORS_FIELDS, QUESTION_TYPES } from '../config';
+import { FieldLabel } from '../styles';
+import { OtherContent, FullContainerWidth } from './styles';
+import { SCOPED_OBJECTS } from '../../config';
+import { withQuestionResponseRedux } from './index.service';
+import CircularSpinnerWithText from '../../../shared/components/CircularSpinnerWithText';
+import EditorWrapper from '../../../shared/components/EditorWrapper';
+import OutlinedInput from '../../../shared/components/OutlinedInput';
+import ScopedObjectService from '../index.service';
+import Switch from '../../../shared/components/Switch';
+import type { IScopedObjectProps } from './types';
 
 class QuestionResponses extends ScopedObjectService {
   constructor(props: IScopedObjectProps) {
@@ -33,20 +29,15 @@ class QuestionResponses extends ScopedObjectService {
     };
   }
 
-  handleSliderOrSwitchChange = (e: Event, value: number | boolean, name: string): void => {
-    this.setState({ [name]: value });
-  };
-
   render() {
     const {
-      description,
+      feedback,
       id,
       isCorrect,
       isFieldsDisabled,
-      name,
       order,
+      response,
       score,
-      text,
     } = this.state;
 
 
@@ -65,36 +56,25 @@ class QuestionResponses extends ScopedObjectService {
         hasBackButton={false}
       >
         <FieldLabel>
-          {EDITORS_FIELDS.NAME}
+          {EDITORS_FIELDS.RESPONSE}
           <small>
             {idInfo}
           </small>
           <OutlinedInput
-            name="name"
-            placeholder={EDITORS_FIELDS.NAME}
-            value={name}
+            name="response"
+            placeholder={EDITORS_FIELDS.RESPONSE}
+            value={response}
             onChange={this.handleInputChange}
             disabled={isFieldsDisabled}
             fullWidth
           />
         </FieldLabel>
         <FieldLabel>
-          {EDITORS_FIELDS.DESCRIPTION}
+          {EDITORS_FIELDS.FEEDBACK}
           <OutlinedInput
-            name="name"
-            placeholder={EDITORS_FIELDS.DESCRIPTION}
-            value={description}
-            onChange={this.handleInputChange}
-            disabled={isFieldsDisabled}
-            fullWidth
-          />
-        </FieldLabel>
-        <FieldLabel>
-          {EDITORS_FIELDS.TEXT}
-          <OutlinedInput
-            name="name"
-            placeholder={EDITORS_FIELDS.TEXT}
-            value={text}
+            name="feedback"
+            placeholder={EDITORS_FIELDS.FEEDBACK}
+            value={feedback}
             onChange={this.handleInputChange}
             disabled={isFieldsDisabled}
             fullWidth
@@ -136,7 +116,7 @@ class QuestionResponses extends ScopedObjectService {
             name="isCorrect"
             labelPlacement="start"
             checked={isCorrect}
-            onChange={this.onSwitchChange}
+            onChange={this.handleSliderOrSwitchChange}
             disabled={isFieldsDisabled}
           />
         </FieldLabel>
