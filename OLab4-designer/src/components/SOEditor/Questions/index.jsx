@@ -42,13 +42,6 @@ class Questions extends ScopedObjectService {
     };
   }
 
-  handleQuestionTypeChange = (e: Event): void => {
-    let { value } = (e.target.parentNode: window.HTMLInputElement);
-    value = Number(value);
-    const name = 'questionType';
-    this.setState({ [name]: value });
-  }
-
   handleSliderOrSwitchChange = (e: Event, value: number | boolean, name: string): void => {
     this.setState({ [name]: value });
   };
@@ -111,7 +104,8 @@ class Questions extends ScopedObjectService {
               orientation="horizontal"
               value={Number(questionType)}
               exclusive
-              onChange={this.handleQuestionTypeChange}
+              name="questionType"
+              onChange={this.handleToggleButtonChange}
             >
               <ToggleButton
                 classes={{ root: this.props.classes.toggleButton }}

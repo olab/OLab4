@@ -40,6 +40,12 @@ export const EDITORS_FIELDS = {
   WIKI: 'Wiki',
 };
 
+export const CORRECTNESS_TYPES = {
+  0: 'Incorrect',
+  1: 'Correct',
+  2: 'Neutral',
+};
+
 // NOTE: as more types come online, the relative in-array
 // indexes will change and code has to be modified to accomodate
 export const QUESTION_TYPES = {

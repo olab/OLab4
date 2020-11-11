@@ -1,7 +1,7 @@
 // @flow
 import React from 'react';
-// import type { QuestionResponse } from '../../../redux/questionResponses/types';
-import { EDITORS_FIELDS, QUESTION_TYPES } from '../config';
+import { ToggleButtonGroup, ToggleButton } from '@material-ui/lab';
+import { EDITORS_FIELDS, QUESTION_TYPES, CORRECTNESS_TYPES } from '../config';
 import { FieldLabel } from '../styles';
 import { OtherContent, FullContainerWidth } from './styles';
 import { SCOPED_OBJECTS } from '../../config';
@@ -10,7 +10,6 @@ import CircularSpinnerWithText from '../../../shared/components/CircularSpinnerW
 import EditorWrapper from '../../../shared/components/EditorWrapper';
 import OutlinedInput from '../../../shared/components/OutlinedInput';
 import ScopedObjectService from '../index.service';
-import Switch from '../../../shared/components/Switch';
 import type { IScopedObjectProps } from './types';
 
 class QuestionResponses extends ScopedObjectService {
@@ -112,15 +111,36 @@ class QuestionResponses extends ScopedObjectService {
         </OtherContent>
         <FieldLabel>
           {EDITORS_FIELDS.IS_CORRECT}
-          <Switch
-            name="isCorrect"
-            labelPlacement="start"
-            checked={isCorrect}
-            onChange={this.handleSliderOrSwitchChange}
-            disabled={isFieldsDisabled}
-          />
         </FieldLabel>
-
+        <ToggleButtonGroup
+          name="isCorrect"
+          orientation="horizontal"
+          value={Number(isCorrect)}
+          exclusive
+          onChange={this.handleToggleButtonChange}
+        >
+          <ToggleButton
+            classes={{ root: this.props.classes.toggleButton }}
+            value={0}
+            aria-label="list"
+          >
+            {CORRECTNESS_TYPES[0]}
+          </ToggleButton>
+          <ToggleButton
+            classes={{ root: this.props.classes.toggleButton }}
+            value={1}
+            aria-label="module"
+          >
+            {CORRECTNESS_TYPES[1]}
+          </ToggleButton>
+          <ToggleButton
+            classes={{ root: this.props.classes.toggleButton }}
+            value={2}
+            aria-label="quilt"
+          >
+            {CORRECTNESS_TYPES[2]}
+          </ToggleButton>
+        </ToggleButtonGroup>
       </EditorWrapper>
     );
   }

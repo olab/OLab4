@@ -120,6 +120,16 @@ class ScopedObjectService extends PureComponent<IScopedObjectProps, IScopedObjec
     this.setState({ [name]: value });
   }
 
+  handleToggleButtonChange = (e: Event): void => {
+    let { value } = (e.target.parentNode: window.HTMLInputElement);
+    const { attributes } = (
+      e.target.parentNode.parentNode: window.HTMLInputElement
+    );
+    const { value: name } = attributes.name;
+    value = Number(value);
+    this.setState({ [name]: value });
+  }
+
   toggleDisableFields = (): void => {
     this.setState(({ isFieldsDisabled }) => ({
       isFieldsDisabled: !isFieldsDisabled,
