@@ -21,6 +21,19 @@ export const getScopedObjects = mapId => API
     throw error;
   });
 
+export const getScopedObjectsByParent = (
+  scopedObjectParentType,
+  scopedObjectParentId,
+  scopedObjectType,
+) => API
+  .get(`/olab/${scopedObjectParentType}/${scopedObjectParentId}/${scopedObjectType}`)
+  .then(({
+    data: { data: scopedObjectDetails },
+  }) => scopedObjectDetailsFromServer(scopedObjectDetails))
+  .catch((error) => {
+    throw error;
+  });
+
 export const getScopedObjectsByType = scopedObjectType => API
   .get(`/olab/${scopedObjectType}`)
   .then(({ data: { data: scopedObjects } }) => scopedObjects

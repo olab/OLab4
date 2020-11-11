@@ -2,12 +2,13 @@ import {
   call, put, select, takeLatest, takeEvery,
 } from 'redux-saga/effects';
 import {
-  getScopedObjects,
-  getScopedObjectDetails,
-  getScopedObjectsByType,
   createScopedObject,
-  editScopedObject,
   deleteScopedObject,
+  editScopedObject,
+  getScopedObjectDetails,
+  getScopedObjects,
+  getScopedObjectsByParent,
+  getScopedObjectsByType,
 } from '../../services/api/scopedObjects';
 
 import {
@@ -17,6 +18,7 @@ import {
   SCOPED_OBJECT_CREATE_REQUESTED,
   SCOPED_OBJECT_UPDATE_REQUESTED,
   SCOPED_OBJECT_DELETE_REQUESTED,
+  SCOPED_OBJECTS_PARENT_TYPED_REQUESTED,
 } from './types';
 import { GET_MAP_DETAILS_SUCCEEDED } from '../mapDetails/types';
 
@@ -146,12 +148,37 @@ function* deleteScopedObjectSaga({ scopedObjectId, scopedObjectType }) {
   }
 }
 
+function* getScopedObjectsByParentSaga({
+  scopedObjectParentType,
+  scopedObjectParentId,
+  scopedObjectType,
+}) {
+  try {
+    const scopedObjects = yield call(
+      getScopedObjectsByParent,
+      scopedObjectParentType,
+      scopedObjectParentId,
+      scopedObjectType,
+    );
+
+    yield put(ACTION_SCOPED_OBJECTS_TYPED_SUCCEEDED(scopedObjectType, scopedObjects));
+  } catch (error) {
+    const { response, message } = error;
+    const errorMessage = response ? response.statusText : message;
+
+    yield put(ACTION_SCOPED_OBJECTS_TYPED_FAILED());
+    yield put(ACTION_NOTIFICATION_ERROR(errorMessage));
+  }
+}
+
 function* scopedObjectsSaga() {
   yield takeLatest([
     GET_MAP_DETAILS_SUCCEEDED,
     SCOPED_OBJECTS_REQUESTED,
   ], getScopedObjectsSaga);
+
   yield takeLatest(SCOPED_OBJECTS_TYPED_REQUESTED, getScopedObjectsByTypeSaga);
+  yield takeLatest(SCOPED_OBJECTS_PARENT_TYPED_REQUESTED, getScopedObjectsByParentSaga);
   yield takeLatest(SCOPED_OBJECT_CREATE_REQUESTED, createScopedObjectSaga);
   yield takeLatest(SCOPED_OBJECT_UPDATE_REQUESTED, updateScopedObjectSaga);
   yield takeLatest(SCOPED_OBJECT_DELETE_REQUESTED, deleteScopedObjectSaga);

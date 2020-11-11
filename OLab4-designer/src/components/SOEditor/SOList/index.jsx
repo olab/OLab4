@@ -1,32 +1,23 @@
 // @flow
 import React, { PureComponent } from 'react';
-import { connect } from 'react-redux';
-import { withRouter } from 'react-router-dom';
 import { withStyles } from '@material-ui/core/styles';
 import {
   Grid, Button, Paper, Typography, Divider,
 } from '@material-ui/core';
-
-import ListWithSearch from '../../../shared/components/ListWithSearch';
-import CircularSpinnerWithText from '../../../shared/components/CircularSpinnerWithText';
+import { connect } from 'react-redux';
+import { withRouter } from 'react-router-dom';
 
 import * as scopedObjectsActions from '../../../redux/scopedObjects/action';
-
-import { toLowerCaseAndPlural, toUpperCaseAndPlural } from '../utils';
-
+import { ListWithSearchWrapper } from '../styles';
 import { PAGE_TITLES, SCOPED_OBJECTS } from '../../config';
-
-import filterByName from '../../../helpers/filterByName';
+import { toLowerCaseAndPlural, toUpperCaseAndPlural } from '../utils';
 import capitalizeFirstLetter from '../../../helpers/capitalizeFirstLetter';
-
+import CircularSpinnerWithText from '../../../shared/components/CircularSpinnerWithText';
+import filterByName from '../../../helpers/filterByName';
+import ListWithSearch from '../../../shared/components/ListWithSearch';
+import styles, { HeaderWrapper, ProgressWrapper } from './styles';
 import type { ISOListProps, ISOListState } from './types';
 import type { ScopedObjectListItem as ScopedObjectListItemType } from '../../../redux/scopedObjects/types';
-
-import styles, {
-  HeaderWrapper, ProgressWrapper,
-} from './styles';
-
-import { ListWithSearchWrapper } from '../styles';
 
 class SOList extends PureComponent<ISOListProps, ISOListState> {
   listWithSearchRef: null | React.RefObject<any>;

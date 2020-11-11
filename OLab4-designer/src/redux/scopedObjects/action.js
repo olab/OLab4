@@ -23,6 +23,9 @@ import {
   SCOPED_OBJECTS_TYPED_FAILED,
   SCOPED_OBJECTS_TYPED_REQUESTED,
   SCOPED_OBJECTS_TYPED_SUCCEEDED,
+  SCOPED_OBJECTS_PARENT_TYPED_REQUESTED,
+  SCOPED_OBJECTS_PARENT_TYPED_SUCCEEDED,
+  SCOPED_OBJECTS_PARENT_TYPED_FAILED,
 } from './types';
 
 export const ACTION_SCOPED_OBJECTS_REQUEST_SUCCEEDED = (scopedObjectsData: ScopedObjectsType) => ({
@@ -188,4 +191,23 @@ export const ACTION_SCOPED_OBJECT_DELETE_SUCCEEDED = (
 
 export const ACTION_SCOPED_OBJECT_DELETE_FAILED = () => ({
   type: SCOPED_OBJECT_DELETE_FAILED,
+});
+
+
+export const ACTION_SCOPED_PARENT_OBJECTS_TYPED_REQUESTED = (scopedObjectType: string) => ({
+  type: SCOPED_OBJECTS_PARENT_TYPED_REQUESTED,
+  scopedObjectType,
+});
+
+export const ACTION_SCOPED_PARENT_OBJECTS_TYPED_SUCCEEDED = (
+  scopedObjectType: string,
+  scopedObjects: Array<ScopedObjectListItemType>,
+) => ({
+  type: SCOPED_OBJECTS_PARENT_TYPED_SUCCEEDED,
+  scopedObjectType,
+  scopedObjects,
+});
+
+export const ACTION_SCOPED_PARENT_OBJECTS_TYPED_FAILED = () => ({
+  type: SCOPED_OBJECTS_PARENT_TYPED_FAILED,
 });

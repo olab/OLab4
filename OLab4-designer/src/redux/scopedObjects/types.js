@@ -137,6 +137,24 @@ type ScopedObjectUpdateFulfilled = {
   type: 'SCOPED_OBJECT_UPDATE_FULFILLED',
 };
 
+const SCOPED_OBJECTS_PARENT_TYPED_REQUESTED = 'SCOPED_OBJECTS_PARENT_TYPED_REQUESTED';
+type ScopedObjectsParentTypedRequested = {
+  type: 'SCOPED_OBJECTS_PARENT_TYPED_REQUESTED',
+  scopedObjectType: string,
+};
+
+const SCOPED_OBJECTS_PARENT_TYPED_SUCCEEDED = 'SCOPED_OBJECTS_PARENT_TYPED_SUCCEEDED';
+type ScopedObjectsParentTypedSucceeded = {
+  type: 'SCOPED_OBJECTS_PARENT_TYPED_SUCCEEDED',
+  scopedObjectType: string,
+  scopedObjects: Array<ScopedObjectListItem>,
+};
+
+const SCOPED_OBJECTS_PARENT_TYPED_FAILED = 'SCOPED_OBJECTS_PARENT_TYPED_FAILED';
+type ScopedObjectsParentTypedFailed = {
+  type: 'SCOPED_OBJECTS_PARENT_TYPED_FAILED',
+};
+
 const SCOPED_OBJECTS_TYPED_REQUESTED = 'SCOPED_OBJECTS_TYPED_REQUESTED';
 type ScopedObjectsTypedRequested = {
   type: 'SCOPED_OBJECTS_TYPED_REQUESTED',
@@ -187,7 +205,9 @@ export type ScopedObjectsActions = ScopedObjectsRequestSucceeded |
   ScopedObjectUpdateFulfilled | ScopedObjectsTypedRequested |
   ScopedObjectsTypedSucceeded | ScopedObjectsTypedFailed |
   ScopedObjectsClear | ScopedObjectDeleteRequested |
-  ScopedObjectDeleteSucceeded | ScopedObjectDeleteFailed;
+  ScopedObjectDeleteSucceeded | ScopedObjectDeleteFailed |
+  ScopedObjectsParentTypedRequested | ScopedObjectsParentTypedSucceeded |
+  ScopedObjectsParentTypedFailed;
 
 export {
   SCOPED_OBJECTS_REQUEST_FAILED,
@@ -207,4 +227,7 @@ export {
   SCOPED_OBJECT_DELETE_REQUESTED,
   SCOPED_OBJECT_DELETE_SUCCEEDED,
   SCOPED_OBJECT_DELETE_FAILED,
+  SCOPED_OBJECTS_PARENT_TYPED_REQUESTED,
+  SCOPED_OBJECTS_PARENT_TYPED_SUCCEEDED,
+  SCOPED_OBJECTS_PARENT_TYPED_FAILED,
 };
