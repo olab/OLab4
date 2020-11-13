@@ -21,31 +21,34 @@ const OutlinedInput = ({
   disabled = false,
   readOnly = false,
 }: IOutlinedInputProps) => (
-  <TextField
-    type={type}
-    name={name}
-    label={label}
-    value={value}
-    placeholder={placeholder}
-    onChange={onChange}
-    onFocus={onFocus}
-    margin="none"
-    variant="outlined"
-    disabled={disabled}
-    InputProps={{
-      classes: {
-        input: classes.input,
-      },
-      readOnly,
-      inputRef: setRef,
-    }}
-    InputLabelProps={{
-      classes: {
-        root: classes.focusedLabel,
-      },
-    }}
-    fullWidth={fullWidth}
-  />
+    <>
+      <TextField
+        type={type}
+        name={name}
+        label={label}
+        value={value}
+        placeholder={placeholder}
+        onChange={onChange}
+        onFocus={onFocus}
+        margin="none"
+        variant="outlined"
+        disabled={disabled}
+        InputProps={{
+          classes: {
+            input: classes.input,
+          },
+          readOnly,
+          inputRef: setRef,
+          id: `${name}`,
+        }}
+        InputLabelProps={{
+          classes: {
+            root: classes.focusedLabel,
+          },
+        }}
+        fullWidth={fullWidth}
+      />
+    </>
 );
 
 export default withStyles(styles)(OutlinedInput);

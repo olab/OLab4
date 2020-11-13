@@ -1216,9 +1216,11 @@
     <Folder Include="OLab4-designer\src\components\SOEditor\Constants\" />
     <Folder Include="OLab4-designer\src\components\SOEditor\Counters\" />
     <Folder Include="OLab4-designer\src\components\SOEditor\Files\" />
+    <Folder Include="OLab4-designer\src\components\SOEditor\QuestionResponses\" />
     <Folder Include="OLab4-designer\src\components\SOEditor\Questions\" />
     <Folder Include="OLab4-designer\src\components\SOEditor\Questions\MultiChoiceLayout\" />
     <Folder Include="OLab4-designer\src\components\SOEditor\Questions\MultiLineLayout\" />
+    <Folder Include="OLab4-designer\src\components\SOEditor\Questions\QuestionResponsesLayout\" />
     <Folder Include="OLab4-designer\src\components\SOEditor\SOList\" />
     <Folder Include="OLab4-designer\src\helpers\" />
     <Folder Include="OLab4-designer\src\middlewares\" />
@@ -2165,6 +2167,10 @@
     <Content Include="OLab4-designer\src\components\SOEditor\Files\styles.js" />
     <Content Include="OLab4-designer\src\components\SOEditor\index.jsx" />
     <Content Include="OLab4-designer\src\components\SOEditor\index.service.js" />
+    <Content Include="OLab4-designer\src\components\SOEditor\QuestionResponses\index.jsx" />
+    <Content Include="OLab4-designer\src\components\SOEditor\QuestionResponses\index.service.js" />
+    <Content Include="OLab4-designer\src\components\SOEditor\QuestionResponses\styles.js" />
+    <Content Include="OLab4-designer\src\components\SOEditor\QuestionResponses\types.js" />
     <Content Include="OLab4-designer\src\components\SOEditor\Questions\config.js" />
     <Content Include="OLab4-designer\src\components\SOEditor\Questions\index.jsx" />
     <Content Include="OLab4-designer\src\components\SOEditor\Questions\MultiChoiceLayout\index.jsx" />
@@ -2172,6 +2178,9 @@
     <Content Include="OLab4-designer\src\components\SOEditor\Questions\MultiChoiceLayout\types.js" />
     <Content Include="OLab4-designer\src\components\SOEditor\Questions\MultiLineLayout\index.jsx" />
     <Content Include="OLab4-designer\src\components\SOEditor\Questions\MultiLineLayout\types.js" />
+    <Content Include="OLab4-designer\src\components\SOEditor\Questions\QuestionResponsesLayout\index.jsx" />
+    <Content Include="OLab4-designer\src\components\SOEditor\Questions\QuestionResponsesLayout\styles.js" />
+    <Content Include="OLab4-designer\src\components\SOEditor\Questions\QuestionResponsesLayout\types.js" />
     <Content Include="OLab4-designer\src\components\SOEditor\Questions\utils.js" />
     <Content Include="OLab4-designer\src\components\SOEditor\SOList\index.jsx" />
     <Content Include="OLab4-designer\src\components\SOEditor\SOList\styles.js" />
