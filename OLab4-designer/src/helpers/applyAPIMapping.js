@@ -252,9 +252,6 @@ export const scopedObjectDetailsFromServer = ({
   name,
   ...(parentId && { parentId }),
   ...restSODetails,
-  details: {
-    ...restSODetails,
-  },
   ...(url && { isShowEyeIcon: Boolean(url) }),
 });
 

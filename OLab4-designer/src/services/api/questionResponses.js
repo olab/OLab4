@@ -1,7 +1,6 @@
 import createInstance from '../createCustomInstance';
 import {
   questionResponseToServer,
-  questionResponseFromServer,
 } from '../../helpers/applyAPIMapping';
 
 const API = createInstance();
@@ -24,27 +23,9 @@ export const createResponse = (scopedObjectData) => API
   });
 
 export const editResponse = (scopedObjectData) => API
-  .put(`/olab/questions/${scopedObjectData.questionId}/questionresponses/${scopedObjectData.id}`, {
+  .put(`/olab/questionresponses/${scopedObjectData.id}`, {
     data: questionResponseToServer(scopedObjectData),
   })
-  .catch((error) => {
-    throw error;
-  });
-
-export const getResponseDetails = (questionResponseId) => API
-  .get(`/olab/questionresponses/${questionResponseId}`)
-  .then(({ data: { data: questionResponse } }) => questionResponseFromServer(questionResponse))
-  .catch((error) => {
-    throw error;
-  });
-
-export const getResponses = questionId => API
-  .get(`/olab/questions/${questionId}/questionresponses`)
-  .then(({ data: { data: { questionResponses } } }) => ({
-    questionResponses: questionResponses.map(
-      questionResponse => questionResponseFromServer(questionResponse),
-    ),
-  }))
   .catch((error) => {
     throw error;
   });

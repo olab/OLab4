@@ -12,13 +12,13 @@
     "jest": true
   },
   "rules": {
-    "react/prefer-stateless-function": "off",
     "arrow-parens": "off",
-    "react/no-danger": "off",
-    "react/prop-types": "off",
-    "no-param-reassign": 0,
-    "react/sort-comp": [0, {}],
     "import/no-named-as-default": 0,
-    "no-bitwise": ["error", { "allow": ["<<"] }]
+    "no-bitwise": ["error", { "allow": ["<<"] }],
+    "no-param-reassign": 0,
+    "react/no-danger": "off",
+    "react/prefer-stateless-function": "off",
+    "react/prop-types": "off",
+    "react/sort-comp": [0, {}],
   }
 }

@@ -12,11 +12,12 @@ export type ScopedObject = {
   details: null | QuestionResponse,
 };
 
-export type IScopedObjectProps = {
+export type IQuestionResponseProps = {
   classes: {
     [props: string]: any,
   },
   ACTION_SCOPED_OBJECT_CREATE_REQUESTED: Function,
+  ACTION_SCOPED_OBJECT_DELETE_REQUESTED: Function,
   ACTION_SCOPED_OBJECT_DETAILS_REQUESTED: Function,
   ACTION_SCOPED_OBJECT_UPDATE_REQUESTED: Function,
   history: any,

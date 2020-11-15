@@ -3,16 +3,15 @@ import { withRouter } from 'react-router-dom';
 import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/core/styles';
 
-import type { IScopedObjectProps } from './types';
+import { toLowerCaseAndPlural } from '../utils';
+import * as questionResponseActions from '../../../redux/questionResponses/action';
+import * as scopedObjectsActions from '../../../redux/scopedObjects/action';
+import styles from './styles';
+import type { IQuestionResponseProps } from './types';
 import type { ScopedObjectBase as ScopedObjectBaseType } from '../../../redux/scopedObjects/types';
 
-import { toLowerCaseAndPlural } from '../utils';
-import * as scopedObjectsActions from '../../../redux/scopedObjects/action';
-
-import styles from './styles';
-
 export const withQuestionResponseRedux = (
-  Component: ReactElement<IScopedObjectProps>,
+  Component: ReactElement<IQuestionResponseProps>,
   scopedObjectType: string,
 ) => {
   const mapStateToProps = ({ scopedObjects }) => ({
@@ -22,6 +21,13 @@ export const withQuestionResponseRedux = (
   });
 
   const mapDispatchToProps = dispatch => ({
+    ACTION_SCOPED_OBJECT_DELETE_REQUESTED: (scopedObjectId: number) => {
+      dispatch(questionResponseActions.ACTION_SCOPED_OBJECT_DELETE_REQUESTED(
+        scopedObjectId,
+        // 'questionresponse',
+        // toLowerCaseAndPlural(scopedObjectType),
+      ));
+    },
     ACTION_SCOPED_OBJECT_DETAILS_REQUESTED: (scopedObjectId: number) => {
       dispatch(scopedObjectsActions.ACTION_SCOPED_OBJECT_DETAILS_REQUESTED(
         scopedObjectId,
@@ -29,7 +35,7 @@ export const withQuestionResponseRedux = (
       ));
     },
     ACTION_SCOPED_OBJECT_CREATE_REQUESTED: (scopedObjectData: ScopedObjectBaseType) => {
-      dispatch(scopedObjectsActions.ACTION_SCOPED_OBJECT_CREATE_REQUESTED(
+      dispatch(questionResponseActions.ACTION_RESPONSE_CREATE_REQUESTED(
         toLowerCaseAndPlural(scopedObjectType),
         scopedObjectData,
       ));
@@ -38,9 +44,9 @@ export const withQuestionResponseRedux = (
       scopedObjectId: number,
       scopedObjectData: ScopedObjectBaseType,
     ) => {
-      dispatch(scopedObjectsActions.ACTION_SCOPED_OBJECT_UPDATE_REQUESTED(
+      dispatch(questionResponseActions.ACTION_RESPONSE_UPDATE_REQUESTED(
         scopedObjectId,
-        toLowerCaseAndPlural(scopedObjectType),
+        'questionresponse',
         scopedObjectData,
       ));
     },

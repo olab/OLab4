@@ -1,6 +1,8 @@
 // @flow
 import React from 'react';
 import { ToggleButtonGroup, ToggleButton } from '@material-ui/lab';
+import { Delete as DeleteIcon } from '@material-ui/icons';
+import { IconButton } from '@material-ui/core';
 import log from 'loglevel';
 import { EDITORS_FIELDS, QUESTION_TYPES, CORRECTNESS_TYPES } from '../config';
 import { FieldLabel } from '../styles';
@@ -12,10 +14,11 @@ import CircularSpinnerWithText from '../../../shared/components/CircularSpinnerW
 import EditorWrapper from '../../../shared/components/EditorWrapper';
 import OutlinedInput from '../../../shared/components/OutlinedInput';
 import ScopedObjectService from '../index.service';
-import type { IScopedObjectProps } from './types';
+import type { IQuestionResponseProps } from './types';
+
 
 class QuestionResponses extends ScopedObjectService {
-  constructor(props: IScopedObjectProps) {
+  constructor(props: IQuestionResponseProps) {
     super(props, SCOPED_OBJECTS.QUESTION.name);
     this.state = {
       description: '',
@@ -38,15 +41,19 @@ class QuestionResponses extends ScopedObjectService {
   handleToggleButtonChange = (e: Event): void => {
     const { value: index } = e.target.parentNode.parentNode.parentNode.parentNode.children[0];
     const { innerHTML: stringValue } = e.target;
-    const responses = [...this.state.responses];
+    const { state } = this;
+    const responses = [...state.responses];
 
     const [value] = Object.keys(CORRECTNESS_TYPES).filter(
       (key) => CORRECTNESS_TYPES[key] === stringValue,
     );
-    if (value.length > 0) {
-      const fieldName = 'isCorrect';
-      responses[Number(index)][fieldName] = Number(value);
-      log.debug(`${fieldName}[${index}] = ${value}`);
+
+    if (typeof value !== 'undefined') {
+      if (value.length > 0) {
+        const fieldName = 'isCorrect';
+        responses[Number(index)][fieldName] = Number(value);
+        log.debug(`${fieldName}[${index}] = ${value}`);
+      }
     }
 
     this.setState({ responses });
@@ -55,7 +62,8 @@ class QuestionResponses extends ScopedObjectService {
   handleIntegerInputChange = (e: Event): void => {
     const { value, name } = (e.target: window.HTMLInputElement);
     const [fieldName, index] = name.split('-');
-    const responses = [...this.state.responses];
+    const { state } = this;
+    const responses = [...state.responses];
 
     if (isPositiveInteger(value)) {
       const int = parseInt(value, 10);
@@ -69,11 +77,20 @@ class QuestionResponses extends ScopedObjectService {
   handleTextInputChange = (e: Event): void => {
     const { value, name } = (e.target: window.HTMLInputElement);
     const [fieldName, index] = name.split('-');
+    const { state } = this;
+    const responses = [...state.responses];
 
-    const responses = [...this.state.responses];
     responses[index][fieldName] = value;
     log.debug(`${fieldName}[${index}] = ${value}`);
     this.setState({ responses });
+  }
+
+  onItemDelete = (id): void => {
+    const {
+      ACTION_SCOPED_OBJECT_DELETE_REQUESTED,
+    } = this.props;
+
+    ACTION_SCOPED_OBJECT_DELETE_REQUESTED(id);
   }
 
   handleSubmitScopedObject = (): void => {
@@ -104,6 +121,9 @@ class QuestionResponses extends ScopedObjectService {
       isFieldsDisabled,
       responses,
     } = this.state;
+    const {
+      classes,
+    } = this.props;
 
     if (id === 0) {
       return <CircularSpinnerWithText text="Data is being fetched..." large centered />;
@@ -229,6 +249,24 @@ class QuestionResponses extends ScopedObjectService {
                   {CORRECTNESS_TYPES[2]}
                 </ToggleButton>
               </ToggleButtonGroup>
+            </FullContainerWidth>
+            <FullContainerWidth>
+              <FieldLabel>
+                {i === 0 && (
+                  <>
+                    <br />
+                  </>
+                )}
+                <IconButton
+                  size="small"
+                  title={`Delete ${item.response}`}
+                  aria-label="Delete Scoped Object"
+                  onClick={() => this.onItemDelete(item.id)}
+                  classes={{ root: classes.deleteIcon }}
+                >
+                  <DeleteIcon />
+                </IconButton>
+              </FieldLabel>
             </FullContainerWidth>
           </OtherContent>
         ))}
