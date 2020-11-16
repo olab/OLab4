@@ -1,17 +1,17 @@
 // @flow
 import React from 'react';
 import { withStyles } from '@material-ui/core/styles';
-import { TextField, Divider } from '@material-ui/core';
-import Switch from '../../../../shared/components/Switch';
-import OutlinedSelect from '../../../../shared/components/OutlinedSelect';
-import ListWithSearch from '../../../../shared/components/ListWithSearch';
-import type { ScopedObjectListItem as ScopedObjectListItemType } from '../../../../redux/scopedObjects/types';
+import { Button, TextField, Divider } from '@material-ui/core';
+import { Link } from 'react-router-dom';
 
-import { LAYOUT_TYPES } from '../config';
 import { EDITORS_FIELDS } from '../../config';
-
-import type { IQuestionResponsesLayoutProps } from './types';
+import { LAYOUT_TYPES } from '../config';
+import ListWithSearch from '../../../../shared/components/ListWithSearch';
+import OutlinedSelect from '../../../../shared/components/OutlinedSelect';
 import styles, { FieldLabel, SwitchWrapper, ListWithSearchWrapper } from '../../styles';
+import Switch from '../../../../shared/components/Switch';
+import type { IQuestionResponsesLayoutProps } from './types';
+import type { ScopedObjectListItem as ScopedObjectListItemType } from '../../../../redux/scopedObjects/types';
 
 const isHideSearch = true;
 
@@ -56,6 +56,19 @@ function QuestionResponsesLayout({
           isWithSpinner={false}
         />
       </ListWithSearchWrapper>
+
+      <Button
+        size="small"
+        variant="outlined"
+        color="primary"
+        className={classes.button}
+        component={Link}
+        to="/scopedObject/questionresponse/3535"
+        target="_blank"
+      >
+        Edit
+      </Button>
+
       <Divider />
 
       <FieldLabel>
