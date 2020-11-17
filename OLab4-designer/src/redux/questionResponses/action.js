@@ -66,11 +66,9 @@ export const ACTION_RESPONSE_DELETE_SUCCEEDED = (
 };
 
 export const ACTION_RESPONSE_UPDATE_REQUESTED = (
-  scopedObjectId: number,
-  scopedObjectData: ScopedObjectType,
+  scopedObjectData: Array,
 ) => ({
   type: RESPONSE_UPDATE_REQUESTED,
-  scopedObjectId,
   scopedObjectData,
 });
 

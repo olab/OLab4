@@ -6,7 +6,6 @@ import { Route, Switch } from 'react-router-dom';
 import SOList from './SOList';
 
 import { SCOPED_OBJECTS_MAPPING } from './config';
-import { SCOPED_OBJECTS } from '../config';
 
 import * as scopeLevelsActions from '../../redux/scopeLevels/action';
 import * as scopedObjectsActions from '../../redux/scopedObjects/action';
@@ -31,12 +30,6 @@ class SOEditor extends PureComponent<ISOEditorProps> {
           exact
           path="/scopedObject/:scopedObjectType"
           component={SOList}
-        />
-        <Route
-          key={[SCOPED_OBJECTS.QUESTIONRESPONSES.name.toLowerCase()]}
-          exact
-          path="/scopedObject/question/:questionId/questionresponse/:questionResponseId"
-          component={SCOPED_OBJECTS_MAPPING[SCOPED_OBJECTS.QUESTIONRESPONSES.name.toLowerCase()]}
         />
         {Object.keys(SCOPED_OBJECTS_MAPPING).map(scopedObjectType => (
           <Route

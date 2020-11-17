@@ -11,7 +11,6 @@ import OutlinedSelect from '../../../../shared/components/OutlinedSelect';
 import styles, { FieldLabel, SwitchWrapper, ListWithSearchWrapper } from '../../styles';
 import Switch from '../../../../shared/components/Switch';
 import type { IQuestionResponsesLayoutProps } from './types';
-import type { ScopedObjectListItem as ScopedObjectListItemType } from '../../../../redux/scopedObjects/types';
 
 const isHideSearch = true;
 
@@ -25,11 +24,10 @@ function QuestionResponsesLayout({
   onInputChange,
   onSelectChange,
   onSwitchChange,
+  questionId,
   responses,
 }: IQuestionResponsesLayoutProps) {
-  const handleScopedObjectClick = (scopedObject: ScopedObjectListItemType): void => {
-    window.open(`/scopedObject/questionresponse/${scopedObject.questionId}`);
-  };
+  const handleScopedObjectClick = (): void => false;
 
   return (
     <>
@@ -46,6 +44,16 @@ function QuestionResponsesLayout({
 
       <FieldLabel>
         {EDITORS_FIELDS.RESPONSES}
+        <Button
+          size="small"
+          color="primary"
+          className={classes.button}
+          component={Link}
+          to={`/scopedObject/questionresponse/${questionId}`}
+          target="_blank"
+        >
+          (Edit)
+        </Button>
       </FieldLabel>
 
       <ListWithSearchWrapper>
@@ -56,18 +64,6 @@ function QuestionResponsesLayout({
           isWithSpinner={false}
         />
       </ListWithSearchWrapper>
-
-      <Button
-        size="small"
-        variant="outlined"
-        color="primary"
-        className={classes.button}
-        component={Link}
-        to="/scopedObject/questionresponse/3535"
-        target="_blank"
-      >
-        Edit
-      </Button>
 
       <Divider />
 

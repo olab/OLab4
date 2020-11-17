@@ -66,16 +66,16 @@ class ListWithSearch extends PureComponent<IListWithSearchProps, IListWithSearch
   render() {
     const { query } = this.state;
     const {
-      label,
-      onItemClick,
-      onItemDelete,
-      list,
       classes,
       isForModal,
-      isWithSpinner,
       isHideSearch,
-      isItemsFetching,
       isItemsDisabled,
+      isItemsFetching,
+      isWithSpinner,
+      label,
+      list,
+      onItemClick,
+      onItemDelete,
     } = this.props;
 
     const listClassNames = classNames(

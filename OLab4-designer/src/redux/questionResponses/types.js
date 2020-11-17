@@ -56,8 +56,7 @@ type QuestionResponseDeleteFailed = {
 const RESPONSE_UPDATE_REQUESTED = 'RESPONSE_UPDATE_REQUESTED';
 type QuestionResponseUpdateRequested = {
   type: 'RESPONSE_UPDATE_REQUESTED',
-  questionResponseId: number,
-  scopedObjectData: QuestionResponse,
+  scopedObjectData: Question,
 };
 
 const RESPONSE_UPDATE_FULFILLED = 'RESPONSE_UPDATE_FULFILLED';

@@ -41,12 +41,9 @@ export const withQuestionResponseRedux = (
       ));
     },
     ACTION_SCOPED_OBJECT_UPDATE_REQUESTED: (
-      scopedObjectId: number,
       scopedObjectData: ScopedObjectBaseType,
     ) => {
       dispatch(questionResponseActions.ACTION_RESPONSE_UPDATE_REQUESTED(
-        scopedObjectId,
-        'questionresponse',
         scopedObjectData,
       ));
     },

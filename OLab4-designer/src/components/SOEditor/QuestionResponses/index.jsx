@@ -33,7 +33,10 @@ class QuestionResponses extends ScopedObjectService {
       text: '',
     };
 
+    // this.scopedObjectType = 'Question Response';
     log.setDefaultLevel('trace');
+
+    this.setPageTitle();
   }
 
   buildId = (name: String, index: Number): void => `${name.toLowerCase()}-${index}`;
@@ -100,13 +103,13 @@ class QuestionResponses extends ScopedObjectService {
       ...scopedObjectData
     } = this.state;
     const {
-      match: { params: { scopedObjectId: questionId } },
       ACTION_SCOPED_OBJECT_CREATE_REQUESTED,
       ACTION_SCOPED_OBJECT_UPDATE_REQUESTED,
     } = this.props;
 
     if (this.isEditMode) {
-      ACTION_SCOPED_OBJECT_UPDATE_REQUESTED(Number(questionId), scopedObjectData);
+      const { responses } = scopedObjectData;
+      ACTION_SCOPED_OBJECT_UPDATE_REQUESTED(responses);
     } else if (this.scopeLevelObj) {
       const { id: parentId } = this.scopeLevelObj;
       Object.assign(scopedObjectData, { parentId });
@@ -131,11 +134,11 @@ class QuestionResponses extends ScopedObjectService {
 
     return (
       <EditorWrapper
-        isEditMode={this.isEditMode}
-        isDisabled={isFieldsDisabled}
-        scopedObject={this.scopedObjectType}
-        onSubmit={this.handleSubmitScopedObject}
         hasBackButton={false}
+        isDisabled={isFieldsDisabled}
+        isEditMode={this.isEditMode}
+        onSubmit={this.handleSubmitScopedObject}
+        scopedObject={this.scopedObjectType}
       >
         {responses.map((item, i) => (
           <OtherContent>

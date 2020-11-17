@@ -14,7 +14,14 @@ import type { IEditorWrapperProps } from './types';
 import styles, { HeadingWrapper, Paper, Container } from './styles';
 
 const EditorWrapper = ({
-  classes, children, history, scopedObject, onSubmit, isEditMode, isDisabled, hasBackButton,
+  children,
+  classes,
+  hasBackButton,
+  history,
+  isDisabled,
+  isEditMode,
+  onSubmit,
+  scopedObject,
 }: IEditorWrapperProps) => (
   <Grid container component="main" className={classes.root}>
     <HeadingWrapper>

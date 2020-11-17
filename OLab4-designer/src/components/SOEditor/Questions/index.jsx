@@ -8,7 +8,7 @@ import { FieldLabel } from '../styles';
 import { LAYOUT_TYPES, DEFAULT_WIDTH, DEFAULT_HEIGHT } from './config';
 import { QUESTION_TYPES, EDITORS_FIELDS } from '../config';
 import { SCOPE_LEVELS, SCOPED_OBJECTS } from '../../config';
-import CircularSpinnerWithText from '../../../shared/components/CircularSpinnerWithText';
+// import CircularSpinnerWithText from '../../../shared/components/CircularSpinnerWithText';
 import EditorWrapper from '../../../shared/components/EditorWrapper';
 import MultiLineLayout from './MultiLineLayout';
 import OutlinedInput from '../../../shared/components/OutlinedInput';
@@ -82,9 +82,9 @@ class Questions extends ScopedObjectService {
     const isSCTType = QUESTION_TYPES[questionType] === QUESTION_TYPES[7];
     const isResponseQuestion = isMultiChoiceType || isSingleChoiceType || isSCTType;
 
-    if (id === 0) {
-      return <CircularSpinnerWithText text="Data is being fetched..." large centered />;
-    }
+    // if (id === 0) {
+    //   return <CircularSpinnerWithText text="Data is being fetched..." large centered />;
+    // }
 
     const idInfo = ` (Id: ${id})`;
 
@@ -213,6 +213,7 @@ class Questions extends ScopedObjectService {
               onInputChange={this.handleInputChange}
               onSelectChange={this.handleLayoutTypeChange}
               onSwitchChange={this.handleSliderOrSwitchChange}
+              questionId={id}
               responses={responses}
             />
           </>

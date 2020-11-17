@@ -22,10 +22,15 @@ export const createResponse = (scopedObjectData) => API
     throw error;
   });
 
-export const editResponse = (scopedObjectData) => API
-  .put(`/olab/questionresponses/${scopedObjectData.id}`, {
-    data: questionResponseToServer(scopedObjectData),
-  })
-  .catch((error) => {
-    throw error;
+export const editResponse = (scopedObjectData) => {
+  scopedObjectData.forEach(item => {
+    const data = questionResponseToServer(item);
+    API
+      .put(`/olab/questionresponses/${item.id}`, {
+        data,
+      })
+      .catch((error) => {
+        throw error;
+      });
   });
+};
