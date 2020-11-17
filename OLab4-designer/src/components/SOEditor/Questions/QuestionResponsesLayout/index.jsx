@@ -29,6 +29,9 @@ function QuestionResponsesLayout({
 }: IQuestionResponsesLayoutProps) {
   const handleScopedObjectClick = (): void => false;
 
+  const getListPrimaryField = (item) => item.response;
+  const getListSecondaryField = () => '';
+
   return (
     <>
       <FieldLabel>
@@ -41,31 +44,6 @@ function QuestionResponsesLayout({
         onChange={onSelectChange}
         disabled={isFieldsDisabled}
       />
-
-      <FieldLabel>
-        {EDITORS_FIELDS.RESPONSES}
-        <Button
-          size="small"
-          color="primary"
-          className={classes.button}
-          component={Link}
-          to={`/scopedObject/questionresponse/${questionId}`}
-          target="_blank"
-        >
-          (Edit)
-        </Button>
-      </FieldLabel>
-
-      <ListWithSearchWrapper>
-        <ListWithSearch
-          onItemClick={handleScopedObjectClick}
-          list={responses}
-          isHideSearch={isHideSearch}
-          isWithSpinner={false}
-        />
-      </ListWithSearchWrapper>
-
-      <Divider />
 
       <FieldLabel>
         {EDITORS_FIELDS.FEEDBACK}
@@ -101,6 +79,34 @@ function QuestionResponsesLayout({
           disabled={isFieldsDisabled}
         />
       </SwitchWrapper>
+
+      <FieldLabel>
+        {EDITORS_FIELDS.RESPONSES}
+        <Button
+          size="small"
+          color="primary"
+          className={classes.button}
+          component={Link}
+          to={`/scopedObject/questionresponse/${questionId}`}
+          target="_blank"
+        >
+          (Edit)
+        </Button>
+      </FieldLabel>
+
+      <ListWithSearchWrapper>
+        <ListWithSearch
+          onItemClick={handleScopedObjectClick}
+          list={responses}
+          isHideSearch={isHideSearch}
+          isWithSpinner={false}
+          primarytext={getListPrimaryField}
+          secondarytext={getListSecondaryField}
+          showIcons={false}
+        />
+      </ListWithSearchWrapper>
+
+      <Divider />
     </>
   );
 }

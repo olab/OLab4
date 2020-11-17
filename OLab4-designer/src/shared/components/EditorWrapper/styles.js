@@ -23,7 +23,7 @@ export const Paper = styled.div`
   flex-direction: column;
   padding: 12px 18px;
   boxShadow: none;
-  width: 60%;
+  width: 100%;
 
   @media only screen and (max-width: 1099px) {
     width: 100%;

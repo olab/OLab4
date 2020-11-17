@@ -1,14 +1,13 @@
 // @flow
 import React from 'react';
 import { TextField, Chip } from '@material-ui/core';
-import { ToggleButtonGroup, ToggleButton } from '@material-ui/lab';
 
-import { FieldLabel } from '../styles';
-// import { getKeyByValue } from './utils';
-import { LAYOUT_TYPES, DEFAULT_WIDTH, DEFAULT_HEIGHT } from './config';
-import { QUESTION_TYPES, EDITORS_FIELDS } from '../config';
-import { SCOPE_LEVELS, SCOPED_OBJECTS } from '../../config';
 // import CircularSpinnerWithText from '../../../shared/components/CircularSpinnerWithText';
+import { FieldLabel } from '../styles';
+import { getKeyByValue } from './utils';
+import { LAYOUT_TYPES, DEFAULT_WIDTH, DEFAULT_HEIGHT } from './config';
+import { QUESTION_TYPES, EDITORS_FIELDS, RESPONSE_QUESTION_TYPES } from '../config';
+import { SCOPE_LEVELS, SCOPED_OBJECTS } from '../../config';
 import EditorWrapper from '../../../shared/components/EditorWrapper';
 import MultiLineLayout from './MultiLineLayout';
 import OutlinedInput from '../../../shared/components/OutlinedInput';
@@ -42,6 +41,12 @@ class Questions extends ScopedObjectService {
     };
   }
 
+  handleQuestionTypeChange = (e: Event): void => {
+    const { value, name } = (e.target: window.HTMLInputElement);
+    const key = Number(getKeyByValue(QUESTION_TYPES, value));
+    this.setState({ [name]: key });
+  }
+
   handleSliderOrSwitchChange = (e: Event, value: number | boolean, name: string): void => {
     this.setState({ [name]: value });
   };
@@ -54,7 +59,6 @@ class Questions extends ScopedObjectService {
 
   render() {
     const {
-      description,
       feedback,
       height,
       id,
@@ -63,7 +67,6 @@ class Questions extends ScopedObjectService {
       isShowModal,
       isShowSubmit,
       layoutType,
-      name,
       placeholder,
       questionType,
       responses,
@@ -95,44 +98,22 @@ class Questions extends ScopedObjectService {
         scopedObject={this.scopedObjectType}
         onSubmit={this.handleSubmitScopedObject}
       >
+        <small>{idInfo}</small>
         <FieldLabel>
           {EDITORS_FIELDS.QUESTION_TYPES}
         </FieldLabel>
-        {(isResponseQuestion) && (
+        {(this.isEditMode) && (isResponseQuestion) && (
           <>
-            <ToggleButtonGroup
-              size="small"
-              orientation="horizontal"
-              value={Number(questionType)}
-              exclusive
+            <OutlinedSelect
               name="questionType"
-              onChange={this.handleToggleButtonChange}
-            >
-              <ToggleButton
-                classes={{ root: this.props.classes.toggleButton }}
-                value={3}
-                aria-label="list"
-              >
-                {QUESTION_TYPES[3]}
-              </ToggleButton>
-              <ToggleButton
-                classes={{ root: this.props.classes.toggleButton }}
-                value={4}
-                aria-label="module"
-              >
-                {QUESTION_TYPES[4]}
-              </ToggleButton>
-              <ToggleButton
-                classes={{ root: this.props.classes.toggleButton }}
-                value={7}
-                aria-label="quilt"
-              >
-                {QUESTION_TYPES[7]}
-              </ToggleButton>
-            </ToggleButtonGroup>
+              value={RESPONSE_QUESTION_TYPES[questionType]}
+              values={Object.values(RESPONSE_QUESTION_TYPES)}
+              onChange={this.handleQuestionTypeChange}
+              disabled={isFieldsDisabled}
+            />
           </>
         )}
-        {(!isResponseQuestion) && (
+        {(!this.isEditMode) && (
           <>
             <OutlinedSelect
               name="questionType"
@@ -143,36 +124,6 @@ class Questions extends ScopedObjectService {
             />
           </>
         )}
-        <FieldLabel>
-          {EDITORS_FIELDS.NAME}
-          <small>
-            {idInfo}
-          </small>
-          <OutlinedInput
-            name="name"
-            placeholder={EDITORS_FIELDS.NAME}
-            value={name}
-            onChange={this.handleInputChange}
-            disabled={isFieldsDisabled}
-            fullWidth
-          />
-        </FieldLabel>
-        <FieldLabel>
-          {EDITORS_FIELDS.DESCRIPTION}
-          <TextField
-            multiline
-            rows="1"
-            name="description"
-            placeholder={EDITORS_FIELDS.DESCRIPTION}
-            className={classes.textField}
-            margin="normal"
-            variant="outlined"
-            value={description}
-            onChange={this.handleInputChange}
-            disabled={isFieldsDisabled}
-            fullWidth
-          />
-        </FieldLabel>
         <FieldLabel>
           {EDITORS_FIELDS.STEM}
           <TextField

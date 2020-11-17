@@ -65,6 +65,14 @@ export const QUESTION_TYPES = {
   14: 'Pick-choice grid',
 };
 
+// NOTE: as more types come online, the relative in-array
+// indexes will change and code has to be modified to accomodate
+export const RESPONSE_QUESTION_TYPES = {
+  3: 'Multiple Choice',
+  4: 'Single Choice',
+  7: 'SCT',
+};
+
 export const SCOPED_OBJECTS_MAPPING = {
   [SCOPED_OBJECTS.FILE.name.toLowerCase()]: Files,
   [SCOPED_OBJECTS.COUNTER.name.toLowerCase()]: Counters,

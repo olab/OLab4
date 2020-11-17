@@ -157,6 +157,7 @@ class Home extends PureComponent<IHomeProps, IHomeState> {
             isItemsDisabled={isButtonsDisabled}
             iconEven={MapsIcon}
             iconOdd={MapsOutlinedIcon}
+            showIcons={false}
           />
         </MapListWrapper>
 

@@ -27,8 +27,11 @@ class ListWithSearch extends PureComponent<IListWithSearchProps, IListWithSearch
     iconEven: DefaultIcon,
     iconOdd: DefaultOutlinedIcon,
     isForModal: false,
-    isWithSpinner: true,
     isItemsDisabled: false,
+    isWithSpinner: true,
+    showIcons: true,
+    primarytext: (item) => item.name,
+    secondarytext: (item) => item.description,
   };
 
   state: IListWithSearchState = {
@@ -36,7 +39,16 @@ class ListWithSearch extends PureComponent<IListWithSearchProps, IListWithSearch
   };
 
   getIcon(index, file) {
-    const { isMedia, iconEven: IconEven, iconOdd: IconOdd } = this.props;
+    const {
+      showIcons,
+      isMedia,
+      iconEven: IconEven,
+      iconOdd: IconOdd,
+    } = this.props;
+
+    if (!showIcons) {
+      return '';
+    }
 
     if (isMedia) {
       const iconType = file.resourceUrl && file.resourceUrl.split('.').pop();
@@ -76,6 +88,8 @@ class ListWithSearch extends PureComponent<IListWithSearchProps, IListWithSearch
       list,
       onItemClick,
       onItemDelete,
+      primarytext,
+      secondarytext,
     } = this.props;
 
     const listClassNames = classNames(
@@ -135,8 +149,8 @@ class ListWithSearch extends PureComponent<IListWithSearchProps, IListWithSearch
                 >
                   {this.getIcon(i, listItem)}
                   <ListItemText
-                    primary={listItem.name}
-                    secondary={removeHTMLTags(listItem.description || '')}
+                    primary={primarytext(listItem)}
+                    secondary={removeHTMLTags(secondarytext(listItem) || '')}
                     classes={{ secondary: classes.secondaryText }}
                   />
                 </Button>

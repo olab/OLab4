@@ -165,6 +165,7 @@ class SOList extends PureComponent<ISOListProps, ISOListState> {
               isItemsFetching={isScopedObjectsFetching}
               isWithSpinner={false}
               isMedia={isMedia}
+              showIcons={false}
             />
           </ListWithSearchWrapper>
         </Grid>
