@@ -22,9 +22,6 @@ const Switch = ({
       <MaterialSwitch
         classes={{
           switchBase: classes.iOSSwitchBase,
-          bar: classes.iOSBar,
-          icon: classes.iOSIcon,
-          iconChecked: classes.iOSIconChecked,
           checked: classes.iOSChecked,
         }}
         checked={checked}

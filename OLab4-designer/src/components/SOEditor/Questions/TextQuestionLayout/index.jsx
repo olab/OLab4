@@ -7,6 +7,7 @@ import OutlinedSelect from '../../../../shared/components/OutlinedSelect';
 import styles, { FieldLabel, SwitchWrapper } from '../../styles';
 import Switch from '../../../../shared/components/Switch';
 import type { ITextQuestionLayoutProps } from './types';
+import { DEFAULT_WIDTH, DEFAULT_HEIGHT } from '../config';
 
 function TextQuestionLayout({
   onInputChange,
@@ -28,8 +29,15 @@ function TextQuestionLayout({
     stem,
     width,
   } = state;
-  const widthChoices = [10, 20, 30, 40, 50];
-  const heightChoices = [2, 4, 6, 8];
+
+  const widthChoices = [];
+  const heightChoices = [];
+  for (let i = DEFAULT_WIDTH.MIN; i <= DEFAULT_WIDTH.MAX; i += DEFAULT_WIDTH.STEP) {
+    widthChoices.push(i);
+  }
+  for (let i = DEFAULT_HEIGHT.MIN; i <= DEFAULT_HEIGHT.MAX; i += DEFAULT_HEIGHT.STEP) {
+    heightChoices.push(i);
+  }
 
   return (
     <>

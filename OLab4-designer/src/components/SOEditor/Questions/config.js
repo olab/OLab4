@@ -1,5 +1,6 @@
 export const LAYOUT_TYPES = [
-  'Vertical', 'Horizontal',
+  'Vertical',
+  'Horizontal',
 ];
 
 export const PICKER_QUESTION_TYPES = {

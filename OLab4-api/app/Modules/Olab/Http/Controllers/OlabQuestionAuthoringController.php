@@ -63,13 +63,13 @@ use Entrada\Modules\Olab\Models\MapNodes;
 use Entrada\Modules\Olab\Classes\GlobalObjectManager;
 use Entrada\Modules\Olab\Classes\PostDataHandler;
 
-class OlabQuestionAuthoringController extends OlabScopedObjectAuthoringController 
+class OlabQuestionAuthoringController extends OlabScopedObjectAuthoringController
 {
   // override for abstract class to provide url subpath
   public function get_object_url_subpath() { return "questions"; }
 
   public function create( Request $request ) {
-    
+
     // spin up a function tracer.  Handles entry/exit/timing messages
     $tracer = new OlabCodeTracer(__CLASS__, __FUNCTION__ . "()" );
     $payload = array();
@@ -104,9 +104,10 @@ class OlabQuestionAuthoringController extends OlabScopedObjectAuthoringControlle
       // verify we have a valid parent object
       OLabUtilities::get_parent_object( $oObj );
 
-      // all is well, write it to database
+      // made it this far, meaning have access to parent object,
+      // now write it to database
       $this->write_object( $oObj );
-      
+
       $aData['id'] = $oObj->id;
 
       Log::info( "created new question. id = " . $oObj->id );
@@ -170,7 +171,7 @@ class OlabQuestionAuthoringController extends OlabScopedObjectAuthoringControlle
   }
 
   public function getSingle( Request $request, int $id ) {
-    
+
     // spin up a function tracer.  Handles entry/exit/timing messages
     $tracer = new OlabCodeTracer(__CLASS__, __FUNCTION__ . "($id)" );
     $payload = array();
@@ -191,7 +192,7 @@ class OlabQuestionAuthoringController extends OlabScopedObjectAuthoringControlle
       }
 
       $aData = $oObj->toArray();
-      $this->build_scoped_object( $aData, Questions::WIKI_TAG_QUESTION, "scopedobjects/questions" );    
+      $this->build_scoped_object( $aData, Questions::WIKI_TAG_QUESTION, "scopedobjects/questions" );
 
       $payload = OLabUtilities::make_api_return( null, $tracer, $aData );
 
@@ -206,7 +207,7 @@ class OlabQuestionAuthoringController extends OlabScopedObjectAuthoringControlle
   }
 
   public function delete( Request $request, int $id ) {
-    
+
     // spin up a function tracer.  Handles entry/exit/timing messages
     $tracer = new OlabCodeTracer(__CLASS__, __FUNCTION__ . "($id)" );
     $payload = array();
@@ -217,7 +218,7 @@ class OlabQuestionAuthoringController extends OlabScopedObjectAuthoringControlle
       $this->initialize( $request );
 
       $oObj = $this->get_question( $id );
-      $this->delete_scoped_object( $oObj );    
+      $this->delete_scoped_object( $oObj );
 
       $payload = OLabUtilities::make_api_return( null, $tracer );
 
@@ -231,7 +232,7 @@ class OlabQuestionAuthoringController extends OlabScopedObjectAuthoringControlle
   }
 
   public function edit( Request $request, int $id ) {
-    
+
     // spin up a function tracer.  Handles entry/exit/timing messages
     $tracer = new OlabCodeTracer(__CLASS__, __FUNCTION__ . "($id)" );
     $payload = array();
@@ -258,7 +259,7 @@ class OlabQuestionAuthoringController extends OlabScopedObjectAuthoringControlle
       $this->oPostData->get_integer_optional( $oObj, 'order');
       $this->oPostData->get_integer_optional( $oObj, 'layoutType');
 
-      $this->write_object( $oObj );    
+      $this->write_object( $oObj );
 
       $payload = OLabUtilities::make_api_return( null, $tracer );
 

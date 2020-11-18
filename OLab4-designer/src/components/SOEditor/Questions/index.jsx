@@ -15,6 +15,7 @@ import ScopedObjectService, { withSORedux } from '../index.service';
 import SearchModal from '../../../shared/components/SearchModal';
 import ChoiceQuestionLayout from './ChoiceQuestionLayout';
 import TextQuestionLayout from './TextQuestionLayout';
+import SliderQuestionLayout from './SliderQuestionLayout';
 import type { IScopedObjectProps } from '../types';
 
 class Questions extends ScopedObjectService {
@@ -36,10 +37,21 @@ class Questions extends ScopedObjectService {
       questionType: Number(Object.keys(QUESTION_TYPES)[0]),
       responses: [],
       scopeLevel: SCOPE_LEVELS[0],
+      settings: '{}',
       stem: '',
       width: DEFAULT_WIDTH.MIN,
     };
   }
+
+  onSettingsChange = (e: Event): void => {
+    const { value, name } = (e.target: window.HTMLInputElement);
+
+    const settingsObject = JSON.parse(this.state.settings);
+    settingsObject[name] = value;
+    const settingsName = 'settings';
+    const settings = JSON.stringify(settingsObject);
+    this.setState({ [settingsName]: settings });
+  };
 
   onLayoutTypeChange = (e: Event): void => {
     const { value, name } = (e.target: window.HTMLInputElement);
@@ -69,6 +81,7 @@ class Questions extends ScopedObjectService {
     const isSingleChoiceType = QUESTION_TYPES[questionType] === QUESTION_TYPES[4];
     const isSCTType = QUESTION_TYPES[questionType] === QUESTION_TYPES[7];
     const isChoiceQuestion = isMultiChoiceType || isSingleChoiceType || isSCTType;
+    const isSliderQuestion = QUESTION_TYPES[questionType] === QUESTION_TYPES[5];
 
     const isTextQuestion = (QUESTION_TYPES[questionType] === QUESTION_TYPES[1])
       || (QUESTION_TYPES[questionType] === QUESTION_TYPES[2]);
@@ -117,6 +130,18 @@ class Questions extends ScopedObjectService {
             onInputChange={this.onInputChange}
             onQuestionTypeChange={this.onQuestionTypeChange}
             onSelectChange={this.handleLayoutTypeChange}
+            onSwitchChange={this.onSliderOrSwitchChange}
+            props={this.props}
+            state={this.state}
+          />
+        )}
+
+
+        {(isSliderQuestion) && (
+          <SliderQuestionLayout
+            onInputChange={this.onInputChange}
+            onQuestionTypeChange={this.onQuestionTypeChange}
+            onSettingsChange={this.onSettingsChange}
             onSwitchChange={this.onSliderOrSwitchChange}
             props={this.props}
             state={this.state}
