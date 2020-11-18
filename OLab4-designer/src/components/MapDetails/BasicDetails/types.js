@@ -6,6 +6,6 @@ export type BasicDetailsProps = {
     [prop: string]: any,
   },
   details: MapDetails,
-  handleInputChange: Function,
+  onInputChange: Function,
   handleEditorChange: Function,
 };

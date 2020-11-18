@@ -73,7 +73,7 @@ class NodeEditor extends PureComponent<INodeEditorProps, INodeEditorState> {
     ACTION_UNFOCUS_NODE(nodeId);
   }
 
-  handleInputChange = (e: Event): void => {
+  onInputChange = (e: Event): void => {
     const { value, name } = (e.target: window.HTMLInputElement);
     this.setState({ [name]: value });
   }
@@ -195,7 +195,7 @@ class NodeEditor extends PureComponent<INodeEditorProps, INodeEditorState> {
               name="title"
               label="Title"
               value={title}
-              onChange={this.handleInputChange}
+              onChange={this.onInputChange}
               fullWidth
             />
           </article>

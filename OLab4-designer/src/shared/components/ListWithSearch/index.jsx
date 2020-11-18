@@ -67,7 +67,7 @@ class ListWithSearch extends PureComponent<IListWithSearchProps, IListWithSearch
     this.setState({ query: '' });
   }
 
-  handleInputChange = (e: Event): void => {
+  onInputChange = (e: Event): void => {
     const { onSearch } = this.props;
     const { name, value } = (e.target: window.HTMLInputElement);
 
@@ -110,7 +110,7 @@ class ListWithSearch extends PureComponent<IListWithSearchProps, IListWithSearch
               label={label}
               className={classes.searchField}
               value={query}
-              onChange={this.handleInputChange}
+              onChange={this.onInputChange}
               fullWidth
             />
 

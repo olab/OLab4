@@ -104,7 +104,7 @@ class File extends ScopedObjectService {
               name="originUrl"
               label={EDITORS_FIELDS.ORIGIN_URL}
               value={originUrl}
-              onChange={this.handleInputChange}
+              onChange={this.onInputChange}
               fullWidth
             />
           </Outlined>
@@ -144,7 +144,7 @@ class File extends ScopedObjectService {
             name="name"
             label={EDITORS_FIELDS.NAME}
             value={name}
-            onChange={this.handleInputChange}
+            onChange={this.onInputChange}
             fullWidth
           />
         </Outlined>
@@ -156,7 +156,7 @@ class File extends ScopedObjectService {
             label={EDITORS_FIELDS.DESCRIPTION}
             variant="outlined"
             value={description}
-            onChange={this.handleInputChange}
+            onChange={this.onInputChange}
             fullWidth
           />
         </Outlined>
@@ -165,7 +165,7 @@ class File extends ScopedObjectService {
             name="copyright"
             label={EDITORS_FIELDS.COPYRIGHT}
             value={copyright}
-            onChange={this.handleInputChange}
+            onChange={this.onInputChange}
             fullWidth
           />
         </Outlined>
@@ -214,7 +214,7 @@ class File extends ScopedObjectService {
                 label={EDITORS_FIELDS.SCOPE_LEVEL}
                 value={scopeLevel}
                 values={SCOPE_LEVELS}
-                onChange={this.handleInputChange}
+                onChange={this.onInputChange}
                 disabled={isFieldsDisabled}
                 labelWidth={90}
                 fullWidth

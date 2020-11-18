@@ -11,14 +11,14 @@ import styles, { ContainerKeywords } from './styles';
 import { ContainerTab, ContentTitle } from '../styles';
 
 const BasicDetails = ({
-  details, handleInputChange, handleEditorChange,
+  details, onInputChange, handleEditorChange,
 }: IProps): React$Element<any> => (
   <ContainerTab>
     <OutlinedInput
       name="name"
       label="Title"
       value={details.name}
-      onChange={handleInputChange}
+      onChange={onInputChange}
       fullWidth
     />
     <ContentTitle>Description</ContentTitle>
@@ -34,7 +34,7 @@ const BasicDetails = ({
         name="keywords"
         label="Keywords"
         value={details.keywords}
-        onChange={handleInputChange}
+        onChange={onInputChange}
         fullWidth
       />
     </ContainerKeywords>

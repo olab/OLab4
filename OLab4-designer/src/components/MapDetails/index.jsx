@@ -62,7 +62,7 @@ class AdvancedNodeEditor extends PureComponent<IProps, IState> {
     this.forceUpdate();
   };
 
-  handleInputChange = (e: Event): void => {
+  onInputChange = (e: Event): void => {
     const { value, name } = (e.target: window.HTMLInputElement);
     this.setState({ [name]: value });
   };
@@ -126,7 +126,7 @@ class AdvancedNodeEditor extends PureComponent<IProps, IState> {
             {[
               <BasicDetails
                 details={this.state}
-                handleInputChange={this.handleInputChange}
+                onInputChange={this.onInputChange}
                 handleEditorChange={this.handleEditorChange}
                 handleSelectChange={this.handleSelectChange}
               />,

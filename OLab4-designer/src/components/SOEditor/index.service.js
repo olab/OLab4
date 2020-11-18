@@ -115,7 +115,7 @@ class ScopedObjectService extends PureComponent<IScopedObjectProps, IScopedObjec
     this.parentIdRef = ref;
   }
 
-  handleInputChange = (e: Event): void => {
+  onInputChange = (e: Event): void => {
     const { value, name } = (e.target: window.HTMLInputElement);
     this.setState({ [name]: value });
   }
@@ -136,7 +136,7 @@ class ScopedObjectService extends PureComponent<IScopedObjectProps, IScopedObjec
     }));
   }
 
-  handleSliderOrSwitchChange = (e: Event, value: number | boolean, name: string): void => {
+  onSliderOrSwitchChange = (e: Event, value: number | boolean, name: string): void => {
     this.setState({ [name]: value });
   };
 

@@ -49,7 +49,7 @@ class Constant extends ScopedObjectService {
             name="name"
             placeholder={EDITORS_FIELDS.NAME}
             value={name}
-            onChange={this.handleInputChange}
+            onChange={this.onInputChange}
             disabled={isFieldsDisabled}
             fullWidth
           />
@@ -65,7 +65,7 @@ class Constant extends ScopedObjectService {
             margin="normal"
             variant="outlined"
             value={description}
-            onChange={this.handleInputChange}
+            onChange={this.onInputChange}
             disabled={isFieldsDisabled}
             fullWidth
           />
@@ -81,7 +81,7 @@ class Constant extends ScopedObjectService {
             margin="normal"
             variant="outlined"
             value={value}
-            onChange={this.handleInputChange}
+            onChange={this.onInputChange}
             disabled={isFieldsDisabled}
             fullWidth
           />
@@ -95,7 +95,7 @@ class Constant extends ScopedObjectService {
               name="scopeLevel"
               value={scopeLevel}
               values={SCOPE_LEVELS}
-              onChange={this.handleInputChange}
+              onChange={this.onInputChange}
               disabled={isFieldsDisabled}
             />
             <FieldLabel>

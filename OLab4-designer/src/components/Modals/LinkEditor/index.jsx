@@ -107,7 +107,7 @@ class LinkEditor extends PureComponent<ILinkEditorProps, ILinkEditorState> {
     this.shouldUpdateVisual = true;
   }
 
-  handleInputChange = (e: Event): void => {
+  onInputChange = (e: Event): void => {
     const { value, name } = (e.target: window.HTMLInputElement);
 
     this.setState({ [name]: value });
@@ -203,7 +203,7 @@ class LinkEditor extends PureComponent<ILinkEditorProps, ILinkEditorState> {
               name="label"
               label="Label"
               value={label}
-              onChange={this.handleInputChange}
+              onChange={this.onInputChange}
               fullWidth
             />
           </article>

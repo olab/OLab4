@@ -16,12 +16,14 @@ export const EDITORS_FIELDS = {
   HEIGHT: 'Height',
   ID: 'Id',
   IS_CORRECT: 'Is Correct',
+  IS_PRIVATE: 'Is Private',
   LAYOUT_TYPE: 'Layout Type',
   NAME: 'Name',
   ORDER: 'Order',
   ORIGIN_URL: 'Origin URL',
   PARENT: 'Parent',
   PLACEHOLDER: 'Placeholder',
+  PROMPTTEXT: 'Prompt Text',
   QUESTION_TYPES: 'Question Types',
   RESOURCE_URL: 'Resource Url',
   RESPONSE: 'Response',
@@ -49,6 +51,7 @@ export const CORRECTNESS_TYPES = {
 // NOTE: as more types come online, the relative in-array
 // indexes will change and code has to be modified to accomodate
 export const QUESTION_TYPES = {
+  0: '--Select--',
   1: 'Single Line Text',
   2: 'Multi-Line Text',
   3: 'Multiple Choice',
@@ -67,10 +70,15 @@ export const QUESTION_TYPES = {
 
 // NOTE: as more types come online, the relative in-array
 // indexes will change and code has to be modified to accomodate
-export const RESPONSE_QUESTION_TYPES = {
+export const CHOICE_QUESTION_TYPES = {
   3: 'Multiple Choice',
   4: 'Single Choice',
   7: 'SCT',
+};
+
+export const TEXTENTRY_QUESTION_TYPES = {
+  1: 'Single Line Text',
+  2: 'Multi-Line Text',
 };
 
 export const SCOPED_OBJECTS_MAPPING = {

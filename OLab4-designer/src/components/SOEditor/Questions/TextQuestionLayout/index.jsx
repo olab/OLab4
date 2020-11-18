@@ -1,0 +1,144 @@
+// @flow
+import React from 'react';
+import { withStyles } from '@material-ui/core/styles';
+import { TextField, Divider } from '@material-ui/core';
+import { QUESTION_TYPES, EDITORS_FIELDS, TEXTENTRY_QUESTION_TYPES } from '../../config';
+import OutlinedSelect from '../../../../shared/components/OutlinedSelect';
+import styles, { FieldLabel, SwitchWrapper } from '../../styles';
+import Switch from '../../../../shared/components/Switch';
+import type { ITextQuestionLayoutProps } from './types';
+
+function TextQuestionLayout({
+  onInputChange,
+  onQuestionTypeChange,
+  onSelectChange,
+  onSwitchChange,
+  props,
+  state,
+}: ITextQuestionLayoutProps) {
+  const { classes } = props;
+  const {
+    feedback,
+    height,
+    isFieldsDisabled,
+    isPrivate,
+    isShowSubmit,
+    prompt,
+    questionType,
+    stem,
+    width,
+  } = state;
+  const widthChoices = [10, 20, 30, 40, 50];
+  const heightChoices = [2, 4, 6, 8];
+
+  return (
+    <>
+      <FieldLabel>
+        {EDITORS_FIELDS.QUESTION_TYPES}
+      </FieldLabel>
+      <OutlinedSelect
+        name="questionType"
+        value={TEXTENTRY_QUESTION_TYPES[questionType]}
+        values={Object.values(TEXTENTRY_QUESTION_TYPES)}
+        onChange={onQuestionTypeChange}
+        disabled={isFieldsDisabled}
+      />
+      <FieldLabel>
+        {EDITORS_FIELDS.STEM}
+        <TextField
+          multiline
+          rows="1"
+          name="stem"
+          placeholder={EDITORS_FIELDS.STEM}
+          className={classes.textField}
+          margin="normal"
+          variant="outlined"
+          value={stem}
+          onChange={onInputChange}
+          disabled={isFieldsDisabled}
+          fullWidth
+        />
+      </FieldLabel>
+      <FieldLabel>
+        {EDITORS_FIELDS.WIDTH}
+      </FieldLabel>
+      <OutlinedSelect
+        name="width"
+        value={width}
+        values={widthChoices}
+        onChange={onSelectChange}
+        disabled={isFieldsDisabled}
+      />
+      {(QUESTION_TYPES[questionType] === QUESTION_TYPES[2]) && (
+        <>
+          <FieldLabel>
+            {EDITORS_FIELDS.HEIGHT}
+          </FieldLabel>
+          <OutlinedSelect
+            name="height"
+            value={height}
+            values={heightChoices}
+            onChange={onSelectChange}
+            disabled={isFieldsDisabled}
+          />
+        </>
+      )}
+      <FieldLabel>
+        {EDITORS_FIELDS.FEEDBACK}
+        <TextField
+          multiline
+          rows="3"
+          name="feedback"
+          placeholder={EDITORS_FIELDS.FEEDBACK}
+          className={classes.textField}
+          margin="normal"
+          variant="outlined"
+          value={feedback}
+          onChange={onInputChange}
+          disabled={isFieldsDisabled}
+          fullWidth
+        />
+      </FieldLabel>
+
+      <FieldLabel>
+        {EDITORS_FIELDS.PROMPTTEXT}
+        <TextField
+          multiline
+          rows="3"
+          name="feedback"
+          placeholder={EDITORS_FIELDS.PROMPTTEXT}
+          className={classes.textField}
+          margin="normal"
+          variant="outlined"
+          value={prompt}
+          onChange={onInputChange}
+          disabled={isFieldsDisabled}
+          fullWidth
+        />
+      </FieldLabel>
+
+      <SwitchWrapper>
+        <Switch
+          name="isPrivate"
+          label={EDITORS_FIELDS.IS_PRIVATE}
+          labelPlacement="start"
+          checked={isPrivate}
+          onChange={onSwitchChange}
+          disabled={isFieldsDisabled}
+        />
+        <Switch
+          name="isShowSubmit"
+          label={EDITORS_FIELDS.SHOW_SUBMIT}
+          labelPlacement="start"
+          checked={isShowSubmit}
+          onChange={onSwitchChange}
+          disabled={isFieldsDisabled}
+        />
+      </SwitchWrapper>
+
+      <Divider />
+    </>
+  );
+}
+
+export default withStyles(styles)(TextQuestionLayout);

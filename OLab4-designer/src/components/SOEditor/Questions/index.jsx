@@ -1,20 +1,20 @@
 // @flow
 import React from 'react';
-import { TextField, Chip } from '@material-ui/core';
+import { Chip } from '@material-ui/core';
 
 // import CircularSpinnerWithText from '../../../shared/components/CircularSpinnerWithText';
 import { FieldLabel } from '../styles';
 import { getKeyByValue } from './utils';
-import { LAYOUT_TYPES, DEFAULT_WIDTH, DEFAULT_HEIGHT } from './config';
-import { QUESTION_TYPES, EDITORS_FIELDS, RESPONSE_QUESTION_TYPES } from '../config';
+import { DEFAULT_WIDTH, DEFAULT_HEIGHT, LAYOUT_TYPES } from './config';
+import { QUESTION_TYPES, EDITORS_FIELDS } from '../config';
 import { SCOPE_LEVELS, SCOPED_OBJECTS } from '../../config';
 import EditorWrapper from '../../../shared/components/EditorWrapper';
-import MultiLineLayout from './MultiLineLayout';
 import OutlinedInput from '../../../shared/components/OutlinedInput';
 import OutlinedSelect from '../../../shared/components/OutlinedSelect';
-import QuestionResponsesLayout from './QuestionResponsesLayout';
 import ScopedObjectService, { withSORedux } from '../index.service';
 import SearchModal from '../../../shared/components/SearchModal';
+import ChoiceQuestionLayout from './ChoiceQuestionLayout';
+import TextQuestionLayout from './TextQuestionLayout';
 import type { IScopedObjectProps } from '../types';
 
 class Questions extends ScopedObjectService {
@@ -41,53 +41,37 @@ class Questions extends ScopedObjectService {
     };
   }
 
-  handleQuestionTypeChange = (e: Event): void => {
-    const { value, name } = (e.target: window.HTMLInputElement);
-    const key = Number(getKeyByValue(QUESTION_TYPES, value));
-    this.setState({ [name]: key });
-  }
-
-  handleSliderOrSwitchChange = (e: Event, value: number | boolean, name: string): void => {
-    this.setState({ [name]: value });
-  };
-
-  handleLayoutTypeChange = (e: Event): void => {
+  onLayoutTypeChange = (e: Event): void => {
     const { value, name } = (e.target: window.HTMLInputElement);
     const index = LAYOUT_TYPES.findIndex(type => type === value);
     this.setState({ [name]: index });
-  }
+  };
+
+  onQuestionTypeChange = (e: Event): void => {
+    const { value, name } = (e.target: window.HTMLInputElement);
+    const key = Number(getKeyByValue(QUESTION_TYPES, value));
+    this.setState({ [name]: key });
+  };
 
   render() {
     const {
-      feedback,
-      height,
       id,
       isFieldsDisabled,
-      isShowAnswer,
       isShowModal,
-      isShowSubmit,
-      layoutType,
-      placeholder,
       questionType,
-      responses,
       scopeLevel,
-      stem,
-      width,
     } = this.state;
 
     const { classes, scopeLevels } = this.props;
     const { iconEven: IconEven, iconOdd: IconOdd } = this.icons;
 
-    const isMultiLineType = QUESTION_TYPES[questionType] === QUESTION_TYPES[2];
-
     const isMultiChoiceType = QUESTION_TYPES[questionType] === QUESTION_TYPES[3];
     const isSingleChoiceType = QUESTION_TYPES[questionType] === QUESTION_TYPES[4];
     const isSCTType = QUESTION_TYPES[questionType] === QUESTION_TYPES[7];
-    const isResponseQuestion = isMultiChoiceType || isSingleChoiceType || isSCTType;
+    const isChoiceQuestion = isMultiChoiceType || isSingleChoiceType || isSCTType;
 
-    // if (id === 0) {
-    //   return <CircularSpinnerWithText text="Data is being fetched..." large centered />;
-    // }
+    const isTextQuestion = (QUESTION_TYPES[questionType] === QUESTION_TYPES[1])
+      || (QUESTION_TYPES[questionType] === QUESTION_TYPES[2]);
 
     const idInfo = ` (Id: ${id})`;
 
@@ -98,127 +82,100 @@ class Questions extends ScopedObjectService {
         scopedObject={this.scopedObjectType}
         onSubmit={this.handleSubmitScopedObject}
       >
-        <small>{idInfo}</small>
-        <FieldLabel>
-          {EDITORS_FIELDS.QUESTION_TYPES}
-        </FieldLabel>
-        {(this.isEditMode) && (isResponseQuestion) && (
-          <>
-            <OutlinedSelect
-              name="questionType"
-              value={RESPONSE_QUESTION_TYPES[questionType]}
-              values={Object.values(RESPONSE_QUESTION_TYPES)}
-              onChange={this.handleQuestionTypeChange}
-              disabled={isFieldsDisabled}
-            />
-          </>
+        {(id !== 0) && (
+          <small>{idInfo}</small>
         )}
-        {(!this.isEditMode) && (
+
+        {(!this.isEditMode) && (questionType === 0) && (
           <>
+            <FieldLabel>
+              {EDITORS_FIELDS.QUESTION_TYPES}
+            </FieldLabel>
             <OutlinedSelect
               name="questionType"
               value={QUESTION_TYPES[questionType]}
               values={Object.values(QUESTION_TYPES)}
-              onChange={this.handleQuestionTypeChange}
+              onChange={this.onQuestionTypeChange}
               disabled={isFieldsDisabled}
             />
           </>
         )}
-        <FieldLabel>
-          {EDITORS_FIELDS.STEM}
-          <TextField
-            multiline
-            rows="1"
-            name="stem"
-            placeholder={EDITORS_FIELDS.STEM}
-            className={classes.textField}
-            margin="normal"
-            variant="outlined"
-            value={stem}
-            onChange={this.handleInputChange}
-            disabled={isFieldsDisabled}
-            fullWidth
-          />
-        </FieldLabel>
 
-        {isMultiLineType && (
-          <MultiLineLayout
-            height={height}
-            isFieldsDisabled={isFieldsDisabled}
-            onInputChange={this.handleInputChange}
-            onSliderChange={this.handleSliderOrSwitchChange}
-            placeholder={placeholder}
-            width={width}
+        {(isChoiceQuestion) && (
+          <ChoiceQuestionLayout
+            onInputChange={this.onInputChange}
+            onLayoutTypeChange={this.onLayoutTypeChange}
+            onQuestionTypeChange={this.onQuestionTypeChange}
+            onSwitchChange={this.onSliderOrSwitchChange}
+            props={this.props}
+            state={this.state}
           />
         )}
 
-        {(isResponseQuestion) && (
-          <>
-            <QuestionResponsesLayout
-              classes={this.props.classes}
-              feedback={feedback}
-              history={this.props.history}
-              isShowAnswer={isShowAnswer}
-              isShowSubmit={isShowSubmit}
-              layoutType={layoutType}
-              onInputChange={this.handleInputChange}
-              onSelectChange={this.handleLayoutTypeChange}
-              onSwitchChange={this.handleSliderOrSwitchChange}
-              questionId={id}
-              responses={responses}
-            />
-          </>
+        {(isTextQuestion) && (
+          <TextQuestionLayout
+            onInputChange={this.onInputChange}
+            onQuestionTypeChange={this.onQuestionTypeChange}
+            onSelectChange={this.handleLayoutTypeChange}
+            onSwitchChange={this.onSliderOrSwitchChange}
+            props={this.props}
+            state={this.state}
+          />
         )}
 
-        {!this.isEditMode && (
+        {(questionType !== 0) && (
           <>
-            <FieldLabel>
-              {EDITORS_FIELDS.SCOPE_LEVEL}
-            </FieldLabel>
-            <OutlinedSelect
-              name="scopeLevel"
-              value={scopeLevel}
-              values={SCOPE_LEVELS}
-              onChange={this.handleInputChange}
-              disabled={isFieldsDisabled}
-            />
-            <FieldLabel>
-              {EDITORS_FIELDS.PARENT}
-              <OutlinedInput
-                name="parentId"
-                placeholder={this.scopeLevelObj ? '' : EDITORS_FIELDS.PARENT}
-                disabled={isFieldsDisabled}
-                onFocus={this.showModal}
-                setRef={this.setParentRef}
-                readOnly
-                fullWidth
-              />
-              {this.scopeLevelObj && (
-                <Chip
-                  className={classes.chip}
-                  label={this.scopeLevelObj.name}
-                  variant="outlined"
-                  color="primary"
-                  onDelete={this.handleParentRemove}
-                  icon={<IconEven />}
+            {!this.isEditMode && (
+              <>
+                <FieldLabel>
+                  {EDITORS_FIELDS.SCOPE_LEVEL}
+                </FieldLabel>
+                <OutlinedSelect
+                  name="scopeLevel"
+                  value={scopeLevel}
+                  values={SCOPE_LEVELS}
+                  onChange={this.onInputChange}
+                  disabled={isFieldsDisabled}
                 />
-              )}
-            </FieldLabel>
-          </>
-        )}
+                <FieldLabel>
+                  {EDITORS_FIELDS.PARENT}
+                  <OutlinedInput
+                    name="parentId"
+                    placeholder={this.scopeLevelObj ? '' : EDITORS_FIELDS.PARENT}
+                    disabled={isFieldsDisabled}
+                    onFocus={this.showModal}
+                    setRef={this.setParentRef}
+                    readOnly
+                    fullWidth
+                  />
+                  {this.scopeLevelObj && (
+                    <Chip
+                      className={classes.chip}
+                      label={this.scopeLevelObj.name}
+                      variant="outlined"
+                      color="primary"
+                      onDelete={this.handleParentRemove}
+                      icon={<IconEven />}
+                    />
+                  )}
+                </FieldLabel>
+              </>
+            )}
 
-        {isShowModal && (
-          <SearchModal
-            label="Parent record"
-            searchLabel="Search for parent record"
-            items={scopeLevels[scopeLevel.toLowerCase()]}
-            text={`Please choose appropriate parent from ${scopeLevel}:`}
-            onClose={this.hideModal}
-            onItemChoose={this.handleLevelObjChoose}
-            isItemsFetching={scopeLevels.isFetching}
-            iconEven={IconEven}
-            iconOdd={IconOdd}
-          />
+            {isShowModal && (
+              <SearchModal
+                label="Parent record"
+                searchLabel="Search for parent record"
+                items={scopeLevels[scopeLevel.toLowerCase()]}
+                text={`Please choose appropriate parent from ${scopeLevel}:`}
+                onClose={this.hideModal}
+                onItemChoose={this.handleLevelObjChoose}
+                isItemsFetching={scopeLevels.isFetching}
+                iconEven={IconEven}
+                iconOdd={IconOdd}
+              />
+            )}
+          </>
         )}
       </EditorWrapper>
     );
