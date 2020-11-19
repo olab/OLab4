@@ -14,6 +14,7 @@ import { toLowerCaseAndPlural, toUpperCaseAndPlural } from '../utils';
 import capitalizeFirstLetter from '../../../helpers/capitalizeFirstLetter';
 import CircularSpinnerWithText from '../../../shared/components/CircularSpinnerWithText';
 import filterByName from '../../../helpers/filterByName';
+import filterByIndex from '../../../helpers/filterByIndex';
 import ListWithSearch from '../../../shared/components/ListWithSearch';
 import styles, { HeaderWrapper, ProgressWrapper } from './styles';
 import type { ISOListProps, ISOListState } from './types';
@@ -66,7 +67,9 @@ class SOList extends PureComponent<ISOListProps, ISOListState> {
     }
 
     if (scopedObjects !== scopedObjectsPrev) {
-      const scopedObjectsFiltered = filterByName(scopedObjects, query);
+      const scopedObjectsNameFiltered = filterByName(scopedObjects, query);
+      const scopedObjectsIndexFiltered = filterByIndex(scopedObjects, query);
+      const scopedObjectsFiltered = [...scopedObjectsNameFiltered, ...scopedObjectsIndexFiltered];
 
       // eslint-disable-next-line react/no-did-update-set-state
       this.setState({ scopedObjectsFiltered });
@@ -83,7 +86,9 @@ class SOList extends PureComponent<ISOListProps, ISOListState> {
 
   handleItemsSearch = (query: string): void => {
     const { scopedObjects } = this.props;
-    const scopedObjectsFiltered = filterByName(scopedObjects, query);
+    const scopedObjectsNameFiltered = filterByName(scopedObjects, query);
+    const scopedObjectsIndexFiltered = filterByIndex(scopedObjects, query);
+    const scopedObjectsFiltered = [...scopedObjectsNameFiltered, ...scopedObjectsIndexFiltered];
 
     this.setState({ scopedObjectsFiltered });
   }
@@ -128,7 +133,7 @@ class SOList extends PureComponent<ISOListProps, ISOListState> {
 
     const isHideSearch = isScopedObjectsFetching && !scopedObjects.length;
     const isMedia = scopedObjectType === SCOPED_OBJECTS.FILE.name.toLowerCase();
-    const searchLabel = `Search for ${scopedObjectType}`;
+    const searchLabel = `Search for ${scopedObjectType} by keyword or index`;
 
     return (
       <Grid container component="main" className={classes.root}>

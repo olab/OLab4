@@ -27,7 +27,7 @@ export const EDITORS_FIELDS = {
   PARENT: 'Parent',
   PLACEHOLDER: 'Placeholder',
   PROMPTTEXT: 'Prompt Text',
-  QUESTION_TYPES: 'Question Types',
+  QUESTION_TYPES: 'Question Type',
   RESOURCE_URL: 'Resource Url',
   RESPONSE: 'Response',
   RESPONSES: 'Responses',
@@ -64,20 +64,21 @@ export const QUESTION_TYPES = {
   6: 'Drag and Drop',
   7: 'SCT',
   8: 'Situational Judgement Testing',
-  9: 'Cumulative',
-  10: 'Rich Text',
-  11: 'Turk Talk',
-  12: 'DropDown',
-  13: 'Multiple-choice grid',
-  14: 'Pick-choice grid',
+  // 9: 'Cumulative',
+  // 10: 'Rich Text',
+  // 11: 'Turk Talk',
+  12: 'Drop Down',
+  // 13: 'Multiple-choice grid',
+  // 14: 'Pick-choice grid',
 };
 
-// NOTE: as more types come online, the relative in-array
-// indexes will change and code has to be modified to accomodate
 export const CHOICE_QUESTION_TYPES = {
   3: 'Multiple Choice',
   4: 'Single Choice',
+  6: 'Drag and Drop',
   7: 'SCT',
+  8: 'Situational Judgement Testing',
+  12: 'Drop Down',
 };
 
 export const TEXTENTRY_QUESTION_TYPES = {

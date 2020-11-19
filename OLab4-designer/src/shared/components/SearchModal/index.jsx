@@ -2,10 +2,9 @@
 import React, { PureComponent } from 'react';
 
 import ConfirmationModal from '../ConfirmationModal';
-import ListWithSearch from '../ListWithSearch';
-
+import filterByIndex from '../../../helpers/filterByIndex';
 import filterByName from '../../../helpers/filterByName';
-
+import ListWithSearch from '../ListWithSearch';
 import type { ISearchModalProps, ISearchModalState } from './types';
 
 class SearchModal extends PureComponent<ISearchModalProps, ISearchModalState> {
@@ -34,7 +33,9 @@ class SearchModal extends PureComponent<ISearchModalProps, ISearchModalState> {
 
   handleItemsSearch = (query: string): void => {
     const { items } = this.props;
-    const listFiltered = filterByName(items, query);
+    const scopedObjectsNameFiltered = filterByName(items, query);
+    const scopedObjectsIndexFiltered = filterByIndex(items, query);
+    const listFiltered = [...scopedObjectsNameFiltered, ...scopedObjectsIndexFiltered];
 
     this.setState({ listFiltered });
   }
@@ -51,15 +52,15 @@ class SearchModal extends PureComponent<ISearchModalProps, ISearchModalState> {
   render() {
     const { listFiltered } = this.state;
     const {
-      label,
-      searchLabel,
-      text,
-      items,
-      onClose,
-      onItemChoose,
       iconEven,
       iconOdd,
       isItemsFetching,
+      items,
+      label,
+      onClose,
+      onItemChoose,
+      searchLabel,
+      text,
     } = this.props;
 
     const isHideSearch = isItemsFetching && !items.length;
@@ -71,17 +72,17 @@ class SearchModal extends PureComponent<ISearchModalProps, ISearchModalState> {
         onClose={onClose}
       >
         <ListWithSearch
-          label={searchLabel}
-          innerRef={this.setListWithSearchRef}
-          onSearch={this.handleItemsSearch}
-          onClear={this.clearSearchInput}
-          onItemClick={onItemChoose}
-          list={listFiltered}
           iconEven={iconEven}
           iconOdd={iconOdd}
+          innerRef={this.setListWithSearchRef}
+          isForModal
           isHideSearch={isHideSearch}
           isItemsFetching={isItemsFetching}
-          isForModal
+          label={searchLabel}
+          list={listFiltered}
+          onClear={this.clearSearchInput}
+          onItemClick={onItemChoose}
+          onSearch={this.handleItemsSearch}
         />
       </ConfirmationModal>
     );

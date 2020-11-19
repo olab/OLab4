@@ -25,6 +25,7 @@ import type { ScopeLevel as ScopeLevelType } from '../../redux/scopeLevels/types
 import { PAGE_TITLES, SCOPE_LEVELS } from '../config';
 
 import filterByName from '../../helpers/filterByName';
+import filterByIndex from '../../helpers/filterByIndex';
 
 import { HomeWrapper, HomeHeader, MapListWrapper } from './styles';
 
@@ -106,7 +107,9 @@ class Home extends PureComponent<IHomeProps, IHomeState> {
 
   handleItemsSearch = (query: string): void => {
     const { maps } = this.props;
-    const mapsFiltered = filterByName(maps, query);
+    const scopedObjectsNameFiltered = filterByName(maps, query);
+    const scopedObjectsIndexFiltered = filterByIndex(maps, query);
+    const mapsFiltered = [...scopedObjectsNameFiltered, ...scopedObjectsIndexFiltered];
 
     this.setState({ mapsFiltered });
   }
@@ -147,7 +150,7 @@ class Home extends PureComponent<IHomeProps, IHomeState> {
 
         <MapListWrapper>
           <ListWithSearch
-            label="Search for existing Maps"
+            label="Search for map by keyword or index"
             innerRef={this.setListWithSearchRef}
             onSearch={this.handleItemsSearch}
             onClear={this.clearSearchInput}
@@ -165,7 +168,7 @@ class Home extends PureComponent<IHomeProps, IHomeState> {
           <SearchModal
             label="Choose template"
             searchLabel="Search for template"
-            text="Please take template from the following:"
+            text="Search for template by keyword or index:"
             items={templates}
             onClose={this.closeTemplatesListModal}
             onItemChoose={this.handleTemplateChoose}

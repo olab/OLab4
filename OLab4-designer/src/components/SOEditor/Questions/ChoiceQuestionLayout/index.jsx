@@ -116,13 +116,15 @@ function ChoiceQuestionLayout({
         {EDITORS_FIELDS.RESPONSES}
         <Button
           size="small"
-          color="primary"
-          className={classes.button}
+          fullWidth
+          variant="contained"
+          color="default"
+          className={classes.submit}
           component={Link}
           to={`/scopedObject/questionresponse/${id}`}
           target="_blank"
         >
-          (Edit)
+          Edit
         </Button>
       </FieldLabel>
 

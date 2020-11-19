@@ -5,8 +5,17 @@ import { Chip } from '@material-ui/core';
 // import CircularSpinnerWithText from '../../../shared/components/CircularSpinnerWithText';
 import { FieldLabel } from '../styles';
 import { getKeyByValue } from './utils';
-import { DEFAULT_WIDTH, DEFAULT_HEIGHT, LAYOUT_TYPES } from './config';
-import { QUESTION_TYPES, EDITORS_FIELDS } from '../config';
+import {
+  DEFAULT_WIDTH,
+  DEFAULT_HEIGHT,
+  LAYOUT_TYPES,
+} from './config';
+import {
+  QUESTION_TYPES,
+  TEXTENTRY_QUESTION_TYPES,
+  CHOICE_QUESTION_TYPES,
+  EDITORS_FIELDS,
+} from '../config';
 import { SCOPE_LEVELS, SCOPED_OBJECTS } from '../../config';
 import EditorWrapper from '../../../shared/components/EditorWrapper';
 import OutlinedInput from '../../../shared/components/OutlinedInput';
@@ -77,14 +86,9 @@ class Questions extends ScopedObjectService {
     const { classes, scopeLevels } = this.props;
     const { iconEven: IconEven, iconOdd: IconOdd } = this.icons;
 
-    const isMultiChoiceType = QUESTION_TYPES[questionType] === QUESTION_TYPES[3];
-    const isSingleChoiceType = QUESTION_TYPES[questionType] === QUESTION_TYPES[4];
-    const isSCTType = QUESTION_TYPES[questionType] === QUESTION_TYPES[7];
-    const isChoiceQuestion = isMultiChoiceType || isSingleChoiceType || isSCTType;
+    const isChoiceQuestion = (questionType in CHOICE_QUESTION_TYPES);
     const isSliderQuestion = QUESTION_TYPES[questionType] === QUESTION_TYPES[5];
-
-    const isTextQuestion = (QUESTION_TYPES[questionType] === QUESTION_TYPES[1])
-      || (QUESTION_TYPES[questionType] === QUESTION_TYPES[2]);
+    const isTextQuestion = (questionType in TEXTENTRY_QUESTION_TYPES);
 
     const idInfo = ` (Id: ${id})`;
 
