@@ -15,6 +15,7 @@ import capitalizeFirstLetter from '../../../helpers/capitalizeFirstLetter';
 import CircularSpinnerWithText from '../../../shared/components/CircularSpinnerWithText';
 import filterByName from '../../../helpers/filterByName';
 import filterByIndex from '../../../helpers/filterByIndex';
+import { getIconType, getQuestionIconType } from '../../../helpers/getIconType';
 import ListWithSearch from '../../../shared/components/ListWithSearch';
 import styles, { HeaderWrapper, ProgressWrapper } from './styles';
 import type { ISOListProps, ISOListState } from './types';
@@ -84,6 +85,23 @@ class SOList extends PureComponent<ISOListProps, ISOListState> {
     document.title = PAGE_TITLES.SO_LIST(capitalizeFirstLetter(scopedObjectType));
   }
 
+  getIcon = (showIcons, scopedObject) => {
+    if (showIcons) {
+      if (Object.prototype.hasOwnProperty.call(scopedObject, 'questionType')) {
+        const MediaIconContent = getQuestionIconType(scopedObject.questionType);
+        return <MediaIconContent />;
+      }
+
+      if (Object.prototype.hasOwnProperty.call(scopedObject, 'resourceUrl')) {
+        const iconType = scopedObject.resourceUrl && scopedObject.resourceUrl.split('.').pop();
+        const MediaIconContent = getIconType(iconType);
+        return <MediaIconContent />;
+      }
+    }
+
+    return '';
+  };
+
   handleItemsSearch = (query: string): void => {
     const { scopedObjects } = this.props;
     const scopedObjectsNameFiltered = filterByName(scopedObjects, query);
@@ -115,6 +133,30 @@ class SOList extends PureComponent<ISOListProps, ISOListState> {
       scopedObjectId,
       this.SOTypeLowerCasedAndPluralled,
     );
+  }
+
+  primarytext = (scopedObject) => {
+    const {
+      match: { params: { scopedObjectType } },
+    } = this.props;
+
+    if (scopedObjectType === 'question') {
+      return scopedObject.stem;
+    }
+
+    return scopedObject.name;
+  }
+
+  secondarytext = (scopedObject) => {
+    const {
+      match: { params: { scopedObjectType } },
+    } = this.props;
+
+    if (scopedObjectType === 'question') {
+      return `Id: ${scopedObject.id}`;
+    }
+
+    return scopedObject.description;
   }
 
   handleRedirect = () => {
@@ -159,18 +201,20 @@ class SOList extends PureComponent<ISOListProps, ISOListState> {
           <Divider />
           <ListWithSearchWrapper>
             <ListWithSearch
-              label={searchLabel}
+              getIcon={this.getIcon}
               innerRef={this.setListWithSearchRef}
-              onSearch={this.handleItemsSearch}
+              isHideSearch={isHideSearch}
+              isItemsFetching={isScopedObjectsFetching}
+              isMedia={isMedia}
+              isWithSpinner={false}
+              label={searchLabel}
+              primarytext={this.primarytext}
+              secondarytext={this.secondarytext}
+              list={scopedObjectsFiltered}
               onClear={this.clearSearchInput}
               onItemClick={this.handleScopedObjectClick}
               onItemDelete={this.handleScopedObjectDelete}
-              list={scopedObjectsFiltered}
-              isHideSearch={isHideSearch}
-              isItemsFetching={isScopedObjectsFetching}
-              isWithSpinner={false}
-              isMedia={isMedia}
-              showIcons={false}
+              onSearch={this.handleItemsSearch}
             />
           </ListWithSearchWrapper>
         </Grid>

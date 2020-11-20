@@ -1,14 +1,44 @@
 // @flow
 import {
-  Image as ImageIcon,
   Archive as ArchiveIcon,
+  ArrowDropDown as DropDownQuestionIcon,
   Audiotrack as AudiotrackIcon,
+  ContactSupport as UnknownQuestionIcon,
+  DeveloperBoard as SCTQuestionIcon,
   ErrorOutline as ErrorOutlineIcon,
-  OndemandVideo as OndemandVideoIcon,
+  Image as ImageIcon,
   InsertDriveFile as InsertDriveFileIcon,
+  List as MultiSelectQuestionIcon,
+  OndemandVideo as OndemandVideoIcon,
+  RadioButtonChecked as SingleSelectQuestionIcon,
+  ShortText as SingleLineTextQuestionIcon,
+  TextFields as RichTextQuestionIcon,
+  Tune as SliderQuestionIcon,
+  ViewHeadline as MultiLineTextQuestionIcon,
 } from '@material-ui/icons';
 
-const getIconType = (iconType: string): any => {
+export const getQuestionIconType = (questionTypeId: Number) => {
+  switch (questionTypeId) {
+    case 1: return SingleLineTextQuestionIcon;
+    case 2: return MultiLineTextQuestionIcon;
+    case 3: return MultiSelectQuestionIcon;
+    case 4: return SingleSelectQuestionIcon;
+    case 5: return SliderQuestionIcon;
+    case 6: return DropDownQuestionIcon;
+    case 7: return SCTQuestionIcon;
+    // case 8: 'Situational Judgement Testing',
+    // case 9: 'Cumulative',
+    case 10: return RichTextQuestionIcon;
+    // case 11: 'Turk Talk',
+    case 12: return DropDownQuestionIcon;
+    // case 13: 'Multiple-choice grid',
+    // case 14: 'Pick-choice grid',
+    default:
+      return UnknownQuestionIcon;
+  }
+};
+
+export const getIconType = (iconType: string): any => {
   switch (iconType) {
     case 'png':
     case 'gif':
@@ -39,4 +69,4 @@ const getIconType = (iconType: string): any => {
   }
 };
 
-export default getIconType;
+// export default getIconType;

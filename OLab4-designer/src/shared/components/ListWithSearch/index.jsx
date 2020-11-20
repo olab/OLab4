@@ -15,7 +15,7 @@ import {
 
 import CircularSpinnerWithText from '../CircularSpinnerWithText';
 
-import getIconType from '../../../helpers/getIconType';
+// import getIconType from '../../../helpers/getIconType';
 import removeHTMLTags from '../../../helpers/removeHTMLTags';
 
 import type { IListWithSearchProps, IListWithSearchState } from './types';
@@ -24,41 +24,42 @@ import styles, { SearchWrapper, ListItemContentWrapper } from './styles';
 
 class ListWithSearch extends PureComponent<IListWithSearchProps, IListWithSearchState> {
   static defaultProps = {
+    getIcon: () => '',
     iconEven: DefaultIcon,
     iconOdd: DefaultOutlinedIcon,
     isForModal: false,
     isItemsDisabled: false,
     isWithSpinner: true,
-    showIcons: true,
     primarytext: (item) => item.name,
     secondarytext: (item) => item.description,
+    showIcons: true,
   };
 
   state: IListWithSearchState = {
     query: '',
   };
 
-  getIcon(index, file) {
-    const {
-      showIcons,
-      isMedia,
-      iconEven: IconEven,
-      iconOdd: IconOdd,
-    } = this.props;
+  // getIcon(index, file) {
+  //   const {
+  //     showIcons,
+  //     isMedia,
+  //     iconEven: IconEven,
+  //     iconOdd: IconOdd,
+  //   } = this.props;
 
-    if (!showIcons) {
-      return '';
-    }
+  //   if (!showIcons) {
+  //     return '';
+  //   }
 
-    if (isMedia) {
-      const iconType = file.resourceUrl && file.resourceUrl.split('.').pop();
-      const MediaIconContent = getIconType(iconType);
+  //   if (isMedia) {
+  //     const iconType = file.resourceUrl && file.resourceUrl.split('.').pop();
+  //     const MediaIconContent = getIconType(iconType);
 
-      return <MediaIconContent />;
-    }
+  //     return <MediaIconContent />;
+  //   }
 
-    return index % 2 === 0 ? <IconEven /> : <IconOdd />;
-  }
+  //   return index % 2 === 0 ? <IconEven /> : <IconOdd />;
+  // }
 
   clearSearch = (): void => {
     const { onClear } = this.props;
@@ -79,6 +80,7 @@ class ListWithSearch extends PureComponent<IListWithSearchProps, IListWithSearch
     const { query } = this.state;
     const {
       classes,
+      getIcon,
       isForModal,
       isHideSearch,
       isItemsDisabled,
@@ -90,6 +92,7 @@ class ListWithSearch extends PureComponent<IListWithSearchProps, IListWithSearch
       onItemDelete,
       primarytext,
       secondarytext,
+      showIcons,
     } = this.props;
 
     const listClassNames = classNames(
@@ -135,7 +138,7 @@ class ListWithSearch extends PureComponent<IListWithSearchProps, IListWithSearch
           classes={{ root: listClassNames }}
           disablePadding
         >
-          {list.map((listItem, i) => (
+          {list.map((listItem) => (
             <ListItem
               key={listItem.id}
               classes={{ root: classes.listItem }}
@@ -147,7 +150,7 @@ class ListWithSearch extends PureComponent<IListWithSearchProps, IListWithSearch
                   onClick={() => onItemClick(listItem)}
                   disabled={isItemsDisabled}
                 >
-                  {this.getIcon(i, listItem)}
+                  {getIcon(showIcons, listItem)}
                   <ListItemText
                     primary={primarytext(listItem)}
                     secondary={removeHTMLTags(secondarytext(listItem) || '')}

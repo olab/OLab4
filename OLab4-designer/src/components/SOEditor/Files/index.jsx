@@ -9,7 +9,7 @@ import OutlinedSelect from '../../../shared/components/OutlinedSelect';
 import CopyToClipboard from '../../../shared/components/CopyToClipboard';
 
 import convertSize from '../../../helpers/convertSize';
-import getIconType from '../../../helpers/getIconType';
+import { getIconType } from '../../../helpers/getIconType';
 import ScopedObjectService, { withSORedux } from '../index.service';
 
 import { EDITORS_FIELDS } from '../config';
@@ -53,6 +53,18 @@ class File extends ScopedObjectService {
 
     this.setState({ [name]: index });
   };
+
+  getIcon = (showIcons, scopedObject) => {
+    if (showIcons) {
+      if (Object.prototype.hasOwnProperty.call(scopedObject, 'resourceUrl')) {
+        const iconType = scopedObject.resourceUrl && scopedObject.resourceUrl.split('.').pop();
+        const MediaIconContent = getIconType(iconType);
+        return <MediaIconContent />;
+      }
+    }
+
+    return '';
+  }
 
   render() {
     const {
