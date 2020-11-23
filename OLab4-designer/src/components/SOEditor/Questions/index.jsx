@@ -36,9 +36,9 @@ class Questions extends ScopedObjectService {
       height: DEFAULT_HEIGHT.MIN,
       id: 0,
       isFieldsDisabled: false,
-      isShowAnswer: false,
+      showAnswer: false,
       isShowModal: false,
-      isShowSubmit: false,
+      showSubmit: false,
       layoutType: 0,
       name: '',
       placeholder: '',
@@ -97,7 +97,7 @@ class Questions extends ScopedObjectService {
         isEditMode={this.isEditMode}
         isDisabled={isFieldsDisabled}
         scopedObject={this.scopedObjectType}
-        onSubmit={this.handleSubmitScopedObject}
+        onSubmit={this.onClickUpdate}
       >
         {(id !== 0) && (
           <small>{idInfo}</small>

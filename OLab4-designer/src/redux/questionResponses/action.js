@@ -50,18 +50,24 @@ export const ACTION_RESPONSE_DELETE_FAILED = () => ({
   type: RESPONSE_DELETE_FAILED,
 });
 
+// export const ACTION_RESPONSE_DELETE_SUCCEEDED = (scopedObjectId) => ({
+//   type: RESPONSE_DELETE_SUCCEEDED,
+//   scopedObjectId,
+// });
+
 export const ACTION_RESPONSE_DELETE_SUCCEEDED = (
   scopedObjectId: number,
-  scopedObjectType: string,
 ) => {
+  const scopedObjectType = 'questions';
   const { scopedObjects } = store.getState();
-  const scopedObjectsList = scopedObjects[scopedObjectType];
+  const scopedObjectsList = scopedObjects[scopedObjectType][0].responses;
   const scopedObjectIndex = scopedObjectsList.findIndex(({ id }) => id === scopedObjectId);
 
   return {
     type: RESPONSE_DELETE_SUCCEEDED,
     scopedObjectIndex,
     scopedObjectType,
+    scopedObject: scopedObjects[scopedObjectType][0],
   };
 };
 

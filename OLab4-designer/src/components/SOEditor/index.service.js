@@ -120,7 +120,7 @@ class ScopedObjectService extends PureComponent<IScopedObjectProps, IScopedObjec
     this.setState({ [name]: value });
   }
 
-  handleToggleButtonChange = (e: Event): void => {
+  onToggleButtonChange = (e: Event): void => {
     let { value } = (e.target.parentNode: window.HTMLInputElement);
     const { attributes } = (
       e.target.parentNode.parentNode: window.HTMLInputElement
@@ -140,7 +140,7 @@ class ScopedObjectService extends PureComponent<IScopedObjectProps, IScopedObjec
     this.setState({ [name]: value });
   };
 
-  handleSubmitScopedObject = (): void => {
+  onClickUpdate = (): void => {
     const {
       isFieldsDisabled,
       isShowModal,

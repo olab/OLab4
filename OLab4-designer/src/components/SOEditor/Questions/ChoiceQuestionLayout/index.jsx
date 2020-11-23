@@ -28,8 +28,8 @@ function ChoiceQuestionLayout({
     feedback,
     id,
     isFieldsDisabled,
-    isShowAnswer,
-    isShowSubmit,
+    showAnswer,
+    showSubmit,
     layoutType,
     responses,
     stem,
@@ -67,18 +67,18 @@ function ChoiceQuestionLayout({
 
       <SwitchWrapper>
         <Switch
-          name="isShowAnswer"
+          name="showAnswer"
           label={EDITORS_FIELDS.SHOW_ANSWER}
           labelPlacement="start"
-          checked={isShowAnswer}
+          checked={showAnswer}
           onChange={onSwitchChange}
           disabled={isFieldsDisabled}
         />
         <Switch
-          name="isShowSubmit"
+          name="showSubmit"
           label={EDITORS_FIELDS.SHOW_SUBMIT}
           labelPlacement="start"
-          checked={isShowSubmit}
+          checked={showSubmit}
           onChange={onSwitchChange}
           disabled={isFieldsDisabled}
         />

@@ -83,7 +83,7 @@ class File extends ScopedObjectService {
         isEditMode={this.isEditMode}
         isDisabled={isFieldsDisabled}
         scopedObject={this.scopedObjectType}
-        onSubmit={this.handleSubmitScopedObject}
+        onSubmit={this.onClickUpdate}
       >
         {isPreviewShow && (
           <Preview src={resourceUrl} alt={name} />

@@ -23,7 +23,7 @@ function TextQuestionLayout({
     height,
     isFieldsDisabled,
     isPrivate,
-    isShowSubmit,
+    showSubmit,
     prompt,
     questionType,
     stem,
@@ -135,10 +135,10 @@ function TextQuestionLayout({
           disabled={isFieldsDisabled}
         />
         <Switch
-          name="isShowSubmit"
+          name="showSubmit"
           label={EDITORS_FIELDS.SHOW_SUBMIT}
           labelPlacement="start"
-          checked={isShowSubmit}
+          checked={showSubmit}
           onChange={onSwitchChange}
           disabled={isFieldsDisabled}
         />

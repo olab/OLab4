@@ -20,6 +20,7 @@ const EditorWrapper = ({
   history,
   isDisabled,
   isEditMode,
+  onRevert,
   onSubmit,
   scopedObject,
 }: IEditorWrapperProps) => (
@@ -41,17 +42,28 @@ const EditorWrapper = ({
           {`${isEditMode ? 'EDIT' : 'ADD NEW'} ${scopedObject.toUpperCase()}`}
         </Typography>
       </div>
-      <Button
-        type="submit"
-        fullWidth
-        variant="contained"
-        color="primary"
-        className={classes.submit}
-        onClick={onSubmit}
-        disabled={isDisabled}
-      >
-        {isEditMode ? 'Update' : 'Create'}
-      </Button>
+      <div>
+        <Button
+          type="submit"
+          variant="contained"
+          color="primary"
+          className={classes.submit}
+          onClick={onSubmit}
+          disabled={isDisabled}
+        >
+          {isEditMode ? 'Update' : 'Create'}
+        </Button>
+        {(typeof onRevert !== 'undefined') && (
+          <Button
+            variant="contained"
+            className={classes.submit}
+            onClick={onRevert}
+            disabled={isDisabled}
+          >
+            Revert
+          </Button>
+        )}
+      </div>
     </HeadingWrapper>
     <Container>
       <Paper>

@@ -28,8 +28,8 @@ export type ScopedObjectBase = {
   resourceUrl?: string,
   placeholder?: string,
   isEmbedded?: boolean,
-  isShowAnswer?: boolean,
-  isShowSubmit?: boolean,
+  showAnswer?: boolean,
+  showSubmit?: boolean,
 };
 
 export type ScopedObjectDetails = {

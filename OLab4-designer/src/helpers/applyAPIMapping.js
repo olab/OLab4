@@ -205,27 +205,39 @@ export const mapFromServerOnCreate = (
 
 export const templateFromServer = mapFromServer;
 
-export const scopedObjectFromServer = (
-  { url, ...restSO }: ScopedObject | ScopedObjectListItem,
-): ScopedObject => ({
-  ...restSO,
-  details: null,
-  isShowEyeIcon: Boolean(url),
-  isDetailsFetching: false,
-});
 
 export const scopedObjectByTypeFromServer = ({
-  url, showAnswer, showSubmit, ...restSO
-}: ScopedObjectListItem): ScopedObjectListItem => ({
-  ...restSO,
-  ...(isNumber(showAnswer) && { isShowAnswer: Number(showAnswer) }),
-  ...(isNumber(showAnswer) && { isShowSubmit: Number(showAnswer) }),
-});
+  url,
+  showAnswer,
+  showSubmit,
+  ...restSO
+}: ScopedObjectListItem): ScopedObjectListItem => {
+  const objectPayload = {
+    ...restSO,
+    ...(isNumber(showAnswer) && { showAnswer: Number(showAnswer) }),
+    ...(isNumber(showAnswer) && { showSubmit: Number(showAnswer) }),
+  };
+
+  return objectPayload;
+};
+
+export const scopedObjectFromServer = (
+  { url, ...restSO }: ScopedObject | ScopedObjectListItem,
+): ScopedObject => {
+  const objectPayload = {
+    ...restSO,
+    details: null,
+    isShowEyeIcon: Boolean(url),
+    isDetailsFetching: false,
+  };
+
+  return objectPayload;
+};
 
 export const scopedObjectToServer = (SO: ScopedObjectBase): ScopedObjectBase => {
   if (Number(Object.keys(QUESTION_TYPES)[0]) === SO.questionType) {
     const {
-      feedback, layoutType, isShowAnswer, isShowSubmit, ...restSO
+      feedback, layoutType, showAnswer, showSubmit, ...restSO
     } = SO;
 
     return {
@@ -235,18 +247,24 @@ export const scopedObjectToServer = (SO: ScopedObjectBase): ScopedObjectBase => 
   }
 
   const {
-    width, height, placeholder, isShowAnswer, isShowSubmit, ...restSO
+    width, height, placeholder, showAnswer, showSubmit, ...restSO
   } = SO;
 
-  return {
+  const serverPayload = {
     ...restSO,
-    ...(isBoolean(isShowAnswer) && { showAnswer: Number(isShowAnswer) }),
-    ...(isBoolean(isShowSubmit) && { showSubmit: Number(isShowSubmit) }),
+    ...(isBoolean(showAnswer) && { showAnswer: Number(showAnswer) }),
+    ...(isBoolean(showSubmit) && { showSubmit: Number(showSubmit) }),
   };
+
+  return serverPayload;
 };
 
 export const scopedObjectDetailsFromServer = ({
-  id, name, parentId, url, ...restSODetails
+  id,
+  name,
+  parentId,
+  url,
+  ...restSODetails
 }: ScopedObject): ScopedObject => ({
   id,
   name,

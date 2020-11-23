@@ -14,24 +14,24 @@ export const withQuestionResponseRedux = (
   Component: ReactElement<IQuestionResponseProps>,
   scopedObjectType: string,
 ) => {
-  const mapStateToProps = ({ scopedObjects }) => ({
+  const mapStateToProps = (
+    { scopedObjects },
+  ) => ({
     scopedObjects: scopedObjects[toLowerCaseAndPlural(scopedObjectType)],
     isScopedObjectCreating: scopedObjects.isCreating,
     isScopedObjectUpdating: scopedObjects.isUpdating,
   });
 
   const mapDispatchToProps = dispatch => ({
-    ACTION_SCOPED_OBJECT_DELETE_REQUESTED: (scopedObjectId: number) => {
-      dispatch(questionResponseActions.ACTION_SCOPED_OBJECT_DELETE_REQUESTED(
-        scopedObjectId,
-        // 'questionresponse',
-        // toLowerCaseAndPlural(scopedObjectType),
-      ));
-    },
     ACTION_SCOPED_OBJECT_DETAILS_REQUESTED: (scopedObjectId: number) => {
       dispatch(scopedObjectsActions.ACTION_SCOPED_OBJECT_DETAILS_REQUESTED(
         scopedObjectId,
         toLowerCaseAndPlural(scopedObjectType),
+      ));
+    },
+    ACTION_SCOPED_OBJECT_DELETE_REQUESTED: (scopedObjectId: number) => {
+      dispatch(questionResponseActions.ACTION_SCOPED_OBJECT_DELETE_REQUESTED(
+        scopedObjectId,
       ));
     },
     ACTION_SCOPED_OBJECT_CREATE_REQUESTED: (scopedObjectData: ScopedObjectBaseType) => {

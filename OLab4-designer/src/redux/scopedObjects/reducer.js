@@ -29,7 +29,6 @@ export const initialScopedObjectsState: ScopedObjectsType = {
   isDeleting: false,
   isFetching: false,
   isUpdating: false,
-  questionresponses: [],
   questions: [],
 };
 
@@ -61,8 +60,7 @@ const scopedObjects = (
     case SCOPED_OBJECT_DETAILS_FULFILLED:
     case SCOPED_OBJECT_DETAILS_REQUESTED: {
       const { scopedObjectType, scopedObjectIndex, scopedObject } = action;
-
-      return {
+      const newState = {
         ...state,
         [scopedObjectType]: [
           ...state[scopedObjectType].slice(0, scopedObjectIndex),
@@ -71,6 +69,8 @@ const scopedObjects = (
         ],
         isFetching: false,
       };
+
+      return newState;
     }
     case SCOPED_OBJECT_CREATE_REQUESTED:
       return {

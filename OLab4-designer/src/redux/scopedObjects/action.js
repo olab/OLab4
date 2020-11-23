@@ -96,12 +96,14 @@ export const ACTION_SCOPED_OBJECT_DETAILS_SUCCEEDED = (
     isDetailsFetching: false,
   };
 
-  return {
+  const action = {
     type: SCOPED_OBJECT_DETAILS_FULFILLED,
     scopedObjectType,
     scopedObjectIndex,
     scopedObject: clonedScopedObject,
   };
+
+  return action;
 };
 
 export const ACTION_SCOPED_OBJECT_CREATE_REQUESTED = (

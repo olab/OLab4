@@ -2,7 +2,7 @@
 import React from 'react';
 import { ToggleButtonGroup, ToggleButton } from '@material-ui/lab';
 import { Delete as DeleteIcon } from '@material-ui/icons';
-import { IconButton } from '@material-ui/core';
+import { Button, IconButton } from '@material-ui/core';
 import log from 'loglevel';
 import { EDITORS_FIELDS, QUESTION_TYPES, CORRECTNESS_TYPES } from '../config';
 import { FieldLabel } from '../styles';
@@ -21,27 +21,20 @@ class QuestionResponses extends ScopedObjectService {
   constructor(props: IQuestionResponseProps) {
     super(props, SCOPED_OBJECTS.QUESTION.name);
     this.state = {
-      description: '',
-      id: 0,
-      isCorrect: false,
       isFieldsDisabled: false,
-      name: '',
+      isDetailsFetching: true,
       questionId: 0,
       questionType: Number(Object.keys(QUESTION_TYPES)[0]),
       responses: [],
-      score: 0,
-      text: '',
     };
 
-    // this.scopedObjectType = 'Question Response';
-    log.setDefaultLevel('trace');
-
+    // log.setDefaultLevel('trace');
     this.setPageTitle();
   }
 
   buildId = (name: String, index: Number): void => `${name.toLowerCase()}-${index}`;
 
-  handleToggleButtonChange = (e: Event): void => {
+  onToggleButtonChange = (e: Event): void => {
     const { value: index } = e.target.parentNode.parentNode.parentNode.parentNode.children[0];
     const { innerHTML: stringValue } = e.target;
     const { state } = this;
@@ -62,7 +55,7 @@ class QuestionResponses extends ScopedObjectService {
     this.setState({ responses });
   }
 
-  handleIntegerInputChange = (e: Event): void => {
+  onIntegerTextChange = (e: Event): void => {
     const { value, name } = (e.target: window.HTMLInputElement);
     const [fieldName, index] = name.split('-');
     const { state } = this;
@@ -77,7 +70,7 @@ class QuestionResponses extends ScopedObjectService {
     this.setState({ responses });
   }
 
-  handleTextInputChange = (e: Event): void => {
+  onTextChange = (e: Event): void => {
     const { value, name } = (e.target: window.HTMLInputElement);
     const [fieldName, index] = name.split('-');
     const { state } = this;
@@ -88,15 +81,25 @@ class QuestionResponses extends ScopedObjectService {
     this.setState({ responses });
   }
 
-  onItemDelete = (id): void => {
+  onItemDelete = (questionId, id): void => {
     const {
       ACTION_SCOPED_OBJECT_DELETE_REQUESTED,
+      ACTION_SCOPED_OBJECT_DETAILS_REQUESTED,
     } = this.props;
 
-    ACTION_SCOPED_OBJECT_DELETE_REQUESTED(id);
+    ACTION_SCOPED_OBJECT_DELETE_REQUESTED(id, 'questionresponses');
+    ACTION_SCOPED_OBJECT_DETAILS_REQUESTED(questionId);
   }
 
-  handleSubmitScopedObject = (): void => {
+  onClickCreate = () => true;
+
+  onClickRevert = () => {
+    const { ACTION_SCOPED_OBJECT_DETAILS_REQUESTED } = this.props;
+    const { id } = this.state;
+    ACTION_SCOPED_OBJECT_DETAILS_REQUESTED(id);
+  }
+
+  onClickUpdate = (): void => {
     const {
       isFieldsDisabled,
       isShowModal,
@@ -120,162 +123,177 @@ class QuestionResponses extends ScopedObjectService {
 
   render() {
     const {
-      id,
+      isDetailsFetching,
       isFieldsDisabled,
       responses,
     } = this.state;
-    const {
-      classes,
-    } = this.props;
+    const { classes } = this.props;
 
-    if (id === 0) {
+    if (isDetailsFetching) {
       return <CircularSpinnerWithText text="Data is being fetched..." large centered />;
     }
 
     return (
-      <EditorWrapper
-        hasBackButton={false}
-        isDisabled={isFieldsDisabled}
-        isEditMode={this.isEditMode}
-        onSubmit={this.handleSubmitScopedObject}
-        scopedObject={this.scopedObjectType}
-      >
-        {responses.map((item, i) => (
-          <OtherContent>
-            <input value={i} type="hidden" />
-            <FullContainerWidth>
-              <FieldLabel>
-                {i === 0 && (
-                  <>
-                    {EDITORS_FIELDS.RESPONSE}
-                  </>
-                )}
-                <OutlinedInput
-                  name={this.buildId('response', i)}
-                  placeholder={EDITORS_FIELDS.RESPONSE}
-                  value={item.response}
-                  onChange={this.handleTextInputChange}
-                  disabled={isFieldsDisabled}
-                  fullWidth
-                />
-              </FieldLabel>
-            </FullContainerWidth>
-            <FullContainerWidth>
-              <FieldLabel>
-                {i === 0 && (
-                  <>
-                    {EDITORS_FIELDS.FEEDBACK}
-                  </>
-                )}
-                <OutlinedInput
-                  name={this.buildId('feedback', i)}
-                  placeholder={EDITORS_FIELDS.FEEDBACK}
-                  value={item.feedback}
-                  onChange={this.handleTextInputChange}
-                  disabled={isFieldsDisabled}
-                  fullWidth
-                />
-              </FieldLabel>
-            </FullContainerWidth>
-            <FullContainerWidth>
-              <FieldLabel>
-                {i === 0 && (
-                  <>
-                    {EDITORS_FIELDS.SCORE}
-                  </>
-                )}
-                <OutlinedInput
-                  name={this.buildId('score', i)}
-                  placeholder={EDITORS_FIELDS.SCORE}
-                  value={item.score}
-                  onChange={this.handleIntegerInputChange}
-                  disabled={isFieldsDisabled}
-                  fullWidth
-                />
-              </FieldLabel>
-            </FullContainerWidth>
-            <FullContainerWidth>
-              <FieldLabel>
-                {i === 0 && (
-                  <>
-                    {EDITORS_FIELDS.ORDER}
-                  </>
-                )}
-                <OutlinedInput
-                  name={this.buildId('order', i)}
-                  placeholder={EDITORS_FIELDS.ORDER}
-                  value={item.order}
-                  onChange={this.handleIntegerInputChange}
-                  disabled={isFieldsDisabled}
-                  fullWidth
-                />
-              </FieldLabel>
-            </FullContainerWidth>
-            <FullContainerWidth>
-              <FieldLabel>
-                {i === 0 && (
-                  <>
-                    {EDITORS_FIELDS.IS_CORRECT}
-                  </>
-                )}
-              </FieldLabel>
-              <ToggleButtonGroup
-                size="small"
-                name="isCorrect"
-                orientation="horizontal"
-                value={Number(item.isCorrect)}
-                exclusive
-                onChange={this.handleToggleButtonChange}
-              >
-                <ToggleButton
-                  name={this.buildId('incorrect', i)}
-                  classes={{ root: this.props.classes.toggleButton }}
-                  value={0}
-                  aria-label="list"
-                >
-                  {CORRECTNESS_TYPES[0]}
-                </ToggleButton>
-                <ToggleButton
-                  name={this.buildId('correct', i)}
-                  classes={{ root: this.props.classes.toggleButton }}
-                  value={1}
-                  aria-label="module"
-                >
-                  {CORRECTNESS_TYPES[1]}
-                </ToggleButton>
-                <ToggleButton
-                  name={this.buildId('neutral', i)}
-                  classes={{ root: this.props.classes.toggleButton }}
-                  value={2}
-                  aria-label="quilt"
-                >
-                  {CORRECTNESS_TYPES[2]}
-                </ToggleButton>
-              </ToggleButtonGroup>
-            </FullContainerWidth>
-            <FullContainerWidth>
-              <FieldLabel>
-                {i === 0 && (
-                  <>
-                    <br />
-                  </>
-                )}
-                <IconButton
+      <>
+        <EditorWrapper
+          hasBackButton={false}
+          isDisabled={isFieldsDisabled}
+          isEditMode={this.isEditMode}
+          onRevert={this.onClickRevert}
+          onSubmit={this.onClickUpdate}
+          scopedObject={this.scopedObjectType}
+        >
+          {responses.map((item, i) => (
+            <OtherContent>
+              <input value={i} type="hidden" />
+              <FullContainerWidth>
+                <FieldLabel>
+                  {i === 0 && (
+                    <>
+                      {EDITORS_FIELDS.RESPONSE}
+                    </>
+                  )}
+                  <OutlinedInput
+                    name={this.buildId('response', i)}
+                    placeholder={EDITORS_FIELDS.RESPONSE}
+                    value={item.response}
+                    onChange={this.onTextChange}
+                    disabled={isFieldsDisabled}
+                    fullWidth
+                  />
+                </FieldLabel>
+              </FullContainerWidth>
+              <FullContainerWidth>
+                <FieldLabel>
+                  {i === 0 && (
+                    <>
+                      {EDITORS_FIELDS.FEEDBACK}
+                    </>
+                  )}
+                  <OutlinedInput
+                    name={this.buildId('feedback', i)}
+                    placeholder={EDITORS_FIELDS.FEEDBACK}
+                    value={item.feedback}
+                    onChange={this.onTextChange}
+                    disabled={isFieldsDisabled}
+                    fullWidth
+                  />
+                </FieldLabel>
+              </FullContainerWidth>
+              <FullContainerWidth>
+                <FieldLabel>
+                  {i === 0 && (
+                    <>
+                      {EDITORS_FIELDS.SCORE}
+                    </>
+                  )}
+                  <OutlinedInput
+                    name={this.buildId('score', i)}
+                    placeholder={EDITORS_FIELDS.SCORE}
+                    value={item.score}
+                    onChange={this.onIntegerTextChange}
+                    disabled={isFieldsDisabled}
+                    fullWidth
+                  />
+                </FieldLabel>
+              </FullContainerWidth>
+              <FullContainerWidth>
+                <FieldLabel>
+                  {i === 0 && (
+                    <>
+                      {EDITORS_FIELDS.ORDER}
+                    </>
+                  )}
+                  <OutlinedInput
+                    name={this.buildId('order', i)}
+                    placeholder={EDITORS_FIELDS.ORDER}
+                    value={item.order}
+                    onChange={this.onIntegerTextChange}
+                    disabled={isFieldsDisabled}
+                    fullWidth
+                  />
+                </FieldLabel>
+              </FullContainerWidth>
+              <FullContainerWidth>
+                <FieldLabel>
+                  {i === 0 && (
+                    <>
+                      {EDITORS_FIELDS.IS_CORRECT}
+                    </>
+                  )}
+                </FieldLabel>
+                <ToggleButtonGroup
                   size="small"
-                  title={`Delete ${item.response}`}
-                  aria-label="Delete Scoped Object"
-                  onClick={() => this.onItemDelete(item.id)}
-                  classes={{ root: classes.deleteIcon }}
+                  name="isCorrect"
+                  orientation="horizontal"
+                  value={Number(item.isCorrect)}
+                  exclusive
+                  onChange={this.onToggleButtonChange}
                 >
-                  <DeleteIcon />
-                </IconButton>
-              </FieldLabel>
-            </FullContainerWidth>
-          </OtherContent>
-        ))}
-      </EditorWrapper>
+                  <ToggleButton
+                    name={this.buildId('incorrect', i)}
+                    classes={{ root: this.props.classes.toggleButton }}
+                    value={0}
+                    aria-label="list"
+                  >
+                    {CORRECTNESS_TYPES[0]}
+                  </ToggleButton>
+                  <ToggleButton
+                    name={this.buildId('correct', i)}
+                    classes={{ root: this.props.classes.toggleButton }}
+                    value={1}
+                    aria-label="module"
+                  >
+                    {CORRECTNESS_TYPES[1]}
+                  </ToggleButton>
+                  <ToggleButton
+                    name={this.buildId('neutral', i)}
+                    classes={{ root: this.props.classes.toggleButton }}
+                    value={2}
+                    aria-label="quilt"
+                  >
+                    {CORRECTNESS_TYPES[2]}
+                  </ToggleButton>
+                </ToggleButtonGroup>
+              </FullContainerWidth>
+              <FullContainerWidth>
+                <FieldLabel>
+                  {i === 0 && (
+                    <>
+                      <br />
+                    </>
+                  )}
+                  <IconButton
+                    size="small"
+                    title={`Delete ${item.response}`}
+                    aria-label="Delete Scoped Object"
+                    onClick={() => this.onItemDelete(item.questionId, item.id)}
+                    classes={{ root: classes.deleteIcon }}
+                  >
+                    <DeleteIcon />
+                  </IconButton>
+                </FieldLabel>
+              </FullContainerWidth>
+            </OtherContent>
+          ))}
+          <FieldLabel>
+            <Button
+              type="submit"
+              variant="contained"
+              color="primary"
+              className={classes.submit}
+              onClick={this.onClickCreate}
+            >
+              Create
+            </Button>
+          </FieldLabel>
+        </EditorWrapper>
+      </>
     );
   }
 }
 
-export default withQuestionResponseRedux(QuestionResponses, SCOPED_OBJECTS.QUESTION.name);
+export default withQuestionResponseRedux(
+  QuestionResponses,
+  SCOPED_OBJECTS.QUESTION.name,
+);

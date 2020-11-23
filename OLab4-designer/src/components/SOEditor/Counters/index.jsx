@@ -71,7 +71,7 @@ class Counters extends ScopedObjectService {
         isEditMode={this.isEditMode}
         isDisabled={isFieldsDisabled}
         scopedObject={this.scopedObjectType}
-        onSubmit={this.handleSubmitScopedObject}
+        onSubmit={this.onClickUpdate}
       >
         <FieldLabel>
           {EDITORS_FIELDS.NAME}

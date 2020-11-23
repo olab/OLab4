@@ -7,7 +7,7 @@ import mapDetails from '../redux/mapDetails/reducer';
 import scopeLevels from '../redux/scopeLevels/reducer';
 import counterGrid from '../redux/counterGrid/reducer';
 import scopedObjects from '../redux/scopedObjects/reducer';
-// import questionResponses from '../redux/questionResponses/reducer';
+import questionResponses from '../redux/questionResponses/reducer';
 import constructor from '../redux/constructor/reducer';
 
 export default {
@@ -21,5 +21,5 @@ export default {
   counterGrid,
   constructor,
   scopedObjects,
-  // questionResponses,
+  questionResponses,
 };

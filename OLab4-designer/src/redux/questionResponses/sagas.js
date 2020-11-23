@@ -64,7 +64,7 @@ function* deleteResponseSaga({
       scopedObjectId,
     );
 
-    yield put(ACTION_RESPONSE_DELETE_SUCCEEDED(scopedObjectId));
+    yield put(ACTION_RESPONSE_DELETE_SUCCEEDED(scopedObjectId, 'questionresponses'));
     yield put(ACTION_NOTIFICATION_SUCCESS(MESSAGES.ON_DELETE.SCOPED_OBJECT));
   } catch (error) {
     const { response, message } = error;

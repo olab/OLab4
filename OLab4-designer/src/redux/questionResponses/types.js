@@ -18,6 +18,18 @@ export type QuestionResponse = {
   updated_At: string,
 };
 
+export type ScopedObjects = {
+  [type: string]: Array<ScopedObject | ScopedObjectListItem>,
+};
+
+export type ScopedObjectsState = {
+  ...ScopedObjects,
+  isFetching: boolean,
+  isCreating: boolean,
+  isUpdating: boolean,
+  isDeleting: boolean,
+};
+
 const RESPONSE_CREATE_REQUESTED = 'RESPONSE_CREATE_REQUESTED';
 type QuestionResponseCreateRequested = {
   type: 'RESPONSE_CREATE_REQUESTED',
