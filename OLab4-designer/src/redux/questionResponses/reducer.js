@@ -25,17 +25,10 @@ const questionResponses = (
         isCreating: true,
       };
     case RESPONSE_CREATE_SUCCEEDED: {
-      const { scopedObjectId, scopedObjectType, scopedObjectData } = action;
+      // const { scopedObjectId, scopedObjectData } = action;
 
       return {
         ...state,
-        [scopedObjectType]: [
-          ...state[scopedObjectType],
-          {
-            ...scopedObjectData,
-            id: scopedObjectId,
-          },
-        ],
         isCreating: false,
       };
     }

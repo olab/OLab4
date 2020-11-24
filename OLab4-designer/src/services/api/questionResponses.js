@@ -27,14 +27,12 @@ export const createResponse = (scopedObjectData) => API
   });
 
 export const editResponse = (scopedObjectData) => {
-  scopedObjectData.forEach(item => {
-    const data = questionResponseToServer(item);
-    API
-      .put(`/olab/questionresponses/${item.id}`, {
-        data,
-      })
-      .catch((error) => {
-        throw error;
-      });
-  });
+  const data = questionResponseToServer(scopedObjectData);
+  API
+    .put(`/olab/questionresponses/${scopedObjectData.id}`, {
+      data,
+    })
+    .catch((error) => {
+      throw error;
+    });
 };

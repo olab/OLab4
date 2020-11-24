@@ -48,6 +48,9 @@ class QuestionResponses extends ScopedObjectService {
       if (value.length > 0) {
         const fieldName = 'isCorrect';
         responses[Number(index)][fieldName] = Number(value);
+        if (responses[index].dbOperation !== 'create') {
+          responses[index].dbOperation = 'edit';
+        }
         log.debug(`${fieldName}[${index}] = ${value}`);
       }
     }
@@ -64,6 +67,9 @@ class QuestionResponses extends ScopedObjectService {
     if (isPositiveInteger(value)) {
       const int = parseInt(value, 10);
       responses[index][fieldName] = int;
+      if (responses[index].dbOperation !== 'create') {
+        responses[index].dbOperation = 'edit';
+      }
       log.debug(`${fieldName}[${index}] = ${value}`);
     }
 
@@ -77,21 +83,29 @@ class QuestionResponses extends ScopedObjectService {
     const responses = [...state.responses];
 
     responses[index][fieldName] = value;
+    if (responses[index].dbOperation !== 'create') {
+      responses[index].dbOperation = 'edit';
+    }
     log.debug(`${fieldName}[${index}] = ${value}`);
     this.setState({ responses });
   }
 
   onItemDelete = (id): void => {
-    // if (id < 0) {
+    log.debug(`deleting id = ${id}`);
     const {
       state,
     } = this;
-    let responses = [...state.responses];
-    responses = responses.filter((value) => value.id !== id);
+    const responses = [...state.responses];
+    responses.forEach((value) => {
+      if (value.id === id) {
+        value.dbOperation = 'delete';
+      }
+    });
     this.setState({ responses });
   }
 
   onClickCreate = (questionId) => {
+    log.debug('creating record');
     let { addIndex } = this.state;
     const {
       state,
@@ -100,6 +114,7 @@ class QuestionResponses extends ScopedObjectService {
     const newResponse = {
       id: addIndex,
       name: '',
+      dbOperation: 'create',
       description: '',
       response: '',
       score: 0,
@@ -128,16 +143,34 @@ class QuestionResponses extends ScopedObjectService {
     const {
       ACTION_SCOPED_OBJECT_CREATE_REQUESTED,
       ACTION_SCOPED_OBJECT_UPDATE_REQUESTED,
+      ACTION_SCOPED_OBJECT_DELETE_REQUESTED,
     } = this.props;
 
-    const { responses } = scopedObjectData;
+    let { responses } = scopedObjectData;
     responses.forEach(response => {
-      if (response.id > 0) {
-        ACTION_SCOPED_OBJECT_UPDATE_REQUESTED(response);
-      } else {
-        ACTION_SCOPED_OBJECT_CREATE_REQUESTED(response);
+      switch (response.dbOperation) {
+        case 'edit':
+          ACTION_SCOPED_OBJECT_UPDATE_REQUESTED(response);
+          break;
+        case 'create':
+          ACTION_SCOPED_OBJECT_CREATE_REQUESTED(response);
+          break;
+        case 'delete':
+          ACTION_SCOPED_OBJECT_DELETE_REQUESTED(response.id);
+          break;
+        default:
+          break;
       }
     });
+
+    // remove any deleted responses
+    responses = responses.filter((value) => value.dbOperation !== 'delete');
+    // reset and db operation flags
+    responses.forEach(response => {
+      response.dbOperation = null;
+    });
+
+    this.setState({ responses });
   }
 
   render() {
@@ -163,7 +196,7 @@ class QuestionResponses extends ScopedObjectService {
           onSubmit={() => this.onClickUpdate()}
           scopedObject={this.scopedObjectType}
         >
-          {responses.map((item, i) => (
+          {responses.map((item, i) => item.dbOperation !== 'delete' && (
             <OtherContent>
               <input value={i} type="hidden" />
               <FullContainerWidth>

@@ -15,12 +15,10 @@ import {
 
 export const ACTION_RESPONSE_CREATE_SUCCEEDED = (
   scopedObjectId: number,
-  scopedObjectType: string,
   scopedObjectData: ScopedObjectType,
 ) => ({
   type: RESPONSE_CREATE_SUCCEEDED,
   scopedObjectId,
-  scopedObjectType,
   scopedObjectData,
 });
 
