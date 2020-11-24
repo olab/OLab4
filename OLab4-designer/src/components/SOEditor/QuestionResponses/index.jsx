@@ -16,11 +16,11 @@ import OutlinedInput from '../../../shared/components/OutlinedInput';
 import ScopedObjectService from '../index.service';
 import type { IQuestionResponseProps } from './types';
 
-
 class QuestionResponses extends ScopedObjectService {
   constructor(props: IQuestionResponseProps) {
     super(props, SCOPED_OBJECTS.QUESTION.name);
     this.state = {
+      addIndex: -1,
       isFieldsDisabled: false,
       isDetailsFetching: true,
       questionId: 0,
@@ -81,17 +81,47 @@ class QuestionResponses extends ScopedObjectService {
     this.setState({ responses });
   }
 
-  onItemDelete = (questionId, id): void => {
+  onItemDelete = (id): void => {
+    // if (id < 0) {
     const {
-      ACTION_SCOPED_OBJECT_DELETE_REQUESTED,
-      ACTION_SCOPED_OBJECT_DETAILS_REQUESTED,
-    } = this.props;
+      state,
+    } = this;
+    let responses = [...state.responses];
+    responses = responses.filter((value) => value.id !== id);
+    this.setState({ responses });
+    // }
+    // else {
+    //   const {
+    //     ACTION_SCOPED_OBJECT_DELETE_REQUESTED,
+    //     ACTION_SCOPED_OBJECT_DETAILS_REQUESTED,
+    //   } = this.props;
 
-    ACTION_SCOPED_OBJECT_DELETE_REQUESTED(id, 'questionresponses');
-    ACTION_SCOPED_OBJECT_DETAILS_REQUESTED(questionId);
+    //   ACTION_SCOPED_OBJECT_DELETE_REQUESTED(id, 'questionresponses');
+    //   ACTION_SCOPED_OBJECT_DETAILS_REQUESTED(questionId);
+    // }
   }
 
-  onClickCreate = () => true;
+  onClickCreate = (questionId) => {
+    let { addIndex } = this.state;
+    const {
+      state,
+    } = this;
+    const responses = [...state.responses];
+    const newResponse = {
+      id: addIndex,
+      name: '',
+      description: '',
+      response: '',
+      score: 0,
+      order: 0,
+      questionId,
+      isCorrect: 0,
+    };
+
+    addIndex -= 1;
+    responses.push(newResponse);
+    this.setState({ responses });
+  };
 
   onClickRevert = () => {
     const { ACTION_SCOPED_OBJECT_DETAILS_REQUESTED } = this.props;
@@ -267,7 +297,7 @@ class QuestionResponses extends ScopedObjectService {
                     size="small"
                     title={`Delete ${item.response}`}
                     aria-label="Delete Scoped Object"
-                    onClick={() => this.onItemDelete(item.questionId, item.id)}
+                    onClick={() => this.onItemDelete(item.id)}
                     classes={{ root: classes.deleteIcon }}
                   >
                     <DeleteIcon />
@@ -282,7 +312,7 @@ class QuestionResponses extends ScopedObjectService {
               variant="contained"
               color="primary"
               className={classes.submit}
-              onClick={this.onClickCreate}
+              onClick={() => this.onClickCreate()}
             >
               Create
             </Button>

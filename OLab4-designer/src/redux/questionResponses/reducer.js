@@ -1,8 +1,8 @@
 // @flow
 import {
-  // SCOPED_OBJECT_CREATE_FAILED,
-  // SCOPED_OBJECT_CREATE_REQUESTED,
-  // SCOPED_OBJECT_CREATE_SUCCEEDED,
+  RESPONSE_CREATE_FAILED,
+  RESPONSE_CREATE_REQUESTED,
+  RESPONSE_CREATE_SUCCEEDED,
   RESPONSE_DELETE_FAILED,
   RESPONSE_DELETE_SUCCEEDED,
   // SCOPED_OBJECT_DETAILS_FULFILLED,
@@ -19,6 +19,32 @@ const questionResponses = (
   action: ScopedObjectsActions,
 ) => {
   switch (action.type) {
+    case RESPONSE_CREATE_REQUESTED:
+      return {
+        ...state,
+        isCreating: true,
+      };
+    case RESPONSE_CREATE_SUCCEEDED: {
+      const { scopedObjectId, scopedObjectType, scopedObjectData } = action;
+
+      return {
+        ...state,
+        [scopedObjectType]: [
+          ...state[scopedObjectType],
+          {
+            ...scopedObjectData,
+            id: scopedObjectId,
+          },
+        ],
+        isCreating: false,
+      };
+    }
+    case RESPONSE_CREATE_FAILED:
+      return {
+        ...state,
+        isCreating: false,
+      };
+
     case RESPONSE_DELETE_FAILED: {
       const response = {
         ...state,
