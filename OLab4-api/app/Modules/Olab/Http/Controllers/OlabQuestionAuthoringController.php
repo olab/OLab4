@@ -91,7 +91,7 @@ class OlabQuestionAuthoringController extends OlabScopedObjectAuthoringControlle
       $this->oPostData->get_integer_optional( $oObj, 'width');
       $this->oPostData->get_integer_optional( $oObj, 'height');
       $this->oPostData->get_text_optional( $oObj, 'feedback');
-      $this->oPostData->get_text_optional( $oObj, 'placeholder');
+      $this->oPostData->get_text_optional( $oObj, 'prompt');
       $this->oPostData->get_integer_optional( $oObj, 'showAnswer');
       $this->oPostData->get_integer_optional( $oObj, 'layoutType');
       $this->oPostData->get_integer_optional( $oObj, 'showSubmit');

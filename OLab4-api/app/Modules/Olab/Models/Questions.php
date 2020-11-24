@@ -129,7 +129,6 @@ class Questions extends PolymorphicModel {
       OLabUtilities::safe_rename( $aObj, 'external_source_id' );
       OLabUtilities::safe_rename( $aObj, 'redirect_node_id' );
       OLabUtilities::safe_rename( $aObj, 'settings' );
-      OLabUtilities::safe_rename( $aObj, 'prompt', 'placeholder' );
       OLabUtilities::safe_rename( $aObj, 'entry_type_id', 'questionType');
       OLabUtilities::safe_rename( $aObj, 'show_answer', 'showAnswer');
       OLabUtilities::safe_rename( $aObj, 'counter_id', 'counterId');
