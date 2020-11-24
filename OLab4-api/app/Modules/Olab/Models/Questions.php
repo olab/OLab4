@@ -121,25 +121,25 @@ class Questions extends PolymorphicModel {
 
       $aObj = parent::toArray();
 
-      OLabUtilities::safe_rename( $aObj, 'parent_id' );
-      OLabUtilities::safe_rename( $aObj, 'is_private' );
       OLabUtilities::safe_rename( $aObj, 'counter_id' );
-      OLabUtilities::safe_rename( $aObj, 'submit_text' );
-      OLabUtilities::safe_rename( $aObj, 'num_tries' );
-      OLabUtilities::safe_rename( $aObj, 'external_source_id' );
-      OLabUtilities::safe_rename( $aObj, 'redirect_node_id' );
-      OLabUtilities::safe_rename( $aObj, 'settings' );
-      OLabUtilities::safe_rename( $aObj, 'entry_type_id', 'questionType');
-      OLabUtilities::safe_rename( $aObj, 'show_answer', 'showAnswer');
       OLabUtilities::safe_rename( $aObj, 'counter_id', 'counterId');
+      OLabUtilities::safe_rename( $aObj, 'entry_type_id', 'questionType');
+      OLabUtilities::safe_rename( $aObj, 'external_source_id' );
+      OLabUtilities::safe_rename( $aObj, 'external_source_id', 'externalSourceId');
+      OLabUtilities::safe_rename( $aObj, 'is_private', 'isPrivate' );
+      OLabUtilities::safe_rename( $aObj, 'is_private', 'isPrivate');
+      OLabUtilities::safe_rename( $aObj, 'num_tries' );
       OLabUtilities::safe_rename( $aObj, 'num_tries', 'numTries');
-      OLabUtilities::safe_rename( $aObj, 'show_submit', 'showSubmit');
+      OLabUtilities::safe_rename( $aObj, 'parent_id' );
+      OLabUtilities::safe_rename( $aObj, 'QuestionResponses', 'responses');
+      OLabUtilities::safe_rename( $aObj, 'redirect_node_id' );
       OLabUtilities::safe_rename( $aObj, 'redirect_node_id', 'redirectNodeId');
+      OLabUtilities::safe_rename( $aObj, 'settings' );
+      OLabUtilities::safe_rename( $aObj, 'show_answer', 'showAnswer');
+      OLabUtilities::safe_rename( $aObj, 'show_submit', 'showSubmit');
+      OLabUtilities::safe_rename( $aObj, 'submit_text' );
       OLabUtilities::safe_rename( $aObj, 'submit_text', 'submitText');
       OLabUtilities::safe_rename( $aObj, 'type_display', 'layoutType');
-      OLabUtilities::safe_rename( $aObj, 'is_private', 'isPrivate');
-      OLabUtilities::safe_rename( $aObj, 'external_source_id', 'externalSourceId');
-      OLabUtilities::safe_rename( $aObj, 'QuestionResponses', 'responses');
 
       OLabUtilities::safe_rename( $aObj, 'imageable_type', 'scopeLevel' );
       OLabUtilities::safe_rename( $aObj, 'imageable_id', "parentId" );

@@ -84,19 +84,20 @@ class OlabQuestionAuthoringController extends OlabScopedObjectAuthoringControlle
       $oObj = new Questions();
 
       $this->oPostData = new PostDataHandler( $request );
-      $this->oPostData->get_text( $oObj, 'name');
-      $this->oPostData->get_text_optional( $oObj, 'description');
-      $this->oPostData->get_text( $oObj, 'stem');
       $this->oPostData->get_integer( $oObj, 'questionType');
-      $this->oPostData->get_integer_optional( $oObj, 'width');
       $this->oPostData->get_integer_optional( $oObj, 'height');
+      $this->oPostData->get_integer_optional( $oObj, 'isPrivate');
+      $this->oPostData->get_integer_optional( $oObj, 'layoutType');
+      $this->oPostData->get_integer_optional( $oObj, 'layoutType');
+      $this->oPostData->get_integer_optional( $oObj, 'order');
+      $this->oPostData->get_integer_optional( $oObj, 'showAnswer');
+      $this->oPostData->get_integer_optional( $oObj, 'showSubmit');
+      $this->oPostData->get_integer_optional( $oObj, 'width');
+      $this->oPostData->get_text( $oObj, 'name');
+      $this->oPostData->get_text( $oObj, 'stem');
+      $this->oPostData->get_text_optional( $oObj, 'description');
       $this->oPostData->get_text_optional( $oObj, 'feedback');
       $this->oPostData->get_text_optional( $oObj, 'prompt');
-      $this->oPostData->get_integer_optional( $oObj, 'showAnswer');
-      $this->oPostData->get_integer_optional( $oObj, 'layoutType');
-      $this->oPostData->get_integer_optional( $oObj, 'showSubmit');
-      $this->oPostData->get_integer_optional( $oObj, 'order');
-      $this->oPostData->get_integer_optional( $oObj, 'layoutType');
 
       $this->oPostData->get_text( $oObj, 'scopeLevel');
       $this->oPostData->get_integer( $oObj, 'parentId');
