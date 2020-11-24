@@ -46,10 +46,10 @@ class OlabQuestionResponseAuthoringController extends OlabScopedObjectAuthoringC
   // override for abstract class to provide url subpath
   public function get_object_url_subpath() { return "questionresponses"; }
 
-  public function create( Request $request, int $question_id ) {
+  public function create( Request $request ) {
 
     // spin up a function tracer.  Handles entry/exit/timing messages
-    $tracer = new OlabCodeTracer(__CLASS__, __FUNCTION__ . "($question_id)" );
+    $tracer = new OlabCodeTracer(__CLASS__, __FUNCTION__ );
     $payload = array();
 
     try {
@@ -59,25 +59,25 @@ class OlabQuestionResponseAuthoringController extends OlabScopedObjectAuthoringC
 
       $aData = array();
 
-      $oQuestion = $this->get_question( $question_id );
-
-      // test access control context based on object type to evaluate.
-      $oAccessControl = AccessControlBase::classFactory( $oQuestion );
-      if ( !$oAccessControl->isWriteable( $question_id )) {
-        throw new OlabAccessDeniedException("question = $question_id");
-      }
-
       // create and save a new object
       $oObj = new QuestionResponses();
 
-      // attach to parent question
-      $oObj->question_id = $oQuestion->id;
-
       $oPostData = new PostDataHandler( $request );
 
+      $oPostData->get_integer( $oObj, 'questionId');
       $oPostData->get_text( $oObj, 'response');
-      $oPostData->get_integer( $oObj, 'order');
+      $oPostData->get_text_optional( $oObj, 'feedback');
+      $oPostData->get_integer_optional( $oObj, 'order');
+      $oPostData->get_integer_optional( $oObj, 'isCorrect');
       $oPostData->get_integer_optional( $oObj, 'score');
+
+      $oQuestion = $this->get_question( $oObj->question_id );
+
+      // test access control context based on object type to evaluate.
+      $oAccessControl = AccessControlBase::classFactory( $oQuestion );
+      if ( !$oAccessControl->isWriteable( $oObj->question_id )) {
+        throw new OlabAccessDeniedException("question = $oObj->question_id");
+      }
 
       $oObj->save();
 

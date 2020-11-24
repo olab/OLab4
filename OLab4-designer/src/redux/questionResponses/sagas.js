@@ -33,11 +33,10 @@ import {
 
 // import { SCOPED_OBJECTS } from '../../components/config';
 
-function* createResponseSaga({ questionId, scopedObjectData }) {
+function* createResponseSaga({ scopedObjectData }) {
   try {
     const scopedObjectId = yield call(
       createResponse,
-      questionId,
       scopedObjectData,
     );
 

@@ -29,11 +29,9 @@ export const ACTION_RESPONSE_CREATE_FAILED = () => ({
 });
 
 export const ACTION_RESPONSE_CREATE_REQUESTED = (
-  scopedObjectType: string,
   scopedObjectData: ScopedObjectType,
 ) => ({
   type: RESPONSE_CREATE_REQUESTED,
-  scopedObjectType,
   scopedObjectData,
 });
 

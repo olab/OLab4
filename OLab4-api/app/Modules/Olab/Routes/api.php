@@ -90,6 +90,7 @@ Route::post( 'olab/maps',                         'OlabMapAuthoringController@cr
 Route::post( 'olab/maps/{mapId}',                 'OlabMapAuthoringController@insertFromTemplate');
 Route::post( 'olab/maps/{mapId}/nodes',            'OlabNodeAuthoringController@create');
 Route::post( 'olab/maps/{mapId}/nodes/{nodeId}/links', 'OlabLinkAuthoringController@create');
+Route::post( 'olab/questionresponses',             'OlabQuestionResponseAuthoringController@create');
 Route::post( 'olab/question/dropdown/{nodeId}',    'OlabQuestionController@postDropdownResponse');
 Route::post( 'olab/question/multichoice/{nodeId}', 'OlabQuestionController@postMultichoiceResponse');
 Route::post( 'olab/question/radio/{nodeId}',       'OlabQuestionController@postRadioResponse');

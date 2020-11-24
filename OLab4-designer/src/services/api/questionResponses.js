@@ -17,7 +17,11 @@ export const createResponse = (scopedObjectData) => API
       ...questionResponseToServer(scopedObjectData),
     },
   })
-  .then(({ data: { data: { id: scopedObjectId } } }) => scopedObjectId)
+  .then((
+    {
+      data: { data: { id: scopedObjectId } },
+    },
+  ) => scopedObjectId)
   .catch((error) => {
     throw error;
   });

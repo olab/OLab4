@@ -89,16 +89,6 @@ class QuestionResponses extends ScopedObjectService {
     let responses = [...state.responses];
     responses = responses.filter((value) => value.id !== id);
     this.setState({ responses });
-    // }
-    // else {
-    //   const {
-    //     ACTION_SCOPED_OBJECT_DELETE_REQUESTED,
-    //     ACTION_SCOPED_OBJECT_DETAILS_REQUESTED,
-    //   } = this.props;
-
-    //   ACTION_SCOPED_OBJECT_DELETE_REQUESTED(id, 'questionresponses');
-    //   ACTION_SCOPED_OBJECT_DETAILS_REQUESTED(questionId);
-    // }
   }
 
   onClickCreate = (questionId) => {
@@ -140,21 +130,21 @@ class QuestionResponses extends ScopedObjectService {
       ACTION_SCOPED_OBJECT_UPDATE_REQUESTED,
     } = this.props;
 
-    if (this.isEditMode) {
-      const { responses } = scopedObjectData;
-      ACTION_SCOPED_OBJECT_UPDATE_REQUESTED(responses);
-    } else if (this.scopeLevelObj) {
-      const { id: parentId } = this.scopeLevelObj;
-      Object.assign(scopedObjectData, { parentId });
-
-      ACTION_SCOPED_OBJECT_CREATE_REQUESTED(scopedObjectData);
-    }
+    const { responses } = scopedObjectData;
+    responses.forEach(response => {
+      if (response.id > 0) {
+        ACTION_SCOPED_OBJECT_UPDATE_REQUESTED(response);
+      } else {
+        ACTION_SCOPED_OBJECT_CREATE_REQUESTED(response);
+      }
+    });
   }
 
   render() {
     const {
       isDetailsFetching,
       isFieldsDisabled,
+      id,
       responses,
     } = this.state;
     const { classes } = this.props;
@@ -170,7 +160,7 @@ class QuestionResponses extends ScopedObjectService {
           isDisabled={isFieldsDisabled}
           isEditMode={this.isEditMode}
           onRevert={this.onClickRevert}
-          onSubmit={this.onClickUpdate}
+          onSubmit={() => this.onClickUpdate()}
           scopedObject={this.scopedObjectType}
         >
           {responses.map((item, i) => (
@@ -312,7 +302,7 @@ class QuestionResponses extends ScopedObjectService {
               variant="contained"
               color="primary"
               className={classes.submit}
-              onClick={() => this.onClickCreate()}
+              onClick={() => this.onClickCreate(id)}
             >
               Create
             </Button>

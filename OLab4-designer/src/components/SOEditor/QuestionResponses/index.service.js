@@ -36,7 +36,6 @@ export const withQuestionResponseRedux = (
     },
     ACTION_SCOPED_OBJECT_CREATE_REQUESTED: (scopedObjectData: ScopedObjectBaseType) => {
       dispatch(questionResponseActions.ACTION_RESPONSE_CREATE_REQUESTED(
-        toLowerCaseAndPlural(scopedObjectType),
         scopedObjectData,
       ));
     },
