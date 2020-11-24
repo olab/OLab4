@@ -30,6 +30,7 @@ export type ScopedObjectBase = {
   isEmbedded?: boolean,
   showAnswer?: boolean,
   showSubmit?: boolean,
+  isPrivate?: Boolean,
 };
 
 export type ScopedObjectDetails = {

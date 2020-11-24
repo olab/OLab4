@@ -208,14 +208,16 @@ export const templateFromServer = mapFromServer;
 
 export const scopedObjectByTypeFromServer = ({
   url,
+  isPrivate,
   showAnswer,
   showSubmit,
   ...restSO
 }: ScopedObjectListItem): ScopedObjectListItem => {
   const objectPayload = {
     ...restSO,
+    ...(isBoolean(isPrivate) && { isPrivate: Number(isPrivate) }),
     ...(isNumber(showAnswer) && { showAnswer: Number(showAnswer) }),
-    ...(isNumber(showAnswer) && { showSubmit: Number(showAnswer) }),
+    ...(isNumber(showSubmit) && { showSubmit: Number(showSubmit) }),
   };
 
   return objectPayload;
@@ -237,7 +239,7 @@ export const scopedObjectFromServer = (
 export const scopedObjectToServer = (SO: ScopedObjectBase): ScopedObjectBase => {
   if (Number(Object.keys(QUESTION_TYPES)[0]) === SO.questionType) {
     const {
-      feedback, layoutType, showAnswer, showSubmit, ...restSO
+      feedback, layoutType, isPrivate, showAnswer, showSubmit, ...restSO
     } = SO;
 
     return {
@@ -247,11 +249,12 @@ export const scopedObjectToServer = (SO: ScopedObjectBase): ScopedObjectBase => 
   }
 
   const {
-    width, height, placeholder, showAnswer, showSubmit, ...restSO
+    width, height, placeholder, isPrivate, showAnswer, showSubmit, ...restSO
   } = SO;
 
   const serverPayload = {
     ...restSO,
+    ...(isBoolean(isPrivate) && { isPrivate: Number(isPrivate) }),
     ...(isBoolean(showAnswer) && { showAnswer: Number(showAnswer) }),
     ...(isBoolean(showSubmit) && { showSubmit: Number(showSubmit) }),
   };

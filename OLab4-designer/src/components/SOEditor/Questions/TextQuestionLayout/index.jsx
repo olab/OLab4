@@ -113,7 +113,7 @@ function TextQuestionLayout({
         <TextField
           multiline
           rows="3"
-          name="feedback"
+          name="prompt"
           placeholder={EDITORS_FIELDS.PROMPTTEXT}
           className={classes.textField}
           margin="normal"

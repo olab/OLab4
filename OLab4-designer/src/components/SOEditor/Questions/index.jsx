@@ -37,6 +37,7 @@ class Questions extends ScopedObjectService {
       id: 0,
       isFieldsDisabled: false,
       showAnswer: false,
+      isPrivate: false,
       isShowModal: false,
       showSubmit: false,
       layoutType: 0,
@@ -133,7 +134,7 @@ class Questions extends ScopedObjectService {
           <TextQuestionLayout
             onInputChange={this.onInputChange}
             onQuestionTypeChange={this.onQuestionTypeChange}
-            onSelectChange={this.handleLayoutTypeChange}
+            onSelectChange={this.onSelectChange}
             onSwitchChange={this.onSliderOrSwitchChange}
             props={this.props}
             state={this.state}

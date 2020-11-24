@@ -115,6 +115,11 @@ class ScopedObjectService extends PureComponent<IScopedObjectProps, IScopedObjec
     this.parentIdRef = ref;
   }
 
+  onSelectChange = (e: Event): void => {
+    const { value, name } = (e.target: window.HTMLInputElement);
+    this.setState({ [name]: value });
+  }
+
   onInputChange = (e: Event): void => {
     const { value, name } = (e.target: window.HTMLInputElement);
     this.setState({ [name]: value });
