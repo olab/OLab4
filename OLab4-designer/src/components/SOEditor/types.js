@@ -16,6 +16,7 @@ export type IScopedObjectProps = {
   classes: {
     [props: string]: any,
   },
+  ACTION_NOTIFICATION_INFO: Function,
   ACTION_SCOPE_LEVELS_REQUESTED: Function,
   ACTION_SCOPED_OBJECT_CREATE_REQUESTED: Function,
   ACTION_SCOPED_OBJECT_DETAILS_REQUESTED: Function,

@@ -13,6 +13,7 @@ import { getIconsByScopeLevel, toLowerCaseAndPlural } from './utils';
 
 import * as scopedObjectsActions from '../../redux/scopedObjects/action';
 import * as scopeLevelsActions from '../../redux/scopeLevels/action';
+import * as notificationActions from '../../redux/notifications/action';
 
 import styles from './styles';
 
@@ -189,6 +190,11 @@ class ScopedObjectService extends PureComponent<IScopedObjectProps, IScopedObjec
     this.scopeLevelObj = null;
     this.forceUpdate();
   }
+
+  displayNotificationInfo = (message: string) => {
+    const { ACTION_NOTIFICATION_INFO } = this.props;
+    ACTION_NOTIFICATION_INFO(message);
+  }
 }
 
 export const withSORedux = (
@@ -203,6 +209,9 @@ export const withSORedux = (
   });
 
   const mapDispatchToProps = dispatch => ({
+    ACTION_NOTIFICATION_INFO: (message: string) => {
+      dispatch(notificationActions.ACTION_NOTIFICATION_INFO(message));
+    },
     ACTION_SCOPE_LEVELS_REQUESTED: (scopeLevel: string) => {
       dispatch(scopeLevelsActions.ACTION_SCOPE_LEVELS_REQUESTED(scopeLevel));
     },

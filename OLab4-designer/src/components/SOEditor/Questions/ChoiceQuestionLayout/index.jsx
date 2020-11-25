@@ -12,6 +12,7 @@ import Switch from '../../../../shared/components/Switch';
 import type { IChoiceQuestionLayoutProps } from './types';
 
 function ChoiceQuestionLayout({
+  isEditMode,
   onInputChange,
   onLayoutTypeChange,
   onQuestionTypeChange,
@@ -38,6 +39,11 @@ function ChoiceQuestionLayout({
 
   return (
     <>
+      {(!isEditMode) && (
+        <center>
+          Create is required before adding Question Responses
+        </center>
+      )}
       <FieldLabel>
         {EDITORS_FIELDS.QUESTION_TYPES}
       </FieldLabel>
@@ -112,35 +118,39 @@ function ChoiceQuestionLayout({
         />
       </FieldLabel>
 
-      <FieldLabel>
-        {EDITORS_FIELDS.RESPONSES}
-        <Button
-          size="small"
-          fullWidth
-          variant="contained"
-          color="default"
-          className={classes.submit}
-          component={Link}
-          to={`/scopedObject/questionresponse/${id}`}
-          target="_blank"
-        >
-          Edit
-        </Button>
-      </FieldLabel>
+      {(isEditMode) && (
+        <>
+          <FieldLabel>
+            {EDITORS_FIELDS.RESPONSES}
+            <Button
+              size="small"
+              fullWidth
+              variant="contained"
+              color="default"
+              className={classes.submit}
+              component={Link}
+              to={`/scopedObject/questionresponse/${id}`}
+              target="_blank"
+            >
+              Edit
+            </Button>
+          </FieldLabel>
 
-      <ListWithSearchWrapper>
-        <ListWithSearch
-          onItemClick={onClicked}
-          list={responses}
-          isWithSpinner={false}
-          isHideSearch={isHideSearch}
-          primarytext={getListPrimaryField}
-          secondarytext={getListSecondaryField}
-          showIcons={false}
-        />
-      </ListWithSearchWrapper>
+          <ListWithSearchWrapper>
+            <ListWithSearch
+              onItemClick={onClicked}
+              list={responses}
+              isWithSpinner={false}
+              isHideSearch={isHideSearch}
+              primarytext={getListPrimaryField}
+              secondarytext={getListSecondaryField}
+              showIcons={false}
+            />
+          </ListWithSearchWrapper>
 
-      <Divider />
+          <Divider />
+        </>
+      )}
     </>
   );
 }

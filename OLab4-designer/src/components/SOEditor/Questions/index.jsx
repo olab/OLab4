@@ -121,6 +121,7 @@ class Questions extends ScopedObjectService {
 
         {(isChoiceQuestion) && (
           <ChoiceQuestionLayout
+            isEditMode={this.isEditMode}
             onInputChange={this.onInputChange}
             onLayoutTypeChange={this.onLayoutTypeChange}
             onQuestionTypeChange={this.onQuestionTypeChange}
