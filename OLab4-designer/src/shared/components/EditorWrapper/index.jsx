@@ -16,7 +16,6 @@ import styles, { HeadingWrapper, Paper, Container } from './styles';
 const EditorWrapper = ({
   children,
   classes,
-  dataChanged,
   hasBackButton,
   history,
   isDisabled,
@@ -47,35 +46,30 @@ const EditorWrapper = ({
             </Typography>
           </div>
         </Grid>
-        {dataChanged() && (
-          <>
-            <Grid item xs={2} style={{ minWidth: '160px' }}>
-              {(typeof onRevert !== 'undefined') && (
-                <Button
-                  variant="contained"
-                  className={classes.submit}
-                  onClick={onRevert}
-                  disabled={isDisabled}
-                >
-                  Revert
-                </Button>
-              )}
-            </Grid>
-            <Grid item xs={2} style={{ minWidth: '160px' }}>
-              <Button
-                type="submit"
-                variant="contained"
-                color="primary"
-                className={classes.submit}
-                onClick={onSubmit}
-                disabled={isDisabled}
-              >
-                {isEditMode ? 'Update' : 'Create'}
-              </Button>
-            </Grid>
-
-          </>
-        )}
+        <Grid item xs={2} style={{ minWidth: '160px' }}>
+          {(typeof onRevert !== 'undefined') && (
+            <Button
+              variant="contained"
+              className={classes.submit}
+              onClick={onRevert}
+              disabled={isDisabled}
+            >
+              Revert
+            </Button>
+          )}
+        </Grid>
+        <Grid item xs={2} style={{ minWidth: '160px' }}>
+          <Button
+            type="submit"
+            variant="contained"
+            color="primary"
+            className={classes.submit}
+            onClick={onSubmit}
+            disabled={isDisabled}
+          >
+            {isEditMode ? 'Update' : 'Create'}
+          </Button>
+        </Grid>
       </Grid>
     </HeadingWrapper>
     <Container>

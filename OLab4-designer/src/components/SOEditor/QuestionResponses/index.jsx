@@ -203,7 +203,7 @@ class QuestionResponses extends ScopedObjectService {
           isEditMode={this.isEditMode}
           onRevert={this.onClickRevert}
           onSubmit={() => this.onClickUpdate()}
-          dataChanged={this.isDataChanged}
+          dataChanged={() => this.isDataChanged()}
           scopedObject={this.scopedObjectType}
         >
           {responses.map((item, i) => item.dbOperation !== 'delete' && (
