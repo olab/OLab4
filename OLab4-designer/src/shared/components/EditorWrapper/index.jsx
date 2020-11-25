@@ -16,6 +16,7 @@ import styles, { HeadingWrapper, Paper, Container } from './styles';
 const EditorWrapper = ({
   children,
   classes,
+  dataChanged,
   hasBackButton,
   history,
   isDisabled,
@@ -26,44 +27,56 @@ const EditorWrapper = ({
 }: IEditorWrapperProps) => (
   <Grid container component="main" className={classes.root}>
     <HeadingWrapper>
-      <div className={classes.headerLabel}>
-        {(hasBackButton) && (
+
+      <Grid container spacing={3}>
+        <Grid item xs={8}>
+          <div className={classes.headerLabel}>
+            {(hasBackButton) && (
+              <>
+                <IconButton
+                  aria-label="Back To Object List"
+                  title="Back To Object List"
+                  onClick={(): void => redirectToSO(history, scopedObject)}
+                >
+                  <ArrowBackIcon className={classes.arrow} />
+                </IconButton>
+              </>
+            )}
+            <Typography variant="h4" className={classes.title}>
+              {`${isEditMode ? 'EDIT' : 'ADD NEW'} ${scopedObject.toUpperCase()}`}
+            </Typography>
+          </div>
+        </Grid>
+        {dataChanged() && (
           <>
-            <IconButton
-              aria-label="Back To Object List"
-              title="Back To Object List"
-              onClick={(): void => redirectToSO(history, scopedObject)}
-            >
-              <ArrowBackIcon className={classes.arrow} />
-            </IconButton>
+            <Grid item xs={2} style={{ minWidth: '160px' }}>
+              {(typeof onRevert !== 'undefined') && (
+                <Button
+                  variant="contained"
+                  className={classes.submit}
+                  onClick={onRevert}
+                  disabled={isDisabled}
+                >
+                  Revert
+                </Button>
+              )}
+            </Grid>
+            <Grid item xs={2} style={{ minWidth: '160px' }}>
+              <Button
+                type="submit"
+                variant="contained"
+                color="primary"
+                className={classes.submit}
+                onClick={onSubmit}
+                disabled={isDisabled}
+              >
+                {isEditMode ? 'Update' : 'Create'}
+              </Button>
+            </Grid>
+
           </>
         )}
-        <Typography variant="h4" className={classes.title}>
-          {`${isEditMode ? 'EDIT' : 'ADD NEW'} ${scopedObject.toUpperCase()}`}
-        </Typography>
-      </div>
-      <div>
-        <Button
-          type="submit"
-          variant="contained"
-          color="primary"
-          className={classes.submit}
-          onClick={onSubmit}
-          disabled={isDisabled}
-        >
-          {isEditMode ? 'Update' : 'Create'}
-        </Button>
-        {(typeof onRevert !== 'undefined') && (
-          <Button
-            variant="contained"
-            className={classes.submit}
-            onClick={onRevert}
-            disabled={isDisabled}
-          >
-            Revert
-          </Button>
-        )}
-      </div>
+      </Grid>
     </HeadingWrapper>
     <Container>
       <Paper>

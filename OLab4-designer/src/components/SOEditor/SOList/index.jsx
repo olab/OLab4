@@ -102,7 +102,7 @@ class SOList extends PureComponent<ISOListProps, ISOListState> {
     return '';
   };
 
-  handleItemsSearch = (query: string): void => {
+  searchObjectList = (query: string): void => {
     const { scopedObjects } = this.props;
     const scopedObjectsNameFiltered = filterByName(scopedObjects, query);
     const scopedObjectsIndexFiltered = filterByIndex(scopedObjects, query);
@@ -118,7 +118,7 @@ class SOList extends PureComponent<ISOListProps, ISOListState> {
     this.setState({ scopedObjectsFiltered });
   }
 
-  handleScopedObjectClick = (scopedObject: ScopedObjectListItemType): void => {
+  onObjectClick = (scopedObject: ScopedObjectListItemType): void => {
     const { history, pathname } = this.props;
     history.push(`${pathname}/${scopedObject.id}`);
   }
@@ -127,7 +127,7 @@ class SOList extends PureComponent<ISOListProps, ISOListState> {
     this.listWithSearchRef = ref;
   }
 
-  handleScopedObjectDelete = (scopedObjectId: number): void => {
+  onClickObjectDelete = (scopedObjectId: number): void => {
     const { ACTION_SCOPED_OBJECT_DELETE_REQUESTED } = this.props;
     ACTION_SCOPED_OBJECT_DELETE_REQUESTED(
       scopedObjectId,
@@ -212,9 +212,9 @@ class SOList extends PureComponent<ISOListProps, ISOListState> {
               secondarytext={this.secondarytext}
               list={scopedObjectsFiltered}
               onClear={this.clearSearchInput}
-              onItemClick={this.handleScopedObjectClick}
-              onItemDelete={this.handleScopedObjectDelete}
-              onSearch={this.handleItemsSearch}
+              onItemClick={this.onObjectClick}
+              onItemDelete={this.onClickObjectDelete}
+              onSearch={this.searchObjectList}
             />
           </ListWithSearchWrapper>
         </Grid>

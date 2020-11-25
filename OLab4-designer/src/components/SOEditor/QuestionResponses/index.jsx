@@ -134,6 +134,15 @@ class QuestionResponses extends ScopedObjectService {
     ACTION_SCOPED_OBJECT_DETAILS_REQUESTED(id);
   }
 
+  isDataChanged = (): void => {
+    const {
+      ...scopedObjectData
+    } = this.state;
+    const { responses } = scopedObjectData;
+    const changed = responses.filter((value) => value.dbOperation === 'delete' || value.dbOperation === 'edit' || value.dbOperation === 'create');
+    return changed.length > 0;
+  }
+
   onClickUpdate = (): void => {
     const {
       isFieldsDisabled,
@@ -194,6 +203,7 @@ class QuestionResponses extends ScopedObjectService {
           isEditMode={this.isEditMode}
           onRevert={this.onClickRevert}
           onSubmit={() => this.onClickUpdate()}
+          dataChanged={this.isDataChanged}
           scopedObject={this.scopedObjectType}
         >
           {responses.map((item, i) => item.dbOperation !== 'delete' && (
