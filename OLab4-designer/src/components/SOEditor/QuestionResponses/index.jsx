@@ -120,7 +120,7 @@ class QuestionResponses extends ScopedObjectService {
       score: 0,
       order: 0,
       questionId,
-      isCorrect: 0,
+      isCorrect: 2,
     };
 
     addIndex -= 1;
@@ -294,14 +294,6 @@ class QuestionResponses extends ScopedObjectService {
                   onChange={this.onToggleButtonChange}
                 >
                   <ToggleButton
-                    name={this.buildId('incorrect', i)}
-                    classes={{ root: this.props.classes.toggleButton }}
-                    value={0}
-                    aria-label="list"
-                  >
-                    {CORRECTNESS_TYPES[0]}
-                  </ToggleButton>
-                  <ToggleButton
                     name={this.buildId('correct', i)}
                     classes={{ root: this.props.classes.toggleButton }}
                     value={1}
@@ -316,6 +308,14 @@ class QuestionResponses extends ScopedObjectService {
                     aria-label="quilt"
                   >
                     {CORRECTNESS_TYPES[2]}
+                  </ToggleButton>
+                  <ToggleButton
+                    name={this.buildId('incorrect', i)}
+                    classes={{ root: this.props.classes.toggleButton }}
+                    value={0}
+                    aria-label="list"
+                  >
+                    {CORRECTNESS_TYPES[0]}
                   </ToggleButton>
                 </ToggleButtonGroup>
               </FullContainerWidth>
@@ -347,7 +347,7 @@ class QuestionResponses extends ScopedObjectService {
               className={classes.submit}
               onClick={() => this.onClickCreate(id)}
             >
-              Create
+              Add
             </Button>
           </FieldLabel>
         </EditorWrapper>

@@ -141,7 +141,9 @@ class SOList extends PureComponent<ISOListProps, ISOListState> {
     } = this.props;
 
     if (scopedObjectType === 'question') {
-      return scopedObject.stem;
+      if ((!scopedObject.name) || (scopedObject.name.length === 0)) {
+        return scopedObject.stem;
+      }
     }
 
     return scopedObject.name;
@@ -153,7 +155,9 @@ class SOList extends PureComponent<ISOListProps, ISOListState> {
     } = this.props;
 
     if (scopedObjectType === 'question') {
-      return `Id: ${scopedObject.id}`;
+      if ((!scopedObject.description) || (scopedObject.description.length === 0)) {
+        return `Id: ${scopedObject.id}`;
+      }
     }
 
     return scopedObject.description;

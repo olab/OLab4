@@ -1,6 +1,6 @@
 // @flow
 import React from 'react';
-import { Chip } from '@material-ui/core';
+import { Chip, TextField } from '@material-ui/core';
 
 // import CircularSpinnerWithText from '../../../shared/components/CircularSpinnerWithText';
 import { FieldLabel } from '../styles';
@@ -77,9 +77,11 @@ class Questions extends ScopedObjectService {
 
   render() {
     const {
+      description,
       id,
       isFieldsDisabled,
       isShowModal,
+      name,
       questionType,
       scopeLevel,
     } = this.state;
@@ -119,6 +121,40 @@ class Questions extends ScopedObjectService {
           </>
         )}
 
+        <FieldLabel>
+          {EDITORS_FIELDS.NAME}
+          <TextField
+            multiline
+            rows="1"
+            name="name"
+            placeholder={EDITORS_FIELDS.NAME}
+            className={classes.textField}
+            margin="normal"
+            variant="outlined"
+            value={name}
+            onChange={this.onInputChange}
+            disabled={isFieldsDisabled}
+            fullWidth
+          />
+        </FieldLabel>
+
+        <FieldLabel>
+          {EDITORS_FIELDS.DESCRIPTION}
+          <TextField
+            multiline
+            rows="1"
+            name="description"
+            placeholder={EDITORS_FIELDS.DESCRIPTION}
+            className={classes.textField}
+            margin="normal"
+            variant="outlined"
+            value={description}
+            onChange={this.onInputChange}
+            disabled={isFieldsDisabled}
+            fullWidth
+          />
+        </FieldLabel>
+
         {(isChoiceQuestion) && (
           <ChoiceQuestionLayout
             isEditMode={this.isEditMode}
@@ -154,59 +190,51 @@ class Questions extends ScopedObjectService {
           />
         )}
 
-        {(questionType !== 0) && (
-          <>
-            {!this.isEditMode && (
-              <>
-                <FieldLabel>
-                  {EDITORS_FIELDS.SCOPE_LEVEL}
-                </FieldLabel>
-                <OutlinedSelect
-                  name="scopeLevel"
-                  value={scopeLevel}
-                  values={SCOPE_LEVELS}
-                  onChange={this.onInputChange}
-                  disabled={isFieldsDisabled}
-                />
-                <FieldLabel>
-                  {EDITORS_FIELDS.PARENT}
-                  <OutlinedInput
-                    name="parentId"
-                    placeholder={this.scopeLevelObj ? '' : EDITORS_FIELDS.PARENT}
-                    disabled={isFieldsDisabled}
-                    onFocus={this.showModal}
-                    setRef={this.setParentRef}
-                    readOnly
-                    fullWidth
-                  />
-                  {this.scopeLevelObj && (
-                    <Chip
-                      className={classes.chip}
-                      label={this.scopeLevelObj.name}
-                      variant="outlined"
-                      color="primary"
-                      onDelete={this.handleParentRemove}
-                      icon={<IconEven />}
-                    />
-                  )}
-                </FieldLabel>
-              </>
-            )}
+        <FieldLabel>
+          {EDITORS_FIELDS.SCOPE_LEVEL}
+        </FieldLabel>
+        <OutlinedSelect
+          name="scopeLevel"
+          value={scopeLevel}
+          values={SCOPE_LEVELS}
+          onChange={this.onInputChange}
+          disabled={isFieldsDisabled}
+        />
+        <FieldLabel>
+          {EDITORS_FIELDS.PARENT}
+          <OutlinedInput
+            name="parentId"
+            placeholder={this.scopeLevelObj ? '' : EDITORS_FIELDS.PARENT}
+            disabled={isFieldsDisabled}
+            onFocus={this.showModal}
+            setRef={this.setParentRef}
+            readOnly
+            fullWidth
+          />
+          {this.scopeLevelObj && (
+            <Chip
+              className={classes.chip}
+              label={this.scopeLevelObj.name}
+              variant="outlined"
+              color="primary"
+              onDelete={this.handleParentRemove}
+              icon={<IconEven />}
+            />
+          )}
+        </FieldLabel>
 
-            {isShowModal && (
-              <SearchModal
-                label="Parent record"
-                searchLabel="Search for parent record"
-                items={scopeLevels[scopeLevel.toLowerCase()]}
-                text={`Please choose appropriate parent from ${scopeLevel}:`}
-                onClose={this.hideModal}
-                onItemChoose={this.handleLevelObjChoose}
-                isItemsFetching={scopeLevels.isFetching}
-                iconEven={IconEven}
-                iconOdd={IconOdd}
-              />
-            )}
-          </>
+        {(questionType !== 0) && (isShowModal) && (
+          <SearchModal
+            label="Parent record"
+            searchLabel="Search for parent record"
+            items={scopeLevels[scopeLevel.toLowerCase()]}
+            text={`Please choose appropriate parent from ${scopeLevel}:`}
+            onClose={this.hideModal}
+            onItemChoose={this.handleLevelObjChoose}
+            isItemsFetching={scopeLevels.isFetching}
+            iconEven={IconEven}
+            iconOdd={IconOdd}
+          />
         )}
       </EditorWrapper>
     );

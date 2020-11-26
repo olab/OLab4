@@ -54,7 +54,7 @@ const EditorWrapper = ({
               onClick={onRevert}
               disabled={isDisabled}
             >
-              Revert
+              Undo
             </Button>
           )}
         </Grid>
@@ -67,7 +67,7 @@ const EditorWrapper = ({
             onClick={onSubmit}
             disabled={isDisabled}
           >
-            {isEditMode ? 'Update' : 'Create'}
+            {isEditMode ? 'Save' : 'Create'}
           </Button>
         </Grid>
       </Grid>
