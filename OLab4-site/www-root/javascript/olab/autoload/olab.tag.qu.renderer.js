@@ -6,7 +6,7 @@ Vue.component('olab-question-dropdown',
               <span>
                   <select v-bind:id="'QU_' + question.id" v-bind:name="'QU_' + question.id" v-on:change="changed">
                     <option></option>
-                    <option v-for='response in question.QuestionResponses'
+                    <option v-for='response in question.responses'
                             v-bind:value="'QU_' + question.id + '_' + response.id">{{response.response}}</option>
                   </select>
               </span>
@@ -54,7 +54,7 @@ Vue.component('olab-question-draganddrop',
       template: `<div class="questions olab-question-draganddrop">
               <p>{{question.stem}}</p>
               <ul class="drag-question-container ui-sortable navigation" v-bind:id="'qresponse_' + question.id" v-bind:name="'qresponse_' + question.id" v-bind:questionid="question.id">
-                <li v-for='response in question.QuestionResponses' class='sortable' v-bind:responseid='response.id'>{{response.response}}</li>
+                <li v-for='response in question.responses' class='sortable' v-bind:responseid='response.id'>{{response.response}}</li>
               </ul>
             </div>`,
       props: ['question'],
@@ -157,7 +157,7 @@ Vue.component('olab-question-multiplechoice',
                <div v-bind:id="question.name + '_responses'" class="questionResponses" v-bind:class="orientation">
                  <ul class="navigation">
 
-                   <li v-for='response in question.QuestionResponses' v-bind:id="'QU_' + question.name + '_' + response.name">
+                   <li v-for='response in question.responses' v-bind:id="'QU_' + question.name + '_' + response.name">
                      <span v-bind:id="'QU_' + question.name + '_' + response.name + '_response'">
                        <input class="lightning-choice"
                               v-bind:id="'QU_' + question.name + '_' + response.name + '_input'"
@@ -222,7 +222,7 @@ Vue.component('olab-question-radio',
                 <div v-bind:id="question.name + '_responses'" class="questionResponses" v-bind:class="orientation">
                 <ul class="navigation">
 
-                  <li v-for='response in question.QuestionResponses' v-bind:id="'QU_' + question.name + '_' + response.name">
+                  <li v-for='response in question.responses' v-bind:id="'QU_' + question.name + '_' + response.name">
                     <span v-bind:id="'QU_' + question.name + '_' + response.name + '_response'">
                       <input class="lightning-choice"
                              v-bind:id="'QU_' + question.name + '_' + response.name + '_input'"
