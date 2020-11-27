@@ -132,6 +132,7 @@ class ListWithSearch extends PureComponent<IListWithSearchProps, IListWithSearch
                     disabled={isItemsDisabled}
                   >
                     {getIcon(showIcons, listItem)}
+                    &nbsp;
                     <ListItemText
                       primary={primarytext(listItem)}
                       secondary={removeHTMLTags(secondarytext(listItem) || '')}

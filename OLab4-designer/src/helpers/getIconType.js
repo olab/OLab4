@@ -8,7 +8,7 @@ import {
   ErrorOutline as ErrorOutlineIcon,
   Image as ImageIcon,
   InsertDriveFile as InsertDriveFileIcon,
-  List as MultiSelectQuestionIcon,
+  ListAlt as MultiSelectQuestionIcon,
   OndemandVideo as OndemandVideoIcon,
   RadioButtonChecked as SingleSelectQuestionIcon,
   ShortText as SingleLineTextQuestionIcon,
