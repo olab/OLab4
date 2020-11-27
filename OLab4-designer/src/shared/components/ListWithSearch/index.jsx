@@ -10,7 +10,7 @@ import {
   FilterVintageOutlined as DefaultOutlinedIcon,
 } from '@material-ui/icons';
 import {
-  List, ListItem, ListItemText, Button, IconButton, TextField, Typography,
+  List, ListItem, ListItemText, Button, IconButton, TextField, Typography, Tooltip,
 } from '@material-ui/core';
 
 import CircularSpinnerWithText from '../CircularSpinnerWithText';
@@ -25,6 +25,7 @@ import styles, { SearchWrapper, ListItemContentWrapper } from './styles';
 class ListWithSearch extends PureComponent<IListWithSearchProps, IListWithSearchState> {
   static defaultProps = {
     getIcon: () => '',
+    getIconTooltip: () => '',
     iconEven: DefaultIcon,
     iconOdd: DefaultOutlinedIcon,
     isForModal: false,
@@ -38,28 +39,6 @@ class ListWithSearch extends PureComponent<IListWithSearchProps, IListWithSearch
   state: IListWithSearchState = {
     query: '',
   };
-
-  // getIcon(index, file) {
-  //   const {
-  //     showIcons,
-  //     isMedia,
-  //     iconEven: IconEven,
-  //     iconOdd: IconOdd,
-  //   } = this.props;
-
-  //   if (!showIcons) {
-  //     return '';
-  //   }
-
-  //   if (isMedia) {
-  //     const iconType = file.resourceUrl && file.resourceUrl.split('.').pop();
-  //     const MediaIconContent = getIconType(iconType);
-
-  //     return <MediaIconContent />;
-  //   }
-
-  //   return index % 2 === 0 ? <IconEven /> : <IconOdd />;
-  // }
 
   clearSearch = (): void => {
     const { onClear } = this.props;
@@ -81,6 +60,7 @@ class ListWithSearch extends PureComponent<IListWithSearchProps, IListWithSearch
     const {
       classes,
       getIcon,
+      getIconTooltip,
       isForModal,
       isHideSearch,
       isItemsDisabled,
@@ -145,18 +125,20 @@ class ListWithSearch extends PureComponent<IListWithSearchProps, IListWithSearch
               disabled={isItemsDisabled}
             >
               <ListItemContentWrapper>
-                <Button
-                  classes={{ text: classes.listButton }}
-                  onClick={() => onItemClick(listItem)}
-                  disabled={isItemsDisabled}
-                >
-                  {getIcon(showIcons, listItem)}
-                  <ListItemText
-                    primary={primarytext(listItem)}
-                    secondary={removeHTMLTags(secondarytext(listItem) || '')}
-                    classes={{ secondary: classes.secondaryText }}
-                  />
-                </Button>
+                <Tooltip title={getIconTooltip(showIcons, listItem)}>
+                  <Button
+                    classes={{ text: classes.listButton }}
+                    onClick={() => onItemClick(listItem)}
+                    disabled={isItemsDisabled}
+                  >
+                    {getIcon(showIcons, listItem)}
+                    <ListItemText
+                      primary={primarytext(listItem)}
+                      secondary={removeHTMLTags(secondarytext(listItem) || '')}
+                      classes={{ secondary: classes.secondaryText }}
+                    />
+                  </Button>
+                </Tooltip>
                 {onItemDelete && (
                   <IconButton
                     size="small"

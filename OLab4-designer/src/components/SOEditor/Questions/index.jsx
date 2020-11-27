@@ -1,6 +1,6 @@
 // @flow
 import React from 'react';
-import { Chip, TextField } from '@material-ui/core';
+import { Chip } from '@material-ui/core';
 
 // import CircularSpinnerWithText from '../../../shared/components/CircularSpinnerWithText';
 import { FieldLabel } from '../styles';
@@ -77,11 +77,9 @@ class Questions extends ScopedObjectService {
 
   render() {
     const {
-      description,
       id,
       isFieldsDisabled,
       isShowModal,
-      name,
       questionType,
       scopeLevel,
     } = this.state;
@@ -120,40 +118,6 @@ class Questions extends ScopedObjectService {
             />
           </>
         )}
-
-        <FieldLabel>
-          {EDITORS_FIELDS.NAME}
-          <TextField
-            multiline
-            rows="1"
-            name="name"
-            placeholder={EDITORS_FIELDS.NAME}
-            className={classes.textField}
-            margin="normal"
-            variant="outlined"
-            value={name}
-            onChange={this.onInputChange}
-            disabled={isFieldsDisabled}
-            fullWidth
-          />
-        </FieldLabel>
-
-        <FieldLabel>
-          {EDITORS_FIELDS.DESCRIPTION}
-          <TextField
-            multiline
-            rows="1"
-            name="description"
-            placeholder={EDITORS_FIELDS.DESCRIPTION}
-            className={classes.textField}
-            margin="normal"
-            variant="outlined"
-            value={description}
-            onChange={this.onInputChange}
-            disabled={isFieldsDisabled}
-            fullWidth
-          />
-        </FieldLabel>
 
         {(isChoiceQuestion) && (
           <ChoiceQuestionLayout

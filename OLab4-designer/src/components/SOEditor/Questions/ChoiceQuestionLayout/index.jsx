@@ -26,9 +26,11 @@ function ChoiceQuestionLayout({
   const onClicked = (): void => false;
   const { classes } = props;
   const {
+    description,
     feedback,
     id,
     isFieldsDisabled,
+    name,
     showAnswer,
     showSubmit,
     layoutType,
@@ -54,6 +56,41 @@ function ChoiceQuestionLayout({
         onChange={onQuestionTypeChange}
         disabled={isFieldsDisabled}
       />
+
+      <FieldLabel>
+        {EDITORS_FIELDS.NAME}
+        <TextField
+          multiline
+          rows="1"
+          name="name"
+          placeholder={EDITORS_FIELDS.NAME}
+          className={classes.textField}
+          margin="normal"
+          variant="outlined"
+          value={name}
+          onChange={onInputChange}
+          disabled={isFieldsDisabled}
+          fullWidth
+        />
+      </FieldLabel>
+
+      <FieldLabel>
+        {EDITORS_FIELDS.DESCRIPTION}
+        <TextField
+          multiline
+          rows="1"
+          name="description"
+          placeholder={EDITORS_FIELDS.DESCRIPTION}
+          className={classes.textField}
+          margin="normal"
+          variant="outlined"
+          value={description}
+          onChange={onInputChange}
+          disabled={isFieldsDisabled}
+          fullWidth
+        />
+      </FieldLabel>
+
       <FieldLabel>
         {EDITORS_FIELDS.STEM}
         <TextField

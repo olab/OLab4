@@ -20,8 +20,10 @@ function SliderQuestionLayout({
 }: ISliderQuestionLayoutProps) {
   const { classes } = props;
   const {
+    description,
     feedback,
     isFieldsDisabled,
+    name,
     showAnswer,
     showSubmit,
     settings,
@@ -118,6 +120,40 @@ function SliderQuestionLayout({
           placeholder={EDITORS_FIELDS.STEPVALUE}
           value={settingsObject.stepValue}
           onChange={onSettingsChange}
+          disabled={isFieldsDisabled}
+          fullWidth
+        />
+      </FieldLabel>
+
+      <FieldLabel>
+        {EDITORS_FIELDS.NAME}
+        <TextField
+          multiline
+          rows="1"
+          name="name"
+          placeholder={EDITORS_FIELDS.NAME}
+          className={classes.textField}
+          margin="normal"
+          variant="outlined"
+          value={name}
+          onChange={onInputChange}
+          disabled={isFieldsDisabled}
+          fullWidth
+        />
+      </FieldLabel>
+
+      <FieldLabel>
+        {EDITORS_FIELDS.DESCRIPTION}
+        <TextField
+          multiline
+          rows="1"
+          name="description"
+          placeholder={EDITORS_FIELDS.DESCRIPTION}
+          className={classes.textField}
+          margin="normal"
+          variant="outlined"
+          value={description}
+          onChange={onInputChange}
           disabled={isFieldsDisabled}
           fullWidth
         />

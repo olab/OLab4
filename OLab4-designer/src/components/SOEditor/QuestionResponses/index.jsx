@@ -2,7 +2,7 @@
 import React from 'react';
 import { ToggleButtonGroup, ToggleButton } from '@material-ui/lab';
 import { Delete as DeleteIcon } from '@material-ui/icons';
-import { Button, IconButton } from '@material-ui/core';
+import { IconButton } from '@material-ui/core';
 import log from 'loglevel';
 import { EDITORS_FIELDS, QUESTION_TYPES, CORRECTNESS_TYPES } from '../config';
 import { FieldLabel } from '../styles';
@@ -14,6 +14,7 @@ import CircularSpinnerWithText from '../../../shared/components/CircularSpinnerW
 import EditorWrapper from '../../../shared/components/EditorWrapper';
 import OutlinedInput from '../../../shared/components/OutlinedInput';
 import ScopedObjectService from '../index.service';
+import TitledButton from '../../../shared/components/TitledButton';
 import type { IQuestionResponseProps } from './types';
 
 class QuestionResponses extends ScopedObjectService {
@@ -340,15 +341,13 @@ class QuestionResponses extends ScopedObjectService {
             </OtherContent>
           ))}
           <FieldLabel>
-            <Button
+            <TitledButton
+              title="Add new record"
+              label="Add"
               type="submit"
-              variant="contained"
-              color="primary"
               className={classes.submit}
               onClick={() => this.onClickCreate(id)}
-            >
-              Add
-            </Button>
+            />
           </FieldLabel>
         </EditorWrapper>
       </>
