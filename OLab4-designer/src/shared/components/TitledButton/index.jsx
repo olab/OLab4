@@ -1,6 +1,5 @@
 // @flow
 import React, { PureComponent } from 'react';
-// import { withStyles } from '@material-ui/core/styles';
 import { Button, Tooltip } from '@material-ui/core';
 import type { ITitledButtonProps, ITitledButtonState } from './types';
 

@@ -92,7 +92,7 @@ class AuthController extends Controller
                 if ($session_id) {
                     $claims['session_id'] = $session_id;
                 }
-                
+
                 // Add claims to token
 
                 Auth::guard($auth_method)->claims($claims);
@@ -128,23 +128,29 @@ class AuthController extends Controller
     {
         // Validate all request parameters
 
-        $this->validate($request, [
-            'username' => 'required',
-            'password' => 'required',
-        ]);
-
         // Create auth instance
 
         $auth = new Entrada_Auth(AUTH_PRODUCTION);
         $auth->setAppAuth(AUTH_APP_ID, AUTH_USERNAME, AUTH_PASSWORD);
-
         $method = AUTH_METHOD;
 
-        // Authenticate all inputs
+        if ( $request->isJson()) {
 
-        Log::info('Login initiated via client route.', $request->only('username'));
+          Log::info('Login initiated via client route (json-based).', $request->only('username'));
+          $auth_result = $auth->authenticate($request->json('username'), $request->json('password'), $method);
 
-        $auth_result = $auth->authenticate($request->input('username'), $request->input('password'), $method);
+        } else {
+
+          Log::info('Login initiated via client route.', $request->only('username'));
+
+          // Authenticate all inputs
+          $this->validate($request, [
+              'username' => 'required',
+              'password' => 'required',
+          ]);
+
+          $auth_result = $auth->authenticate($request->input('username'), $request->input('password'), $method);
+        }
 
         // Login / create session
 
@@ -155,7 +161,7 @@ class AuthController extends Controller
         return response($auth_result['response'], $auth_result['http_status']);
     }
 
-    public function postLogout() 
+    public function postLogout()
     {
         Entrada_Auth::logout();
 
@@ -184,9 +190,9 @@ class AuthController extends Controller
     }
 
     /**
-     * This method creates a token with a random number of claims 
+     * This method creates a token with a random number of claims
      * as well as random keys and values, designed purely for testing.
-     * Requires username and password as input, and 
+     * Requires username and password as input, and
      * assumes the "local" auth_method
      */
     public function createTokenWithRandomCustomClaims(Request $request)
