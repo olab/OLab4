@@ -1,5 +1,7 @@
 # Welcome to OLab4
 
+<06-Dec-2020 Developers Note: this repo is in translation from an Entrada-based OLab player codebase to .Net.  The transition is expected to be complete in Q1 2021.>
+
 OLab4 is an open source web-based educational research platform that supports the creation and publication of virtual scenarios. Much of its original structure is based on OpenLabyrinth v3, a platform that was originally designed to support virtual patients but evolved into so much more. 
 
 For more information please visit our website: http://olab.ca 
