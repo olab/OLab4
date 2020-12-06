@@ -1,4 +1,4 @@
-# 06-Dec-2020 Developers Note: this repo is in translation from an Entrada-based OLab player codebase to .Net.  The transition is expected to be complete in Q1 2021 while two separate feature branches are being reconciled.  CMW
+## 06-Dec-2020 Developers Note: this repo is in translation from an Entrada-based OLab player codebase to .Net.  The transition is expected to be complete in Q1 2021 while two separate feature branches are being reconciled.  CMW
 
 # Welcome to OLab4
 
