@@ -1,4 +1,4 @@
-## 06-Dec-2020 Developers Note: this repo is in transition from a restrictive vue.js/Entrada-based OLab player codebase to react.js/.Net.  The transition is expected to be complete in Q1 2021 while two separate feature branches are being reconciled.  CMW
+## This repo is in transition from a restrictive vue.js/Entrada-based OLab player codebase to react.js/.Net.  The transition is expected to be complete in Q1 2021 while two separate feature branches are being reconciled.  CMW - 06-Dec-2020
 
 # Welcome to OLab4
 
