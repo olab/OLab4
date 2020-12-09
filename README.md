@@ -81,7 +81,7 @@ Directions:
 	drwx------ 1 root root     4096 Dec  9 07:36 performance_schema
 	drwx------ 1 root root     4096 Dec  9 07:36 test
 
-  [root@ aa0a1928378c /]# ls -l /var/www/vhosts/
+  	sh-4.2# ls -l /var/www/vhosts/
   
 	total 340
 	-rwxrwxrwx 1 root root  35147 Dec  9 07:30 LICENSE
@@ -96,7 +96,6 @@ Directions:
 	
 •	Run the following post-setup commands within the container to set up the runtime environment download and create the OLab4 demo databases, set up apache, and connect file shares from the host system:
 
-	sh-4.2# 
 	sh-4.2# cd /tmp
 	sh-4.2# ./post-create.sh
 	
