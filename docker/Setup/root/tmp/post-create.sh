@@ -6,11 +6,13 @@
 /bin/cp -r /var/www/vhosts/docker/Setup/root/* /
 rm -Rf /var/www/vhosts/OLab4-site/www-root/core/storage/cache/*
 
+# revert to composer 1.x as there are compatibility issues with 2.x at this time.
+composer self-update --1
+
 runcomposer() {
 
 	echo "Composing $1"
-	composer self-update --1
-	
+
 	pushd $1	
 	
 	if [ ! -f composer.lock ]; then
