@@ -1,4 +1,4 @@
-## This repo is in transition from a restrictive vue.js/Entrada-based OLab player codebase to react.js/.Net.  The transition is expected to be complete in Q1 2021 while two separate feature branches are being reconciled.  In the meantime, the 'master' branch is stable for trying it out.  CMW - 06-Dec-2020
+## This repo is in transition from a restrictive vue.js/Entrada-based OLab player codebase to react.js/.Net.  The transition is expected to be complete in Q1 2021 while two separate feature branches are being reconciled.  In the meantime, the 'master' branch is stable for demo purposes.  CMW - 06-Dec-2020
 
 # Welcome to OLab4
 
@@ -112,7 +112,7 @@ Directions:
 	https://olab4.localhost/player
   
   The login dialog will appear if the container is configured properly.
-•	Log into Olab4 as user ‘demo’ and password 'oldemo' as the password.
+•	Log into Olab4 as user ‘demo’ and password 'oldemo' as the password.  Once logged in, look for the 'Maps' menu item and you should be good to go.
 
 Any problems or questions, please contact us!
 
