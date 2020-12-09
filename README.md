@@ -113,6 +113,7 @@ OLab does not have a production-grade release (yet).  This note describes the st
 	https://olab4.localhost/player
   
   The login dialog will appear if the container is configured properly.
+  
 •	Log into Olab4 as user ‘demo’ and password 'oldemo'.  Once logged in, look for the 'Maps' menu item and you should be good to go.
 
 Any problems or questions, please contact us!
