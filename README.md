@@ -18,6 +18,7 @@ However, OLab4 remains a standalone project. You do not have to buy Entrada, or 
 OLab does not have a production-grade release (yet).  This note describes the step-by-step instructions for setting up the OLab4 demo Docker container on a host system.
 
 Prerequisites:
+
 •	Windows/Mac/Linux host system with internet access
 
 •	Docker Desktop
