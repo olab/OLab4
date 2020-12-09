@@ -24,10 +24,7 @@ Prerequisites:
 
 •	Read-access to the OLab4 git repository (contact David for permission)
 
-•	(Windows) GIT for Windows, inclunding GIT Bash shell
-
-•	(Linux) GIT
-
+•	GIT (command line tools, or a GUI, like Git Kraken)
 
 Directions:
 
@@ -67,8 +64,6 @@ Directions:
   sh-4.2#
   
   Verify that necessary file shares to the host system are configured properly and are operational.
-  
-  sh-4.2# ls -l /var/lib/mysql
   
   sh-4.2# ls -l /var/lib/mysql
   
@@ -117,4 +112,7 @@ Directions:
   https://olab4.localhost/apidev/olab
   
   The login dialog will appear it the container is configured properly.
-•	Log into Olab4 with the ‘admin’ credentials (provided separately).	
+•	Log into Olab4 with the ‘admin’ credentials (provided separately).
+
+Any problems or questions, please contact us!
+
