@@ -17,7 +17,7 @@ However, OLab4 remains a standalone project. You do not have to buy Entrada, or 
 
 OLab does not have a production-grade release (yet).  This note describes the step-by-step instructions for setting up the OLab4 demo Docker container on a host system.
 
-Prerequisites:
+### Prerequisites:
 
 •	Windows/Mac/Linux host system with internet access
 
@@ -27,7 +27,7 @@ Prerequisites:
 
 •	GIT (command line, or a GUI like Git Kraken)
 
-Directions:
+### Directions:
 
 •	IMPORTANT: ensure that the host system does not have existing applications/services listening on the following ports: 80, 443, 3306.  Disable/stop these programs before continuing.
 
