@@ -19,79 +19,81 @@ OLab does not have a production-grade release (yet).  This note describes the st
 
 Prerequisites:
 •	Windows/Mac/Linux host system
-
 •	Docker CE installed on host system
-
-•	Kitematic installed on the host system
-
 •	Read-access to the OLab4 git repository (contact David for permission)
-
 •	(Windows) GIT for Windows, inclunding GIT Bash shell
-
 •	(Linux) GIT
-
 
 Directions:
 
 •	IMPORTANT: ensure that the host system does not have existing applications listening for connections on the following ports: 80, 443, 3306.  Disable/stop these programs before continuing.
-
 •	Edit the host system 'hosts' file and add the following entry:
   127.0.0.1 olab4.localhost    
   
 •	Verify you can 'ping olab4.localhost' from a host system command line and that the name resolves to the IP address above.
-
 •	Start Docker on the host system
-
 •	Create a 'docker' directory on the host system (preferably with full permissions to the host system logged in user).  This is now the 'container root directory'.
+•	Clone the OLab4 git repository into the container root directory.  Using GIT Bash or similar command line too, execute the following command lines:
 
-•	Clone the OLab4 repositories into the container root directory.  Using GIT Bash or similar command line too, execute the following command lines:
+  $ git clone https://github.com/olab/OLab4.git
 
-  $ git clone --single-branch --branch 4.0dev https://github.com/olab/OLab4.git  
-  $ git clone --single-branch --branch 4.0dev https://github.com/olab/OLab4-api.git
-
-•	Change into the generated OLab/OLab4/docker directory.  Verify the file 'docker-compose.yml' exists in this directory.
-
+•	Change into the OLab4/docker directory.  Verify the file 'docker-compose.yml' exists.
 •	Execute the following command to create the 'olab4-developer' docker container:
 
   $ docker-compose up -d  
   
-  Depending on the speed of the internet connection, those may take some time.  When the creation has completed, open Kitematic (via the Docker context menu) and verify the container is running.  If the container creation was successful, you should see the following two log file lines that signify that the container is running:
+  Depending on the speed of the internet connection, those may take some time as the container creation downloads several images and operating system requisites.  We are aware that there are some warnings of deprecated packages (like ruby), but this will not affect the container installation.
+  
+  When the creation has completed, open Docker Desktop. Verify the 'olab4-developer' container is running.  If the container creation was successful, you should see the following two log file lines that signify that the container is running:
   
   2017-11-29 12:28:35,941 INFO success: httpd entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
   
   2017-11-29 12:28:35,941 INFO success: mariadb entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+    
+•	Open a container shell prompt by selecting the running container in Docker Desktop and clicking the 'CLI' icon.
+   
+  If working, the shell window should display the following command prompt:
   
-  
-•	Open a GIT Bash command prompt. Execute the following command to invoke a command line prompt hosted WITHIN the container:
-
-  $ docker exec -it olab4-developer bash
-  
-  If GIT Bash (Windows) was installed with an alternate command console, you may need to prefix the command as such:  
-  
-  $ winpty docker exec -it olab4-developer bash
-  
-  The window should respond with a different command prompt:
-  
-  [root@aa0a1928378c /]#
+  sh-4.2#
   
   Verify that necessary file shares to the host system are configured properly and are operational.
   
-  [root@ aa0a1928378c /]# ls -l /var/lib/mysql
+  sh-4.2# ls -l /var/lib/mysql
   
-  total 0
+  sh-4.2# ls -l /var/lib/mysql
+  
+	total 28688
+	-rw-rw---- 1 root root    16384 Dec  9 07:36 aria_log.00000001
+	-rw-rw---- 1 root root       52 Dec  9 07:36 aria_log_control
+	drwx------ 1 root root     4096 Dec  9 07:36 entrada
+	drwx------ 1 root root     4096 Dec  9 07:36 entrada_auth
+	drwx------ 1 root root     4096 Dec  9 07:36 entrada_clerkship
+	-rw-rw---- 1 root root  5242880 Dec  9 07:36 ib_logfile0
+	-rw-rw---- 1 root root  5242880 Dec  9 07:36 ib_logfile1
+	-rw-rw---- 1 root root 18874368 Dec  9 07:36 ibdata1
+	drwx------ 1 root root     4096 Dec  9 07:36 mysql
+	-rw-rw---- 1 root root      350 Dec  9 07:36 olab4docker-slow.log
+	drwx------ 1 root root     4096 Dec  9 07:36 openlabyrinth
+	drwx------ 1 root root     4096 Dec  9 07:36 performance_schema
+	drwx------ 1 root root     4096 Dec  9 07:36 test
 
   [root@ aa0a1928378c /]# ls -l /var/www/vhosts/
-  total 0
-  drwxrwxrwx 2 root root 0 May 16  2018 OLab
-
-  [root@ aa0a1928378c /]# ls -l /etc/httpd/vhosts.d/
-  total 1
-  -rwxr-xr-x 1 root root 625 Apr 27  2018 olab4.dev.conf
   
+	total 340
+	-rwxrwxrwx 1 root root  35147 Dec  9 07:30 LICENSE
+	-rwxrwxrwx 1 root root  26040 Dec  9 07:30 OLab4 Docker Setup Notes v2a.docx
+	drwxrwxrwx 1 root root   4096 Dec  9 07:30 OLab4-api
+	drwxrwxrwx 1 root root   4096 Dec  9 07:30 OLab4-designer
+	drwxrwxrwx 1 root root   4096 Dec  9 07:30 OLab4-site
+	-rwxrwxrwx 1 root root 267847 Dec  9 07:30 OLab4.phpproj
+	-rwxrwxrwx 1 root root    921 Dec  9 07:30 OLab4.sln
+	-rwxrwxrwx 1 root root   5452 Dec  9 07:30 README.md
+	drwxrwxrwx 1 root root   4096 Dec  9 07:36 docker  
+	
 •	Run the following post-setup commands within the container to download and create the OLab4 demo databases, set up apache, and connect file shares from the host system:
 
-  [root@aa0a1928378c /]# cd /tmp
-  [root@aa0a1928378c /]# ./post-create.sh
+  sh-4.2# cd /tmp
+  sh-4.2# ./post-create.sh
   If, during the post-create step, you see the following message:
   
   Cloning failed using an ssh key for authentication, enter your GitHub credentials to access private repos
@@ -105,5 +107,4 @@ Directions:
   https://olab4.localhost/apidev/olab
   
   The login dialog will appear it the container is configured properly.
-•	Log into Olab4 with the ‘admin’ credentials (provided separately).
-
+•	Log into Olab4 with the ‘admin’ credentials (provided separately).	
