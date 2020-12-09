@@ -31,7 +31,7 @@ Directions:
 •	IMPORTANT: ensure that the host system does not have existing applications listening for connections on the following ports: 80, 443, 3306.  Disable/stop these programs before continuing.
 
 •	Edit the host system 'hosts' file and add the following entry:
-  127.0.0.1 olab4.localhost    
+	127.0.0.1 olab4.localhost    
   
 •	Verify you can 'ping olab4.localhost' from a host system command line and that the name resolves to the IP address above.
 
@@ -41,31 +41,30 @@ Directions:
 
 •	Clone the OLab4 git repository into the container root directory.  Using GIT Bash or similar command line too, execute the following command lines:
 
-  $ git clone https://github.com/olab/OLab4.git
+	$ git clone https://github.com/olab/OLab4.git
 
 •	Change into the OLab4/docker directory.  Verify the file 'docker-compose.yml' exists.
 
 •	Execute the following command to create the 'olab4-developer' docker container:
 
-  $ docker-compose up -d  
+	$ docker-compose up -d  
   
   Depending on the speed of the internet connection, those may take some time as the container creation downloads several images and operating system requisites.  We are aware that there are some warnings of deprecated packages (like ruby), but this will not affect the container installation.
   
   When the creation has completed, open Docker Desktop. Verify the 'olab4-developer' container is running.  If the container creation was successful, you should see the following two log file lines that signify that the container is running:
   
-  2017-11-29 12:28:35,941 INFO success: httpd entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
-  
-  2017-11-29 12:28:35,941 INFO success: mariadb entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+	2017-11-29 12:28:35,941 INFO success: httpd entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+	2017-11-29 12:28:35,941 INFO success: mariadb entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
     
 •	Open a container shell prompt by selecting the running container in Docker Desktop and clicking the 'CLI' icon.
    
   If working, the shell window should display the following command prompt:
   
-  sh-4.2#
+	sh-4.2#
   
   Verify that necessary file shares to the host system are configured properly and are operational.
   
-  sh-4.2# ls -l /var/lib/mysql
+	sh-4.2# ls -l /var/lib/mysql
   
 	total 28688
 	-rw-rw---- 1 root root    16384 Dec  9 07:36 aria_log.00000001
@@ -95,10 +94,12 @@ Directions:
 	-rwxrwxrwx 1 root root   5452 Dec  9 07:30 README.md
 	drwxrwxrwx 1 root root   4096 Dec  9 07:36 docker  
 	
-•	Run the following post-setup commands within the container to download and create the OLab4 demo databases, set up apache, and connect file shares from the host system:
+•	Run the following post-setup commands within the container to set up the runtime environment download and create the OLab4 demo databases, set up apache, and connect file shares from the host system:
 
-  sh-4.2# cd /tmp
-  sh-4.2# ./post-create.sh
+	sh-4.2# 
+	sh-4.2# cd /tmp
+	sh-4.2# ./post-create.sh
+	
   If, during the post-create step, you see the following message:
   
   Cloning failed using an ssh key for authentication, enter your GitHub credentials to access private repos
@@ -109,7 +110,7 @@ Directions:
   Several steps will run as part of this step.  If there are any errors, screen shot them and report them to OLab managers.
   
 •	Open your favorite browser window and navigate to:
-  https://olab4.localhost/apidev/olab
+	https://olab4.localhost/apidev/olab
   
   The login dialog will appear it the container is configured properly.
 •	Log into Olab4 with the ‘admin’ credentials (provided separately).
