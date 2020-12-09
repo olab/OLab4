@@ -19,25 +19,35 @@ OLab does not have a production-grade release (yet).  This note describes the st
 
 Prerequisites:
 •	Windows/Mac/Linux host system
+
 •	Docker CE installed on host system
+
 •	Read-access to the OLab4 git repository (contact David for permission)
+
 •	(Windows) GIT for Windows, inclunding GIT Bash shell
+
 •	(Linux) GIT
+
 
 Directions:
 
 •	IMPORTANT: ensure that the host system does not have existing applications listening for connections on the following ports: 80, 443, 3306.  Disable/stop these programs before continuing.
+
 •	Edit the host system 'hosts' file and add the following entry:
   127.0.0.1 olab4.localhost    
   
 •	Verify you can 'ping olab4.localhost' from a host system command line and that the name resolves to the IP address above.
+
 •	Start Docker on the host system
+
 •	Create a 'docker' directory on the host system (preferably with full permissions to the host system logged in user).  This is now the 'container root directory'.
+
 •	Clone the OLab4 git repository into the container root directory.  Using GIT Bash or similar command line too, execute the following command lines:
 
   $ git clone https://github.com/olab/OLab4.git
 
 •	Change into the OLab4/docker directory.  Verify the file 'docker-compose.yml' exists.
+
 •	Execute the following command to create the 'olab4-developer' docker container:
 
   $ docker-compose up -d  
