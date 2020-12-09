@@ -18,22 +18,22 @@ However, OLab4 remains a standalone project. You do not have to buy Entrada, or 
 OLab does not have a production-grade release (yet).  This note describes the step-by-step instructions for setting up the OLab4 demo Docker container on a host system.
 
 Prerequisites:
-•	Windows/Mac/Linux host system
+•	Windows/Mac/Linux host system with internet access
 
-•	Docker CE installed on host system
+•	Docker Desktop
 
-•	Read-access to the OLab4 git repository (contact David for permission)
+•	Read-access to the OLab4 git repository
 
-•	GIT (command line tools, or a GUI, like Git Kraken)
+•	GIT (command line, or a GUI like Git Kraken)
 
 Directions:
 
-•	IMPORTANT: ensure that the host system does not have existing applications listening for connections on the following ports: 80, 443, 3306.  Disable/stop these programs before continuing.
+•	IMPORTANT: ensure that the host system does not have existing applications/services listening on the following ports: 80, 443, 3306.  Disable/stop these programs before continuing.
 
 •	Edit the host system 'hosts' file and add the following entry:
 	127.0.0.1 olab4.localhost    
   
-•	Verify you can 'ping olab4.localhost' from a host system command line and that the name resolves to the IP address above.
+•	Verify you can 'ping olab4.localhost' from a host system command prompt and that the name resolves to the IP address above.
 
 •	Start Docker on the host system
 
@@ -49,16 +49,14 @@ Directions:
 
 	$ docker-compose up -d  
   
-  Depending on the speed of the internet connection, those may take some time as the container creation downloads several images and operating system requisites.  We are aware that there are some warnings of deprecated packages (like ruby), but this will not affect the container installation.
+  Depending on the speed of the internet connection, those may take some time as the container creation downloads several images and operating system prerequisites.  We are aware that there are some warnings of deprecated packages (like ruby), but this will not adversely affect the container functionality.
   
-  When the creation has completed, open Docker Desktop. Verify the 'olab4-developer' container is running.  If the container creation was successful, you should see the following two log file lines that signify that the container is running:
+  When docker-compose has completed, verify the 'olab4-developer' container is running.  If the container creation was successful, you should see the following two log file lines that signify that the container is running:
   
 	2017-11-29 12:28:35,941 INFO success: httpd entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
 	2017-11-29 12:28:35,941 INFO success: mariadb entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
     
-•	Open a container shell prompt by selecting the running container in Docker Desktop and clicking the 'CLI' icon.
-   
-  If working, the shell window should display the following command prompt:
+•	Open a container shell prompt by selecting the running container in Docker Desktop and clicking the 'CLI' icon.   If working, the shell window should display the following command prompt:
   
 	sh-4.2#
   
@@ -101,18 +99,20 @@ Directions:
 	
   If, during the post-create step, you see the following message:
   
-  Cloning failed using an ssh key for authentication, enter your GitHub credentials to access private repos
-  Head to … to retrieve a token. It will be stored in "/root/.composer/auth.json" for future use by Composer.
-  Token (hidden):
-  a token is required.  Contact the OLab4 github repository manager for the token.
+	Cloning failed using an ssh key for authentication, enter your GitHub credentials to access private repos
+	Head to … to retrieve a token. It will be stored in "/root/.composer/auth.json" for future use by Composer.
+	Token (hidden):
+	a token is required.  Contact the OLab4 github repository manager for the token.
+	
+  let us know, as we are trying to diagnose and get around this problem.
   
-  Several steps will run as part of this step.  If there are any errors, screen shot them and report them to OLab managers.
+  Several steps will run as part of the post-create.  If there are any other errors, screen shot them and report them to us.
   
 •	Open your favorite browser window and navigate to:
-	https://olab4.localhost/apidev/olab
+	https://olab4.localhost/player
   
-  The login dialog will appear it the container is configured properly.
-•	Log into Olab4 with the ‘admin’ credentials (provided separately).
+  The login dialog will appear if the container is configured properly.
+•	Log into Olab4 as user ‘demo’ and password 'oldemo' as the password.
 
 Any problems or questions, please contact us!
 
