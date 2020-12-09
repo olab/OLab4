@@ -9,6 +9,8 @@ rm -Rf /var/www/vhosts/OLab4-site/www-root/core/storage/cache/*
 runcomposer() {
 
 	echo "Composing $1"
+	composer self-update --1
+	
 	pushd $1	
 	
 	if [ ! -f composer.lock ]; then
