@@ -19,7 +19,7 @@ OLab does not have a production-grade release (yet).  This note describes the st
 
 ### Prerequisites:
 
-•	Windows/Mac/Linux host system with internet access
+•	Host system with internet access (tested with Windows host, not tested with Linux or MAC (yet))
 
 •	Docker Desktop
 
