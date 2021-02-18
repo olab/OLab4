@@ -15,7 +15,9 @@ However, OLab4 remains a standalone project. You do not have to buy Entrada, or 
 
 ## Installing OLab
 
-OLab does not have a production-grade release (yet).  ## The Docker deployment below has hard-coded passwords and is not, not, NOT intended for any publish-facing installations. ##.  At this time, the OLab4 container is purely for local development or demo purposes.
+OLab does not have a production-grade release (yet).  At this time, the OLab4 container is purely for local development or demo purposes.
+
+## The Docker deployment below has hard-coded passwords and is not, not, NOT intended for any publish-facing installations. ##.  
 
 This note describes the step-by-step instructions for setting up the OLab4 demo Docker container on a host system.
 
