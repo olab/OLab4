@@ -1,4 +1,4 @@
-## This repo is in transition from a restrictive vue.js/Entrada-based OLab player codebase to react.js/.Net.  The transition is expected to be complete in Q1 2021 while two separate feature branches are being reconciled.  In the meantime, the 'master' branch is stable for demo purposes.  CMW - 06-Dec-2020
+## This repo is no longer active and only exists for archival purposes.  Do not use. CMW - 06-Oct-2022
 
 # Welcome to OLab4
 
